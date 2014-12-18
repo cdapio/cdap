@@ -54,7 +54,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     this.configService = configService;
   }
 
-  @Path("/{namespace-id}/configuration/dashboard")
+  @Path("/{namespace-id}/configuration/dashboards")
   @POST
   public void createDashboard(final HttpRequest request, final HttpResponder responder,
                               @PathParam("namespace-id") String namespace) throws Exception {
@@ -66,7 +66,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(HttpResponseStatus.OK, id);
   }
 
-  @Path("/{namespace-id}/configuration/dashboard")
+  @Path("/{namespace-id}/configuration/dashboards")
   @GET
   public void listDashboard(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
@@ -80,7 +80,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(dashboardIds));
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}")
   @DELETE
   public void deleteDashboard(final HttpRequest request, final HttpResponder responder,
                               @PathParam("namespace-id") String namespace,
@@ -94,7 +94,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties")
   @GET
   public void getProperties(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
@@ -107,7 +107,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties")
   @POST
   public void setProperties(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
@@ -120,7 +120,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties")
   @DELETE
   public void deleteProperties(final HttpRequest request, final HttpResponder responder,
                                @PathParam("namespace-id") String namespace,
@@ -133,7 +133,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties/{property-name}")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties/{property-name}")
   @GET
   public void getProperty(final HttpRequest request, final HttpResponder responder,
                           @PathParam("namespace-id") String namespace,
@@ -147,7 +147,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties/{property-name}")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties/{property-name}")
   @PUT
   public void putProperty(final HttpRequest request, final HttpResponder responder,
                           @PathParam("namespace-id") String namespace,
@@ -162,7 +162,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties/{property-name}")
+  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties/{property-name}")
   @DELETE
   public void deleteProperty(final HttpRequest request, final HttpResponder responder,
                              @PathParam("namespace-id") String namespace,
