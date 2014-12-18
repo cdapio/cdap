@@ -21,7 +21,6 @@ import co.cask.cdap.app.config.ConfigType;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.gateway.handlers.DatasetConfigService;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.Guice;
@@ -34,9 +33,9 @@ import org.junit.Test;
 import java.util.List;
 
 /**
- * Test for {@link DatasetConfigService}.
+ * Test for {@link ConfigService}.
  */
-public class DatasetConfigServiceTest {
+public class ConfigServiceTest {
   private static TransactionManager txManager;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;

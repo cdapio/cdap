@@ -18,9 +18,9 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.config.ConfigType;
@@ -169,7 +169,7 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
       public void apply() throws Exception {
         configTable.delete(getRowKey(namespace, type, name));
         if (type == ConfigType.DASHBOARD) {
-          dashboardTable.delete(Bytes.toBytes(accId), Bytes.toBytes(name));
+          dashboardTable.delete(Bytes.toBytes(accId), getRowKey(namespace, type, name));
           metaDataTable.delete(getRowKey(namespace, type, name));
         }
       }
@@ -188,7 +188,7 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
         byte[] value = metaDataTable.read(countId);
         Long id =  (value == null) ? 0 : (Bytes.toLong(value) + 1);
         String dashboardId = Long.toString(id);
-        dashboardTable.put(Bytes.toBytes(accId), Bytes.toBytes(dashboardId), Bytes.toBytes(true));
+        dashboardTable.put(Bytes.toBytes(accId), getRowKey(namespace, type, dashboardId), Bytes.toBytes(true));
         metaDataTable.write(countId, Bytes.toBytes(id));
         metaDataTable.write(getRowKey(namespace, type, dashboardId), Bytes.toBytes(true));
         return dashboardId;
@@ -203,7 +203,10 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
       configs.add(accId);
     } else if (type == ConfigType.DASHBOARD) {
       for (Map.Entry<byte[], byte[]> entry : dashboardTable.get(Bytes.toBytes(accId)).getColumns().entrySet()) {
-        configs.add(Bytes.toString(entry.getKey()));
+        String column = Bytes.toString(entry.getKey());
+        if (column.startsWith(getRowKeyString(namespace, type, null))) {
+          configs.add(column.substring(column.lastIndexOf(".") + 1));
+        }
       }
     }
     return configs;
@@ -212,14 +215,15 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   @Override
   public List<String> getConfig(final String namespace, final ConfigType type) throws Exception {
     List<String> configs = Lists.newArrayList();
-    byte[] startRowPrefix = getRowKey(namespace, type, "");
+    byte[] startRowPrefix = getRowKey(namespace, type, null);
     byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
-    Scanner scanner = configTable.scan(startRowPrefix, endRowPrefix);
-    Row row;
-    while ((row = scanner.next()) != null) {
-      String rowKey = Bytes.toString(row.getRow());
-      configs.add(rowKey.substring(rowKey.indexOf('.') + 1));
+    CloseableIterator<KeyValue<byte[], byte[]>> iterator = metaDataTable.scan(startRowPrefix, endRowPrefix);
+    while(iterator.hasNext()) {
+      KeyValue<byte[], byte[]> entry = iterator.next();
+      String rowKey = Bytes.toString(entry.getKey());
+      configs.add(rowKey.substring(rowKey.lastIndexOf('.') + 1));
     }
+    iterator.close();
     return configs;
   }
 
@@ -234,13 +238,20 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
     }, null);
   }
 
-  private byte[] getRowKey(String namespace, ConfigType type, String name) {
+  private String getRowKeyString(String namespace, ConfigType type, String name) {
     String rowKeyString = null;
     if (ConfigType.DASHBOARD == type) {
-      rowKeyString = String.format("namespace.%s.dashboard.%s", namespace, name);
+      rowKeyString = String.format("namespace.%s.dashboard.", namespace);
+      if (name != null) {
+        rowKeyString += name;
+      }
     } else if (ConfigType.USER == type) {
       rowKeyString = String.format("user.%s", name);
     }
-    return Bytes.toBytes(rowKeyString);
+    return rowKeyString;
+  }
+
+  private byte[] getRowKey(String namespace, ConfigType type, String name) {
+    return Bytes.toBytes(getRowKeyString(namespace, type, name));
   }
 }

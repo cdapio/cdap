@@ -143,7 +143,11 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       String value = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
-      responder.sendString(HttpResponseStatus.OK, value);
+      if (value != null) {
+        responder.sendString(HttpResponseStatus.OK, value);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
     }
   }
 
@@ -171,8 +175,13 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      configService.deleteSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
-      responder.sendStatus(HttpResponseStatus.OK);
+      String value = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
+      if (value != null) {
+        configService.deleteSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
     }
   }
 
