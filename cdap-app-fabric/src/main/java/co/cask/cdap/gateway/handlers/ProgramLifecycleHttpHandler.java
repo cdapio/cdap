@@ -328,11 +328,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("runnable-type") String runnableType,
                                     @PathParam("runnable-id") String runnableId) {
 
-    ProgramType type;
-    try {
-      type = ProgramType.valueOfCategoryName(runnableType);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Invalid runnable type '%s'",
+    ProgramType type = getProgramType(runnableType);
+    if (type == null) {
+      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
                                                                                 runnableType));
       return;
     }

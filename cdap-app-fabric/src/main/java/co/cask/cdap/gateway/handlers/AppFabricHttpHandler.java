@@ -898,7 +898,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") String appId,
                                      @PathParam("procedure-id") String procId) {
     programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.PROCEDURE.toString(), procId);
+                                                      appId, ProgramType.PROCEDURE.getCategoryName(), procId);
   }
 
   /**
