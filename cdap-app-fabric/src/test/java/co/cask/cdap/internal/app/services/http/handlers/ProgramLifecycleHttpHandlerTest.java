@@ -92,38 +92,40 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testRunnableStatus() throws Exception {
 
-    //deploy and check the status
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    //check the status of the deployment
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus());
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(), getRunnableStatus(TEST_NAMESPACE1,
-                                                                                      WORDCOUNT_APP_NAME, ProgramType
-        .FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME));
+    //deploy app to namespace1 and check status
+    int deployStatus = deploy(WordCountApp.class,
+                              Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1).getStatusLine().getStatusCode();
+    Assert.assertEquals(200, deployStatus);
+    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+                        getRunnableStatus(TEST_NAMESPACE1,
+                                          WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME));
 
     //start flow and check the status
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
-      .getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME,
+                                                  ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
     waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
               ProgramRunStatus.RUNNING.toString());
 
     //stop the flow and check the status
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
-      .getCategoryName(), WORDCOUNT_FLOW_NAME, "stop"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME,
+                                                  ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "stop"));
     waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
               ProgramController.State.STOPPED.toString());
 
-    deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus());
+    //deploy app to namespace2 and check status
+    deployStatus = deploy(DummyAppWithTrackingTable.class,
+                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2).getStatusLine().getStatusCode();
+    Assert.assertEquals(200, deployStatus);
 
     //start map-reduce and check status and stop the map-reduce job and check the status ..
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE
-      .getCategoryName(), DUMMY_RUNNABLE_ID, "start"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, DUMMY_APP_ID,
+                                                  ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID, "start"));
     waitState(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID,
               ProgramRunStatus.RUNNING.toString());
 
     //stop the mapreduce program and check the status
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE
-      .getCategoryName(), DUMMY_RUNNABLE_ID, "stop"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, DUMMY_APP_ID,
+                                                  ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID, "stop"));
     waitState(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID,
               ProgramController.State.STOPPED.toString());
 
@@ -496,16 +498,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(1, obj.get("requested").getAsInt());
       Assert.assertEquals(0, obj.get("provisioned").getAsInt());
     }
-  }
-
-  //TODO: Should move to base class
-  private String getDeploymentStatus() throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("deploy/status/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                      TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
-    return o.get("status");
   }
 
   private String getRunnableStatus(String namespaceId, String appId, String runnableType, String runnableId)

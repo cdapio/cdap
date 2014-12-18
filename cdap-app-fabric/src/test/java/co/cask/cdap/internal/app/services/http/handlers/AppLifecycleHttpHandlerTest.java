@@ -49,15 +49,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE2)
     .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
-  private String getDeploymentStatus(String namespace) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("deploy/status/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                      namespace));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
-    return o.get("status");
-  }
-
   @BeforeClass
   public static void setup() throws Exception {
     HttpResponse response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
@@ -85,8 +76,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployValid() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus(TEST_NAMESPACE1));
-
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
@@ -122,7 +111,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //deploy without name to testnamespace1
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus(TEST_NAMESPACE1));
 
     //deploy with name to testnamespace2
     response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2, appName);

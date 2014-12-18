@@ -169,25 +169,6 @@ public class ApplicationClient {
   }
 
   /**
-   * Promotes an application to another environment.
-   *
-   * @param appId ID of the application to promote
-   * @throws ApplicationNotFoundException if the application with the given ID was not found
-   * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public void promote(String appId) throws ApplicationNotFoundException, IOException,
-    UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("apps/" + appId);
-
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
-    }
-  }
-
-  /**
    * Lists all programs of some type.
    *
    * @param programType type of the programs to list
