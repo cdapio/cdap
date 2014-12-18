@@ -423,18 +423,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
       for (BatchEndpointInstances requestedObj : args) {
         String appId = requestedObj.getAppId();
-        String programTypeStr = requestedObj.getProgramType();
-        String programId = requestedObj.getProgramId();
-        // these values will be overwritten later
-        int requested, provisioned;
         ApplicationSpecification spec = store.getApplication(Id.Application.from(namespaceId, appId));
         if (spec == null) {
           addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
           continue;
         }
 
+        String programTypeStr = requestedObj.getProgramType();
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
-
         // cant get instances for things that are not flows, services, or procedures
         if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
@@ -442,71 +438,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           continue;
         }
 
-        String runnableId;
-        if (programType == ProgramType.PROCEDURE) {
-          // the "runnable" for procedures has the same id as the procedure name
-          runnableId = programId;
-          if (!spec.getProcedures().containsKey(programId)) {
-            addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                         "Procedure: " + programId + " not found");
-            continue;
-          }
-          requested = store.getProcedureInstances(Id.Program.from(namespaceId, appId, programId));
-
-        } else {
-          // services and flows must have runnable id
-          if (requestedObj.getRunnableId() == null) {
-            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         "Must provide a string runnableId for flows/services");
-            continue;
-          }
-
-          runnableId = requestedObj.getRunnableId();
-          if (programType == ProgramType.FLOW) {
-            FlowSpecification flowSpec = spec.getFlows().get(programId);
-            if (flowSpec == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
-              continue;
-            }
-
-            FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
-            if (flowletDefinition == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Flowlet: " + runnableId + " not found");
-              continue;
-            }
-            requested = flowletDefinition.getInstances();
-
-          } else {
-            // Services
-            ServiceSpecification serviceSpec = spec.getServices().get(programId);
-            if (serviceSpec == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Service: " + programId + " not found");
-              continue;
-            }
-
-            if (serviceSpec.getName().equals(runnableId)) {
-              // If runnable name is the same as the service name, returns the service http server instances
-              requested = serviceSpec.getInstances();
-            } else {
-              // Otherwise, get it from the worker
-              ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(runnableId);
-              if (workerSpec == null) {
-                addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                             "Runnable: " + runnableId + " not found");
-                continue;
-              }
-              requested = workerSpec.getInstances();
-            }
-          }
-        }
-        // use the pretty name of program types to be consistent
-        requestedObj.setProgramType(programType.getPrettyName());
-        provisioned = getRunnableCount(namespaceId, appId, programType, programId, runnableId);
-        requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
-        requestedObj.setRequested(requested);
-        requestedObj.setProvisioned(provisioned);
+        populateRunnableInstances(requestedObj, namespaceId, appId, spec, programType, requestedObj.getProgramId());
       }
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
@@ -517,6 +449,82 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Populates requested and provisioned instances for a program type.
+   * The program type passed here should be one that can have instances (flows, services or procedures)
+   * Requires caller to do this validation.
+   */
+  private void populateRunnableInstances(BatchEndpointInstances requestedObj, String namespaceId, String appId,
+                                         ApplicationSpecification spec, ProgramType programType,
+                                         String programId) throws OperationException {
+    int requested;
+    String runnableId;
+    if (programType == ProgramType.PROCEDURE) {
+      // the "runnable" for procedures has the same id as the procedure name
+      runnableId = programId;
+      if (!spec.getProcedures().containsKey(programId)) {
+        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                     "Procedure: " + programId + " not found");
+        return;
+      }
+      requested = store.getProcedureInstances(Id.Program.from(namespaceId, appId, programId));
+
+    } else {
+      // services and flows must have runnable id
+      if (requestedObj.getRunnableId() == null) {
+        addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                     "Must provide a string runnableId for flows/services");
+        return;
+      }
+
+      runnableId = requestedObj.getRunnableId();
+      if (programType == ProgramType.FLOW) {
+        FlowSpecification flowSpec = spec.getFlows().get(programId);
+        if (flowSpec == null) {
+          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
+          return;
+        }
+
+        FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
+        if (flowletDefinition == null) {
+          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                       "Flowlet: " + runnableId + " not found");
+          return;
+        }
+        requested = flowletDefinition.getInstances();
+
+      } else {
+        // Services
+        ServiceSpecification serviceSpec = spec.getServices().get(programId);
+        if (serviceSpec == null) {
+          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                       "Service: " + programId + " not found");
+          return;
+        }
+
+        if (serviceSpec.getName().equals(runnableId)) {
+          // If runnable name is the same as the service name, returns the service http server instances
+          requested = serviceSpec.getInstances();
+        } else {
+          // Otherwise, get it from the worker
+          ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(runnableId);
+          if (workerSpec == null) {
+            addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                         "Runnable: " + runnableId + " not found");
+            return;
+          }
+          requested = workerSpec.getInstances();
+        }
+      }
+    }
+    // use the pretty name of program types to be consistent
+    requestedObj.setProgramType(programType.getPrettyName());
+    int provisioned = getRunnableCount(namespaceId, appId, programType, programId, runnableId);
+    requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
+    requestedObj.setRequested(requested);
+    requestedObj.setProvisioned(provisioned);
   }
 
   /**
