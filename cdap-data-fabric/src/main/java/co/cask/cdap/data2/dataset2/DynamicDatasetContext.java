@@ -118,6 +118,8 @@ public abstract class DynamicDatasetContext implements DatasetContext {
       @SuppressWarnings("unchecked")
       T resultDataset = (T) dataset;
       return resultDataset;
+    } catch (DatasetInstantiationException e) {
+      throw e;
     } catch (Throwable t) {
       throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
     }
