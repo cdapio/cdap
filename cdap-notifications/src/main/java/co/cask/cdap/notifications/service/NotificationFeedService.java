@@ -18,7 +18,6 @@ package co.cask.cdap.notifications.service;
 
 import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.notifications.NotificationFeedManager;
-import com.google.common.base.CharMatcher;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
@@ -47,15 +46,6 @@ public class NotificationFeedService extends AbstractIdleService implements Noti
 
   @Override
   public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
-    if (feed.getNamespace() == null || feed.getNamespace().isEmpty()) {
-      throw new NotificationFeedException("Namespace value cannot be null or empty.");
-    } else if (feed.getCategory() == null || feed.getCategory().isEmpty()) {
-      throw new NotificationFeedException("Category value cannot be null or empty.");
-    } else if (feed.getName() == null || feed.getName().isEmpty()) {
-      throw new NotificationFeedException("Name value cannot be null or empty.");
-    } else if (!isId(feed.getNamespace()) || !isId(feed.getCategory()) || !isId(feed.getName())) {
-      throw new NotificationFeedException("Namespace, category or name has a wrong format.");
-    }
     return store.createNotificationFeed(feed) == null;
   }
 
@@ -78,13 +68,5 @@ public class NotificationFeedService extends AbstractIdleService implements Noti
   @Override
   public List<NotificationFeed> listFeeds() throws NotificationFeedException {
     return store.listNotificationFeeds();
-  }
-
-  private boolean isId(final String name) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 }

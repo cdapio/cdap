@@ -20,6 +20,7 @@ import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.notifications.client.AbstractNotificationPublisher;
 import co.cask.cdap.notifications.service.NotificationException;
 import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import org.apache.twill.kafka.client.KafkaPublisher;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.util.concurrent.ExecutionException;
  * @param <N> Type of the Notifications being published.
  */
 public class KafkaNotificationPublisher<N> extends AbstractNotificationPublisher<N> {
+  private static final Gson GSON = new Gson();
 
   private final NotificationFeed feed;
   private final KafkaPublisher.Preparer preparer;
@@ -45,8 +47,10 @@ public class KafkaNotificationPublisher<N> extends AbstractNotificationPublisher
   @Override
   protected void doPublish(N notification) throws NotificationException {
     try {
-      ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
-      preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
+      KafkaMessage message = new KafkaMessage(KafkaNotificationUtils.buildKafkaMessageKey(feed),
+                                              GSON.toJsonTree(notification));
+      ByteBuffer bb = KafkaMessageIO.encode(message);
+      preparer.add(bb, message.getMessageKey());
 
       try {
         preparer.send().get();

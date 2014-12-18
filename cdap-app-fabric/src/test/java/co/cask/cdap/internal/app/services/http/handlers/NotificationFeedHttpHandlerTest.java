@@ -49,29 +49,15 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
 
   private static final NotificationFeed METADATA_VALID = new NotificationFeed.Builder().setName(NAME)
     .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_MISSING_NAME = new NotificationFeed.Builder()
-    .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_EMPTY_NAME = new NotificationFeed.Builder().setName("")
-    .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_INVALID_NAME = new NotificationFeed.Builder().setName("$.a")
-    .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_MISSING_NAMESPACE = new NotificationFeed.Builder().setName(NAME)
-    .setCategory(CATEGORY).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_EMPTY_NAMESPACE = new NotificationFeed.Builder().setName(NAME)
-    .setCategory(CATEGORY).setNamespace("").setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_INVALID_NAMESPACE = new NotificationFeed.Builder().setName(NAME)
-    .setCategory(CATEGORY).setNamespace("$.a").setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_MISSING_CATEGORY = new NotificationFeed.Builder().setName(NAME)
-    .setNamespace(NAMESPACE).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_EMPTY_CATEGORY = new NotificationFeed.Builder().setName(NAME)
-    .setCategory("").setNamespace(NAMESPACE).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_INVALID_CATEGORY = new NotificationFeed.Builder().setName(NAME)
-    .setCategory("$.a").setNamespace(NAMESPACE).setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_MISSING_DESCRIPTION = new NotificationFeed.Builder().setName(NAME)
     .setNamespace(NAMESPACE).setCategory(CATEGORY).build();
   private static final NotificationFeed METADATA_EMPTY_DESCRIPTION = new NotificationFeed.Builder().setName(NAME)
     .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription("").build();
   private static final String METADATA_INVALID_JSON = "invalid";
+
+  private HttpResponse createFeed(JsonObject jsonObject) throws Exception {
+    return createFeed(GSON.toJson(jsonObject));
+  }
 
   private HttpResponse createFeed(NotificationFeed metadata) throws Exception {
     return createFeed(GSON.toJson(metadata));
@@ -181,33 +167,60 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateMissingEmptyOrInvalidName() throws Exception {
     // name must be non-null, non-empty
-    HttpResponse response = createFeed(METADATA_MISSING_NAME);
+    JsonObject object = new JsonObject();
+    object.add(NAMESPACE_FIELD, GSON.toJsonTree(NAMESPACE));
+    object.add(CATEGORY_FIELD, GSON.toJsonTree(CATEGORY));
+    object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
+
+    HttpResponse response = createFeed(object);
     assertResponseCode(400, response);
-    response = createFeed(METADATA_EMPTY_NAME);
+
+    object.add(NAME_FIELD, GSON.toJsonTree(""));
+    response = createFeed(object);
     assertResponseCode(400, response);
-    response = createFeed(METADATA_INVALID_NAME);
+
+    object.add(NAME_FIELD, GSON.toJsonTree("$.a"));
+    response = createFeed(object);
     assertResponseCode(400, response);
   }
 
   @Test
   public void testCreateMissingEmptyOrInvalidNamespace() throws Exception {
     // namespace must be non-null, non-empty
-    HttpResponse response = createFeed(METADATA_MISSING_NAMESPACE);
+    JsonObject object = new JsonObject();
+    object.add(NAME_FIELD, GSON.toJsonTree(NAME));
+    object.add(CATEGORY_FIELD, GSON.toJsonTree(CATEGORY));
+    object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
+
+    HttpResponse response = createFeed(object);
     assertResponseCode(400, response);
-    response = createFeed(METADATA_EMPTY_NAMESPACE);
+
+    object.add(NAMESPACE_FIELD, GSON.toJsonTree(""));
+    response = createFeed(object);
     assertResponseCode(400, response);
-    response = createFeed(METADATA_INVALID_NAMESPACE);
+
+    object.add(NAMESPACE_FIELD, GSON.toJsonTree("$.a"));
+    response = createFeed(object);
     assertResponseCode(400, response);
   }
 
   @Test
   public void testCreateMissingEmptyOrInvalidCategory() throws Exception {
     // category must be non-null, non-empty
-    HttpResponse response = createFeed(METADATA_MISSING_CATEGORY);
+    JsonObject object = new JsonObject();
+    object.add(NAME_FIELD, GSON.toJsonTree(NAME));
+    object.add(NAMESPACE_FIELD, GSON.toJsonTree(NAMESPACE));
+    object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
+
+    HttpResponse response = createFeed(object);
     assertResponseCode(400, response);
-    response = createFeed(METADATA_EMPTY_CATEGORY);
+
+    object.add(CATEGORY_FIELD, GSON.toJsonTree(""));
+    response = createFeed(object);
     assertResponseCode(400, response);
-    response = createFeed(METADATA_INVALID_CATEGORY);
+
+    object.add(CATEGORY_FIELD, GSON.toJsonTree("$.a"));
+    response = createFeed(object);
     assertResponseCode(400, response);
   }
 

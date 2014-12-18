@@ -17,7 +17,9 @@
 package co.cask.cdap.notifications;
 
 import co.cask.cdap.notifications.service.NotificationFeedException;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 
 /**
  * Notification Feed POJO.
@@ -38,11 +40,25 @@ public class NotificationFeed {
   }
 
   private NotificationFeed(String namespace, String category, String name, String description) {
+    Preconditions.checkArgument(namespace != null && !namespace.isEmpty(), "Namespace value cannot be null or empty.");
+    Preconditions.checkArgument(category != null && !category.isEmpty(), "Category value cannot be null or empty.");
+    Preconditions.checkArgument(name != null && !name.isEmpty(), "Name value cannot be null or empty.");
+    Preconditions.checkArgument(isId(namespace) && isId(category) && isId(name),
+                                "Namespace, category or name has a wrong format.");
+
     this.namespace = namespace;
     this.category = category;
     this.name = name;
     this.id = String.format("%s.%s.%s", namespace, category, name);
     this.description = description;
+  }
+
+  private boolean isId(final String name) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 
   public String getCategory() {

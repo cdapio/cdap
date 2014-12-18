@@ -145,11 +145,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected <T> T parseBody(HttpRequest request, Class<T> type, T defaultValue) throws IOException {
-    T val = parseBody(request, type);
-    return val == null ? defaultValue : val;
-  }
-
   protected Map<String, String> decodeArguments(HttpRequest request) throws IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {

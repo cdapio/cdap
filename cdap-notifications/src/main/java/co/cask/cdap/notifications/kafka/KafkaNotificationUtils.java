@@ -35,4 +35,8 @@ public class KafkaNotificationUtils {
     // notifications-streams-1 .. notifications-streams-10.
     return String.format("notifications-%s", feed.getCategory());
   }
+
+  public static String buildKafkaMessageKey(NotificationFeed feed) {
+    return feed.getId();
+  }
 }

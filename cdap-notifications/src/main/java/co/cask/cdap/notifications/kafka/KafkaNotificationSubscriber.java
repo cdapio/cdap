@@ -23,6 +23,7 @@ import co.cask.cdap.notifications.NotificationHandler;
 import co.cask.cdap.notifications.client.AbstractNotificationSubscriber;
 import co.cask.cdap.notifications.client.NotificationFeedClient;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.gson.Gson;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
@@ -39,6 +40,7 @@ import java.util.Map;
  */
 public class KafkaNotificationSubscriber extends AbstractNotificationSubscriber {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationSubscriber.class);
+  private static final Gson GSON = new Gson();
 
   private final KafkaConsumer.Preparer kafkaPreparer;
   private final DatasetFramework dsFramework;
@@ -71,13 +73,14 @@ public class KafkaNotificationSubscriber extends AbstractNotificationSubscriber 
           FetchedMessage message = messages.next();
           ByteBuffer payload = message.getPayload();
           try {
-            String msgKey = KafkaMessageSerializer.decodeMessageKey(payload);
+            KafkaMessage decodedMessage = KafkaMessageIO.decode(payload);
             for (Map.Entry<NotificationFeed, NotificationHandler> feedEntry : getFeedMap().entrySet()) {
-              if (!msgKey.equals(KafkaMessageSerializer.buildKafkaMessageKey(feedEntry.getKey()))) {
+              if (!decodedMessage.getMessageKey().equals(
+                KafkaNotificationUtils.buildKafkaMessageKey(feedEntry.getKey()))) {
                 continue;
               }
-              Object notification = KafkaMessageSerializer.decode(payload,
-                                                                  feedEntry.getValue().getNotificationFeedType());
+              Object notification = GSON.fromJson(decodedMessage.getNotificationJson(),
+                                                  feedEntry.getValue().getNotificationFeedType());
               if (notification == null) {
                 continue;
               }

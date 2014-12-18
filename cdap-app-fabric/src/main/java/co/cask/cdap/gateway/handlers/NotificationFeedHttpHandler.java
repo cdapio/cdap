@@ -58,12 +58,16 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/feeds")
   public void createFeed(HttpRequest request, HttpResponder responder) {
     try {
-      NotificationFeed feed = parseBody(request, NotificationFeed.class);
-      if (feedService.createFeed(feed)) {
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        LOG.trace("Notification Feed already exists.");
-        responder.sendStatus(HttpResponseStatus.CONFLICT);
+      try {
+        NotificationFeed feed = parseFeed(request);
+        if (feedService.createFeed(feed)) {
+          responder.sendStatus(HttpResponseStatus.OK);
+        } else {
+          LOG.trace("Notification Feed already exists.");
+          responder.sendStatus(HttpResponseStatus.CONFLICT);
+        }
+      } catch (IllegalArgumentException e) {
+        throw new NotificationFeedException(e);
       }
     } catch (NotificationFeedException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
@@ -86,6 +90,9 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       } catch (NotificationFeedException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        return;
       }
       feedService.deleteFeed(feed);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -105,6 +112,9 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         feed = NotificationFeed.fromId(id);
       } catch (NotificationFeedException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        return;
+      } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
@@ -129,5 +139,19 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Could not check subscribe permission for Notification Feed. %s",
                                          e.getMessage()));
     }
+  }
+
+  /**
+   * This method will make sure that building a notification feed object will go through the checks that the
+   * constructor has.
+   */
+  private NotificationFeed parseFeed(HttpRequest request) throws IOException {
+    NotificationFeed tmpFeed = parseBody(request, NotificationFeed.class);
+    return new NotificationFeed.Builder()
+      .setNamespace(tmpFeed.getNamespace())
+      .setCategory(tmpFeed.getCategory())
+      .setName(tmpFeed.getName())
+      .setDescription(tmpFeed.getDescription())
+      .build();
   }
 }
