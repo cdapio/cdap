@@ -24,10 +24,11 @@ A FileSet represents a set of files on the file system that share certain proper
   class names.  When a FileSet is used as the input or output of a MapReduce Job,
   these classes are injected into the Hadoop configuration by the CDAP runtime
   system.
-- Additional properties for the input and output format. For example, the
-  TextOutputFormat allows configuring the field separator character using the property
-  ``mapreduce.output.textoutputformat.separator``.
-  These properties are also set into the Hadoop configuration by the CDAP runtime system.
+- Additional properties of the specified input and output format. Each format has its own 
+  properties; consult the format's documentation for details. For example, the
+  ``TextOutputFormat`` allows configuring the field separator character by setting the
+  property ``mapreduce.output.textoutputformat.separator``. These properties are also set
+  into the Hadoop configuration by the CDAP runtime system.
 
 These properties are configured at the time the FileSet is created. They apply to all
 files in the Dataset. Every time you use a FileSet in your application code, you can
@@ -62,7 +63,8 @@ between the key and the value in each line of output.
 Input and output formats must be implementations of the standard Apache Hadoop
 `InputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputFormat.html>`_
 and
-`OutputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`_.
+`OutputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`_
+specifications.
 
 If you do not specify a base path, the dataset framework will generate a path
 based on the dataset name. If you do not specify an input format, you will not be able
