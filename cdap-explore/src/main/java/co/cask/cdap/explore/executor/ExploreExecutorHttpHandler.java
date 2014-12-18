@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -170,21 +171,23 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
-        // It is not an error to get non-RecordEnabled datasets, since the type of dataset may not be known where this
-        // call originates from.
-        LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
-                  RecordWritable.class.getName());
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-
-      LOG.debug("Enabling explore for dataset instance {}", datasetName);
+      // TODO: remove RecordScannable and RecordWritable when full Table support is implemented
       String createStatement;
       try {
-        createStatement = generateCreateStatement(datasetName, dataset);
+        if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+          createStatement = generateCreateStatement(datasetName, dataset);
+        } else if (dataset instanceof Table) {
+          createStatement = generateTableCreateStatement(datasetName);
+        } else {
+          // It is not an error to get non-RecordEnabled datasets, since the type of dataset may not be known where this
+          // call originates from.
+          LOG.debug("Dataset {} neither implements {} nor {} nor {}", datasetName, RecordScannable.class.getName(),
+                    RecordWritable.class.getName(), Table.class.getName());
+          JsonObject json = new JsonObject();
+          json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+          responder.sendJson(HttpResponseStatus.OK, json);
+          return;
+        }
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for dataset {}", datasetName, e);
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -232,11 +235,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
+      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable || dataset instanceof Table)) {
         // It is not an error to get non-Record enabled datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
-                  RecordWritable.class.getName());
+        LOG.debug("Dataset {} neither implements {} nor {} nor {}", datasetName, RecordScannable.class.getName(),
+                  RecordWritable.class.getName(), Table.class.getName());
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
@@ -279,7 +282,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public static String generateStreamCreateStatement(String name, String location) throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaForStream();
     String tableName = getStreamTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
                            "LOCATION \"%s\"",
                          tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
@@ -290,10 +293,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Dataset\" " +
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                          Constants.Explore.DATASET_NAME, name);
+  }
+
+  private String generateTableCreateStatement(String name) throws UnsupportedTypeException {
+    String hiveSchema = "( row binary, columns map<binary, binary> )";
+    String tableName = getHiveTableName(name);
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Table\" " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                         tableName, hiveSchema, Constants.Explore.TABLE_DATASET_STORAGE_HANDLER_CLASS,
+                         Constants.Explore.TABLE_DATASET_NAME, name);
   }
 
   public static String generateDeleteStatement(String name) {

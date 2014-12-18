@@ -165,6 +165,10 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
    * This class duplicates all the functionality of
    * {@link co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputSplit}, but implements
    * {@link org.apache.hadoop.mapred.InputSplit} instead of {@link org.apache.hadoop.mapreduce.InputSplit}.
+   * Any InputSplit used by Hive MUST be a FileInputSplit otherwise
+   * Hive will choke and die. Hive will pass this into HiveInputSplit, which happily returns an invalid path if this is
+   * not a FileSplit. The invalid path causes mapred to die, but not in a way where any sensible error message
+   * is logged.
    */
   public static class DatasetInputSplit extends FileSplit {
     private Split dataSetSplit;
