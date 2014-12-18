@@ -19,8 +19,11 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,7 +38,6 @@ import java.util.Map;
  */
 public class StateStoreTableDataset extends AbstractDataset implements StateStoreTable {
   private static final Logger LOG = LoggerFactory.getLogger(StateStoreTableDataset.class);
-  private static final String STATE_STORE_ROWPREFIX = "statestore";
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new Gson();
   private final KeyValueTable table;
@@ -73,9 +75,23 @@ public class StateStoreTableDataset extends AbstractDataset implements StateStor
     }
   }
 
+  @Override
+  public void deleteState(Id.Application appId) {
+    try {
+      byte[] startRowKey = Bytes.toBytes(appId.getId() + ".");
+      byte[] endRowKey = Bytes.stopKeyForPrefix(startRowKey);
+      CloseableIterator<KeyValue<byte[], byte[]>> rows = table.scan(startRowKey, endRowKey);
+      while (rows.hasNext()) {
+        table.delete(rows.next().getKey());
+      }
+      rows.close();
+    } catch (Exception e) {
+      LOG.debug("Delete State failed for Application {}", appId);
+    }
+  }
+
   private byte[] generateStateStoreRowKey(ProgramRecord program) {
-    //TODO: Use default namespace until namespace is implemented (CDAP-993).
-    return Bytes.toBytes(String.format("%s.%s.%s.%s.%s", STATE_STORE_ROWPREFIX, "default", program.getApp(),
-                                       program.getType().getPrettyName(), program.getId()));
+    return Bytes.toBytes(String.format("%s.%s.%s", program.getApp(), program.getType().getPrettyName(),
+                                       program.getId()));
   }
 }

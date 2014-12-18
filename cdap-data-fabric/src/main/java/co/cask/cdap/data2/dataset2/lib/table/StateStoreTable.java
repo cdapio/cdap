@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 
 import java.util.Map;
@@ -45,4 +46,10 @@ public interface StateStoreTable extends Dataset {
    * @param program Program
    */
   public void deleteState(ProgramRecord program);
+
+  /**
+   * Delete the contents of the StateStore for a given {@link Id.Application}
+   * @param appId Application Id
+   */
+  public void deleteState(Id.Application appId);
 }

@@ -23,7 +23,7 @@
   <artifactId>cdap-examples</artifactId>
   <version>@project.version@</version>
   <packaging>pom</packaging>
-  <name>Cask Data Application Platform (CDAP) Examples</name>
+  <name>CDAP Examples</name>
 
   <modules>
     <module>CountRandom</module>
@@ -48,15 +48,16 @@
 
   <properties>
     <cdap.version>@project.version@</cdap.version>
-    <netty.http.version>0.7.0</netty.http.version>
-    <hadoop.version>2.3.0</hadoop.version>
+    <netty.http.version>@netty.http.version@</netty.http.version>
+    <hadoop.version>@hadoop.version@</hadoop.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
-    <gson.version>2.2.4</gson.version>
-    <guava.version>13.0.1</guava.version>
-    <slf4j.version>1.7.5</slf4j.version>
-    <junit.version>4.11</junit.version>
-    <spark.version>1.1.0</spark.version>
+    <gson.version>@gson.version@</gson.version>
+    <guava.version>@guava.version@</guava.version>
+    <slf4j.version>@slf4j.version@</slf4j.version>
+    <junit.version>@junit.version@</junit.version>
+    <spark.version>@spark.version@</spark.version>
+    <cask.common.version>@cask.common.version@</cask.common.version>
   </properties>
 
   <build>
@@ -167,6 +168,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-http</artifactId>
+        <version>${cask.common.version}</version>
+      </dependency>
       <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>

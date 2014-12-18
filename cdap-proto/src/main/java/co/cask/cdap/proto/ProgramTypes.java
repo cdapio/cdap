@@ -35,14 +35,14 @@ public class ProgramTypes {
 
   private static final Map<Class<? extends ProgramSpecification>, ProgramType> specClassToProgramType =
     ImmutableMap.<Class<? extends ProgramSpecification>, ProgramType>builder()
-    .put(FlowSpecification.class, ProgramType.FLOW)
-    .put(ProcedureSpecification.class, ProgramType.PROCEDURE)
-    .put(MapReduceSpecification.class, ProgramType.MAPREDUCE)
-    .put(SparkSpecification.class, ProgramType.SPARK)
-    .put(WorkflowSpecification.class, ProgramType.WORKFLOW)
-    .put(WebappSpecification.class, ProgramType.WEBAPP)
-    .put(ServiceSpecification.class, ProgramType.SERVICE)
-    .build();
+      .put(FlowSpecification.class, ProgramType.FLOW)
+      .put(ProcedureSpecification.class, ProgramType.PROCEDURE)
+      .put(MapReduceSpecification.class, ProgramType.MAPREDUCE)
+      .put(SparkSpecification.class, ProgramType.SPARK)
+      .put(WorkflowSpecification.class, ProgramType.WORKFLOW)
+      .put(WebappSpecification.class, ProgramType.WEBAPP)
+      .put(ServiceSpecification.class, ProgramType.SERVICE)
+      .build();
 
   /**
    * Maps from {@link ProgramSpecification} to {@link ProgramType}.

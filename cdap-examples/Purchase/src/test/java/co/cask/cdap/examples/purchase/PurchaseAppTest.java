@@ -68,19 +68,52 @@ public class PurchaseAppTest extends TestBase {
       flowManager.stop();
     }
 
+    ServiceManager userProfileServiceManager = getServiceManager(appManager);
+
+    // Add customer's profile information
+    URL userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
+                                    UserProfileServiceHandler.USER_ENDPOINT);
+    HttpURLConnection userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
+    String userProfileJson = "{'id' : 'joe', 'firstName': 'joe', 'lastName':'bernard', 'categories': ['fruits']}";
+
+    try {
+      userProfileConnection.setDoOutput(true);
+      userProfileConnection.setRequestMethod("POST");
+      userProfileConnection.getOutputStream().write(userProfileJson.getBytes(Charsets.UTF_8));
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, userProfileConnection.getResponseCode());
+    } finally {
+      userProfileConnection.disconnect();
+    }
+
+    // Test service to retrieve customer's profile information
+    userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
+                                    UserProfileServiceHandler.USER_ENDPOINT + "/joe");
+    userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, userProfileConnection.getResponseCode());
+    String customerJson;
+    try {
+      customerJson = new String(ByteStreams.toByteArray(userProfileConnection.getInputStream()), Charsets.UTF_8);
+    } finally {
+      userProfileConnection.disconnect();
+    }
+
+    UserProfile profileFromService = GSON.fromJson(customerJson, UserProfile.class);
+    Assert.assertEquals(profileFromService.getFirstName(), "joe");
+    Assert.assertEquals(profileFromService.getLastName(), "bernard");
+
     // Run PurchaseHistoryWorkflow which will process the data
     MapReduceManager mapReduceManager = appManager.startMapReduce("PurchaseHistoryWorkflow_PurchaseHistoryBuilder",
                                                                   ImmutableMap.<String, String>of());
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Start PurchaseHistoryService
-    ServiceManager serviceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
+    ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
-    // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+    // Wait for service startup
+    serviceStatusCheck(purchaseHistoryServiceManager, true);
 
     // Test service to retrieve a customer's purchase history
-    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "history/joe");
+    URL url = new URL(purchaseHistoryServiceManager.getServiceURL(15, TimeUnit.SECONDS), "history/joe");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
     String historyJson;
@@ -93,7 +126,20 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals("joe", history.getCustomer());
     Assert.assertEquals(2, history.getPurchases().size());
 
+    UserProfile profileFromPurchaseHistory = history.getUserProfile();
+    Assert.assertEquals(profileFromPurchaseHistory.getFirstName(), "joe");
+    Assert.assertEquals(profileFromPurchaseHistory.getLastName(), "bernard");
+
     appManager.stopAll();
+  }
+
+  private ServiceManager getServiceManager(ApplicationManager appManager) throws InterruptedException {
+    // Start UserProfileService
+    ServiceManager userProfileServiceManager = appManager.startService(UserProfileServiceHandler.SERVICE_NAME);
+
+    // Wait for service startup
+    serviceStatusCheck(userProfileServiceManager, true);
+    return userProfileServiceManager;
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {

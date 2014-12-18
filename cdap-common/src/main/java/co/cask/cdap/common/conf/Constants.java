@@ -509,6 +509,8 @@ public final class Constants {
 
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
+    public static final String STREAM_NAME = "explore.stream.name";
+    public static final String STREAM_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.stream.StreamStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
@@ -526,6 +528,7 @@ public final class Constants {
 
     public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
     public static final String EXPLORE_ENABLED = "explore.enabled";
+    public static final String WRITES_ENABLED = "explore.writes.enabled";
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
@@ -605,10 +608,9 @@ public final class Constants {
 
 
   /**
-   * Corresponds to account id used when running in local mode.
-   * NOTE: value should be in sync with the one used by UI.
+   * Default namespace to be used by v2 APIs
    */
-  public static final String DEVELOPER_ACCOUNT_ID = "developer";
+  public static final String DEFAULT_NAMESPACE = "default";
 
   /**
    * Constants related to external systems.

@@ -2,16 +2,18 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _TestFramework:
+.. _test-cdap:
 
 ================================================
 Testing a CDAP Application
 ================================================
 
-Strategies in Testing Applications
-==================================
+.. _test-framework:
 
-CDAP comes with a convenient way to unit test your Applications.
+Strategies in Testing Applications: Test Framework
+==================================================
+
+CDAP comes with a convenient way to unit test your Applications with CDAP’s Test Framework.
 The base for these tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies

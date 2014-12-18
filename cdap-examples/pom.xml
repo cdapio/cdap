@@ -27,7 +27,7 @@
 
   <artifactId>cdap-examples</artifactId>
   <packaging>pom</packaging>
-  <name>Cask Data Application Platform (CDAP) Examples</name>
+  <name>CDAP Examples</name>
 
   <modules>
     <module>CountRandom</module>
@@ -48,8 +48,6 @@
   </repositories>
 
   <properties>
-    <hadoop.version>2.3.0</hadoop.version>
-    <netty.http.version>0.7.0</netty.http.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>
 
@@ -125,9 +123,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
-        <configuration>
-          <argLine>-Xmx2048m -XX:MaxPermSize=256m -XX:+CMSClassUnloadingEnabled</argLine>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
@@ -178,6 +173,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-http</artifactId>
+        <version>${cask.common.version}</version>
+      </dependency>
       <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>

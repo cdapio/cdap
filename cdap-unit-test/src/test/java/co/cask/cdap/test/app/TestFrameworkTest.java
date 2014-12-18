@@ -369,20 +369,23 @@ public class TestFrameworkTest extends TestBase {
 
       LOG.info("Service Started");
 
+      URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(serviceURL);
+
       // Call the ping endpoint
-      URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
+      URL url = new URL(serviceURL, "ping2");
       HttpRequest request = HttpRequest.get(url).build();
       HttpResponse response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
 
       // Call the failure endpoint
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+      url = new URL(serviceURL, "failure");
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(500, response.getResponseCode());
 
       // Call the verify ClassLoader endpoint
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
+      url = new URL(serviceURL, "verifyClassLoader");
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
@@ -416,7 +419,7 @@ public class TestFrameworkTest extends TestBase {
       // Test that a service can discover another service
       String path = String.format("discover/%s/%s",
                                   AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
+      url = new URL(serviceURL, path);
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
@@ -450,7 +453,8 @@ public class TestFrameworkTest extends TestBase {
       LOG.info("Service Started");
 
 
-      final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+      final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(baseUrl);
 
       // Make a request to write in a separate thread and wait for it to return.
       ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -801,13 +805,9 @@ public class TestFrameworkTest extends TestBase {
 
       Connection connection = getQueryClient();
       try {
-        // list the tables and make sure the table is there
-        ResultSet results = connection.prepareStatement("show tables").executeQuery();
-        Assert.assertTrue(results.next());
-        Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
 
         // run a query over the dataset
-        results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
+        ResultSet results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
           .executeQuery();
         Assert.assertTrue(results.next());
         Assert.assertEquals("a", results.getString(1));
@@ -835,12 +835,15 @@ public class TestFrameworkTest extends TestBase {
 
       // Wait for at least 10 records being generated
       RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
-      flowMetrics.waitForProcessed(10, 1000, TimeUnit.MILLISECONDS);
+      flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
       flowManager.stop();
 
-      // Query record
       ServiceManager serviceManager = appManager.startService("RecordQuery");
-      URL url = new URL(serviceManager.getServiceURL(2000, TimeUnit.MILLISECONDS), "query?type=public");
+      URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(serviceURL);
+
+      // Query record
+      URL url = new URL(serviceURL, "query?type=public");
       HttpRequest request = HttpRequest.get(url).build();
       HttpResponse response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());

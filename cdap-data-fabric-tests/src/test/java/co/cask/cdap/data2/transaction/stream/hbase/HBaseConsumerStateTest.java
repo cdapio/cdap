@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.stream.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -34,13 +35,18 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
  */
 @Category(SlowTests.class)
 public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
   private static StreamAdmin streamAdmin;
@@ -52,6 +58,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     testHBase.startHBase();
     Configuration hConf = testHBase.getConfiguration();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),

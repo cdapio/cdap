@@ -2,9 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
-CDAP How-To Guides and Tutorials
-============================================
+======================================================
+CDAP Examples, Guides, and Tutorials Table of Contents
+======================================================
 
 .. toctree::
    :maxdepth: 3
