@@ -30,6 +30,7 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -179,7 +180,7 @@ public class OpenCloseDataSetTest {
     }
     Assert.assertNotNull(controller);
 
-    while (!controller.getState().equals(ProgramController.State.STOPPED)) {
+    while (!controller.getState().equals(ProgramState.STOPPED)) {
       TimeUnit.MILLISECONDS.sleep(100);
     }
 

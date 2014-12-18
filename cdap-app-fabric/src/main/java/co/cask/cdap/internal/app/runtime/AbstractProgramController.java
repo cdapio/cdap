@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.proto.ProgramState;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -44,7 +45,7 @@ public abstract class AbstractProgramController implements ProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramController.class);
 
-  private final AtomicReference<State> state;
+  private final AtomicReference<ProgramState> state;
   private final String programName;
   private final RunId runId;
   private final ConcurrentMap<ListenerCaller, Cancellable> listeners;
@@ -52,7 +53,7 @@ public abstract class AbstractProgramController implements ProgramController {
   private Throwable failureCause;
 
   protected AbstractProgramController(String programName, RunId runId) {
-    this.state = new AtomicReference<State>(State.STARTING);
+    this.state = new AtomicReference<ProgramState>(ProgramState.STARTING);
     this.programName = programName;
     this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
@@ -66,17 +67,17 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> suspend() {
-    if (!state.compareAndSet(State.ALIVE, State.SUSPENDING)) {
+    if (!state.compareAndSet(ProgramState.RUNNING, ProgramState.SUSPENDING)) {
       return Futures.immediateFailedFuture(new IllegalStateException("Suspension not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.SUSPENDING).execute(new Runnable() {
+    executor(ProgramState.SUSPENDING).execute(new Runnable() {
       @Override
       public void run() {
         try {
           caller.suspending();
           doSuspend();
-          state.set(State.SUSPENDED);
+          state.set(ProgramState.SUSPENDED);
           result.set(AbstractProgramController.this);
           caller.suspended();
         } catch (Throwable t) {
@@ -90,17 +91,17 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> resume() {
-    if (!state.compareAndSet(State.SUSPENDED, State.RESUMING)) {
+    if (!state.compareAndSet(ProgramState.SUSPENDED, ProgramState.RESUMING)) {
       return Futures.immediateFailedFuture(new IllegalStateException("Resumption not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.RESUMING).execute(new Runnable() {
+    executor(ProgramState.RESUMING).execute(new Runnable() {
       @Override
       public void run() {
         try {
           caller.resuming();
           doResume();
-          state.set(State.ALIVE);
+          state.set(ProgramState.RUNNING);
           result.set(AbstractProgramController.this);
           caller.alive();
         } catch (Throwable t) {
@@ -113,19 +114,19 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> stop() {
-    if (!state.compareAndSet(State.STARTING, State.STOPPING)
-      && !state.compareAndSet(State.ALIVE, State.STOPPING)
-      && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
+    if (!state.compareAndSet(ProgramState.STARTING, ProgramState.STOPPING)
+      && !state.compareAndSet(ProgramState.RUNNING, ProgramState.STOPPING)
+      && !state.compareAndSet(ProgramState.SUSPENDED, ProgramState.STOPPING)) {
       return Futures.immediateFailedFuture(new IllegalStateException("Stopping not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.STOPPING).execute(new Runnable() {
+    executor(ProgramState.STOPPING).execute(new Runnable() {
       @Override
       public void run() {
         try {
           caller.stopping();
           doStop();
-          state.set(State.STOPPED);
+          state.set(ProgramState.STOPPED);
           result.set(AbstractProgramController.this);
           caller.stopped();
         } catch (Throwable t) {
@@ -176,7 +177,7 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final State getState() {
+  public final ProgramState getState() {
     return state.get();
   }
 
@@ -195,7 +196,7 @@ public abstract class AbstractProgramController implements ProgramController {
    */
   protected final <V> void error(Throwable t, SettableFuture<V> future) {
     failureCause = t;
-    state.set(State.ERROR);
+    state.set(ProgramState.FAILED);
     if (future != null) {
       future.setException(t);
     }
@@ -206,15 +207,15 @@ public abstract class AbstractProgramController implements ProgramController {
    * Children call this method to signal the program is started.
    */
   protected final void started() {
-    if (!state.compareAndSet(State.STARTING, State.ALIVE)) {
-      LOG.debug("Cannot transit to ALIVE state from {} state: {} {}", state.get(), programName, runId);
+    if (!state.compareAndSet(ProgramState.STARTING, ProgramState.RUNNING)) {
+      LOG.debug("Cannot transit to RUNNING state from {} state: {} {}", state.get(), programName, runId);
       return;
     }
     LOG.debug("Program started: {} {}", programName, runId);
-    executor(State.ALIVE).execute(new Runnable() {
+    executor(ProgramState.RUNNING).execute(new Runnable() {
       @Override
       public void run() {
-        state.set(State.ALIVE);
+        state.set(ProgramState.RUNNING);
         caller.alive();
       }
     });
@@ -242,14 +243,14 @@ public abstract class AbstractProgramController implements ProgramController {
 
   protected abstract void doCommand(String name, Object value) throws Exception;
 
-  private Executor executor(State state) {
+  private Executor executor(ProgramState state) {
     return executor(state.name());
   }
 
   private final class MultiListenerCaller implements Listener {
 
     @Override
-    public void init(State currentState) {
+    public void init(ProgramState currentState) {
       for (ListenerCaller caller : listeners.keySet()) {
         caller.init(currentState);
       }
@@ -309,11 +310,11 @@ public abstract class AbstractProgramController implements ProgramController {
 
     private final Listener listener;
     private final Executor executor;
-    private final State initState;
+    private final ProgramState initState;
     private final Queue<ListenerTask> tasks;
-    private State lastState;
+    private ProgramState lastState;
 
-    private ListenerCaller(Listener listener, Executor executor, State initState) {
+    private ListenerCaller(Listener listener, Executor executor, ProgramState initState) {
       this.listener = listener;
       this.executor = executor;
       this.initState = initState;
@@ -321,44 +322,44 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void init(final State currentState) {
+    public void init(final ProgramState currentState) {
       // The init state is being passed from constructor, hence ignoring the state passed to this method
       addTask(null);
     }
 
     @Override
     public void suspending() {
-      addTask(State.SUSPENDING);
+      addTask(ProgramState.SUSPENDING);
     }
 
     @Override
     public void suspended() {
-      addTask(State.SUSPENDED);
+      addTask(ProgramState.SUSPENDED);
     }
 
     @Override
     public void resuming() {
-      addTask(State.RESUMING);
+      addTask(ProgramState.RESUMING);
     }
 
     @Override
     public void alive() {
-      addTask(State.ALIVE);
+      addTask(ProgramState.RUNNING);
     }
 
     @Override
     public void stopping() {
-      addTask(State.STOPPING);
+      addTask(ProgramState.STOPPING);
     }
 
     @Override
     public void stopped() {
-      addTask(State.STOPPED);
+      addTask(ProgramState.STOPPED);
     }
 
     @Override
     public void error(final Throwable cause) {
-      addTask(State.ERROR, cause);
+      addTask(ProgramState.FAILED, cause);
     }
 
     @Override
@@ -424,7 +425,7 @@ public abstract class AbstractProgramController implements ProgramController {
      *
      * @param state State of the task. If {@code null}, the init state will be used.
      */
-    private void addTask(@Nullable State state) {
+    private void addTask(@Nullable ProgramState state) {
       addTask(state, null);
     }
 
@@ -434,9 +435,9 @@ public abstract class AbstractProgramController implements ProgramController {
      * @param state state of the task. If {@code null}, the init state will be used.
      * @param failureCause cause of the error state if not {@code null}.
      */
-    private void addTask(@Nullable State state, @Nullable Throwable failureCause) {
+    private void addTask(@Nullable ProgramState state, @Nullable Throwable failureCause) {
       boolean execute;
-      State taskState = (state == null) ? initState : state;
+      ProgramState taskState = (state == null) ? initState : state;
 
       synchronized (this) {
         // Determine if there is need to submit task to executor and add the task to the queue.
@@ -457,17 +458,17 @@ public abstract class AbstractProgramController implements ProgramController {
 
     private final Listener listener;
     private final boolean initTask;
-    private final State state;
+    private final ProgramState state;
     private final Throwable failureCause;
 
-    private ListenerTask(Listener listener, boolean initTask, State state, @Nullable Throwable failureCause) {
+    private ListenerTask(Listener listener, boolean initTask, ProgramState state, @Nullable Throwable failureCause) {
       this.listener = listener;
       this.initTask = initTask;
       this.state = state;
       this.failureCause = failureCause;
     }
 
-    public State getState() {
+    public ProgramState getState() {
       return state;
     }
 
@@ -482,7 +483,7 @@ public abstract class AbstractProgramController implements ProgramController {
         case STARTING:
           // No-op
           break;
-        case ALIVE:
+        case RUNNING:
           listener.alive();
           break;
         case SUSPENDING:
@@ -500,7 +501,7 @@ public abstract class AbstractProgramController implements ProgramController {
         case STOPPED:
           listener.stopped();
           break;
-        case ERROR:
+        case FAILED:
           listener.error(failureCause);
           break;
       }

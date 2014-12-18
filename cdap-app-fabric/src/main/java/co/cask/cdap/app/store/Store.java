@@ -21,13 +21,11 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import org.apache.twill.filesystem.Location;
@@ -71,7 +69,7 @@ public interface Store {
    * @param endTime end timestamp
    * @param state   State of program
    */
-  void setStop(Id.Program id, String pid, long endTime, ProgramController.State state);
+  void setStop(Id.Program id, String pid, long endTime, ProgramState state);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramState;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -27,83 +27,6 @@ import java.util.concurrent.Executor;
  *
  */
 public interface ProgramController {
-
-  /**
-   * All possible state transitions.
-   * <p/>
-   * <pre>
-   *
-   *
-   *   |------------------------------------|
-   *   |                                    |
-   *   |        |-----------------------|   |
-   *   v        v                       |   |
-   * ALIVE -> STOPPING ---> STOPPED     |   |
-   *   |                                |   |
-   *   |----> SUSPENDING -> SUSPENDED --|   |
-   *                            |           |
-   *                            |------> RESUMING
-   *
-   * </pre>
-   * <p>
-   *   Any error during state transitions would end up in ERROR state.
-   * </p>
-   * <p>
-   *   Any unrecoverable error in ALIVE state would also end up in ERROR state.
-   * </p>
-   */
-  enum State {
-
-    /**
-     * Program is starting.
-     */
-    STARTING(ProgramRunStatus.RUNNING),
-
-    /**
-     * Program is alive.
-     */
-    ALIVE(ProgramRunStatus.RUNNING),
-
-    /**
-     * Trying to suspend the program.
-     */
-    SUSPENDING(ProgramRunStatus.RUNNING),
-
-    /**
-     * Program is suspended.
-     */
-    SUSPENDED(ProgramRunStatus.RUNNING),
-
-    /**
-     * Trying to resume a suspended program.
-     */
-    RESUMING(ProgramRunStatus.RUNNING),
-
-    /**
-     * Trying to stop a program.
-     */
-    STOPPING(ProgramRunStatus.RUNNING),
-
-    /**
-     * Program stopped. It is a terminal state, no more state transition is allowed.
-     */
-    STOPPED(ProgramRunStatus.COMPLETED),
-
-    /**
-     * Program runs into error. It is a terminal state, no more state transition is allowed.
-     */
-    ERROR(ProgramRunStatus.FAILED);
-
-    private final ProgramRunStatus runStatus;
-
-    private State(ProgramRunStatus runStatus) {
-      this.runStatus = runStatus;
-    }
-
-    public ProgramRunStatus getRunStatus() {
-      return runStatus;
-    }
-  }
 
   RunId getRunId();
 
@@ -120,10 +43,10 @@ public interface ProgramController {
   /**
    * @return The current state of the program at the time when this method is called.
    */
-  State getState();
+  ProgramState getState();
 
   /**
-   * @return The failure cause of the program if the current state is {@link State#ERROR}, otherwise
+   * @return The failure cause of the program if the current state is {@link ProgramState#FAILED}, otherwise
    *         {@code null} will be returned.
    */
   Throwable getFailureCause();
@@ -155,7 +78,7 @@ public interface ProgramController {
      *
      * @param currentState The state of the program by the time when the listener is added.
      */
-    void init(State currentState);
+    void init(ProgramState currentState);
 
     void suspending();
 

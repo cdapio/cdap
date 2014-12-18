@@ -17,20 +17,21 @@
 package co.cask.cdap.proto;
 
 /**
- * Class containing a program status.
+ * Class containing a program state.
  */
-public class ProgramStatus {
+public class ProgramStateMeta {
+
   private String applicationId;
   private String runnableId;
-  private String status;
+  private ProgramState status;
 
-  public ProgramStatus(String applicationId, String runnableId, String status) {
+  public ProgramStateMeta(String applicationId, String runnableId, ProgramState status) {
     this.applicationId = applicationId;
     this.runnableId = runnableId;
     this.status = status;
   }
 
-  public String getStatus() {
+  public ProgramState getState() {
     return this.status;
   }
 }

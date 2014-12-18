@@ -63,7 +63,8 @@ import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.ProgramState;
+import co.cask.cdap.proto.ProgramStateMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
@@ -314,7 +315,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.valueOf(statusMap.getStatusCode()), statusMap.getError());
         return;
       }
-      Map<String, String> status = ImmutableMap.of("status", statusMap.getStatus());
+      Map<String, ProgramState> status = ImmutableMap.of("status", statusMap.getStatus());
       responder.sendJson(HttpResponseStatus.OK, status);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -374,7 +375,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             StatusMap result = new StatusMap();
 
             if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-              result.setStatus("RUNNING");
+              result.setStatus(ProgramState.RUNNING);
               result.setStatusCode(HttpResponseStatus.OK.getCode());
             } else {
               //mapreduce name might follow the same format even when its not part of the workflow.
@@ -405,14 +406,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private StatusMap getProgramStatus(Id.Program id, ProgramType type, StatusMap statusMap) {
-    // getProgramStatus returns program status or http response status NOT_FOUND
-    String progStatus = getProgramStatus(id, type).getStatus();
-    if (progStatus.equals(HttpResponseStatus.NOT_FOUND.toString())) {
-      statusMap.setStatusCode(HttpResponseStatus.NOT_FOUND.getCode());
-      statusMap.setError("Program not found");
-    } else {
+    try {
+      ProgramState progStatus = getProgramStatus(id, type).getState();
       statusMap.setStatus(progStatus);
       statusMap.setStatusCode(HttpResponseStatus.OK.getCode());
+    } catch (ProgramNotFoundException e) {
+      statusMap.setStatusCode(HttpResponseStatus.NOT_FOUND.getCode());
+      statusMap.setError("Program not found");
     }
     return statusMap;
   }
@@ -477,12 +477,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void runnableStatus(HttpResponder responder, Id.Program id, ProgramType type) {
     try {
-      ProgramStatus status = getProgramStatus(id, type);
-      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
+      ProgramStateMeta status = getProgramStatus(id, type);
+      if (status.getState().equals(HttpResponseStatus.NOT_FOUND.toString())) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         JsonObject reply = new JsonObject();
-        reply.addProperty("status", status.getStatus());
+        reply.addProperty("status", status.getState().toString());
         responder.sendJson(HttpResponseStatus.OK, reply);
       }
     } catch (SecurityException e) {
@@ -692,8 +692,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
 
   private boolean isRunning(Id.Program id, ProgramType type) {
-    String programStatus = getStatus(id, type).getStatus();
-    return programStatus != null && !"STOPPED".equals(programStatus);
+    ProgramState programStatus = getStatus(id, type).getStatus();
+    return programStatus != null && programStatus != ProgramState.STOPPED;
   }
 
   /**
@@ -729,12 +729,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       controller.addListener(new AbstractListener() {
 
         @Override
-        public void init(ProgramController.State state) {
+        public void init(ProgramState state) {
           store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-          if (state == ProgramController.State.STOPPED) {
+          if (state == ProgramState.STOPPED) {
             stopped();
           }
-          if (state == ProgramController.State.ERROR) {
+          if (state == ProgramState.FAILED) {
             error(controller.getFailureCause());
           }
         }
@@ -742,7 +742,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         public void stopped() {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.STOPPED);
+                        ProgramState.STOPPED);
         }
 
         @Override
@@ -750,7 +750,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.info("Program stopped with error {}, {}", id, runId, cause);
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR);
+                        ProgramState.FAILED);
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
@@ -773,10 +773,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, type);
     if (runtimeInfo == null) {
       try {
-        ProgramStatus status = getProgramStatus(identifier, type);
-        if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
+        ProgramStateMeta status = getProgramStatus(identifier, type);
+        if (status.getState().equals(HttpResponseStatus.NOT_FOUND.toString())) {
           return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-        } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
+        } else if (ProgramState.STOPPED.toString().equals(status.getState())) {
           return AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
         } else {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
@@ -1299,7 +1299,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private ProgramStatus getProgramStatus(Id.Program id, ProgramType type) {
+  private ProgramStateMeta getProgramStatus(Id.Program id, ProgramType type) throws ProgramNotFoundException {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, type);
 
@@ -1309,10 +1309,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           String spec = getProgramSpecification(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
+            throw new ProgramNotFoundException();
           } else {
             // program exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
+            return new ProgramStateMeta(id.getApplicationId(), id.getId(), ProgramState.STOPPED);
           }
         } else {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
@@ -1325,16 +1325,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
           if (webappLoc != null && webappLoc.exists()) {
             // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
+            return new ProgramStateMeta(id.getApplicationId(), id.getId(), ProgramState.STOPPED);
           } else {
             // webapp doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
+            throw new ProgramNotFoundException();
           }
         }
       }
 
-      String status = controllerStateToString(runtimeInfo.getController().getState());
-      return new ProgramStatus(id.getApplicationId(), id.getId(), status);
+      return new ProgramStateMeta(id.getApplicationId(), id.getId(),
+                                  runtimeInfo.getController().getState());
+    } catch (ProgramNotFoundException e) {
+      throw e;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw Throwables.propagate(throwable);
@@ -1648,10 +1650,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program programId = Id.Program.from(accountId, appId, flowId);
     try {
-      ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
-      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else if (status.getStatus().equals("RUNNING")) {
+      ProgramStateMeta status = getProgramStatus(programId, ProgramType.FLOW);
+      if (status.getState() == ProgramState.RUNNING) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(appId, flowId);
@@ -1659,6 +1659,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         deleteProcessMetricsForFlow(appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
+    } catch (ProgramNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1740,20 +1742,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } finally {
       client.close();
     }
-  }
-
-  /** NOTE: This was a temporary hack done to map the status to something that is
-   * UI friendly. Internal states of program controller are reasonable and hence
-   * no point in changing them.
-   */
-  private String controllerStateToString(ProgramController.State state) {
-    if (state == ProgramController.State.ALIVE) {
-      return "RUNNING";
-    }
-    if (state == ProgramController.State.ERROR) {
-      return "FAILED";
-    }
-    return state.toString();
   }
 
   private String getProgramSpecification(Id.Program id, ProgramType type)
@@ -2456,17 +2444,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private class BatchEndpointStatus extends BatchEndpointArgs {
-    private String status = null;
+    private ProgramState status = null;
 
     public BatchEndpointStatus(BatchEndpointArgs arg) {
       super(arg);
     }
 
-    public String getStatus() {
+    public ProgramState getStatus() {
       return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ProgramState status) {
       this.status = status;
     }
   }
@@ -2497,11 +2485,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Convenience class for representing the necessary components for retrieving status
    */
   private class StatusMap {
-    private String status = null;
+    private ProgramState status = null;
     private String error = null;
     private Integer statusCode = null;
 
-    private StatusMap(String status, String error, int statusCode) {
+    private StatusMap(ProgramState status, String error, int statusCode) {
       this.status = status;
       this.error = error;
       this.statusCode = statusCode;
@@ -2517,7 +2505,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       return error;
     }
 
-    public String getStatus() {
+    public ProgramState getStatus() {
       return status;
     }
 
@@ -2529,7 +2517,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       this.error = error;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ProgramState status) {
       this.status = status;
     }
   }

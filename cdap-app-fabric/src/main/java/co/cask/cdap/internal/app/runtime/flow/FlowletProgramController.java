@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.proto.ProgramState;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
@@ -90,7 +91,7 @@ final class FlowletProgramController extends AbstractProgramController {
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    Preconditions.checkState(getState() == State.SUSPENDED,
+    Preconditions.checkState(getState() == ProgramState.SUSPENDED,
                              "Cannot change instance count when flowlet is running.");
     if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
       return;
@@ -102,7 +103,7 @@ final class FlowletProgramController extends AbstractProgramController {
   }
 
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {
-    Preconditions.checkState(getState() == State.SUSPENDED,
+    Preconditions.checkState(getState() == ProgramState.SUSPENDED,
                              "Cannot change instance count of a flowlet without suspension.");
     flowletContext.setInstanceCount(instanceCount);
   }
@@ -122,7 +123,7 @@ final class FlowletProgramController extends AbstractProgramController {
 
       @Override
       public void terminated(Service.State from) {
-        if (getState() != State.STOPPING) {
+        if (getState() != ProgramState.STOPPING) {
           LOG.warn("Flowlet terminated by itself");
           // Close all consumers
           for (ConsumerSupplier consumerSupplier : consumerSuppliers) {

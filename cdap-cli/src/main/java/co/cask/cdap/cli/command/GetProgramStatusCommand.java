@@ -19,6 +19,7 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 
@@ -47,7 +48,7 @@ public class GetProgramStatusCommand implements Command {
     String appId = programIdParts[0];
     String programId = programIdParts[1];
 
-    String status = programClient.getStatus(appId, elementType.getProgramType(), programId);
+    ProgramState status = programClient.getStatus(appId, elementType.getProgramType(), programId);
     output.println(status);
   }
 
