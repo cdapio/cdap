@@ -22,6 +22,5 @@ describe 'cdap::config' do
     it 'runs execute[update cdap-conf alternatives]' do
       expect(chef_run).to run_execute('update cdap-conf alternatives')
     end
-
   end
 end
