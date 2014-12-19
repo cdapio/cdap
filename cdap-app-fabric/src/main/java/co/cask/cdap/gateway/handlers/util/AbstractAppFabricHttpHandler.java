@@ -284,16 +284,12 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return null;
   }
 
-  protected void getLiveInfo(HttpRequest request, HttpResponder responder,
+  protected void getLiveInfo(HttpRequest request, HttpResponder responder, String namespaceId,
                              final String appId, final String programId, ProgramType type,
                              ProgramRuntimeService runtimeService) {
     try {
-      String accountId = getAuthenticatedAccountId(request);
       responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(accountId,
-                                                                    appId,
-                                                                    programId),
-                                                    type));
+                         runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, programId), type));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

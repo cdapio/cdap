@@ -201,7 +201,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") String appId,
                               @PathParam("service-id") String serviceId) {
-    getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
+    programLifecycleHttpHandler.liveInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                         ProgramType.SERVICE.getCategoryName(), serviceId);
   }
 
   @Nullable
