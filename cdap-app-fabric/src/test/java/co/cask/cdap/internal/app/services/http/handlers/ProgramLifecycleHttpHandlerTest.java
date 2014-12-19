@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
@@ -69,6 +70,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
+  private static final String WORDCOUNT_MAPREDUCE_NAME = "VoidMapReduceJob";
   private static final String WORDCOUNT_FLOWLET_NAME = "StreamSource";
   private static final String DUMMY_APP_ID = "dummy";
   private static final String DUMMY_RUNNABLE_ID = "dummy-batch";
@@ -76,6 +78,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String SLEEP_WORKFLOW_RUNNABLE_ID = "SleepWorkflow";
   private static final String APP_WITH_SERVICES_APP_ID = "AppWithServices";
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
+  private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
+  private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
 
@@ -509,6 +513,46 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(405, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
   }
 
+  /**
+   * Program specification tests through appfabric apis.
+   */
+  @Test
+  public void testProgramSpecification() throws Exception {
+    // deploy WordCountApp in namespace1 and verify
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // deploy AppWithServices in namespace2 and verify
+    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // deploy AppWithWorkflow in namespace2 and verify
+    response = deploy(AppWithWorkflow.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // verify program specification
+    verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                               WORDCOUNT_FLOW_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE.getCategoryName(),
+                               WORDCOUNT_MAPREDUCE_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
+                               APP_WITH_SERVICES_SERVICE_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE2, APP_WITH_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
+                               APP_WITH_WORKFLOW_WORKFLOW_NAME);
+
+    // verify invalid namespace
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
+                                                                 ProgramType.SERVICE.getCategoryName(),
+                                                                 APP_WITH_SERVICES_SERVICE_NAME));
+    // verify invalid app
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                                 ProgramType.WORKFLOW.getCategoryName(),
+                                                                 APP_WITH_WORKFLOW_WORKFLOW_NAME));
+    // verify invalid runnable type
+    Assert.assertEquals(405, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                                 "random", APP_WITH_WORKFLOW_WORKFLOW_NAME));
+  }
+
   @After
   public void cleanup() throws Exception {
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -522,6 +566,35 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private void verifyProgramSpecification(String namespace, String appId, String programType, String programId)
+    throws Exception {
+    JsonObject programSpec = getProgramSpecification(namespace, appId, programType, programId);
+    Assert.assertTrue(programSpec.has("className") && programSpec.has("name") && programSpec.has("description"));
+    Assert.assertEquals(programId, programSpec.get("name").getAsString());
+  }
+
+  private JsonObject getProgramSpecification(String namespace, String appId, String programType,
+                                             String programId) throws Exception {
+    HttpResponse response = requestProgramSpecification(namespace, appId, programType, programId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    Assert.assertNotNull(result);
+    return GSON.fromJson(result, JsonObject.class);
+  }
+
+  private int getProgramSpecificationResponseCode(String namespace, String appId, String programType, String programId)
+    throws Exception {
+    HttpResponse response = requestProgramSpecification(namespace, appId, programType, programId);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private HttpResponse requestProgramSpecification(String namespace, String appId, String programType,
+                                                   String programId) throws Exception {
+    String uri = getVersionedAPIPath(String.format("apps/%s/%s/%s", appId, programType, programId),
+                                    Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(uri);
   }
 
   private void testListInitialState(String namespace, ProgramType programType) throws Exception {
