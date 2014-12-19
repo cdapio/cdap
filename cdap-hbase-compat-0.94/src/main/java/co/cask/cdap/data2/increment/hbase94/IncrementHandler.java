@@ -155,11 +155,12 @@ public class IncrementHandler extends BaseRegionObserver {
                                   InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
+        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
         snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
   public static boolean isIncrement(KeyValue kv) {
-    return kv.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
+    return !KeyValue.isDelete(kv.getType()) && kv.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
       Bytes.equals(kv.getBuffer(), kv.getValueOffset(), IncrementHandler.DELTA_MAGIC_PREFIX.length,
                    IncrementHandler.DELTA_MAGIC_PREFIX, 0, IncrementHandler.DELTA_MAGIC_PREFIX.length);
   }
@@ -169,6 +170,7 @@ public class IncrementHandler extends BaseRegionObserver {
                                     InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
+        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
         snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
@@ -179,6 +181,7 @@ public class IncrementHandler extends BaseRegionObserver {
     TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
         request.isMajor() ? ScanType.MAJOR_COMPACT : ScanType.MINOR_COMPACT,
+        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
         snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 

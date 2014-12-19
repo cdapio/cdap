@@ -135,6 +135,8 @@ class IncrementSummingScanner implements RegionScanner {
     baseScanner.startNext();
     KeyValue cell = null;
     while ((cell = baseScanner.peekNextCell(limit)) != null && (limit <= 0 || addedCnt < limit)) {
+      // we use the "peek" semantics so that only once cell is ever emitted per iteration
+      // this makes is clearer and easier to enforce that the returned results are <= limit
       if (LOG.isTraceEnabled()) {
         LOG.trace("Checking cell " + cell);
       }
@@ -177,15 +179,18 @@ class IncrementSummingScanner implements RegionScanner {
       } else {
         // otherwise (not an increment)
         if (previousIncrement != null) {
-          if (sameCell(previousIncrement, cell)) {
+          if (sameCell(previousIncrement, cell) && !KeyValue.isDelete(cell.getType())) {
             // if qualifier matches previous and this is a long, add to running sum, emit
             runningSum += Bytes.toLong(cell.getBuffer(), cell.getValueOffset());
-            // this cell already processed as part of the previous increment
+            // this cell already processed as part of the previous increment's sum, so consume it
             baseScanner.nextCell(limit);
           }
           if (LOG.isTraceEnabled()) {
             LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
           }
+          // if this put is a different cell from the previous increment, then
+          // we only emit the previous increment, reset it, and continue.
+          // the current cell will be consumed on the next iteration, if we have not yet reached the limit
           cells.add(newCell(previousIncrement, runningSum));
           addedCnt++;
           previousIncrement = null;

@@ -159,11 +159,12 @@ public class IncrementHandler extends BaseRegionObserver {
                                   InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.COMPACT_RETAIN_DELETES,
+        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
         snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
   public static boolean isIncrement(Cell cell) {
-    return cell.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
+    return !CellUtil.isDelete(cell) && cell.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
       Bytes.equals(cell.getValueArray(), cell.getValueOffset(), IncrementHandler.DELTA_MAGIC_PREFIX.length,
                    IncrementHandler.DELTA_MAGIC_PREFIX, 0, IncrementHandler.DELTA_MAGIC_PREFIX.length);
   }
@@ -173,6 +174,7 @@ public class IncrementHandler extends BaseRegionObserver {
                                     InternalScanner scanner, ScanType scanType) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, scanType,
+        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
         snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
@@ -182,6 +184,7 @@ public class IncrementHandler extends BaseRegionObserver {
     throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, scanType,
+        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
         snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
