@@ -191,7 +191,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/status", appId, wflowId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
+    httpHandler.getScheduleState(request, responder, appId, wflowId, schedId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get workflow schedules status failed");
     Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");

@@ -35,6 +35,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
@@ -54,6 +55,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayInputStream;
@@ -64,6 +66,8 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -80,6 +84,9 @@ public abstract class AppFabricTestBase {
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
   private static final String CLUSTER = "SampleTestClusterName";
+
+  protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   private static final String hostname = "127.0.0.1";
 
@@ -348,5 +355,46 @@ public abstract class AppFabricTestBase {
     }
     versionedApiBuilder.append(nonVersionedApiPath);
     return versionedApiBuilder.toString();
+  }
+
+  protected void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+    int trial = 0;
+    int workflowRuns = 0;
+    List<Map<String, String>> history;
+    String json;
+    HttpResponse response;
+    while (trial++ < retries) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      workflowRuns = history.size();
+      if (workflowRuns > expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(workflowRuns > expected);
+  }
+
+  protected void scheduleStatusCheck(int retires, String url,
+                                   String expected) throws Exception {
+    int trial = 0;
+    String status = null;
+    String json = null;
+    Map<String, String> output;
+    HttpResponse response;
+    while (trial++ < retires) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+      status = output.get("status");
+      if (status.equals(expected)) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expected, status);
   }
 }
