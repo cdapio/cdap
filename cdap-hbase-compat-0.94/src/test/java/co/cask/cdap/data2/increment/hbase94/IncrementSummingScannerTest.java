@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
@@ -174,6 +175,31 @@ public class IncrementSummingScannerTest {
       cell = results.get(1);
       assertNotNull(cell);
       assertEquals("value", Bytes.toString(cell.getValue()));
+
+      // test handling of an increment column followed by a delete
+      now = System.currentTimeMillis();
+      Delete d = new Delete(Bytes.toBytes("r5"));
+      d.deleteColumn(familyBytes, columnBytes, now - 3);
+      region.delete(d, true);
+
+      p = new Put(Bytes.toBytes("r5"));
+      for (int i = 2; i >= 0; i--) {
+        p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
+      }
+      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+      doPut(region, p);
+
+      scan = new Scan(Bytes.toBytes("r5"));
+      scan.setMaxVersions();
+      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan), ScanType.USER_SCAN);
+      results = Lists.newArrayList();
+      scanner.next(results);
+
+      // delete marker will not be returned for user scan
+      assertEquals(1, results.size());
+      cell = results.get(0);
+      assertNotNull(cell);
+      assertEquals(3L, Bytes.toLong(cell.getValue()));
     } finally {
       region.close();
     }
