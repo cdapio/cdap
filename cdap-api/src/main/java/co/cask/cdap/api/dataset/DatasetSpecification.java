@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.dataset;
 
 import com.google.common.base.Joiner;
@@ -297,7 +296,7 @@ public final class DatasetSpecification {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }
 
-      return new DatasetSpecification(name, type, spec.properties, specifications);
+      return new DatasetSpecification(name, spec.type, spec.properties, specifications);
     }
   }
 }

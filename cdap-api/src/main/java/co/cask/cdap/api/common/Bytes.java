@@ -78,6 +78,8 @@ public class Bytes {
    */
   public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
 
+  private static final char[] hexDigits = "0123456789abcdef".toCharArray();
+
   /**
    * Byte array comparator class.
    */
@@ -223,6 +225,18 @@ public class Bytes {
       return "null";
     }
     return toStringBinary(b, 0, b.length);
+  }
+
+  /**
+   * Returns a string containing each byte, in order, as a two-digit unsigned
+   * hexadecimal number in lower case.
+   */
+  public static String toHexString(byte [] bytes) {
+    StringBuilder sb = new StringBuilder(2 * bytes.length);
+    for (byte b : bytes) {
+      sb.append(hexDigits[(b >> 4) & 0xf]).append(hexDigits[b & 0xf]);
+    }
+    return sb.toString();
   }
 
   /**

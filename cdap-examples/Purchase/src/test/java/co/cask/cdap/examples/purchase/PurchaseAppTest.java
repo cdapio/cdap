@@ -71,7 +71,7 @@ public class PurchaseAppTest extends TestBase {
     ServiceManager userProfileServiceManager = getServiceManager(appManager);
 
     // Add customer's profile information
-    URL userProfileUrl = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
+    URL userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
                                     UserProfileServiceHandler.USER_ENDPOINT);
     HttpURLConnection userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
     String userProfileJson = "{'id' : 'joe', 'firstName': 'joe', 'lastName':'bernard', 'categories': ['fruits']}";
@@ -86,7 +86,7 @@ public class PurchaseAppTest extends TestBase {
     }
 
     // Test service to retrieve customer's profile information
-    userProfileUrl = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
+    userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
                                     UserProfileServiceHandler.USER_ENDPOINT + "/joe");
     userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, userProfileConnection.getResponseCode());
@@ -113,7 +113,7 @@ public class PurchaseAppTest extends TestBase {
     serviceStatusCheck(purchaseHistoryServiceManager, true);
 
     // Test service to retrieve a customer's purchase history
-    URL url = new URL(purchaseHistoryServiceManager.getServiceURL(5, TimeUnit.SECONDS), "history/joe");
+    URL url = new URL(purchaseHistoryServiceManager.getServiceURL(15, TimeUnit.SECONDS), "history/joe");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
     String historyJson;
