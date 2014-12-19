@@ -17,23 +17,25 @@
 package co.cask.cdap.notifications.kafka;
 
 import co.cask.cdap.notifications.NotificationFeed;
+import org.apache.twill.kafka.client.TopicPartition;
 
 /**
  *
  */
 public class KafkaNotificationUtils {
+
   /**
-   * Map a {@link NotificationFeed} to a Kafka topic.
+   * Map a {@link NotificationFeed} to a Kafka topic partition.
    *
    * @param feed {@link NotificationFeed} object.
    * @return Kafka topic that should contain the Notifications published on the {@code feed}.
    */
-  public static String getKafkaTopic(NotificationFeed feed) {
+  public static TopicPartition getKafkaTopicPartition(NotificationFeed feed) {
     // For now, we only have a topic per feed Category.
     // Later, we may want to have multiple topics per categories, defined in cdap-site.
     // For example, we may have 10 topics for the category streams, which names would be
     // notifications-streams-1 .. notifications-streams-10.
-    return String.format("notifications-%s", feed.getCategory());
+    return new TopicPartition(String.format("notifications-%s", feed.getCategory()), 0);
   }
 
   public static String buildKafkaMessageKey(NotificationFeed feed) {

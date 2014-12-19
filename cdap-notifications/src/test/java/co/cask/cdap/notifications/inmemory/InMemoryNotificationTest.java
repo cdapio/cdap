@@ -18,7 +18,7 @@ package co.cask.cdap.notifications.inmemory;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.notifications.NotificationTest;
-import co.cask.cdap.notifications.guice.NotificationClientRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -28,24 +28,18 @@ import org.junit.BeforeClass;
  */
 public class InMemoryNotificationTest extends NotificationTest {
 
-  private static InMemoryNotificationService inMemoryNotificationService;
-
   @BeforeClass
   public static void start() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = createInjector(
       cConf,
-      new NotificationClientRuntimeModule().getInMemoryModules()
+      new NotificationServiceRuntimeModule().getInMemoryModules()
     );
     startServices(injector);
-
-    inMemoryNotificationService = injector.getInstance(InMemoryNotificationService.class);
-    inMemoryNotificationService.startAndWait();
   }
 
   @AfterClass
   public static void shutDown() throws Exception {
     stopServices();
-    inMemoryNotificationService.stopAndWait();
   }
 }

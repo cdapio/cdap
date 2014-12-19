@@ -47,7 +47,7 @@ public class KafkaMessageIO {
     try {
       return GSON.fromJson(decoder.readString(), KafkaMessage.class);
     } catch (JsonSyntaxException e) {
-      return null;
+      throw new IOException(e);
     }
   }
 }

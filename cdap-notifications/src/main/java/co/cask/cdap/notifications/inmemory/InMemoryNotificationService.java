@@ -20,10 +20,13 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.notifications.BasicNotificationContext;
 import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.notifications.NotificationHandler;
-import co.cask.cdap.notifications.client.AbstractNotificationSubscriber;
-import co.cask.cdap.notifications.kafka.KafkaNotificationSubscriber;
+import co.cask.cdap.notifications.client.NotificationFeedClient;
+import co.cask.cdap.notifications.client.NotificationService;
+import co.cask.cdap.notifications.service.NotificationException;
+import co.cask.cdap.notifications.service.NotificationFeedException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -31,13 +34,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -45,69 +50,69 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * In memory Notification service that pushes notifications to subscribers.
  */
-public class InMemoryNotificationService extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationSubscriber.class);
+public class InMemoryNotificationService extends AbstractIdleService implements NotificationService {
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
   private static final int EXECUTOR_POOL_SIZE = 10;
 
-  private final SetMultimap<NotificationFeed, AbstractNotificationSubscriber> feedsToSubscribers;
+  private final SetMultimap<NotificationFeed, NotificationHandler> feedsToHandlers;
+  private final Map<NotificationHandler, Executor> handlersToExecutors;
   private final ReadWriteLock lock;
 
   private final DatasetFramework dsFramework;
   private final TransactionSystemClient transactionSystemClient;
+  private final NotificationFeedClient feedClient;
 
-  private ListeningExecutorService executor;
+  private ListeningExecutorService defaultExecutor;
 
   @Inject
-  public InMemoryNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient) {
+  public InMemoryNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient,
+                                     NotificationFeedClient feedClient) {
     this.dsFramework = dsFramework;
     this.transactionSystemClient = transactionSystemClient;
-    this.feedsToSubscribers = HashMultimap.create();
+    this.feedClient = feedClient;
+    this.feedsToHandlers = HashMultimap.create();
+    this.handlersToExecutors = Maps.newHashMap();
     this.lock = new ReentrantReadWriteLock();
   }
 
   @Override
   protected void startUp() throws Exception {
-    executor = MoreExecutors.listeningDecorator(
+    defaultExecutor = MoreExecutors.listeningDecorator(
       Executors.newFixedThreadPool(EXECUTOR_POOL_SIZE, Threads.createDaemonThreadFactory("notification-service-%d")));
   }
 
   @Override
   protected void shutDown() throws Exception {
-    executor.shutdownNow();
+    defaultExecutor.shutdownNow();
   }
 
-  /**
-   * Publish a {@code notification} on a {@code feed}. Internally pushes the notification to all subscribers of the
-   * feed.
-   *
-   * @param feed {@link co.cask.cdap.notifications.NotificationFeed} on which to publish the {@code notification}.
-   * @param notification Notification to publish.
-   * @param <N> Type of the notification to publish.
-   * @return A {@link ListenableFuture} describing the pushing of the notification.
-   */
-  public <N> ListenableFuture<Void> publish(final NotificationFeed feed, final N notification) {
+  @Override
+  public <N> ListenableFuture<N> publish(NotificationFeed feed, N notification)
+    throws NotificationException, NotificationFeedException {
+    return publish(feed, notification, notification.getClass());
+  }
+
+  @Override
+  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, Type notificationType)
+    throws NotificationException, NotificationFeedException {
     lock.readLock().lock();
     try {
-      Set<AbstractNotificationSubscriber> subscribers = feedsToSubscribers.get(feed);
-      if (subscribers == null) {
+      LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
+      Set<NotificationHandler> handlers = feedsToHandlers.get(feed);
+      if (handlers.isEmpty()) {
         return Futures.immediateFuture(null);
       }
 
-      for (final AbstractNotificationSubscriber subscriber : subscribers) {
-        if (!subscriber.isConsuming()) {
-          continue;
-        }
-
-        final NotificationHandler handler = subscriber.getFeedMap().get(feed);
-        executor.submit(new Runnable() {
+      for (final NotificationHandler handler : handlers) {
+        handlersToExecutors.get(handler).execute(new Runnable() {
           @Override
           public void run() {
             try {
               handler.processNotification(notification,
                                           new BasicNotificationContext(dsFramework, transactionSystemClient));
             } catch (Throwable t) {
-              LOG.warn("Notification {} on feed {} could not be processed successfully by subscriber {}",
-                       notification, feed, subscriber, t);
+              LOG.warn("Notification {} on feed {} could not be processed successfully by handler {}",
+                       notification, feed, handler, t);
             }
           }
         });
@@ -118,39 +123,47 @@ public class InMemoryNotificationService extends AbstractIdleService {
     return Futures.immediateFuture(null);
   }
 
-  /**
-   * Make an {@link AbstractNotificationSubscriber} subscribe to the Notifications sent to a {@link NotificationFeed}.
-   *
-   * @param subscriber Notification subscriber
-   * @param feed {@link NotificationFeed} to subscribe to.
-   */
-  public void subscribe(AbstractNotificationSubscriber subscriber, NotificationFeed feed) {
-    lock.writeLock().lock();
-    try {
-      feedsToSubscribers.put(feed, subscriber);
-    } finally {
-      lock.writeLock().unlock();
-    }
+  @Override
+  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler)
+    throws NotificationFeedException {
+    return subscribe(feed, handler, defaultExecutor);
   }
 
   /**
-   * Cancel all subscriptions of one subscriber.
    *
-   * @param subscriber subscriber that wants to cancel its subscriptions.
+   * @param feed
+   * @param handler
+   * @param executor The executor passed as parameter will be used to push the notifications published via the
+   *                 {@link #publish} methods to the {@code handler}.
+   * @param <N>
+   * @return
+   * @throws NotificationFeedException
    */
-  public void cancel(AbstractNotificationSubscriber subscriber) {
+  @Override
+  public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler, Executor executor)
+    throws NotificationFeedException {
+    // This call will make sure that the feed exists
+    feedClient.getFeed(feed);
+
     lock.writeLock().lock();
     try {
-      Iterator<Map.Entry<NotificationFeed, AbstractNotificationSubscriber>> i = feedsToSubscribers.entries().iterator();
-      while (i.hasNext()) {
-        if (i.next().getValue().equals(subscriber)) {
-          // Here the subscriber will be identified by its reference, since equals() is not overridden.
-          // Which is good, this is the behavior we expect.
-          i.remove();
-        }
-      }
+      feedsToHandlers.put(feed, handler);
+      handlersToExecutors.put(handler, executor);
     } finally {
       lock.writeLock().unlock();
     }
+
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        lock.writeLock().lock();
+        try {
+          feedsToHandlers.remove(feed, handler);
+          handlersToExecutors.remove(handler);
+        } finally {
+          lock.writeLock().unlock();
+        }
+      }
+    };
   }
 }

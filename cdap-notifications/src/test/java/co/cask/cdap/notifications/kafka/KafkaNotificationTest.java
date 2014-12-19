@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.notifications.NotificationTest;
-import co.cask.cdap.notifications.guice.NotificationClientRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.TempFolder;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
@@ -61,7 +61,7 @@ public class KafkaNotificationTest extends NotificationTest {
     Injector injector = createInjector(
       cConf,
       new KafkaClientModule(),
-      new NotificationClientRuntimeModule().getDistributedModules(),
+      new NotificationServiceRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -98,8 +98,8 @@ public class KafkaNotificationTest extends NotificationTest {
     // TODO remove once Twill addLatest bug is fixed
     feedClient.createFeed(FEED1);
     feedClient.createFeed(FEED2);
-    getNotificationClient().createPublisher(FEED1).publish("test").get();
-    getNotificationClient().createPublisher(FEED2).publish("test").get();
+    getNotificationService().publish(FEED1, "test").get();
+    getNotificationService().publish(FEED2, "test").get();
     feedClient.deleteFeed(FEED1);
     feedClient.deleteFeed(FEED2);
   }

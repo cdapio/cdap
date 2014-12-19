@@ -19,10 +19,9 @@ package co.cask.cdap.notifications.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.notifications.client.NotificationClient;
-import co.cask.cdap.notifications.inmemory.InMemoryNotificationClient;
+import co.cask.cdap.notifications.client.NotificationService;
 import co.cask.cdap.notifications.inmemory.InMemoryNotificationService;
-import co.cask.cdap.notifications.kafka.KafkaNotificationClient;
+import co.cask.cdap.notifications.kafka.KafkaNotificationService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -32,16 +31,16 @@ import com.google.inject.Scopes;
 /**
  *
  */
-public class NotificationClientRuntimeModule extends RuntimeModule {
+public class NotificationServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return new InMemoryNotificationClientModule();
+    return new InMemoryNotificationServiceModule();
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new InMemoryNotificationClientModule();
+    return new InMemoryNotificationServiceModule();
   }
 
   @Override
@@ -49,24 +48,25 @@ public class NotificationClientRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(KafkaNotificationClient.class).in(Scopes.SINGLETON);
+//        bind(KafkaNotificationClient.class).in(Scopes.SINGLETON);
+        bind(KafkaNotificationService.class).in(Scopes.SINGLETON);
       }
 
       @Provides
       @SuppressWarnings("unused")
-      private NotificationClient notificationPublisher(CConfiguration cConf, Injector injector) {
+      private NotificationService notificationPublisher(CConfiguration cConf, Injector injector) {
         // TODO use that constant once we have more core systems
         String coreSystem = cConf.get(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
-        return injector.getInstance(KafkaNotificationClient.class);
+//        return injector.getInstance(KafkaNotificationClient.class);
+        return injector.getInstance(KafkaNotificationService.class);
       }
     };
   }
 
-  private static class InMemoryNotificationClientModule extends AbstractModule {
+  private static class InMemoryNotificationServiceModule extends AbstractModule {
     @Override
     protected void configure() {
-      bind(InMemoryNotificationService.class).in(Scopes.SINGLETON);
-      bind(NotificationClient.class).to(InMemoryNotificationClient.class).in(Scopes.SINGLETON);
+      bind(NotificationService.class).to(InMemoryNotificationService.class).in(Scopes.SINGLETON);
     }
   }
 }
