@@ -60,8 +60,7 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
         Pattern methodPattern = Pattern.compile(METHOD_REGEX);
         Matcher methodMatcher = methodPattern.matcher(buffer.substring(programIdMatcher.group().length()));
         if (methodMatcher.find()) {
-          String method = methodMatcher.group();
-          method = method.substring(0, method.length() - 1);
+          String method = methodMatcher.group().trim();
           completer.setEndpoints(getEndpoints(appAndServiceIds[0], appAndServiceIds[1], method));
         }
       }
