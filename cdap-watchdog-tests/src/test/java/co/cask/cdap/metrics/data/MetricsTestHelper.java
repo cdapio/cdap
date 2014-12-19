@@ -52,6 +52,7 @@ public class MetricsTestHelper {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
+    cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME + ".60", "60");
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf),
                                              new LocationRuntimeModule().getStandaloneModules(),
@@ -80,6 +81,7 @@ public class MetricsTestHelper {
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectStr);
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
+    cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME + ".60", "60");
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
