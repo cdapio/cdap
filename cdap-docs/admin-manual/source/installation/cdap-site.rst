@@ -82,7 +82,7 @@ see the :ref:`configuration-security` section.
      - Transaction command port number
    * - ``data.tx.janitor.enable``
      - ``true``
-     - Whether or not the TransactionDataJanitor coprocessor
+     - Whether or not the TransactionDataJanitor coprocessor is enabled on tables
    * - ``data.tx.server.io.threads``
      - ``2``
      - Number of transaction IO threads
@@ -101,6 +101,10 @@ see the :ref:`configuration-security` section.
    * - ``data.tx.snapshot.retain``
      - ``10``
      - Number of retained transaction snapshot files
+   * - ``data.tx.timeout``
+     - ``30``
+     - Timeout value in seconds for a transaction; if the transaction is not finished
+       in that time, it is marked invalid
    * - ``enable.unrecoverable.reset``
      - ``false``
      - **WARNING: Enabling this option makes it possible to delete all
@@ -354,20 +358,13 @@ see the :ref:`configuration-security` section.
      - ``250``
      - Reserved non-heap memory in MB for Weave container
    * - ``weave.jvm.gc.opts``
-     - ``-verbose:gc``
-
-       ``-Xloggc:<log-dir>/gc.log``
-
-       ``-XX:+PrintGCDetails``
-
-       ``-XX:+PrintGCTimeStamps``
-
-       ``-XX:+UseGCLogFileRotation``
-
-       ``-XX:NumberOfGCLogFiles=10``
-
-       ``-XX:GCLogFileSize=1M``
-
+     - | ``-verbose:gc``
+       | ``-Xloggc:<log-dir>/gc.log``
+       | ``-XX:+PrintGCDetails``
+       | ``-XX:+PrintGCTimeStamps``
+       | ``-XX:+UseGCLogFileRotation``
+       | ``-XX:NumberOfGCLogFiles=10``
+       | ``-XX:GCLogFileSize=1M``
      - Java garbage collection options for all Weave containers; ``<log-dir>`` is the location
        of the log directory on each machine
    * - ``weave.no.container.timeout``
