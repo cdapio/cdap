@@ -55,6 +55,7 @@ file '/etc/profile.d/cdap_home.sh' do
 end
 
 package 'cdap' do
+  version node['cdap']['version']
   action :install
 end
 
