@@ -75,10 +75,6 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
   };
 
 
-  $scope.addWidget = function (w) {
-    myDashboardsModel.current().addWidget(w);
-  };
-
   $scope.removeWidget = function (w) {
     myDashboardsModel.current().removeWidget(w);
   };

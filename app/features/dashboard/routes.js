@@ -19,10 +19,9 @@ angular.module(PKG.name+'.feature.dashboard')
         .state('dashboard.addwdgt', {
           // url: '/widget/add',
           onEnter: function ($state, $modal) {
-            var m = $modal({
+            $modal({
               template: '/assets/features/dashboard/partials/addwdgt.html'
-            });
-            m.$promise.then(function () {
+            }).$promise.then(function () {
               $state.go('^', $state.params);
             });
           }

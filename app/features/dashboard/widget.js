@@ -1,17 +1,21 @@
 /**
- * Widget
+ * Widget model & controller
  */
 
-angular.module(PKG.name+'.feature.dashboard').factory('Widget',
-function ($q) {
+angular.module(PKG.name+'.feature.dashboard')
+  .factory('Widget', function ($q) {
 
-  function Widget (opts) {
-    opts = opts || {};
-    this.title = opts.title || 'Widget';
-    this.partial = '/assets/features/dashboard/partials/wdgt-body.html';
-  }
+    function Widget (opts) {
+      opts = opts || {};
+      this.title = opts.title || 'Widget';
+      this.partial = '/assets/features/dashboard/widgets/welcome.html';
+    }
 
-  return Widget;
+    return Widget;
 
-});
+  })
 
+  .controller('WidgetCtrl', function ($scope) {
+
+
+  });

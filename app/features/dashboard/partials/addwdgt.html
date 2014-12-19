@@ -2,9 +2,9 @@
   <div class="modal-dialog">
     <div class="modal-content" ng-controller="DashboardAddWdgtCtrl">
 
-      <form name="addWdgtForm"
-          ng-submit="validateAndAddToModel(addWdgtForm.name)"
-          ng-class="{'has-error': addWdgtForm.$invalid || modalError}"
+      <form name="addWdgtForm" class="form-horizontal"
+          ng-submit="doAddWidget()"
+          ng-class="{'has-error': addWdgtForm.$invalid}"
           novalidate>
 
         <div class="modal-header">
@@ -14,14 +14,34 @@
 
         <div class="modal-body">
 
-          <pre>{{dashboard | json}}</pre>
+          <div class="form-group">
+            <label for="addWdgtName" class="col-xs-3 control-label">Widget Name</label>
+            <div class="col-xs-9">
+              <input id="addWdgtName" type="text" name="name" class="form-control"
+                placeholder="Name"
+                cask-focus="addWdgtName"
+                ng-model="model.title" required/>
+            </div>
+          </div>
 
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-          tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-          quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-          consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-          cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-          proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <div class="form-group">
+            <label for="addWdgtType" class="col-xs-3 control-label">Type</label>
+            <div class="col-xs-9">
+              <select id="addWdgtType" name="partial" class="form-control"
+                cask-focus="addWdgtType"
+                ng-model="model.partial"
+                ng-options="t.partial as t.name for t in widgetTypes"></select>
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="model.partial !== widgetTypes[0].partial">
+            <label for="addWdgtMetric" class="col-xs-3 control-label">Metric Context</label>
+            <div class="col-xs-9">
+              <input id="addWdgtMetric" type="text" name="metric" class="form-control"
+                placeholder="Context"
+                ng-model="model.metric" required/>
+            </div>
+          </div>
 
         </div>
 
