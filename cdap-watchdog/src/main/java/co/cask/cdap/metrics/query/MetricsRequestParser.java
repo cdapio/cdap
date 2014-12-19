@@ -449,9 +449,9 @@ final class MetricsRequestParser {
   }
 
   private static MetricsRequest.TimeSeriesResolution getResolution(long difference) {
-    if (difference > 3600) {
+    if (difference >= MetricsConstants.METRICS_HOUR_RESOLUTION_CUTOFF) {
       return  MetricsRequest.TimeSeriesResolution.HOUR;
-    } else if (difference > 60) {
+    } else if (difference >= MetricsConstants.METRICS_MINUTE_RESOLUTION_CUTOFF) {
       return MetricsRequest.TimeSeriesResolution.MINUTE;
     } else {
       return MetricsRequest.TimeSeriesResolution.SECOND;
