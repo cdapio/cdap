@@ -35,18 +35,20 @@ import java.util.Map;
  */
 public class StateStoreTableDatasetTest extends AbstractDatasetTest {
   private static final String MODULE_NAME = "stateStoreModule";
+  private static final String INSTANCE_NAME = "myStateTable";
   private static StateStoreTable myStateTable;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     addModule(MODULE_NAME, new StateStoreTableModule());
-    createInstance(StateStoreTable.class.getName(), "myStateTable", DatasetProperties.EMPTY);
-    myStateTable = getInstance("myStateTable");
+    createInstance(StateStoreTable.class.getName(), INSTANCE_NAME, DatasetProperties.EMPTY);
+    myStateTable = getInstance(INSTANCE_NAME);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     myStateTable.close();
+    deleteInstance(INSTANCE_NAME);
     deleteModule(MODULE_NAME);
   }
 
