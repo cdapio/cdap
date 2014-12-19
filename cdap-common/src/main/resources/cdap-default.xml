@@ -951,7 +951,7 @@
     </property>
 
     <property>
-      <name>security.auth.server.address</name>
+      <name>security.auth.server.bind.address</name>
       <value>127.0.0.1</value>
     </property>
 

@@ -16,8 +16,14 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.common.Bytes;
+import com.google.common.io.Closeables;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -26,6 +32,8 @@ import static org.junit.Assert.fail;
  * Testing CConfiguration.
  */
 public class CConfigurationTest {
+
+  private final static String DEPRECATED_PROPERTY_VALUE = "Value of deprecated property";
 
   @Test
   public void testConfiguration() throws Exception {
@@ -146,5 +154,39 @@ public class CConfigurationTest {
     }
   }
 
-  private enum TestEnum { FIRST };
+  @Test
+  public void testDeprecatedConfigProperties() throws Exception {
+    CConfiguration conf = CConfiguration.create();
+    Map<String, String[]> deprecated = conf.getDeprecatedProps();
+
+    if (!deprecated.isEmpty()) {
+      Map.Entry<String, String[]> property = deprecated.entrySet().iterator().next();
+
+      // Test a deprecated property on loading from resources
+      InputStream resource = new ByteArrayInputStream(Bytes.toBytes(
+        String.format("<configuration><property><name>%s</name><value>%s</value></property></configuration>",
+                      property.getKey(), DEPRECATED_PROPERTY_VALUE)));
+      conf.addResource(resource);
+      conf.reloadConfiguration();
+      // Validate new properties, which should be used instead of deprecated
+      for (String newProperty : property.getValue()) {
+        Assert.assertEquals(DEPRECATED_PROPERTY_VALUE, conf.get(newProperty));
+      }
+
+      // Clear the Config before next test
+      conf.clear();
+
+      // Test a deprecated property on set from the code
+      conf.set(property.getKey(), DEPRECATED_PROPERTY_VALUE);
+      // Validate new properties, which should be used instead of deprecated
+      for (String newProperty : property.getValue()) {
+        Assert.assertEquals(DEPRECATED_PROPERTY_VALUE, conf.get(newProperty));
+      }
+
+      // Close the InputStream
+      Closeables.closeQuietly(resource);
+    }
+  }
+
+  private enum TestEnum { FIRST }
 }
