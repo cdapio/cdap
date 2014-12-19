@@ -43,6 +43,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 
@@ -92,10 +93,18 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   }
 
   @Override
-  protected void shutDown() throws Exception {
-    dashboardTable.close();
-    configTable.close();
-    metaDataTable.close();
+  protected void shutDown() {
+    closeDataSet(configTable);
+    closeDataSet(dashboardTable);
+    closeDataSet(metaDataTable);
+  }
+
+  private void closeDataSet(Closeable ds) {
+    try {
+      ds.close();
+    } catch (Throwable t) {
+      LOG.error("Dataset throws exceptions during close:" + ds.toString(), t);
+    }
   }
 
   @Override
