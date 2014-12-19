@@ -21,9 +21,9 @@ function ($q, Widget) {
   /**
    * rename a widget
    */
-  Dashboard.prototype.renameWidget = function (w, newName) {
+  Dashboard.prototype.renameWidget = function (widget, newName) {
     if(newName) {
-      w.title = newName;
+      widget.title = newName;
     }
   };
 
@@ -32,11 +32,11 @@ function ($q, Widget) {
    * remove a widget from the active dashboard tab
    * @param  {object} w the widget object
    */
-  Dashboard.prototype.removeWidget = function (w) {
+  Dashboard.prototype.removeWidget = function (widget) {
     var that = this;
     angular.forEach(that.columns, function (c, i) {
       that.columns[i] = c.filter(function (p) {
-        return w !== p;
+        return widget !== p;
       });
     });
   };
@@ -75,11 +75,10 @@ function ($q, Widget) {
   };
 
 
+/* ------------------------------------------------------------------------- */
 
 
-
-  function DashboardsModel () {
-
+  function Model () {
     this.data = [
       new Dashboard('grid'),
       new Dashboard('full-width', 1)
@@ -90,9 +89,9 @@ function ($q, Widget) {
 
 
   /**
-   * direct access to the current tab's data + widget methods
+   * direct access to the current tab's Dashboard instance
    */
-  DashboardsModel.prototype.current = function () {
+  Model.prototype.current = function () {
     return this.data[this.data.activeIndex || 0];
   };
 
@@ -101,7 +100,7 @@ function ($q, Widget) {
   /**
    * remove a dashboard tab
    */
-  DashboardsModel.prototype.remove = function (index) {
+  Model.prototype.remove = function (index) {
     this.data.splice(index, 1);
   };
 
@@ -109,14 +108,14 @@ function ($q, Widget) {
   /**
    * add a new dashboard tab
    */
-  DashboardsModel.prototype.add = function (title, colCount) {
+  Model.prototype.add = function (title, colCount) {
     var n = this.data.push(new Dashboard(title, colCount));
     this.data.activeIndex = n-1;
   };
 
 
 
-  return new DashboardsModel();
+  return new Model();
 });
 
 
