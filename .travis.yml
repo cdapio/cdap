@@ -4,5 +4,4 @@ rvm:
 cache: bundler
 sudo: false
 bundler_args: --jobs 7 --without docs integration
-install: bundle install
 script: bundle exec rake
