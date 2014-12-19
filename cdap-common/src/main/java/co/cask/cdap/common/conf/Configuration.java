@@ -246,6 +246,17 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   };
 
   /**
+   * checks whether the given <code>key</code> is deprecated.
+   *
+   * @param key the parameter which is to be checked for deprecation
+   * @return <code>true</code> if the key is deprecated and
+   *         <code>false</code> otherwise.
+   */
+  public static boolean isDeprecated(String key) {
+    return deprecatedKeyMap.containsKey(key);
+  }
+
+  /**
    * Method to get deprecated properties.
    *
    * @return {@code Map} of deprecated properties with new properties in array,
