@@ -191,15 +191,19 @@ public class IncrementSummingScannerTest {
 
       scan = new Scan(Bytes.toBytes("r5"));
       scan.setMaxVersions();
-      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan), ScanType.USER_SCAN);
+      scan.setRaw(true);
+      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan), ScanType.MINOR_COMPACT);
       results = Lists.newArrayList();
       scanner.next(results);
 
       // delete marker will not be returned for user scan
-      assertEquals(1, results.size());
+      assertEquals(2, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(3L, Bytes.toLong(cell.getValue()));
+      assertEquals(3L, Bytes.toLong(cell.getValue(), IncrementHandler.DELTA_MAGIC_PREFIX.length, 8));
+      // next cell should be the delete
+      cell = results.get(1);
+      assertTrue(KeyValue.isDelete(cell.getType()));
     } finally {
       region.close();
     }
@@ -416,6 +420,7 @@ public class IncrementSummingScannerTest {
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor cfd = new HColumnDescriptor(family);
     cfd.setMaxVersions(Integer.MAX_VALUE);
+    cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
     Path tablePath = new Path("/tmp/" + tableName);
