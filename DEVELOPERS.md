@@ -31,7 +31,7 @@ Prerequisite: Docker
 git clone git@github.com:caskdata/cdap.git
 ```
 
-* Build the Docker image: (from the cdap/ root directory)
+* Build the Docker image (from the cdap/ root directory):
 ```
 docker build caskdata/cdap-standalone .
 ```
