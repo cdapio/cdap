@@ -55,12 +55,19 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @PUT
-  @Path("/feeds")
-  public void createFeed(HttpRequest request, HttpResponder responder) {
+  @Path("/feeds/{id}")
+  public void createFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
       try {
-        NotificationFeed feed = parseFeed(request);
-        if (feedService.createFeed(feed)) {
+        NotificationFeed feedUrl = NotificationFeed.fromId(id);
+        NotificationFeed feed = parseBody(request, NotificationFeed.class);
+        NotificationFeed combinedFeed = new NotificationFeed.Builder()
+          .setNamespace(feedUrl.getNamespace())
+          .setCategory(feedUrl.getCategory())
+          .setName(feedUrl.getName())
+          .setDescription(feed == null ? null : feed.getDescription())
+          .build();
+        if (feedService.createFeed(combinedFeed)) {
           responder.sendStatus(HttpResponseStatus.OK);
         } else {
           LOG.trace("Notification Feed already exists.");
@@ -139,19 +146,5 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Could not check subscribe permission for Notification Feed. %s",
                                          e.getMessage()));
     }
-  }
-
-  /**
-   * This method will make sure that building a notification feed object will go through the checks that the
-   * constructor has.
-   */
-  private NotificationFeed parseFeed(HttpRequest request) throws IOException {
-    NotificationFeed tmpFeed = parseBody(request, NotificationFeed.class);
-    return new NotificationFeed.Builder()
-      .setNamespace(tmpFeed.getNamespace())
-      .setCategory(tmpFeed.getCategory())
-      .setName(tmpFeed.getName())
-      .setDescription(tmpFeed.getDescription())
-      .build();
   }
 }

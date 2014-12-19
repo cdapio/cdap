@@ -55,16 +55,16 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription("").build();
   private static final String METADATA_INVALID_JSON = "invalid";
 
-  private HttpResponse createFeed(JsonObject jsonObject) throws Exception {
-    return createFeed(GSON.toJson(jsonObject));
+  private HttpResponse createFeed(String id, JsonObject jsonObject) throws Exception {
+    return createFeed(id, GSON.toJson(jsonObject));
   }
 
   private HttpResponse createFeed(NotificationFeed metadata) throws Exception {
-    return createFeed(GSON.toJson(metadata));
+    return createFeed(metadata.getId(), GSON.toJson(metadata));
   }
 
-  private HttpResponse createFeed(String metadata) throws Exception {
-    return doPut(String.format("%s/feeds", Constants.Gateway.API_VERSION_3), metadata);
+  private HttpResponse createFeed(String feedId, String metadata) throws Exception {
+    return doPut(String.format("%s/feeds/%s", Constants.Gateway.API_VERSION_3, feedId), metadata);
   }
 
   private HttpResponse listFeeds() throws Exception {
@@ -157,7 +157,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateInvalidJson() throws Exception {
     // invalid json should return 400
-    HttpResponse response = createFeed(METADATA_INVALID_JSON);
+    HttpResponse response = createFeed("invalid", METADATA_INVALID_JSON);
     assertResponseCode(400, response);
     // verify
     response = getFeed(ID);
@@ -168,19 +168,15 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   public void testCreateMissingEmptyOrInvalidName() throws Exception {
     // name must be non-null, non-empty
     JsonObject object = new JsonObject();
-    object.add(NAMESPACE_FIELD, GSON.toJsonTree(NAMESPACE));
-    object.add(CATEGORY_FIELD, GSON.toJsonTree(CATEGORY));
     object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
 
-    HttpResponse response = createFeed(object);
+    HttpResponse response = createFeed(String.format("%s.%s", NAMESPACE, CATEGORY), object);
     assertResponseCode(400, response);
 
-    object.add(NAME_FIELD, GSON.toJsonTree(""));
-    response = createFeed(object);
+    response = createFeed(String.format("%s.%s.%s", NAMESPACE, CATEGORY, ""), object);
     assertResponseCode(400, response);
 
-    object.add(NAME_FIELD, GSON.toJsonTree("$.a"));
-    response = createFeed(object);
+    response = createFeed(String.format("%s.%s.%s", NAMESPACE, CATEGORY, "$.a"), object);
     assertResponseCode(400, response);
   }
 
@@ -188,19 +184,15 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   public void testCreateMissingEmptyOrInvalidNamespace() throws Exception {
     // namespace must be non-null, non-empty
     JsonObject object = new JsonObject();
-    object.add(NAME_FIELD, GSON.toJsonTree(NAME));
-    object.add(CATEGORY_FIELD, GSON.toJsonTree(CATEGORY));
     object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
 
-    HttpResponse response = createFeed(object);
+    HttpResponse response = createFeed(String.format("%s.%s", CATEGORY, NAME), object);
     assertResponseCode(400, response);
 
-    object.add(NAMESPACE_FIELD, GSON.toJsonTree(""));
-    response = createFeed(object);
+    response = createFeed(String.format("%s.%s.%s", "", CATEGORY, NAME), object);
     assertResponseCode(400, response);
 
-    object.add(NAMESPACE_FIELD, GSON.toJsonTree("$.a"));
-    response = createFeed(object);
+    response = createFeed(String.format("%s.%s.%s", "$.a", CATEGORY, NAME), object);
     assertResponseCode(400, response);
   }
 
@@ -208,19 +200,15 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   public void testCreateMissingEmptyOrInvalidCategory() throws Exception {
     // category must be non-null, non-empty
     JsonObject object = new JsonObject();
-    object.add(NAME_FIELD, GSON.toJsonTree(NAME));
-    object.add(NAMESPACE_FIELD, GSON.toJsonTree(NAMESPACE));
     object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
 
-    HttpResponse response = createFeed(object);
+    HttpResponse response = createFeed(String.format("%s.%s", NAMESPACE, NAME), object);
     assertResponseCode(400, response);
 
-    object.add(CATEGORY_FIELD, GSON.toJsonTree(""));
-    response = createFeed(object);
+    response = createFeed(String.format("%s.%s.%s", NAMESPACE, "", NAME), object);
     assertResponseCode(400, response);
 
-    object.add(CATEGORY_FIELD, GSON.toJsonTree("$.a"));
-    response = createFeed(object);
+    response = createFeed(String.format("%s.%s.%s", NAMESPACE, "$.a", NAME), object);
     assertResponseCode(400, response);
   }
 
@@ -258,6 +246,9 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       response = deleteFeed(ID);
       assertResponseCode(200, response);
     }
+
+    response = createFeed(String.format("%s.%s.%s", NAMESPACE, CATEGORY, NAME), "");
+    assertResponseCode(200, response);
   }
 
   @Test

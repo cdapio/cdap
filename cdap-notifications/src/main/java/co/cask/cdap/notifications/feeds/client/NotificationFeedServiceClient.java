@@ -78,7 +78,8 @@ public class NotificationFeedServiceClient implements NotificationFeedManager {
   @Override
   public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
 
-    HttpRequest request = HttpRequest.put(resolve("feeds")).withBody(GSON.toJson(feed)).build();
+    HttpRequest request = HttpRequest.put(resolve(String.format("feeds/%s", feed.getId())))
+      .withBody(GSON.toJson(feed)).build();
     HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return true;
