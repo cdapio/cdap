@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -50,11 +51,16 @@ public class StateStoreTableDataset extends AbstractDataset implements StateStor
   @Override
   public Map<String, String> getState(ProgramRecord program) {
     try {
-      return GSON.fromJson(Bytes.toString(table.read(generateStateStoreRowKey(program))), STRING_MAP_TYPE);
+      byte[] state = table.read(generateStateStoreRowKey(program));
+      if (state == null) {
+        return Maps.newHashMap();
+      } else {
+        return GSON.fromJson(Bytes.toString(table.read(generateStateStoreRowKey(program))), STRING_MAP_TYPE);
+      }
     } catch (Exception e) {
       LOG.debug("Get State failed for {}", program);
     }
-    return null;
+    return Maps.newHashMap();
   }
 
   @Override

@@ -73,9 +73,6 @@ public class AppUsingStore extends AbstractApplication {
     @Tick(delay =  1L, unit = TimeUnit.SECONDS)
     void process() {
       Map<String, String> state = getContext().getState();
-      if (state == null) {
-        state = Maps.newHashMap();
-      }
       state.put("key" + i, "value" + i);
       getContext().saveState(state);
       emitter.emit("key" + i);
@@ -99,7 +96,7 @@ public class AppUsingStore extends AbstractApplication {
     @POST
     public void incrCount(HttpServiceRequest request, HttpServiceResponder responder) {
       Map<String, String> state = getContext().getState();
-      if (getContext().getState() == null) {
+      if (!getContext().getState().containsKey("call")) {
         state = Maps.newHashMap();
         state.put("call", Integer.toString(1));
         getContext().saveState(state);
