@@ -30,8 +30,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -58,9 +56,7 @@ import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -70,9 +66,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -84,9 +77,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -137,8 +128,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final WorkflowClient workflowClient;
 
-  private final DiscoveryServiceClient discoveryServiceClient;
-
   private final QueueAdmin queueAdmin;
 
   private final StreamAdmin streamAdmin;
@@ -160,8 +149,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DatasetFramework dsFramework, AppLifecycleHttpHandler appLifecycleHttpHandler,
+                              TransactionSystemClient txClient, DatasetFramework dsFramework,
+                              AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
 
     super(authenticator);
@@ -171,7 +160,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
     this.scheduler = service;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
     this.dsFramework =
@@ -513,21 +501,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
   public void getFlowletInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
-                                  @PathParam("flowlet-id") final String flowletId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      int count = store.getFlowletInstances(Id.Program.from(accountId, appId, flowId), flowletId);
-      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      if (respondIfElementNotFound(e, responder)) {
-        return;
-      }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                  @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
+                                  @PathParam("flowlet-id") String flowletId) {
+    programLifecycleHttpHandler.getFlowletInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                    appId, flowId, flowletId);
   }
 
   /**
@@ -605,45 +582,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
-                                  @PathParam("flowlet-id") final String flowletId) {
-    int instances = 0;
-    try {
-      instances = getInstances(request);
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-    } catch (Throwable th) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programID = Id.Program.from(accountId, appId, flowId);
-      int oldInstances = store.getFlowletInstances(programID, flowletId);
-      if (oldInstances != instances) {
-        store.setFlowletInstances(programID, flowletId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW,
-                                                                        runtimeService);
-        if (runtimeInfo != null) {
-          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of("flowlet", flowletId,
-                                                              "newInstances", String.valueOf(instances),
-                                                              "oldInstances", String.valueOf(oldInstances))).get();
-        }
-      }
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      if (respondIfElementNotFound(e, responder)) {
-        return;
-      }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                  @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
+                                  @PathParam("flowlet-id") String flowletId) {
+    programLifecycleHttpHandler.setFlowletInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                    appId, flowId, flowletId);
   }
 
   /**
@@ -652,38 +594,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
   public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
-                                            @PathParam("app-id") final String appId,
-                                            @PathParam("flow-id") final String flowId,
-                                            @PathParam("flowlet-id") final String flowletId,
-                                            @PathParam("stream-id") final String streamId) throws IOException {
-
-    try {
-      Map<String, String> arguments = decodeArguments(request);
-      String oldStreamId = arguments.get("oldStreamId");
-      if (oldStreamId == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
-        return;
-      }
-
-      String accountId = getAuthenticatedAccountId(request);
-      StreamSpecification stream = store.getStream(Id.Account.from(accountId), streamId);
-      if (stream == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
-        return;
-      }
-
-      Id.Program programID = Id.Program.from(accountId, appId, flowId);
-      store.changeFlowletSteamConnection(programID, flowletId, oldStreamId, streamId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      if (respondIfElementNotFound(e, responder)) {
-        return;
-      }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                            @PathParam("app-id") String appId,
+                                            @PathParam("flow-id") String flowId,
+                                            @PathParam("flowlet-id") String flowletId,
+                                            @PathParam("stream-id") String streamId) throws IOException {
+    programLifecycleHttpHandler.changeFlowletStreamConnection(rewriteRequest(request), responder,
+                                                              Constants.DEFAULT_NAMESPACE, appId, flowId, flowletId,
+                                                              streamId);
   }
 
   /**
@@ -859,22 +776,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Procedures directly execute v2 calls, they do not delegate to v3 handlers since they are deprecated
+   */
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
   @SuppressWarnings("unused")
   public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("procedure-id") final String procedureId) {
-    getLiveInfo(request, responder, appId, procedureId, ProgramType.PROCEDURE, runtimeService);
+                                @PathParam("app-id") String appId,
+                                @PathParam("procedure-id") String procedureId) {
+    getLiveInfo(request, responder, Constants.DEFAULT_NAMESPACE, appId, procedureId, ProgramType.PROCEDURE,
+                runtimeService);
   }
 
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}/live-info")
   @SuppressWarnings("unused")
   public void flowLiveInfo(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") final String appId,
-                           @PathParam("flow-id") final String flowId) {
-    getLiveInfo(request, responder, appId, flowId, ProgramType.FLOW, runtimeService);
+                           @PathParam("app-id") String appId,
+                           @PathParam("flow-id") String flowId) {
+    programLifecycleHttpHandler.liveInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                         ProgramType.FLOW.getCategoryName(), flowId);
   }
 
   /**
@@ -971,30 +893,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps/{app-id}/flows/{flow-id}/queues")
   public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
-                               @PathParam("app-id") final String appId,
-                               @PathParam("flow-id") final String flowId) {
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
-    try {
-      //TODO: This method should eventually delegate to its corresponding v3 handler method once that is implemented
-      //getProgramStatus should become private in ProgramLifecycleHttpHandler.
-      ProgramStatus status = programLifecycleHttpHandler.getProgramStatus(programId, ProgramType.FLOW);
-      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else if (status.getStatus().equals("RUNNING")) {
-        responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
-      } else {
-        queueAdmin.dropAllForFlow(appId, flowId);
-        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-        deleteProcessMetricsForFlow(appId, flowId);
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                               @PathParam("app-id") String appId,
+                               @PathParam("flow-id") String flowId) {
+    programLifecycleHttpHandler.deleteFlowQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                 appId, flowId);
   }
 
   @DELETE
@@ -1034,41 +936,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  // deletes the process metrics for a flow
-  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              3L, TimeUnit.SECONDS).pick();
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
-    }
-
-    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.API_VERSION_2,
-                               application, flow);
-
-    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) timeout)
-      .build();
-
-    try {
-      client.delete().get(timeout, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("exception making metrics delete call", e);
-      Throwables.propagate(e);
-    } finally {
-      client.close();
     }
   }
 
