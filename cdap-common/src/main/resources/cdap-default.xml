@@ -662,25 +662,25 @@
     <property>
         <name>metrics.data.table.retention.resolution.60.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution 1 minute table (in seconds)</description>
+        <description>Retention resolution for 1 minute table (in seconds). Default retention period is 30 days</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.3600.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution 1 hour table (in seconds)</description>
+        <description>Retention resolution 1 hour table (in seconds). Default retention period is 30 days</description>
     </property>
 
     <property>
         <name>metrics.data.table.ts.rollTime.60</name>
         <value>60</value>
-        <description>Roll time for a new row in 1 minute MetricsTable</description>
+        <description>Number of columns in a 1 minute time series table</description>
     </property>
 
     <property>
         <name>metrics.data.table.ts.rollTime.3600</name>
         <value>24</value>
-        <description>Roll time for a new row in 1hour MetricsTable</description>
+        <description>Number of columns in 1 hour time series table</description>
     </property>
 
     <property>

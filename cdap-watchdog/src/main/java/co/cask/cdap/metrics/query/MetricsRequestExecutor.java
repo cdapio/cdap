@@ -31,14 +31,11 @@ import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsScanResult;
 import co.cask.cdap.metrics.data.MetricsScanner;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.cdap.metrics.data.TimeValue;
 import co.cask.cdap.metrics.data.TimeValueAggregator;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -64,22 +61,11 @@ public class MetricsRequestExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsRequestExecutor.class);
   private static final Gson GSON = new Gson();
 
-  // It's a cache from metric table resolution to MetricsTable
-  private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
+  private final TimeSeriesTables timeSeriesTables;
 
   public MetricsRequestExecutor(final MetricsTableFactory metricsTableFactory) {
-    this.metricsTableCaches = Maps.newHashMap();
-    for (final MetricsScope scope : MetricsScope.values()) {
-      LoadingCache<Integer, TimeSeriesTable> cache =
-        CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
-          @Override
-          public TimeSeriesTable load(Integer key) throws Exception {
-            return metricsTableFactory.createTimeSeries(scope.name(), key);
-          }
-        });
-      this.metricsTableCaches.put(scope, cache);
-    }
+    this.timeSeriesTables = new TimeSeriesTables(metricsTableFactory);
     this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
@@ -121,15 +107,16 @@ public class MetricsRequestExecutor {
           }
         }
         long resolution = metricsRequest.getTimeSeriesResolution().getResolution();
-        long resultTime = (metricsRequest.getStartTime() / resolution) * resolution;
+        long resultTimeStamp = (metricsRequest.getStartTime() / resolution) * resolution;
 
         for (int i = 0; i < metricsRequest.getCount(); i++) {
-          if (timeValueItor.hasNext() && timeValueItor.peek().getTime() == resultTime) {
-            builder.addData(resultTime, timeValueItor.next().getValue());
+          if (timeValueItor.hasNext() && timeValueItor.peek().getTime() == resultTimeStamp) {
+            builder.addData(resultTimeStamp, timeValueItor.next().getValue());
           } else {
-            builder.addData(resultTime, 0);
+            // If the scan result doesn't have value for a timestamp, we add 0 to the result-returned for that timestamp
+            builder.addData(resultTimeStamp, 0);
           }
-          resultTime += metricsRequest.getTimeSeriesResolution().getResolution();
+          resultTimeStamp += metricsRequest.getTimeSeriesResolution().getResolution();
         }
       }
       resultObj = builder.build();
@@ -169,24 +156,25 @@ public class MetricsRequestExecutor {
     PeekingIterator<TimeValue> eventsProcessedItor =
       Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator(),
                                                 metricsRequest.getTimeSeriesResolution().getResolution()));
-    long resultTime = start;
+    long resultTimeStamp = start;
 
     for (int i = 0; i < metricsRequest.getCount(); i++) {
       long tupleRead = 0;
       long eventProcessed = 0;
-      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTime) {
+      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTimeStamp) {
         tupleRead = tuplesReadItor.next().getValue();
       }
-      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTime) {
+      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTimeStamp) {
         eventProcessed = eventsProcessedItor.next().getValue();
       }
       if (eventProcessed != 0) {
         int busyness = (int) ((float) tupleRead / eventProcessed * 100);
-        builder.addData(resultTime, busyness > 100 ? 100 : busyness);
+        builder.addData(resultTimeStamp, busyness > 100 ? 100 : busyness);
       } else {
-        builder.addData(resultTime, 0);
+        // If the scan result doesn't have value for a timestamp, we add 0 to the returned result for that timestamp.
+        builder.addData(resultTimeStamp, 0);
       }
-      resultTime += metricsRequest.getTimeSeriesResolution().getResolution();
+      resultTimeStamp += metricsRequest.getTimeSeriesResolution().getResolution();
     }
   }
 
@@ -242,7 +230,7 @@ public class MetricsRequestExecutor {
   private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery,
                                               Interpolator interpolator, int resolution) throws OperationException {
     Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
-    MetricsScanner scanner = metricsTableCaches.get(scope).getUnchecked(resolution).scan(scanQuery);
+    MetricsScanner scanner = timeSeriesTables.getTable(scope, resolution).scan(scanQuery);
     while (scanner.hasNext()) {
       MetricsScanResult res = scanner.next();
       // if we get multiple scan results for the same logical timeseries, concatenate them together.

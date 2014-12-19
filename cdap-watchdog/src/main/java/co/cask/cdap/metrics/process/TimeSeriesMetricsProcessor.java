@@ -19,12 +19,8 @@ package co.cask.cdap.metrics.process;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.cdap.metrics.transport.MetricsRecord;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -42,34 +38,22 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(TimeSeriesMetricsProcessor.class);
   private static final int MAX_RECORDLIST_SIZE = 100;
 
-  private final LoadingCache<String, List<TimeSeriesTable>> timeSeriesTables;
+  private final TimeSeriesTables timeSeriesTables;
 
 
   @Inject
   public TimeSeriesMetricsProcessor(final MetricsTableFactory tableFactory) {
-    timeSeriesTables = CacheBuilder.newBuilder()
-                                   .build(new CacheLoader<String, List<TimeSeriesTable>>() {
-      @Override
-      public List<TimeSeriesTable> load(String key) throws Exception {
-        LOG.info("Creating Multiple Time Resolution Tables");
-        return ImmutableList.of(tableFactory.createTimeSeries(key, 1),
-                                tableFactory.createTimeSeries(key, 60),
-                                tableFactory.createTimeSeries(key, 3600));
-      }
-    });
+    this.timeSeriesTables = new TimeSeriesTables(tableFactory);
   }
 
   @Override
   public void process(MetricsScope scope, Iterator<MetricsRecord> records) {
     try {
       List<MetricsRecord> metricsRecords = Lists.newArrayList();
-      List<TimeSeriesTable> listTimeSeriesTables = timeSeriesTables.getUnchecked(scope.name());
       while (records.hasNext()) {
         metricsRecords.add(records.next());
         if (metricsRecords.size() == MAX_RECORDLIST_SIZE || !records.hasNext()) {
-          for (TimeSeriesTable table : listTimeSeriesTables) {
-            table.save(metricsRecords.iterator());
-          }
+          timeSeriesTables.save(scope, metricsRecords.iterator());
           metricsRecords.clear();
         }
       }

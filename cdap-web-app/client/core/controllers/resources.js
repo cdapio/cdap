@@ -203,7 +203,7 @@ define([], function () {
       // Scans models for current metrics and updates them.
       C.Util.updateCurrents(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
 
-      // back-end auto determines count and resolution based on time interval
+      // metrics system auto determines count and resolution based on time interval
       var queries = [
         '/system/resources.used.memory?start=' + start + '&end=' +
           end + '&interpolate=step',
