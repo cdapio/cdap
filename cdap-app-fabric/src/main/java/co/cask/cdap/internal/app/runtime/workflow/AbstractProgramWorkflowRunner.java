@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -26,9 +26,8 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramController;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.SettableFuture;
@@ -39,38 +38,41 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /**
- * A {@link MapReduceRunnerFactory} that creates {@link Callable} for executing MapReduce job from Workflow.
+ * An Abstract class which implements {@link ProgramWorkflowRunner} and provides functionality to programs which can run
+ * in workflow to get a {@link Callable} of {@link RuntimeContext} of that Program and then these program which
+ * extend this class (like {@link MapReduceProgramWorkflowRunner} and {@link SparkProgramWorkflowRunner}) can execute
+ * their associated  program through {@link AbstractProgramWorkflowRunner#executeProgram} by providing their
+ * {@link ProgramController} and {@link RuntimeContext} obtained through the {@link ProgramRunner}.
+ * * This {@link RuntimeContext} is also blocked upon till the completion of the program.
  */
-final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
-
-  private final WorkflowSpecification workflowSpec;
-  private final ProgramRunner programRunner;
-  private final Program workflowProgram;
+public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
+  protected final WorkflowSpecification workflowSpec;
+  protected final ProgramRunnerFactory programRunnerFactory;
+  protected final Program workflowProgram;
   private final RunId runId;
   private final Arguments userArguments;
   private final long logicalStartTime;
 
-  WorkflowMapReduceRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunner programRunner,
-                                 Program workflowProgram, RunId runId,
-                                 Arguments userArguments, long logicalStartTime) {
-    this.workflowSpec = workflowSpec;
-    this.programRunner = programRunner;
-    this.workflowProgram = workflowProgram;
-    this.runId = runId;
-    this.logicalStartTime = logicalStartTime;
+  public AbstractProgramWorkflowRunner(Arguments userArguments, RunId runId, Program workflowProgram,
+                                       long logicalStartTime, ProgramRunnerFactory programRunnerFactory,
+                                       WorkflowSpecification workflowSpec) {
     this.userArguments = userArguments;
+    this.runId = runId;
+    this.workflowProgram = workflowProgram;
+    this.logicalStartTime = logicalStartTime;
+    this.programRunnerFactory = programRunnerFactory;
+    this.workflowSpec = workflowSpec;
   }
 
   @Override
-  public Callable<MapReduceContext> create(String name) {
+  public abstract Callable<RuntimeContext> create(String name);
 
-    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduce().get(name);
-    Preconditions.checkArgument(mapReduceSpec != null,
-                                "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());
+  @Override
+  public abstract RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception;
 
-    final Program mapReduceProgram = new WorkflowMapReduceProgram(workflowProgram, mapReduceSpec);
+  protected Callable<RuntimeContext> getRuntimeContextCallable(String name, final Program program) {
     final ProgramOptions options = new SimpleProgramOptions(
-      mapReduceProgram.getName(),
+      program.getName(),
       new BasicArguments(ImmutableMap.of(
         ProgramOptionConstants.RUN_ID, runId.getId(),
         ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime),
@@ -79,26 +81,17 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
       userArguments
     );
 
-    return new Callable<MapReduceContext>() {
+    return new Callable<RuntimeContext>() {
       @Override
-      public MapReduceContext call() throws Exception {
-        return runAndWait(mapReduceProgram, options);
+      public RuntimeContext call() throws Exception {
+        return runAndWait(program, options);
       }
     };
   }
 
-  /**
-   * Executes given MapReduce Program and block until it completed. On completion, return the MapReduceContext.
-   *
-   * @throws Exception if execution failed.
-   */
-  private MapReduceContext runAndWait(Program program, ProgramOptions options) throws Exception {
-    ProgramController controller = programRunner.run(program, options);
-    final MapReduceContext context = (controller instanceof MapReduceProgramController)
-                                        ? ((MapReduceProgramController) controller).getContext()
-                                        : null;
+  protected RuntimeContext executeProgram(ProgramController controller, final RuntimeContext context) throws Exception {
     // Execute the program.
-    final SettableFuture<MapReduceContext> completion = SettableFuture.create();
+    final SettableFuture<RuntimeContext> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
       @Override
       public void stopped() {

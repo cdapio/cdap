@@ -15,10 +15,11 @@
  */
 package co.cask.cdap.internal.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -28,29 +29,36 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Callable;
 
 /**
- *
+ * Action to be executed in Workflow for Programs.
+ * {@link ProgramWorkflowAction#run} does a call on {@link Callable} of {@link RuntimeContext}.
  */
-public final class MapReduceWorkflowAction implements WorkflowAction {
+public final class ProgramWorkflowAction implements WorkflowAction {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceWorkflowAction.class);
-  private static final String MAP_REDUCE_NAME = "mapReduceName";
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramWorkflowAction.class);
+  private static final String PROGRAM_NAME = "ProgramName";
+  public static final String PROGRAM_TYPE = "ProgramType";
 
   private final String name;
-  private String mapReduceName;
-  private Callable<MapReduceContext> mapReduceRunner;
+  private String programName;
+  private Callable<RuntimeContext> programRunner;
+  private final WorkflowSupportedProgram programType;
   private WorkflowContext context;
 
-  public MapReduceWorkflowAction(String name, String mapReduceName) {
+  public ProgramWorkflowAction(String name, String programName, WorkflowSupportedProgram programType) {
     this.name = name;
-    this.mapReduceName = mapReduceName;
+    this.programName = programName;
+    this.programType = programType;
   }
 
   @Override
   public WorkflowActionSpecification configure() {
     return WorkflowActionSpecification.Builder.with()
       .setName(name)
-      .setDescription("Workflow action for " + mapReduceName)
-      .withOptions(ImmutableMap.of(MAP_REDUCE_NAME, mapReduceName))
+      .setDescription("Workflow action for " + programName)
+      .withOptions(ImmutableMap.of(
+        PROGRAM_TYPE, programType.name(),
+        PROGRAM_NAME, programName
+      ))
       .build();
   }
 
@@ -58,25 +66,25 @@ public final class MapReduceWorkflowAction implements WorkflowAction {
   public void initialize(WorkflowContext context) throws Exception {
     this.context = context;
 
-    mapReduceName = context.getSpecification().getProperties().get(MAP_REDUCE_NAME);
-    Preconditions.checkNotNull(mapReduceName, "No MapReduce name provided.");
+    programName = context.getSpecification().getProperties().get(PROGRAM_NAME);
+    Preconditions.checkNotNull(programName, "No Program name provided.");
 
-    mapReduceRunner = context.getMapReduceRunner(mapReduceName);
+    programRunner = context.getProgramRunner(programName);
 
-    LOG.info("Initialized for MapReduce workflow action: {}", mapReduceName);
+    LOG.info("Initialized for Program in workflow action: {}", programName);
   }
 
   @Override
   public void run() {
     try {
-      LOG.info("Starting MapReduce workflow action: {}", mapReduceName);
-      MapReduceContext mapReduceContext = mapReduceRunner.call();
+      LOG.info("Starting Program for workflow action: {}", programName);
+      RuntimeContext runtimeContext = programRunner.call();
 
       // TODO (terence) : Put something back to context.
 
-      LOG.info("MapReduce workflow action completed: {}", mapReduceName);
+      LOG.info("Program workflow action completed: {}", programName);
     } catch (Exception e) {
-      LOG.info("Failed to execute MapReduce workflow: {}", mapReduceName, e);
+      LOG.info("Failed to execute Program in workflow: {}", programName, e);
       throw Throwables.propagate(e);
     }
   }
