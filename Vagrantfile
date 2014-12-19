@@ -22,7 +22,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     centos-6.5
     ubuntu-12.04
   ).each do |platform|
-
     config.vm.define platform do |c|
       c.vm.box       = "opscode-#{platform}"
       c.vm.box_url   = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_#{platform}_chef-provisionerless.box"

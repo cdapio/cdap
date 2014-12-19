@@ -16,6 +16,5 @@ describe 'cdap::security' do
     it 'creates cdap-auth-server service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-auth-server')
     end
-
   end
 end
