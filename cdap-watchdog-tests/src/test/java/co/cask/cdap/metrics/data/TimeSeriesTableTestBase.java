@@ -118,6 +118,68 @@ public abstract class TimeSeriesTableTestBase {
     });
   }
 
+
+
+  @Test
+  public void testTimeSeriesMinuteResolutionAggregation() throws OperationException {
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("minute-agg", 60);
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // Insert metrics for flow
+    String context = "app.f.flow.flowlet";
+    String metric = "input";
+    insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 7200, 100);
+
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow.flowlet")
+      .setMetric("input")
+      .build(time, time + 7200);
+
+    assertAggregate(query, timeSeriesTable.scan(query), 120, 2, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return (int) (1770 + (ts - time) * 60);
+      }
+    });
+  }
+  @Test
+  public void testTimeSeriesMinuteResolution() throws OperationException {
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("minutes", 60);
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // Insert metrics for flow
+    String context = "app.f.flow.flowlet";
+    String metric = "input";
+
+    insertMetricsEachMinute(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 1440,
+                            MetricType.COUNTER);
+    insertMetricsEachMinute(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 1440,
+                            MetricType.COUNTER);
+
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow.flowlet")
+      .setMetric("input")
+      .build(time, time + 86400);
+
+    assertAggregate(query, timeSeriesTable.scan(query), 1440, 24, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return (int) ((ts - time) * 2);
+      }
+    });
+
+    insertMetricsEachMinute(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 1440,
+                            MetricType.GAUGE);
+    assertAggregate(query, timeSeriesTable.scan(query), 1440, 24, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return (int) ((ts - time));
+      }
+    });
+  }
+
   private void insertMetrics(TimeSeriesTable timeSeriesTable,
                              String context, String runId, String metric, Iterable<String> tags,
                              long startTime, int offset, int count, int batchSize) throws OperationException {
@@ -135,6 +197,23 @@ public abstract class TimeSeriesTableTestBase {
       timeSeriesTable.save(records);
       records.clear();
     }
+  }
+
+  private void insertMetricsEachMinute(TimeSeriesTable timeSeriesTable,
+                                       String context, String runId, String metric, Iterable<String> tags,
+                                       long startTime, int offset, int count, MetricType type)
+    throws OperationException {
+
+    List<TagMetric> tagMetrics = Lists.newLinkedList();
+    List<MetricsRecord> records = Lists.newArrayListWithCapacity(count);
+    for (int i = offset; i < offset + count; i++) {
+      for (String tag : tags) {
+        tagMetrics.add(new TagMetric(tag, i * 2));
+      }
+      records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + (i * 60), i * 60, type));
+    }
+    timeSeriesTable.save(records);
+    records.clear();
   }
 
   @Test
@@ -304,8 +383,8 @@ public abstract class TimeSeriesTableTestBase {
                                         MetricType.COUNTER));
           records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15,
                                         MetricType.COUNTER));
-          timeSeriesTable.save(records);
         }
+        timeSeriesTable.save(records);
       }
     }
 
@@ -391,8 +470,8 @@ public abstract class TimeSeriesTableTestBase {
                                         MetricType.COUNTER));
           records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15,
                                         MetricType.COUNTER));
-          timeSeriesTable.save(records);
         }
+        timeSeriesTable.save(records);
       }
     }
 
@@ -539,13 +618,12 @@ public abstract class TimeSeriesTableTestBase {
       } else {
         Assert.assertTrue(result.getTag().startsWith(query.getTagPrefix()));
       }
-
       timeValues.add(result);
     }
 
     int count = 0;
     for (TimeValue tv : new TimeValueAggregator(timeValues)) {
-      Assert.assertEquals(computeExpected.apply(tv.getTime()).intValue(), tv.getValue());
+      Assert.assertEquals(computeExpected.apply(tv.getTime()).longValue(), tv.getValue());
       count++;
     }
     Assert.assertEquals(expectedCount, count);
