@@ -3,21 +3,17 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $alert, $dropdown) {
+function ($scope, $state, $alert, $dropdown, Widget) {
 
 
   $scope.dashboards = [
     {
       title: 'grid',
-      columns: [[{
-        title: 'widget title'
-      }],[],[]]
+      columns: [[new Widget()],[new Widget()],[new Widget()]]
     },
     {
       title: 'full-width',
-      columns: [[{
-        title: 'hello world'
-      }]]
+      columns: [[new Widget()]]
     }
   ];
 
@@ -87,9 +83,7 @@ function ($scope, $state, $alert, $dropdown) {
   $scope.addDashboard = function () {
     var n = $scope.dashboards.push({
       title: 'new dashboard',
-      columns: [[{
-        title: 'default widget'
-      }],[],[]]
+      columns: [[new Widget()],[],[]]
     });
     $scope.dashboards.activeTab = n-1;
   };
@@ -156,9 +150,7 @@ function ($scope, $state, $alert, $dropdown) {
       }
     }
 
-    columns[index].unshift({
-      title: 'added widget'
-    });
+    columns[index].unshift(new Widget({title: 'just added'}));
   };
 
 
