@@ -13,7 +13,7 @@
     ng-repeat="dashboard in dashboards"
     bs-pane>
 
-    <div class="row">
+    <div class="row" ng-if="dashboards.activeTab === $index">
 
       <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
         ng-repeat="column in dashboard.columns"
