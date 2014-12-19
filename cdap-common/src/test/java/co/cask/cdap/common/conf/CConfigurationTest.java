@@ -25,15 +25,12 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 /**
  * Testing CConfiguration.
  */
 public class CConfigurationTest {
 
-  private final static String DEPRECATED_PROPERTY_VALUE = "Value of deprecated property";
+  private static final String DEPRECATED_PROPERTY_VALUE = "Value of deprecated property";
 
   @Test
   public void testConfiguration() throws Exception {
@@ -49,16 +46,16 @@ public class CConfigurationTest {
     b = conf.get("conf.test.B");
     Assert.assertNotNull(a);
     Assert.assertNotNull(b);
-    assertEquals("A", a);
-    assertEquals("B", b);
+    Assert.assertEquals("A", a);
+    Assert.assertEquals("B", b);
     // override one of the defaults and verify
     conf.addResource("test-override.xml");
     a = conf.get("conf.test.A");
     b = conf.get("conf.test.B");
     Assert.assertNotNull(a);
     Assert.assertNotNull(b);
-    assertEquals("A", a);
-    assertEquals("B+", b);
+    Assert.assertEquals("A", a);
+    Assert.assertEquals("B+", b);
   }
 
   @Test
@@ -72,9 +69,9 @@ public class CConfigurationTest {
     Assert.assertNotNull(conf.get("conf.test.B"));
     Assert.assertNotNull(conf.get("conf.test.addedA"));
     Assert.assertNotNull(conf.get("conf.test.addedB"));
-    assertEquals("A+", conf.get("conf.test.A"));
-    assertEquals("AddedA", conf.get("conf.test.addedA"));
-    assertEquals("AddedB", conf.get("conf.test.addedB"));
+    Assert.assertEquals("A+", conf.get("conf.test.A"));
+    Assert.assertEquals("AddedA", conf.get("conf.test.addedA"));
+    Assert.assertEquals("AddedB", conf.get("conf.test.addedB"));
   }
 
   @Test
@@ -92,63 +89,63 @@ public class CConfigurationTest {
 
     try {
       conf.getInt("missing.property");
-      fail("Expected getInt() to throw NullPointerException");
+      Assert.fail("Expected getInt() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(1, conf.getInt("test.property.int"));
+    Assert.assertEquals(1, conf.getInt("test.property.int"));
 
     try {
       conf.getLong("missing.property");
-      fail("Expected getLong() to throw NullPointerException");
+      Assert.fail("Expected getLong() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(1L, conf.getLong("test.property.long"));
+    Assert.assertEquals(1L, conf.getLong("test.property.long"));
 
     try {
       conf.getLongBytes("missing.property");
-      fail("Expected getLongBytes() to throw NullPointerException");
+      Assert.fail("Expected getLongBytes() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(1024L, conf.getLongBytes("test.property.longbytes"));
+    Assert.assertEquals(1024L, conf.getLongBytes("test.property.longbytes"));
 
     try {
       conf.getFloat("missing.property");
-      fail("Expected getFloat() to throw NullPointerException");
+      Assert.fail("Expected getFloat() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(1.1f, conf.getFloat("test.property.float"), 0.01f);
+    Assert.assertEquals(1.1f, conf.getFloat("test.property.float"), 0.01f);
 
     try {
       conf.getBoolean("missing.property");
-      fail("Expected getBoolean() to throw NullPointerException");
+      Assert.fail("Expected getBoolean() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(true, conf.getBoolean("test.property.boolean"));
+    Assert.assertEquals(true, conf.getBoolean("test.property.boolean"));
 
     try {
       conf.getEnum("missing.property", TestEnum.class);
-      fail("Expected getEnum() to throw NullPointerException");
+      Assert.fail("Expected getEnum() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(TestEnum.FIRST, conf.getEnum("test.property.enum", TestEnum.class));
+    Assert.assertEquals(TestEnum.FIRST, conf.getEnum("test.property.enum", TestEnum.class));
 
     try {
       conf.getPattern("missing.property");
-      fail("Expected getPattern() to throw NullPointerException");
+      Assert.fail("Expected getPattern() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
-    assertEquals(testRegex, conf.getPattern("test.property.pattern").pattern());
+    Assert.assertEquals(testRegex, conf.getPattern("test.property.pattern").pattern());
 
     try {
       conf.getRange("missing.property");
-      fail("Expected getRange() to throw NullPointerException");
+      Assert.fail("Expected getRange() to throw NullPointerException");
     } catch (NullPointerException e) {
       // expected
     }
