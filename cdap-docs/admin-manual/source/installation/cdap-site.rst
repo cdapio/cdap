@@ -36,7 +36,7 @@ see the :ref:`configuration-security` section.
      - ``/programs``
      - Directory where all archives are stored
    * - ``app.program.jvm.opts``
-     - ``${weave.jvm.gc.opts}``
+     - ``${twill.jvm.gc.opts}``
      - Java options for all program containers
    * - ``app.temp.dir``
      - ``/tmp``
@@ -354,10 +354,10 @@ see the :ref:`configuration-security` section.
    * - ``thrift.max.read.buffer``
      - ``16777216``
      - Maximum read buffer size in bytes used by the Thrift server [`Note 2`_]
-   * - ``weave.java.reserved.memory.mb``
+   * - ``twill.java.reserved.memory.mb``
      - ``250``
-     - Reserved non-heap memory in MB for Weave container
-   * - ``weave.jvm.gc.opts``
+     - Reserved non-heap memory in MB for Twill container
+   * - ``twill.jvm.gc.opts``
      - | ``-verbose:gc``
        | ``-Xloggc:<log-dir>/gc.log``
        | ``-XX:+PrintGCDetails``
@@ -365,14 +365,14 @@ see the :ref:`configuration-security` section.
        | ``-XX:+UseGCLogFileRotation``
        | ``-XX:NumberOfGCLogFiles=10``
        | ``-XX:GCLogFileSize=1M``
-     - Java garbage collection options for all Weave containers; ``<log-dir>`` is the location
+     - Java garbage collection options for all Twill containers; ``<log-dir>`` is the location
        of the log directory on each machine
-   * - ``weave.no.container.timeout``
+   * - ``twill.no.container.timeout``
      - ``120000``
-     - Amount of time in milliseconds to wait for at least one container for Weave runnable
-   * - ``weave.zookeeper.namespace``
-     - ``/weave``
-     - Weave Zookeeper namespace prefix
+     - Amount of time in milliseconds to wait for at least one container for Twill runnable
+   * - ``twill.zookeeper.namespace``
+     - ``/twill``
+     - Twill Zookeeper namespace prefix
    * - ``yarn.user``
      - ``yarn``
      - User name for running applications in YARN
