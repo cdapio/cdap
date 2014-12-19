@@ -42,7 +42,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.DatasetRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -856,10 +855,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
-  public void workflowStatus(HttpRequest request, final HttpResponder responder,
+  public void workflowStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
-    programLifecycleHttpHandler.workflowStatus(rewriteRequest(request), responder,
-                                               Constants.Gateway.API_VERSION_3_TOKEN, appId, workflowName);
+    programLifecycleHttpHandler.workflowStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                               workflowName);
   }
 
   /**

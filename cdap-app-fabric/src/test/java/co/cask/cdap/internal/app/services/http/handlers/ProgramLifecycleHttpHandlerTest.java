@@ -636,6 +636,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    //TODO: cannot test the /current endpoint because of CDAP-66. Enable after that bug is fixed.
+//    Assert.assertEquals(200, getWorkflowCurrentStatus(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+//                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME));
+
     // get schedule id
     String scheduleId = getScheduleId(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
     long current = System.currentTimeMillis();
@@ -648,7 +652,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleHistoryCheck(5, runsUrl, 0);
 
     //Check schedule status
-    String statusUrl = getStatusUrl(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
+    String statusUrl = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
                                     scheduleId);
     scheduleStatusCheck(5, statusUrl, "SCHEDULED");
 
@@ -667,7 +671,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     int workflowRunsAfterSuspend = getRuns(runsUrl);
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
 
     scheduleHistoryCheck(5, runsUrl, workflowRunsAfterSuspend);
@@ -680,7 +684,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                   "invalid");
     scheduleStatusCheck(5, invalid, "NOT_FOUND");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
                                              APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
 
     //check paused state
@@ -702,6 +706,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/current", app, workflow);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(versionedUrl).getStatusLine().getStatusCode();
   }
 
   private Long getNextScheduledRunTime(String namespace, String app, String workflow, String schedule)

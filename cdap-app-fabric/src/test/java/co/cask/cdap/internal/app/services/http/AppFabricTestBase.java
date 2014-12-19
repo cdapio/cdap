@@ -377,14 +377,13 @@ public abstract class AppFabricTestBase {
     Assert.assertTrue(workflowRuns > expected);
   }
 
-  protected void scheduleStatusCheck(int retires, String url,
-                                   String expected) throws Exception {
+  protected void scheduleStatusCheck(int retries, String url, String expected) throws Exception {
     int trial = 0;
     String status = null;
-    String json = null;
+    String json;
     Map<String, String> output;
     HttpResponse response;
-    while (trial++ < retires) {
+    while (trial++ < retries) {
       response = doGet(url);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
