@@ -56,7 +56,7 @@ import javax.ws.rs.PathParam;
 /**
  * Handlers for clearing metrics.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
+@Path(Constants.Gateway.API_VERSION_2 + "/metrics")
 public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);

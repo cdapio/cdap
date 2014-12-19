@@ -111,9 +111,9 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());
 
-      BasicServiceWorkerContext context = new BasicServiceWorkerContext(workerSpec, program, runId, instanceId,
-                                                                        workerSpec.getInstances(),
-                                                                        options.getArguments(), cConf,
+      BasicServiceWorkerContext context = new BasicServiceWorkerContext(workerSpec, program, runId,
+                                                                        instanceId, instanceCount,
+                                                                        options.getUserArguments(), cConf,
                                                                         metricsCollectionService, datasetFramework,
                                                                         txClient, discoveryServiceClient);
       component = new ServiceWorkerDriver(program, workerSpec, context);

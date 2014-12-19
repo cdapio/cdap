@@ -82,6 +82,11 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+    core.increment(updates);
+  }
+
+  @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
     return core.increment(row, ImmutableMap.of(column, delta)).get(column);
   }

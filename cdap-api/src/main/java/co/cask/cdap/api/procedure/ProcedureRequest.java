@@ -21,7 +21,9 @@ import java.util.Map;
 /**
  * This interface defines the request to the {@link Procedure}.
  *
- * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
+ * @deprecated As of version 2.6.0, replaced by 
+ *             {@link co.cask.cdap.api.service.http.HttpServiceRequest HttpServiceRequest,}
+ *             which is used with {@link co.cask.cdap.api.service.Service Service}
  */
 @Deprecated
 public interface ProcedureRequest {

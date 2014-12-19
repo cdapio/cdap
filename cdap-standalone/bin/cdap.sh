@@ -99,7 +99,7 @@ location of your Java installation."
 fi
 
 # java version check
-JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
+JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
 if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
   die "ERROR: Java version not supported
 Please install Java 6 or 7 - other versions of Java are not yet supported."
@@ -271,7 +271,11 @@ start() {
     rotate_log $APP_HOME/logs/cdap.log
     rotate_log $APP_HOME/logs/cdap-debug.log
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
+    if test -e /proc/1/cgroup && grep docker /proc/1/cgroup 2>&1 >/dev/null; then
+        ROUTER_OPTS="-Drouter.bind.address=`hostname -i` -Drouter.server.address=`hostname -i`"
+    fi
+
+    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
         --web-app-path ${WEB_APP_PATH} \
         >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid

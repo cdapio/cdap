@@ -107,7 +107,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
     String hostName = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
     String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
+                                Constants.Gateway.API_VERSION_2, applicationId, serviceId);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

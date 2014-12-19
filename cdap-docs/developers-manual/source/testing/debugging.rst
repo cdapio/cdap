@@ -6,7 +6,7 @@
 Debugging a CDAP Application
 ================================================
 
-.. _DebugCDAP:
+.. _debugging-cdap:
 
 Debugging an Application in Standalone CDAP
 ===========================================
@@ -41,8 +41,8 @@ single place to debug the entire application.
 
 You can, however, debug every individual container by attaching a remote debugger to it.
 This is supported for each Flowlet of a Flow and each instance of a Procedure. In order
-to debug a container, you need to start the element with debugging enabled by making
-an HTTP request to the element’s URL. For example, the following will start a Flow for debugging::
+to debug a container, you need to start the component with debugging enabled by making
+an HTTP request to the component’s URL. For example, the following will start a Flow for debugging::
 
   POST <base-url>/apps/WordCount/flows/WordCounter/debug
 
@@ -168,7 +168,7 @@ You may need to adjust them for your installation or version.
 #. The control stops at the breakpoint and you can proceed with debugging.
 
 
-.. _TxDebugger:
+.. _tx-debugger:
 
 Debugging the Transaction Manager (Advanced Use)
 ================================================

@@ -31,13 +31,13 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. |security| replace:: **Security:**
 .. _security: installation/security.html
 
-- |security|_ CDAP supports securing clusters using perimeter security. This section
+- |security|_ CDAP supports **securing clusters using perimeter security.** This section
   describes enabling security, configuring authentication and testing security.
 
 .. |monitoring| replace:: **Monitoring:**
 .. _monitoring: installation/monitoring.html
 
-- |monitoring|_ CDAP collects logs and metrics for all of its internal services. 
+- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
   This section provides links to the relevant APIs for accessing these logs and metrics.
 
 .. |appendices| replace:: **Appendices:**
@@ -80,7 +80,7 @@ introduces the CDAP Console.**
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: operations/troubleshooting.html
 
-- |troubleshooting|_ Selected examples of potential problems and possible resolutions.
+- |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
 
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

@@ -112,10 +112,34 @@ public class LevelDBOrderedTableCore {
   }
 
   public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments) throws Exception {
+    Map<byte[], Long> result = getResultMap(row, increments);
+    Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], Long> entry : result.entrySet()) {
+      replacing.put(entry.getKey(), Bytes.toBytes(entry.getValue()));
+    }
+    persist(ImmutableMap.of(row, replacing), System.currentTimeMillis());
+    return result;
+  }
+
+
+  public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
+    Map<byte[], Map<byte[], byte[]>> resultMap = Maps.newHashMap();
+    for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
+      NavigableMap<byte[], Long> increments = row.getValue();
+      Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      Map<byte[], Long> result = getResultMap(row.getKey(), increments);
+      for (Map.Entry<byte[], Long> entry : result.entrySet()) {
+        replacing.put(entry.getKey(), Bytes.toBytes(entry.getValue()));
+      }
+      resultMap.put(row.getKey(), replacing);
+    }
+    persist(resultMap, System.currentTimeMillis());
+  }
+
+  private Map<byte[], Long> getResultMap(byte[] row, Map<byte[], Long> increments) throws IOException {
     NavigableMap<byte[], byte[]> existing =
       getRow(row, increments.keySet().toArray(new byte[increments.size()][]), null, null, -1, null);
     Map<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], Long> increment : increments.entrySet()) {
       long existingValue = 0L;
       byte[] existingBytes = existing.get(increment.getKey());
@@ -129,9 +153,7 @@ public class LevelDBOrderedTableCore {
       }
       long newValue = existingValue + increment.getValue();
       result.put(increment.getKey(), newValue);
-      replacing.put(increment.getKey(), Bytes.toBytes(newValue));
     }
-    persist(ImmutableMap.of(row, replacing), System.currentTimeMillis());
     return result;
   }
 

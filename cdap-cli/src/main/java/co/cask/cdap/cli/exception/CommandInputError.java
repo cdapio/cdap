@@ -16,12 +16,18 @@
 
 package co.cask.cdap.cli.exception;
 
+import co.cask.common.cli.Command;
+
 /**
  * Thrown when there was an error in the command input.
  */
 public class CommandInputError extends RuntimeException {
 
-  public CommandInputError(String message) {
-    super(message);
+  public CommandInputError(Command command) {
+    super("Invalid input. Expected format: " + command.getPattern());
+  }
+
+  public CommandInputError(Command command, String message) {
+    super("Invalid input: " + message + "\nExpected format: " + command.getPattern());
   }
 }

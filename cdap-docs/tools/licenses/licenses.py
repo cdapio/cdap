@@ -28,7 +28,7 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.7"
+VERSION = "0.0.8"
 
 COPYRIGHT_YEAR = "2014"
 
@@ -38,7 +38,7 @@ ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
 STANDALONE = "cdap-standalone-dependencies"
 
-LICENSES_SOURCE = "../../developers-manual/source/licenses"
+LICENSES_SOURCE = "../../reference-manual/source/licenses"
 
 SPACE = " "*3
 BACK_DASH = "\-"
@@ -304,6 +304,12 @@ def process_dependencies(dependency):
     print "New Master CSV: Rows: %s" % len(master_libs_dict.keys())
     print "New Master CSV: Missing Entry Rows: %s" % missing_entries
     print "New Master CSV: Missing License Rows: %s" % missing_licenses
+    
+    if missing_entries:
+        i = 0
+        for key in missing_libs_dict.keys():
+            i += 1
+            print "Missing %2d: %s" % (i, missing_libs_dict[key])
 
     # Write out a new master cvs file, only if not already exists 
     if missing_entries or missing_licenses:

@@ -24,6 +24,7 @@ import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.StreamProperties;
@@ -66,7 +67,7 @@ import javax.ws.rs.PathParam;
  *
  * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
+@Path(Constants.Gateway.API_VERSION_2 + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
@@ -79,6 +80,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final StreamAdmin streamAdmin;
   private final MetricsCollector metricsCollector;
   private final ConcurrentStreamWriter streamWriter;
+  private final ExploreFacade exploreFacade;
+  private final boolean exploreEnabled;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -91,11 +94,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamFileWriterFactory writerFactory,
-                       MetricsCollectionService metricsCollectionService) {
+                       MetricsCollectionService metricsCollectionService,
+                       ExploreFacade exploreFacade) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
+    this.exploreFacade = exploreFacade;
+    this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
@@ -160,6 +166,16 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
     streamMetaStore.addStream(accountID, stream);
+    // Enable ad-hoc exploration of stream
+    if (exploreEnabled) {
+      try {
+        exploreFacade.enableExploreStream(stream);
+      } catch (Exception e) {
+        // at this time we want to still allow using stream even if it cannot be used for exploration
+        String msg = String.format("Cannot enable exploration of stream %s: %s", stream, e.getMessage());
+        LOG.error(msg, e);
+      }
+    }
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);

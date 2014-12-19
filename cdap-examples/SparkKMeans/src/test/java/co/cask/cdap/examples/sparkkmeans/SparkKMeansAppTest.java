@@ -73,7 +73,7 @@ public class SparkKMeansAppTest extends TestBase {
     serviceStatusCheck(serviceManager, true);
 
     // Request data and verify it
-    String response = requestService(new URL(serviceManager.getServiceURL(), "centers/1"));
+    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
     String[] coordinates = response.split(",");
     Assert.assertTrue(coordinates.length == 3);
     for (String coordinate : coordinates) {
@@ -82,7 +82,7 @@ public class SparkKMeansAppTest extends TestBase {
     }
 
     // Request data by incorrect index and verify response
-    URL url = new URL(serviceManager.getServiceURL(), "centers/10");
+    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/10");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     try {
       Assert.assertEquals(HttpURLConnection.HTTP_NO_CONTENT, conn.getResponseCode());

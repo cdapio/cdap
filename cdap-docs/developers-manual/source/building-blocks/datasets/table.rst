@@ -204,5 +204,6 @@ A delete operation removes an entire row or a subset of its columns::
 
 Note that specifying a set of columns helps to perform delete operation faster.
 When you want to delete all the columns of a row and you know all of them,
-passing all of them will make the deletion faster.
-
+passing all of them will make the deletion faster. Deleting all the columns of a row will
+also delete the entire row, as the underlying implementation of a Table is a 
+`columnar store. <http://en.wikipedia.org/wiki/Column-oriented_DBMS>`__

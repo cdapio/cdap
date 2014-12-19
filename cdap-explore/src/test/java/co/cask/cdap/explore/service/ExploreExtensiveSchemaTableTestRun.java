@@ -19,6 +19,8 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.explore.service.datasets.ExtensiveSchemaTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.TableInfo;
@@ -41,7 +43,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices(CConfiguration.create());
+    startServices();
 
     datasetFramework.addModule("extensiveSchema", new ExtensiveSchemaTableDefinition.ExtensiveSchemaTableModule());
 

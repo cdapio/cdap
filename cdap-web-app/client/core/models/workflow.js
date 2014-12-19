@@ -39,12 +39,16 @@ define(['core/models/program'], function (Program) {
     },
 
     startStopDisabled: function () {
+      var enableStates = [
+        'STOPPED',
+        'RUNNING'
+      ];
 
-      if (this.currentState !== 'STOPPED') {
-        return true;
+      if (-1 !== enableStates.indexOf(this.currentState)) {
+        return false;
       }
-      return false;
 
+      return true;
     }.property('currentState')
 
   });

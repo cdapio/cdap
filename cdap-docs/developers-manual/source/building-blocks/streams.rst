@@ -13,7 +13,7 @@ They are ordered, time-partitioned sequences of data, usable for realtime collec
 
 They can be created programmatically within your application, using the
 :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or by
-using the :ref:`CDAP Command-line Interface tool. <cli>` 
+using the :ref:`CDAP Command Line Interface. <cli>` 
 
 Data written to a Stream can be consumed in real-time by :ref:`Flows <flows>` or in batch
 by :ref:`MapReduce Jobs. <mapreduce>`.
@@ -35,7 +35,7 @@ Streams are shared between applications.
 .. rubric::  Writing To a Stream
 
 You can write to Streams either one operation at a time or in batches, using either the
-:ref:`http-restful-api-stream` or the :ref:`command-line tools. <cli>`
+:ref:`http-restful-api-stream` or the :ref:`Command Line Interface. <cli>`
 
 Each individual signal sent to a Stream is stored as a ``StreamEvent``, which is comprised
 of a header (a map of strings for metadata) and a body (a blob of binary data).
@@ -60,7 +60,7 @@ never expires. The Time-To-Live (TTL) property governs how long an event is vali
 consumption since it was written to the Stream. The default TTL for all Streams is
 infinite, meaning that events will never expire. The TTL property of a Stream can be
 changed, using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of the
-:ref:`client-api`, or by using the :ref:`command-line tool. <cli>`
+:ref:`client-api`, or by using the :ref:`Command Line Interface. <cli>`
 
 
 .. rubric::  Truncating a Stream
@@ -68,7 +68,7 @@ changed, using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of t
 Streams can be truncated, which means deleting all events that were ever written to the
 Stream. This is permanent and cannot be undone. They can be truncated through the using
 the :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or
-by using the :ref:`command-line tool. <cli>`
+by using the :ref:`Command Line Interface. <cli>`
 
 
 
@@ -80,7 +80,7 @@ Streams are included in just about every CDAP :ref:`application <apps-and-packs>
 - The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates **using a
   stream to ingest** a name into a dataset.
 
-- For an example of **pushing events to a Stream from the command-line,** see the :ref:`Purchase
+- For an example of **pushing events to a Stream from the Command Line,** see the :ref:`Purchase
   example <examples-purchase>`, and its script ``inject-data`` that injects data to a stream.
 
 - For an example of **reading events from a Stream,** see the 

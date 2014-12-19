@@ -20,7 +20,7 @@ Building Blocks
     Flows and Flowlets <flows-flowlets/index>
     MapReduce Jobs<mapreduce-jobs>
     Workflows <workflows>
-    Spark Jobs <spark-jobs>
+    Spark Programs <spark-programs>
     Procedures <procedures>
     Services <services>
     Transaction System <transaction-system>
@@ -41,7 +41,7 @@ write to—the data virtualization layer in CDAP.
 - :doc:`Flows (and Flowlets) <flows-flowlets/index>`
 - :doc:`MapReduce Jobs <mapreduce-jobs>`
 - :doc:`Workflows <workflows>`
-- :doc:`Spark Jobs <spark-jobs>`
+- :doc:`Spark Programs <spark-programs>`
 - :doc:`Procedures <procedures>`
 - :doc:`Services <services>`
 

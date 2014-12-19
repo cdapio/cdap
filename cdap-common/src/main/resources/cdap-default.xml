@@ -899,6 +899,16 @@
     </property>
 
     <property>
+        <name>dashboard.ssl.bind.port</name>
+        <value>9443</value>
+    </property>
+
+    <property>
+        <name>dashboard.ssl.disable.cert.check</name>
+        <value>false</value>
+    </property>
+
+    <property>
         <name>router.server.address</name>
         <value>localhost</value>
     </property>
@@ -909,6 +919,12 @@
     <property>
         <name>explore.enabled</name>
         <value>false</value>
+        <description>Whether ad-hoc SQL queries are enabled</description>
+    </property>
+    <property>
+        <name>explore.writes.enabled</name>
+        <value>true</value>
+        <description>Whether writing to a table through ad-hoc SQL queries is enabled</description>
     </property>
     <property>
         <name>explore.start.on.demand</name>
@@ -1061,30 +1077,6 @@
   <property>
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
-  </property>
-
-  <!-- Router configuration-->
-
-  <property>
-    <name>router.server.address</name>
-    <value>localhost</value>
-  </property>
-
-  <!-- Frontend configuration -->
-
-  <property>
-    <name>dashboard.bind.port</name>
-    <value>9999</value>
-  </property>
-
-  <property>
-    <name>dashboard.ssl.bind.port</name>
-    <value>9443</value>
-  </property>
-
-  <property>
-    <name>dashboard.ssl.disable.cert.check</name>
-    <value>false</value>
   </property>
 
 </configuration>

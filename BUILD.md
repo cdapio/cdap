@@ -8,7 +8,7 @@
     mvn clean
 
 ### Run all tests, fail at the end
-    mvn test -fae
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae
     
 ### Build all modules
     mvn package
@@ -20,7 +20,7 @@
     mvn package -pl [module] -am
 
 ### Run selected test
-    mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName -DfailIfNoTests=false test
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName -DfailIfNoTests=false test
 
 See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html) for more details
 

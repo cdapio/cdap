@@ -17,14 +17,11 @@
 package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.Constants;
 import co.cask.cdap.cli.DefaultCommands;
 import co.cask.cdap.cli.command.HelpCommand;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
@@ -34,9 +31,6 @@ import com.google.inject.Injector;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * Generates data for the table in cdap-docs/reference-manual/source/cli-api.rst.
@@ -45,36 +39,7 @@ public class GenerateCLIDocsTable {
 
   private final Command printDocsCommand;
 
-  private final Iterable<Command> commands;
-
   public GenerateCLIDocsTable(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.printDocsCommand = new Command() {
-
-      @Override
-      public void execute(Arguments arguments, PrintStream output) throws Exception {
-        List<Command> commandList = com.googlecode.concurrenttrees.common.Iterables.toList(commands);
-        Collections.sort(commandList, new Comparator<Command>() {
-          @Override
-          public int compare(Command command, Command command2) {
-            return command.getPattern().compareTo(command2.getPattern());
-          }
-        });
-        for (Command command : commandList) {
-          output.printf("   ``%s``,%s\n", command.getPattern(), command.getDescription());
-        }
-      }
-
-      @Override
-      public String getPattern() {
-        return "null";
-      }
-
-      @Override
-      public String getDescription() {
-        return "null";
-      }
-    };
-
     Injector injector = Guice.createInjector(
       new AbstractModule() {
         @Override
@@ -85,16 +50,15 @@ public class GenerateCLIDocsTable {
         }
       }
     );
-
-    this.commands = Iterables.concat(new DefaultCommands(injector).get(),
-                                     ImmutableList.<Command>of(new HelpCommand(null, null)));
+    Iterable<Command> commands = Iterables.concat(new DefaultCommands(injector).get(),
+                                                  ImmutableList.<Command>of(new HelpCommand(null, null)));
+    this.printDocsCommand = new PrintCLIDocsTableCommand(commands);
   }
 
   public static void main(String[] args) throws Exception {
-    String hostname = Objects.firstNonNull(System.getenv(Constants.EV_HOSTNAME), "localhost");
     PrintStream output = System.out;
 
-    CLIConfig config = new CLIConfig(hostname);
+    CLIConfig config = new CLIConfig(null);
     GenerateCLIDocsTable generateCLIDocsTable = new GenerateCLIDocsTable(config);
     generateCLIDocsTable.printDocsCommand.execute(null, output);
   }

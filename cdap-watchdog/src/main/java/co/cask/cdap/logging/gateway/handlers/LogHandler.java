@@ -44,7 +44,7 @@ import javax.ws.rs.PathParam;
 /**
  * Handler to serve log requests.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class LogHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
 
