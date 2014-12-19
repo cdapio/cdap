@@ -5,18 +5,18 @@
 </aside>
 
 <div
-  bs-active-pane="dashboards.activeTab"
+  bs-active-pane="dashboards.activeIndex"
   bs-tabs data-template="assets/features/dashboard/partials/tab.html">
 
   <div
-    data-title="{{dashboard.title}}"
-    ng-repeat="dashboard in dashboards"
+    data-title="{{board.title}}"
+    ng-repeat="board in dashboards"
     bs-pane>
 
-    <div class="row" ng-if="dashboards.activeTab === $index">
+    <div class="row" ng-if="dashboards.activeIndex === $index">
 
-      <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
-        ng-repeat="column in dashboard.columns"
+      <div ng-class="'col-sm-'+(12/board.columns.length)"
+        ng-repeat="column in board.columns"
         ng-model="column"
         as-sortable="dragdrop">
 
@@ -25,11 +25,11 @@
           as-sortable-item>
 
           <div class="panel-heading"
-            ng-include="'assets/features/dashboard/partials/wdgt-head.html'"
+            ng-include="'/assets/features/dashboard/partials/wdgt-head.html'"
             as-sortable-item-handle></div>
 
           <div class="panel-body"
-            ng-include="'assets/features/dashboard/partials/wdgt-body.html'"
+            ng-include="wdgt.partial"
             ></div>
 
         </div>

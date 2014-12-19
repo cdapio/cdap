@@ -1,0 +1,39 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content" ng-controller="DashboardAddWdgtCtrl">
+
+      <form name="addWdgtForm"
+          ng-submit="validateAndAddToModel(addWdgtForm.name)"
+          ng-class="{'has-error': addWdgtForm.$invalid || modalError}"
+          novalidate>
+
+        <div class="modal-header">
+          <button type="button" class="close" ng-click="$hide()">&times;</button>
+          <h4 class="modal-title">Add a Widget</h4>
+        </div>
+
+        <div class="modal-body">
+
+          <pre>{{dashboard | json}}</pre>
+
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+          tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+          quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+          consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+          cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+          proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+        </div>
+
+        <div class="modal-footer text-right">
+          <button type="submit"
+            ng-disabled="addWdgtForm.$invalid"
+            class="btn btn-primary"
+          >Add</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
