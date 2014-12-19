@@ -12,7 +12,6 @@ describe 'cdap::web_app_init' do
     it 'does not run execute[generate-webapp-ssl-cert]' do
       expect(chef_run).not_to run_execute('generate-webapp-ssl-cert')
     end
-
   end
 
   context 'with SSL' do
@@ -26,6 +25,5 @@ describe 'cdap::web_app_init' do
     it 'executes generate-webapp-ssl-cert' do
       expect(chef_run).to run_execute('generate-webapp-ssl-cert')
     end
-
   end
 end
