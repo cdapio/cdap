@@ -108,6 +108,9 @@ CDAP Bug Fixes
 - Fixed a problem with applications, whose Spark or Scala user classes were not extended
   from either ``JavaSparkProgram`` or ``ScalaSparkProgram``, failing with a class loading error
   (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
+- Fixed a problem with the :ref:`CDAP upgrade tool <install-upgrade> not preserving—for 
+  tables with readless increments enabled—the coprocessor configuration during an upgrade
+  (`CDAP-1044 <https://issues.cask.co/browse/CDAP-1044>`__).
 - Fixed a problem with the readless increment implementation dropping increment cells when 
   a region flush or compaction occurred (`CDAP-1062 <https://issues.cask.co/browse/CDAP-1062>`__).
 
