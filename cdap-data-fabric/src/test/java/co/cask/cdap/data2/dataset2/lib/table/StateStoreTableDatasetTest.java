@@ -18,10 +18,14 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Map;
@@ -30,31 +34,71 @@ import java.util.Map;
  * StateStore Dataset Tests.
  */
 public class StateStoreTableDatasetTest extends AbstractDatasetTest {
+  private static final String MODULE_NAME = "stateStoreModule";
+  private static StateStoreTable myStateTable;
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    addModule(MODULE_NAME, new StateStoreTableModule());
+    createInstance(StateStoreTable.class.getName(), "myStateTable", DatasetProperties.EMPTY);
+    myStateTable = getInstance("myStateTable");
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    myStateTable.close();
+    deleteModule(MODULE_NAME);
+  }
 
   @Test
   public void testBasics() throws Exception {
-    addModule("stateStoreModule", new StateStoreTableModule());
     Map<String, String> content = Maps.newHashMap();
     content.put("k1", "v1");
     content.put("k2", "v2");
     content.put("key1", "val1");
     content.put("key2", "val2");
 
-    createInstance(StateStoreTable.class.getName(), "myStateTable", DatasetProperties.EMPTY);
-    StateStoreTable myStateTable = getInstance("myStateTable");
-
     ProgramRecord record = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow");
-    Assert.assertEquals(null, myStateTable.getState(record));
+    Assert.assertEquals(0, myStateTable.getState(record).size());
     myStateTable.saveState(record, content);
-    Assert.assertEquals(content.get("key1"), myStateTable.getState(record).get("key1"));
-    Assert.assertEquals(false, myStateTable.getState(record).containsKey("key3"));
-    Map<String, String> testContent = myStateTable.getState(record);
-    Assert.assertEquals(content.size(), testContent.size());
-    Assert.assertEquals(content.keySet(), testContent.keySet());
+    Assert.assertEquals(content, myStateTable.getState(record));
+
     content.remove("key1");
     myStateTable.saveState(record, content);
-    Assert.assertEquals(content.size(), myStateTable.getState(record).size());
-    Assert.assertEquals(false, myStateTable.getState(record).containsKey("key1"));
-    deleteModule("stateStoreModule");
+    Assert.assertEquals(content, myStateTable.getState(record));
+
+    myStateTable.deleteState(record);
+    Assert.assertEquals(0, myStateTable.getState(record).size());
+  }
+
+  @Test
+  public void testMultiPrograms() throws Exception {
+    ProgramRecord record1 = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow1");
+    ProgramRecord record2 = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow2");
+    ProgramRecord record3 = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow3");
+    ProgramRecord record4 = new ProgramRecord(ProgramType.FLOW, "NotMyApp", "MyFlow");
+    Map<String, String> content = ImmutableMap.of("key", "value");
+    Id.Application appId = new Id.Application(new Id.Account("myId"), "MyApp");
+
+    myStateTable.saveState(record1, content);
+    myStateTable.saveState(record2, content);
+    myStateTable.saveState(record3, content);
+    myStateTable.saveState(record4, content);
+
+    Assert.assertEquals(content, myStateTable.getState(record1));
+    Assert.assertEquals(content, myStateTable.getState(record4));
+
+    myStateTable.deleteState(record1);
+    Assert.assertEquals(content, myStateTable.getState(record2));
+    Assert.assertEquals(content, myStateTable.getState(record3));
+
+    myStateTable.deleteState(appId);
+    Assert.assertEquals(0, myStateTable.getState(record1).size());
+    Assert.assertEquals(0, myStateTable.getState(record2).size());
+    Assert.assertEquals(0, myStateTable.getState(record3).size());
+    Assert.assertEquals(content, myStateTable.getState(record4));
+
+    myStateTable.deleteState(record4);
+    Assert.assertEquals(0, myStateTable.getState(record4).size());
   }
 }
