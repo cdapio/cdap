@@ -9,6 +9,8 @@ function ($scope, caskFocusManager, myDashboardsModel, Widget) {
 
   $scope.model = new Widget();
 
+  $scope.model.metric = '/metrics/system/collect.events?start=now-60s&end=now';
+
 
   var P = '/assets/features/dashboard/widgets';
   $scope.widgetTypes = [
