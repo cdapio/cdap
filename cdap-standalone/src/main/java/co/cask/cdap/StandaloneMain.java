@@ -48,6 +48,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedClientRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -371,7 +372,8 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new NotificationFeedClientRuntimeModule().getStandaloneModules()
     );
   }
 }

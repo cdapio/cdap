@@ -14,13 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
+package co.cask.cdap.notifications.service;
+
+import co.cask.cdap.notifications.feeds.NotificationFeed;
 
 import java.lang.reflect.Type;
 
 /**
  * Notification handler passed when subscribing to a {@link NotificationFeed} using
- * {@link co.cask.cdap.notifications.client.NotificationClient.Subscriber#add}.
+ * {@link co.cask.cdap.notifications.service.NotificationClient.Subscriber#add}.
  *
  * @param <N> Type of the Notification to handle.
  */
@@ -33,7 +35,7 @@ public interface NotificationHandler<N> {
 
   /**
    * Method called to process a Notification received by a
-   * {@link co.cask.cdap.notifications.client.NotificationClient.Subscriber}.
+   * {@link co.cask.cdap.notifications.service.NotificationClient.Subscriber}.
    *
    * @param notification notification received.
    * @param notificationContext {@link NotificationContext} object for the notification.

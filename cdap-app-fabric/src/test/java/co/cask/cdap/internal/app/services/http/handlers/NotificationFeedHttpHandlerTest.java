@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.notifications.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;

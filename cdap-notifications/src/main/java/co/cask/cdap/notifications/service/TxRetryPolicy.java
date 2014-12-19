@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
+package co.cask.cdap.notifications.service;
 
 /**
- * Retry policy object used by the {@link co.cask.cdap.notifications.NotificationContext#execute} method
+ * Retry policy object used by the {@link NotificationContext#execute} method
  * to specify behavior when transaction execution fails.
  */
 public abstract class TxRetryPolicy {

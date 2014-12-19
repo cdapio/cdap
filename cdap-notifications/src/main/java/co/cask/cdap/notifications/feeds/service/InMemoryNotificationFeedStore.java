@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
+package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.notifications.service.NotificationFeedStore;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 

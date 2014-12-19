@@ -14,10 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.service;
+package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.notifications.NotificationFeed;
-import co.cask.cdap.notifications.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 

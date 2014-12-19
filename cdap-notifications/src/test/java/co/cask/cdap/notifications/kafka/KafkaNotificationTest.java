@@ -96,12 +96,12 @@ public class KafkaNotificationTest extends NotificationTest {
     kafkaServer.startAndWait();
 
     // TODO remove once Twill addLatest bug is fixed
-    feedClient.createFeed(FEED1);
-    feedClient.createFeed(FEED2);
+    feedManager.createFeed(FEED1);
+    feedManager.createFeed(FEED2);
     getNotificationService().publish(FEED1, "test").get();
     getNotificationService().publish(FEED2, "test").get();
-    feedClient.deleteFeed(FEED1);
-    feedClient.deleteFeed(FEED2);
+    feedManager.deleteFeed(FEED1);
+    feedManager.deleteFeed(FEED2);
   }
 
   @AfterClass

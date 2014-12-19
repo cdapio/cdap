@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.kafka;
+package co.cask.cdap.notifications.service.kafka;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.BasicNotificationContext;
-import co.cask.cdap.notifications.NotificationFeed;
-import co.cask.cdap.notifications.NotificationHandler;
-import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.client.NotificationService;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.service.BasicNotificationContext;
 import co.cask.cdap.notifications.service.NotificationException;
-import co.cask.cdap.notifications.service.NotificationFeedException;
+import co.cask.cdap.notifications.service.NotificationHandler;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -78,7 +78,7 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
 
   private final KafkaClient kafkaClient;
   private final DatasetFramework dsFramework;
-  private final NotificationFeedClient feedClient;
+  private final NotificationFeedManager feedManager;
   private final TransactionSystemClient transactionSystemClient;
   private final KafkaPublisher.Ack ack;
 
@@ -94,10 +94,11 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
 
   @Inject
   public KafkaNotificationService(KafkaClient kafkaClient, DatasetFramework dsFramework,
-                                  NotificationFeedClient feedClient, TransactionSystemClient transactionSystemClient) {
+                                  NotificationFeedManager feedManager,
+                                  TransactionSystemClient transactionSystemClient) {
     this.kafkaClient = kafkaClient;
     this.dsFramework = dsFramework;
-    this.feedClient = feedClient;
+    this.feedManager = feedManager;
     this.transactionSystemClient = transactionSystemClient;
     this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
 
@@ -200,7 +201,7 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
   public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler,
                                    Executor executor) throws NotificationFeedException {
     // This call will make sure that the feed exists
-    feedClient.getFeed(feed);
+    feedManager.getFeed(feed);
 
     final TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);
 

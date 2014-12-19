@@ -14,15 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.client;
+package co.cask.cdap.notifications.feeds.client;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.notifications.NotificationFeed;
-import co.cask.cdap.notifications.service.NotificationFeedException;
-import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Notification feed service client.
  */
-public class NotificationFeedServiceClient implements NotificationFeedClient {
+public class NotificationFeedServiceClient implements NotificationFeedManager {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedServiceClient.class);
   private static final Gson GSON = new Gson();
 

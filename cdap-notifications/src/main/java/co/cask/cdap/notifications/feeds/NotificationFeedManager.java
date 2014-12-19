@@ -14,9 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
-
-import co.cask.cdap.notifications.service.NotificationFeedException;
+package co.cask.cdap.notifications.feeds;
 
 import java.util.List;
 
@@ -40,7 +38,7 @@ public interface NotificationFeedManager {
    * the {@link NotificationFeed#getId} method is used.
    *
    * @param feed the {@link NotificationFeed} to delete.
-   * @throws co.cask.cdap.notifications.service.NotificationFeedNotFoundException if the feed does not exist.
+   * @throws NotificationFeedNotFoundException if the feed does not exist.
    */
   void deleteFeed(NotificationFeed feed) throws NotificationFeedException;
 
@@ -49,7 +47,7 @@ public interface NotificationFeedManager {
    *
    * @param feed feed containing the feed Id of the feed to retrieve.
    * @return {@link NotificationFeed} of the feed which ID is the same as {@code feed}.
-   * @throws co.cask.cdap.notifications.service.NotificationFeedNotFoundException if the feed does not exist.
+   * @throws NotificationFeedNotFoundException if the feed does not exist.
    */
   NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException;
 

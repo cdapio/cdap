@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.service;
+package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.notifications.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -29,8 +29,8 @@ public interface NotificationFeedStore {
   /**
    * Creates a new Notification feed.
    *
-   * @param feed {@link co.cask.cdap.notifications.NotificationFeed} representing the feed.
-   * @return existing {@link co.cask.cdap.notifications.NotificationFeed} if a feed with the same id already exists,
+   * @param feed {@link NotificationFeed} representing the feed.
+   * @return existing {@link NotificationFeed} if a feed with the same id already exists,
    * null if no feed with the same id exists, and the feed was created successfully.
    */
   @Nullable

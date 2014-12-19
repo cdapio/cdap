@@ -24,7 +24,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -274,21 +273,5 @@ public class AppMetadataStore extends MetadataStoreDataset {
       builder.add(name);
     }
     return builder.build();
-  }
-
-  public void createNotificationFeed(NotificationFeed feed) {
-    write(new Key.Builder().add(TYPE_NOTIFICATION_FEED, feed.getId()).build(), feed);
-  }
-
-  public NotificationFeed getNotificationFeed(String feedId) {
-    return get(new Key.Builder().add(TYPE_NOTIFICATION_FEED, feedId).build(), NotificationFeed.class);
-  }
-
-  public void deleteNotificationFeed(String feedId) {
-    deleteAll(new Key.Builder().add(TYPE_NOTIFICATION_FEED, feedId).build());
-  }
-
-  public List<NotificationFeed> listNotificationFeeds() {
-    return list(new Key.Builder().add(TYPE_NOTIFICATION_FEED).build(), NotificationFeed.class);
   }
 }

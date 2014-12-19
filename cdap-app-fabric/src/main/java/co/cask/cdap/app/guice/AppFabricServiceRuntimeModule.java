@@ -56,8 +56,10 @@ import co.cask.cdap.logging.run.InMemoryStreamServiceManager;
 import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
-import co.cask.cdap.notifications.service.NotificationFeedService;
-import co.cask.cdap.notifications.service.NotificationFeedStore;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.MDSNotificationFeedStore;
+import co.cask.cdap.notifications.feeds.service.NotificationFeedService;
+import co.cask.cdap.notifications.feeds.service.NotificationFeedStore;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
@@ -66,7 +68,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
@@ -220,13 +221,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
 
-      bind(NotificationFeedService.class).in(Scopes.SINGLETON);
-    }
-
-    @Provides
-    @Singleton
-    public NotificationFeedStore providesNotificationFeedStore(StoreFactory storeFactory) {
-      return storeFactory.create();
+      bind(NotificationFeedManager.class).to(NotificationFeedService.class).in(Scopes.SINGLETON);
+      bind(NotificationFeedStore.class).to(MDSNotificationFeedStore.class).in(Scopes.SINGLETON);
     }
 
     @Provides

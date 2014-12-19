@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.kafka;
+package co.cask.cdap.notifications.service.kafka;
 
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;

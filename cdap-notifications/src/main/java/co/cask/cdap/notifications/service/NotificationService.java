@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.client;
+package co.cask.cdap.notifications.service;
 
-import co.cask.cdap.notifications.NotificationFeed;
-import co.cask.cdap.notifications.NotificationHandler;
-import co.cask.cdap.notifications.service.NotificationException;
-import co.cask.cdap.notifications.service.NotificationFeedException;
-import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
@@ -65,7 +64,7 @@ public interface NotificationService extends Service {
   /**
    * Subscribe to the notification received on the {@code feed}, and handle the notifications with the {@code handler}.
    * Before this call is made, the {@code feed} has to be created using the
-   * {@link co.cask.cdap.notifications.NotificationFeedManager}.
+   * {@link NotificationFeedManager}.
    * Multiple subscriptions to a same feed with different handlers are possible.
    *
    * @param feed {@link NotificationFeed} to subscribe to.
@@ -73,7 +72,7 @@ public interface NotificationService extends Service {
    * @param <N> Type of the notifications.
    * @return A {@link Cancellable} for cancelling Notification consumption.
    * @throws NotificationFeedNotFoundException if the feed does not exist, according to the
-   * {@link co.cask.cdap.notifications.NotificationFeedManager}.
+   * {@link NotificationFeedManager}.
    * @throws NotificationFeedException in case of any other error.
    */
   <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler)
@@ -82,7 +81,7 @@ public interface NotificationService extends Service {
   /**
    * Subscribe to the notification received on the {@code feed}, and handle the notifications with the {@code handler}.
    * Before this call is made, the {@code feed} has to be created using the
-   * {@link co.cask.cdap.notifications.NotificationFeedManager}.
+   * {@link NotificationFeedManager}.
    * Multiple subscriptions to a same feed with different handlers are possible.
    *
    * @param feed {@link NotificationFeed} to subscribe to.
@@ -92,7 +91,7 @@ public interface NotificationService extends Service {
    * @param <N> Type of the notifications.
    * @return A {@link Cancellable} for cancelling Notification consumption.
    * @throws NotificationFeedNotFoundException if the feed does not exist, according to the
-   * {@link co.cask.cdap.notifications.NotificationFeedManager}.
+   * {@link NotificationFeedManager}.
    * @throws NotificationFeedException in case of any other error.
    */
   <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler, Executor executor)

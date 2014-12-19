@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
+package co.cask.cdap.notifications.feeds;
 
-import co.cask.cdap.notifications.service.NotificationFeedException;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;

@@ -36,22 +36,23 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.client.NotificationService;
-import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
-import co.cask.cdap.notifications.service.NotificationFeedService;
-import co.cask.cdap.notifications.service.NotificationFeedStore;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedClientRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationContext;
+import co.cask.cdap.notifications.service.NotificationHandler;
+import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.notifications.service.TxRetryPolicy;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
@@ -70,7 +71,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class NotificationTest {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationTest.class);
 
-  protected static NotificationFeedClient feedClient;
+  protected static NotificationFeedManager feedManager;
   private static DatasetFramework dsFramework;
 
   private static TransactionManager txManager;
@@ -102,17 +103,8 @@ public abstract class NotificationTest {
                                     new IOModule(),
                                     new AuthModule(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new AbstractModule() {
-                                      @Override
-                                      protected void configure() {
-                                        bind(NotificationFeedClient.class).to(NotificationFeedClientAndService.class)
-                                          .in(Scopes.SINGLETON);
-                                        bind(NotificationFeedService.class).to(NotificationFeedClientAndService.class)
-                                          .in(Scopes.SINGLETON);
-                                        bind(NotificationFeedStore.class).to(InMemoryNotificationFeedStore.class)
-                                          .in(Scopes.SINGLETON);
-                                      }
-                                    }),
+                                    new NotificationFeedClientRuntimeModule().getInMemoryModules()
+                                  ),
                                   Arrays.asList(modules))
     );
   }
@@ -121,7 +113,7 @@ public abstract class NotificationTest {
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
 
-    feedClient = injector.getInstance(NotificationFeedClient.class);
+    feedManager = injector.getInstance(NotificationFeedManager.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
 
     txManager = injector.getInstance(TransactionManager.class);
@@ -133,6 +125,7 @@ public abstract class NotificationTest {
   }
 
   public static void stopServices() throws Exception {
+    notificationService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
@@ -143,7 +136,7 @@ public abstract class NotificationTest {
   public void onePublisherOneSubscriberTest() throws Exception {
     final int messagesCount = 20;
 
-    Assert.assertTrue(feedClient.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED1));
     try {
       // Create a subscribing process
       final AtomicInteger receiveCount = new AtomicInteger(0);
@@ -194,9 +187,9 @@ public abstract class NotificationTest {
       Assert.assertTrue(assertionOk.get());
       Assert.assertEquals(messagesCount, receiveCount.get());
     } finally {
-      feedClient.deleteFeed(FEED1);
+      feedManager.deleteFeed(FEED1);
       try {
-        feedClient.getFeed(FEED1);
+        feedManager.getFeed(FEED1);
         Assert.fail("Should throw NotificationFeedNotFoundException.");
       } catch (NotificationFeedNotFoundException e) {
         // Expected
@@ -231,7 +224,7 @@ public abstract class NotificationTest {
     // keyValueTable is a system dataset module
     dsFramework.addInstance("keyValueTable", "myTable", DatasetProperties.EMPTY);
 
-    Assert.assertTrue(feedClient.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED1));
     try {
       Cancellable cancellable = notificationService.subscribe(FEED1, new NotificationHandler<String>() {
         private int received = 0;
@@ -273,7 +266,7 @@ public abstract class NotificationTest {
       }
     } finally {
       dsFramework.deleteInstance("myTable");
-      feedClient.deleteFeed(FEED1);
+      feedManager.deleteFeed(FEED1);
     }
   }
 
@@ -282,7 +275,7 @@ public abstract class NotificationTest {
     final int messagesCount = 20;
     int subscribersCount = 10;
 
-    Assert.assertTrue(feedClient.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED1));
     try {
       Runnable publisherRunnable = new Runnable() {
         @Override
@@ -340,7 +333,7 @@ public abstract class NotificationTest {
         Assert.assertEquals(messagesCount, i);
       }
     } finally {
-      feedClient.deleteFeed(FEED1);
+      feedManager.deleteFeed(FEED1);
     }
   }
 
@@ -354,7 +347,7 @@ public abstract class NotificationTest {
     final int messagesCount = 15;
     int publishersCount = 5;
 
-    Assert.assertTrue(feedClient.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED1));
     try {
       // Create a subscribing process
       final AtomicBoolean assertionOk = new AtomicBoolean(true);
@@ -370,7 +363,8 @@ public abstract class NotificationTest {
         public void processNotification(SimpleNotification notification, NotificationContext notificationContext) {
           LOG.debug("Received notification payload: {}", notification);
           try {
-            Assert.assertEquals("fake-payload-" + receiveCounts[notification.getPublisherId()], notification.getPayload());
+            Assert.assertEquals("fake-payload-" + receiveCounts[notification.getPublisherId()],
+                                notification.getPayload());
             receiveCounts[notification.getPublisherId()]++;
           } catch (Throwable t) {
             assertionOk.set(false);
@@ -415,7 +409,7 @@ public abstract class NotificationTest {
         Assert.assertEquals(messagesCount, i);
       }
     } finally {
-      feedClient.deleteFeed(FEED1);
+      feedManager.deleteFeed(FEED1);
     }
   }
 
@@ -424,8 +418,8 @@ public abstract class NotificationTest {
     // One subscriber subscribes to two feeds
     final int messagesCount = 15;
 
-    Assert.assertTrue(feedClient.createFeed(FEED1));
-    Assert.assertTrue(feedClient.createFeed(FEED2));
+    Assert.assertTrue(feedManager.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED2));
     try {
       // Create a subscribing process
       final AtomicBoolean assertionOk = new AtomicBoolean(true);
@@ -519,8 +513,8 @@ public abstract class NotificationTest {
         Assert.assertEquals(messagesCount, i);
       }
     } finally {
-      feedClient.deleteFeed(FEED1);
-      feedClient.deleteFeed(FEED2);
+      feedManager.deleteFeed(FEED1);
+      feedManager.deleteFeed(FEED2);
     }
   }
 
@@ -529,8 +523,8 @@ public abstract class NotificationTest {
     // Test two publishers on two different feeds, but only one subscriber subscribing to one of the feeds
 
     final int messagesCount = 15;
-    Assert.assertTrue(feedClient.createFeed(FEED1));
-    Assert.assertTrue(feedClient.createFeed(FEED2));
+    Assert.assertTrue(feedManager.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED2));
     try {
 
       // Create a subscribing process
@@ -600,8 +594,8 @@ public abstract class NotificationTest {
       Assert.assertTrue(assertionOk.get());
       Assert.assertEquals(messagesCount, receiveCount.get());
     } finally {
-      feedClient.deleteFeed(FEED1);
-      feedClient.deleteFeed(FEED2);
+      feedManager.deleteFeed(FEED1);
+      feedManager.deleteFeed(FEED2);
     }
   }
 

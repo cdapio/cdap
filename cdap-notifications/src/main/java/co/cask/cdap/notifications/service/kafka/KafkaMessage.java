@@ -14,12 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.client;
+package co.cask.cdap.notifications.service.kafka;
 
-import co.cask.cdap.notifications.NotificationFeedManager;
+import com.google.gson.JsonElement;
 
 /**
- * Client to connect to the {@link co.cask.cdap.notifications.NotificationFeedManager}.
+ * Message sent to Kafka that contains a serialized notification.
  */
-public interface NotificationFeedClient extends NotificationFeedManager {
+public class KafkaMessage {
+  private final String messageKey;
+  private final JsonElement notificationJson;
+
+  public KafkaMessage(String messageKey, JsonElement notificationJson) {
+    this.messageKey = messageKey;
+    this.notificationJson = notificationJson;
+  }
+
+  public String getMessageKey() {
+    return messageKey;
+  }
+
+  public JsonElement getNotificationJson() {
+    return notificationJson;
+  }
 }

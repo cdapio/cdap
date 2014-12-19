@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
+package co.cask.cdap.notifications.service;
 
 import co.cask.cdap.api.TxRunnable;
 

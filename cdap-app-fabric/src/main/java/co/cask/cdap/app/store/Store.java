@@ -23,7 +23,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.notifications.service.NotificationFeedStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -41,7 +40,7 @@ import javax.annotation.Nullable;
  * {@link Store} operates on a {@link Program}. It's responsible
  * for managing the non-runtime lifecycle of a {@link Program}
  */
-public interface Store extends NotificationFeedStore {
+public interface Store {
 
   /**
    * Loads a given program.

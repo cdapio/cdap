@@ -48,7 +48,6 @@ import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -724,56 +723,6 @@ public class DefaultStore implements Store {
       @Override
       public List<NamespaceMeta> apply(AppMds input) throws Exception {
         return input.apps.listNamespaces();
-      }
-    });
-  }
-
-  @Override
-  public NotificationFeed createNotificationFeed(final NotificationFeed feed) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NotificationFeed> () {
-      @Override
-      public NotificationFeed apply(AppMds input) throws Exception {
-        String feedId = feed.getId();
-        NotificationFeed existing = input.apps.getNotificationFeed(feedId);
-        if (existing != null) {
-          return existing;
-        }
-        input.apps.createNotificationFeed(feed);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public NotificationFeed getNotificationFeed(final String feedId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NotificationFeed>() {
-      @Override
-      public NotificationFeed apply(AppMds input) throws Exception {
-        return input.apps.getNotificationFeed(feedId);
-      }
-    });
-  }
-
-  @Override
-  public NotificationFeed deleteNotificationFeed(final String feedId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NotificationFeed>() {
-      @Override
-      public NotificationFeed apply(AppMds input) throws Exception {
-        NotificationFeed existing = input.apps.getNotificationFeed(feedId);
-        if (existing != null) {
-          input.apps.deleteNotificationFeed(feedId);
-        }
-        return existing;
-      }
-    });
-  }
-
-  @Override
-  public List<NotificationFeed> listNotificationFeeds() {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<NotificationFeed>>() {
-      @Override
-      public List<NotificationFeed> apply(AppMds input) throws Exception {
-        return input.apps.listNotificationFeeds();
       }
     });
   }

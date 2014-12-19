@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.service;
+package co.cask.cdap.notifications.feeds;
 
 /**
  * Exceptions about notification feed.

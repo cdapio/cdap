@@ -14,20 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.notifications;
-
-import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.service.NotificationFeedService;
-import co.cask.cdap.notifications.service.NotificationFeedStore;
-import com.google.inject.Inject;
+package co.cask.cdap.notifications.feeds;
 
 /**
- *
+ * Exception thrown when a {@link NotificationFeed} object is not found.
  */
-public class NotificationFeedClientAndService extends NotificationFeedService implements NotificationFeedClient {
+public class NotificationFeedNotFoundException extends NotificationFeedException {
+  public NotificationFeedNotFoundException(String s) {
+    super(s);
+  }
 
-  @Inject
-  public NotificationFeedClientAndService(NotificationFeedStore store) {
-    super(store);
+  public NotificationFeedNotFoundException(Throwable throwable) {
+    super(throwable);
+  }
+
+  public NotificationFeedNotFoundException(String s, Throwable throwable) {
+    super(s, throwable);
   }
 }

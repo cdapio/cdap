@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.inmemory;
+package co.cask.cdap.notifications.service.inmemory;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.BasicNotificationContext;
-import co.cask.cdap.notifications.NotificationFeed;
-import co.cask.cdap.notifications.NotificationHandler;
-import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.client.NotificationService;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.service.BasicNotificationContext;
 import co.cask.cdap.notifications.service.NotificationException;
-import co.cask.cdap.notifications.service.NotificationFeedException;
+import co.cask.cdap.notifications.service.NotificationHandler;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
@@ -60,16 +60,16 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
 
   private final DatasetFramework dsFramework;
   private final TransactionSystemClient transactionSystemClient;
-  private final NotificationFeedClient feedClient;
+  private final NotificationFeedManager feedManager;
 
   private ListeningExecutorService defaultExecutor;
 
   @Inject
   public InMemoryNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient,
-                                     NotificationFeedClient feedClient) {
+                                     NotificationFeedManager feedManager) {
     this.dsFramework = dsFramework;
     this.transactionSystemClient = transactionSystemClient;
-    this.feedClient = feedClient;
+    this.feedManager = feedManager;
     this.feedsToHandlers = HashMultimap.create();
     this.handlersToExecutors = Maps.newHashMap();
     this.lock = new ReentrantReadWriteLock();
@@ -143,7 +143,7 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
   public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler, Executor executor)
     throws NotificationFeedException {
     // This call will make sure that the feed exists
-    feedClient.getFeed(feed);
+    feedManager.getFeed(feed);
 
     lock.writeLock().lock();
     try {
