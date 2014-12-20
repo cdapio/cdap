@@ -106,7 +106,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} to manage program lifecycle for v3 REST APIs
  */
 @Singleton
-@Path(Constants.Gateway.API_VERSION_3)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
 
@@ -211,7 +211,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns status of a runnable specified by the type{flows,workflows,mapreduce,spark,procedures,services}.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/status")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
   public void getStatus(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") String appId,
@@ -237,7 +237,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @POST
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
   public void startStopDebugProgram(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
@@ -262,7 +262,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Default it returns all.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-id") String appId,
@@ -286,7 +286,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Get runnable runtime args.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
   public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
@@ -317,7 +317,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Save runnable runtime args.
    */
   @PUT
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
   public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespaceId,
                                       @PathParam("app-id") String appId,
@@ -347,7 +347,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}")
   public void runnableSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                     @PathParam("runnable-type") String runnableType,
@@ -403,7 +403,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param responder
    */
   @POST
-  @Path("/{namespace-id}/status")
+  @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     try {
@@ -469,7 +469,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param responder
    */
   @POST
-  @Path("/{namespace-id}/instances")
+  @Path("/instances")
   public void getInstances(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
     try {
@@ -516,7 +516,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of flows associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/flows")
+  @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.FLOW, null, store);
@@ -526,7 +526,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of procedures associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/procedures")
+  @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.PROCEDURE, null, store);
@@ -536,7 +536,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of map/reduces associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/mapreduce")
+  @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.MAPREDUCE, null, store);
@@ -546,7 +546,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of spark jobs associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/spark")
+  @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.SPARK, null, store);
@@ -556,7 +556,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of workflows associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/workflows")
+  @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.WORKFLOW, null, store);
@@ -566,7 +566,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of services associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/services")
+  @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.SERVICE, null, store);
@@ -576,7 +576,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of programs associated with an application within a namespace.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{program-category}")
+  @Path("/apps/{app-id}/{program-category}")
   public void getProgramsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
@@ -595,7 +595,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns number of instances for a flowlet within a flow.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
   public void getFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
@@ -618,7 +618,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Increases number of instance for a flowlet within a flow.
    */
   @PUT
-  @Path("/{namespace-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
@@ -665,7 +665,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Changes input stream for a flowlet connection.
    */
   @PUT
-  @Path("/{namespace-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
   public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
                                             @PathParam("namespace-id") String namespaceId,
                                             @PathParam("app-id") String appId,
@@ -701,7 +701,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{program-category}/{program-id}/live-info")
+  @Path("/apps/{app-id}/{program-category}/{program-id}/live-info")
   @SuppressWarnings("unused")
   public void liveInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                        @PathParam("app-id") String appId, @PathParam("program-category") String programCategory,
@@ -720,7 +720,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes queues.
    */
   @DELETE
-  @Path("/{namespace-id}/apps/{app-id}/flows/{flow-id}/queues")
+  @Path("/apps/{app-id}/flows/{flow-id}/queues")
   public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
@@ -748,7 +748,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**************************** Workflow/schedule APIs *****************************************************/
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-name}/current")
+  @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
@@ -785,7 +785,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns next scheduled runtime of a workflow.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/nextruntime")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
@@ -813,7 +813,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the schedule ids for a given workflow.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void workflowSchedules(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
@@ -832,7 +832,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Get schedule state.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
   public void getScheduleState(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                               @PathParam("workflow-id") String workflowId,
@@ -853,7 +853,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Suspend a workflow schedule.
    */
   @POST
-  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                       @PathParam("workflow-id") String workflowId,
@@ -884,7 +884,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Resume a workflow schedule.
    */
   @POST
-  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                      @PathParam("workflow-id") String workflowId,
