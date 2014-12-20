@@ -1,4 +1,4 @@
-I/*
+/*
  * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,6 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
