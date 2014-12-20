@@ -34,9 +34,13 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+
 /**
  * Handler to serve log requests.
  */
@@ -73,17 +77,20 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs")
-  public void sysList(HttpRequest request, HttpResponder responder,
-                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId) {
+  public void sysList(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
+                      @PathParam("service-id") String serviceId,
+                      @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                      @QueryParam("stop") @DefaultValue("-1") long toTimeMsParam,
+                      @QueryParam("escape") @DefaultValue("true") boolean escape,
+                      @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
-      LogHandler.LogRequestArguments logArgs = logHandler.decodeLogArgs(request);
-      long fromTimeMs = logArgs.getFromTimeMs();
-      long toTimeMs = logArgs.getToTimeMs();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterStr);
+      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
+      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeMsParam, TimeUnit.SECONDS);
 
       if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
+          "greater than zero and stop should be greater than start.");
         return;
       }
 
@@ -103,20 +110,22 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs")
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
-                   @PathParam("entity-id") String entityId) {
-    logHandler.list(request, responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId);
+                   @PathParam("entity-id") String entityId, @QueryParam("start") long fromTimeMs,
+                   @QueryParam("stop") long toTimeMs, @QueryParam("escape") @DefaultValue("true") boolean escape,
+                   @QueryParam("filter") @DefaultValue("") String filterStr) {
+    logHandler.list(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId,
+                    fromTimeMs, toTimeMs, escape, filterStr);
   }
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs/next")
-  public void sysNext(HttpRequest request, HttpResponder responder,
-                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId) {
+  public void sysNext(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
+                      @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
+                      @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                      @QueryParam("escape") @DefaultValue("true") boolean escape,
+                      @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
-      LogHandler.LogRequestArguments logArgs = logHandler.decodeLogArgs(request);
-      int maxEvents = logArgs.getMaxEvents();
-      long fromOffset = logArgs.getFromOffset();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterStr);
 
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
                                                                              serviceId);
@@ -134,20 +143,23 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs/next")
   public void next(HttpRequest request, HttpResponder responder,
                    @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
-                   @PathParam("entity-id") String entityId) {
-    logHandler.next(request, responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId);
+                   @PathParam("entity-id") String entityId, @QueryParam("max") @DefaultValue("50") int maxEvents,
+                   @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                   @QueryParam("escape") @DefaultValue("true") boolean escape,
+                   @QueryParam("filter") @DefaultValue("") String filterStr) {
+    logHandler.next(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId,
+                    maxEvents, fromOffset, escape, filterStr);
   }
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs/prev")
-  public void sysPrev(HttpRequest request, HttpResponder responder,
-                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId) {
+  public void sysPrev(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
+                      @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
+                      @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                      @QueryParam("escape") @DefaultValue("true") boolean escape,
+                      @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
-      LogHandler.LogRequestArguments logArgs = logHandler.decodeLogArgs(request);
-      int maxEvents = logArgs.getMaxEvents();
-      long fromOffset = logArgs.getFromOffset();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterStr);
 
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
                                                                              serviceId);
@@ -165,7 +177,26 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs/prev")
   public void prev(HttpRequest request, HttpResponder responder,
                    @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
-                   @PathParam("entity-id") String entityId) {
-    logHandler.prev(request, responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId);
+                   @PathParam("entity-id") String entityId, @QueryParam("max") @DefaultValue("50") int maxEvents,
+                   @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                   @QueryParam("escape") @DefaultValue("true") boolean escape,
+                   @QueryParam("filter") @DefaultValue("") String filterStr) {
+    logHandler.prev(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId,
+                    maxEvents, fromOffset, escape, filterStr);
+  }
+
+  /**
+   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
+   * Note: This piece of code is duplicated from AbstractAppFabricHttpHandler, but its ok since this temporary, till we
+   * support v2 APIs
+   *
+   * @param request the original {@link HttpRequest}
+   * @return {@link HttpRequest} with modified URI
+   */
+  public HttpRequest rewriteRequest(HttpRequest request) {
+    String originalUri = request.getUri();
+    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
+      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
+    return request;
   }
 }
