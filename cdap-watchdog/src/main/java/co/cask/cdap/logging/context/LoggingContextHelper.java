@@ -26,6 +26,7 @@ import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
@@ -35,13 +36,6 @@ import java.util.Map;
  */
 public final class LoggingContextHelper {
   private LoggingContextHelper() {}
-
-  /**
-   * Defines entity types.
-   */
-  public enum EntityType {
-    FLOW, PROCEDURE, MAP_REDUCE, SPARK, SERVICE
-  }
 
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
     // Tags are empty, cannot determine logging context.
@@ -96,20 +90,20 @@ public final class LoggingContextHelper {
   }
 
   public static LoggingContext getLoggingContext(String accountId, String applicationId, String entityId,
-                                                 EntityType entityType) {
-    switch (entityType) {
+                                                 ProgramType programType) {
+    switch (programType) {
       case FLOW:
         return new FlowletLoggingContext(accountId, applicationId, entityId, "");
       case PROCEDURE:
         return new ProcedureLoggingContext(accountId, applicationId, entityId);
-      case MAP_REDUCE:
+      case MAPREDUCE:
         return new MapReduceLoggingContext(accountId, applicationId, entityId);
       case SPARK:
         return new SparkLoggingContext(accountId, applicationId, entityId);
       case SERVICE:
         return new UserServiceLoggingContext(accountId, applicationId, entityId, "");
       default:
-        throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", entityType));
+        throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
     }
   }
 

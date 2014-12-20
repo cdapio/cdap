@@ -41,6 +41,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -74,6 +75,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Provides base test class for MetricsServiceTestsSuite.
@@ -371,5 +373,37 @@ public abstract class MetricsSuiteTestBase {
     HttpDelete delete = new HttpDelete(MetricsSuiteTestBase.getEndPoint(resource));
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);
+  }
+
+  /**
+   * Given a non-versioned API path, returns its corresponding versioned API path.
+   *
+   * @param nonVersionedApiPath API path without version
+   * @param version the requested API version. Optional - defaults to v2.
+   * @param namespace the requested namespace id. Optional - defaults to null/no namespace.
+   * @return
+   */
+  public static String getVersionedAPIPath(String nonVersionedApiPath, @Nullable String version,
+                                           @Nullable String namespace) {
+    StringBuilder versionedApiBuilder = new StringBuilder("/");
+    // if not specified, treat v2 as the version, so existing tests do not need any updates.
+    if (version == null) {
+      version = Constants.Gateway.API_VERSION_2_TOKEN;
+    }
+
+    if (Constants.Gateway.API_VERSION_2_TOKEN.equals(version)) {
+      Preconditions.checkArgument(namespace == null,
+                                  String.format("Cannot specify namespace for v2 APIs. Namespace will default to '%s'" +
+                                                  " for all v2 APIs.", Constants.DEFAULT_NAMESPACE));
+      versionedApiBuilder.append(version).append("/");
+    } else if (Constants.Gateway.API_VERSION_3_TOKEN.equals(version)) {
+      Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3 APIs.");
+      versionedApiBuilder.append(version).append("/namespaces/").append(namespace).append("/");
+    } else {
+      throw new IllegalArgumentException(String.format("Unsupported version '%s'. Only v2 and v3 are supported.",
+                                                       version));
+    }
+    versionedApiBuilder.append(nonVersionedApiPath);
+    return versionedApiBuilder.toString();
   }
 }

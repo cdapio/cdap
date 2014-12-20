@@ -129,6 +129,10 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   }
 
   private String getV3RoutingService(String [] uriParts, AllowedMethod method, String accId) {
+    if (uriParts.length >= 8 && uriParts[7].equals("logs")) {
+      //Log Handler Path /v3/namespaces/<namespaceid>apps/<appid>/<programid-type>/<programid>/logs
+      return Constants.Service.METRICS;
+    }
     return Constants.Service.APP_FABRIC_HTTP;
   }
 }
