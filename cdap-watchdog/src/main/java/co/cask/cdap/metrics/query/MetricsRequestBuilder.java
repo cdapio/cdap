@@ -33,7 +33,7 @@ final class MetricsRequestBuilder {
   private long startTime;
   private long endTime;
   private MetricsRequest.Type type;
-  private MetricsRequest.TimeSeriesResolution resolution;
+  private int resolution;
   private int count;
   private MetricsScope scope;
   private Interpolator interpolator;
@@ -77,7 +77,7 @@ final class MetricsRequestBuilder {
     return this;
   }
 
-  MetricsRequestBuilder setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution resolution) {
+  MetricsRequestBuilder setTimeSeriesResolution(int resolution) {
     this.resolution = resolution;
     return this;
   }
@@ -111,13 +111,13 @@ final class MetricsRequestBuilder {
     private final long startTime;
     private final long endTime;
     private final Type type;
-    private final TimeSeriesResolution resolution;
+    private final int resolution;
     private final int count;
     private MetricsScope scope;
     private Interpolator interpolator;
 
     public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix, String tagPrefix,
-                              long startTime, long endTime, Type type, TimeSeriesResolution resolution,
+                              long startTime, long endTime, Type type, int resolution,
                               int count, MetricsScope scope, Interpolator interpolator) {
       Preconditions.checkNotNull(scope);
       this.contextPrefix = contextPrefix;
@@ -175,7 +175,7 @@ final class MetricsRequestBuilder {
     }
 
     @Override
-    public TimeSeriesResolution getTimeSeriesResolution() {
+    public int getTimeSeriesResolution() {
       return resolution;
     }
 

@@ -55,10 +55,6 @@ public class TimeSeriesTables {
     }
   }
 
-  public TimeSeriesTable getTable(MetricsScope scope, int resolution) {
-    return metricsTableCaches.get(scope).getUnchecked(resolution);
-  }
-
   public void clear(MetricsScope scope) throws OperationException {
     for (int resolution : timeSeriesResolutions) {
       metricsTableCaches.get(scope).getUnchecked(resolution).clear();
@@ -87,9 +83,13 @@ public class TimeSeriesTables {
     }
   }
 
-  public void save(MetricsScope scope, Iterator<MetricsRecord> iterator) throws OperationException {
+  public void save(MetricsScope scope, List<MetricsRecord> records) throws OperationException {
     for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.get(scope).getUnchecked(resolution).save(iterator);
+      metricsTableCaches.get(scope).getUnchecked(resolution).save(records.iterator());
     }
+  }
+
+  public MetricsScanner scan(MetricsScope scope, int resolution, MetricsScanQuery scanQuery) throws OperationException {
+    return metricsTableCaches.get(scope).getUnchecked(resolution).scan(scanQuery);
   }
 }

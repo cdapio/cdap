@@ -36,6 +36,7 @@ public class TimeMathParser {
   private static final String NOW = "now";
   private static final String VALID_UNITS = "s|m|h|d";
   private static final Pattern OP_PATTERN = Pattern.compile("(\\-|\\+)(\\d+)(" + VALID_UNITS + ")");
+  private static final Pattern RESOLUTION_PATTERN = Pattern.compile("(\\d+)(" + VALID_UNITS + ")");
   private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("^(\\d+)$");
 
   private static long convertToSeconds(String op, long num, String unitStr) {
@@ -63,6 +64,16 @@ public class TimeMathParser {
 
   public static long nowInSeconds() {
     return TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+  }
+
+  public static int resolutionInSeconds(String resolutionStr) {
+    Matcher matcher = RESOLUTION_PATTERN.matcher(resolutionStr);
+    int output = 0;
+    while (matcher.find()) {
+      // group 1 should be '+' or '-', group 2 is the number of units, and group 3 is the unit.  ex: 6h
+      output += convertToSeconds("+", Long.parseLong(matcher.group(1)), matcher.group(2));
+    }
+    return output;
   }
 
   public static long parseTime(String timeStr) {

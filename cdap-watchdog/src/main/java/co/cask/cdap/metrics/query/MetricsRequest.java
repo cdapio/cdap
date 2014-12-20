@@ -65,7 +65,7 @@ interface MetricsRequest {
 
   Type getType();
 
-  TimeSeriesResolution getTimeSeriesResolution();
+  int getTimeSeriesResolution();
 
   int getCount();
 

@@ -53,7 +53,7 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
       while (records.hasNext()) {
         metricsRecords.add(records.next());
         if (metricsRecords.size() == MAX_RECORDLIST_SIZE || !records.hasNext()) {
-          timeSeriesTables.save(scope, metricsRecords.iterator());
+          timeSeriesTables.save(scope, metricsRecords);
           metricsRecords.clear();
         }
       }

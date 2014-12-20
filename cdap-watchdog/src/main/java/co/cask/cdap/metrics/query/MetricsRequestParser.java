@@ -397,16 +397,18 @@ final class MetricsRequestParser {
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 
     if (queryParams.containsKey(RESOLUTION)) {
-      try {
-        MetricsRequest.TimeSeriesResolution resolutionInterval = MetricsRequest.TimeSeriesResolution.valueOf(
-          queryParams.get(RESOLUTION).get(0).toUpperCase());
-        builder.setTimeSeriesResolution(resolutionInterval);
-        resolution = resolutionInterval.getResolution();
-      } catch (IllegalArgumentException e) {
-        builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND);
-      }
+
+        resolution = TimeMathParser.resolutionInSeconds(queryParams.get(RESOLUTION).get(0));
+        if ((resolution == 3600) || (resolution == 60) || (resolution == 1)) {
+          builder.setTimeSeriesResolution(resolution);
+        } else {
+          throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
+                                               "1 hour resolutions are supported currently");
+        }
+
     } else {
-      builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND);
+      // if resolution is not provided set 1
+      builder.setTimeSeriesResolution(1);
     }
 
     if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
@@ -415,7 +417,7 @@ final class MetricsRequestParser {
       if (!queryParams.containsKey(RESOLUTION)) {
         // determine resolution, based on difference.
         MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
-        builder.setTimeSeriesResolution(autoResolution);
+        builder.setTimeSeriesResolution(autoResolution.getResolution());
         resolution = autoResolution.getResolution();
       }
       if (queryParams.containsKey(COUNT)) {
