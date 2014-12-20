@@ -228,9 +228,7 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        if (type == ConfigType.USER) {
-          configs.add(accId);
-        } else if (type == ConfigType.DASHBOARD) {
+        if (type == ConfigType.DASHBOARD) {
           //Get all the dashboards owned by the user
           for (Map.Entry<byte[], byte[]> entry : dashboardTable.get(Bytes.toBytes(accId)).getColumns().entrySet()) {
             String column = Bytes.toString(entry.getKey());
@@ -252,17 +250,19 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        //Scan the metaDataTable for rows that have keys corresponding to the given namespace
-        byte[] startRowPrefix = getRowKey(namespace, type, null);
-        byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
-        CloseableIterator<KeyValue<byte[], byte[]>> iterator = metaDataTable.scan(startRowPrefix, endRowPrefix);
-        while (iterator.hasNext()) {
-          KeyValue<byte[], byte[]> entry = iterator.next();
-          String rowKey = Bytes.toString(entry.getKey());
-          //Extract the dashboard id
-          configs.add(rowKey.substring(rowKey.lastIndexOf('.') + 1));
+        if (type == ConfigType.DASHBOARD) {
+          //Scan the metaDataTable for rows that have keys corresponding to the given namespace
+          byte[] startRowPrefix = getRowKey(namespace, type, null);
+          byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
+          CloseableIterator<KeyValue<byte[], byte[]>> iterator = metaDataTable.scan(startRowPrefix, endRowPrefix);
+          while (iterator.hasNext()) {
+            KeyValue<byte[], byte[]> entry = iterator.next();
+            String rowKey = Bytes.toString(entry.getKey());
+            //Extract the dashboard id
+            configs.add(rowKey.substring(rowKey.lastIndexOf('.') + 1));
+          }
+          iterator.close();
         }
-        iterator.close();
       }
     });
     return configs;

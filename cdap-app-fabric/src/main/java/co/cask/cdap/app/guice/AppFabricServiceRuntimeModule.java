@@ -32,6 +32,7 @@ import co.cask.cdap.gateway.handlers.DashboardServiceHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.PreferencesServiceHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.gateway.handlers.UserSettingsServiceHandler;
 import co.cask.cdap.internal.app.deploy.LocalManager;
@@ -215,6 +216,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(UserSettingsServiceHandler.class);
       handlerBinder.addBinding().to(DashboardServiceHandler.class);
+      handlerBinder.addBinding().to(PreferencesServiceHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
     }
 

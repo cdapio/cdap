@@ -21,5 +21,6 @@ package co.cask.cdap.app.config;
  */
 public enum ConfigType {
   DASHBOARD,
-  USER
+  USER,
+  PREFERENCES
 }

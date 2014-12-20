@@ -20,16 +20,13 @@ import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.config.ConfigType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -41,75 +38,52 @@ import javax.ws.rs.PathParam;
  * Config Service HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/configuration/usersettings")
-public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
-  private static final String DEFAULT_NAMESPACE = "default";
+public class UserSettingsServiceHandler extends ConfigServiceHandler {
+  private static final String PREFIX = "default";
   private static final Logger LOG = LoggerFactory.getLogger(UserSettingsServiceHandler.class);
   private static final Gson GSON = new Gson();
-  private final ConfigService configService;
 
   @Inject
   public UserSettingsServiceHandler(Authenticator authenticator, ConfigService configService) {
-    super(authenticator);
-    this.configService = configService;
+    super(authenticator, configService);
   }
 
   @Path("/properties/{property-name}")
   @GET
   public void getUserProperty(final HttpRequest request, final HttpResponder responder,
                             @PathParam("property-name") String property) throws Exception {
-    String value = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
-                                             property);
-    if (value == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      responder.sendString(HttpResponseStatus.OK, value);
-    }
+    getProperty(PREFIX, ConfigType.USER, getAuthenticatedAccountId(request), property, responder);
   }
 
   @Path("/properties/{property-name}")
   @DELETE
   public void deleteUserProperty(final HttpRequest request, final HttpResponder responder,
                                @PathParam("property-name") String property) throws Exception {
-    String value = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
-                                             property);
-    if (value != null) {
-      configService.deleteSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request), property);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } else {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    }
+    deleteProperty(PREFIX, ConfigType.USER, getAuthenticatedAccountId(request), property, responder);
   }
 
   @Path("/properties/{property-name}")
   @PUT
   public void putUserProperty(final HttpRequest request, final HttpResponder responder,
                             @PathParam("property-name") String property) throws Exception {
-    String value = parseBody(request, String.class);
-    configService.writeSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request), property, value);
-    responder.sendStatus(HttpResponseStatus.OK);
+    setProperty(PREFIX, ConfigType.USER, getAuthenticatedAccountId(request), property, request, responder);
   }
 
   @Path("/properties")
   @POST
   public void postUserProperty(final HttpRequest request, final HttpResponder responder) throws Exception {
-    configService.writeSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
-                               decodeArguments(request));
-    responder.sendStatus(HttpResponseStatus.OK);
+    setProperties(PREFIX, ConfigType.USER, getAuthenticatedAccountId(request), request, responder);
   }
 
   @Path("/properties")
   @GET
   public void getUserProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
-    Map<String, String> settings = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER,
-                                                             getAuthenticatedAccountId(request));
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
+    getProperties(PREFIX, ConfigType.USER, getAuthenticatedAccountId(request), responder);
   }
 
   @Path("/properties")
   @DELETE
   public void deleteUserProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
-    configService.deleteConfig(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
-                               getAuthenticatedAccountId(request));
-    responder.sendStatus(HttpResponseStatus.OK);
+    deleteProperties(PREFIX, ConfigType.USER, getAuthenticatedAccountId(request), responder);
   }
 }
