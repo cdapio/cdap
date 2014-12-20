@@ -43,6 +43,8 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -60,6 +62,8 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -142,6 +146,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final QueueAdmin queueAdmin;
 
+  private final Scheduler scheduler;
+
   /**
    * Convenience class for representing the necessary components for retrieving status
    */
@@ -187,7 +193,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
-                                     DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin) {
+                                     DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+                                     Scheduler scheduler) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -197,6 +204,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
+    this.scheduler = scheduler;
   }
 
   /**
@@ -737,6 +745,172 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  /**************************** Workflow/schedule APIs *****************************************************/
+  @GET
+  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-name}/current")
+  public void workflowStatus(HttpRequest request, final HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
+
+    try {
+      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName,
+                                       new WorkflowClient.Callback() {
+                                         @Override
+                                         public void handle(WorkflowClient.Status status) {
+                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+                                             responder.sendByteArray(HttpResponseStatus.OK,
+                                                                     status.getResult().getBytes(),
+                                                                     ImmutableMultimap.of(
+                                                                       HttpHeaders.Names.CONTENT_TYPE,
+                                                                       "application/json; charset=utf-8"));
+
+                                           } else {
+                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                                                 status.getResult());
+                                           }
+                                         }
+                                       });
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns next scheduled runtime of a workflow.
+   */
+  @GET
+  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/nextruntime")
+  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+    try {
+      Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, ProgramType.WORKFLOW);
+
+      JsonArray array = new JsonArray();
+      for (ScheduledRuntime runtime : runtimes) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", runtime.getScheduleId());
+        object.addProperty("time", runtime.getTime());
+        array.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, array);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns the schedule ids for a given workflow.
+   */
+  @GET
+  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules")
+  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+    try {
+      Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
+      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, ProgramType.WORKFLOW));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Get schedule state.
+   */
+  @GET
+  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  public void getScheduleState(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                              @PathParam("workflow-id") String workflowId,
+                              @PathParam("schedule-id") String scheduleId) {
+    try {
+      JsonObject json = new JsonObject();
+      json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Suspend a workflow schedule.
+   */
+  @POST
+  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+                                      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                                      @PathParam("workflow-id") String workflowId,
+                                      @PathParam("schedule-id") String scheduleId) {
+    try {
+      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          scheduler.suspendSchedule(scheduleId);
+          responder.sendJson(HttpResponseStatus.OK, "OK");
+          break;
+        case SUSPENDED:
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Resume a workflow schedule.
+   */
+  @POST
+  @Path("/{namespace-id}/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                                     @PathParam("workflow-id") String workflowId,
+                                     @PathParam("schedule-id") String scheduleId) {
+    try {
+      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
+          break;
+        case SUSPENDED:
+          scheduler.resumeSchedule(scheduleId);
+          responder.sendJson(HttpResponseStatus.OK, "OK");
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
 
   /**
    * Populates requested and provisioned instances for a program type.
