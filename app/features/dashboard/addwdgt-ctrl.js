@@ -15,8 +15,10 @@ function ($scope, caskFocusManager, myDashboardsModel, Widget) {
   var P = '/assets/features/dashboard/widgets';
   $scope.widgetTypes = [
     { name: 'Welcome',        partial: P+'/welcome.html' },
+    { name: 'JSON',           partial: P+'/json.html' },
     { name: 'Histogram',      partial: P+'/bar.html' },
     { name: 'Line Chart',     partial: P+'/line.html' },
+    { name: 'Area Chart',     partial: P+'/area.html' },
     { name: 'Pie Chart',      partial: P+'/pie.html' }
   ];
 

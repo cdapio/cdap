@@ -20,7 +20,8 @@
         ng-model="column"
         as-sortable="dragdrop">
 
-        <div class="panel panel-default"
+        <div class="panel"
+          ng-class="wdgt.getClassName()"
           ng-repeat="wdgt in column"
           as-sortable-item>
 
