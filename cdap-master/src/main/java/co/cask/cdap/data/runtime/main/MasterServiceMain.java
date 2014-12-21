@@ -402,6 +402,8 @@ public class MasterServiceMain extends DaemonMain {
         @Override
         public void running() {
           if (!dsService.isRunning()) {
+            // we need a new dataset service (the old one may have run before and can't be restarted)
+            dsService = baseInjector.getInstance(DatasetService.class); // not a singleton
             LOG.info("Starting Dataset service");
             dsService.startAndWait();
           }
