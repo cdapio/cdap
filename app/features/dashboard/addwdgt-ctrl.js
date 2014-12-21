@@ -11,17 +11,14 @@ function ($scope, caskFocusManager, myDashboardsModel, Widget) {
 
   $scope.model.metric = '/metrics/system/collect.events?start=now-60s&end=now';
 
-
-  var P = '/assets/features/dashboard/widgets';
   $scope.widgetTypes = [
-    { name: 'Welcome',        partial: P+'/welcome.html' },
-    { name: 'JSON',           partial: P+'/json.html' },
-    { name: 'Histogram',      partial: P+'/bar.html' },
-    { name: 'Line Chart',     partial: P+'/line.html' },
-    { name: 'Area Chart',     partial: P+'/area.html' },
-    { name: 'Pie Chart',      partial: P+'/pie.html' }
+    { name: 'Welcome',               type: 'welcome' },
+    { name: 'Histogram (bar)',       type: 'bar' },
+    { name: 'Timeseries (line)',     type: 'line' },
+    { name: 'Timeseries (area)',     type: 'area' },
+    { name: 'Pie Chart',             type: 'pie' },
+    { name: 'Debug',                 type: 'json' }
   ];
-
 
   $scope.doAddWidget = function () {
     myDashboardsModel.current().addWidget($scope.model);

@@ -8,11 +8,15 @@ angular.module(PKG.name+'.feature.dashboard')
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
-      this.partial = '/assets/features/dashboard/widgets/welcome.html';
+      this.type = opts.type || 'welcome';
     }
 
+    Widget.prototype.getPartial = function () {
+      return '/assets/features/dashboard/widgets/' + this.type + '.html'
+    };
+
     Widget.prototype.getClassName = function () {
-      return 'panel-default widget-'+this.partial.split('/').pop().split('.').shift();
+      return 'panel-default widget-'+this.type;
     };
 
     return Widget;
@@ -26,7 +30,7 @@ angular.module(PKG.name+'.feature.dashboard')
     dataSrc.fetch({_cdap: 'GET '+$scope.wdgt.metric}, function (result) {
       $scope.chartHistory = [
         {
-          label: $scope.wdgt.title,
+          label: $scope.wdgt.metric,
           values: result.data.map(function (o) {
             return {
               x: o.time,
