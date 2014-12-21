@@ -19,11 +19,18 @@ angular.module(PKG.name+'.feature.dashboard')
 
     var dataSrc = new MyDataSource($scope);
 
-    console.log($scope.wdgt);
-
     dataSrc.fetch({_cdap: 'GET '+$scope.wdgt.metric}, function (result) {
-      console.log(result);
-      $scope.chartHistory = result;
+      $scope.chartHistory = [
+        {
+          label: $scope.wdgt.title,
+          values: result.data.map(function (o) {
+            return {
+              time: o.time,
+              y: o.value
+            }
+          })
+        }
+      ];
     });
 
   });

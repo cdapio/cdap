@@ -1,9 +1,8 @@
 <div ng-controller="WidgetCtrl">
 
-  <pre>{{wdgt | json}}</pre>
-
-  <pre>{{chartHistory | json}}</pre>
-
-  <epoch-bar></epoch-bar>
+  <epoch-bar
+    data-history="chartHistory"
+    chart-height="200"
+  ></epoch-bar>
 
 </div>
