@@ -1,11 +1,10 @@
 angular.module(PKG.name + '.services')
   .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope) {
     var scope = $rootScope;
+    var data = new MyDataSource(scope);
     this.getList = function() {
       var deferred = $q.defer();
       if (myNamespaceMediator.namespaceList.length === 0) {
-        var data = new MyDataSource(scope);
-
         data.fetch({
           config: {
             isAbsoluteUrl: true,
@@ -13,14 +12,15 @@ angular.module(PKG.name + '.services')
             method: 'GET'
           }
         }, function(res) {
-          myNamespaceMediator.setNamespaceList(res);
-          deferred.resolve(res);
+          if (myNamespaceMediator.namespaceList.length === 0) {
+            myNamespaceMediator.setNamespaceList(res);
+          }
+          deferred.resolve(myNamespaceMediator.getNamespaceList());
         });
-        return deferred.promise;
       } else {
         deferred.resolve(myNamespaceMediator.getNamespaceList());
       }
-      return deferred;
+      return deferred.promise;
     };
     this.getCurrentNamespace = function(scope) {
       var deferred = $q.defer();

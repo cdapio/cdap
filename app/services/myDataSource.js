@@ -96,6 +96,23 @@ angular.module(PKG.name+'.services')
     };
 
     DataSource.prototype.fetch = function (resource, cb) {
+      this.registerCallback(resource, cb);
+      mySocket.send({
+        action: 'fetch',
+        resource: resource
+      });
+    };
+
+    // Just a sugar syntax
+    DataSource.prototype.post = function(resource, cb) {
+      this.registerCallback(resource, cb);
+      mySocket.send({
+        action: 'post',
+        resource: resource
+      });
+    };
+
+    DataSource.prototype.registerCallback = function(resource, cb) {
       var once = false;
 
       this.bindings.push({
@@ -106,11 +123,6 @@ angular.module(PKG.name+'.services')
             cb.apply(this, arguments);
           }
         }
-      });
-
-      mySocket.send({
-        action: 'fetch',
-        resource: resource
       });
     };
 

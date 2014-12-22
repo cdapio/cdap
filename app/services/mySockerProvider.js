@@ -87,7 +87,7 @@ angular.module(PKG.name+'.services')
             MY_CONFIG.cdap.routerServerUrl +
             ':' +
             MY_CONFIG.cdap.routerServerPort +
-            '/v3/';
+            '/v3';
 
       if(r) {
         // we only support json content-type,
@@ -141,11 +141,14 @@ angular.module(PKG.name+'.services')
             msg.resource.url = baseUrl + r.config.path
           } else {
             msg.resource.url = baseUrl +
-              'namespaces/' +
+              '/namespaces/' +
               ns +
               r.config.path;
           }
           msg.resource.method = r.config.method || 'GET';
+          if (r.config.body) {
+            msg.resource.body = r.config.body;
+          }
 
           delete msg.resource.config;
         }

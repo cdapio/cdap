@@ -20,11 +20,12 @@ angular.module(PKG.name + '.services')
         deferred.resolve(this.namespaceList);
       });
       this.deferredNsList = [];
+      this.setCurrentNamespace(nsList[0]);
     };
 
     this.getCurrentNamespace = function() {
       var deferred = $q.defer();
-      if (this.currentNamesapce) {
+      if (this.currentNamespace) {
         deferred.resolve(this.currentNamespace);
       } else {
         this.defferedList.push(deferred);
