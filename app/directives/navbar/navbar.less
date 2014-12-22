@@ -13,5 +13,15 @@
     }
   }
 
+  .navbar-form {
+    visibility: hidden;
+  }
 
+}
+
+body.state-home,
+body.state-apps {
+  [my-navbar] .navbar-form {
+    visibility: visible;
+  }
 }

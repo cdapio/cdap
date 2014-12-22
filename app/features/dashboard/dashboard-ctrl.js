@@ -3,32 +3,16 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $alert, $dropdown) {
+function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
 
-
-  $scope.dashboards = [
-    {
-      title: 'grid',
-      columns: [[{
-        title: 'widget title'
-      }],[],[]]
-    },
-    {
-      title: 'full-width',
-      columns: [[{
-        title: 'hello world'
-      }]]
-    }
-  ];
-
-
+  $scope.dashboards = myDashboardsModel.data;
 
 
   /**
    * handle tab navigation
    */
-  $scope.$watch('dashboards.activeTab', function (newVal) {
-    $state.go($state.includes('**.tab') ? $state.current : '.tab', {tab:newVal});
+  $scope.$watch('dashboards.activeIndex', function (newVal) {
+    $state.go($state.current, {tab:newVal});
   });
 
   $scope.$on('$stateChangeSuccess', function (event, state) {
@@ -36,7 +20,7 @@ function ($scope, $state, $alert, $dropdown) {
     if((tab<0 || tab>=$scope.dashboards.length)) {
       tab = 0;
     }
-    $scope.dashboards.activeTab = tab;
+    $scope.dashboards.activeIndex = tab;
   });
 
 
@@ -78,87 +62,25 @@ function ($scope, $state, $alert, $dropdown) {
   };
 
 
-
-
-
-  /**
-   * add a new dashboard tab
-   */
   $scope.addDashboard = function () {
-    var n = $scope.dashboards.push({
-      title: 'new dashboard',
-      columns: [[{
-        title: 'default widget'
-      }],[],[]]
-    });
-    $scope.dashboards.activeTab = n-1;
+    myDashboardsModel.add('new dashboard');
   };
 
-
-  /**
-   * remove the currently active dashboard tab
-   */
   $scope.removeDashboard = function () {
-    $scope.dashboards.splice($scope.dashboards.activeTab, 1);
+    myDashboardsModel.remove($scope.dashboards.activeIndex);
   };
 
-
-  /**
-   * rename the currently active dashboard tab
-   */
   $scope.renameDashboard = function (newName) {
-    if(newName) {
-      $scope.dashboards[$scope.dashboards.activeTab].title = newName;
-    }
+    myDashboardsModel.current().rename(newName);
   };
 
 
-  /**
-   * rename a widget
-   */
-  $scope.renameWidget = function (wdgt, newName) {
-    if(newName) {
-      wdgt.title = newName;
-    }
+  $scope.removeWidget = function (w) {
+    myDashboardsModel.current().removeWidget(w);
   };
 
-
-
-  /**
-   * remove a widget from the active dashboard tab
-   * @param  {object} wdgt the widget object
-   */
-  $scope.removeWidget = function (wdgt) {
-    var d = $scope.dashboards[$scope.dashboards.activeTab];
-    angular.forEach(d.columns, function (c, i) {
-      d.columns[i] = c.filter(function (p) {
-        return wdgt !== p;
-      });
-    });
-  };
-
-
-
-  /**
-   * add a widget to the active dashboard tab
-   */
-  $scope.addWidget = function () {
-    var columns = $scope.dashboards[$scope.dashboards.activeTab].columns,
-        index = 0,
-        smallest;
-
-    // find the column with the least widgets
-    for (var i = 0; i < columns.length; i++) {
-      var c = columns[i].length;
-      if(smallest===undefined || (c < smallest)) {
-        smallest = c;
-        index = i;
-      }
-    }
-
-    columns[index].unshift({
-      title: 'added widget'
-    });
+  $scope.renameWidget = function (w, newName) {
+    myDashboardsModel.current().renameWidget(w, newName);
   };
 
 

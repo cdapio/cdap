@@ -1,7 +1,7 @@
 <ul class="dropdown-menu" role="menu">
 
   <li role="presentation">
-    <a role="menuitem" tabindex="-1" href="" ng-click="addWidget()">
+    <a role="menuitem" tabindex="-1" ui-sref="dashboard.addwdgt">
       <span class="fa fa-fw fa-dashboard"></span>
       Add widget
     </a>
@@ -18,7 +18,7 @@
 
   <li role="presentation">
     <a role="menuitem" tabindex="-1" href=""
-      ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeTab].title)"
+      ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeIndex].title)"
       cask-promptable="renameDashboard($value)">
       <span class="fa fa-fw fa-pencil"></span>
       Rename
