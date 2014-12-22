@@ -16,8 +16,6 @@
 
 package co.cask.cdap.explore.client;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 import java.net.InetSocketAddress;
 import javax.annotation.Nullable;
 
@@ -37,16 +35,6 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
     return addr;
-  }
-
-  @Override
-  public ListenableFuture<Void> enableExplore(String datasetInstance) {
-    throw new UnsupportedOperationException("This client does not allow to enable explore on datasets.");
-  }
-
-  @Override
-  public ListenableFuture<Void> disableExplore(String datasetInstance) {
-    throw new UnsupportedOperationException("This client does not allow to disable explore on datasets");
   }
 
   @Override

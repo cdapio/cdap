@@ -66,9 +66,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         if ((uriParts.length >= 3) && uriParts[2].equals("explore")
           && (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("tables"))) {
           return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-        } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
-          && uriParts[5].equals("schema")) {
-          // v2/data/explore/datasets/<dataset>/schema
+        } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")) {
+          // v2/data/explore/datasets/<dataset>
           return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
         }
         return Constants.Service.DATASET_MANAGER;
