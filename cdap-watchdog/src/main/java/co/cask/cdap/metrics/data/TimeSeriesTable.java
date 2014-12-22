@@ -99,7 +99,6 @@ public final class TimeSeriesTable {
     this.timeSeriesTable = timeSeriesTable;
     this.entityCodec = entityCodec;
     this.resolution = resolution;
-
     // Two bytes for column name, which is a delta timestamp
     Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
     this.rollTimebaseInterval = rollTime * resolution;
@@ -109,7 +108,9 @@ public final class TimeSeriesTable {
   }
 
   /**
-   * Saves a collection of {@link co.cask.cdap.metrics.transport.MetricsRecord}.
+   * Saves a collection of {@link co.cask.cdap.metrics.transport.MetricsRecord}. If the
+   * {@link co.cask.cdap.metrics.transport.MetricType} is Counter, we would perform an increment and if its of
+   * Gauge type we perform a put operation
    */
   public void save(Iterable<MetricsRecord> records) throws OperationException {
     save(records.iterator());
@@ -121,18 +122,23 @@ public final class TimeSeriesTable {
     }
 
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> table = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
 
     while (records.hasNext()) {
-      getUpdates(records.next(), table);
+      getUpdates(records.next(), gaugesTable, incrementsTable);
     }
 
-    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable =
-      Maps.transformValues(table, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedIncrementsTable =
+      Maps.transformValues(incrementsTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
+
+    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedGaugesTable =
+      Maps.transformValues(gaugesTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
 
     try {
-      timeSeriesTable.put(convertedTable);
+      timeSeriesTable.put(convertedGaugesTable);
+      timeSeriesTable.increment(convertedIncrementsTable);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
@@ -282,7 +288,8 @@ public final class TimeSeriesTable {
   /**
    * Setups all rows, columns and values for updating the metric table.
    */
-  private void getUpdates(MetricsRecord record, NavigableMap<byte[], NavigableMap<byte[], byte[]>> table) {
+  private void getUpdates(MetricsRecord record, NavigableMap<byte[], NavigableMap<byte[], byte[]>> gaugesTable,
+                          NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable) {
     long timestamp = record.getTimestamp() / resolution * resolution;
     int timeBase = getTimeBase(timestamp);
 
@@ -290,23 +297,31 @@ public final class TimeSeriesTable {
     byte[] rowKey = getKey(record.getContext(), record.getRunId(), record.getName(), null, timeBase);
 
     // delta is guaranteed to be 2 bytes.
-    byte[] column = deltaCache[(int) (timestamp - timeBase)];
+    byte[] column = deltaCache[(int) ((timestamp - timeBase) / resolution)];
 
-    addValue(rowKey, column, table, record.getValue(), record.getType());
+    if (record.getType() == MetricType.COUNTER) {
+      addValue(rowKey, column, incrementsTable, record.getValue());
+    } else {
+      put(gaugesTable, rowKey, column, Bytes.toBytes(record.getValue()));
+    }
 
     // Save tags metrics
     for (TagMetric tag : record.getTags()) {
       rowKey = getKey(record.getContext(), record.getRunId(), record.getName(), tag.getTag(), timeBase);
-      addValue(rowKey, column, table, tag.getValue(), record.getType());
+      if (record.getType() == MetricType.COUNTER) {
+        addValue(rowKey, column, incrementsTable, tag.getValue());
+      } else {
+        put(gaugesTable, rowKey, column, Bytes.toBytes(tag.getValue()));
+      }
     }
   }
 
-
   private void addValue(byte[] rowKey, byte[] column,
-                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value, MetricType type) {
-    byte[] oldValue = get(table, rowKey, column);
+                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable,
+                        long value) {
+    byte[] oldValue = get(incrementsTable, rowKey, column);
     long newValue = value;
-    if (oldValue != null && type == MetricType.COUNTER) {
+    if (oldValue != null) {
       if (Bytes.SIZEOF_LONG == oldValue.length) {
         newValue = Bytes.toLong(oldValue) + value;
       } else if (Bytes.SIZEOF_INT == oldValue.length) {
@@ -318,8 +333,9 @@ public final class TimeSeriesTable {
           String.format("Could not parse metric @row %s @column %s value %s as int or long",
                         Bytes.toStringBinary(rowKey), Bytes.toStringBinary(column), Bytes.toStringBinary(oldValue)));
       }
+
     }
-    put(table, rowKey, column, Bytes.toBytes(newValue));
+    put(incrementsTable, rowKey, column, Bytes.toBytes(newValue));
   }
 
   private static byte[] get(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, byte[] row, byte[] column) {

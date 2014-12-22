@@ -27,13 +27,16 @@ To use the **Docker image**:
   to determine the Docker VM's IP address. You will need to use that address as the host
   name when either connecting to the Console or making an HTTP request.
   
-  When you run boot2docker start, it will print a message on the screen similar to::
+  When you run ``boot2docker start``, it will print a message on the screen such as::
 
     To connect the Docker client to the Docker daemon, please set:
-    export DOCKER_HOST=tcp://192.168.59.103:2375
+        export DOCKER_HOST=tcp://192.168.59.103:2375
+        export DOCKER_CERT_PATH=/Users/.../.boot2docker/certs/boot2docker-vm
+        export DOCKER_TLS_VERIFY=1
 
-  It is essential to run this export command. Otherwise, subsequent Docker commands will
-  fail because they can't tell how to connect to the Docker VM.
+  It is essential to run these export commands (or command, if only one). Otherwise,
+  subsequent Docker commands will fail because they can't tell how to connect to the
+  Docker VM.
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 

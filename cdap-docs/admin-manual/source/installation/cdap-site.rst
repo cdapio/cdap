@@ -36,7 +36,7 @@ see the :ref:`configuration-security` section.
      - ``/programs``
      - Directory where all archives are stored
    * - ``app.program.jvm.opts``
-     - ``${weave.jvm.gc.opts}``
+     - ``${twill.jvm.gc.opts}``
      - Java options for all program containers
    * - ``app.temp.dir``
      - ``/tmp``
@@ -82,7 +82,7 @@ see the :ref:`configuration-security` section.
      - Transaction command port number
    * - ``data.tx.janitor.enable``
      - ``true``
-     - Whether or not the TransactionDataJanitor coprocessor
+     - Whether or not the TransactionDataJanitor coprocessor is enabled on tables
    * - ``data.tx.server.io.threads``
      - ``2``
      - Number of transaction IO threads
@@ -101,6 +101,10 @@ see the :ref:`configuration-security` section.
    * - ``data.tx.snapshot.retain``
      - ``10``
      - Number of retained transaction snapshot files
+   * - ``data.tx.timeout``
+     - ``30``
+     - Timeout value in seconds for a transaction; if the transaction is not finished
+       in that time, it is marked invalid
    * - ``enable.unrecoverable.reset``
      - ``false``
      - **WARNING: Enabling this option makes it possible to delete all
@@ -284,7 +288,7 @@ see the :ref:`configuration-security` section.
    * - ``scheduler.max.thread.pool.size``
      - ``30``
      - Size of the scheduler thread pool
-   * - ``security.auth.server.address``
+   * - ``security.auth.server.bind.address``
      - ``127.0.0.1``
      - IP address that the CDAP Authentication Server should bind to
    * - ``security.auth.server.bind.port``
@@ -350,32 +354,25 @@ see the :ref:`configuration-security` section.
    * - ``thrift.max.read.buffer``
      - ``16777216``
      - Maximum read buffer size in bytes used by the Thrift server [`Note 2`_]
-   * - ``weave.java.reserved.memory.mb``
+   * - ``twill.java.reserved.memory.mb``
      - ``250``
-     - Reserved non-heap memory in MB for Weave container
-   * - ``weave.jvm.gc.opts``
-     - ``-verbose:gc``
-
-       ``-Xloggc:<log-dir>/gc.log``
-
-       ``-XX:+PrintGCDetails``
-
-       ``-XX:+PrintGCTimeStamps``
-
-       ``-XX:+UseGCLogFileRotation``
-
-       ``-XX:NumberOfGCLogFiles=10``
-
-       ``-XX:GCLogFileSize=1M``
-
-     - Java garbage collection options for all Weave containers; ``<log-dir>`` is the location
+     - Reserved non-heap memory in MB for Twill container
+   * - ``twill.jvm.gc.opts``
+     - | ``-verbose:gc``
+       | ``-Xloggc:<log-dir>/gc.log``
+       | ``-XX:+PrintGCDetails``
+       | ``-XX:+PrintGCTimeStamps``
+       | ``-XX:+UseGCLogFileRotation``
+       | ``-XX:NumberOfGCLogFiles=10``
+       | ``-XX:GCLogFileSize=1M``
+     - Java garbage collection options for all Twill containers; ``<log-dir>`` is the location
        of the log directory on each machine
-   * - ``weave.no.container.timeout``
+   * - ``twill.no.container.timeout``
      - ``120000``
-     - Amount of time in milliseconds to wait for at least one container for Weave runnable
-   * - ``weave.zookeeper.namespace``
-     - ``/weave``
-     - Weave Zookeeper namespace prefix
+     - Amount of time in milliseconds to wait for at least one container for Twill runnable
+   * - ``twill.zookeeper.namespace``
+     - ``/twill``
+     - Twill Zookeeper namespace prefix
    * - ``yarn.user``
      - ``yarn``
      - User name for running applications in YARN

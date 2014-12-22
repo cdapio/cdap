@@ -424,10 +424,12 @@ public final class Constants {
     public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
-    /** Address the Authentication Server should bind to*/
+    /** TODO: Config param is deprecated, AUTH_SERVER_BIND_ADDRESS should be used instead. */
     public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
+    /** Address the Authentication Server should bind to. */
+    public static final String AUTH_SERVER_BIND_ADDRESS = "security.auth.server.bind.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.auth.server.bind.port";
+    public static final String AUTH_SERVER_BIND_PORT = "security.auth.server.bind.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */

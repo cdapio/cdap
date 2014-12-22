@@ -38,7 +38,7 @@ To enable security in CDAP, add these properties to ``cdap-site.xml``:
    Property                                     Value
 ============================================= ===============================================================
 security.enabled                                true
-security.auth.server.address                    <hostname>
+security.auth.server.bind.address               <hostname>
 ============================================= ===============================================================
 
 Configuring Kerberos (required)

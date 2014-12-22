@@ -803,7 +803,7 @@ public class TestFrameworkTest extends TestBase {
 
       // Wait for at least 10 records being generated
       RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
-      flowMetrics.waitForProcessed(10, 1000, TimeUnit.MILLISECONDS);
+      flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
       flowManager.stop();
 
       ServiceManager serviceManager = appManager.startService("RecordQuery");

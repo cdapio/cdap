@@ -84,8 +84,6 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
     HttpResponse response =
@@ -149,47 +147,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
-  }
-
-  private void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
-    int trial = 0;
-    int workflowRuns = 0;
-    List<Map<String, String>> history;
-    String json;
-    HttpResponse response;
-    while (trial++ < retries) {
-      response = doGet(url);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      json = EntityUtils.toString(response.getEntity());
-      history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
-      workflowRuns = history.size();
-      if (workflowRuns > expected) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(workflowRuns > expected);
-  }
-
-  private void scheduleStatusCheck(int retires, String url,
-                                   String expected) throws Exception {
-    int trial = 0;
-    String status = null;
-    String json = null;
-    Map<String, String> output;
-    HttpResponse response;
-    while (trial++ < retires) {
-      response = doGet(url);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      json = EntityUtils.toString(response.getEntity());
-      output = GSON.fromJson(json, MAP_STRING_STRING_TYPE);
-      status = output.get("status");
-      if (status.equals(expected)) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(status, expected);
   }
 
   private void historyStatusWithRetry(String url, int size) throws Exception {
