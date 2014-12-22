@@ -48,7 +48,7 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
 
   public DefaultWorkflowSpecification(String className, WorkflowSpecification spec) {
     this(className, spec.getName(), spec.getDescription(),
-         spec.getActions(), spec.getMapReduce(), spec.getSpark(), spec.getSchedules());
+         spec.getActions(), spec.getMapReduce(), spec.getSparks(), spec.getSchedules());
   }
 
   public DefaultWorkflowSpecification(String className, String name, String description,
@@ -91,7 +91,7 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
   }
 
   @Override
-  public Map<String, SparkSpecification> getSpark() {
+  public Map<String, SparkSpecification> getSparks() {
     return sparks;
   }
 

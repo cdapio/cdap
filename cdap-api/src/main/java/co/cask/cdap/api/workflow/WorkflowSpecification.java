@@ -75,7 +75,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   Map<String, MapReduceSpecification> getMapReduce();
 
-  Map<String, SparkSpecification> getSpark();
+  Map<String, SparkSpecification> getSparks();
 
   /**
    * Builder for adding the first action to the workflow.
@@ -392,7 +392,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       }
     }
 
-    // TODO (CDAP-450): Temporary. Remove when move workflow to use Configurer to configure
+    // TODO (CDAP-450): Update when Workflow is changed to use Configurer for its configuration
     private static final class WorkflowSparkConfigurer implements SparkConfigurer {
       private final String className;
       private String name;

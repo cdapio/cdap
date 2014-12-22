@@ -36,8 +36,8 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                  Program workflowProgram, RunId runId,
-                                 Arguments userArguments, long logicalStartTime) {
-    super(userArguments, runId, workflowProgram, logicalStartTime, programRunnerFactory, workflowSpec);
+                                 Arguments runtimeArguments, long logicalStartTime) {
+    super(runtimeArguments, runId, workflowProgram, logicalStartTime, programRunnerFactory, workflowSpec);
   }
 
   /**
@@ -61,7 +61,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
   }
 
   /**
-   * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed. 
+   * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
    * On completion, return the {@link RuntimeContext} of the program.
    *
    * @throws Exception if execution failed.
@@ -70,11 +70,12 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
   public RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE).run(program,
                                                                                                         options);
-    final RuntimeContext context = (controller instanceof MapReduceProgramController)
-      ? ((MapReduceProgramController) controller).getContext()
-      : null;
-    return executeProgram(controller, context);
-
+    if (controller instanceof MapReduceProgramController) {
+      final RuntimeContext context = ((MapReduceProgramController) controller).getContext();
+      return executeProgram(controller, context);
+    } else {
+      throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
+                                        "MapReduceProgramController");
+    }
   }
-
 }

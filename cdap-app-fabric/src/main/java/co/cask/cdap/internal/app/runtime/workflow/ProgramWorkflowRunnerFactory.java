@@ -47,13 +47,13 @@ public class ProgramWorkflowRunnerFactory {
   private final long logicalStartTime;
 
   public ProgramWorkflowRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                      Program workflowProgram, RunId runId, Arguments userArguments,
+                                      Program workflowProgram, RunId runId, Arguments runtimeArguments,
                                       long logicalStartTime) {
     this.workflowSpec = workflowSpec;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowProgram = workflowProgram;
     this.runId = runId;
-    this.userArguments = userArguments;
+    this.userArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
   }
 
@@ -65,16 +65,18 @@ public class ProgramWorkflowRunnerFactory {
    * @return the appropriate concrete implementation of {@link ProgramWorkflowRunner} for the program
    */
   public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec) {
+
+
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
-      String programType = actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE);
-      if (WorkflowSupportedProgram.valueOf(programType) == WorkflowSupportedProgram.MAPREDUCE) {
-        return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
-                                                  userArguments, logicalStartTime);
-      } else if (WorkflowSupportedProgram.valueOf(programType) == WorkflowSupportedProgram.SPARK) {
-        return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
-                                              userArguments, logicalStartTime);
-      } else {
-        LOG.debug("No workflow program runner found for this program");
+      switch (WorkflowSupportedProgram.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
+        case MAPREDUCE:
+          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
+                                                    userArguments, logicalStartTime);
+        case SPARK:
+          return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
+                                                userArguments, logicalStartTime);
+        default:
+          LOG.debug("No workflow program runner found for this program");
       }
     } else {
       LOG.debug("ProgramType key not found in Workflow Action Specification Properties");

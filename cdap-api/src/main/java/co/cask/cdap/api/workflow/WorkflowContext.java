@@ -32,14 +32,14 @@ public interface WorkflowContext {
   long getLogicalStartTime();
 
   /**
-   * Returns a {@link Callable} that launches the associated program/job
-   * of the specified name when the {@link Callable#call()} method is called. When the program/job completes,
-   * the {@link Callable} returns the {@link RuntimeContext} of the program/job or {@code null} if
+   * Returns a {@link Callable} that launches the associated program
+   * with the specified name when the {@link Callable#call() call} method is invoked. When the program completes,
+   * the {@link Callable} returns the {@link RuntimeContext} of the program or {@code null} if
    * no such context exists.
+   * <p/>
+   * <p> An Exception is thrown from the {@link Callable#call()} method if the program fails </p>
    *
-   * An Exception is thrown from the {@link Callable#call()} method if the program/job fails.
-   *
-   * @throws IllegalArgumentException if no program/job with the specified name is defined in the workflow.
+   * @throws IllegalArgumentException if no program with the specified name is defined in the workflow
    */
   Callable<RuntimeContext> getProgramRunner(String name);
 

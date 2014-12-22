@@ -54,7 +54,7 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
   @Override
   public Callable<RuntimeContext> create(String name) {
 
-    final SparkSpecification sparkSpec = workflowSpec.getSpark().get(name);
+    final SparkSpecification sparkSpec = workflowSpec.getSparks().get(name);
     Preconditions.checkArgument(sparkSpec != null,
                                 "No Spark with name %s found in Workflow %s", name, workflowSpec.getName());
 
@@ -71,9 +71,13 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
   @Override
   public RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.SPARK).run(program, options);
-    final RuntimeContext context = (controller instanceof SparkProgramController)
-      ? ((SparkProgramController) controller).getContext()
-      : null;
-    return executeProgram(controller, context);
+
+    if (controller instanceof SparkProgramController) {
+      final RuntimeContext context = ((SparkProgramController) controller).getContext();
+      return executeProgram(controller, context);
+    } else {
+      throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
+                                        "SparkProgramController");
+    }
   }
 }

@@ -38,12 +38,15 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /**
- * An Abstract class which implements {@link ProgramWorkflowRunner} and provides functionality to programs which can run
- * in workflow to get a {@link Callable} of {@link RuntimeContext} of that Program and then these program which
- * extend this class (like {@link MapReduceProgramWorkflowRunner} and {@link SparkProgramWorkflowRunner}) can execute
- * their associated  program through {@link AbstractProgramWorkflowRunner#executeProgram} by providing their
- * {@link ProgramController} and {@link RuntimeContext} obtained through the {@link ProgramRunner}.
- * * This {@link RuntimeContext} is also blocked upon till the completion of the program.
+ * An Abstract class implementing {@link ProgramWorkflowRunner}, providing a {@link Callable} of
+ * {@link RuntimeContext} to programs running in a workflow.
+ * <p>
+ * Programs that extend this class (such as {@link MapReduceProgramWorkflowRunner} or
+ * {@link SparkProgramWorkflowRunner}) can execute their associated programs through the
+ * {@link AbstractProgramWorkflowRunner#executeProgram} by providing the {@link ProgramController} and
+ * {@link RuntimeContext} that they obtained through the {@link ProgramRunner}.
+ * </p>
+ * The {@link RuntimeContext} is blocked until completion of the associated program.
  */
 public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
   protected final WorkflowSpecification workflowSpec;
@@ -53,10 +56,10 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   private final Arguments userArguments;
   private final long logicalStartTime;
 
-  public AbstractProgramWorkflowRunner(Arguments userArguments, RunId runId, Program workflowProgram,
+  public AbstractProgramWorkflowRunner(Arguments runtimeArguments, RunId runId, Program workflowProgram,
                                        long logicalStartTime, ProgramRunnerFactory programRunnerFactory,
                                        WorkflowSpecification workflowSpec) {
-    this.userArguments = userArguments;
+    this.userArguments = runtimeArguments;
     this.runId = runId;
     this.workflowProgram = workflowProgram;
     this.logicalStartTime = logicalStartTime;
@@ -70,6 +73,13 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   @Override
   public abstract RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception;
 
+  /**
+   * Gets a {@link Callable} of {@link RuntimeContext} for the {@link Program}
+   *
+   * @param name    name of the {@link Program}
+   * @param program the {@link Program}
+   * @return a {@link Callable} of {@link RuntimeContext} for this {@link Program}
+   */
   protected Callable<RuntimeContext> getRuntimeContextCallable(String name, final Program program) {
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),
@@ -89,7 +99,16 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     };
   }
 
-  protected RuntimeContext executeProgram(ProgramController controller, final RuntimeContext context) throws Exception {
+  /**
+   * Adds a listener to the {@link ProgramController} and blocks for completion.
+   *
+   * @param controller the {@link ProgramController} for the program
+   * @param context    the {@link RuntimeContext}
+   * @return {@link RuntimeContext} of the completed program
+   * @throws Exception if the execution failed
+   */
+  protected RuntimeContext executeProgram(final ProgramController controller,
+                                          final RuntimeContext context) throws Exception {
     // Execute the program.
     final SettableFuture<RuntimeContext> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {

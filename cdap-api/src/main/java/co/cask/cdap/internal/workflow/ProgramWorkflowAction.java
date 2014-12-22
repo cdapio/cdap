@@ -41,7 +41,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   private final String name;
   private String programName;
   private Callable<RuntimeContext> programRunner;
-  private final WorkflowSupportedProgram programType;
+  private WorkflowSupportedProgram programType;
   private WorkflowContext context;
 
   public ProgramWorkflowAction(String name, String programName, WorkflowSupportedProgram programType) {
@@ -70,8 +70,11 @@ public final class ProgramWorkflowAction implements WorkflowAction {
     Preconditions.checkNotNull(programName, "No Program name provided.");
 
     programRunner = context.getProgramRunner(programName);
+    programType = context.getRuntimeArguments().containsKey(PROGRAM_TYPE) ? 
+                              WorkflowSupportedProgram.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
 
-    LOG.info("Initialized for Program in workflow action: {}", programName);
+    LOG.info("Initialized for {} Program {} in workflow action: {}",
+             programType != null ? programType.name() : null, programName);
   }
 
   @Override
@@ -82,9 +85,11 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
       // TODO (terence) : Put something back to context.
 
-      LOG.info("Program workflow action completed: {}", programName);
+      LOG.info("{} Program {} workflow action completed: {}", 
+               programType != null ? programType.name() : null, programName);
     } catch (Exception e) {
-      LOG.info("Failed to execute Program in workflow: {}", programName, e);
+      LOG.info("Failed to execute {} Program {} in workflow: {}", 
+               programType != null ? programType.name() : null, programName, e);
       throw Throwables.propagate(e);
     }
   }
