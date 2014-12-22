@@ -139,6 +139,11 @@ function onSocketData (message) {
       case 'fetch':
         request(r, _.bind(emitResponse, this, r));
         break;
+      // Syntactic sugar.
+      // TODO: Reduce redundancy.
+      case 'post':
+        request(r, _.bind(emitResponse, this, r));
+        break;
       case 'poll-stop':
         this.polledResources.remove(r);
         if(!Object.keys(this.polledResources.table()).length) {
@@ -164,4 +169,3 @@ function onSocketClose () {
 
 
 module.exports = Aggregator;
-
