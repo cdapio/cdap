@@ -62,6 +62,10 @@ public class TimeMathParser {
     }
   }
 
+  private static long convertToSeconds(long num, String unitStr) {
+    return convertToSeconds("+", num, unitStr);
+  }
+
   public static long nowInSeconds() {
     return TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
   }
@@ -70,8 +74,7 @@ public class TimeMathParser {
     Matcher matcher = RESOLUTION_PATTERN.matcher(resolutionStr);
     int output = 0;
     while (matcher.find()) {
-      // group 1 should be '+' or '-', group 2 is the number of units, and group 3 is the unit.  ex: 6h
-      output += convertToSeconds("+", Long.parseLong(matcher.group(1)), matcher.group(2));
+      output += convertToSeconds(Long.parseLong(matcher.group(1)), matcher.group(2));
     }
     return output;
   }
