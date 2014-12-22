@@ -13,7 +13,6 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
       myNamespace.getList()
         .then(function(list) {
-          debugger;
           scope.namespaces = list;
           scope.currentns = scope.namespaces[0].displayName;
         }.bind(this));
