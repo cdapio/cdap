@@ -50,7 +50,6 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
-      String accId = getAuthenticatedAccountId(httpRequest);
 
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
@@ -65,9 +64,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //This will have to be completely refactored once we know how all v3 paths look like (with namespaces)
       //We will have to take into consideration common patterns between v2 and v3 paths when we do refactor
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_2_TOKEN)) {
-        return getV2RoutingService(uriParts, requestMethod, accId);
+        return getV2RoutingService(uriParts, requestMethod, getAuthenticatedAccountId(httpRequest));
       } else if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
-        return getV3RoutingService(uriParts, requestMethod, accId);
+        return getV3RoutingService(uriParts, requestMethod, uriParts[2]);
       }
     } catch (Exception e) {
 
@@ -75,7 +74,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     return Constants.Service.APP_FABRIC_HTTP;
   }
 
-  private String getV2RoutingService(String [] uriParts, AllowedMethod requestMethod, String accId) {
+  private String getV2RoutingService(String [] uriParts, AllowedMethod requestMethod, String namespaceId) {
     if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
       return Constants.Service.ACL;
     } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
@@ -115,20 +114,27 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
       //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
       //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
-      String serviceName = String.format("procedure.%s.%s.%s", accId, uriParts[2], uriParts[4]);
+      String serviceName = String.format("procedure.%s.%s.%s", namespaceId, uriParts[2], uriParts[4]);
       return serviceName;
     } else if ((uriParts.length >= 7) && uriParts[3].equals("services") && uriParts[5].equals("methods")) {
       //User defined services handle methods on them:
       //Service Path:  "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-      //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
-      String serviceName = String.format("service.%s.%s.%s", accId, uriParts[2], uriParts[4]);
+      //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
+      String serviceName = String.format("service.%s.%s.%s", namespaceId, uriParts[2], uriParts[4]);
       return serviceName;
     } else {
       return Constants.Service.APP_FABRIC_HTTP;
     }
   }
 
-  private String getV3RoutingService(String [] uriParts, AllowedMethod method, String accId) {
+  private String getV3RoutingService(String [] uriParts, AllowedMethod method, String namespaceId) {
+    if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
+      //User defined services handle methods on them:
+      //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
+      //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
+      String serviceName = String.format("service.%s.%s.%s", namespaceId, uriParts[4], uriParts[6]);
+      return serviceName;
+    }
     return Constants.Service.APP_FABRIC_HTTP;
   }
 }
