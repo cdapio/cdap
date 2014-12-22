@@ -19,13 +19,19 @@ angular.module(PKG.name + '.feature.admin')
           url: '/security',
           templateUrl: '/assets/features/admin/templates/security.html'
         })
+        .state('admin.nscreate', {
+          url: '/namespace/create',
+          templateUrl: '/assets/features/admin/templates/namespace/create.html',
+          controller: 'NamespaceCreateController'
+        })
         .state('admin.namespace', {
           url: '/ns/:namespaceId',
-          resolve: {
-            namespaceId: function() {
-              return 'namespace1';
-            }
-          },
+          // resolve: {
+          //   namespaceId: function($stateParams) {
+          //     debugger;
+          //     return $stateParams.namespaceId;
+          //   }
+          // },
           templateUrl: '/assets/features/admin/templates/namespace.html'
         })
           .state('admin.namespace.settings', {
