@@ -743,8 +743,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                        HttpMethod.GET);
     Assert.assertEquals(404, code);
 
-    // verify that endpoints are available in the right namespace. TODO: Enable after fixing service discovery
-    /*code = callService(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, "multi",
+/*  // verify that endpoints are available in the right namespace.
+    TODO: Cannot test this through unit tests right now since the service can't be discovered without changes to
+    AppFabricTestBase. Currently all requests in unit tests are going to app fabric, so this fails.
+    code = callService(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, "multi",
                        HttpMethod.POST);
     Assert.assertEquals(200, code);
 
@@ -770,11 +772,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    HttpResponse response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
-                                                   TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-    //Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1));
+    doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
   }
 
   private ServiceInstances getServiceInstances(String namespace, String app, String service) throws Exception {
