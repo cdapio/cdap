@@ -44,10 +44,8 @@ public class EndpointSupplier implements CompleterSupplier {
     if (prefix != null && !prefix.isEmpty()) {
       String prefixMatch = prefix.replaceAll("<.+?>", "<>");
       if (METHOD_PREFIX.equals(prefixMatch)) {
-        System.out.println(prefix);
         return new HttpMethodPrefixCompleter(serviceClient, prefix, (EndpointCompleter) completer);
       } else if (ENDPOINT_PREFIX.equals(prefixMatch)) {
-        System.out.println(prefix);
         return new HttpEndpointPrefixCompleter(serviceClient, prefix, (EndpointCompleter) completer);
       }
     }
