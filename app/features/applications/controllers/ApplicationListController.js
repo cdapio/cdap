@@ -4,7 +4,10 @@ angular.module(PKG.name + '.feature.applications')
     var data = new MyDataSource($scope);
 
     data.fetch({
-      _cdap: 'GET /apps/'
+      config: {
+        method: 'GET',
+        path: '/apps/'
+      }
     }, function(res) {
       $scope.apps = res;
     });

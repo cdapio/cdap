@@ -38,7 +38,10 @@ angular.module(PKG.name + '.feature.applications')
     var data = new MyDataSource($scope);
     var appId = $state.params.appId;
     data.fetch({
-      _cdap: 'GET /apps/' + appId + '/status'
+      config: {
+        method: 'GET',
+        path: '/apps/' + appId + '/status'
+      }
     }, function(res) {
       $scope.programs = res;
       $scope.programs.runningCount = getProgramCount($scope.programs, 'ALIVE');
