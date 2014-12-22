@@ -22,6 +22,19 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+
+Release 2.7.0
+=============
+
+API Changes
+-----------
+-  The property ``security.auth.server.address`` has been deprecated and replaced with
+   ``security.auth.server.bind.address`` (`CDAP-639 <https://issues.cask.co/browse/CDAP-639>`__,
+   `CDAP-1078 <https://issues.cask.co/browse/CDAP-1078>`__).
+
+
+
+
 Release 2.6.0
 =============
 
