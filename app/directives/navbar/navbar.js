@@ -3,21 +3,25 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG) {
+function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
 
     link: function (scope, element, attrs) {
 
-      scope.currentNamespace = 'Namespace 1';
-
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
-
+      myNamespace.getList()
+        .then(function(list) {
+          debugger;
+          scope.namespaces = list;
+          scope.currentns = scope.namespaces[0].displayName;
+        }.bind(this));
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
         template: 'navbar/namespace.html',
-        animation: 'am-flip-x'
+        animation: 'am-flip-x',
+        scope: scope
       });
 
       // right dropdown
@@ -33,9 +37,19 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG) {
       scope.securityEnabled = MY_CONFIG.securityEnabled;
 
       scope.navbarLinks = [
-        { sref: 'home',                label: 'Development'  },
-        { sref: 'dashboard',           label: 'Operations'   },
-        { sref: 'admin.overview',      label: 'Management'   }
+        {
+          sref: 'home',
+          label: 'Development'
+        },
+        {
+          sref: 'dashboard',
+          label: 'Operations'
+        },
+        {
+          sref: 'admin.overview',
+          label: 'Management',
+          parent: 'admin'
+        }
       ];
 
 
