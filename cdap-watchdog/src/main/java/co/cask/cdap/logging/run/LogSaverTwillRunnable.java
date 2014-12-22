@@ -55,12 +55,14 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Twill wrapper for running LogSaver through Twill.
  */
 public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTwillRunnable.class);
+  public static final int TIMEOUT_VALUE = 10;
 
   private LogSaver logSaver;
   private SettableFuture<?> completion;
@@ -142,8 +144,9 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void run() {
     LOG.info("Starting runnable " + name);
 
-    Futures.getUnchecked(Services.chainStart(zkClientService,
-                                             kafkaClientService, logSaver, multiElection, logSaverStatusService));
+    Futures.getUnchecked(Services.chainStart(zkClientService));
+    waitForDatasetAvailability();
+    Futures.getUnchecked(Services.chainStart(kafkaClientService, logSaver, multiElection, logSaverStatusService));
 
     LOG.info("Runnable started " + name);
 
@@ -159,6 +162,22 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       // and AM would detect and restarts it.
       LOG.error("Completed with exception. Exception get propagated", e);
       throw Throwables.propagate(e);
+    }
+  }
+
+  private void waitForDatasetAvailability() {
+    boolean isDatasetAvailable = false;
+    while (!isDatasetAvailable) {
+      try {
+        logSaver.getCheckpointManager().getCheckpoint(0);
+        isDatasetAvailable = true;
+      } catch (Exception e) {
+        try {
+          LOG.warn(String.format("Cannot discover dataset service. Retry after %d seconds timeout.", TIMEOUT_VALUE));
+          TimeUnit.SECONDS.sleep(TIMEOUT_VALUE);
+        } catch (InterruptedException ignored) {
+        }
+      }
     }
   }
 

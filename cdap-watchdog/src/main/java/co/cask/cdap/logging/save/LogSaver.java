@@ -269,4 +269,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
+
+  public CheckpointManager getCheckpointManager() {
+    return checkpointManager;
+  }
 }
