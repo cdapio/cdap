@@ -47,7 +47,6 @@ angular.module(PKG.name+'.services')
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
         if(data.warning) { return; }
-
         angular.forEach(self.bindings, function (b) {
           if(angular.equals(b.resource, data.resource)) {
             scope.$apply(b.callback.bind(self, data.response));
@@ -83,9 +82,6 @@ angular.module(PKG.name+'.services')
       this.scope = scope;
     }
 
-
-
-
     DataSource.prototype.poll = function (resource, cb) {
       this.bindings.push({
         resource: resource,
@@ -98,7 +94,6 @@ angular.module(PKG.name+'.services')
 
       _pollStart(resource);
     };
-
 
     DataSource.prototype.fetch = function (resource, cb) {
       var once = false;
@@ -126,120 +121,3 @@ angular.module(PKG.name+'.services')
   .factory('SockJS', function ($window) {
     return $window.SockJS;
   })
-
-  .provider('mySocket', function () {
-
-    this.prefix = '/_sock';
-
-    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG) {
-
-      var self = this,
-          socket = null,
-          buffer = [];
-
-      function init (attempt) {
-        $log.log('[mySocket] init');
-
-        attempt = attempt || 1;
-        socket = new SockJS(self.prefix);
-
-        socket.onmessage = function (event) {
-          try {
-            var data = JSON.parse(event.data);
-            $log.log('[mySocket] ←', data);
-            $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
-          }
-          catch(e) {
-            $log.error(e);
-          }
-        };
-
-        socket.onopen = function (event) {
-
-          if(attempt>1) {
-            $rootScope.$broadcast(MYSOCKET_EVENT.reconnected, event);
-            attempt = 1;
-          }
-
-          $log.info('[mySocket] opened');
-          angular.forEach(buffer, send);
-          buffer = [];
-        };
-
-        socket.onclose = function (event) {
-          $log.error(event.reason);
-
-          if(attempt<2) {
-            $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
-          }
-
-          // reconnect with exponential backoff
-          var d = Math.max(500, Math.round(
-            (Math.random() + 1) * 500 * Math.pow(2, attempt)
-          ));
-          $log.log('[mySocket] will try again in ',d+'ms');
-          setTimeout(function () {
-            init(attempt+1);
-          }, d);
-        };
-
-      }
-
-      function send(obj) {
-        if(!socket.readyState) {
-          buffer.push(obj);
-          return false;
-        }
-
-        var msg = angular.extend({
-
-              user: myAuth.currentUser
-
-            }, obj),
-            r = obj.resource;
-
-        if(r) {
-          // we only support json content-type,
-          // and expect json as response
-          msg.resource.json = true;
-
-          // parse the _cdap key, prefix with the CDAP protocol/host
-          if(r._cdap) {
-            var p = r._cdap.split(' '),
-                path = p.pop();
-            msg.resource.method = p.length ? p[0] : 'GET';
-            msg.resource.url = 'http://' +
-              MY_CONFIG.cdap.routerServerUrl +
-              ':' +
-              MY_CONFIG.cdap.routerServerPort +
-              '/v2' +
-              path;
-            delete msg.resource._cdap;
-          }
-
-          if(MY_CONFIG.securityEnabled) {
-            msg.resource.headers = angular.extend(r.headers || {}, {
-              authorization: 'Bearer ' + myAuth.currentUser.token
-            });
-          }
-        }
-
-        $log.log('[mySocket] →', msg);
-        socket.send(JSON.stringify(msg));
-        return true;
-      }
-
-      init();
-
-      return {
-        init: init,
-        send: send,
-        close: function () {
-          return socket.close.apply(socket, arguments);
-        }
-      };
-    };
-
-  })
-
-  ;
