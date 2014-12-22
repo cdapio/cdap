@@ -130,8 +130,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   private String getV3RoutingService(String [] uriParts, AllowedMethod method, String accId) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
-      // TODO find a better way to handle that - this won't work
-      return "no.service";
+      // TODO find a better way to handle that - this looks hackish
+      return null;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }
