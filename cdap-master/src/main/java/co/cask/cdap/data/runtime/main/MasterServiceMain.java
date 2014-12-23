@@ -16,7 +16,9 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.ConfigServiceModules;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -122,6 +124,7 @@ public class MasterServiceMain extends DaemonMain {
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
   private ServiceStore serviceStore;
+  private ConfigService configService;
   private HBaseSecureStoreUpdater secureStoreUpdater;
   private ExploreClient exploreClient;
 
@@ -159,6 +162,7 @@ public class MasterServiceMain extends DaemonMain {
       new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule(),
+      new ConfigServiceModules().getDistribtuedModule(),
       new ExploreClientModule()
     );
 
@@ -227,13 +231,17 @@ public class MasterServiceMain extends DaemonMain {
         appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
         runTwillApps();
+        configService = baseInjector.getInstance(ConfigService.class);
+        configService.startAndWait();
         isLeader.set(true);
       }
 
       @Override
       public void follower() {
         LOG.info("Became follower");
-
+        if (configService != null) {
+          configService.stopAndWait();
+        }
         dsService.stopAndWait();
         if (twillRunnerService != null) {
           // this shuts down the twill runner service but not the twill services themselves

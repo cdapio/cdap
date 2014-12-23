@@ -17,6 +17,7 @@ package co.cask.cdap.test.internal.guice;
 
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.ConfigServiceModules;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -78,6 +79,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
     install(new ServiceStoreModules().getInMemoryModule());
+    install(new ConfigServiceModules().getInMemoryModule());
     install(new PrivateModule() {
       @Override
       protected void configure() {

@@ -16,7 +16,9 @@
 
 package co.cask.cdap.internal.app.services.http;
 
+import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -98,6 +100,8 @@ public abstract class AppFabricTestBase {
   private static MetricsQueryService metricsService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+  private static ConfigService configService;
+  private static ServiceStore serviceStore;
   private static TransactionSystemClient txClient;
 
   @BeforeClass
@@ -117,8 +121,12 @@ public abstract class AppFabricTestBase {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    serviceStore = injector.getInstance(ServiceStore.class);
+    serviceStore.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    configService = injector.getInstance(ConfigService.class);
+    configService.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     EndpointStrategy endpointStrategy =
       new TimeLimitEndpointStrategy(
@@ -132,6 +140,8 @@ public abstract class AppFabricTestBase {
 
   @AfterClass
   public static void afterClass() {
+    configService.stopAndWait();
+    serviceStore.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();

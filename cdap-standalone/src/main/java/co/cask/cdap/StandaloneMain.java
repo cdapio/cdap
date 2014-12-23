@@ -16,7 +16,9 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.ConfigServiceModules;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -81,6 +83,7 @@ public class StandaloneMain {
   private final AppFabricServer appFabricServer;
   private final StreamHttpService streamHttpService;
   private final ServiceStore serviceStore;
+  private final ConfigService configService;
 
   private final MetricsCollectionService metricsCollectionService;
 
@@ -109,6 +112,7 @@ public class StandaloneMain {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
+    configService = injector.getInstance(ConfigService.class);
 
     this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 
@@ -163,6 +167,7 @@ public class StandaloneMain {
     }
 
     metricsQueryService.startAndWait();
+    configService.startAndWait();
     router.startAndWait();
     if (webCloudAppService != null) {
       webCloudAppService.startAndWait();
@@ -206,6 +211,7 @@ public class StandaloneMain {
       }
       exploreClient.close();
       serviceStore.stopAndWait();
+      configService.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
@@ -371,6 +377,7 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
+      new ConfigServiceModules().getStandaloneModule(),
       new ExploreClientModule()
     );
   }
