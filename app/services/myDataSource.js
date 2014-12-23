@@ -3,7 +3,10 @@ angular.module(PKG.name+'.services')
     MyDataSource // usage in a controler:
 
     var dataSrc = new MyDataSource($scope);
-    dataSrc.poll({_cdap: 'GET /foo/bar'}, function(result) {
+    dataSrc.poll({
+      method: 'GET'
+      _cdapPath: '/foo/bar'
+    }, function(result) {
       $scope.foo = result;
     });
 
