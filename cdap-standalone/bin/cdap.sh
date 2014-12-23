@@ -272,7 +272,7 @@ start() {
     rotate_log $APP_HOME/logs/cdap-debug.log
 
     if test -e /proc/1/cgroup && grep docker /proc/1/cgroup 2>&1 >/dev/null; then
-        ROUTER_OPTS="-Drouter.bind.address=`hostname -i` -Drouter.server.address=`hostname -i`"
+        ROUTER_OPTS="-Drouter.address=`hostname -i`"
     fi
 
     nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
