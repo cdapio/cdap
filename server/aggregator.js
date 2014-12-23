@@ -136,12 +136,7 @@ function onSocketData (message) {
           this.planPolling();
         }
         /* falls through */
-      case 'fetch':
-        request(r, _.bind(emitResponse, this, r));
-        break;
-      // Syntactic sugar.
-      // TODO: Reduce redundancy.
-      case 'post':
+      case 'request':
         request(r, _.bind(emitResponse, this, r));
         break;
       case 'poll-stop':

@@ -95,19 +95,10 @@ angular.module(PKG.name+'.services')
       _pollStart(resource);
     };
 
-    DataSource.prototype.fetch = function (resource, cb) {
+    DataSource.prototype.request = function (resource, cb) {
       this.registerCallback(resource, cb);
       mySocket.send({
-        action: 'fetch',
-        resource: resource
-      });
-    };
-
-    // Just a sugar syntax
-    DataSource.prototype.post = function(resource, cb) {
-      this.registerCallback(resource, cb);
-      mySocket.send({
-        action: 'post',
+        action: 'request',
         resource: resource
       });
     };
