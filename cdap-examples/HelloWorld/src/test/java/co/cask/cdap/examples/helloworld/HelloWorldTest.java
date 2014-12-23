@@ -58,8 +58,10 @@ public class HelloWorldTest extends TestBase {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
       RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("HelloWorld", "WhoFlow", "saver");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
+      Assert.assertTrue(flowManager.isRunning());
     } finally {
       flowManager.stop();
+      Assert.assertFalse(flowManager.isRunning());
     }
 
     // Start Greeting service and use it
