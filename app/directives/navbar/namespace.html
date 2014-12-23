@@ -1,24 +1,11 @@
 <ul class="dropdown-menu" role="menu">
 
-  <li role="presentation" class="disabled">
-    <a role="menuitem" tabindex="-1" href="">
-      <span class="fa fa-fw fa-dot-circle-o"></span>
-      Namespace 1
-    </a>
-  </li>
-
-  <li role="presentation" class="disabled">
-    <a role="menuitem" tabindex="-1" href="">
-      <span class="fa fa-fw fa-circle-o"></span>
-      Namespace 2
-    </a>
-  </li>
-
-  <li role="presentation" class="disabled">
-    <a role="menuitem" tabindex="-1" href="">
-      <span class="fa fa-fw fa-circle-o"></span>
-      Namespace 3
-    </a>
+  <li  role="presentation" ng-show="curentUser">
+    <li ng-repeat="ns in namespaces">
+      <a role="menuitem" tabindex="-1" >
+        <span ng-bind="ns.displayName"> </span>
+      </a>
+    </li>
   </li>
 
 </ul>

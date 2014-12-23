@@ -136,7 +136,7 @@ function onSocketData (message) {
           this.planPolling();
         }
         /* falls through */
-      case 'fetch':
+      case 'request':
         request(r, _.bind(emitResponse, this, r));
         break;
       case 'poll-stop':
@@ -164,4 +164,3 @@ function onSocketClose () {
 
 
 module.exports = Aggregator;
-
