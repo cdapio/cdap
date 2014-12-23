@@ -5,7 +5,7 @@ angular.module(PKG.name+'.services')
     var dataSrc = new MyDataSource($scope);
     dataSrc.poll({
       method: 'GET'
-      _cdapPath: '/foo/bar'
+      _cdapNsPath: '/foo/bar'
     }, function(result) {
       $scope.foo = result;
     });

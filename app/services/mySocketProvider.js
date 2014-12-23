@@ -18,7 +18,6 @@ angular.module(PKG.name+'.services')
 
     var self = this,
         socket = null,
-        ns = null,
         buffer = [];
 
     function init (attempt) {
@@ -75,19 +74,19 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      if (obj.resource._cdapPath && !ns) {
+      if (obj.resource._cdapNsPath) {
         myNamespaceMediator.getCurrentNamespace()
           .then(function (namespace) {
-            ns = namespace.name;
-            doSend(obj);
+            doSend(obj, namespace);
           });
       } else {
         doSend(obj);
       }
+
       return true;
     }
 
-    function doSend(obj) {
+    function doSend(obj, namespace) {
       var msg = angular.extend({
 
             user: myAuth.currentUser
@@ -106,35 +105,13 @@ angular.module(PKG.name+'.services')
         // and expect json as response
         msg.resource.json = true;
 
-        /*
-          if _cdapPath is there -> construct url
-          else use the entire resource object
+        if(r._cdapNsPath) {
+          r._cdapPath = '/namespaces/' + namespace + r._cdapNsPath;
+          delete msg.resource._cdapNsPath;
+        }
 
-          In this case it will be used like this,
-          myDatasrc.request({
-            _cdapPath: '/apps/myApp'
-            method: 'GET'
-          });
-          or
-          No _cdapPath --> use the entire resource object as it is.
-          myDatasrc.request({
-            path: <entire-url>,
-            method: POST,
-            body: {
-              name: "asdad",
-              description: "asdasd",
-              displayName: "axcxc"
-            }
-          }, function() {
-            ...
-          })
-
-        */
         if(r._cdapPath) {
-          msg.resource.url = baseUrl +
-            '/namespaces/' +
-            ns +
-            r._cdapPath;
+          msg.resource.url = baseUrl + r._cdapPath;
           delete msg.resource._cdapPath;
         }
 
@@ -145,7 +122,7 @@ angular.module(PKG.name+'.services')
         }
       }
 
-      $log.log('[mySocket] →', msg);
+      $log.log('[mySocket] →', msg.action, r.method, r.url);
       socket.send(JSON.stringify(msg));
     }
 
