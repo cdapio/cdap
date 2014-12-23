@@ -1,3 +1,7 @@
+/**
+ * myNamespaceMediator
+ * a layer of indirection to avoid circular dependency in mySocket
+ */
 angular.module(PKG.name + '.services')
   .service('myNamespaceMediator', function myNameSpaceMediator($q) {
     this.currentNamespace = null;
