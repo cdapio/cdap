@@ -5,9 +5,7 @@ angular.module(PKG.name + '.feature.admin')
     };
     myNamespace.getList()
       .then(function(list) {
-        $scope.nsList = list.map(function(item) {
-          return generateNsObject(item);
-        });
+        $scope.nsList = list.map(generateNsObject);
       });
     function generateNsObject(item) {
       return {
