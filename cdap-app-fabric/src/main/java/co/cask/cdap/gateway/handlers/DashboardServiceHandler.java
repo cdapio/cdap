@@ -77,7 +77,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     } else {
       dashboardIds = configService.getConfig(namespace, ConfigType.DASHBOARD, getAuthenticatedAccountId(request));
     }
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(dashboardIds));
+    responder.sendJson(HttpResponseStatus.OK, dashboardIds);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}")
@@ -103,7 +103,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       Map<String, String> settings = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
+      responder.sendJson(HttpResponseStatus.OK, settings);
     }
   }
 

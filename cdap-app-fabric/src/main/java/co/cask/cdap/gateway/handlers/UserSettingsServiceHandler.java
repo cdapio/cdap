@@ -102,7 +102,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
   public void getUserProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
     Map<String, String> settings = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER,
                                                              getAuthenticatedAccountId(request));
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
+    responder.sendJson(HttpResponseStatus.OK, settings);
   }
 
   @Path("/properties")

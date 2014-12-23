@@ -53,6 +53,7 @@ import java.util.Map;
 public class DatasetConfigService extends AbstractIdleService implements ConfigService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetConfigService.class);
   private static final String RECENT_DASHBOARD_ID = "idcount";
+
   private final DatasetFramework dsFramework;
   private final TransactionExecutorFactory executorFactory;
   private Table configTable;
@@ -137,9 +138,9 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   @Override
   public String readSetting(final String namespace, final ConfigType type, final String name, final String key)
     throws Exception {
-    return executor.execute(new TransactionExecutor.Function<Object, String>() {
+    return executor.execute(new TransactionExecutor.Function<Void, String>() {
       @Override
-      public String apply(Object o) throws Exception {
+      public String apply(Void o) throws Exception {
         return Bytes.toString(configTable.get(getRowKey(namespace, type, name), Bytes.toBytes(key)));
       }
     }, null);
@@ -148,9 +149,9 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   @Override
   public Map<String, String> readSetting(final String namespace, final ConfigType type, final String name)
     throws Exception {
-    return executor.execute(new TransactionExecutor.Function<Object, Map<String, String>>() {
+    return executor.execute(new TransactionExecutor.Function<Void, Map<String, String>>() {
       @Override
-      public Map<String, String> apply(Object i) throws Exception {
+      public Map<String, String> apply(Void i) throws Exception {
         Map<String, String> settings = Maps.newHashMap();
         byte[] rowKey = getRowKey(namespace, type, name);
         for (Map.Entry<byte[], byte[]> entry : configTable.get(rowKey).getColumns().entrySet()) {
@@ -201,9 +202,9 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   @Override
   public String createConfig(final String namespace, final ConfigType type, final String accId) throws Exception {
     final String countId = String.format("namespace.%s.%s", namespace, RECENT_DASHBOARD_ID);
-    return executor.execute(new TransactionExecutor.Function<Object, String>() {
+    return executor.execute(new TransactionExecutor.Function<Void, String>() {
       @Override
-      public String apply(Object i) throws Exception {
+      public String apply(Void i) throws Exception {
         if (type != ConfigType.DASHBOARD) {
           return null;
         }
@@ -270,9 +271,9 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
 
   @Override
   public boolean checkConfig(final String namespace, final ConfigType type, final String name) throws Exception {
-    return executor.execute(new TransactionExecutor.Function<Object, Boolean>() {
+    return executor.execute(new TransactionExecutor.Function<Void, Boolean>() {
       @Override
-      public Boolean apply(Object i) throws Exception {
+      public Boolean apply(Void i) throws Exception {
         if (type != ConfigType.DASHBOARD) {
           return true;
         }
