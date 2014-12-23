@@ -599,8 +599,7 @@ define([], function () {
 						// Hax. Server treats end = start + count (no downsample yet)
 						count = C.__timeRange;
 						map[metric.path] = models[j];
-						path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
-
+						path = metric.path + '?start=' + start + '&end=' + end;
 						if (metric.interpolate) {
 							path += '&interpolate=' + metric.interpolate;
 						}
