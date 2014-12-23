@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.notifications.NotificationTest;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.test.TempFolder;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -36,6 +35,8 @@ import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Properties;
@@ -45,7 +46,8 @@ import java.util.Properties;
  */
 public class KafkaNotificationTest extends NotificationTest {
 
-  private static final TempFolder TEMP_FOLDER = new TempFolder();
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
@@ -90,7 +92,7 @@ public class KafkaNotificationTest extends NotificationTest {
     kafkaClient = injector.getInstance(KafkaClientService.class);
     kafkaClient.startAndWait();
 
-    Properties kafkaConfig = generateKafkaConfig(zkServer, TEMP_FOLDER.newFolder("kafka-notifications-test"));
+    Properties kafkaConfig = generateKafkaConfig(zkServer, tmpFolder.newFolder("kafka-notifications-test"));
 
     kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
     kafkaServer.startAndWait();

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package co.cask.cdap.test.internal;
 
 import com.google.common.base.Throwables;
 
