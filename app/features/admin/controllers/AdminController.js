@@ -40,6 +40,6 @@ angular.module(PKG.name + '.feature.admin')
             children: []
           }
         ]
-      }
-    };
+      };
+    }
   });

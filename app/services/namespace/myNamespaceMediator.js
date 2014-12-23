@@ -3,7 +3,7 @@ angular.module(PKG.name + '.services')
     this.currentNamespace = null;
     this.namespaceList = [];
     var currentNsdeferred = $q.defer(),
-        nsListdeferred = $q.defer();;
+        nsListdeferred = $q.defer();
 
     this.setCurrentNamespace = function(ns) {
       this.currentNamespace = ns;
