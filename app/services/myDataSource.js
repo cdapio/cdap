@@ -1,11 +1,4 @@
 angular.module(PKG.name+'.services')
-
-  .constant('MYSOCKET_EVENT', {
-    message: 'mysocket-message',
-    closed: 'mysocket-closed',
-    reconnected: 'mysocket-reconnected'
-  })
-
   /*
     MyDataSource // usage in a controler:
 
@@ -118,9 +111,4 @@ angular.module(PKG.name+'.services')
     };
 
     return DataSource;
-  })
-
-
-  .factory('SockJS', function ($window) {
-    return $window.SockJS;
-  })
+  });

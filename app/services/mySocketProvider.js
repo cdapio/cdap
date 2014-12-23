@@ -1,4 +1,15 @@
 angular.module(PKG.name+'.services')
+
+.factory('SockJS', function ($window) {
+  return $window.SockJS;
+})
+
+.constant('MYSOCKET_EVENT', {
+  message: 'mysocket-message',
+  closed: 'mysocket-closed',
+  reconnected: 'mysocket-reconnected'
+})
+
 .provider('mySocket', function () {
 
   this.prefix = '/_sock';
@@ -149,6 +160,4 @@ angular.module(PKG.name+'.services')
     };
   };
 
-})
-
-;
+});
