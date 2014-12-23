@@ -62,7 +62,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTwillRunnable.class);
-  public static final int TIMEOUT_VALUE = 10;
+  private static final int TIMEOUT_VALUE = 10;
 
   private LogSaver logSaver;
   private SettableFuture<?> completion;
