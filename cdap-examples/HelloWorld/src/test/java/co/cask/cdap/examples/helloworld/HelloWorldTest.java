@@ -45,6 +45,7 @@ public class HelloWorldTest extends TestBase {
 
     // Start WhoFlow
     FlowManager flowManager = appManager.startFlow("WhoFlow");
+    Assert.assertTrue(flowManager.isRunning());
 
     // Send stream events to the "who" Stream
     StreamWriter streamWriter = appManager.getStreamWriter("who");
@@ -58,7 +59,6 @@ public class HelloWorldTest extends TestBase {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
       RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("HelloWorld", "WhoFlow", "saver");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
-      Assert.assertTrue(flowManager.isRunning());
     } finally {
       flowManager.stop();
       Assert.assertFalse(flowManager.isRunning());
