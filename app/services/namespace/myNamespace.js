@@ -11,12 +11,6 @@ angular.module(PKG.name + '.services')
             method: 'GET'
           },
           function(res) {
-            if(!res.length) {
-              res.push({
-                name: 'default',
-                displayName: 'Default Namespace'
-              });
-            }
             myNamespaceMediator.setNamespaceList(res);
             deferred.resolve(res);
           }
