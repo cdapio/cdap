@@ -6,15 +6,12 @@ angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
 function ($scope, $alert, MyDataSource, myNamespace) {
   $scope.apps = null;
   $scope.hideWelcomeMessage = false;
-  
+
   var dataSrc = new MyDataSource($scope);
 
-  dataSrc.fetch({
-    // _cdap: 'GET /apps/'
-    config: {
-      method: 'GET',
-      path: '/apps/'
-    }
+  dataSrc.request({
+    _cdapPath: '/apps/',
+    method: 'GET'
   }, function(res) {
     $scope.apps = res;
     if (angular.isArray($scope.apps) && $scope.apps.length) {
