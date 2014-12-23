@@ -1,16 +1,17 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope) {
-    var scope = $rootScope;
+  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope, MY_CONFIG) {
+    var scope = $rootScope.$new();
     var data = new MyDataSource(scope);
     this.getList = function() {
       var deferred = $q.defer();
       if (myNamespaceMediator.namespaceList.length === 0) {
-        data.fetch({
-          config: {
-            isAbsoluteUrl: true,
-            path: '/namespaces/',
+        data.request({
+            url: 'http://' +
+              MY_CONFIG.cdap.routerServerUrl +
+              ':' +
+              MY_CONFIG.cdap.routerServerPort +
+              '/v3/namespaces/',
             method: 'GET'
-          }
         }, function(res) {
           if (myNamespaceMediator.namespaceList.length === 0) {
             myNamespaceMediator.setNamespaceList(res);
