@@ -14,7 +14,7 @@
   <ul class="nav navbar-nav hidden-sm">
     <li class="dropdown">
       <a href="" class="dropdown-toggle">
-        {{currentNamespace}}
+        <span class="" ng-bind="currentns"></span>
         <span class="caret"></span>
       </a>
     </li>
@@ -24,7 +24,7 @@
     <ul class="nav navbar-nav">
       <li
         ng-repeat="link in navbarLinks"
-        ng-class="{active: $state.includes(link.sref)}"
+        ng-class="{active: $state.includes(link.parent || link.sref)}"
       >
         <a ui-sref="{{link.sref}}" ng-bind="link.label"></a>
       </li>

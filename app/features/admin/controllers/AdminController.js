@@ -1,41 +1,43 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminController', function ($scope, $state) {
+  .controller('AdminController', function ($scope, $state, myNamespace) {
     $scope.toggleMenu = function(menu) {
       menu.showSubMenu = !menu.showSubMenu;
     };
-    $scope.nsList = [
-      {
-        // /admin/ns/namespace1 - state is not designed/decided yet.
-        state: 'admin.namespace({namespaceId: "namespace1"})',
-        label: 'Namespace1',
+    myNamespace.getList()
+      .then(function(list) {
+        $scope.nsList = list.map(generateNsObject);
+      });
+    function generateNsObject(item) {
+      return {
+        state: 'admin.namespace({namespaceId: "' + item.name +'" })',
+        label: item.displayName,
         children: [
           {
-            state: 'admin.namespace.settings({namespaceId: "namespace1"})',
+            state: 'admin.namespace.settings({namespaceId: "' + item.name +'" })',
             label: 'Settings',
             children: []
           },
           {
-            state: 'admin.namespace.users({namespaceId: "namespace1"})',
+            state: 'admin.namespace.users({namespaceId: "' + item.name +'" })',
             label: 'Users',
             children: []
           },
           {
-            state: 'admin.namespace.datatypes({namespaceId: "namespace1"})',
+            state: 'admin.namespace.datatypes({namespaceId: "' + item.name +'" })',
             label: 'Data Types',
             children: []
           },
           {
-            state: 'admin.namespace.datasets({namespaceId: "namespace1"})',
+            state: 'admin.namespace.datasets({namespaceId: "' + item.name +'" })',
             label: 'Datasets',
             children: []
           },
           {
-            state: 'admin.namespace.apps({namespaceId: "namespace1"})',
+            state: 'admin.namespace.apps({namespaceId: "' + item.name +'" })',
             label: 'Apps',
             children: []
           }
         ]
-      }
-    ];
-
+      };
+    }
   });
