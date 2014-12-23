@@ -14,7 +14,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myNamespaceMediator) {
+  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myNamespaceMediator, myBaseUrl) {
 
     var self = this,
         socket = null,
@@ -115,11 +115,7 @@ angular.module(PKG.name+'.services')
         // further sugar for building absolute url
         if(r._cdapPath) {
           msg.resource.url = [
-            'http://',
-            MY_CONFIG.cdap.routerServerUrl,
-            ':',
-            MY_CONFIG.cdap.routerServerPort,
-            '/v3',
+            myBaseUrl,
             r._cdapPath
           ].join('');
           delete msg.resource._cdapPath;
