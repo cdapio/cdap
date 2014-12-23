@@ -28,8 +28,12 @@ angular.module(PKG.name + '.services')
       if (!myNamespaceMediator.currentNamespace) {
         this.getList(scope)
           .then(function(list) {
-            myNamespaceMediator.setCurrentNamespace(list[0] || 'default');
-            deferred.resolve(list[0] || 'default');
+            var defaultns = {
+              name: 'default',
+              displayName: 'default'
+            };
+            myNamespaceMediator.setCurrentNamespace(list[0] || defaultns);
+            deferred.resolve(list[0] || defaultns);
           });
       } else {
         deferred.resolve(myNamespaceMediator.getCurrentNamespace());
