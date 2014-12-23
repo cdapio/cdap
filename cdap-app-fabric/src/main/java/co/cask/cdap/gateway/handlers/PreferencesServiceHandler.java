@@ -19,13 +19,17 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.config.ConfigType;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpResponder;
 import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -47,9 +51,14 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreferencesServiceHandler.class);
   private static final String INSTANCE_NAME = "cdap";
 
+  private final Store store;
+
   @Inject
-  public PreferencesServiceHandler(Authenticator authenticator, ConfigService configService) {
+  public PreferencesServiceHandler(Authenticator authenticator,
+                                   @Named(Constants.ConfigService.PREFERENCE_SETTING) ConfigService configService,
+                                   StoreFactory storeFactory) {
     super(authenticator, configService);
+    this.store = storeFactory.create();
   }
 
   //Instance Level properties
@@ -106,6 +115,11 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
   public void putNamespaceProperty(final HttpRequest request, final HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("property-name") String property) throws Exception {
+    //Check if the given Namespace is present
+    if (store.getNamespace(Id.Namespace.from(namespaceId)) == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
     setProperty(getPrefix(INSTANCE_NAME), ConfigType.PREFERENCES, namespaceId, property, request, responder);
   }
 
@@ -113,6 +127,11 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
   @POST
   public void putNamespaceProperties(final HttpRequest request, final HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId) throws Exception {
+    //Check if the given Namespace is present
+    if (store.getNamespace(Id.Namespace.from(namespaceId)) == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
     setProperties(getPrefix(INSTANCE_NAME), ConfigType.PREFERENCES, namespaceId, request, responder);
   }
 
@@ -154,6 +173,11 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
                                      @PathParam("property-id") String propertyId) throws Exception {
+    //Check if the application is present
+    if (store.getApplication(Id.Application.from(namespaceId, appId)) == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
     setProperty(getPrefix(INSTANCE_NAME, namespaceId), ConfigType.PREFERENCES, appId, propertyId, request, responder);
   }
 
@@ -162,6 +186,11 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
   public void setApplicationProperties(final HttpRequest request, final HttpResponder responder,
                                        @PathParam("namespace-id") String namespaceId,
                                        @PathParam("app-id") String appId) throws Exception {
+    //Check if the application is present
+    if (store.getApplication(Id.Application.from(namespaceId, appId)) == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
     setProperties(getPrefix(INSTANCE_NAME, namespaceId), ConfigType.PREFERENCES, appId, request, responder);
   }
 
@@ -216,8 +245,14 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
                                  @PathParam("program-id") String programId,
                                  @PathParam("property-name") String property) throws Exception {
     try {
-      setProperty(getPrefix(INSTANCE_NAME, namespaceId, appId), ConfigType.PREFERENCES,
-                  getProgramName(programType, programId), property, request, responder);
+      //Check if the program id/type is present.
+      if (!store.programExists(Id.Program.from(namespaceId, appId, programId),
+                               ProgramType.valueOfCategoryName(programType))) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        setProperty(getPrefix(INSTANCE_NAME, namespaceId, appId), ConfigType.PREFERENCES,
+                    getProgramName(programType, programId), property, request, responder);
+      }
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Program Type");
     }
@@ -231,8 +266,14 @@ public class PreferencesServiceHandler extends ConfigServiceHandler {
                                    @PathParam("program-type") String programType,
                                    @PathParam("program-id") String programId) throws Exception {
     try {
-      setProperties(getPrefix(INSTANCE_NAME, namespaceId, appId), ConfigType.PREFERENCES,
-                    getProgramName(programType, programId), request, responder);
+      //Check if the program id/type is present.
+      if (!store.programExists(Id.Program.from(namespaceId, appId, programId),
+                               ProgramType.valueOfCategoryName(programType))) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        setProperties(getPrefix(INSTANCE_NAME, namespaceId, appId), ConfigType.PREFERENCES,
+                      getProgramName(programType, programId), request, responder);
+      }
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Program Type");
     }

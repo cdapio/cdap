@@ -153,6 +153,9 @@ public final class Constants {
    * Config Service options.
    */
   public static final class ConfigService {
+    public static final String DASHBOARD = "dashbord";
+    public static final String USERSETTING = "usersetting";
+    public static final String PREFERENCE_SETTING = "prefsetting";
     public static final String CONFIG_STORE_TABLE = "configstore";
     public static final String DASHBOARD_OWNER_TABLE = "dashboardowner";
     public static final String METADATA_TABLE = "configmetadata";

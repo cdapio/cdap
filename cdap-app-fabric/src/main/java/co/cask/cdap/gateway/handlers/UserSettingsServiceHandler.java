@@ -23,6 +23,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,8 @@ public class UserSettingsServiceHandler extends ConfigServiceHandler {
   private static final Gson GSON = new Gson();
 
   @Inject
-  public UserSettingsServiceHandler(Authenticator authenticator, ConfigService configService) {
+  public UserSettingsServiceHandler(Authenticator authenticator,
+                                    @Named(Constants.ConfigService.USERSETTING) ConfigService configService) {
     super(authenticator, configService);
   }
 

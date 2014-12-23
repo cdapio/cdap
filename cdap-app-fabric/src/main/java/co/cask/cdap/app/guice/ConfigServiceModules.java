@@ -17,43 +17,43 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.config.ConfigService;
-import co.cask.cdap.gateway.handlers.DatasetConfigService;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.gateway.handlers.DashboardConfigService;
+import co.cask.cdap.gateway.handlers.PreferencesConfigService;
+import co.cask.cdap.gateway.handlers.UserSettingsConfigService;
+import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 
 /**
  * ConfigService Guice Modules.
  */
 public class ConfigServiceModules {
 
-  public Module getInMemoryModule() {
-    return new PrivateModule() {
+  private Module getModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(ConfigService.class).to(DatasetConfigService.class).in(Scopes.SINGLETON);
-        expose(ConfigService.class);
+        bind(ConfigService.class).annotatedWith(Names.named(Constants.ConfigService.USERSETTING)).
+          to(UserSettingsConfigService.class).in(Scopes.SINGLETON);
+        bind(ConfigService.class).annotatedWith(Names.named(Constants.ConfigService.PREFERENCE_SETTING)).
+          to(PreferencesConfigService.class).in(Scopes.SINGLETON);
+        bind(ConfigService.class).annotatedWith(Names.named(Constants.ConfigService.DASHBOARD)).
+          to(DashboardConfigService.class).in(Scopes.SINGLETON);
       }
     };
+  }
+
+  public Module getInMemoryModule() {
+    return getModule();
   }
 
   public Module getStandaloneModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(ConfigService.class).to(DatasetConfigService.class).in(Scopes.SINGLETON);
-        expose(ConfigService.class);
-      }
-    };
+    return getModule();
   }
 
-  public Module getDistribtuedModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(ConfigService.class).to(DatasetConfigService.class).in(Scopes.SINGLETON);
-        expose(ConfigService.class);
-      }
-    };
+  public Module getDistributedModule() {
+    return getModule();
   }
 }

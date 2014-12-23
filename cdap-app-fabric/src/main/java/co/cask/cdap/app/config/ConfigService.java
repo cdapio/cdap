@@ -22,117 +22,138 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service to store/retrieve configuration settings.
+ * Service to store/retrieve configuration settings under a given prefix (separated by '.').
  */
 public interface ConfigService extends Service {
 
   /**
    * Write setting to a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @param key Key
    * @param value Value
    * @throws Exception
    */
-  void writeSetting(String namespace, ConfigType type, String name, String key, String value) throws Exception;
+  void writeSetting(String prefix, ConfigType type, String name, String key, String value) throws Exception;
 
   /**
    * Write a Map of settings to a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @param settingsMap Map of Key/Value
    * @throws Exception
    */
-  void writeSetting(String namespace, ConfigType type, String name, Map<String, String> settingsMap) throws Exception;
+  void writeSetting(String prefix, ConfigType type, String name, Map<String, String> settingsMap) throws Exception;
 
   /**
-   * Read a setting of a Configuration.
-   * @param namespace Namespace
+   * Return a setting of a Configuration.
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @param key Key
    * @return Value
    * @throws Exception
    */
-  String readSetting(String namespace, ConfigType type, String name, String key) throws Exception;
+  String readSetting(String prefix, ConfigType type, String name, String key) throws Exception;
+
+  /**
+   * Return a resolved setting of a Configuration combining the setting at different levels of Prefix.
+   * @param prefix Configuration Prefix
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @param key Key
+   * @return Value
+   * @throws Exception
+   */
+  String readResolvedSetting(String prefix, ConfigType type, String name, String key) throws Exception;
 
   /**
    * Read settings of a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @return Map of Key/Value
    * @throws Exception
    */
-  Map<String, String> readSetting(String namespace, ConfigType type, String name) throws Exception;
+  Map<String, String> readSetting(String prefix, ConfigType type, String name) throws Exception;
+
+  /**
+   * Read resolved settings of a Configuration combining settings at different levels of Prefix.
+   * @param prefix Configuration Prefix
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @return Map of Key/Value
+   * @throws Exception
+   */
+  Map<String, String> readResolvedSetting(String prefix, ConfigType type, String name) throws Exception;
 
   /**
    * Delete a setting of a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @param key Key
    * @throws Exception
    */
-  void deleteSetting(String namespace, ConfigType type, String name, String key) throws Exception;
+  void deleteSetting(String prefix, ConfigType type, String name, String key) throws Exception;
 
   /**
    * Delete all the settings of a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @throws Exception
    */
-  void deleteSetting(String namespace, ConfigType type, String name) throws Exception;
+  void deleteSetting(String prefix, ConfigType type, String name) throws Exception;
 
   /**
    * Delete a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param accId Account Id
    * @param name Name of the Configuration
    * @throws Exception
    */
-  void deleteConfig(String namespace, ConfigType type, String accId, String name) throws Exception;
+  void deleteConfig(String prefix, ConfigType type, String accId, String name) throws Exception;
 
   /**
    * Create a Configuration.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param accId Account Id
    * @return Configuration Id
    * @throws Exception
    */
-  String createConfig(String namespace, ConfigType type, String accId) throws Exception;
+  String createConfig(String prefix, ConfigType type, String accId) throws Exception;
 
   /**
    * Get the list of Configurations belonging to a specific Account Id.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param accId Account Id
    * @return List of Configuration Ids
    * @throws Exception
    */
-  List<String> getConfig(String namespace, ConfigType type, String accId) throws Exception;
+  List<String> getConfig(String prefix, ConfigType type, String accId) throws Exception;
 
   /**
    * Get the list of Configurations.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @return List of Configuration Ids
    * @throws Exception
    */
-  List<String> getConfig(String namespace, ConfigType type) throws Exception;
+  List<String> getConfig(String prefix, ConfigType type) throws Exception;
 
   /**
    * Check if a Configuration exists.
-   * @param namespace Namespace
+   * @param prefix Configuration Prefix
    * @param type Configuration Type
    * @param name Name of the Configuration
    * @return True if the configuration exists
    * @throws Exception
    */
-  boolean checkConfig(String namespace, ConfigType type, String name) throws Exception;
+  boolean checkConfig(String prefix, ConfigType type, String name) throws Exception;
 }

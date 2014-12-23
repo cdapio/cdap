@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.config.ConfigType;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
@@ -26,6 +27,8 @@ import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -41,7 +44,8 @@ public class ConfigServiceTest {
   private static TransactionManager txManager;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
-  private static ConfigService configService;
+  private static ConfigService dashboardService;
+  private static ConfigService userSettingsService;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -53,13 +57,18 @@ public class ConfigServiceTest {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    configService = injector.getInstance(ConfigService.class);
-    configService.startAndWait();
+    dashboardService = injector.getInstance(Key.get(ConfigService.class,
+                                                    Names.named(Constants.ConfigService.DASHBOARD)));
+    dashboardService.startAndWait();
+    userSettingsService = injector.getInstance(Key.get(ConfigService.class,
+                                                       Names.named(Constants.ConfigService.USERSETTING)));
+    userSettingsService.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() {
-    configService.stopAndWait();
+    dashboardService.stopAndWait();
+    userSettingsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
@@ -70,17 +79,16 @@ public class ConfigServiceTest {
     String namespace = "userspace";
     String userId = "id";
     ConfigType type = ConfigType.USER;
-    List<String> configs = configService.getConfig(namespace, type, userId);
-    Assert.assertEquals(1, configs.size());
-    Assert.assertEquals(userId, configs.get(0));
+    List<String> configs = userSettingsService.getConfig(namespace, type, userId);
+    Assert.assertEquals(0, configs.size());
 
-    configService.writeSetting(namespace, type, userId, "k1", "v1");
-    Map<String, String> settings = configService.readSetting(namespace, type, userId);
+    userSettingsService.writeSetting(namespace, type, userId, "k1", "v1");
+    Map<String, String> settings = userSettingsService.readSetting(namespace, type, userId);
     Assert.assertEquals(1, settings.size());
     Assert.assertEquals("v1", settings.get("k1"));
 
-    configService.deleteConfig(namespace, type, userId, userId);
-    settings = configService.readSetting(namespace, type, userId);
+    userSettingsService.deleteConfig(namespace, type, userId, userId);
+    settings = userSettingsService.readSetting(namespace, type, userId);
     Assert.assertEquals(0, settings.size());
   }
 
@@ -88,50 +96,50 @@ public class ConfigServiceTest {
   public void testDashboard() throws Exception {
     String namespace = "myspace";
     ConfigType type = ConfigType.DASHBOARD;
-    List<String> configs = configService.getConfig(namespace, type, "myId");
+    List<String> configs = dashboardService.getConfig(namespace, type, "myId");
     Assert.assertEquals(0, configs.size());
 
-    String dashId = configService.createConfig(namespace, type, "user1");
+    String dashId = dashboardService.createConfig(namespace, type, "user1");
 
-    configs = configService.getConfig(namespace, type, "user1");
+    configs = dashboardService.getConfig(namespace, type, "user1");
     Assert.assertEquals(1, configs.size());
     Assert.assertEquals(dashId, configs.get(0));
 
-    configs = configService.getConfig(namespace, type, "myId");
+    configs = dashboardService.getConfig(namespace, type, "myId");
     Assert.assertEquals(0, configs.size());
-    configs = configService.getConfig(namespace, type);
+    configs = dashboardService.getConfig(namespace, type);
     Assert.assertEquals(1, configs.size());
     Assert.assertEquals(dashId, configs.get(0));
 
-    Map<String, String> settings = configService.readSetting(namespace, type, dashId);
+    Map<String, String> settings = dashboardService.readSetting(namespace, type, dashId);
     Assert.assertEquals(0, settings.size());
-    String value = configService.readSetting(namespace, type, dashId, "key");
+    String value = dashboardService.readSetting(namespace, type, dashId, "key");
     Assert.assertEquals(null, value);
 
-    configService.writeSetting(namespace, type, dashId, "key", "value");
-    value = configService.readSetting(namespace, type, dashId, "key");
+    dashboardService.writeSetting(namespace, type, dashId, "key", "value");
+    value = dashboardService.readSetting(namespace, type, dashId, "key");
     Assert.assertEquals("value", value);
 
     Map<String, String> newSettings = Maps.newHashMap();
     newSettings.put("key", "noval");
     newSettings.put("k1", "v1");
-    configService.writeSetting(namespace, type, dashId, newSettings);
-    settings = configService.readSetting(namespace, type, dashId);
+    dashboardService.writeSetting(namespace, type, dashId, newSettings);
+    settings = dashboardService.readSetting(namespace, type, dashId);
     Assert.assertEquals(2, settings.size());
     Assert.assertEquals("noval", settings.get("key"));
     Assert.assertEquals("v1", settings.get("k1"));
 
-    configService.deleteSetting(namespace, type, dashId, "k1");
-    Assert.assertEquals(null, configService.readSetting(namespace, type, dashId, "k1"));
-    Assert.assertEquals(1, configService.readSetting(namespace, type, dashId).size());
+    dashboardService.deleteSetting(namespace, type, dashId, "k1");
+    Assert.assertEquals(null, dashboardService.readSetting(namespace, type, dashId, "k1"));
+    Assert.assertEquals(1, dashboardService.readSetting(namespace, type, dashId).size());
 
-    configService.deleteSetting(namespace, type, dashId);
-    Assert.assertEquals(0, configService.readSetting(namespace, type, dashId).size());
+    dashboardService.deleteSetting(namespace, type, dashId);
+    Assert.assertEquals(0, dashboardService.readSetting(namespace, type, dashId).size());
 
-    Assert.assertEquals(true, configService.checkConfig(namespace, type, dashId));
+    Assert.assertEquals(true, dashboardService.checkConfig(namespace, type, dashId));
 
-    configService.deleteConfig(namespace, type, "user1", dashId);
-    configs = configService.getConfig(namespace, type);
+    dashboardService.deleteConfig(namespace, type, "user1", dashId);
+    configs = dashboardService.getConfig(namespace, type);
     Assert.assertEquals(0, configs.size());
   }
 }

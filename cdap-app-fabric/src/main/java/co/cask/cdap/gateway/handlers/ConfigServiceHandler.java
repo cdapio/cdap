@@ -21,7 +21,6 @@ import co.cask.cdap.app.config.ConfigType;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.gson.Gson;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -31,7 +30,6 @@ import java.util.Map;
  * Helper Methods for handlers which use {@link ConfigService}.
  */
 public abstract class ConfigServiceHandler extends AbstractAppFabricHttpHandler {
-  private static final Gson GSON = new Gson();
   private final ConfigService configService;
 
   public ConfigServiceHandler(Authenticator authenticator, ConfigService configService) {
@@ -39,9 +37,13 @@ public abstract class ConfigServiceHandler extends AbstractAppFabricHttpHandler 
     this.configService = configService;
   }
 
+  protected String getProperty(String prefix, ConfigType type, String name, String property) throws Exception {
+    return configService.readSetting(prefix, type, name, property);
+  }
+
   protected void getProperty(String prefix, ConfigType type, String name, String property, HttpResponder responder)
     throws Exception {
-    String value = configService.readSetting(prefix, type, name, property);
+    String value = getProperty(prefix, type, name, property);
     if (value == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -71,13 +73,17 @@ public abstract class ConfigServiceHandler extends AbstractAppFabricHttpHandler 
     }
   }
 
+    protected Map<String, String> getProperties(String prefix, ConfigType type, String name) throws Exception {
+      return configService.readSetting(prefix, type, name);
+  }
+
   protected void getProperties(String prefix, ConfigType type, String name, HttpResponder responder)
     throws Exception {
     if (!isConfigPresent(prefix, type, name)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      Map<String, String> settings = configService.readSetting(prefix, type, name);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
+      Map<String, String> settings = getProperties(prefix, type, name);
+      responder.sendJson(HttpResponseStatus.OK, settings);
     }
   }
 
@@ -98,6 +104,16 @@ public abstract class ConfigServiceHandler extends AbstractAppFabricHttpHandler 
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       configService.deleteSetting(prefix, type, name);
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+  }
+
+  protected void deleteConfig(String prefix, ConfigType type, String name, HttpRequest request, HttpResponder responder)
+    throws Exception {
+    if (!isConfigPresent(prefix, type, name)) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } else {
+      configService.deleteConfig(prefix, type, getAuthenticatedAccountId(request), name);
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }

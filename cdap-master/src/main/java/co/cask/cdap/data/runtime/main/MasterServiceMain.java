@@ -18,7 +18,6 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.ConfigServiceModules;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -162,7 +161,6 @@ public class MasterServiceMain extends DaemonMain {
       new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule(),
-      new ConfigServiceModules().getDistribtuedModule(),
       new ExploreClientModule()
     );
 

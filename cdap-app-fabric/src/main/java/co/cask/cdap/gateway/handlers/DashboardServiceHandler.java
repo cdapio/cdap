@@ -20,10 +20,9 @@ import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.config.ConfigType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -43,14 +42,15 @@ import javax.ws.rs.QueryParam;
  * Dashboard Service HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3)
-public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
+public class DashboardServiceHandler extends ConfigServiceHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardServiceHandler.class);
-  private static final Gson GSON = new Gson();
+
   private final ConfigService configService;
 
   @Inject
-  public DashboardServiceHandler(Authenticator authenticator, ConfigService configService) {
-    super(authenticator);
+  public DashboardServiceHandler(Authenticator authenticator,
+                                 @Named(Constants.ConfigService.DASHBOARD) ConfigService configService) {
+    super(authenticator, configService);
     this.configService = configService;
   }
 
@@ -77,7 +77,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     } else {
       dashboardIds = configService.getConfig(namespace, ConfigType.DASHBOARD, getAuthenticatedAccountId(request));
     }
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(dashboardIds));
+    responder.sendJson(HttpResponseStatus.OK, dashboardIds);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}")
@@ -86,12 +86,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("namespace-id") String namespace,
                               @PathParam("dashboard-id") String dashboard) throws Exception {
     //TODO: Only the owner of the dashboard can delete the dashboard?
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      configService.deleteConfig(namespace, ConfigType.DASHBOARD, getAuthenticatedAccountId(request), dashboard);
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
+    deleteConfig(namespace, ConfigType.DASHBOARD, dashboard, request, responder);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties")
@@ -99,12 +94,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
   public void getProperties(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
                             @PathParam("dashboard-id") String dashboard) throws Exception {
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      Map<String, String> settings = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
-    }
+    getProperties(namespace, ConfigType.DASHBOARD, dashboard, responder);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties")
@@ -112,12 +102,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
   public void setProperties(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
                             @PathParam("dashboard-id") String dashboard) throws Exception {
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      configService.writeSetting(namespace, ConfigType.DASHBOARD, dashboard, decodeArguments(request));
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
+    setProperties(namespace, ConfigType.DASHBOARD, dashboard, request, responder);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties")
@@ -125,12 +110,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
   public void deleteProperties(final HttpRequest request, final HttpResponder responder,
                                @PathParam("namespace-id") String namespace,
                                @PathParam("dashboard-id") String dashboard) throws Exception {
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      configService.deleteSetting(namespace, ConfigType.DASHBOARD, dashboard);
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
+    deleteProperties(namespace, ConfigType.DASHBOARD, dashboard, responder);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties/{property-name}")
@@ -139,16 +119,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespace,
                           @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
     throws Exception {
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      String value = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
-      if (value != null) {
-        responder.sendString(HttpResponseStatus.OK, value);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      }
-    }
+    getProperty(namespace, ConfigType.DASHBOARD, dashboard, property, responder);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties/{property-name}")
@@ -157,13 +128,7 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespace,
                           @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
     throws Exception {
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      String value = parseBody(request, String.class);
-      configService.writeSetting(namespace, ConfigType.DASHBOARD, dashboard, property, value);
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
+    setProperty(namespace, ConfigType.DASHBOARD, dashboard, property, request, responder);
   }
 
   @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}/properties/{property-name}")
@@ -172,20 +137,6 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespace,
                              @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
     throws Exception {
-    if (!isDashboardPresent(namespace, dashboard)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      String value = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
-      if (value != null) {
-        configService.deleteSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      }
-    }
-  }
-
-  private boolean isDashboardPresent(String namespace, String id) throws Exception {
-    return configService.checkConfig(namespace, ConfigType.DASHBOARD, id);
+    deleteProperty(namespace, ConfigType.DASHBOARD, dashboard, property, responder);
   }
 }

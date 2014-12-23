@@ -39,6 +39,8 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -93,7 +95,9 @@ public abstract class AppFabricTestBase {
   private static MetricsQueryService metricsService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
-  private static ConfigService configService;
+  private static ConfigService dashboardService;
+  private static ConfigService userSettingService;
+  private static ConfigService preferenceService;
   private static ServiceStore serviceStore;
   private static TransactionSystemClient txClient;
 
@@ -118,8 +122,15 @@ public abstract class AppFabricTestBase {
     serviceStore.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
-    configService = injector.getInstance(ConfigService.class);
-    configService.startAndWait();
+    dashboardService = injector.getInstance(Key.get(ConfigService.class,
+                                                    Names.named(Constants.ConfigService.DASHBOARD)));
+    dashboardService.startAndWait();
+    preferenceService = injector.getInstance(Key.get(ConfigService.class,
+                                                     Names.named(Constants.ConfigService.PREFERENCE_SETTING)));
+    preferenceService.startAndWait();
+    userSettingService = injector.getInstance(Key.get(ConfigService.class,
+                                                      Names.named(Constants.ConfigService.USERSETTING)));
+    userSettingService.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     EndpointStrategy endpointStrategy =
       new TimeLimitEndpointStrategy(
@@ -133,7 +144,9 @@ public abstract class AppFabricTestBase {
 
   @AfterClass
   public static void afterClass() {
-    configService.stopAndWait();
+    dashboardService.stopAndWait();
+    preferenceService.stopAndWait();
+    userSettingService.stopAndWait();
     serviceStore.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
