@@ -3,13 +3,29 @@ angular.module(PKG.name+'.services')
     MyDataSource // usage in a controler:
 
     var dataSrc = new MyDataSource($scope);
-    dataSrc.poll({
-      method: 'GET'
-      _cdapPath: '/foo/bar'
-    }, function(result) {
-      $scope.foo = result;
-    });
 
+    // polling a namespaced resource example:
+    dataSrc.poll({
+        method: 'GET',
+        _cdapNsPath: '/foo/bar'
+      },
+      function(result) {
+        $scope.foo = result;
+      }
+    ); // will poll <host>:<port>/v3/namespaces/<currentNamespace>/foo/bar
+
+    // posting to a systemwide resource:
+    dataSrc.request({
+        method: 'POST',
+        _cdapPath: '/system/config',
+        body: {
+          foo: 'bar'
+        }
+      },
+      function(result) {
+        $scope.foo = result;
+      }
+    ); // will post to <host>:<port>/v3/system/config
    */
   .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
     MYSOCKET_EVENT) {

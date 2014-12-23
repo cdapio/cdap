@@ -1,42 +1,42 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope, MY_CONFIG) {
-    var scope = $rootScope.$new();
-    var data = new MyDataSource(scope);
+  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope) {
+
+    var data = new MyDataSource($rootScope.$new());
+
     this.getList = function() {
       var deferred = $q.defer();
       if (myNamespaceMediator.namespaceList.length === 0) {
         data.request({
-            url: 'http://' +
-              MY_CONFIG.cdap.routerServerUrl +
-              ':' +
-              MY_CONFIG.cdap.routerServerPort +
-              '/v3/namespaces/',
+            _cdapPath: '/namespaces',
             method: 'GET'
-        }, function(res) {
-          if (myNamespaceMediator.namespaceList.length === 0) {
+          },
+          function(res) {
+            if(!res.length) {
+              res.push({
+                name: 'default',
+                displayName: 'Default Namespace'
+              });
+            }
             myNamespaceMediator.setNamespaceList(res);
+            deferred.resolve(res);
           }
-          deferred.resolve(myNamespaceMediator.getNamespaceList());
-        });
+        );
       } else {
         deferred.resolve(myNamespaceMediator.getNamespaceList());
       }
       return deferred.promise;
     };
-    this.getCurrentNamespace = function(scope) {
+
+    this.getCurrentNamespace = function() {
       var deferred = $q.defer();
       if (!myNamespaceMediator.currentNamespace) {
-        this.getList(scope)
+        this.getList()
           .then(function(list) {
-            var defaultns = {
-              name: 'default',
-              displayName: 'default'
-            };
-            myNamespaceMediator.setCurrentNamespace(list[0] || defaultns);
-            deferred.resolve(list[0] || defaultns);
+            myNamespaceMediator.setCurrentNamespace(list[0]);
+            deferred.resolve(list[0]);
           });
       } else {
-        deferred.resolve(myNamespaceMediator.getCurrentNamespace());
+        deferred.resolve(myNamespaceMediator.currentNamespace);
       }
       return deferred.promise;
     };

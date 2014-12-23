@@ -11,11 +11,12 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
     link: function (scope, element, attrs) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
-      myNamespace.getList()
-        .then(function(list) {
-          scope.namespaces = list;
-          scope.currentns = scope.namespaces[0].displayName;
-        }.bind(this));
+
+      myNamespace.getList().then(function(list) {
+        scope.namespaces = list;
+        scope.currentNamespace = list[0];
+      });
+
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
         template: 'navbar/namespace.html',

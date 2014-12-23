@@ -18,7 +18,6 @@ angular.module(PKG.name+'.services')
 
     var self = this,
         socket = null,
-        ns = null,
         buffer = [];
 
     function init (attempt) {
@@ -75,30 +74,26 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      if (obj.resource._cdapPath && !ns) {
+      if (obj.resource._cdapNsPath) {
         myNamespaceMediator.getCurrentNamespace()
           .then(function (namespace) {
-            ns = namespace.name;
-            doSend(obj);
+            doSend(obj, namespace);
           });
       } else {
         doSend(obj);
       }
+
       return true;
     }
 
-    function doSend(obj) {
+    function doSend(obj, namespace) {
       var msg = angular.extend({
 
             user: myAuth.currentUser
 
           }, obj),
-          r = obj.resource,
-          baseUrl = 'http://' +
-            MY_CONFIG.cdap.routerServerUrl +
-            ':' +
-            MY_CONFIG.cdap.routerServerPort +
-            '/v3';
+
+          r = obj.resource;
 
       if(r) {
         msg.resource = r;
@@ -106,35 +101,27 @@ angular.module(PKG.name+'.services')
         // and expect json as response
         msg.resource.json = true;
 
-        /*
-          if _cdapPath is there -> construct url
-          else use the entire resource object
 
-          In this case it will be used like this,
-          myDatasrc.request({
-            _cdapPath: '/apps/myApp'
-            method: 'GET'
-          });
-          or
-          No _cdapPath --> use the entire resource object as it is.
-          myDatasrc.request({
-            path: <entire-url>,
-            method: POST,
-            body: {
-              name: "asdad",
-              description: "asdasd",
-              displayName: "axcxc"
-            }
-          }, function() {
-            ...
-          })
+        // sugar for prefixing the path with namespace
+        if(r._cdapNsPath) {
+          r._cdapPath = [
+            '/namespaces/',
+            namespace.name,
+            r._cdapNsPath
+          ].join('');
+          delete msg.resource._cdapNsPath;
+        }
 
-        */
+        // further sugar for building absolute url
         if(r._cdapPath) {
-          msg.resource.url = baseUrl +
-            '/namespaces/' +
-            ns +
-            r._cdapPath;
+          msg.resource.url = [
+            'http://',
+            MY_CONFIG.cdap.routerServerUrl,
+            ':',
+            MY_CONFIG.cdap.routerServerPort,
+            '/v3',
+            r._cdapPath
+          ].join('');
           delete msg.resource._cdapPath;
         }
 
@@ -145,7 +132,7 @@ angular.module(PKG.name+'.services')
         }
       }
 
-      $log.log('[mySocket] →', msg);
+      $log.log('[mySocket] →', msg.action, r.method, r.url);
       socket.send(JSON.stringify(msg));
     }
 
