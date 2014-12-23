@@ -74,7 +74,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   public abstract RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception;
 
   /**
-   * Gets a {@link Callable} of {@link RuntimeContext} for the {@link Program}
+   * Gets a {@link Callable} of {@link RuntimeContext} for the {@link Program}.
    *
    * @param name    name of the {@link Program}
    * @param program the {@link Program}

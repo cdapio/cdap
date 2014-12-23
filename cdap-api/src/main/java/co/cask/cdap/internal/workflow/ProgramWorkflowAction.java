@@ -73,7 +73,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
     programType = context.getRuntimeArguments().containsKey(PROGRAM_TYPE) ? 
                               WorkflowSupportedProgram.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
 
-    LOG.info("Initialized for {} Program {} in workflow action: {}",
+    LOG.info("Initialized for {} Program {} in workflow action",
              programType != null ? programType.name() : null, programName);
   }
 
@@ -85,7 +85,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
       // TODO (terence) : Put something back to context.
 
-      LOG.info("{} Program {} workflow action completed: {}", 
+      LOG.info("{} Program {} workflow action completed",
                programType != null ? programType.name() : null, programName);
     } catch (Exception e) {
       LOG.info("Failed to execute {} Program {} in workflow: {}", 
