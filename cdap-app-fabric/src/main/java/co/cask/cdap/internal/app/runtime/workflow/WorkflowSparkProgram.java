@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -27,28 +27,28 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * A Forwarding Program that turns a {@link Workflow} Program into a {@link MapReduce} program.
+ * A Forwarding Program that turns a {@link Workflow} Program into a {@link Spark} program.
  */
-public final class WorkflowMapReduceProgram extends AbstractWorkflowProgram {
+public final class WorkflowSparkProgram extends AbstractWorkflowProgram {
 
-  private final MapReduceSpecification mapReduceSpecification;
+  private final SparkSpecification sparkSpecification;
 
-  public WorkflowMapReduceProgram(Program delegate, MapReduceSpecification mapReduceSpecification) {
-    super(delegate, mapReduceSpecification);
-    this.mapReduceSpecification = mapReduceSpecification;
+  public WorkflowSparkProgram(Program delegate, SparkSpecification sparkSpecification) {
+    super(delegate, sparkSpecification);
+    this.sparkSpecification = sparkSpecification;
   }
 
   @Override
   public ProgramType getType() {
-    return ProgramType.MAPREDUCE;
+    return ProgramType.SPARK;
   }
 
   @Override
   public ApplicationSpecification getSpecification() {
     return new ForwardingApplicationSpecification(super.getForwardingProgramSpecification()) {
       @Override
-      public Map<String, MapReduceSpecification> getMapReduce() {
-        return ImmutableMap.of(mapReduceSpecification.getName(), mapReduceSpecification);
+      public Map<String, SparkSpecification> getSpark() {
+        return ImmutableMap.of(sparkSpecification.getName(), sparkSpecification);
       }
     };
   }

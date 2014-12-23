@@ -24,7 +24,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -55,25 +55,25 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
-  private final MapReduceRunnerFactory runnerFactory;
+  private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private NettyHttpService httpService;
   private volatile boolean running;
   private volatile WorkflowStatus workflowStatus;
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
-                 WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
+                 WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
     this.program = program;
     this.runId = runId;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
     this.logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-                                ? Long.parseLong(options.getArguments()
-                                                         .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
-                                : System.currentTimeMillis();
-
-    this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner, program,
-                                                            runId, options.getUserArguments(), logicalStartTime);
+      ? Long.parseLong(options.getArguments()
+                         .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
+      : System.currentTimeMillis();
+    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program, 
+                                                                         runId, options.getUserArguments(), 
+                                                                         logicalStartTime);
   }
 
   @Override
@@ -161,7 +161,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     try {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
-                                                 logicalStartTime, runnerFactory, runtimeArgs));
+                                                 logicalStartTime, 
+                                                 workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec), 
+                                                 runtimeArgs));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
       // this will always rethrow
