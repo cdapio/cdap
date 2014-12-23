@@ -92,12 +92,8 @@ angular.module(PKG.name+'.services')
             user: myAuth.currentUser
 
           }, obj),
-          r = obj.resource,
-          baseUrl = 'http://' +
-            MY_CONFIG.cdap.routerServerUrl +
-            ':' +
-            MY_CONFIG.cdap.routerServerPort +
-            '/v3';
+
+          r = obj.resource;
 
       if(r) {
         msg.resource = r;
@@ -106,12 +102,23 @@ angular.module(PKG.name+'.services')
         msg.resource.json = true;
 
         if(r._cdapNsPath) {
-          r._cdapPath = '/namespaces/' + namespace.name + r._cdapNsPath;
+          r._cdapPath = [
+            '/namespaces/',
+            namespace.name,
+            r._cdapNsPath
+          ].join('');
           delete msg.resource._cdapNsPath;
         }
 
         if(r._cdapPath) {
-          msg.resource.url = baseUrl + r._cdapPath;
+          msg.resource.url = [
+            'http://',
+            MY_CONFIG.cdap.routerServerUrl,
+            ':',
+            MY_CONFIG.cdap.routerServerPort,
+            '/v3',
+            r._cdapPath
+          ].join('');
           delete msg.resource._cdapPath;
         }
 

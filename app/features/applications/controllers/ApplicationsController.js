@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.applications')
     var data = new MyDataSource($scope);
     var appId = $state.params.appId;
     data.request({
-      _cdapPath: '/apps/' + appId + '/status',
+      _cdapNsPath: '/apps/' + appId + '/status',
       method: 'GET',
     }, function(res) {
       $scope.programs = res;

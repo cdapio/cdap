@@ -10,7 +10,7 @@ function ($scope, $alert, MyDataSource, myNamespace) {
   var dataSrc = new MyDataSource($scope);
 
   dataSrc.request({
-    _cdapPath: '/apps/',
+    _cdapNsPath: '/apps/',
     method: 'GET'
   }, function(res) {
     $scope.apps = res;

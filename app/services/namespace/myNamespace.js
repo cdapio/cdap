@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope, MY_CONFIG) {
+  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope) {
 
     var data = new MyDataSource($rootScope.$new());
 
@@ -9,10 +9,16 @@ angular.module(PKG.name + '.services')
         data.request({
             _cdapPath: '/namespaces',
             method: 'GET'
-        }, function(res) {
-          myNamespaceMediator.setNamespaceList(res);
-          deferred.resolve(myNamespaceMediator.getNamespaceList());
-        });
+          },
+          function(res) {
+            res.push({
+              name: 'default',
+              displayName: 'Default Namespace'
+            });
+            myNamespaceMediator.setNamespaceList(res);
+            deferred.resolve(res);
+          }
+        );
       } else {
         deferred.resolve(myNamespaceMediator.getNamespaceList());
       }
@@ -24,15 +30,11 @@ angular.module(PKG.name + '.services')
       if (!myNamespaceMediator.currentNamespace) {
         this.getList()
           .then(function(list) {
-            var defaultns = {
-              name: 'default',
-              displayName: 'Default Namespace'
-            };
-            myNamespaceMediator.setCurrentNamespace(list[0] || defaultns);
-            deferred.resolve(list[0] || defaultns);
+            myNamespaceMediator.setCurrentNamespace(list[0]);
+            deferred.resolve(list[0]);
           });
       } else {
-        deferred.resolve(myNamespaceMediator.getCurrentNamespace());
+        deferred.resolve(myNamespaceMediator.currentNamespace);
       }
       return deferred.promise;
     };
