@@ -64,7 +64,7 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      if (!obj.resource.config.isAbsoluteUrl && !ns) {
+      if (obj.resource._cdapPath && !ns) {
         myNamespaceMediator.getCurrentNamespace()
           .then(function (namespace) {
             ns = namespace.name;
@@ -90,67 +90,41 @@ angular.module(PKG.name+'.services')
             '/v3';
 
       if(r) {
+        msg.resource = r;
         // we only support json content-type,
         // and expect json as response
         msg.resource.json = true;
 
         /*
-          Parse the config. The config is simillar to any config that we use to
-          overwrite the default headers during a http call in libraries.
-
-          $.ajax({
-            url: ...,
-            method: GET/POST..,
-            ...
-          });
+          if _cdapPath is there -> construct url
+          else use the entire resource object
 
           In this case it will be used like this,
-          myDatasrc.fetch({
-            config: {
-              path: '/apps/myApp',
-              method: GET
-            }
+          myDatasrc.request({
+            _cdapPath: '/apps/myApp'
+            method: 'GET'
           });
           or
-          myDatasrc.fetch({
-            config: {
-              path: '/namespaces',
-              method: POST,
-              absoluteUrl: true,
-              params: {
-                name: "asdad",
-                description: "asdasd",
-                displayName: "axcxc"
-              }
+          No _cdapPath --> use the entire resource object as it is.
+          myDatasrc.request({
+            path: <entire-url>,
+            method: POST,
+            body: {
+              name: "asdad",
+              description: "asdasd",
+              displayName: "axcxc"
             }
           }, function() {
             ...
           })
-          or
-          myDatasrc.fetch({
-            config: {
-              path: '/namespaces/ns1',
-              method: GET,
-              ...
-            }
-          })
 
         */
-        if(r.config) {
-          if (r.config.isAbsoluteUrl) {
-            msg.resource.url = baseUrl + r.config.path
-          } else {
-            msg.resource.url = baseUrl +
-              '/namespaces/' +
-              ns +
-              r.config.path;
-          }
-          msg.resource.method = r.config.method || 'GET';
-          if (r.config.body) {
-            msg.resource.body = r.config.body;
-          }
-
-          delete msg.resource.config;
+        if(r._cdapPath) {
+          msg.resource.url = baseUrl +
+            '/namespaces/' +
+            ns +
+            r._cdapPath;
+          delete msg.resource._cdapPath;
         }
 
         if(MY_CONFIG.securityEnabled) {
