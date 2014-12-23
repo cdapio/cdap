@@ -59,12 +59,8 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   public void createFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
       try {
-        NotificationFeed feedUrl = NotificationFeed.fromId(id);
         NotificationFeed feed = parseBody(request, NotificationFeed.class);
-        NotificationFeed combinedFeed = new NotificationFeed.Builder()
-          .setNamespace(feedUrl.getNamespace())
-          .setCategory(feedUrl.getCategory())
-          .setName(feedUrl.getName())
+        NotificationFeed combinedFeed = new NotificationFeed.Builder(NotificationFeed.fromId(id))
           .setDescription(feed == null ? null : feed.getDescription())
           .build();
         if (feedService.createFeed(combinedFeed)) {
@@ -94,9 +90,6 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       NotificationFeed feed;
       try {
         feed = NotificationFeed.fromId(id);
-      } catch (NotificationFeedException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        return;
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
@@ -118,9 +111,6 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       NotificationFeed feed;
       try {
         feed = NotificationFeed.fromId(id);
-      } catch (NotificationFeedException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        return;
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;

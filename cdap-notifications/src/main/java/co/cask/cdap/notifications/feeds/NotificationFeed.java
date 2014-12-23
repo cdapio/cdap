@@ -30,10 +30,17 @@ public class NotificationFeed {
   private final String name;
   private final String description;
 
-  public static NotificationFeed fromId(String id) throws NotificationFeedException {
+  /**
+   * Create a {@link NotificationFeed} object from an id. An id is of the form "namespace.category.name".
+   *
+   * @param id id of the notification feed to build.
+   * @return a {@link NotificationFeed} object which id is the same as {@code id}.
+   * @throws IllegalArgumentException when the id doesn't match a valid feed id.
+   */
+  public static NotificationFeed fromId(String id) {
     String[] idParts = id.split("\\.");
     if (idParts.length != 3) {
-      throw new NotificationFeedException(String.format("Id %s is not a valid feed id.", id));
+      throw new IllegalArgumentException(String.format("Id %s is not a valid feed id.", id));
     }
     return new NotificationFeed(idParts[0], idParts[1], idParts[2], "");
   }
@@ -52,7 +59,7 @@ public class NotificationFeed {
     this.description = description;
   }
 
-  private boolean isId(final String name) {
+  private boolean isId(String name) {
     return CharMatcher.inRange('A', 'Z')
       .or(CharMatcher.inRange('a', 'z'))
       .or(CharMatcher.is('-'))
@@ -89,6 +96,13 @@ public class NotificationFeed {
     private String namespace;
     private String description;
 
+    public Builder(NotificationFeed feed) {
+      this.namespace = feed.getNamespace();
+      this.category = feed.getCategory();
+      this.name = feed.getName();
+      this.description = feed.getDescription();
+    }
+
     public Builder setName(final String name) {
       this.name = name;
       return this;
@@ -109,6 +123,10 @@ public class NotificationFeed {
       return this;
     }
 
+    /**
+     * @return a {@link NotificationFeed} object containing all the fields set in the builder.
+     * @throws IllegalArgumentException if the namespace, category or name is invalid.
+     */
     public NotificationFeed build() {
       return new NotificationFeed(namespace, category, name, description);
     }
