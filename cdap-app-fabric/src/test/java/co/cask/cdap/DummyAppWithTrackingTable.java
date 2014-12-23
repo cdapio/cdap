@@ -132,8 +132,6 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(DummyMapper.class);
-      job.setMapOutputKeyClass(Text.class);
-      job.setMapOutputValueClass(Text.class);
       job.setReducerClass(DummyReducer.class);
     }
   }
