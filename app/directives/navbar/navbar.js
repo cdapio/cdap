@@ -14,7 +14,7 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
 
       myNamespace.getList().then(function(list) {
         scope.namespaces = list;
-        scope.currentNamespace = list[0].displayName;
+        scope.currentNamespace = list[0];
       });
 
       // namespace dropdown

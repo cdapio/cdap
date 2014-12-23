@@ -101,6 +101,8 @@ angular.module(PKG.name+'.services')
         // and expect json as response
         msg.resource.json = true;
 
+
+        // sugar for prefixing the path with namespace
         if(r._cdapNsPath) {
           r._cdapPath = [
             '/namespaces/',
@@ -110,6 +112,7 @@ angular.module(PKG.name+'.services')
           delete msg.resource._cdapNsPath;
         }
 
+        // further sugar for building absolute url
         if(r._cdapPath) {
           msg.resource.url = [
             'http://',
