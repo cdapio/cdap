@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  */
 public class InMemoryNotificationFeedStore implements NotificationFeedStore {
 
-  Map<String, NotificationFeed> feeds = Maps.newHashMap();
+  private final Map<String, NotificationFeed> feeds = Maps.newHashMap();
 
   @Nullable
   @Override

@@ -18,7 +18,7 @@ package co.cask.cdap.notifications.feeds.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedServiceClient;
+import co.cask.cdap.notifications.feeds.client.RemoteNotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.InMemoryNotificationFeedStore;
 import co.cask.cdap.notifications.feeds.service.MDSNotificationFeedStore;
 import co.cask.cdap.notifications.feeds.service.NotificationFeedService;
@@ -58,7 +58,7 @@ public class NotificationFeedClientRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(NotificationFeedManager.class).to(NotificationFeedServiceClient.class).in(Scopes.SINGLETON);
+        bind(NotificationFeedManager.class).to(RemoteNotificationFeedManager.class).in(Scopes.SINGLETON);
       }
     };
   }

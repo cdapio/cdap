@@ -23,6 +23,7 @@ import co.cask.cdap.explore.service.Explore;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,13 +57,11 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy == null || endpointStrategy.pick() == null) {
-      String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
-      LOG.debug(message);
-      throw new RuntimeException(message);
+    Discoverable discoverable = endpointStrategy.pick();
+    if (discoverable != null) {
+      return discoverable.getSocketAddress();
     }
-
-    return endpointStrategy.pick().getSocketAddress();
+    throw new RuntimeException(String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
   }
 
   @Override

@@ -60,7 +60,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final String TYPE_NOTIFICATION_FEED = "feed";
 
   public AppMetadataStore(Table table) {
     super(table);

@@ -34,6 +34,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,14 +50,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Notification feed service client.
  */
-public class NotificationFeedServiceClient implements NotificationFeedManager {
-  private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedServiceClient.class);
+public class RemoteNotificationFeedManager implements NotificationFeedManager {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteNotificationFeedManager.class);
   private static final Gson GSON = new Gson();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public NotificationFeedServiceClient(final DiscoveryServiceClient discoveryClient) {
+  public RemoteNotificationFeedManager(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -68,11 +69,12 @@ public class NotificationFeedServiceClient implements NotificationFeedManager {
 
   private InetSocketAddress getServiceAddress() throws NotificationFeedException {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy.pick() == null) {
-      String message = String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP);
-      throw new NotificationFeedException(message);
+    Discoverable discoverable = endpointStrategy.pick();
+    if (discoverable != null) {
+      return discoverable.getSocketAddress();
     }
-    return endpointStrategy.pick().getSocketAddress();
+    throw new NotificationFeedException(
+      String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
   }
 
   @Override
@@ -105,7 +107,7 @@ public class NotificationFeedServiceClient implements NotificationFeedManager {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(String.format("Notification feed %s does not exist.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
+      throw new NotificationFeedException("Cannot get notification feed. Reason: " + getDetails(response));
     }
     return ObjectResponse.fromJsonBody(response, NotificationFeed.class).getResponseObject();
   }
@@ -118,7 +120,7 @@ public class NotificationFeedServiceClient implements NotificationFeedManager {
         ObjectResponse.fromJsonBody(response, new TypeToken<List<NotificationFeed>>() { }.getType());
       return r.getResponseObject();
     }
-    throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
+    throw new NotificationFeedException("Cannot list notification feeds. Reason: " + getDetails(response));
   }
 
   private String getDetails(HttpResponse response) {

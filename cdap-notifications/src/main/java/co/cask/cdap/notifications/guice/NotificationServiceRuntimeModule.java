@@ -48,7 +48,6 @@ public class NotificationServiceRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-//        bind(KafkaNotificationClient.class).in(Scopes.SINGLETON);
         bind(KafkaNotificationService.class).in(Scopes.SINGLETON);
       }
 
@@ -57,7 +56,6 @@ public class NotificationServiceRuntimeModule extends RuntimeModule {
       private NotificationService notificationPublisher(CConfiguration cConf, Injector injector) {
         // TODO use that constant once we have more core systems
         String coreSystem = cConf.get(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
-//        return injector.getInstance(KafkaNotificationClient.class);
         return injector.getInstance(KafkaNotificationService.class);
       }
     };
