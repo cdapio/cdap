@@ -26,7 +26,7 @@ angular.module(PKG.name + '.services')
           .then(function(list) {
             var defaultns = {
               name: 'default',
-              displayName: 'default'
+              displayName: 'Default Namespace'
             };
             myNamespaceMediator.setCurrentNamespace(list[0] || defaultns);
             deferred.resolve(list[0] || defaultns);

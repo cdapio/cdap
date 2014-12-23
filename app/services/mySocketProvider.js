@@ -106,7 +106,7 @@ angular.module(PKG.name+'.services')
         msg.resource.json = true;
 
         if(r._cdapNsPath) {
-          r._cdapPath = '/namespaces/' + namespace + r._cdapNsPath;
+          r._cdapPath = '/namespaces/' + namespace.name + r._cdapNsPath;
           delete msg.resource._cdapNsPath;
         }
 
