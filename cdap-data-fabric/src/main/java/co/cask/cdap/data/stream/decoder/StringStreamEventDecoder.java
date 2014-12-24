@@ -14,28 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream;
+package co.cask.cdap.data.stream.decoder;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Charsets;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 
 /**
- * A {@link StreamEventDecoder} that decodes {@link StreamEvent} into {@link LongWritable} as key and {@link Text} as
+ * A {@link StreamEventDecoder} that decodes {@link StreamEvent} into {@link LongWritable} as key and {@link String} as
  * value for Mapper input. The key carries the event timestamp, while the text value is a UTF-8 decode of the
  * event body.
  */
-public final class TextStreamEventDecoder implements StreamEventDecoder<LongWritable, Text> {
+public class StringStreamEventDecoder implements StreamEventDecoder<LongWritable, String> {
 
   private final LongWritable key = new LongWritable();
-  private final Text value = new Text();
 
   @Override
-  public DecodeResult<LongWritable, Text> decode(StreamEvent event, DecodeResult<LongWritable, Text> result) {
+  public DecodeResult<LongWritable, String> decode(StreamEvent event, DecodeResult<LongWritable, String> result) {
     key.set(event.getTimestamp());
-    value.set(Charsets.UTF_8.decode(event.getBody()).toString());
-    return result.setKey(key).setValue(value);
+    return result.setKey(key).setValue(Charsets.UTF_8.decode(event.getBody()).toString());
   }
 }
