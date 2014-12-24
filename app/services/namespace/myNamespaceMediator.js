@@ -6,32 +6,42 @@ angular.module(PKG.name + '.services')
   .service('myNamespaceMediator', function myNameSpaceMediator($q, $state) {
     this.currentNamespace = null;
     this.namespaceList = [];
-    var currentNsdeferred = $q.defer(),
-        nsListdeferred = $q.defer();
+    var currentNsdeferred = [],
+        nsListdeferred = [];
 
     this.setCurrentNamespace = function(ns) {
-      this.currentNamespace = ns;
-      currentNsdeferred.resolve(this.currentNamespace);
+      $state.params.namespaceId = ns;
+      currentNsdeferred.forEach(function(def) {
+        def.resolve({name: $state.params.namespaceId});
+      });
     };
 
     this.setNamespaceList = function (nsList) {
       this.namespaceList = nsList;
-      this.setCurrentNamespace(nsList[0]);
-      nsListdeferred.resolve(this.namespaceList);
+      this.setCurrentNamespace(nsList[0].name);
+      nsListdeferred.forEach(function(def) {
+        def.resolve(this.namespaceList);
+      })
     };
 
     this.getCurrentNamespace = function() {
+      var deferred = $q.defer();
       if ($state.params.namespaceId) {
-        currentNsdeferred.resolve({name:$state.params.namespaceId});
+        deferred.resolve({name:$state.params.namespaceId});
+      } else {
+        currentNsdeferred.push(deferred);
       }
-      return currentNsdeferred.promise;
+      return deferred.promise;
     };
 
     this.getNamespaceList = function() {
+      var deferred = $q.defer();
       if (this.namespaceList.length > 0) {
-        nsListdeferred.resolve(this.namespaceList);
+        deferred.resolve(this.namespaceList);
+      } else {
+        nsListdeferred.push(deferred);
       }
-      return nsListdeferred.promise;
+      return deferred.promise;
     };
 
   });
