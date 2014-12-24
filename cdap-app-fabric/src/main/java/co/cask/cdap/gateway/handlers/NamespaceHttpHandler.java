@@ -102,13 +102,13 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (!isValid(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Namespace id can contain only alphanumeric characters, '-' or '_'");
+                           "Namespace id can contain only alphanumeric characters, '-' or '_'.");
       return;
     }
 
     if (isReserved(namespaceId)) {
-      responder.sendString(HttpResponseStatus.CONFLICT,
-                           String.format("'%s', '%s' are reserved namespace ids",
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("'%s' and '%s' are reserved namespace ids.",
                                          Constants.DEFAULT_NAMESPACE,
                                          Constants.SYSTEM_NAMESPACE));
       return;
@@ -132,11 +132,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       NamespaceMeta existing = store.createNamespace(builder.build());
+      // make the API idempotent, but send appropriate response
+      String response;
       if (existing == null) {
-        responder.sendStatus(HttpResponseStatus.OK);
+        response = String.format("Namespace '%s' created successfully.", namespaceId);
       } else {
-        responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists.", namespaceId));
+        response = String.format("Namespace '%s' already exists.", namespaceId);
       }
+      responder.sendString(HttpResponseStatus.OK, response);
     } catch (Exception e) {
       LOG.error("Internal error while creating namespace.", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
