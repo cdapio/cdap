@@ -27,7 +27,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -36,11 +36,10 @@ import java.util.Map;
 public class DashboardHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
 
   @Test
   public void testCleanSlate() throws Exception {
-    List<String> dash = getDashboards("mynamespace");
+    Map<String, String> dash = getDashboards("mynamespace");
     Assert.assertEquals(0, dash.size());
 
     String s = createDashboard("mynamespace", 200);
@@ -64,11 +63,11 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
         dashboardIds.put(nsId, createDashboard("myspace" + nsId, 200));
       }
 
-      List<String> dashboards;
+      Map<String, String> dashboards;
       for (int nsId = 0; nsId < maxNamespace; nsId++) {
         dashboards = getDashboards("myspace" + nsId);
         Assert.assertEquals(1, dashboards.size());
-        Assert.assertEquals(dashboardIds.get(nsId), dashboards.get(0));
+        Assert.assertTrue(dashboards.keySet().contains(dashboardIds.get(nsId)));
       }
 
       for (int nsId = 0; nsId < maxNamespace; nsId++) {
@@ -101,7 +100,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, contents.size());
     Assert.assertEquals("n1", contents.get("m1"));
 
-    deleteProperty("newspace", anotherDash, 200);
+    addProperty("newspace", anotherDash, new HashMap<String, String>(), 200);
     contents = getContents("newspace", anotherDash, 200);
     Assert.assertEquals(0, contents.size());
 
@@ -115,7 +114,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     String dash1 = createDashboard("space1", 200);
     String dash2 = createDashboard("space2", 200);
 
-    List<String> dashList = getDashboards("space1", true);
+    Map<String, String> dashList = getDashboards("space1");
     Assert.assertEquals(1, dashList.size());
 
     deleteDashboard("space1", dash1, 200);
@@ -125,19 +124,13 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   private void addProperty(String namespace, String name, Map<String, String> props, int expectedStatus)
     throws Exception {
     HttpResponse response = doPut(
-      String.format("/v3/namespaces/%s/configuration/dashboards/%s/properties", namespace, name), GSON.toJson(props));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-  }
-
-  private void deleteProperty(String namespace, String name, int expectedStatus) throws Exception {
-    HttpResponse response = doDelete(
-      String.format("/v3/namespaces/%s/configuration/dashboards/%s/properties", namespace, name));
+      String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name), GSON.toJson(props));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   private Map<String, String> getContents(String namespace, String name, int expectedStatus) throws Exception {
     HttpResponse response = doGet(
-      String.format("/v3/namespaces/%s/configuration/dashboards/%s/properties", namespace, name));
+      String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -153,19 +146,12 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     return EntityUtils.toString(response.getEntity());
   }
 
-  private List<String> getDashboards(String namespace) throws Exception {
-    return getDashboards(namespace, false);
-  }
-
-  private List<String> getDashboards(String namespace, boolean all) throws Exception {
+  private Map<String, String> getDashboards(String namespace) throws Exception {
     String req = String.format("/v3/namespaces/%s/configuration/dashboards", namespace);
-    if (all) {
-      req = req + "?filter=all";
-    }
     HttpResponse response = doGet(req);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(s, LIST_STRING_TYPE);
+    return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
   }
 
   private void deleteDashboard(String namespace, String name, int expectedStatus) throws Exception {
