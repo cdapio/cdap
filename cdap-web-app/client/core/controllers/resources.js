@@ -203,15 +203,15 @@ define([], function () {
       // Scans models for current metrics and updates them.
       C.Util.updateCurrents(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
 
-      // Hax. Count is timerange because server treats end = start + count (no downsample yet)
+      // metrics system auto determines count and resolution based on time interval
       var queries = [
-        '/system/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.memory?start=' + start + '&end=' +
           end + '&interpolate=step',
-        '/system/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.containers?start=' + start + '&end=' +
           end +'&interpolate=step',
-        '/system/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.vcores?start=' + start + '&end=' +
           end + '&interpolate=step',
-        '/system/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.storage?start=' + start + '&end=' +
           end + '&interpolate=step'
       ], self = this;
 

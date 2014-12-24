@@ -58,8 +58,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
-    job.setMapOutputKeyClass(Text.class);
-    job.setMapOutputValueClass(Text.class);
     job.setReducerClass(PerUserReducer.class);
   }
 

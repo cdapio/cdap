@@ -62,8 +62,6 @@ public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(ObjectStoreMapper.class);
       job.setReducerClass(KeyValueStoreReducer.class);
-      job.setMapOutputKeyClass(Text.class);
-      job.setMapOutputValueClass(Text.class);
     }
 
     @Override

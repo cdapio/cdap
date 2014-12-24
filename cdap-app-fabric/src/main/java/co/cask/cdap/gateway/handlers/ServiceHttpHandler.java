@@ -60,11 +60,14 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService) {
+                            ProgramRuntimeService runtimeService,
+                            ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
     super(authenticator);
+    this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
   }
@@ -75,7 +78,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SERVICE, null, store);
+    programLifecycleHttpHandler.getAllServices(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -84,7 +87,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/services")
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programList(request, responder, ProgramType.SERVICE, appId, store);
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.SERVICE.getCategoryName());
   }
 
   /**
@@ -197,7 +201,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") String appId,
                               @PathParam("service-id") String serviceId) {
-    getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
+    programLifecycleHttpHandler.liveInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                         ProgramType.SERVICE.getCategoryName(), serviceId);
   }
 
   @Nullable

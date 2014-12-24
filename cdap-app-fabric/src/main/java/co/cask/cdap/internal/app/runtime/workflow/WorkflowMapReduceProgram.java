@@ -15,38 +15,27 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
-import co.cask.cdap.internal.app.program.ForwardingProgram;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
 /**
- * A Forwarding Program that turns a Workflow Program into a MapReduce program.
+ * A Forwarding Program that turns a {@link Workflow} Program into a {@link MapReduce} program.
  */
-public final class WorkflowMapReduceProgram extends ForwardingProgram {
+public final class WorkflowMapReduceProgram extends AbstractWorkflowProgram {
 
-  private final MapReduceSpecification mapReduceSpec;
+  private final MapReduceSpecification mapReduceSpecification;
 
-  public WorkflowMapReduceProgram(Program delegate, MapReduceSpecification mapReduceSpec) {
-    super(delegate);
-    this.mapReduceSpec = mapReduceSpec;
-  }
-
-  @Override
-  public String getMainClassName() {
-    return mapReduceSpec.getClassName();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <T> Class<T> getMainClass() throws ClassNotFoundException {
-    return (Class<T>) Class.forName(getMainClassName(), true, getClassLoader());
+  public WorkflowMapReduceProgram(Program delegate, MapReduceSpecification mapReduceSpecification) {
+    super(delegate, mapReduceSpecification);
+    this.mapReduceSpecification = mapReduceSpecification;
   }
 
   @Override
@@ -55,21 +44,11 @@ public final class WorkflowMapReduceProgram extends ForwardingProgram {
   }
 
   @Override
-  public Id.Program getId() {
-    return Id.Program.from(getAccountId(), getApplicationId(), getName());
-  }
-
-  @Override
-  public String getName() {
-    return mapReduceSpec.getName();
-  }
-
-  @Override
   public ApplicationSpecification getSpecification() {
-    return new ForwardingApplicationSpecification(super.getSpecification()) {
+    return new ForwardingApplicationSpecification(super.getForwardingProgramSpecification()) {
       @Override
       public Map<String, MapReduceSpecification> getMapReduce() {
-        return ImmutableMap.of(mapReduceSpec.getName(), mapReduceSpec);
+        return ImmutableMap.of(mapReduceSpecification.getName(), mapReduceSpecification);
       }
     };
   }

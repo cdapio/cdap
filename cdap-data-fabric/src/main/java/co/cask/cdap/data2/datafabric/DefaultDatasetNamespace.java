@@ -44,10 +44,16 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   @Override
   @Nullable
   public String fromNamespaced(String name) {
-    if (!name.startsWith(namespacePrefix)) {
+    if (!contains(name)) {
       return null;
     }
-    // will return null if doesn't belong to namespace
     return namespace.fromNamespaced(name.substring(namespacePrefix.length()));
   }
+
+  @Override
+  public boolean contains(String name) {
+    return name.startsWith(namespacePrefix) &&
+      namespace.contains(name.substring(namespacePrefix.length()));
+  }
+
 }

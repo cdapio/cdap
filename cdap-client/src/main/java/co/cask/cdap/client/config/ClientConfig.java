@@ -280,6 +280,15 @@ public class ClientConfig {
       return this;
     }
 
+    public Builder setUri(URI uri) {
+      this.hostname = uri.getHost();
+      this.sslEnabled = "https".equals(uri.getScheme());
+      if (uri.getPort() != -1) {
+        this.port = Optional.of(uri.getPort());
+      }
+      return this;
+    }
+    
     public ClientConfig build() {
       return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT),
                               sslEnabled, serviceUnavailableRetryLimit, apiVersion, accessToken, verifySSLCert,

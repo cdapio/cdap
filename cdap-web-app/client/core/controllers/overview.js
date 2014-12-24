@@ -138,10 +138,10 @@ define([], function () {
 
 			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
-				'/system/collect.events?count=' + count + '&start=' + start + '&end=' + end,
-				'/system/process.busyness?count=' + count + '&start=' + start + '&end=' + end,
-				'/system/dataset.store.bytes?count=' + count + '&start=' + start + '&end=' + end,
-				'/system/query.requests?count=' + count + '&start=' + start + '&end=' + end
+				'/system/collect.events?start=' + start + '&end=' + end,
+				'/system/process.busyness?start=' + start + '&end=' + end,
+				'/system/dataset.store.bytes?start=' + start + '&end=' + end,
+				'/system/query.requests?start=' + start + '&end=' + end
 			], self = this;
 
 			var count = 0;

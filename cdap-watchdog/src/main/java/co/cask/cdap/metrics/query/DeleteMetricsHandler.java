@@ -26,14 +26,11 @@ import co.cask.cdap.metrics.data.AggregatesTable;
 import co.cask.cdap.metrics.data.MetricsScanQuery;
 import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -60,26 +57,16 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
-  private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
+
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
   private final int tsRetentionSeconds;
+  private final TimeSeriesTables timeSeriesTables;
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
-    this.metricsTableCaches = Maps.newHashMap();
-    for (final MetricsScope scope : MetricsScope.values()) {
-      LoadingCache<Integer, TimeSeriesTable> cache =
-        CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
-          @Override
-          public TimeSeriesTable load(Integer key) throws Exception {
-            return metricsTableFactory.createTimeSeries(scope.name(), key);
-          }
-        });
-      this.metricsTableCaches.put(scope, cache);
-    }
-
+    this.timeSeriesTables = new TimeSeriesTables(metricsTableFactory);
     this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
@@ -231,14 +218,13 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private void deleteTableEntries(MetricsScope scope, String contextPrefix,
                                   String metricPrefix, String tag) throws OperationException {
-    TimeSeriesTable ts1Table = metricsTableCaches.get(scope).getUnchecked(1);
     AggregatesTable aggTable = aggregatesTables.get().get(scope);
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
-      ts1Table.clear();
+      timeSeriesTables.clear(scope);
       aggTable.clear();
     } else if (tag == null) {
-      ts1Table.delete(contextPrefix, metricPrefix);
+      timeSeriesTables.delete(scope, contextPrefix, metricPrefix);
       aggTable.delete(contextPrefix, metricPrefix);
     } else {
       long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
@@ -249,7 +235,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
         .setRunId("0")
         .setTag(tag)
         .build(now - tsRetentionSeconds, now + 10);
-      ts1Table.delete(scanQuery);
+      timeSeriesTables.delete(scope, scanQuery);
       aggTable.delete(contextPrefix, metricPrefix, "0", tag);
     }
   }
