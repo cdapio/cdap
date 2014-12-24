@@ -87,11 +87,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void setup() throws Exception {
-    HttpResponse response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+    HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }

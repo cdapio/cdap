@@ -42,17 +42,17 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final String TEST_NAMESPACE1 = "testnamespace1";
   private static final String TEST_NAMESPACE2 = "testnamespace2";
-  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE1)
+  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
     .setDisplayName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
-  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE2)
+  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
     .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
   @BeforeClass
   public static void setup() throws Exception {
-    HttpResponse response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+    HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
