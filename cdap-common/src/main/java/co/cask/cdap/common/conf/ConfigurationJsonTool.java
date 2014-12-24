@@ -16,9 +16,14 @@
 
 package co.cask.cdap.common.conf;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.GsonBuilder;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -44,15 +49,20 @@ public class ConfigurationJsonTool {
   }
 
   public static void exportToJson(Configuration configuration, Appendable output) {
+    // Set the log-level of the Configuration logger to ERROR. We don't want warning of deprecated key.
+    Level oldLevel = setConfigurationLogLevel(Level.ERROR);
+
     Map<String, String> map = Maps.newHashMapWithExpectedSize(configuration.size());
     for (Map.Entry<String, String> entry : configuration) {
       map.put(entry.getKey(), entry.getValue());
     }
     new GsonBuilder().setPrettyPrinting().create().toJson(map, output);
+
+    // Restore the log level
+    setConfigurationLogLevel(oldLevel);
   }
 
   public static void main(String[] args) {
-
     String programName = System.getProperty("script", "ConfigurationJsonTool");
     Set<String> validArgument = Sets.newHashSet();
     validArgument.add(CDAP_CONFIG);
@@ -62,5 +72,24 @@ public class ConfigurationJsonTool {
       System.exit(1);
     }
     exportToJson(args[0], System.out);
+  }
+
+  /**
+   * Sets the logger level of the {@link Configuration} object. The log level is only set if the logger is a
+   * logback logger.
+   *
+   * @param level Level to set to.
+   * @return The current log level or {@code null} if the logger is not a logback logger.
+   */
+  private static Level setConfigurationLogLevel(Level level) {
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (loggerFactory instanceof LoggerContext) {
+      Logger logger = ((LoggerContext) loggerFactory).getLogger(Configuration.class);
+      Level oldLevel = logger.getLevel();
+      logger.setLevel(level);
+      return oldLevel;
+    }
+
+    return null;
   }
 }
