@@ -36,7 +36,6 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -252,7 +251,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void createNamespace(NamespaceMeta metadata) {
-    write(getNamespaceKey(metadata.getName()), metadata);
+    write(getNamespaceKey(metadata.getId()), metadata);
   }
 
   public NamespaceMeta getNamespace(Id.Namespace id) {

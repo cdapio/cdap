@@ -680,7 +680,7 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
-        Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
+        Id.Namespace namespaceId = Id.Namespace.from(metadata.getId());
         NamespaceMeta existing = input.apps.getNamespace(namespaceId);
         if (existing != null) {
           return existing;
