@@ -22,13 +22,12 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
+module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, myNamespace, stateParamsCache) {
   $rootScope.currentUser = myAuth.currentUser;
 
-  $rootScope.$on('$stateChangeStart', function (event, next) {
+  $rootScope.$on('$stateChangeStart', function (event, next, params) {
     var authorizedRoles = next.data && next.data.authorizedRoles;
     if (!authorizedRoles) { return; } // no role required, anyone can access
-
     var user = myAuth.currentUser;
     if (user) { // user is logged in
       if (authorizedRoles === MYAUTH_ROLE.all) { return; } // any logged-in user is welcome
@@ -39,8 +38,8 @@ module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
     event.preventDefault();
 
     // and go to login instead
-    $state.go('login', {next: next.url});
 
+    $state.go('login', {next: next.url});
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
 

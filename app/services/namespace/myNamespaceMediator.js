@@ -3,7 +3,7 @@
  * a layer of indirection to avoid circular dependency in mySocket
  */
 angular.module(PKG.name + '.services')
-  .service('myNamespaceMediator', function myNameSpaceMediator($q) {
+  .service('myNamespaceMediator', function myNameSpaceMediator($q, $state) {
     this.currentNamespace = null;
     this.namespaceList = [];
     var currentNsdeferred = $q.defer(),
@@ -21,8 +21,8 @@ angular.module(PKG.name + '.services')
     };
 
     this.getCurrentNamespace = function() {
-      if (this.currentNamespace) {
-        currentNsdeferred.resolve(this.currentNamespace);
+      if ($state.params.namespaceId) {
+        currentNsdeferred.resolve({name:$state.params.namespaceId});
       }
       return currentNsdeferred.promise;
     };
