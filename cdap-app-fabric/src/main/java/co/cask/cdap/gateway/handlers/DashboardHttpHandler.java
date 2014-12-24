@@ -45,10 +45,11 @@ import javax.ws.rs.QueryParam;
 /**
  * Dashboard HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces")
 public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final Gson GSON = new Gson();
+
   private final Map<String, String> inMemoryConfigStore;
 
   @Inject

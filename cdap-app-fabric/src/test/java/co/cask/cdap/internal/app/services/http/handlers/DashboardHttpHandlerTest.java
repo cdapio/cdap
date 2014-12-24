@@ -124,18 +124,20 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
 
   private void addProperty(String namespace, String name, Map<String, String> props, int expectedStatus)
     throws Exception {
-    HttpResponse response = doPut(String.format("/v3/%s/configuration/dashboards/%s/properties", namespace, name),
-                                  GSON.toJson(props));
+    HttpResponse response = doPut(
+      String.format("/v3/namespaces/%s/configuration/dashboards/%s/properties", namespace, name), GSON.toJson(props));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   private void deleteProperty(String namespace, String name, int expectedStatus) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/%s/configuration/dashboards/%s/properties", namespace, name));
+    HttpResponse response = doDelete(
+      String.format("/v3/namespaces/%s/configuration/dashboards/%s/properties", namespace, name));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   private Map<String, String> getContents(String namespace, String name, int expectedStatus) throws Exception {
-    HttpResponse response = doGet(String.format("/v3/%s/configuration/dashboards/%s/properties", namespace, name));
+    HttpResponse response = doGet(
+      String.format("/v3/namespaces/%s/configuration/dashboards/%s/properties", namespace, name));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -146,7 +148,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   }
 
   private String createDashboard(String namespace, String contents, int expectedStatus) throws Exception {
-    HttpResponse response = doPost(String.format("/v3/%s/configuration/dashboards", namespace), contents);
+    HttpResponse response = doPost(String.format("/v3/namespaces/%s/configuration/dashboards", namespace), contents);
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
     return EntityUtils.toString(response.getEntity());
   }
@@ -156,7 +158,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   }
 
   private List<String> getDashboards(String namespace, boolean all) throws Exception {
-    String req = String.format("/v3/%s/configuration/dashboards", namespace);
+    String req = String.format("/v3/namespaces/%s/configuration/dashboards", namespace);
     if (all) {
       req = req + "?filter=all";
     }
@@ -167,7 +169,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void deleteDashboard(String namespace, String name, int expectedStatus) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/%s/configuration/dashboards/%s", namespace, name));
+    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 }
