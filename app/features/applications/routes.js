@@ -18,7 +18,7 @@ angular.module(PKG.name+'.feature.applications')
         controller: 'ApplicationListController',
         ncyBreadcrumb: {
           label: 'Applications',
-          parent: 'home'
+          parent: 'ns.overview'
         }
       })
 
@@ -27,7 +27,7 @@ angular.module(PKG.name+'.feature.applications')
         templateUrl: '/assets/features/applications/templates/application.html',
         controller: 'ApplicationController',
         ncyBreadcrumb: {
-          parent: 'apps.list',
+          parent: 'ns.apps.list',
           label: '{{$state.params.appId}}'
         }
       })

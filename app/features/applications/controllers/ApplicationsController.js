@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.applications')
       _cdapNsPath: '/apps/' + appId + '/status',
       method: 'GET',
     }, function(res) {
-      if (!res) {
+      if (!angular.isArray(res)) {
         return;
       }
       $scope.programs = res;
