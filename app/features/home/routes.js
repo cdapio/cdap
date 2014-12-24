@@ -1,7 +1,6 @@
 angular.module(PKG.name+'.feature.home')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
-
     /**
      * Redirects and Otherwise
      */
@@ -30,7 +29,7 @@ angular.module(PKG.name+'.feature.home')
         templateUrl: '/assets/features/home/home.html'
       })
         .state('ns.overview', {
-          url: '/overview',
+          url: '',
           templateUrl: '/assets/features/home/overview.html',
           controller: 'HomeCtrl'
         })
