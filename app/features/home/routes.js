@@ -16,17 +16,24 @@ angular.module(PKG.name+'.feature.home')
      */
     $stateProvider
 
-      .state('home', {
+      .state('ns', {
         data: {
           authorizedRoles: MYAUTH_ROLE.all
         },
-        url: '/',
-        templateUrl: '/assets/features/home/home.html',
-        controller: 'HomeCtrl',
-        ncyBreadcrumb: {
-          label: 'Home'
-        }
+        url: '/ns/:namespaceId',
+        abstract: true,
+        resolve: {
+          namespaceId: function($state) {
+            $state.params.namespaceId;
+          }
+        },
+        templateUrl: '/assets/features/home/home.html'
       })
+        .state('ns.overview', {
+          url: '/overview',
+          templateUrl: '/assets/features/home/overview.html',
+          controller: 'HomeCtrl'
+        })
 
       .state('404', {
         templateUrl: '/assets/features/home/404.html'

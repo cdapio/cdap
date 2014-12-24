@@ -4,7 +4,7 @@
     <div class="clearfix">
       <h3 class="pull-left"> Apps </h3>
       <div class="btn-group pull-right">
-        <a ui-sref="apps.list({namespace: 'ns1'})">
+        <a ui-sref="ns.apps.list({namespace: 'ns1'})">
           <button class="btn btn-default">
             <span class="fa fa-bars"> </span>
              All Apps
@@ -22,7 +22,7 @@
     <div class="list-group">
       <a class="list-group-item"
          ng-repeat="app in apps"
-         ui-sref="apps.application({namespace: 'ns1', appId: app.id})">
+         ui-sref="ns.apps.application({namespace: 'ns1', appId: app.id})">
         <strong ng-bind="app.name">  </strong>
         <div ng-bind="app.description"> </div>
       </a>
@@ -39,7 +39,7 @@
             All Datasets
           </button>
         </a>
-        <a ui-sref="apps.list({namespace: 'ns1'})">
+        <a ui-sref="ns.apps.list({namespace: 'ns1'})">
           <button class="btn btn-default">
             <span class="fa fa-edit"> </span>
             ETL
@@ -51,7 +51,7 @@
     <div class="list-group">
       <a class="list-group-item"
          ng-repeat="app in apps"
-         ui-sref="apps.application({namespace: 'ns1', appId: app.id})">
+         ui-sref="ns.apps.application({namespace: 'ns1', appId: app.id})">
         <strong ng-bind="app.name">  </strong>
         <div ng-bind="app.description"> </div>
       </a>

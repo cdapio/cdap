@@ -13,6 +13,7 @@ function ($scope, $alert, MyDataSource, myNamespace) {
     _cdapNsPath: '/apps/',
     method: 'GET'
   }, function(res) {
+    debugger;
     $scope.apps = res;
     if (angular.isArray($scope.apps) && $scope.apps.length) {
       $scope.dataAppsTemplate = 'assets/features/home/templates/data-apps-section.html';
