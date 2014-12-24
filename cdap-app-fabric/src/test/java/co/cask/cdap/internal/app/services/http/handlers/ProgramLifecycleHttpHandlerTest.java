@@ -16,7 +16,9 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
@@ -31,6 +33,7 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -47,6 +50,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link ProgramLifecycleHttpHandler}
@@ -54,10 +58,7 @@ import java.util.concurrent.TimeUnit;
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
-  }.getType();
-  private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() {
-  }.getType();
+  private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
@@ -69,6 +70,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
+  private static final String WORDCOUNT_MAPREDUCE_NAME = "VoidMapReduceJob";
   private static final String WORDCOUNT_FLOWLET_NAME = "StreamSource";
   private static final String DUMMY_APP_ID = "dummy";
   private static final String DUMMY_RUNNABLE_ID = "dummy-batch";
@@ -76,6 +78,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String SLEEP_WORKFLOW_RUNNABLE_ID = "SleepWorkflow";
   private static final String APP_WITH_SERVICES_APP_ID = "AppWithServices";
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
+  private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
+  private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
+  private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
+  private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
+
+  private static final String EMPTY_ARRAY_JSON = "[]";
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -275,8 +283,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, doPost(statusUrl1, "").getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(statusUrl2, "").getStatusLine().getStatusCode());
     // empty array is valid args
-    Assert.assertEquals(200, doPost(statusUrl1, "[]").getStatusLine().getStatusCode());
-    Assert.assertEquals(200, doPost(statusUrl2, "[]").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doPost(statusUrl1, EMPTY_ARRAY_JSON).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doPost(statusUrl2, EMPTY_ARRAY_JSON).getStatusLine().getStatusCode());
 
     // deploy an app in namespace1
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
@@ -380,7 +388,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // data requires appId, programId, and programType. Test missing fields/invalid programType
-    // TODO: These json strings should be replaced with static inner classes so it becomes easier to refactor in future
+    // TODO: These json strings should be replaced with JsonObjects so it becomes easier to refactor in future
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
@@ -442,17 +450,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
 
-    // request for more instances of the flowlet
-    // TODO: verify this when the flowlets/instances v3 API is implemented
-//    String flowletInstancesUrl = String.format("apps/%s/%s/%s/flowlets/%s/instances", WORDCOUNT_APP_NAME,
-// ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME);
-//    String flowletInstancesVersionedUrl = getVersionedAPIPath(flowletInstancesUrl, Constants.Gateway
-// .API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-//    Assert.assertEquals(200, doPut(flowletInstancesVersionedUrl, "{'instances': 2}").getStatusLine().getStatusCode());
-//    returnedBody = readResponse(doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'," +
-//      "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), LIST_OF_JSONOBJECT_TYPE);
-//    // verify that 2 more instances were requested
-//    Assert.assertEquals(2, returnedBody.get(0).get("requested").getAsInt());
+    // request for 2 more instances of the flowlet
+    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
+                                                     WORDCOUNT_FLOWLET_NAME, 2));
+    returnedBody = readResponse(doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'," +
+      "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), LIST_OF_JSONOBJECT_TYPE);
+    // verify that 2 more instances were requested
+    Assert.assertEquals(2, returnedBody.get(0).get("requested").getAsInt());
 
 
     getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
@@ -464,6 +468,229 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
               ProgramController.State.STOPPED.toString());
     waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
               APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
+  }
+
+  /**
+   * Tests for program list calls
+   */
+  @Test
+  public void testProgramList() throws Exception {
+    // test initial state
+    testListInitialState(TEST_NAMESPACE1, ProgramType.FLOW);
+    testListInitialState(TEST_NAMESPACE2, ProgramType.MAPREDUCE);
+    testListInitialState(TEST_NAMESPACE1, ProgramType.WORKFLOW);
+    testListInitialState(TEST_NAMESPACE2, ProgramType.SPARK);
+    testListInitialState(TEST_NAMESPACE1, ProgramType.SERVICE);
+
+    // deploy WordCountApp in namespace1 and verify
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // deploy AppWithServices in namespace2 and verify
+    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // verify list by namespace
+    verifyProgramList(TEST_NAMESPACE1, null, ProgramType.FLOW.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE2, null, ProgramType.SERVICE.getCategoryName(), 1);
+
+    // verify list by app
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.WORKFLOW.getCategoryName(), 0);
+    verifyProgramList(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), 1);
+
+    // verify invalid namespace
+    Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
+                                                        ProgramType.SERVICE.getCategoryName()));
+    // verify invalid app
+    Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE1, "random", ProgramType.FLOW.getCategoryName()));
+
+    // verify invalid program type
+    Assert.assertEquals(405, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
+  }
+
+  /**
+   * Program specification tests through appfabric apis.
+   */
+  @Test
+  public void testProgramSpecification() throws Exception {
+    // deploy WordCountApp in namespace1 and verify
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // deploy AppWithServices in namespace2 and verify
+    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // deploy AppWithWorkflow in namespace2 and verify
+    response = deploy(AppWithWorkflow.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // verify program specification
+    verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                               WORDCOUNT_FLOW_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE.getCategoryName(),
+                               WORDCOUNT_MAPREDUCE_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
+                               APP_WITH_SERVICES_SERVICE_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE2, APP_WITH_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
+                               APP_WITH_WORKFLOW_WORKFLOW_NAME);
+
+    // verify invalid namespace
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
+                                                                 ProgramType.SERVICE.getCategoryName(),
+                                                                 APP_WITH_SERVICES_SERVICE_NAME));
+    // verify invalid app
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                                 ProgramType.WORKFLOW.getCategoryName(),
+                                                                 APP_WITH_WORKFLOW_WORKFLOW_NAME));
+    // verify invalid runnable type
+    Assert.assertEquals(405, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                                 "random", APP_WITH_WORKFLOW_WORKFLOW_NAME));
+  }
+
+  @Test
+  public void testFlows() throws Exception {
+    // deploy WordCountApp in namespace1 and verify
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // check initial flowlet instances
+    int initial = getFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME);
+    Assert.assertEquals(1, initial);
+
+    // request two more instances
+    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
+                                                     WORDCOUNT_FLOWLET_NAME, 3));
+    // verify
+    int after = getFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME);
+    Assert.assertEquals(3, after);
+
+    // invalid namespace
+    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE2, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
+                                                     WORDCOUNT_FLOWLET_NAME, 3));
+    // invalid app
+    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, WORDCOUNT_FLOW_NAME,
+                                                     WORDCOUNT_FLOWLET_NAME, 3));
+    // invalid flow
+    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random",
+                                                     WORDCOUNT_FLOWLET_NAME, 3));
+    // invalid flowlet
+    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
+                                                     "random", 3));
+
+    // test change stream connection TODO: Enable after implementing v3 streams
+//    changeStreamConnection(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME,
+//                           WORDCOUNT_STREAM_NAME);
+
+    // test live info
+    // send invalid program type to live info
+    response = sendLiveInfoRequest(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random", WORDCOUNT_FLOW_NAME);
+    Assert.assertEquals(405, response.getStatusLine().getStatusCode());
+
+    // test valid live info
+    JsonObject liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                                      WORDCOUNT_FLOW_NAME);
+    Assert.assertEquals(WORDCOUNT_APP_NAME, liveInfo.get("app").getAsString());
+    Assert.assertEquals(ProgramType.FLOW.getPrettyName(), liveInfo.get("type").getAsString());
+    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("id").getAsString());
+
+    // start flow
+    int status = getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                                      WORDCOUNT_FLOW_NAME, "start");
+    Assert.assertEquals(200, status);
+
+    liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                           WORDCOUNT_FLOW_NAME);
+    Assert.assertEquals(WORDCOUNT_APP_NAME, liveInfo.get("app").getAsString());
+    Assert.assertEquals(ProgramType.FLOW.getPrettyName(), liveInfo.get("type").getAsString());
+    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("id").getAsString());
+    Assert.assertEquals("in-memory", liveInfo.get("runtime").getAsString());
+
+    // should not delete queues while running
+    Assert.assertEquals(403, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
+
+    // stop
+    status = getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                                  WORDCOUNT_FLOW_NAME, "stop");
+    Assert.assertEquals(200, status);
+    // delete queues
+    Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowSchedules() throws Exception {
+    // Steps for the test:
+    // 1. Deploy the app
+    // 2. Verify the schedules
+    // 3. Verify the history after waiting a while
+    // 4. Suspend the schedule
+    // 5. Verify there are no runs after the suspend by looking at the history
+    // 6. Resume the schedule
+    // 7. Verify there are runs after the resume by looking at the history
+
+    // deploy app with schedule in namespace 2
+    HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //TODO: cannot test the /current endpoint because of CDAP-66. Enable after that bug is fixed.
+//    Assert.assertEquals(200, getWorkflowCurrentStatus(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+//                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME));
+
+    // get schedule id
+    String scheduleId = getScheduleId(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    long current = System.currentTimeMillis();
+    Long nextRunTime = getNextScheduledRunTime(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                               APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId);
+    Assert.assertNotNull(nextRunTime);
+    Assert.assertTrue(nextRunTime > current);
+
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    scheduleHistoryCheck(5, runsUrl, 0);
+
+    //Check schedule status
+    String statusUrl = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
+                                    scheduleId);
+    scheduleStatusCheck(5, statusUrl, "SCHEDULED");
+
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
+    //check paused state
+    scheduleStatusCheck(5, statusUrl, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+
+    int workflowRuns = getRuns(runsUrl);
+
+    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
+    TimeUnit.SECONDS.sleep(10);
+
+    int workflowRunsAfterSuspend = getRuns(runsUrl);
+    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
+
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                            APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
+
+    scheduleHistoryCheck(5, runsUrl, workflowRunsAfterSuspend);
+
+    //check scheduled state
+    scheduleStatusCheck(5, statusUrl, "SCHEDULED");
+
+    //Check status of a non existing schedule
+    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
+                                  "invalid");
+    scheduleStatusCheck(5, invalid, "NOT_FOUND");
+
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
+
+    //check paused state
+    scheduleStatusCheck(5, statusUrl, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
   }
 
   @After
@@ -479,6 +706,191 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/current", app, workflow);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(versionedUrl).getStatusLine().getStatusCode();
+  }
+
+  private Long getNextScheduledRunTime(String namespace, String app, String workflow, String schedule)
+    throws Exception {
+    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/nextruntime", app, workflow);
+    String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    JsonArray array = readResponse(response, JsonArray.class);
+    JsonObject wfObject = (JsonObject) array.get(0);
+    Assert.assertNotNull(wfObject);
+    String id = wfObject.get("id").getAsString();
+    Long time = wfObject.get("time").getAsLong();
+    Assert.assertTrue(id.contains(schedule));
+    return time;
+  }
+
+  private String getStatusUrl(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String statusUrl = String.format("apps/%s/workflows/%s/schedules/%s/status", appName, workflow, schedule);
+    return getVersionedAPIPath(statusUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private int resumeSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String scheduleResume = String.format("apps/%s/workflows/%s/schedules/%s/resume", appName, workflow, schedule);
+    HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                       namespace));
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private int suspendSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String scheduleSuspend = String.format("apps/%s/workflows/%s/schedules/%s/suspend", appName, workflow, schedule);
+    String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           namespace);
+    HttpResponse response = doPost(versionedScheduledSuspend);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private int getRuns(String runsUrl) throws Exception {
+    HttpResponse response = doGet(runsUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    return history.size();
+  }
+
+  private String getRunsUrl(String namespace, String appName, String workflow) {
+    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=completed", appName, workflow);
+    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private String getScheduleId(String namespace, String appName, String workflowName) throws Exception {
+    String scheduleIdsUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(scheduleIdsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(1, schedules.size());
+    String scheduleId = schedules.get(0);
+    Assert.assertNotNull(scheduleId);
+    Assert.assertFalse(scheduleId.isEmpty());
+    return scheduleId;
+  }
+
+  private int deleteQueues(String namespace, String appId, String flow) throws Exception {
+    String deleteQueuesUrl = String.format("apps/%s/flows/%s/queues", appId, flow);
+    String versionedDeleteUrl = getVersionedAPIPath(deleteQueuesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doDelete(versionedDeleteUrl);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private JsonObject getLiveInfo(String namespace, String appId, String programType, String programId)
+    throws Exception {
+    HttpResponse response = sendLiveInfoRequest(namespace, appId, programType, programId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    return readResponse(response, JsonObject.class);
+  }
+
+  private HttpResponse sendLiveInfoRequest(String namespace, String appId, String programType, String programId)
+    throws Exception {
+    String liveInfoUrl = String.format("apps/%s/%s/%s/live-info", appId, programType, programId);
+    String versionedUrl = getVersionedAPIPath(liveInfoUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(versionedUrl);
+  }
+
+  private void changeStreamConnection(String namespace, String appId, String flow, String flowlet, String streamId)
+    throws Exception {
+    String flowletStreamConnectionUrl = String.format("apps/%s/flows/%s/flowlets/%s/connections/%s", appId, flow,
+                                                      flowlet, streamId);
+    String versionedUrl = getVersionedAPIPath(flowletStreamConnectionUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+                                              namespace);
+    JsonObject oldStream = new JsonObject();
+    oldStream.addProperty("oldStreamId", "oldStreamId");
+    HttpResponse response = doPut(versionedUrl, GSON.toJson(oldStream));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private int requestFlowletInstances(String namespace, String appId, String flow, String flowlet, int noRequested)
+    throws Exception {
+    String flowletInstancesVersionedUrl = getFlowletInstancesVersionedUrl(namespace, appId, flow, flowlet);
+    JsonObject instances = new JsonObject();
+    instances.addProperty("instances", noRequested);
+    String body = GSON.toJson(instances);
+    return doPut(flowletInstancesVersionedUrl, body).getStatusLine().getStatusCode();
+  }
+
+  private int getFlowletInstances(String namespace, String appId, String flow, String flowlet) throws Exception {
+    String flowletInstancesUrl = getFlowletInstancesVersionedUrl(namespace, appId, flow, flowlet);
+    String response = readResponse(doGet(flowletInstancesUrl));
+    Assert.assertNotNull(response);
+    JsonObject instances = GSON.fromJson(response, JsonObject.class);
+    Assert.assertTrue(instances.has("instances"));
+    return instances.get("instances").getAsInt();
+  }
+
+  private String getFlowletInstancesVersionedUrl(String namespace, String appId, String flow, String flowlet) {
+    String flowletInstancesUrl = String.format("apps/%s/%s/%s/flowlets/%s/instances", appId,
+                                               ProgramType.FLOW.getCategoryName(), flow, flowlet);
+    return getVersionedAPIPath(flowletInstancesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private void verifyProgramSpecification(String namespace, String appId, String programType, String programId)
+    throws Exception {
+    JsonObject programSpec = getProgramSpecification(namespace, appId, programType, programId);
+    Assert.assertTrue(programSpec.has("className") && programSpec.has("name") && programSpec.has("description"));
+    Assert.assertEquals(programId, programSpec.get("name").getAsString());
+  }
+
+  private JsonObject getProgramSpecification(String namespace, String appId, String programType,
+                                             String programId) throws Exception {
+    HttpResponse response = requestProgramSpecification(namespace, appId, programType, programId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    Assert.assertNotNull(result);
+    return GSON.fromJson(result, JsonObject.class);
+  }
+
+  private int getProgramSpecificationResponseCode(String namespace, String appId, String programType, String programId)
+    throws Exception {
+    HttpResponse response = requestProgramSpecification(namespace, appId, programType, programId);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private HttpResponse requestProgramSpecification(String namespace, String appId, String programType,
+                                                   String programId) throws Exception {
+    String uri = getVersionedAPIPath(String.format("apps/%s/%s/%s", appId, programType, programId),
+                                     Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(uri);
+  }
+
+  private void testListInitialState(String namespace, ProgramType programType) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(programType.getCategoryName(),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(EMPTY_ARRAY_JSON, readResponse(response));
+  }
+
+  private void verifyProgramList(String namespace, @Nullable String appName, String programType,
+                                 int expected) throws Exception {
+    HttpResponse response = requestProgramList(namespace, appName, programType);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> programs = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(expected, programs.size());
+  }
+
+  private int getProgramListResponseCode(String namespace, @Nullable String appName, String programType)
+    throws Exception {
+    HttpResponse response = requestProgramList(namespace, appName, programType);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private HttpResponse requestProgramList(String namespace, @Nullable String appName, String programType)
+    throws Exception {
+    String uri;
+    if (appName == null) {
+      uri = getVersionedAPIPath(programType, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    } else {
+      uri = getVersionedAPIPath(String.format("apps/%s/%s", appName, programType),
+                                Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    }
+    return doGet(uri);
   }
 
   private void verifyInitialBatchStatusOutput(HttpResponse response) throws IOException {

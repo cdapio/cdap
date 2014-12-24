@@ -13,16 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-
-import java.util.concurrent.Callable;
+package co.cask.cdap.api.workflow;
 
 /**
- *
+ * An Enum of supported Programs in {@link Workflow}
  */
-public interface MapReduceRunnerFactory {
 
-  Callable<MapReduceContext> create(String name);
+public enum WorkflowSupportedProgram {
+  MAPREDUCE, SPARK
 }

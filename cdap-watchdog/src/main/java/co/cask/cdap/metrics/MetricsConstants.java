@@ -54,6 +54,9 @@ public final class MetricsConstants {
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
   public static final long DEFAULT_RETENTION_HOURS = 2;
 
+  public static final long METRICS_HOUR_RESOLUTION_CUTOFF = 3610;
+  public static final long METRICS_MINUTE_RESOLUTION_CUTOFF = 610;
+
   public static final String DEFAULT_KAFKA_META_TABLE = "metrics.kafka.meta";
   public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
 
