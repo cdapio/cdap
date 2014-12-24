@@ -36,11 +36,16 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
       scope.theme = caskTheme;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
 
+      myNamespace.getCurrentNamespace().then(function(currentNamespace) {
+        scope.navbarLinks.unshift(
+          {
+            sref: 'ns.overview({namespaceId: "' + currentNamespace.name + '"})',
+            label: 'Development',
+            parent: 'ns'
+          }
+        )
+      });
       scope.navbarLinks = [
-        {
-          sref: 'home',
-          label: 'Development'
-        },
         {
           sref: 'dashboard',
           label: 'Operations'
