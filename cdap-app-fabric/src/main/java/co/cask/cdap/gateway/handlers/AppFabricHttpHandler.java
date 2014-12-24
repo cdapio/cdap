@@ -36,7 +36,6 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
-import co.cask.cdap.app.services.DeployStatus;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -61,7 +60,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.deploy.SessionInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -70,7 +68,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.filesystem.LocationCodec;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DatasetRecord;
@@ -97,17 +94,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
@@ -138,9 +131,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -216,13 +207,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-
-  /**
-   * Maintains a mapping of transient session state. The state is stored in memory,
-   * in case of failure, all the current running sessions will be terminated. As
-   * per the current implementation only connection per account is allowed to upload.
-   */
-  private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
 
   /**
    * Store manages non-runtime lifecycle.
@@ -1748,9 +1732,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     final Location archiveDir = locationFactory.create(this.archiveDir).append(accountId);
     final Location archive = archiveDir.append(archiveName);
 
-    final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
-    sessions.put(accountId, sessionInfo);
-
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
@@ -1775,17 +1756,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             throw e;
           }
 
-          sessionInfo.setStatus(DeployStatus.VERIFYING);
           deploy(accountId, appId, archive);
-          sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
-          sessionInfo.setStatus(DeployStatus.FAILED);
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        } finally {
-          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
-          sessions.remove(accountId);
         }
       }
     };
@@ -1831,42 +1806,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
   }
-
-
-  /**
-   * Defines the class for sending deploy status to client.
-   */
-  private static class Status {
-    private final int code;
-    private final String status;
-    private final String message;
-
-    public Status(int code, String message) {
-      this.code = code;
-      this.status = DeployStatus.getMessage(code);
-      this.message = message;
-    }
-  }
-
-  /**
-   * Gets application deployment status.
-   */
-  @GET
-  @Path("/deploy/status")
-  public void getDeployStatus(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      DeployStatus status  = dstatus(accountId);
-      LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
-      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
 
   /**
    * Promote an application to another CDAP instance.
@@ -2133,37 +2072,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /*
-   * Retrieves a {@link SessionInfo} from the file system.
-   */
-  @Nullable
-  private SessionInfo retrieve(String accountId) {
-    try {
-      final Location outputDir = locationFactory.create(archiveDir).append(accountId);
-      if (!outputDir.exists()) {
-        return null;
-      }
-      final Location sessionInfoFile = outputDir.append("session.json");
-      InputSupplier<Reader> reader = new InputSupplier<Reader>() {
-        @Override
-        public Reader getInput() throws IOException {
-          return new InputStreamReader(sessionInfoFile.getInputStream(), "UTF-8");
-        }
-      };
-
-      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Reader r = reader.getInput();
-      try {
-        return gson.fromJson(r, SessionInfo.class);
-      } finally {
-        Closeables.closeQuietly(r);
-      }
-    } catch (IOException e) {
-      LOG.warn("Failed to retrieve session info for account.");
-    }
-    return null;
-  }
-
   private AppFabricServiceStatus removeAll(Id.Account identifier) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
       store.getAllApplications(identifier));
@@ -2402,22 +2310,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /*
-   * Returns DeploymentStatus
-   */
-  private DeployStatus dstatus(String accountId) {
-    if (!sessions.containsKey(accountId)) {
-      SessionInfo info = retrieve(accountId);
-      if (info == null) {
-        return DeployStatus.NOT_FOUND;
-      }
-      return info.getStatus();
-    } else {
-      SessionInfo info = sessions.get(accountId);
-      return info.getStatus();
-    }
-  }
-
   private void deleteHandler(Id.Program programId, ProgramType type)
     throws ExecutionException {
     try {
@@ -2453,40 +2345,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }
-  }
-
-  /**
-   * Saves the {@link SessionInfo} to the filesystem.
-   *
-   * @param info to be saved.
-   * @return true if and only if successful; false otherwise.
-   */
-  private boolean save(SessionInfo info, String accountId) {
-    try {
-      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Location outputDir = locationFactory.create(archiveDir).append(accountId);
-      if (!outputDir.exists()) {
-        return false;
-      }
-      final Location sessionInfoFile = outputDir.append("session.json");
-      OutputSupplier<Writer> writer = new OutputSupplier<Writer>() {
-        @Override
-        public Writer getOutput() throws IOException {
-          return new OutputStreamWriter(sessionInfoFile.getOutputStream(), "UTF-8");
-        }
-      };
-
-      Writer w = writer.getOutput();
-      try {
-        gson.toJson(info, w);
-      } finally {
-        Closeables.closeQuietly(w);
-      }
-    } catch (IOException e) {
-      LOG.warn(e.getMessage(), e);
-      return false;
-    }
-    return true;
   }
 
   private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
