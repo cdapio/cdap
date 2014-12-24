@@ -70,7 +70,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         return getV3RoutingService(uriParts, requestMethod, accId);
       }
     } catch (Exception e) {
-
+      // Ignore exception. Default routing to app-fabric.
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }
@@ -84,8 +84,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       if ((uriParts.length >= 3) && uriParts[2].equals("explore")
         && (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("tables"))) {
         return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-      } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
-        && uriParts[5].equals("schema")) {
+      } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")) {
         // v2/data/explore/datasets/<dataset>/schema
         return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
       }
