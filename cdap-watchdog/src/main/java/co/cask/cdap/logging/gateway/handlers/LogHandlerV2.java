@@ -27,6 +27,7 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.http.HandlerContext;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -42,7 +43,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * Handler to serve log requests.
+ * v2 {@link HttpHandler} to handle /logs requests.
  */
 @Path(Constants.Gateway.API_VERSION_2)
 public class LogHandlerV2 extends AuthenticatedHttpHandler {

@@ -397,7 +397,7 @@ public abstract class MetricsSuiteTestBase {
                                                   " for all v2 APIs.", Constants.DEFAULT_NAMESPACE));
       versionedApiBuilder.append(version).append("/");
     } else if (Constants.Gateway.API_VERSION_3_TOKEN.equals(version)) {
-      Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3 APIs.");
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null for v3 APIs.");
       versionedApiBuilder.append(version).append("/namespaces/").append(namespace).append("/");
     } else {
       throw new IllegalArgumentException(String.format("Unsupported version '%s'. Only v2 and v3 are supported.",

@@ -46,7 +46,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * v3 {@link HttpHandler} for logging
+ * v3 {@link HttpHandler} to handle /logs requests
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
