@@ -73,5 +73,4 @@ public class UserSettingsHttpHandler extends AbstractAppFabricHttpHandler {
     inMemoryConfigStore.remove(getAuthenticatedAccountId(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
-
 }
