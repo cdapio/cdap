@@ -167,7 +167,7 @@ see the :ref:`configuration-security` section.
      - ``${hdfs.namespace}/lib``
      - Common directory in HDFS for JAR files for coprocessors
    * - ``hdfs.namespace``
-     - ``/${cdap.namespace}``
+     - ``/${root.namespace}``
      - Namespace for files written by CDAP
    * - ``hdfs.user``
      - ``yarn``
@@ -252,7 +252,7 @@ see the :ref:`configuration-security` section.
    * - ``metrics.query.bind.port``
      - ``45005``
      - Metrics query server port
-   * - ``cdap.namespace``
+   * - ``root.namespace``
      - ``cdap``
      - Namespace for this CDAP instance
    * - ``router.bind.address``
@@ -340,7 +340,7 @@ see the :ref:`configuration-security` section.
      - ``128``
      - Key length used in generating the secret keys for generating MAC of access tokens
    * - ``security.token.distributed.parent.znode``
-     - ``/${cdap.namespace}/security/auth``
+     - ``/${root.namespace}/security/auth``
      - Parent node in ZooKeeper used for secret key distribution in distributed mode
    * - ``ssl.enabled``
      - ``false``
@@ -377,7 +377,7 @@ see the :ref:`configuration-security` section.
      - ``yarn``
      - User name for running applications in YARN
    * - ``zookeeper.quorum``
-     - ``127.0.0.1:2181/${cdap.namespace}``
+     - ``127.0.0.1:2181/${root.namespace}``
      - Zookeeper address host:port
    * - ``zookeeper.session.timeout.millis``
      - ``40000``
