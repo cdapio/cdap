@@ -41,7 +41,7 @@ import javax.ws.rs.PathParam;
 /**
  * Dashboard HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
 public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final Gson GSON = new Gson();
@@ -55,7 +55,7 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     this.configStore = HashBasedTable.create();
   }
 
-  @Path("/{namespace-id}/configuration/dashboards")
+  @Path("/")
   @POST
   public synchronized void create(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
@@ -64,7 +64,7 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(HttpResponseStatus.OK, dashboardId);
   }
 
-  @Path("/{namespace-id}/configuration/dashboards")
+  @Path("/")
   @GET
   public synchronized void list(final HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
@@ -72,7 +72,7 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, row);
   }
 
-  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}")
+  @Path("/{dashboard-id}")
   @DELETE
   public synchronized void delete(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace,
@@ -85,7 +85,7 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}")
+  @Path("/{dashboard-id}")
   @GET
   public synchronized void get(final HttpRequest request, final HttpResponder responder,
                                @PathParam("namespace-id") String namespace,
@@ -97,7 +97,7 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/{namespace-id}/configuration/dashboards/{dashboard-id}")
+  @Path("/{dashboard-id}")
   @PUT
   public synchronized void set(final HttpRequest request, final HttpResponder responder,
                                @PathParam("namespace-id") String namespace,

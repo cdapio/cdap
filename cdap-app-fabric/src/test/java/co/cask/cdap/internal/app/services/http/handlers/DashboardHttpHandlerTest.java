@@ -110,7 +110,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testFilterAll() throws Exception {
+  public void testGetDashboards() throws Exception {
     String dash1 = createDashboard("space1", 200);
     String dash2 = createDashboard("space2", 200);
 
