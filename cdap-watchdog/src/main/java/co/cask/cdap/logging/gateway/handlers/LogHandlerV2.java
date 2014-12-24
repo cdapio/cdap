@@ -188,8 +188,8 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
 
   /**
    * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated from AbstractAppFabricHttpHandler, but its ok since this temporary, till we
-   * support v2 APIs
+   * Note: This piece of code is duplicated from AbstractAppFabricHttpHandler, but is ok since it is temporary until we
+   * support v2 APIs.
    *
    * @param request the original {@link HttpRequest}
    * @return {@link HttpRequest} with modified URI
