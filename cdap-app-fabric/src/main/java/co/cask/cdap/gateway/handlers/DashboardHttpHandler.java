@@ -46,6 +46,7 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final Gson GSON = new Gson();
 
+  //TODO: https://issues.cask.co/browse/CDAP-699 PersistenceStore will be used instead of inMemory implementation.
   private final Table<String, String, String> configStore;
 
   @Inject
