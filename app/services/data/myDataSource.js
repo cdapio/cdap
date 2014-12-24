@@ -28,7 +28,7 @@ angular.module(PKG.name+'.services')
     ); // will post to <host>:<port>/v3/system/config
    */
   .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT) {
+    MYSOCKET_EVENT, myNamespaceMediator) {
 
     var instances = {}; // keyed by scopeid
 

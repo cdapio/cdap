@@ -14,7 +14,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myNamespaceMediator, myBaseUrl) {
+  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myBaseUrl) {
 
     var self = this,
         socket = null,
@@ -74,14 +74,7 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      if (obj.resource._cdapNsPath) {
-        myNamespaceMediator.getCurrentNamespace()
-          .then(function (namespace) {
-            doSend(obj, namespace);
-          });
-      } else {
-        doSend(obj);
-      }
+      doSend(obj, obj.namespace || null);
 
       return true;
     }
@@ -100,7 +93,6 @@ angular.module(PKG.name+'.services')
         // we only support json content-type,
         // and expect json as response
         msg.resource.json = true;
-
 
         // sugar for prefixing the path with namespace
         if(r._cdapNsPath) {
