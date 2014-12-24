@@ -146,11 +146,15 @@ public final class TimeSeriesTable {
   }
 
   public MetricsScanner scan(MetricsScanQuery query) throws OperationException {
-    return scanFor(query, false, false);
+    return scanFor(query, false);
   }
 
   public List<String> getNextLevelContexts(MetricsScanQuery query) throws OperationException {
     return getAvailableContextAndMetrics(query, true);
+  }
+
+  public List<String> getAllMetrics(MetricsScanQuery query) throws OperationException {
+    return getAvailableContextAndMetrics(query, false);
   }
 
   private List<String> getAvailableContextAndMetrics(MetricsScanQuery query, boolean isContextQuery)
@@ -230,10 +234,6 @@ public final class TimeSeriesTable {
     return metricsScanResults;
   }
 
-  public List<String> getAllMetrics(MetricsScanQuery query) throws OperationException {
-    return getAvailableContextAndMetrics(query, false);
-  }
-
   private byte[] getNextMetricsTarget(byte[] metricsArray) {
     int idSize = entityCodec.getIdSize();
     String metricsString = entityCodec.decode(MetricsEntityType.METRIC, metricsArray);
@@ -257,7 +257,7 @@ public final class TimeSeriesTable {
   }
 
   public MetricsScanner scanAllTags(MetricsScanQuery query) throws OperationException {
-    return scanFor(query, true, false);
+    return scanFor(query, true);
   }
 
   /**
@@ -323,7 +323,7 @@ public final class TimeSeriesTable {
    */
   public void delete(MetricsScanQuery query) throws OperationException {
     try {
-      ScannerFields fields = getScannerFields(query, false);
+      ScannerFields fields = getScannerFields(query);
       timeSeriesTable.deleteRange(fields.startRow, fields.endRow, fields.columns, fields.filter);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
@@ -383,10 +383,9 @@ public final class TimeSeriesTable {
     }
   }
 
-  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags, boolean scanAllRows)
-    throws OperationException {
+  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags) throws OperationException {
     try {
-      ScannerFields fields = getScannerFields(query, shouldMatchAllTags, scanAllRows);
+      ScannerFields fields = getScannerFields(query, shouldMatchAllTags);
       Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
       return new MetricsScanner(query, scanner, entityCodec, resolution);
     } catch (Exception e) {
@@ -524,8 +523,8 @@ public final class TimeSeriesTable {
     ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
                                                                              query.getMetricPrefix(), 0);
     ImmutablePair<byte[], byte[]> tagPair = (!shouldMatchAllTags && tag == null)
-      ? defaultTagFuzzyPair
-      : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
+                                                ? defaultTagFuzzyPair
+                                                : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
     ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, query.getRunId(), 0);
 
     // For each timbase, construct a fuzzy filter pair
@@ -567,26 +566,23 @@ public final class TimeSeriesTable {
     return new ImmutablePair<byte[], byte[]>(key, mask);
   }
 
-  private  ScannerFields getScannerFields(MetricsScanQuery query, boolean scanAllRows) {
-    return getScannerFields(query, false, scanAllRows);
+  private  ScannerFields getScannerFields(MetricsScanQuery query) {
+    return getScannerFields(query, false);
   }
 
-  private ScannerFields getScannerFields(MetricsScanQuery query, boolean shouldMatchAllTags, boolean scanAllRows) {
+  private ScannerFields getScannerFields(MetricsScanQuery query, boolean shouldMatchAllTags) {
     int startTimeBase = getTimeBase(query.getStartTime());
     int endTimeBase = getTimeBase(query.getEndTime());
 
     byte[][] columns = null;
+    if (startTimeBase == endTimeBase) {
+      // If on the same timebase, we only need subset of columns
+      int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
+      int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
+      columns = new byte[endCol - startCol + 1][];
 
-    if (!scanAllRows) {
-      if (startTimeBase == endTimeBase) {
-        // If on the same timebase, we only need subset of columns
-        int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
-        int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
-        columns = new byte[endCol - startCol + 1][];
-
-        for (int i = 0; i < columns.length; i++) {
-          columns[i] = Bytes.toBytes((short) (startCol + i));
-        }
+      for (int i = 0; i < columns.length; i++) {
+        columns[i] = Bytes.toBytes((short) (startCol + i));
       }
     }
 
@@ -598,8 +594,7 @@ public final class TimeSeriesTable {
                                    query.getMetricPrefix(), tagPrefix, startTimeBase, 0);
     byte[] endRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
                                  query.getMetricPrefix(), tagPrefix, endTimeBase + 1, 0xff);
-    FuzzyRowFilter filter = getFilter(query, startTimeBase, endTimeBase, shouldMatchAllTags,
-                                      scanAllRows ? FOUR_ONE_BYTES : FOUR_ZERO_BYTES);
+    FuzzyRowFilter filter = getFilter(query, startTimeBase, endTimeBase, shouldMatchAllTags, FOUR_ZERO_BYTES);
 
     return new ScannerFields(startRow, endRow, columns, filter);
   }
@@ -618,4 +613,3 @@ public final class TimeSeriesTable {
     }
   }
 }
-

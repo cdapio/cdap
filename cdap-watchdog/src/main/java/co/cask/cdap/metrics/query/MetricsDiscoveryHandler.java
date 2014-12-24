@@ -234,7 +234,6 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   public void handleContext(HttpRequest request, HttpResponder responder,
                             @PathParam("context-prefix") final String context) throws IOException {
     try {
-
       responder.sendJson(HttpResponseStatus.OK, getNextContext(context));
     } catch (OperationException e) {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -247,7 +246,6 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   public void getMetricsInContext(HttpRequest request, HttpResponder responder,
                                   @PathParam("context-prefix") final String context) throws IOException {
     try {
-
       responder.sendJson(HttpResponseStatus.OK, getNextMetrics(context));
     } catch (OperationException e) {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
