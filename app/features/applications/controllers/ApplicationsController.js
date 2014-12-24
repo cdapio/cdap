@@ -41,6 +41,9 @@ angular.module(PKG.name + '.feature.applications')
       _cdapNsPath: '/apps/' + appId + '/status',
       method: 'GET',
     }, function(res) {
+      if (!res) {
+        return;
+      }
       $scope.programs = res;
       $scope.programs.runningCount = getProgramCount($scope.programs, 'ALIVE');
       $scope.programs.failedCount = getProgramCount($scope.programs, 'FAILED');

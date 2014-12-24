@@ -6,17 +6,13 @@ angular.module(PKG.name+'.feature.applications')
      */
     $stateProvider
 
-      .state('apps', {
-        url: '/ns/:namespace',
-        templateUrl: '/assets/features/applications/templates/apps.html',
-        resolve: {
-          namespace: function() {
-            return 'ns1';
-          }
-        }
+      .state('ns.apps', {
+        //url: '/ns/:namespace',
+        abstract: true,
+        templateUrl: '/assets/features/applications/templates/apps.html'
       })
 
-      .state('apps.list', {
+      .state('ns.apps.list', {
         url: '/apps',
         templateUrl: '/assets/features/applications/templates/list.html',
         controller: 'ApplicationListController',
@@ -26,7 +22,7 @@ angular.module(PKG.name+'.feature.applications')
         }
       })
 
-      .state('apps.application', {
+      .state('ns.apps.application', {
         url: '/apps/:appId',
         templateUrl: '/assets/features/applications/templates/application.html',
         controller: 'ApplicationController',
@@ -35,7 +31,7 @@ angular.module(PKG.name+'.feature.applications')
           label: '{{$state.params.appId}}'
         }
       })
-        .state('apps.application.tab', {
+        .state('ns.apps.application.tab', {
           url: '/:tab',
           ncyBreadcrumb: {
             skip: true
