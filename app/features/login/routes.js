@@ -1,6 +1,8 @@
 angular.module(PKG.name+'.feature.login')
   .config(function ($stateProvider, $urlRouterProvider) {
 
+    $urlRouterProvider.when('/', '/login');
+
     /**
      * State Configurations
      */
