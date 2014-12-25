@@ -735,24 +735,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, instances.getProvisioned());
 
     // verify that endpoints are not available in the wrong namespace
-    code = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, "multi",
-                       HttpMethod.POST);
+    response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.POST,
+                       "multi");
+    code = response.getStatusLine().getStatusCode();
     Assert.assertEquals(404, code);
 
-    code = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, "multi/ping",
-                       HttpMethod.GET);
+    response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.GET,
+                       "multi/ping");
+    code = response.getStatusLine().getStatusCode();
     Assert.assertEquals(404, code);
-
-/*  // verify that endpoints are available in the right namespace.
-    TODO: Cannot test this through unit tests right now since the service can't be discovered without changes to
-    AppFabricTestBase. Currently all requests in unit tests are going to app fabric, so this fails.
-    code = callService(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, "multi",
-                       HttpMethod.POST);
-    Assert.assertEquals(200, code);
-
-    code = callService(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, "multi/ping",
-                       HttpMethod.GET);
-    Assert.assertEquals(200, code);*/
 
     // stop service
     code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
@@ -792,7 +783,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return doPut(versionedInstanceUrl, instancesBody).getStatusLine().getStatusCode();
   }
 
-  private int callService(String namespace, String app, String service, String endpoint, HttpMethod method)
+  private HttpResponse callService(String namespace, String app, String service, HttpMethod method, String endpoint)
     throws Exception {
     String serviceUrl = String.format("apps/%s/service/%s/methods/%s", app, service, endpoint);
     String versionedServiceUrl = getVersionedAPIPath(serviceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
@@ -804,7 +795,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     } else {
       throw new IllegalArgumentException("Only GET and POST supported right now.");
     }
-    return response.getStatusLine().getStatusCode();
+    return response;
   }
 
   private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {

@@ -364,7 +364,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
-      String specification = getProgramSpecificationJson(id, type);
+      String specification = programSpecificationToString(id, type);
       if (specification == null || specification.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -1200,7 +1200,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (runtimeInfo == null) {
         if (type != ProgramType.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
-          String spec = getProgramSpecificationJson(id, type);
+          String spec = programSpecificationToString(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
@@ -1266,7 +1266,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String getProgramSpecificationJson(Id.Program id, ProgramType type) throws Exception {
+  /**
+   * Returns {@link ProgramSpecification} as a json string if the program exists.
+   * If the program does not exist, it returns an empty string.
+   */
+  private String programSpecificationToString(Id.Program id, ProgramType type) throws Exception {
     ProgramSpecification programSpec = getProgramSpecification(id, type);
     if (programSpec == null) {
       return "";
@@ -1306,36 +1310,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new Exception(throwable.getMessage());
     }
   }
-
-  /*private String getProgramSpecification(Id.Program id, ProgramType type)
-    throws Exception {
-
-    ApplicationSpecification appSpec;
-    try {
-      appSpec = store.getApplication(id.getApplication());
-      if (appSpec == null) {
-        return "";
-      }
-      String runnableId = id.getId();
-      if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getFlows().get(id.getId()));
-      } else if (type == ProgramType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getProcedures().get(id.getId()));
-      } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
-      } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getSpark().get(id.getId()));
-      } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
-      } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getServices().get(id.getId()));
-      }
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
-    }
-    return "";
-  }*/
 
   /** NOTE: This was a temporary hack done to map the status to something that is
    * UI friendly. Internal states of program controller are reasonable and hence

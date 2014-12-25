@@ -135,7 +135,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-      //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
+      //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
       String serviceName = String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
       return serviceName;
     }
@@ -144,8 +144,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   private HttpRequest rewriteRequest(HttpRequest request) {
     String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
+    String namespacedApiPrefix = String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
+                                               Constants.DEFAULT_NAMESPACE);
+    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, namespacedApiPrefix));
     return request;
   }
 }
