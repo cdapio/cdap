@@ -732,7 +732,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     instances = getServiceInstances(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                                      APP_WITH_SERVICES_SERVICE_NAME);
     Assert.assertEquals(3, instances.getRequested());
-    Assert.assertEquals(1, instances.getProvisioned());
+    Assert.assertEquals(3, instances.getProvisioned());
 
     // verify that endpoints are not available in the wrong namespace
     response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.POST,

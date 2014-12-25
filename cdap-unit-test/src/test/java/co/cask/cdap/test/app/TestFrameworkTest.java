@@ -324,15 +324,15 @@ public class TestFrameworkTest extends TestBase {
 
       // Test increasing instances.
       serviceManager.setRunnableInstances(runnableName, 5);
-      runnableInstancesCheck(serviceManager, runnableName, 5, retries, "requested");
+      runnableInstancesCheck(serviceManager, runnableName, 5, retries, "provisioned");
 
       // Test decreasing instances.
       serviceManager.setRunnableInstances(runnableName, 2);
-      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "requested");
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
 
       // Test requesting same number of instances.
       serviceManager.setRunnableInstances(runnableName, 2);
-      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "requested");
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
 
       // Test that the worker starts with 5 instances
       DataSetManager<KeyValueTable> datasetManager = applicationManager

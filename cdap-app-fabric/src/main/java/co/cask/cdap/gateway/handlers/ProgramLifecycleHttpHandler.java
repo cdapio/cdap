@@ -1712,8 +1712,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @return
    */
   private int getRunnableCount(String namespaceId, String appId, ProgramType programType,
-                               String programId, String runnableId) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, programId), programType);
+                               String programId, String runnableId) throws OperationException {
+    Id.Program id = Id.Program.from(namespaceId, appId, programId);
+    ProgramLiveInfo info = runtimeService.getLiveInfo(id, programType);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
@@ -1727,8 +1728,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
       return count;
     }
+    // TODO: CDAP-1091: For standalone mode, returning the requested instances instead of provisioned only for services.
+    // Doing this only for services to keep it consistent with the existing contract for flowlets right now.
+    // The get instances contract for both flowlets and services should be re-thought and fixed as part of CDAP-1091
+    if (programType == ProgramType.SERVICE) {
+      return getRequestedServiceInstances(id, runnableId);
+    }
+
     // Not running on YARN default 1
     return 1;
+  }
+
+  private int getRequestedServiceInstances(Id.Program serviceId, String runnableId) throws OperationException {
+    // Not running on YARN, get it from store
+    // If the runnable name is the same as the service name, get the instances from service spec.
+    // Otherwise get it from worker spec.
+    // TODO: This is due to the improper REST API design that treats everything in service as Runnable
+    if (runnableId.equals(serviceId.getId())) {
+      return store.getServiceInstances(serviceId);
+    } else {
+      return store.getServiceWorkerInstances(serviceId, runnableId);
+    }
   }
 
   private boolean isValidAction(String action) {
