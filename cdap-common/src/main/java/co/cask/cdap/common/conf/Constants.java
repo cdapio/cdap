@@ -130,6 +130,13 @@ public final class Constants {
   }
 
   /**
+   * Configuration Store.
+   */
+  public static final class ConfigStore {
+    public static final String CONFIG_TABLE = "config.store.table";
+  }
+
+  /**
    * Transactions.
    */
   public static final class Transaction {

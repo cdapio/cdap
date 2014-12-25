@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -90,6 +91,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new LoggingModules().getInMemoryModules());
     install(new MetricsHandlerModule());
     install(new ExploreClientModule());
+    install(new ConfigStoreModule().getInMemoryModule());
   }
 
   private Scheduler createNoopScheduler() {
