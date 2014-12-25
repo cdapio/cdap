@@ -3,18 +3,20 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
+function myNavbarDirective ($state, $dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
-
+    controller: 'navbarCtrl',
     link: function (scope, element, attrs) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 
       myNamespace.getList().then(function(list) {
         scope.namespaces = list;
-        scope.currentNamespace = list[0];
+        if (!$state.includes('ns.overview')) {
+          scope.currentNamespace = list[0].name;
+        }
       });
 
       // namespace dropdown
@@ -36,35 +38,6 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
       scope.theme = caskTheme;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
 
-      myNamespace.getCurrentNamespace().then(function(currentNamespace) {
-        scope.navbarLinks.unshift(
-          {
-            sref: 'ns.overview({namespaceId: "' + currentNamespace.name + '"})',
-            label: 'Development',
-            parent: 'ns'
-          }
-        )
-      });
-      scope.navbarLinks = [
-        {
-          sref: 'dashboard',
-          label: 'Operations'
-        },
-        {
-          sref: 'admin.overview',
-          label: 'Management',
-          parent: 'admin'
-        }
-      ];
-
-
-      scope.doSearch = function () {
-        $alert({
-          title: 'Sorry!',
-          content: 'Search is not yet implemented.',
-          type: 'danger'
-        });
-      };
     }
   };
 });

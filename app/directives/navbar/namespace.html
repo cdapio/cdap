@@ -2,7 +2,7 @@
 
   <li  role="presentation" ng-show="curentUser">
     <li ng-repeat="ns in namespaces">
-      <a role="menuitem" tabindex="-1" href="">
+      <a role="menuitem" ng-click="onSelectNamespace(ns)" tabindex="-1" href="">
         <span ng-bind="ns.displayName"></span>
       </a>
     </li>
