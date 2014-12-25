@@ -131,6 +131,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
+    } else if (uriParts.length >= 8 && uriParts[7].equals("logs")) {
+      //Log Handler Path /v3/namespaces/<namespaceid>apps/<appid>/<programid-type>/<programid>/logs
+      return Constants.Service.METRICS;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }

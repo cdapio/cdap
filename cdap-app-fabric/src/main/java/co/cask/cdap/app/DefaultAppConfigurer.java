@@ -178,8 +178,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
                                                                   workflow.configure());
     workflows.put(spec.getName(), spec);
 
-    // Add MapReduces from workflow into application
+    // Add MapReduces and sparks from workflow into application
     mapReduces.putAll(spec.getMapReduce());
+    sparks.putAll(spec.getSparks());
   }
 
   public void addService(Service service) {
