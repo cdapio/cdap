@@ -124,8 +124,9 @@ public class ServiceHttpServer extends AbstractIdleService {
     }
 
     // The service URI is always prefixed for routing purpose
-    String pathPrefix = String.format("%s/apps/%s/services/%s/methods",
-                                      Constants.Gateway.API_VERSION_2,
+    String pathPrefix = String.format("%s/namespaces/%s/apps/%s/services/%s/methods",
+                                      Constants.Gateway.API_VERSION_3,
+                                      programId.getAccountId(),
                                       programId.getApplicationId(),
                                       programId.getId());
 

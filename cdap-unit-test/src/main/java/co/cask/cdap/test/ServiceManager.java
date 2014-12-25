@@ -32,11 +32,18 @@ public interface ServiceManager {
   void setRunnableInstances(String runnable, int instances);
 
   /**
-   * Returns the number of runnable instances.
+   * Returns the number of requested runnable instances.
    *
    * @param runnableName Name of the runnable (can be either handler or worker).
    */
-  int getRunnableInstances(String runnableName);
+  int getRequestedInstances(String runnableName);
+
+  /**
+   * Returns the number of requested runnable instances.
+   *
+   * @param runnableName Name of the runnable (can be either handler or worker).
+   */
+  int getProvisionedInstances(String runnableName);
 
   /**
    * Stops the running service.
