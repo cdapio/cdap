@@ -25,13 +25,7 @@ angular.module(PKG.name + '.feature.admin')
           controller: 'NamespaceCreateController'
         })
         .state('admin.namespace', {
-          url: '/ns/:namespaceId',
-          // resolve: {
-          //   namespaceId: function($stateParams) {
-          //     debugger;
-          //     return $stateParams.namespaceId;
-          //   }
-          // },
+          url: '/ns/:nsId',
           templateUrl: '/assets/features/admin/templates/namespace.html'
         })
           .state('admin.namespace.settings', {
