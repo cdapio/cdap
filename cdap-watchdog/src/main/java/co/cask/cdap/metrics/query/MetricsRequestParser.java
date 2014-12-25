@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricRequest;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeMathParser;
@@ -396,16 +395,14 @@ final class MetricsRequestParser {
     int resolution = 1;
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 
-    if (queryParams.containsKey(RESOLUTION)) {
-
-        resolution = TimeMathParser.resolutionInSeconds(queryParams.get(RESOLUTION).get(0));
-        if ((resolution == 3600) || (resolution == 60) || (resolution == 1)) {
-          builder.setTimeSeriesResolution(resolution);
-        } else {
-          throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
-                                               "1 hour resolutions are supported currently");
-        }
-
+    if (queryParams.containsKey(RESOLUTION) && !queryParams.get(RESOLUTION).get(0).equals("auto")) {
+      resolution = TimeMathParser.resolutionInSeconds(queryParams.get(RESOLUTION).get(0));
+      if ((resolution == 3600) || (resolution == 60) || (resolution == 1)) {
+        builder.setTimeSeriesResolution(resolution);
+      } else {
+        throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
+                                             "1 hour resolutions are supported currently");
+      }
     } else {
       // if resolution is not provided set 1
       builder.setTimeSeriesResolution(1);
@@ -414,17 +411,18 @@ final class MetricsRequestParser {
     if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
       startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
       endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
-      if (!queryParams.containsKey(RESOLUTION)) {
-        // determine resolution, based on difference.
-        MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
-        builder.setTimeSeriesResolution(autoResolution.getResolution());
-        resolution = autoResolution.getResolution();
-      }
-      if (queryParams.containsKey(COUNT)) {
-        count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      if (queryParams.containsKey(RESOLUTION)) {
+        if (queryParams.get(RESOLUTION).get(0).equals("auto")) {
+          //auto determine resolution, based on time difference.
+          MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
+          builder.setTimeSeriesResolution(autoResolution.getResolution());
+          resolution = autoResolution.getResolution();
+        }
       } else {
-        count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+        builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND.getResolution());
+        resolution = MetricsRequest.TimeSeriesResolution.SECOND.getResolution();
       }
+      count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
