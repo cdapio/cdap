@@ -96,6 +96,10 @@ public class NotificationFeed {
     private String namespace;
     private String description;
 
+    public Builder() {
+      // No-op
+    }
+
     public Builder(NotificationFeed feed) {
       this.namespace = feed.getNamespace();
       this.category = feed.getCategory();
@@ -150,14 +154,11 @@ public class NotificationFeed {
     }
 
     NotificationFeed that = (NotificationFeed) o;
-    return Objects.equal(this.id, that.id) &&
-      Objects.equal(this.category, that.category) &&
-      Objects.equal(this.namespace, that.namespace) &&
-      Objects.equal(this.name, that.name);
+    return Objects.equal(this.id, that.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, category, namespace, name);
+    return Objects.hashCode(id);
   }
 }

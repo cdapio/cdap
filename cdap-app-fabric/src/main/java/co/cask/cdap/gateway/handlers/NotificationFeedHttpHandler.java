@@ -21,8 +21,8 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import co.cask.cdap.notifications.feeds.service.NotificationFeedService;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -46,31 +46,32 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedHttpHandler.class);
-  private final NotificationFeedService feedService;
+  private final NotificationFeedManager feedManager;
 
   @Inject
-  public NotificationFeedHttpHandler(Authenticator authenticator, NotificationFeedService feedService) {
+  public NotificationFeedHttpHandler(Authenticator authenticator, NotificationFeedManager feedManager) {
     super(authenticator);
-    this.feedService = feedService;
+    this.feedManager = feedManager;
   }
 
   @PUT
   @Path("/feeds/{id}")
   public void createFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
+      NotificationFeed combinedFeed;
       try {
         NotificationFeed feed = parseBody(request, NotificationFeed.class);
-        NotificationFeed combinedFeed = new NotificationFeed.Builder(NotificationFeed.fromId(id))
+        combinedFeed = new NotificationFeed.Builder(NotificationFeed.fromId(id))
           .setDescription(feed == null ? null : feed.getDescription())
           .build();
-        if (feedService.createFeed(combinedFeed)) {
-          responder.sendStatus(HttpResponseStatus.OK);
-        } else {
-          LOG.trace("Notification Feed already exists.");
-          responder.sendStatus(HttpResponseStatus.CONFLICT);
-        }
       } catch (IllegalArgumentException e) {
         throw new NotificationFeedException(e);
+      }
+      if (feedManager.createFeed(combinedFeed)) {
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        LOG.trace("Notification Feed already exists.");
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
       }
     } catch (NotificationFeedException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
@@ -94,7 +95,7 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
-      feedService.deleteFeed(feed);
+      feedManager.deleteFeed(feed);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (NotificationFeedNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -115,7 +116,7 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
-      responder.sendJson(HttpResponseStatus.OK, feedService.getFeed(feed));
+      responder.sendJson(HttpResponseStatus.OK, feedManager.getFeed(feed));
     } catch (NotificationFeedNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (NotificationFeedException e) {
@@ -129,7 +130,7 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/feeds")
   public void listFeeds(HttpRequest request, HttpResponder responder) {
     try {
-      List<NotificationFeed> feeds = feedService.listFeeds();
+      List<NotificationFeed> feeds = feedManager.listFeeds();
       responder.sendJson(HttpResponseStatus.OK, feeds);
     } catch (NotificationFeedException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,

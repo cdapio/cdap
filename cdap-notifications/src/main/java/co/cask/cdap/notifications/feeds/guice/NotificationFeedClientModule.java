@@ -14,27 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.service.kafka;
+package co.cask.cdap.notifications.feeds.guice;
 
-import com.google.gson.JsonElement;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.client.RemoteNotificationFeedManager;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 
 /**
- * Message sent to Kafka that contains a serialized notification.
+ * Guice module to connect to a remote {@link NotificationFeedManager}.
  */
-class KafkaMessage {
-  private final String messageKey;
-  private final JsonElement notificationJson;
+public class NotificationFeedClientModule extends PrivateModule {
 
-  public KafkaMessage(String messageKey, JsonElement notificationJson) {
-    this.messageKey = messageKey;
-    this.notificationJson = notificationJson;
-  }
-
-  public String getMessageKey() {
-    return messageKey;
-  }
-
-  public JsonElement getNotificationJson() {
-    return notificationJson;
+  @Override
+  protected void configure() {
+    bind(NotificationFeedManager.class).to(RemoteNotificationFeedManager.class).in(Scopes.SINGLETON);
+    expose(NotificationFeedManager.class);
   }
 }

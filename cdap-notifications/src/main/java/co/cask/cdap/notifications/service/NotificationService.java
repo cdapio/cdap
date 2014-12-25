@@ -40,8 +40,8 @@ public interface NotificationService extends Service {
    * @param notification notification object to send.
    * @param <N> Type of the notification to send.
    * @return a {@link ListenableFuture} describing the state of the async send operation.
-   * @throws NotificationException in case of any error regarding the {@code feed}.
-   * @throws NotificationFeedException in cae of any error when publishing the notification.
+   * @throws NotificationException in case of any error when publishing the notification.
+   * @throws NotificationFeedException in case of any error regarding the {@code feed}.
    */
   <N> ListenableFuture<N> publish(NotificationFeed feed, N notification)
     throws NotificationException, NotificationFeedException;
@@ -55,8 +55,8 @@ public interface NotificationService extends Service {
    * @param notificationType type to use to serialize the notification in the Notification system.
    * @param <N> Type of the notification to send.
    * @return a {@link ListenableFuture} describing the state of the async send operation.
-   * @throws NotificationException in case of any error regarding the {@code feed}.
-   * @throws NotificationFeedException in cae of any error when publishing the notification.
+   * @throws NotificationException in case of any error when publishing the notification.
+   * @throws NotificationFeedException in case of any error regarding the {@code feed}.
    */
   <N> ListenableFuture<N> publish(NotificationFeed feed, N notification, Type notificationType)
     throws NotificationException, NotificationFeedException;
@@ -73,7 +73,7 @@ public interface NotificationService extends Service {
    * @return A {@link Cancellable} for cancelling Notification consumption.
    * @throws NotificationFeedNotFoundException if the feed does not exist, according to the
    * {@link NotificationFeedManager}.
-   * @throws NotificationFeedException in case of any other error.
+   * @throws NotificationFeedException in case of any other error concerning the feed.
    */
   <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler)
     throws NotificationFeedException;
@@ -92,7 +92,7 @@ public interface NotificationService extends Service {
    * @return A {@link Cancellable} for cancelling Notification consumption.
    * @throws NotificationFeedNotFoundException if the feed does not exist, according to the
    * {@link NotificationFeedManager}.
-   * @throws NotificationFeedException in case of any other error.
+   * @throws NotificationFeedException in case of any other error concerning the feed.
    */
   <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
     throws NotificationFeedException;

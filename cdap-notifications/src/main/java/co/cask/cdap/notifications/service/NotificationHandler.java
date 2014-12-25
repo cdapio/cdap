@@ -22,7 +22,7 @@ import java.lang.reflect.Type;
 
 /**
  * Notification handler passed when subscribing to a {@link NotificationFeed} using
- * {@link co.cask.cdap.notifications.service.NotificationClient.Subscriber#add}.
+ * {@link co.cask.cdap.notifications.service.NotificationService#subscribe}.
  *
  * @param <N> Type of the Notification to handle.
  */
@@ -34,11 +34,10 @@ public interface NotificationHandler<N> {
   Type getNotificationFeedType();
 
   /**
-   * Method called to process a Notification received by a
-   * {@link co.cask.cdap.notifications.service.NotificationClient.Subscriber}.
+   * Method called when a notification is received by this handler.
    *
    * @param notification notification received.
    * @param notificationContext {@link NotificationContext} object for the notification.
    */
-  void processNotification(N notification, NotificationContext notificationContext);
+  void received(N notification, NotificationContext notificationContext);
 }

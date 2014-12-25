@@ -39,7 +39,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -103,7 +103,7 @@ public abstract class NotificationTest {
                                     new IOModule(),
                                     new AuthModule(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new NotificationFeedClientRuntimeModule().getInMemoryModules()
+                                    new NotificationFeedServiceRuntimeModule().getInMemoryModules()
                                   ),
                                   Arrays.asList(modules))
     );
@@ -149,7 +149,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(String notification, NotificationContext notificationContext) {
+        public void received(String notification, NotificationContext notificationContext) {
           LOG.debug("Received notification payload: {}", notification);
           try {
             Assert.assertEquals("fake-payload-" + receiveCount.get(), notification);
@@ -208,7 +208,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(String notification, NotificationContext notificationContext) {
+        public void received(String notification, NotificationContext notificationContext) {
           // No-op
         }
       });
@@ -235,7 +235,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(final String notification, NotificationContext notificationContext) {
+        public void received(final String notification, NotificationContext notificationContext) {
           notificationContext.execute(new TxRunnable() {
             @Override
             public void run(DatasetContext context) throws Exception {
@@ -305,7 +305,7 @@ public abstract class NotificationTest {
           }
 
           @Override
-          public void processNotification(String notification, NotificationContext notificationContext) {
+          public void received(String notification, NotificationContext notificationContext) {
             LOG.debug("Received notification payload: {}", notification);
             try {
               Assert.assertEquals("fake-payload-" + receiveCounts[j], notification);
@@ -360,7 +360,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(SimpleNotification notification, NotificationContext notificationContext) {
+        public void received(SimpleNotification notification, NotificationContext notificationContext) {
           LOG.debug("Received notification payload: {}", notification);
           try {
             Assert.assertEquals("fake-payload-" + receiveCounts[notification.getPublisherId()],
@@ -433,7 +433,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(SimpleNotification notification, NotificationContext notificationContext) {
+        public void received(SimpleNotification notification, NotificationContext notificationContext) {
           LOG.debug("Received notification payload: {}", notification);
           try {
             Assert.assertEquals("fake-payload-" + receiveCounts[0], notification.getPayload());
@@ -452,7 +452,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(String notification, NotificationContext notificationContext) {
+        public void received(String notification, NotificationContext notificationContext) {
           LOG.debug("Received notification payload: {}", notification);
           try {
             Assert.assertEquals("fake-payload-" + receiveCounts[1], notification);
@@ -538,7 +538,7 @@ public abstract class NotificationTest {
         }
 
         @Override
-        public void processNotification(String notification, NotificationContext notificationContext) {
+        public void received(String notification, NotificationContext notificationContext) {
           LOG.debug("Received notification payload: {}", notification);
           try {
             Assert.assertEquals("fake-payload-" + receiveCount.get(), notification);

@@ -48,7 +48,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Notification feed service client.
+ * Implementation of the {@link NotificationFeedManager} that connects to a remote feed manager service
+ * through internal REST APIs.
  */
 public class RemoteNotificationFeedManager implements NotificationFeedManager {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteNotificationFeedManager.class);

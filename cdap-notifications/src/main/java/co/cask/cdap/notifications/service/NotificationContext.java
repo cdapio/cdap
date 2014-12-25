@@ -20,7 +20,7 @@ import co.cask.cdap.api.TxRunnable;
 
 /**
  * Context accessible when handling the reception of a Notification by the
- * {@link NotificationHandler#processNotification} method.
+ * {@link NotificationHandler#received} method.
  */
 public interface NotificationContext {
 

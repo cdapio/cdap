@@ -25,7 +25,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Implementation of the {@link NotificationFeedStore} that keeps the feeds in memory.
  */
 public class InMemoryNotificationFeedStore implements NotificationFeedStore {
 
@@ -33,7 +33,7 @@ public class InMemoryNotificationFeedStore implements NotificationFeedStore {
 
   @Nullable
   @Override
-  public NotificationFeed createNotificationFeed(NotificationFeed feed) {
+  public synchronized NotificationFeed createNotificationFeed(NotificationFeed feed) {
     NotificationFeed existingFeed = feeds.get(feed.getId());
     if (existingFeed != null) {
       return existingFeed;
@@ -44,18 +44,18 @@ public class InMemoryNotificationFeedStore implements NotificationFeedStore {
 
   @Nullable
   @Override
-  public NotificationFeed getNotificationFeed(String feedId) {
+  public synchronized NotificationFeed getNotificationFeed(String feedId) {
     return feeds.get(feedId);
   }
 
   @Nullable
   @Override
-  public NotificationFeed deleteNotificationFeed(String feedId) {
+  public synchronized NotificationFeed deleteNotificationFeed(String feedId) {
     return feeds.remove(feedId);
   }
 
   @Override
-  public List<NotificationFeed> listNotificationFeeds() {
+  public synchronized List<NotificationFeed> listNotificationFeeds() {
     return Lists.newArrayList(feeds.values());
   }
 }

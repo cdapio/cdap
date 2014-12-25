@@ -52,17 +52,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class InMemoryNotificationService extends AbstractIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
-  private static final int EXECUTOR_POOL_SIZE = 10;
 
   private final SetMultimap<NotificationFeed, NotificationHandler> feedsToHandlers;
   private final Map<NotificationHandler, Executor> handlersToExecutors;
-  private final ReadWriteLock lock;
+  private final ReadWriteLock handlersLock;
 
   private final DatasetFramework dsFramework;
   private final TransactionSystemClient transactionSystemClient;
   private final NotificationFeedManager feedManager;
 
-  private ListeningExecutorService defaultExecutor;
+  private ListeningExecutorService publishingExecutor;
 
   @Inject
   public InMemoryNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient,
@@ -72,18 +71,18 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
     this.feedManager = feedManager;
     this.feedsToHandlers = HashMultimap.create();
     this.handlersToExecutors = Maps.newHashMap();
-    this.lock = new ReentrantReadWriteLock();
+    this.handlersLock = new ReentrantReadWriteLock();
   }
 
   @Override
   protected void startUp() throws Exception {
-    defaultExecutor = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(EXECUTOR_POOL_SIZE, Threads.createDaemonThreadFactory("notification-service-%d")));
+    publishingExecutor = MoreExecutors.listeningDecorator(
+      Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-publisher")));
   }
 
   @Override
   protected void shutDown() throws Exception {
-    defaultExecutor.shutdownNow();
+    publishingExecutor.shutdownNow();
   }
 
   @Override
@@ -95,7 +94,7 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
   @Override
   public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, Type notificationType)
     throws NotificationException, NotificationFeedException {
-    lock.readLock().lock();
+    handlersLock.readLock().lock();
     try {
       LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
       Set<NotificationHandler> handlers = feedsToHandlers.get(feed);
@@ -104,21 +103,41 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
       }
 
       for (final NotificationHandler handler : handlers) {
-        handlersToExecutors.get(handler).execute(new Runnable() {
+        // We use an executor here so that we can release the lock before calling the users' executors
+        // We don't know what those executors might do, they may hold the read lock forever, for eg,
+        // preventing anyone from using the write lock.
+        publishingExecutor.execute(new Runnable() {
           @Override
           public void run() {
+            Executor userExecutor;
+            handlersLock.readLock().lock();
             try {
-              handler.processNotification(notification,
-                                          new BasicNotificationContext(dsFramework, transactionSystemClient));
-            } catch (Throwable t) {
-              LOG.warn("Notification {} on feed {} could not be processed successfully by handler {}",
-                       notification, feed, handler, t);
+              // Might have been removed between the time this task was submitted and
+              // the time it is executed
+              userExecutor = handlersToExecutors.get(handler);
+            } finally {
+              handlersLock.readLock().unlock();
             }
+
+            if (userExecutor == null) {
+              return;
+            }
+            userExecutor.execute(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  handler.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
+                } catch (Throwable t) {
+                  LOG.warn("Notification {} on feed {} could not be processed successfully by handler {}",
+                           notification, feed, handler, t);
+                }
+              }
+            });
           }
         });
       }
     } finally {
-      lock.readLock().unlock();
+      handlersLock.readLock().unlock();
     }
     return Futures.immediateFuture(null);
   }
@@ -126,42 +145,34 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
   @Override
   public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler)
     throws NotificationFeedException {
-    return subscribe(feed, handler, defaultExecutor);
+    return subscribe(feed, handler, Threads.SAME_THREAD_EXECUTOR);
   }
 
-  /**
-   *
-   * @param feed
-   * @param handler
-   * @param executor The executor passed as parameter will be used to push the notifications published via the
-   *                 {@link #publish} methods to the {@code handler}.
-   * @param <N>
-   * @return
-   * @throws NotificationFeedException
-   */
+  // The executor passed as parameter will be used to push the notifications published via the
+  // publish methods to the handler.
   @Override
   public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler, Executor executor)
     throws NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
-    lock.writeLock().lock();
+    handlersLock.writeLock().lock();
     try {
       feedsToHandlers.put(feed, handler);
       handlersToExecutors.put(handler, executor);
     } finally {
-      lock.writeLock().unlock();
+      handlersLock.writeLock().unlock();
     }
 
     return new Cancellable() {
       @Override
       public void cancel() {
-        lock.writeLock().lock();
+        handlersLock.writeLock().lock();
         try {
           feedsToHandlers.remove(feed, handler);
           handlersToExecutors.remove(handler);
         } finally {
-          lock.writeLock().unlock();
+          handlersLock.writeLock().unlock();
         }
       }
     };

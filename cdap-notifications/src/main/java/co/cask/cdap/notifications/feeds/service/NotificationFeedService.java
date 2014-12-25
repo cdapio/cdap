@@ -20,7 +20,6 @@ import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -28,22 +27,12 @@ import java.util.List;
 /**
  * Service side of the {@link NotificationFeedManager}.
  */
-public class NotificationFeedService extends AbstractIdleService implements NotificationFeedManager {
+public class NotificationFeedService implements NotificationFeedManager {
   private final NotificationFeedStore store;
 
   @Inject
   public NotificationFeedService(NotificationFeedStore store) {
     this.store = store;
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    // No-op
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    // No-op
   }
 
   @Override

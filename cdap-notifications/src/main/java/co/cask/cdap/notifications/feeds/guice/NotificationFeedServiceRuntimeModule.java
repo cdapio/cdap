@@ -18,55 +18,52 @@ package co.cask.cdap.notifications.feeds.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.client.RemoteNotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.InMemoryNotificationFeedStore;
 import co.cask.cdap.notifications.feeds.service.MDSNotificationFeedStore;
 import co.cask.cdap.notifications.feeds.service.NotificationFeedService;
 import co.cask.cdap.notifications.feeds.service.NotificationFeedStore;
-import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.util.Modules;
 
 /**
- * Guice modules for the client side of the Notification system.
+ * Guice modules for service side of the notification feed manager.
  */
-public class NotificationFeedClientRuntimeModule extends RuntimeModule {
+public class NotificationFeedServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new InMemoryNotificationFeedClientModule(), new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
         bind(NotificationFeedStore.class).to(InMemoryNotificationFeedStore.class).in(Scopes.SINGLETON);
-      }
-    });
-  }
-
-  @Override
-  public Module getStandaloneModules() {
-    return Modules.combine(new InMemoryNotificationFeedClientModule(), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(NotificationFeedStore.class).to(MDSNotificationFeedStore.class).in(Scopes.SINGLETON);
-      }
-    });
-  }
-
-  @Override
-  public Module getDistributedModules() {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(NotificationFeedManager.class).to(RemoteNotificationFeedManager.class).in(Scopes.SINGLETON);
+        bind(NotificationFeedManager.class).to(NotificationFeedService.class).in(Scopes.SINGLETON);
+        expose(NotificationFeedManager.class);
       }
     };
   }
 
-  private static class InMemoryNotificationFeedClientModule extends AbstractModule {
-    @Override
-    protected void configure() {
-      bind(NotificationFeedManager.class).to(NotificationFeedService.class).in(Scopes.SINGLETON);
-    }
+  @Override
+  public Module getStandaloneModules() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(NotificationFeedStore.class).to(MDSNotificationFeedStore.class).in(Scopes.SINGLETON);
+        bind(NotificationFeedManager.class).to(NotificationFeedService.class).in(Scopes.SINGLETON);
+        expose(NotificationFeedManager.class);
+      }
+    };
+  }
+
+  @Override
+  public Module getDistributedModules() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(NotificationFeedStore.class).to(MDSNotificationFeedStore.class).in(Scopes.SINGLETON);
+        bind(NotificationFeedManager.class).to(NotificationFeedService.class).in(Scopes.SINGLETON);
+        expose(NotificationFeedManager.class);
+      }
+    };
   }
 }

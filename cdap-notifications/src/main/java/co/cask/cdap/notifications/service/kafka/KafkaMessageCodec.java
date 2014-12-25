@@ -16,36 +16,27 @@
 
 package co.cask.cdap.notifications.service.kafka;
 
-import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.common.io.ByteBufferInputStream;
+import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Serializer/deserializer of Notifications to Kafka messages.
+ * Encoder/decoder of Notifications to Kafka messages.
  */
-public class KafkaMessageIO {
+public class KafkaMessageCodec {
   private static final Gson GSON = new Gson();
 
   public static ByteBuffer encode(KafkaMessage message) throws IOException {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    BinaryEncoder encoder = new BinaryEncoder(outputStream);
-
-    // TODO should use something else than json to encode - avro or other
-    encoder.writeString(GSON.toJson(message));
-    return ByteBuffer.wrap(outputStream.toByteArray());
+    return Charsets.UTF_8.encode(GSON.toJson(message));
   }
 
   public static KafkaMessage decode(ByteBuffer byteBuffer)
     throws IOException {
-    BinaryDecoder decoder = new BinaryDecoder(new ByteBufferInputStream(byteBuffer));
     try {
-      return GSON.fromJson(decoder.readString(), KafkaMessage.class);
+      return GSON.fromJson(Charsets.UTF_8.decode(byteBuffer).toString(), KafkaMessage.class);
     } catch (JsonSyntaxException e) {
       throw new IOException(e);
     }
