@@ -98,7 +98,7 @@ public final class MetricsScanner implements Iterator<MetricsScanResult> {
           offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
           String metric = entityCodec.decode(MetricsEntityType.METRIC, rowKey, offset);
           // Always have a "." suffix for unique matching
-          if (query.getMetricPrefix() != null && !(metric + ".").startsWith(query.getMetricPrefix())) {
+          if (!(metric + ".").startsWith(query.getMetricPrefix())) {
             continue;
           }
 

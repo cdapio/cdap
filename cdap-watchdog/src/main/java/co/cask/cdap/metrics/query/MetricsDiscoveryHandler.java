@@ -34,7 +34,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -46,13 +45,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -217,81 +212,79 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
 
-  //returns all the unique elements available in the first context
+  /**
+   * Returns all the unique elements available in the first context
+   */
   @GET
   @Path("/context/")
-  public void handleContextZero(HttpRequest request, HttpResponder responder) throws IOException {
+  public void listFirstContexts(HttpRequest request, HttpResponder responder) throws IOException {
     try {
       responder.sendJson(HttpResponseStatus.OK, getNextContext(null));
     } catch (OperationException e) {
+      LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  //returns all the unique elements available in the context after the given context prefix
+  /**
+   * Returns all the unique elements available in the context after the given context prefix
+   */
   @GET
   @Path("/context/{context-prefix}")
-  public void handleContext(HttpRequest request, HttpResponder responder,
-                            @PathParam("context-prefix") final String context) throws IOException {
+  public void listContextsByPrefix(HttpRequest request, HttpResponder responder,
+                                   @PathParam("context-prefix") final String context) throws IOException {
     try {
       responder.sendJson(HttpResponseStatus.OK, getNextContext(context));
     } catch (OperationException e) {
+      LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  //returns all the unique metrics in the given context
+  /**
+   * Returns all the unique metrics in the given context
+   */
   @GET
   @Path("/context/{context-prefix}/metrics")
-  public void getMetricsInContext(HttpRequest request, HttpResponder responder,
-                                  @PathParam("context-prefix") final String context) throws IOException {
+  public void listContextMetrics(HttpRequest request, HttpResponder responder,
+                                 @PathParam("context-prefix") final String context) throws IOException {
     try {
       responder.sendJson(HttpResponseStatus.OK, getNextMetrics(context));
     } catch (OperationException e) {
+      LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  private Set<String> getNextContext(String contextPrefix) throws OperationException {
-    HashSet<String> seenContext = Sets.newHashSet();
-    // if no context prefix is given, this will match the first part of the context-prefix
-    Pattern firstContext = Pattern.compile("([^.]+)");
-    // match the next part of the context-prefix
-    Pattern resultContext = Pattern.compile(contextPrefix + "." + "[^.]+");
-
+  private List<String> getNextContext(String contextPrefix) throws OperationException {
+    List<String> nextLevelContexts = Lists.newArrayList();
     for (TimeSeriesTable table : timeSeriesTables.get().values()) {
       MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
         allowEmptyMetric().build(0, 0);
       List<String> results = table.getNextLevelContexts(query);
 
       for (String nextContext : results) {
-        if (nextContext != null) {
-          Matcher match = (contextPrefix == null) ? firstContext.matcher(nextContext) :
-            resultContext.matcher(nextContext);
-          if (match.find()) {
-            seenContext.add(match.group());
-          }
+        if (contextPrefix == null) {
+          nextLevelContexts.add(nextContext.substring(0, nextContext.indexOf(".")));
+        } else {
+          String context = nextContext.substring(contextPrefix.length() + 1);
+          nextLevelContexts.add(context.substring(0, context.indexOf(".")));
         }
       }
     }
-    return seenContext;
+    Collections.sort(nextLevelContexts);
+    return nextLevelContexts;
   }
 
-  private Set<String> getNextMetrics(String contextPrefix) throws OperationException {
-    HashSet<String> seenMetrics = Sets.newHashSet();
+  private List<String> getNextMetrics(String contextPrefix) throws OperationException {
+    List<String> metrics = Lists.newArrayList();
     for (TimeSeriesTable table : timeSeriesTables.get().values()) {
       MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
         allowEmptyMetric().build(0, 0);
-      List<String> metricNames = table.getAllMetrics(query);
-
-      for (String metric : metricNames) {
-        if (metric != null) {
-          seenMetrics.add(metric);
-        }
-      }
+      metrics.addAll(table.getAllMetrics(query));
     }
-
-    return seenMetrics;
+    Collections.sort(metrics);
+    return metrics;
   }
 
   private void getMetrics(HttpRequest request, HttpResponder responder) {

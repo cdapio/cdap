@@ -124,7 +124,17 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     metricsResponseCheck("/v2/metrics/available/context", 2);
     metricsResponseCheck("/v2/metrics/available/context/WordCount.f", 1);
     metricsResponseCheck("/v2/metrics/available/context/WCount", 3);
-    metricsResponseCheck("/v2/metrics/available/context/WCount.f", 2);
+
+    String base = "/v2/metrics/available/context/WCount.f";
+    HttpResponse response = doGet(base);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(2, resultList.size());
+    Assert.assertEquals("WCounter", resultList.get(0));
+    Assert.assertEquals("WordCounter", resultList.get(1));
+
   }
 
   private void metricsResponseCheck(String url, int expected) throws Exception {
@@ -142,8 +152,20 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(2, reply.size());
+    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(2, resultList.size());
+
+    base = "/v2/metrics/available/context/WordCount.f.WordCounter.collector/metrics";
+    response = doGet(base);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    result = EntityUtils.toString(response.getEntity());
+    resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(3, resultList.size());
+    Assert.assertEquals("aa", resultList.get(0));
+    Assert.assertEquals("ab", resultList.get(1));
+    Assert.assertEquals("zz", resultList.get(2));
+
   }
 
   private static void setupMetrics() throws InterruptedException {
@@ -166,6 +188,11 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
     collector.increment("reads", 1);
     collector.increment("writes", 1);
+
+    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.collector", "0");
+    collector.increment("aa", 1);
+    collector.increment("zz", 1);
+    collector.increment("ab", 1);
 
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);

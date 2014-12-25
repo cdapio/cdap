@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.data;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -97,17 +98,54 @@ final class MetricsEntityCodec {
   public byte[] paddedEncode(MetricsEntityType type, String entity, int padding) {
     int idSize = entityTable.getIdSize();
     int depth = getDepth(type);
-    String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity, depth);
-    byte[] result = new byte[depth * idSize];
 
+    byte[] result = new byte[depth * idSize];
+    paddedEncode(type, entity, padding, result, 0);
+    return  result;
+  }
+
+  private void paddedEncode(MetricsEntityType type, String entity, int padding, byte[] result, int offset) {
+    int idSize = entityTable.getIdSize();
+    int depth = getDepth(type);
+    String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity, depth);
     for (int i = 0; i < entityParts.length; i++) {
       if (entityParts[i].isEmpty()) {
         throw new IllegalArgumentException("found empty part in metrics entity " + entity);
       }
-      idToBytes(entityTable.getId(type.getType() + i, entityParts[i]), idSize, result, i * idSize);
+      idToBytes(entityTable.getId(type.getType() + i, entityParts[i]), idSize, result, i * idSize + offset);
     }
 
-    Arrays.fill(result, entityParts.length * idSize, depth * idSize, (byte) (padding & 0xff));
+    Arrays.fill(result, entityParts.length * idSize + offset, depth * idSize + offset, (byte) (padding & 0xff));
+  }
+
+  /**
+   * Encode with padding and return the rowkey. contextPrefix is passed as encoded byte-array while other
+   * parts are not encoded yet.
+   * @param contextPrefix
+   * @param metricPrefix
+   * @param tagPrefix
+   * @param timeBase
+   * @param runId
+   * @param padding
+   * @return
+   */
+  public byte[] paddedEncode(String contextPrefix,  String metricPrefix, String tagPrefix,
+                             int timeBase, String runId, int padding) {
+    int idSize = entityTable.getIdSize();
+    int totalDepth = getDepth(MetricsEntityType.CONTEXT) + getDepth(MetricsEntityType.METRIC) +
+      getDepth(MetricsEntityType.TAG) + getDepth(MetricsEntityType.RUN);
+    int sizeOfTimeBase = 4;
+    byte[] result = new byte[idSize * totalDepth + sizeOfTimeBase];
+    int offset = 0;
+    paddedEncode(MetricsEntityType.CONTEXT, contextPrefix, padding, result, offset);
+    offset += idSize * getDepth(MetricsEntityType.METRIC);
+    paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding, result, offset);
+    offset += idSize * getDepth(MetricsEntityType.METRIC);
+    paddedEncode(MetricsEntityType.TAG, tagPrefix, padding, result, offset);
+    offset += idSize * getDepth(MetricsEntityType.TAG);
+    System.arraycopy(Bytes.toBytes(timeBase), 0 , result, offset, sizeOfTimeBase);
+    offset += sizeOfTimeBase;
+    paddedEncode(MetricsEntityType.RUN, runId, padding, result, offset);
     return result;
   }
 
