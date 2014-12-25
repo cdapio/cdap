@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function($scope) {
+  .controller('navbarCtrl', function($scope, $state) {
 
     $scope.navbarLinks = [
       {
