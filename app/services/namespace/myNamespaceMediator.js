@@ -9,28 +9,16 @@ angular.module(PKG.name + '.services')
     var currentNsdeferred = [],
         nsListdeferred = [];
 
-    this.setCurrentNamespace = function(ns) {
-      $state.params.namespaceId = ns;
-      currentNsdeferred.forEach(function(def) {
-        def.resolve({name: $state.params.namespaceId});
-      });
-    };
-
     this.setNamespaceList = function (nsList) {
       this.namespaceList = nsList;
-      this.setCurrentNamespace(nsList[0].name);
       nsListdeferred.forEach(function(def) {
         def.resolve(this.namespaceList);
-      })
+      }.bind(this))
     };
 
     this.getCurrentNamespace = function() {
       var deferred = $q.defer();
-      if ($state.params.namespaceId) {
-        deferred.resolve({name:$state.params.namespaceId});
-      } else {
-        currentNsdeferred.push(deferred);
-      }
+      deferred.resolve($state.params.namespaceId);
       return deferred.promise;
     };
 

@@ -24,18 +24,4 @@ angular.module(PKG.name + '.services')
       }
       return deferred.promise;
     };
-
-    this.getCurrentNamespace = function() {
-      var deferred = $q.defer();
-      if ($state.params.namespaceId) {
-        deferred.resolve($state.params.namespaceId);
-      } else {
-        this.getList()
-          .then(function(list) {
-            $state.params.namespaceId=list[0].name;
-            deferred.resolve(list[0]);
-          });
-      }
-      return deferred.promise;
-    };
 });

@@ -98,7 +98,7 @@ angular.module(PKG.name+'.services')
         if(r._cdapNsPath) {
           r._cdapPath = [
             '/namespaces/',
-            namespace.name,
+            namespace,
             r._cdapNsPath
           ].join('');
           delete msg.resource._cdapNsPath;
