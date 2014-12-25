@@ -1267,7 +1267,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns {@link ProgramSpecification} as a json string if the program exists.
+   * Returns {@link ProgramSpecification} as a JSON string if the program exists.
    * If the program does not exist, it returns an empty string.
    */
   private String programSpecificationToString(Id.Program id, ProgramType type) throws Exception {

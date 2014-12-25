@@ -69,7 +69,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         return getV3RoutingService(uriParts, requestMethod, httpRequest);
       }
     } catch (Exception e) {
-
+      // Ignore exception. Default routing to app-fabric.
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }
@@ -83,8 +83,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       if ((uriParts.length >= 3) && uriParts[2].equals("explore")
         && (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("tables"))) {
         return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-      } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
-        && uriParts[5].equals("schema")) {
+      } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")) {
         // v2/data/explore/datasets/<dataset>/schema
         return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
       }
@@ -138,6 +137,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
       String serviceName = String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
       return serviceName;
+    } else if (uriParts.length >= 8 && uriParts[7].equals("logs")) {
+      //Log Handler Path /v3/namespaces/<namespaceid>apps/<appid>/<programid-type>/<programid>/logs
+      return Constants.Service.METRICS;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }

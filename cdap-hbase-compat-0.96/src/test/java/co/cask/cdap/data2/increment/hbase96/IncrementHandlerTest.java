@@ -148,6 +148,90 @@ public class IncrementHandlerTest {
     }
   }
 
+  @Test
+  public void testIncrementsCompaction() throws Exception {
+    // In this test we verify that squashing delta-increments during flush or compaction works as designed.
+
+    TableName tableName = TableName.valueOf("incrementCompactTest");
+    HTableDescriptor tableDesc = new HTableDescriptor(tableName);
+    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
+    columnDesc.setMaxVersions(Integer.MAX_VALUE);
+    tableDesc.addFamily(columnDesc);
+    tableDesc.addCoprocessor(IncrementHandler.class.getName());
+    testUtil.getHBaseAdmin().createTable(tableDesc);
+    testUtil.waitUntilAllRegionsAssigned(tableName, 5000);
+
+    HTable table = new HTable(conf, tableName);
+    try {
+      byte[] colA = Bytes.toBytes("a");
+      byte[] row1 = Bytes.toBytes("row1");
+
+      // do some increments
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+
+      assertColumn(table, row1, colA, 3);
+
+      testUtil.flush(tableName);
+
+      // verify increments after flush
+      assertColumn(table, row1, colA, 3);
+
+      // do some more increments
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+
+      // verify increments merged well from hstore and memstore
+      assertColumn(table, row1, colA, 6);
+
+      testUtil.flush(tableName);
+
+      // verify increments merged well into hstores
+      assertColumn(table, row1, colA, 6);
+
+      // do another iteration to verify that multiple "squashed" increments merged well at scan and at flush
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+
+      assertColumn(table, row1, colA, 9);
+      testUtil.flush(tableName);
+      assertColumn(table, row1, colA, 9);
+
+      // verify increments merged well on minor compaction
+      testUtil.compact(tableName, false);
+      assertColumn(table, row1, colA, 9);
+
+      // another round of increments to verify that merged on compaction merges well with memstore and with new hstores
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+
+      assertColumn(table, row1, colA, 12);
+      testUtil.flush(tableName);
+      assertColumn(table, row1, colA, 12);
+
+      // do same, but with major compaction
+      // verify increments merged well on minor compaction
+      testUtil.compact(tableName, true);
+      assertColumn(table, row1, colA, 12);
+
+      // another round of increments to verify that merged on compaction merges well with memstore and with new hstores
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+      table.put(newIncrement(row1, colA, 1));
+
+      assertColumn(table, row1, colA, 15);
+      testUtil.flush(tableName);
+      assertColumn(table, row1, colA, 15);
+
+    } finally {
+      table.close();
+    }
+  }
+
   private void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
     Result res = table.get(new Get(row));
     Cell resA = res.getColumnLatestCell(FAMILY, col);

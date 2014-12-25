@@ -302,6 +302,14 @@ public class RouterPathTest {
   }
 
   @Test
+  public void testRouterExplorePathLookUp() throws Exception {
+    String explorePath = "/v2//data///explore//datasets////mydataset//enable";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), explorePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, explorePath, httpRequest);
+    Assert.assertEquals(Constants.Service.EXPLORE_HTTP_USER_SERVICE, result);
+  }
+
+  @Test
   public void testRouterWebAppPathLookUp() throws Exception {
     //Calls to webapp service with appName in the first split of URI will be routed to webappService
     //But if it has v2 then use the regular router lookup logic to find the appropriate service

@@ -124,7 +124,7 @@
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.3.3</tephra.version>
+    <tephra.version>0.3.4</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.4.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>

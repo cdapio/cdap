@@ -43,10 +43,9 @@ public class SparkKMeansAppTest extends TestBase {
   public void test() throws Exception {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(SparkKMeansApp.class);
-
-    // Start the Flow
-    FlowManager flowManager = appManager.startFlow("PointsFlow");
     try {
+      // Start the Flow
+      FlowManager flowManager = appManager.startFlow("PointsFlow");
       // Send a few points to the stream
       StreamWriter streamWriter = appManager.getStreamWriter("pointsStream");
       streamWriter.send("10.6 519.2 110.3");
@@ -62,35 +61,35 @@ public class SparkKMeansAppTest extends TestBase {
       // Start a Spark Program
       SparkManager sparkManager = appManager.startSpark("SparkKMeansProgram");
       sparkManager.waitForFinish(60, TimeUnit.SECONDS);
-    } finally {
+
       flowManager.stop();
-    }
 
-    // Start CentersService
-    ServiceManager serviceManager = appManager.startService(SparkKMeansApp.CentersService.SERVICE_NAME);
+      // Start CentersService
+      ServiceManager serviceManager = appManager.startService(SparkKMeansApp.CentersService.SERVICE_NAME);
 
-    // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+      // Wait service startup
+      serviceStatusCheck(serviceManager, true);
 
-    // Request data and verify it
-    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
-    String[] coordinates = response.split(",");
-    Assert.assertTrue(coordinates.length == 3);
-    for (String coordinate : coordinates) {
-      double value = Double.parseDouble(coordinate);
-      Assert.assertTrue(value > 0);
-    }
+      // Request data and verify it
+      String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
+      String[] coordinates = response.split(",");
+      Assert.assertTrue(coordinates.length == 3);
+      for (String coordinate : coordinates) {
+        double value = Double.parseDouble(coordinate);
+        Assert.assertTrue(value > 0);
+      }
 
-    // Request data by incorrect index and verify response
-    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/10");
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    try {
-      Assert.assertEquals(HttpURLConnection.HTTP_NO_CONTENT, conn.getResponseCode());
+      // Request data by incorrect index and verify response
+      URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/10");
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      try {
+        Assert.assertEquals(HttpURLConnection.HTTP_NO_CONTENT, conn.getResponseCode());
+      } finally {
+        conn.disconnect();
+      }
     } finally {
-      conn.disconnect();
+      appManager.stopAll();
     }
-
-    appManager.stopAll();
   }
 
   private String requestService(URL url) throws IOException {
