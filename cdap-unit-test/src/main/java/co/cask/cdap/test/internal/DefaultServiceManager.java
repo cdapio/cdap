@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +78,18 @@ public class DefaultServiceManager implements ServiceManager {
   }
 
   @Override
-  public int getRunnableInstances(String runnableName) {
+  public int getRequestedInstances(String runnableName) {
+    Map<String, String> instances = getRunnableInstances(runnableName);
+    return Integer.parseInt(instances.get("requested"));
+  }
+
+  @Override
+  public int getProvisionedInstances(String runnableName) {
+    Map<String, String> instances = getRunnableInstances(runnableName);
+    return Integer.parseInt(instances.get("provisioned"));
+  }
+
+  private Map<String, String> getRunnableInstances(String runnableName) {
     try {
       return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
     } catch (Exception e) {

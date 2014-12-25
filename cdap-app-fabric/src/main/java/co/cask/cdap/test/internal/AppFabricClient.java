@@ -125,7 +125,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set runnable instances failed");
   }
 
-  public int getRunnableInstances(String applicationId, String serviceName, String runnableName) {
+  public Map<String, String> getRunnableInstances(String applicationId, String serviceName, String runnableName) {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
@@ -133,8 +133,7 @@ public class AppFabricClient {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get runnable instances failed");
-    Map<String, String> instances = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-    return Integer.parseInt(instances.get("provisioned"));
+    return responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
   }
 
   public void setFlowletInstances(String applicationId, String flowId, String flowletName, int instances) {

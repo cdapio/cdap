@@ -287,9 +287,17 @@ public class TestFrameworkTest extends TestBase {
    * successive attempt.
    */
   private void runnableInstancesCheck(ServiceManager serviceManager, String runnableName,
-                                      int expected, int retries) throws InterruptedException {
+                                      int expected, int retries, String instanceType) throws InterruptedException {
     for (int i = 0; i <= retries; i++) {
-      int actualInstances = serviceManager.getRunnableInstances(runnableName);
+      int actualInstances;
+      if ("requested".equals(instanceType)) {
+        actualInstances = serviceManager.getRequestedInstances(runnableName);
+      } else if ("provisioned".equals(instanceType)) {
+        actualInstances = serviceManager.getProvisionedInstances(runnableName);
+      } else {
+        String error = String.format("instanceType can be 'requested' or 'provisioned'. Found %s.", instanceType);
+        throw new IllegalArgumentException(error);
+      }
       if (actualInstances == expected) {
         return;
       }
@@ -312,19 +320,19 @@ public class TestFrameworkTest extends TestBase {
       int retries = 5;
 
       // Should be 1 instance when first started.
-      runnableInstancesCheck(serviceManager, runnableName, 1, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 1, retries, "provisioned");
 
       // Test increasing instances.
       serviceManager.setRunnableInstances(runnableName, 5);
-      runnableInstancesCheck(serviceManager, runnableName, 5, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 5, retries, "requested");
 
       // Test decreasing instances.
       serviceManager.setRunnableInstances(runnableName, 2);
-      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "requested");
 
       // Test requesting same number of instances.
       serviceManager.setRunnableInstances(runnableName, 2);
-      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "requested");
 
       // Test that the worker starts with 5 instances
       DataSetManager<KeyValueTable> datasetManager = applicationManager
@@ -344,7 +352,7 @@ public class TestFrameworkTest extends TestBase {
       serviceStatusCheck(serviceManager, false);
 
       // Should be 0 instances when stopped.
-      runnableInstancesCheck(serviceManager, runnableName, 0, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 0, retries, "provisioned");
 
     } finally {
       applicationManager.stopAll();
