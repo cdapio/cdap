@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -79,17 +80,17 @@ public class DefaultServiceManager implements ServiceManager {
 
   @Override
   public int getRequestedInstances(String runnableName) {
-    Map<String, String> instances = getRunnableInstances(runnableName);
-    return Integer.parseInt(instances.get("requested"));
+    ServiceInstances instances = getRunnableInstances(runnableName);
+    return instances.getRequested();
   }
 
   @Override
   public int getProvisionedInstances(String runnableName) {
-    Map<String, String> instances = getRunnableInstances(runnableName);
-    return Integer.parseInt(instances.get("provisioned"));
+    ServiceInstances instances = getRunnableInstances(runnableName);
+    return instances.getProvisioned();
   }
 
-  private Map<String, String> getRunnableInstances(String runnableName) {
+  private ServiceInstances getRunnableInstances(String runnableName) {
     try {
       return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
     } catch (Exception e) {

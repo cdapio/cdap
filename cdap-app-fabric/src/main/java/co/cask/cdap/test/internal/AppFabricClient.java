@@ -23,6 +23,7 @@ import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ServiceInstances;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -125,7 +126,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set runnable instances failed");
   }
 
-  public Map<String, String> getRunnableInstances(String applicationId, String serviceName, String runnableName) {
+  public ServiceInstances getRunnableInstances(String applicationId, String serviceName, String runnableName) {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
@@ -133,7 +134,7 @@ public class AppFabricClient {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get runnable instances failed");
-    return responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+    return responder.decodeResponseContent(new TypeToken<ServiceInstances>() { });
   }
 
   public void setFlowletInstances(String applicationId, String flowId, String flowletName, int instances) {
