@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableList;
@@ -90,6 +91,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new LoggingModules().getInMemoryModules());
     install(new MetricsHandlerModule());
     install(new ExploreClientModule());
+    install(new NotificationFeedServiceRuntimeModule().getInMemoryModules());
   }
 
   private Scheduler createNoopScheduler() {
