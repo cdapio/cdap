@@ -94,9 +94,6 @@ public class CLIConfig {
         output.printf("Successfully connected CDAP instance at %s:%d\n",
                       connectionInfo.getHostname(), connectionInfo.getPort());
       }
-    } catch (SSLHandshakeException e) {
-      // forward exception caused by invalid SSL certificates
-      throw e;
     } catch (IOException e) {
       throw new IOException(String.format("Host %s on port %d could not be reached: %s",
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
@@ -139,7 +136,7 @@ public class CLIConfig {
       AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
       checkConnection(clientConfig, connectionInfo, savedAccessToken);
       return savedAccessToken;
-    } catch (UnAuthorizedAccessTokenException e) {
+    } catch (UnAuthorizedAccessTokenException ignored) {
       // access token invalid - fall through to try acquiring token manually
     }
 
@@ -193,7 +190,7 @@ public class CLIConfig {
       try {
         String tokenString = Joiner.on("").join(Files.readLines(file, Charsets.UTF_8));
         return new AccessToken(tokenString, -1L, null);
-      } catch (IOException e) {
+      } catch (IOException ignored) {
         // Fall through
       }
     }
@@ -208,7 +205,7 @@ public class CLIConfig {
         Files.write(accessToken.getValue(), accessTokenFile, Charsets.UTF_8);
         return true;
       }
-    } catch (IOException e) {
+    } catch (IOException ignored) {
       // NO-OP
     }
 
