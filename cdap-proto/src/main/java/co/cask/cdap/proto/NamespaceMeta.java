@@ -22,18 +22,18 @@ import com.google.common.base.Objects;
  * Represents metadata for namespaces
  */
 public final class NamespaceMeta {
-  private final String name;
+  private final String id;
   private final String displayName;
   private final String description;
 
-  private NamespaceMeta(String name, String displayName, String description) {
-    this.name = name;
+  private NamespaceMeta(String id, String displayName, String description) {
+    this.id = id;
     this.displayName = displayName;
     this.description = description;
   }
 
-  public String getName() {
-    return name;
+  public String getId() {
+    return id;
   }
 
   public String getDisplayName() {
@@ -48,12 +48,12 @@ public final class NamespaceMeta {
    * Builder used to build {@link NamespaceMeta}
    */
   public static final class Builder {
-    private String name;
+    private String id;
     private String displayName;
     private String description;
 
-    public Builder setName(final String name) {
-      this.name = name;
+    public Builder setId(final String id) {
+      this.id = id;
       return this;
     }
 
@@ -68,14 +68,14 @@ public final class NamespaceMeta {
     }
 
     public NamespaceMeta build() {
-      return new NamespaceMeta(name, displayName, description);
+      return new NamespaceMeta(id, displayName, description);
     }
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("name", name)
+      .add("id", id)
       .add("displayName", displayName)
       .add("description", description)
       .toString();
