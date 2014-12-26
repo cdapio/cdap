@@ -17,13 +17,14 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -33,17 +34,18 @@ import java.io.PrintStream;
 /**
  * Shows information about a dataset type.
  */
-public class DescribeDatasetTypeCommand implements Command {
+public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
 
   private final DatasetTypeClient datasetTypeClient;
 
   @Inject
-  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient) {
+  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.datasetTypeClient = datasetTypeClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String typeName = arguments.get(ArgumentName.DATASET_TYPE.toString());
     DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(typeName);
 

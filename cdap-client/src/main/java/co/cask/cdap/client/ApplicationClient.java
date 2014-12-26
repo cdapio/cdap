@@ -160,7 +160,7 @@ public class ApplicationClient {
    * @param jarFile jar file of the application to deploy
    * @throws IOException if a network error occurred
    */
-  public void deploy(File jarFile) throws IOException {
+  public void deploy(File jarFile) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("apps");
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
 

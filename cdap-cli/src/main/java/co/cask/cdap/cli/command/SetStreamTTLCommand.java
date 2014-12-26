@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -28,17 +29,18 @@ import java.io.PrintStream;
 /**
  * Sets the Time-to-Live (TTL) of a stream.
  */
-public class SetStreamTTLCommand implements Command {
+public class SetStreamTTLCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
 
   @Inject
-  public SetStreamTTLCommand(StreamClient streamClient) {
+  public SetStreamTTLCommand(StreamClient streamClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.streamClient = streamClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String streamId = arguments.get(ArgumentName.STREAM.toString());
     long ttlInSeconds = arguments.getLong(ArgumentName.TTL_IN_SECONDS.toString());
     streamClient.setTTL(streamId, ttlInSeconds);
