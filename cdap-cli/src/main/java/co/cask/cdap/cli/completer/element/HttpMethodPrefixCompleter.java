@@ -48,6 +48,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
 
   @Override
   public int complete(String buffer, int cursor, List<CharSequence> candidates) {
+    //TODO: add util for getting programId or another param from user input based on prefix.
     if (buffer != null) {
       Pattern pattern = Pattern.compile(REGEX);
       Matcher matcher = pattern.matcher(buffer);
