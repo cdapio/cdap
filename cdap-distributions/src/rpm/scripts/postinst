@@ -34,4 +34,4 @@ if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
     ln -s /opt/cdap/$package_name/bin/service /opt/cdap/$package_name/bin/svc-$svcname
   done
 fi
-
+sed -i '/cdap.site/{n; s/\(.*<value>\).*\(<\/value>.*\)/\1\/opt\/cdap\/$package_name\2/}' /opt/cdap/$package_name/conf/cdap-site.xml
