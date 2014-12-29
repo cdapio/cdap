@@ -33,17 +33,23 @@ angular.module(PKG.name+'.services')
     var instances = {}; // keyed by scopeid
 
     function _pollStart (resource) {
-      mySocket.send({
-        action: 'poll-start',
-        resource: resource
-      });
+      mySocket.send(angular.extend(
+        {
+          action: 'poll-start',
+          resource: resource
+        },
+        getNamespace(resource)
+      ));
     }
 
     function _pollStop (resource) {
-      mySocket.send({
-        action: 'poll-stop',
-        resource: resource
-      });
+      mySocket.send(angular.extend(
+        {
+          action: 'poll-stop',
+          resource: resource
+        },
+        getNamespace(resource)
+      ));
     }
 
     function DataSource (scope) {
