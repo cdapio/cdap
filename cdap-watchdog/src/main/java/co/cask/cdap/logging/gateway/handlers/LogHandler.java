@@ -31,16 +31,15 @@ import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+
 /**
  * Handler to serve log requests.
  */
@@ -75,13 +74,14 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/system/{component-id}/{service-id}/logs")
   public void sysList(HttpRequest request, HttpResponder responder,
-                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId) {
+                      @PathParam("component-id") String componentId,
+                      @PathParam("service-id") String serviceId,
+                      @QueryParam("start") long fromTimeMs,
+                      @QueryParam("stop") long toTimeMs,
+                      @QueryParam("escape") boolean escape,
+                      @QueryParam("filter") String filterType) {
     try {
-      LogRequestArguments logArgs = decodeLogArgs(request);
-      long fromTimeMs = logArgs.getFromTimeMs();
-      long toTimeMs = logArgs.getToTimeMs();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterType);
 
       if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -104,16 +104,14 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs")
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
-                   @PathParam("entity-id") String entityId) {
+                   @PathParam("entity-id") String entityId,
+                   @QueryParam("start") long fromTimeMs,
+                   @QueryParam("stop") long toTimeMs,
+                   @QueryParam("escape") boolean escape,
+                   @QueryParam("filter") String filterType) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-
-      // Parse start, stop, filter and escape
-      LogRequestArguments logArgs = decodeLogArgs(request);
-      long fromTimeMs = logArgs.getFromTimeMs();
-      long toTimeMs = logArgs.getToTimeMs();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterType);
 
       if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
@@ -129,7 +127,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }  catch (Throwable e) {
+    } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -138,13 +136,14 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/system/{component-id}/{service-id}/logs/next")
   public void sysNext(HttpRequest request, HttpResponder responder,
-                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId) {
+                      @PathParam("component-id") String componentId,
+                      @PathParam("service-id") String serviceId,
+                      @QueryParam("max") @DefaultValue("50") int maxEvents,
+                      @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                      @QueryParam("escape") boolean escape,
+                      @QueryParam("filter") String filterType) {
     try {
-      LogRequestArguments logArgs = decodeLogArgs(request);
-      int maxEvents = logArgs.getMaxEvents();
-      long fromOffset = logArgs.getFromOffset();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterType);
 
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
                                                                              serviceId);
@@ -162,17 +161,15 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs/next")
   public void next(HttpRequest request, HttpResponder responder,
                    @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
-                   @PathParam("entity-id") String entityId) {
+                   @PathParam("entity-id") String entityId,
+                   @QueryParam("max") @DefaultValue("50") int maxEvents,
+                   @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                   @QueryParam("escape") boolean escape,
+                   @QueryParam("filter") String filterType) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-
-      //Parse filter, max, offset and escape
-      LogRequestArguments logArgs = decodeLogArgs(request);
-      int maxEvents = logArgs.getMaxEvents();
-      long fromOffset = logArgs.getFromOffset();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterType);
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
@@ -193,13 +190,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/system/{component-id}/{service-id}/logs/prev")
   public void sysPrev(HttpRequest request, HttpResponder responder,
-                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId) {
+                      @PathParam("component-id") String componentId, @PathParam("service-id") String serviceId,
+                      @QueryParam("max") @DefaultValue("50") int maxEvents,
+                      @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                      @QueryParam("escape") boolean escape,
+                      @QueryParam("filter") String filterType) {
     try {
-      LogRequestArguments logArgs = decodeLogArgs(request);
-      int maxEvents = logArgs.getMaxEvents();
-      long fromOffset = logArgs.getFromOffset();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterType);
 
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
                                                                              serviceId);
@@ -217,16 +214,14 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/{entity-type}/{entity-id}/logs/prev")
   public void prev(HttpRequest request, HttpResponder responder,
                    @PathParam("app-id") String appId, @PathParam("entity-type") String entityType,
-                   @PathParam("entity-id") String entityId) {
+                   @PathParam("entity-id") String entityId,
+                   @QueryParam("max") @DefaultValue("50") int maxEvents,
+                   @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                   @QueryParam("escape") boolean escape,
+                   @QueryParam("filter") String filterType) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-
-      //Parse filter, max, offset and escape
-      LogRequestArguments logArgs = decodeLogArgs(request);
-      int maxEvents = logArgs.getMaxEvents();
-      long fromOffset = logArgs.getFromOffset();
-      boolean escape = logArgs.getEscape();
-      Filter filter = FilterParser.parse(logArgs.getFilter());
+      Filter filter = FilterParser.parse(filterType);
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
@@ -240,81 +235,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private class LogRequestArguments {
-    private long fromTimeMs;
-    private long toTimeMs;
-    private String filter;
-    private int maxEvents;
-    private long fromOffset;
-    private boolean escape;
-
-    LogRequestArguments(long fromTimeMs, long toTimeMs, String filter, int maxEvents, long fromOffset, boolean escape) {
-      this.fromTimeMs = fromTimeMs;
-      this.toTimeMs = toTimeMs;
-      this.filter = filter;
-      this.maxEvents = maxEvents;
-      this.fromOffset = fromOffset;
-      this.escape = escape;
-    }
-
-    public long getFromTimeMs() {
-      return fromTimeMs;
-    }
-
-    public long getToTimeMs() {
-      return toTimeMs;
-    }
-
-    public String getFilter() {
-      return filter;
-    }
-
-    public int getMaxEvents() {
-      return maxEvents;
-    }
-
-    public long getFromOffset() {
-      return fromOffset;
-    }
-
-    public boolean getEscape() {
-      return escape;
-    }
-  }
-
-  private LogRequestArguments decodeLogArgs(HttpRequest request) {
-    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-    long fromTimeMs = parseTimestamp(queryParams.get("start"));
-    long toTimeMs = parseTimestamp(queryParams.get("stop"));
-
-    String filterStr = "";
-    if (queryParams.get("filter") != null && !queryParams.get("filter").isEmpty()) {
-      filterStr = queryParams.get("filter").get(0);
-    }
-
-    int maxEvents = queryParams.get("max") != null && !queryParams.get("max").isEmpty() ?
-      Integer.parseInt(queryParams.get("max").get(0)) : 50;
-
-    long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
-      Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
-
-    boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
-      Boolean.parseBoolean(queryParams.get("escape").get(0));
-
-    return new LogRequestArguments(fromTimeMs, toTimeMs, filterStr, maxEvents, fromOffset, escape);
-  }
-
-  private static long parseTimestamp(List<String> parameter) {
-    if (parameter == null || parameter.isEmpty()) {
-      return -1;
-    }
-    try {
-      return TimeUnit.MILLISECONDS.convert(Long.parseLong(parameter.get(0)), TimeUnit.SECONDS);
-    } catch (NumberFormatException e) {
-      return -1;
     }
   }
 
