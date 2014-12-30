@@ -51,8 +51,6 @@ case "$1" in
         fi
       done
     fi
-
-    sed -i '/cdap.site/{n; s/\(.*<value>\).*\(<\/value>.*\)/\1\/opt\/cdap\/$package_name\2/}' /opt/cdap/$package_name/conf/cdap-site.xml
   ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)
