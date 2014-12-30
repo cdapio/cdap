@@ -108,14 +108,6 @@ angular.module(PKG.name+'.services')
     };
 
     DataSource.prototype.request = function (resource, cb) {
-      this.registerCallback(resource, cb);
-      mySocket.send({
-        action: 'request',
-        resource: resource
-      });
-    };
-
-    DataSource.prototype.registerCallback = function(resource, cb) {
       var once = false;
 
       this.bindings.push({
@@ -126,6 +118,11 @@ angular.module(PKG.name+'.services')
             cb.apply(this, arguments);
           }
         }
+      });
+
+      mySocket.send({
+        action: 'request',
+        resource: resource
       });
     };
 
