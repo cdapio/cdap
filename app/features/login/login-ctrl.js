@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.login').controller('LoginCtrl',
-function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, MY_CONFIG, caskFocusManager, myNamespace) {
+function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, MY_CONFIG, caskFocusManager) {
 
   $scope.credentials = myAuth.remembered();
 
