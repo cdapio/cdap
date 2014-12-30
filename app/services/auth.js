@@ -22,7 +22,7 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-module.run(function ($state, $location, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, myNamespace) {
+module.run(function ($state, $location, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
   $rootScope.currentUser = myAuth.currentUser;
   $rootScope.$location = $location;
   $rootScope.$on('$stateChangeStart', function (event, next, params) {

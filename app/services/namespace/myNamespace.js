@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, $rootScope, $state) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, $rootScope, $state) {
     this.namespaceList = [];
     var data = new MyDataSource($rootScope.$new());
     var deferred = $q.defer(),
