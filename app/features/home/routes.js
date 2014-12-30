@@ -22,8 +22,8 @@ angular.module(PKG.name+'.feature.home')
         url: '/ns/:namespaceId',
         abstract: true,
         resolve: {
-          namespaceId: function($state) {
-            $state.params.namespaceId;
+          namespaceList: function(myNamespace) {
+            return myNamespace.getList();
           }
         },
         templateUrl: '/assets/features/home/home.html'
