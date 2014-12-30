@@ -19,7 +19,7 @@ package co.cask.cdap.internal.format;
 /**
  * Exception to indicate data is of an unexpected format.
  */
-public class UnexpectedFormatException extends Exception {
+public class UnexpectedFormatException extends RuntimeException {
   public UnexpectedFormatException(String message) {
     super(message);
   }

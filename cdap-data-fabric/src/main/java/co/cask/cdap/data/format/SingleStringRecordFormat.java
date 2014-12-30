@@ -33,11 +33,12 @@ import java.util.Map;
 public class SingleStringRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   private Charset charset = Charsets.UTF_8;
+  private String fieldName = "body";
 
   @Override
   public StructuredRecord read(ByteBuffer input) {
     String bodyAsStr = Bytes.toString(input, charset);
-    return StructuredRecord.builder(schema).set("body", bodyAsStr).build();
+    return StructuredRecord.builder(schema).set(fieldName, bodyAsStr).build();
   }
 
   @Override
@@ -59,5 +60,6 @@ public class SingleStringRecordFormat extends ByteBufferRecordFormat<StructuredR
     if (charsetStr != null) {
       this.charset = Charset.forName(charsetStr);
     }
+    this.fieldName = schema.getFields().get(0).getName();
   }
 }
