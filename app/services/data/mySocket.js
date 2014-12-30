@@ -14,7 +14,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myBaseUrl) {
+  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myCdapUrl) {
 
     var self = this,
         socket = null,
@@ -74,12 +74,12 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      doSend(obj, obj.namespace || null);
+      doSend(obj);
 
       return true;
     }
 
-    function doSend(obj, namespace) {
+    function doSend(obj) {
       var msg = angular.extend({
 
             user: myAuth.currentUser
@@ -95,22 +95,8 @@ angular.module(PKG.name+'.services')
         msg.resource.json = true;
 
         // sugar for prefixing the path with namespace
-        if(r._cdapNsPath) {
-          r._cdapPath = [
-            '/namespaces/',
-            namespace,
-            r._cdapNsPath
-          ].join('');
-          delete msg.resource._cdapNsPath;
-        }
-
-        // further sugar for building absolute url
-        if(r._cdapPath) {
-          msg.resource.url = [
-            myBaseUrl,
-            r._cdapPath
-          ].join('');
-          delete msg.resource._cdapPath;
+        if (!msg.resource.url) {
+          msg.resource.url = myCdapUrl.constructUrl(msg.resource);
         }
 
         if(MY_CONFIG.securityEnabled) {
