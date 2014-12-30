@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.admin')
         body: {
           name: $scope.model.name,
           displayName: $scope.model.displayName,
-          descriotion: $scope.model.description
+          description: $scope.model.description
         }
       },
       function(res) {
