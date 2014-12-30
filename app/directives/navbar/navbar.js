@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
+function myNavbarDirective ($rootScope, MYAUTH_EVENT, $state, $dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
@@ -12,10 +12,15 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 
-      myNamespace.getList().then(function(list) {
-        scope.namespaces = list;
-        scope.currentNamespace = list[0];
+      $rootScope.$on (MYAUTH_EVENT.loginSuccess, function (event) {
+        myNamespace.getList().then(function(list) {
+          scope.namespaces = list;
+          if (!$state.includes('ns.overview')) {
+            scope.currentNamespace = list[0].name;
+          }
+        });
       });
+
 
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
