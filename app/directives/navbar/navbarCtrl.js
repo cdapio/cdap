@@ -26,9 +26,9 @@ angular.module(PKG.name + '.commons')
       }
     });
     $scope.onSelectNamespace = function(state) {
-      $state.go('ns.overview', {namespaceId: state.name})
+      $state.go('ns.overview', {namespaceId: state.displayName})
         .then(function() {
-          $scope.currentNamespace = state.name;
+          $scope.currentNamespace = state.displayName;
         });
     };
     $scope.goToTab = function(tab) {
