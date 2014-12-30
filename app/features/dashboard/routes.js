@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.feature.dashboard')
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
     $urlRouterProvider
       .when('/dashboard', '/dashboard/0');
@@ -11,6 +11,9 @@ angular.module(PKG.name+'.feature.dashboard')
     $stateProvider
 
       .state('dashboard', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all
+        },
         url: '/dashboard/:tab',
         templateUrl: '/assets/features/dashboard/main.html',
         controller: 'DashboardCtrl'

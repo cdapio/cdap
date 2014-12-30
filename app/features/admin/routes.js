@@ -1,8 +1,11 @@
 angular.module(PKG.name + '.feature.admin')
-  .config(function($stateProvider, $urlRouterProvider) {
+  .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $urlRouterProvider.when('/admin', '/admin/overview');
     $stateProvider
       .state('admin', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all
+        },
         url: '/admin',
         templateUrl: '/assets/features/admin/templates/admin.html',
         controller: 'AdminController'
