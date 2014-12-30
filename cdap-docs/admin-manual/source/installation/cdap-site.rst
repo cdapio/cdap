@@ -41,6 +41,9 @@ see the :ref:`configuration-security` section.
    * - ``app.temp.dir``
      - ``/tmp``
      - Temp directory
+   * - ``cdap.site``
+     - ``/opt/cdap``
+     - Path to CDAP SDK root directory
    * - ``dashboard.bind.port``
      - ``9999``
      - CDAP Console bind port
