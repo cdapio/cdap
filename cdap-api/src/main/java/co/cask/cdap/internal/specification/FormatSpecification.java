@@ -20,24 +20,25 @@ import co.cask.cdap.internal.format.RecordFormat;
 import co.cask.cdap.internal.io.Schema;
 import com.google.common.base.Objects;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
  * Specification for a {@link RecordFormat}, including the class, schema, and settings to use for the format.
  */
 public class FormatSpecification {
-  private final String formatClass;
+  private final String name;
   private final Schema schema;
   private final Map<String, String> settings;
 
-  public FormatSpecification(String formatClass, Schema schema, Map<String, String> settings) {
-    this.formatClass = formatClass;
+  public FormatSpecification(String name, Schema schema, Map<String, String> settings) {
+    this.name = name;
     this.schema = schema;
-    this.settings = settings;
+    this.settings = settings == null ? Collections.<String, String>emptyMap() : settings;
   }
 
-  public String getFormatClass() {
-    return formatClass;
+  public String getName() {
+    return name;
   }
 
   public Schema getSchema() {
@@ -59,20 +60,20 @@ public class FormatSpecification {
 
     FormatSpecification that = (FormatSpecification) o;
 
-    return Objects.equal(formatClass, that.formatClass) &&
+    return Objects.equal(name, that.name) &&
       Objects.equal(schema, that.schema) &&
       Objects.equal(settings, that.settings);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(formatClass, schema, settings);
+    return Objects.hashCode(name, schema, settings);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("formatClass", formatClass)
+      .add("name", name)
       .add("schema", schema)
       .add("settings", settings)
       .toString();

@@ -15,9 +15,8 @@
  */
 package co.cask.cdap.proto;
 
+import co.cask.cdap.internal.specification.FormatSpecification;
 import com.google.common.base.Objects;
-
-import javax.annotation.Nullable;
 
 /**
  * Represents the properties of a stream.
@@ -25,11 +24,13 @@ import javax.annotation.Nullable;
 public final class StreamProperties {
 
   private final String name;
-  private final long ttl;
+  private final Long ttl;
+  private final FormatSpecification format;
 
-  public StreamProperties(String name, long ttl) {
+  public StreamProperties(String name, long ttl, FormatSpecification format) {
     this.name = name;
     this.ttl = ttl;
+    this.format = format;
   }
 
   /**
@@ -38,6 +39,7 @@ public final class StreamProperties {
   public String getName() {
     return name;
   }
+
   /**
    * @return The time to live in seconds for events in this stream.
    */
@@ -45,11 +47,40 @@ public final class StreamProperties {
     return ttl;
   }
 
+  /**
+   * @return The format specification for the stream.
+   */
+  public FormatSpecification getFormat() {
+    return format;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof StreamProperties)) {
+      return false;
+    }
+
+    StreamProperties that = (StreamProperties) o;
+
+    return Objects.equal(name, that.name) &&
+      Objects.equal(ttl, that.ttl) &&
+      Objects.equal(format, that.format);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name, ttl, format);
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("name", name)
       .add("ttl", ttl)
+      .add("format", format)
       .toString();
   }
 }
