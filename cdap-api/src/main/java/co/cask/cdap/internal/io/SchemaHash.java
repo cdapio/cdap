@@ -28,7 +28,7 @@ import java.util.Formatter;
 import java.util.Set;
 
 /**
- *
+ * A MD5 hash of a {@link Schema}.
  */
 public final class SchemaHash {
 

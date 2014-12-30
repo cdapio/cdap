@@ -17,7 +17,8 @@
 package co.cask.cdap.hive.serde;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.internal.io.StructuredRecord;
+import co.cask.cdap.internal.format.StructuredRecord;
+import co.cask.cdap.internal.io.Schema;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Helper class for translating objects that fit a cdap {@link co.cask.cdap.internal.io.Schema} into objects
+ * Helper class for translating objects that fit a cdap {@link Schema} into objects
  * that Hive can understand.
  */
 public class ObjectTranslator {
@@ -43,7 +44,7 @@ public class ObjectTranslator {
    * Using reflection, flatten an object into a list of fields so it can be examined by an ObjectInspector.
    * Assumes the field names and types given as input were derived from the schema of the object.
    *
-   * @param obj object that fits a {@link co.cask.cdap.internal.io.Schema}.
+   * @param obj object that fits a {@link Schema}.
    * @param fieldNames list of field names for the record.
    * @param fieldTypes list of field types for the record.
    * @return list of fields in the record, translated to be understandable by Hive.
@@ -63,7 +64,7 @@ public class ObjectTranslator {
   }
 
   /**
-   * Translate a field that fits a {@link co.cask.cdap.internal.io.Schema} field into a type that Hive understands.
+   * Translate a field that fits a {@link Schema} field into a type that Hive understands.
    * For example, a ByteBuffer is allowed by schema but Hive only understands byte arrays, so all ByteBuffers must
    * be changed into byte arrays. Reflection is used to examine java objects if the expected hive type is a struct.
    *

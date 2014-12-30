@@ -14,16 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.format;
+package co.cask.cdap.data.format;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.internal.io.RecordFormat;
+import co.cask.cdap.internal.format.RecordFormat;
+
+import java.nio.ByteBuffer;
 
 /**
- * Format for a stream event, that reads a {@link StreamEvent} into another object.
+ * Format for a record contained in a ByteBuffer.
  *
- * @param <T> type of object to read the stream event as.
+ * @param <T> type of object to read the byte buffer as.
  */
-public abstract class StreamRecordFormat<T> extends RecordFormat<StreamEvent, T> {
+public abstract class ByteBufferRecordFormat<T> extends RecordFormat<ByteBuffer, T> {
 
 }

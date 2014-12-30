@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.schema;
 
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;

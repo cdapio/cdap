@@ -18,7 +18,7 @@ package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.stream.format.StreamRecordFormat;
+import co.cask.cdap.data.format.ByteBufferRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
@@ -57,7 +57,7 @@ public class StreamSerDe implements SerDe {
   private List<String> bodyColumnNames;
   private List<TypeInfo> bodyColumnTypes;
   private ObjectInspector inspector;
-  private StreamRecordFormat streamFormat;
+  private ByteBufferRecordFormat streamFormat;
 
   // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
   // the conf, but be very careful when doing so. If there are multiple hive tables involved in a query, initialize
@@ -94,7 +94,7 @@ public class StreamSerDe implements SerDe {
       StreamAdmin streamAdmin = context.getStreamAdmin();
       StreamConfig streamConfig = streamAdmin.getConfig(streamName);
       FormatSpecification formatSpec = streamConfig.getFormat();
-      this.streamFormat = (StreamRecordFormat) Class.forName(formatSpec.getFormatClass()).newInstance();
+      this.streamFormat = (ByteBufferRecordFormat) Class.forName(formatSpec.getFormatClass()).newInstance();
       this.streamFormat.initialize(formatSpec);
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
@@ -139,7 +139,8 @@ public class StreamSerDe implements SerDe {
 
     try {
       // The format should always format the body into a record.
-      event.addAll(ObjectTranslator.flattenRecord(streamFormat.format(streamEvent), bodyColumnNames, bodyColumnTypes));
+      event.addAll(ObjectTranslator.flattenRecord(
+        streamFormat.read(streamEvent.getBody()), bodyColumnNames, bodyColumnTypes));
       return event;
     } catch (Throwable t) {
       LOG.info("Unable to format the stream body.", t);

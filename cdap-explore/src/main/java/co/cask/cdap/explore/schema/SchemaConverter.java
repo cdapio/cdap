@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Helper class for converting a {@link co.cask.cdap.internal.io.Schema} into a hive schema.
+ * Helper class for converting a {@link Schema} into a hive schema.
  */
 public class SchemaConverter {
   private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();

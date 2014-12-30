@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package co.cask.cdap.internal.format;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.internal.specification.FormatSpecification;
 
 import java.util.Map;
@@ -28,7 +29,6 @@ import java.util.Map;
  * @param <FROM> the raw data to read from.
  * @param <TO> object to format the data into.
  */
-@Beta
 public abstract class RecordFormat<FROM, TO> {
   protected Schema schema;
 
@@ -37,12 +37,13 @@ public abstract class RecordFormat<FROM, TO> {
   }
 
   /**
-   * Convert the given input to the output type.
+   * Read data from the input format to the output type.
    *
-   * @param input input object to format.
+   * @param input input object to read.
    * @return formatted input.
+   * @throws UnexpectedFormatException if the input object could not be read because it is of an unexpected format.
    */
-  public abstract TO format(FROM input);
+  public abstract TO read(FROM input) throws UnexpectedFormatException;
 
   /**
    * Get the default schema for the format.
@@ -52,7 +53,8 @@ public abstract class RecordFormat<FROM, TO> {
   protected abstract Schema getDefaultSchema();
 
   /**
-   * Validate the desired schema, throwing an exception if it is unsupported.
+   * Validate the desired schema, throwing an exception if it is unsupported. It can be assumed that the input schema
+   * is not null and is a record of at least one field.
    *
    * @param desiredSchema desired schema for the format.
    * @throws UnsupportedTypeException if the desired schema not supported.
@@ -61,7 +63,7 @@ public abstract class RecordFormat<FROM, TO> {
 
   /**
    * Configure the format with the given properties. Guaranteed to be called once before any call to
-   * {@link #format(Object)} is made.
+   * {@link #read(Object)} is made.
    *
    * @param settings
    */
@@ -78,6 +80,7 @@ public abstract class RecordFormat<FROM, TO> {
     throws UnsupportedTypeException {
     Schema desiredSchema = formatSpecification.getSchema();
     if (desiredSchema != null) {
+      validateIsRecord(desiredSchema);
       validateDesiredSchema(desiredSchema);
       this.schema = desiredSchema;
     }
@@ -91,5 +94,11 @@ public abstract class RecordFormat<FROM, TO> {
    */
   public Schema getSchema() {
     return schema;
+  }
+
+  private void validateIsRecord(Schema schema) throws UnsupportedTypeException {
+    if (schema.getType() != Schema.Type.RECORD || schema.getFields().size() < 1) {
+      throw new UnsupportedTypeException("Schema must be a record with at least one field.");
+    }
   }
 }

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.specification;
 
-import co.cask.cdap.internal.io.RecordFormat;
+import co.cask.cdap.internal.format.RecordFormat;
 import co.cask.cdap.internal.io.Schema;
 import com.google.common.base.Objects;
 
