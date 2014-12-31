@@ -16,17 +16,17 @@ angular.module(PKG.name+'.feature.login')
 
 
   })
+  .run(function ($rootScope, $state, $alert, $location, MYAUTH_EVENT) {
 
-  .run(function ($location, $rootScope, $state, $alert, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, MY_CONFIG) {
-    $rootScope.$on (MYAUTH_EVENT.loginSuccess, function (event) {
+    $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
       var next = $state.is('login') && $state.params.next;
-      var currentUser = event.currentScope.currentUser.username;
-      if (currentUser && next) {
-          $rootScope.$applyAsync(function() {
-            $location.path(next);
-            $location.url($location.path());
-          });
-      } else {
+      if(next) {
+        console.log("After login, will redirect to:", next);
+        $rootScope.$applyAsync(function() {
+          $location.path(next).search({}).replace();
+        });
+      }
+      else {
         $state.go('ns-picker');
       }
     });

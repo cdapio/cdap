@@ -22,7 +22,7 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
+module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
 
   $rootScope.$on('$stateChangeStart', function (event, next) {
 
@@ -38,12 +38,10 @@ module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
     // in all other cases, prevent going to this state
     event.preventDefault();
 
-//     var path = $location.path();
-//     $state.go('login', {next: path});
-
     // and go to login instead
-    $state.go('login', {next: next.url});
-    
+    var path = $location.path();
+    $state.go('login', {next: path});
+
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
 
