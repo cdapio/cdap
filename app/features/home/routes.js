@@ -17,9 +17,9 @@ angular.module(PKG.name+'.feature.home')
     $stateProvider
 
       .state('home', {
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all
-        },
+        // data: {
+        //   authorizedRoles: MYAUTH_ROLE.all
+        // },
         url: '/',
         templateUrl: '/assets/features/home/home.html',
         controller: 'HomeCtrl',

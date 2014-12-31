@@ -1,4 +1,13 @@
+<h1>Welcome</h1>
+<p ng-show="currentUser">
+  You are logged-in as <code>{{currentUser | json}}</code>
+</p>
+<p ng-hide="currentUser">
+  You are not logged-in.
+</p>
 
+
+<!--
 <div ng-hide="hideWelcomeMessage">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -49,3 +58,4 @@
 <hr />
 
 <div ng-include="dataAppsTemplate"> </div>
+ -->
