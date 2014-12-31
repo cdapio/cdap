@@ -1,8 +1,6 @@
 angular.module(PKG.name+'.feature.login')
   .config(function ($stateProvider, $urlRouterProvider) {
 
-    $urlRouterProvider.when('/', '/login');
-
     /**
      * State Configurations
      */
@@ -29,7 +27,7 @@ angular.module(PKG.name+'.feature.login')
             $location.url($location.path());
           });
       } else {
-        $state.go('ns.overview');
+        $state.go('ns-picker');
       }
     });
 
