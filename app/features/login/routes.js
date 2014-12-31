@@ -18,15 +18,15 @@ angular.module(PKG.name+'.feature.login')
 
 
   })
-  .run(function ($rootScope, $state, $alert, $location, MYAUTH_EVENT) {
 
-    $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
+  .run(function ($location, $rootScope, $state, $alert, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, MY_CONFIG) {
+    $rootScope.$on (MYAUTH_EVENT.loginSuccess, function (event) {
       var next = $state.is('login') && $state.params.next;
       var currentUser = event.currentScope.currentUser.username;
       if (currentUser && next) {
           $rootScope.$applyAsync(function() {
-            $rootScope.$location.path(next);
-            $rootScope.$location.url($rootScope.$location.path());
+            $location.path(next);
+            $location.url($location.path());
           });
       } else {
         $state.go('ns.overview');

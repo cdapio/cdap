@@ -35,7 +35,7 @@ module.run(function ($state, $location, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     }
     // in all other cases, prevent going to this state
     event.preventDefault();
-    var path = $rootScope.$location.path();
+    var path = $location.path();
     $state.go('login', {next: path});
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
