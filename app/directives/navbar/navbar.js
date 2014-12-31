@@ -3,7 +3,8 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($state, $dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
+
+function myNavbarDirective ($rootScope, MYAUTH_EVENT, $state, $dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
@@ -20,6 +21,7 @@ function myNavbarDirective ($state, $dropdown, $alert, myAuth, caskTheme, MY_CON
           }
         });
       });
+
 
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
@@ -39,7 +41,6 @@ function myNavbarDirective ($state, $dropdown, $alert, myAuth, caskTheme, MY_CON
       scope.logout = myAuth.logout;
       scope.theme = caskTheme;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
-
     }
   };
 });

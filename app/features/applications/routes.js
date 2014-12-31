@@ -6,14 +6,9 @@ angular.module(PKG.name+'.feature.applications')
      */
     $stateProvider
 
-      .state('apps', {
-        url: '/ns/:namespace',
-        templateUrl: '/assets/features/applications/templates/apps.html',
-        resolve: {
-          namespace: function() {
-            return 'ns1';
-          }
-        }
+      .state('ns.apps', {
+        abstract: true,
+        templateUrl: '/assets/features/applications/templates/apps.html'
       })
 
       .state('apps.list', {
