@@ -1,5 +1,5 @@
 <li ng-repeat="menu in model">
-   <a ui-sref="{{menu.state}}" ng-show="menu.children.length == 0">
+  <a ui-sref="{{menu.state || 'home'}}" ng-show="menu.children.length == 0">
     <div ng-bind="menu.label"> </div>
   </a>
   <div ng-show="menu.children.length > 0"
