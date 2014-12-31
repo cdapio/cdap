@@ -10,6 +10,7 @@ angular.module(PKG.name+'.feature.overview')
         data: {
           authorizedRoles: MYAUTH_ROLE.all
         },
+        // url: '/temporary_overview_url',
         // parent: 'ns',
         templateUrl: '/assets/features/overview/overview.html',
         controller: 'OverviewCtrl',
