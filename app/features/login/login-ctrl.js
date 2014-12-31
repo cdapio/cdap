@@ -30,10 +30,9 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
 
       if(MY_CONFIG.securityEnabled) {
         focusLoginField();
+      } else { // auto-login
+        myAuth.login({username:'admin'});
       }
-      // else { // auto-login
-      //   myAuth.login({username:'admin'});
-      // }
 
     }
   });

@@ -22,14 +22,14 @@ angular.module(PKG.name+'.feature.login')
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
       var next = $state.is('login') && $state.params.next;
-      if(next) {
-        console.log("After login, will redirect to:", next);
-        $rootScope.$applyAsync(function() {
-          $location.path(next).search({}).replace();
-        });
-      }
-      else {
-        $state.go('home');
+      var currentUser = event.currentScope.currentUser.username;
+      if (currentUser && next) {
+          $rootScope.$applyAsync(function() {
+            $rootScope.$location.path(next);
+            $rootScope.$location.url($rootScope.$location.path());
+          });
+      } else {
+        $state.go('ns.overview');
       }
     });
 
