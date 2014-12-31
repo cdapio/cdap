@@ -1,8 +1,8 @@
-<ul class="dropdown-menu" role="menu">
+<ul class="dropdown-menu" role="menu" ng-show="currentUser">
 
-  <li  role="presentation" ng-show="curentUser">
+  <li role="presentation">
     <li ng-repeat="ns in namespaces">
-      <a role="menuitem" tabindex="-1" href="">
+      <a role="menuitem" ui-sref="overview({namespace: ns.displayName})" tabindex="-1">
         <span ng-bind="ns.displayName"></span>
       </a>
     </li>

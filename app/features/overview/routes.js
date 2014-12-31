@@ -8,7 +8,8 @@ angular.module(PKG.name+'.feature.overview')
 
       .state('overview', {
         data: {
-          authorizedRoles: MYAUTH_ROLE.all
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'development'
         },
         parent: 'ns',
         url: '',
