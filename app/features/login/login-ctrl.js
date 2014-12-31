@@ -14,6 +14,11 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
     cfpLoadingBar.start();
     myAuth.login(c)
       .finally(function(){
+        $alert({
+          title:'Welcome!',
+          content:'You\'re logged in!',
+          type:'success'
+        });
         $scope.submitting = false;
         cfpLoadingBar.complete();
       });

@@ -43,7 +43,7 @@ function myNavbarDirective ($rootScope, MYAUTH_EVENT, $state, $dropdown, $alert,
 
       scope.navbarLinks = [
         {
-          sref: 'home',
+          sref: 'overview',
           label: 'Development'
         },
         {
