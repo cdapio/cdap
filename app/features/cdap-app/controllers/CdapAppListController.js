@@ -1,5 +1,5 @@
-angular.module(PKG.name + '.feature.applications')
-  .controller('ApplicationListController', function($scope, MyDataSource) {
+angular.module(PKG.name + '.feature.cdap-app')
+  .controller('CdapAppListController', function CdapAppList($scope, MyDataSource) {
 
     var data = new MyDataSource($scope);
 

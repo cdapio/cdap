@@ -17,7 +17,7 @@ function ($scope, MyDataSource) {
 
     var p = '/assets/features/overview/templates/';
     if (angular.isArray($scope.apps) && $scope.apps.length) {
-      $scope.dataAppsTemplate = p + 'section.html';
+      $scope.dataAppsTemplate = p + 'data-apps-section.html';
     } else {
       $scope.dataAppsTemplate = p + 'empty.html';
     }
