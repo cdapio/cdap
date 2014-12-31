@@ -1,15 +1,15 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, MyDataSource, myBaseUrl) {
+  .controller('NamespaceCreateController', function ($scope, $alert, MyDataSource) {
     $scope.model = {
       name: '',
       displayName: '',
       description: ''
     };
-    $scope.socket = new MyDataSource($scope);
+    var myDataSrc = new MyDataSource($scope);
     $scope.submitHandler = function() {
-      $scope.socket.request({
+      myDataSrc.request({
         method: 'PUT',
-        url: myBaseUrl +'/namespaces/',
+        _cdapPath: '/namespaces/' + $scope.model.displayName,
         body: {
           name: $scope.model.name,
           displayName: $scope.model.displayName,
