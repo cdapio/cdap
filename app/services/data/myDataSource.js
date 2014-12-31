@@ -61,7 +61,7 @@ angular.module(PKG.name+'.services')
         if(data.warning) { return; }
         angular.forEach(self.bindings, function (b) {
           if(angular.equals(b.resource, data.resource)) {
-            scope.$apply(b.callback.bind(self, data.response));
+            scope.$apply(b.callback.bind(null, data.response));
           }
         });
       });

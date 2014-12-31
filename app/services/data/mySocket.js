@@ -14,7 +14,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myNamespaceMediator) {
+  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myCdapUrl) {
 
     var self = this,
         socket = null,
@@ -74,19 +74,12 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      if (obj.resource._cdapNsPath) {
-        myNamespaceMediator.getCurrentNamespace()
-          .then(function (namespace) {
-            doSend(obj, namespace);
-          });
-      } else {
-        doSend(obj);
-      }
+      doSend(obj);
 
       return true;
     }
 
-    function doSend(obj, namespace) {
+    function doSend(obj) {
       var msg = angular.extend({
 
             user: myAuth.currentUser
@@ -101,28 +94,9 @@ angular.module(PKG.name+'.services')
         // and expect json as response
         msg.resource.json = true;
 
-
         // sugar for prefixing the path with namespace
-        if(r._cdapNsPath) {
-          r._cdapPath = [
-            '/namespaces/',
-            namespace.name,
-            r._cdapNsPath
-          ].join('');
-          delete msg.resource._cdapNsPath;
-        }
-
-        // further sugar for building absolute url
-        if(r._cdapPath) {
-          msg.resource.url = [
-            'http://',
-            MY_CONFIG.cdap.routerServerUrl,
-            ':',
-            MY_CONFIG.cdap.routerServerPort,
-            '/v3',
-            r._cdapPath
-          ].join('');
-          delete msg.resource._cdapPath;
+        if (!msg.resource.url) {
+          msg.resource.url = myCdapUrl.constructUrl(msg.resource);
         }
 
         if(MY_CONFIG.securityEnabled) {

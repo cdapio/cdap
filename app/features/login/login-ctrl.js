@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.login').controller('LoginCtrl',
-function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, MY_CONFIG, caskFocusManager) {
+function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, MY_CONFIG, caskFocusManager, myNamespace) {
 
   $scope.credentials = myAuth.remembered();
 
@@ -15,13 +15,17 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
 
     myAuth.login(c)
       .finally(function(){
-        $scope.submitting = false;
-        cfpLoadingBar.complete();
-        $alert({
-          title:'Welcome!',
-          content:'You\'re logged in!',
-          type:'success'
-        });
+        myNamespace.getList()
+          .then(function(list) {
+            $state.go('ns.overview', {namespaceId: list[0].name});
+            $alert({
+              title:'Welcome!',
+              content:'You\'re logged in!',
+              type:'success'
+            });
+            $scope.submitting = false;
+            cfpLoadingBar.complete();
+          })
       });
   };
 

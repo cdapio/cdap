@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, MyDataSource, MY_CONFIG) {
+  .controller('NamespaceCreateController', function ($scope, $alert, MyDataSource, myBaseUrl) {
     $scope.model = {
       name: '',
       displayName: '',
@@ -9,11 +9,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.submitHandler = function() {
       $scope.socket.request({
         method: 'PUT',
-        url: 'http://' +
-          MY_CONFIG.cdap.routerServerUrl +
-          ':' +
-          MY_CONFIG.cdap.routerServerPort +
-          '/v3/namespaces/',
+        url: myBaseUrl +'/namespaces/',
         body: {
           name: $scope.model.name,
           displayName: $scope.model.displayName,

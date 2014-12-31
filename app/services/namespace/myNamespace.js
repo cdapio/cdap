@@ -1,42 +1,26 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespaceProvider($q, MyDataSource, myNamespaceMediator, $rootScope) {
-
+  .service('myNamespace', function myNamespace($q, MyDataSource, $rootScope, $state) {
+    this.namespaceList = [];
     var data = new MyDataSource($rootScope.$new());
-
+    var deferred = $q.defer(),
+        queryInProgress = false;
     this.getList = function() {
-      var deferred = $q.defer();
-      if (myNamespaceMediator.namespaceList.length === 0) {
-        data.request({
-            _cdapPath: '/namespaces',
-            method: 'GET'
-          },
-          function(res) {
-            if(!res.length) {
-              res.push({
-                name: 'default',
-                displayName: 'Default Namespace'
-              });
+      if (!queryInProgress) {
+        queryInProgress = true;
+        if (this.namespaceList.length === 0) {
+          data.request({
+              _cdapPath: '/namespaces',
+              method: 'GET'
+            },
+            function(res) {
+              this.namespaceList = res;
+              queryInProgress = false;
+              deferred.resolve(res);
             }
-            myNamespaceMediator.setNamespaceList(res);
-            deferred.resolve(res);
-          }
-        );
-      } else {
-        deferred.resolve(myNamespaceMediator.getNamespaceList());
-      }
-      return deferred.promise;
-    };
-
-    this.getCurrentNamespace = function() {
-      var deferred = $q.defer();
-      if (!myNamespaceMediator.currentNamespace) {
-        this.getList()
-          .then(function(list) {
-            myNamespaceMediator.setCurrentNamespace(list[0]);
-            deferred.resolve(list[0]);
-          });
-      } else {
-        deferred.resolve(myNamespaceMediator.currentNamespace);
+          );
+        } else {
+          deferred.resolve(this.namespaceList);
+        }
       }
       return deferred.promise;
     };
