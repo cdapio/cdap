@@ -8,7 +8,8 @@ angular.module(PKG.name + '.feature.admin')
       .state('admin', {
         url: '/admin',
         data: {
-          authorizedRoles: MYAUTH_ROLE.all
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'management'
         },
         templateUrl: '/assets/features/admin/templates/admin.html',
         controller: 'AdminController'
