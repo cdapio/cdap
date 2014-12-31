@@ -9,7 +9,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.submitHandler = function() {
       $scope.socket.request({
         method: 'PUT',
-        url: myBaseUrl +'/namespaces/',
+        _cdapPath: '/namespaces/' + $scope.model.displayName,
         body: {
           name: $scope.model.name,
           displayName: $scope.model.displayName,
