@@ -1,3 +1,3 @@
-angular.module(PKG.name+'.feature.home', [
+angular.module(PKG.name+'.feature.overview', [
   PKG.name+'.commons'
 ]);
