@@ -10,7 +10,7 @@ function ($scope, MyDataSource) {
   var dataSrc = new MyDataSource($scope);
 
   dataSrc.request({
-    _cdapNsPath: '/apps/',
+    _cdapNsPath: '/apps',
     method: 'GET'
   }, function(res) {
     $scope.apps = res;
