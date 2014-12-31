@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
@@ -25,17 +26,17 @@ import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 /**
  * Prefix completer for Http methods.
  */
 public class HttpMethodPrefixCompleter extends PrefixCompleter {
 
-  private static final String REGEX = "^call service ('.+?'|\".+?\"|\\S+) ";
-  private static final int PROGRAM_ID_START = 13;
+  private static final String PROGRAM_ID = "programId";
+  private static final String PATTERN = String.format("call service <%s>", PROGRAM_ID);
 
   private final ServiceClient serviceClient;
   private final EndpointCompleter completer;
@@ -48,16 +49,12 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
 
   @Override
   public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-    //TODO: add util for getting programId or another param from user input based on prefix.
-    if (buffer != null) {
-      Pattern pattern = Pattern.compile(REGEX);
-      Matcher matcher = pattern.matcher(buffer);
-      if (matcher.find()) {
-        int end = matcher.end() - 1;
-        String programId = buffer.substring(PROGRAM_ID_START, end);
-        String[] appAndServiceIds = programId.split("\\.");
-        completer.setEndpoints(getMethods(appAndServiceIds[0], appAndServiceIds[1]));
-      }
+    Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
+    String[] programId = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
+    if (programId != null) {
+      completer.setEndpoints(getMethods(programId[0], programId[1]));
+    } else {
+      completer.setEndpoints(Collections.<String>emptyList());
     }
     return super.complete(buffer, cursor, candidates);
   }
