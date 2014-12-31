@@ -1,9 +1,15 @@
 angular.module(PKG.name + '.feature.admin')
-  .config(function($stateProvider, $urlRouterProvider) {
-    $urlRouterProvider.when('/admin', '/admin/overview');
+  .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
+
+    $urlRouterProvider
+      .when('/admin', '/admin/overview');
+
     $stateProvider
       .state('admin', {
         url: '/admin',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all
+        },
         templateUrl: '/assets/features/admin/templates/admin.html',
         controller: 'AdminController'
       })
@@ -25,33 +31,27 @@ angular.module(PKG.name + '.feature.admin')
           controller: 'NamespaceCreateController'
         })
         .state('admin.namespace', {
-          url: '/ns/:namespaceId',
-          // resolve: {
-          //   namespaceId: function($stateParams) {
-          //     debugger;
-          //     return $stateParams.namespaceId;
-          //   }
-          // },
+          url: '/namespace/edit/:namespace',
           templateUrl: '/assets/features/admin/templates/namespace.html'
         })
           .state('admin.namespace.settings', {
             url: '/settings',
-            templateUrl: 'assets/features/admin/templates/namespace/settings.html'
+            templateUrl: '/assets/features/admin/templates/namespace/settings.html'
           })
           .state('admin.namespace.users', {
             url: '/users',
-            templateUrl: 'assets/features/admin/templates/namespace/users.html'
+            templateUrl: '/assets/features/admin/templates/namespace/users.html'
           })
           .state('admin.namespace.datatypes', {
             url: '/datatypes',
-            templateUrl: 'assets/features/admin/templates/namespace/datatypes.html'
+            templateUrl: '/assets/features/admin/templates/namespace/datatypes.html'
           })
           .state('admin.namespace.datasets', {
             url: '/datasets',
-            templateUrl: 'assets/features/admin/templates/namespace/datasets.html'
+            templateUrl: '/assets/features/admin/templates/namespace/datasets.html'
           })
           .state('admin.namespace.apps', {
             url: '/apps',
-            templateUrl: 'assets/features/admin/templates/namespace/apps.html'
+            templateUrl: '/assets/features/admin/templates/namespace/apps.html'
           });
   });

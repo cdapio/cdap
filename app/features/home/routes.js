@@ -15,24 +15,39 @@ angular.module(PKG.name+'.feature.home')
      */
     $stateProvider
 
-      .state('ns', {
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all
-        },
-        url: '/ns/:namespaceId',
-        abstract: true,
-        resolve: {
-          namespaceList: function(myNamespace) {
-            return myNamespace.getList();
-          }
-        },
-        templateUrl: '/assets/features/home/home.html'
+      .state('home', {
+        url: '/',
+        templateUrl: '/assets/features/home/home.html',
+        controller: 'HomeCtrl',
+        ncyBreadcrumb: {
+          label: 'Home'
+        }
       })
         .state('ns.overview', {
           url: '',
           templateUrl: '/assets/features/home/overview.html',
           controller: 'HomeCtrl'
         })
+
+      .state('ns', {
+        url: '/ns/:namespace',
+        abstract: true,
+        template: '<ui-view/>'
+      })
+
+      .state('ns-picker', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all
+        },
+        controller: function(myNamespace, $state) {
+          myNamespace.getList()
+            .then(function(list) {
+              $state.go('overview', {
+                namespace: list[0].displayName
+              });
+            });
+        }
+      })
 
       .state('404', {
         templateUrl: '/assets/features/home/404.html'
