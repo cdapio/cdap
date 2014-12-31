@@ -12,7 +12,7 @@
   <tbody>
     <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
       <td >
-        <a ui-sref="ns.apps.application({ appId: app.id })"
+        <a ui-sref="cdap-app.detail({ appId: app.id })"
            ng-bind="app.name"
             >
         </a>
