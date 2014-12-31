@@ -1,6 +1,6 @@
-<ul class="dropdown-menu" role="menu" ng-show="curentUser">
+<ul class="dropdown-menu" role="menu" ng-show="currentUser">
 
-  <li  role="presentation">
+  <li role="presentation">
     <li ng-repeat="ns in namespaces">
       <a role="menuitem" ui-sref="overview({namespace: ns.displayName})" tabindex="-1">
         <span ng-bind="ns.displayName"></span>
@@ -9,5 +9,3 @@
   </li>
 
 </ul>
-
-<!-- <pre>{{namespaces | json}}</pre> -->
