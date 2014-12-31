@@ -43,7 +43,7 @@ public final class StreamConfig {
     this.indexInterval = indexInterval;
     this.ttl = ttl;
     this.location = location;
-    this.format = format == null ? getDefaultFormat() : null;
+    this.format = format == null ? getDefaultFormat() : format;
   }
 
   public StreamConfig() {
