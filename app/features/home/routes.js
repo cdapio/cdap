@@ -23,11 +23,6 @@ angular.module(PKG.name+'.feature.home')
           label: 'Home'
         }
       })
-        .state('ns.overview', {
-          url: '',
-          templateUrl: '/assets/features/home/overview.html',
-          controller: 'HomeCtrl'
-        })
 
       .state('ns', {
         url: '/ns/:namespace',
