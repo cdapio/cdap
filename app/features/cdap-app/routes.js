@@ -16,7 +16,7 @@ angular.module(PKG.name+'.feature.cdap-app')
       .state('cdap-app.list', {
         url: '/list',
         templateUrl: '/assets/features/cdap-app/templates/list.html',
-        controller: 'ApplicationListController',
+        controller: 'CdapAppListController',
         ncyBreadcrumb: {
           label: 'Applications',
           parent: 'overview'
@@ -26,7 +26,7 @@ angular.module(PKG.name+'.feature.cdap-app')
       .state('cdap-app.detail', {
         url: '/view/:appId',
         templateUrl: '/assets/features/cdap-app/templates/application.html',
-        controller: 'ApplicationController',
+        controller: 'CdapAppDetailController',
         ncyBreadcrumb: {
           parent: 'cdap-app.list',
           label: '{{$state.params.appId}}'
