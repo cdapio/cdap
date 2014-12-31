@@ -142,8 +142,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void run() {
     LOG.info("Starting runnable " + name);
 
-    Futures.getUnchecked(Services.chainStart(zkClientService,
-                                             kafkaClientService, logSaver, multiElection, logSaverStatusService));
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, logSaver, multiElection,
+                                             logSaverStatusService));
 
     LOG.info("Runnable started " + name);
 

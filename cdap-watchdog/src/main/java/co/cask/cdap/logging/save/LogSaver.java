@@ -60,6 +60,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class LogSaver extends AbstractIdleService implements PartitionChangeHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
+  private static final int TIMEOUT_SECONDS = 10;
 
   private final String topic;
   private final LoggingEventSerializer serializer;
@@ -181,6 +182,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
   @Override
   protected void startUp() throws Exception {
+    waitForDatasetAvailability();
     LOG.info("Starting LogSaver...");
   }
 
@@ -268,5 +270,18 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
+  }
+
+  private void waitForDatasetAvailability() throws InterruptedException {
+    boolean isDatasetAvailable = false;
+    while (!isDatasetAvailable) {
+      try {
+        checkpointManager.getCheckpoint(0);
+        isDatasetAvailable = true;
+      } catch (Exception e) {
+        LOG.warn(String.format("Cannot discover dataset service. Retry after %d seconds timeout.", TIMEOUT_SECONDS));
+        TimeUnit.SECONDS.sleep(TIMEOUT_SECONDS);
+      }
+    }
   }
 }
