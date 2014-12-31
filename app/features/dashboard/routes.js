@@ -12,7 +12,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
       .state('dashboard', {
         data: {
-          authorizedRoles: MYAUTH_ROLE.all
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'operations'
         },
         url: '/dashboard/:tab',
         templateUrl: '/assets/features/dashboard/main.html',

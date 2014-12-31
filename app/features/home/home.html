@@ -4,56 +4,5 @@
 </p>
 <p ng-hide="currentUser">
   You are not logged-in.
+  <a ui-sref="login({next:'/whatever'})"> Login </a>
 </p>
-
-
-<div ng-hide="hideWelcomeMessage">
-  <div class="panel panel-default">
-    <div class="panel-heading clearfix">
-      <div class="panel-title pull-left">
-        <h2> Welcome!
-        <small> Your cdap is designed to meet your needs, no
-          matter whether you are human or animal or god. </small>
-        </h2>
-      </div>
-      <button class="pull-right btn btn-default" ng-click="hideWelcomeMessage=true">
-        <span class="fa fa-close"></span>
-        <span class="sr-only"> Hide Welcome Message </span>
-      </button>
-    </div>
-    <div class="panel-body">
-        <div class="row">
-          <div class="col-sm-4">
-            <h2> First </h2>
-            <p class="text-justify">
-              It is a long established fact that a reader will be distracted by the readable content of
-              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-              making it look like readable English.
-            </p>
-          </div>
-          <div class="col-sm-4">
-            <h2> Next </h2>
-            <p class="text-justify">
-              It is a long established fact that a reader will be distracted by the readable content of
-              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-              making it look like readable English.
-            </p>
-          </div>
-          <div class="col-sm-4">
-            <h2> Finally </h2>
-            <p class="text-justify">
-              It is a long established fact that a reader will be distracted by the readable content of
-              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-              making it look like readable English.
-            </p>
-          </div>
-        </div>
-    </div>
-  </div>
-</div>
-<hr />
-
-<div ng-include="dataAppsTemplate"> </div>

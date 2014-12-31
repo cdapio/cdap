@@ -5,7 +5,7 @@
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
   </button>
-  <a class="navbar-brand" href="/">
+  <a class="navbar-brand" ui-sref="home">
      <strong>CDAP</strong>
   </a>
 </div>
@@ -14,7 +14,7 @@
   <ul class="nav navbar-nav hidden-sm">
     <li class="dropdown">
       <a href="" class="dropdown-toggle">
-        <span class="" ng-bind="currentNamespace.displayName"></span>
+        <span class="" ng-bind="$stateParams.namespace"></span>
         <span class="caret"></span>
       </a>
     </li>
@@ -22,11 +22,14 @@
 
   <nav ng-click="navbarCollapsed = false">
     <ul class="nav navbar-nav">
-      <li
-        ng-repeat="link in navbarLinks"
-        ng-class="{active: $state.includes(link.parent || link.sref)}"
-      >
-        <a ui-sref="{{link.sref}}" ng-bind="link.label"></a>
+      <li ng-class="{active: highlightTab == 'development'}">
+        <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
+      </li>
+      <li ng-class="{active: highlightTab == 'operations'}">
+        <a ui-sref="dashboard"> Operations </a>
+      </li>
+      <li ng-class="{active: highlightTab == 'management'}">
+        <a ui-sref="admin"> Management </a>
       </li>
     </ul>
   </nav>

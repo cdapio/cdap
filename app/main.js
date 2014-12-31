@@ -5,9 +5,10 @@ angular
 
     angular.module(PKG.name+'.features', [
       PKG.name+'.feature.home',
+      PKG.name+'.feature.overview',
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
-      PKG.name+'.feature.applications',
+      PKG.name+'.feature.cdap-app',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.foo'
     ]).name,
