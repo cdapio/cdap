@@ -3,20 +3,16 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
+
+function myNavbarDirective (MYAUTH_EVENT, $state, $dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
-
+    controller: 'navbarCtrl',
     link: function (scope, element, attrs) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
-
-      myNamespace.getList().then(function(list) {
-        scope.namespaces = list;
-        scope.currentNamespace = list[0];
-      });
-
+      
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
         template: 'navbar/namespace.html',
@@ -35,31 +31,6 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
       scope.logout = myAuth.logout;
       scope.theme = caskTheme;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
-
-      scope.navbarLinks = [
-        {
-          sref: 'home',
-          label: 'Development'
-        },
-        {
-          sref: 'dashboard',
-          label: 'Operations'
-        },
-        {
-          sref: 'admin.overview',
-          label: 'Management',
-          parent: 'admin'
-        }
-      ];
-
-
-      scope.doSearch = function () {
-        $alert({
-          title: 'Sorry!',
-          content: 'Search is not yet implemented.',
-          type: 'danger'
-        });
-      };
     }
   };
 });

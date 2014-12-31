@@ -11,6 +11,9 @@ angular.module(PKG.name+'.feature.dashboard')
     $stateProvider
 
       .state('dashboard', {
+        data: {
+          highlightTab: 'operations'
+        },
         url: '/dashboard/:tab',
         templateUrl: '/assets/features/dashboard/main.html',
         controller: 'DashboardCtrl'

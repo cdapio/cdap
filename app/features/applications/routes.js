@@ -7,7 +7,6 @@ angular.module(PKG.name+'.feature.applications')
     $stateProvider
 
       .state('ns.apps', {
-        //url: '/ns/:namespace',
         abstract: true,
         templateUrl: '/assets/features/applications/templates/apps.html'
       })
