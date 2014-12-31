@@ -36,10 +36,6 @@ public final class StreamConfig {
 
   private final transient Location location;
 
-  public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl, Location location) {
-    this(name, partitionDuration, indexInterval, ttl, location, getDefaultFormat());
-  }
-
   public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl,
                       Location location, FormatSpecification format) {
     this.name = name;
@@ -47,7 +43,7 @@ public final class StreamConfig {
     this.indexInterval = indexInterval;
     this.ttl = ttl;
     this.location = location;
-    this.format = format;
+    this.format = format == null ? getDefaultFormat() : null;
   }
 
   public StreamConfig() {
