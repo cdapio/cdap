@@ -58,7 +58,9 @@ angular.module(PKG.name+'.services')
       this.bindings = [];
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
-        if(data.warning) { return; }
+        if(data.statusCode!==200 || data.warning) {
+          return; // errors are handled at $rootScope level
+        }
         angular.forEach(self.bindings, function (b) {
           if(angular.equals(b.resource, data.resource)) {
             scope.$apply(b.callback.bind(null, data.response));

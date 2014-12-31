@@ -38,7 +38,7 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myN
 
       scope.navbarLinks = [
         {
-          sref: 'home',
+          sref: 'overview',
           label: 'Development'
         },
         {
