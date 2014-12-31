@@ -1,7 +1,6 @@
 angular.module(PKG.name+'.feature.home')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
-
     /**
      * Redirects and Otherwise
      */
