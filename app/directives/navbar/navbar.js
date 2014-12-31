@@ -12,11 +12,13 @@ function myNavbarDirective ($state, $dropdown, $alert, myAuth, caskTheme, MY_CON
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 
-      myNamespace.getList().then(function(list) {
-        scope.namespaces = list;
-        if (!$state.includes('ns.overview')) {
-          scope.currentNamespace = list[0].name;
-        }
+      $rootScope.$on (MYAUTH_EVENT.loginSuccess, function (event) {
+        myNamespace.getList().then(function(list) {
+          scope.namespaces = list;
+          if (!$state.includes('ns.overview')) {
+            scope.currentNamespace = list[0].displayName;
+          }
+        });
       });
 
       // namespace dropdown
