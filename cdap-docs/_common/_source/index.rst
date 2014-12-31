@@ -70,7 +70,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |examples-manual|_
 
-  - **Examples:** Included with the :ref:`CDAP SDK, <getting-started-index>` they range from a simple introductory to more elaborate examples
+  - **Examples:** Included with the :ref:`CDAP SDK <getting-started-index>`, they range from a simple introductory to more elaborate examples
   - **How-To Guides:** Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions
   - **Tutorials:** Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations
   - **CDAP Apps and Packs Repository:** data applications built using CDAP and useful building blocks for your data applications
