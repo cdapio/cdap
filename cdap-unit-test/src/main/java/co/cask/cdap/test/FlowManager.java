@@ -33,4 +33,9 @@ public interface FlowManager {
    * Stops the running flow.
    */
   void stop();
+
+  /**
+   * Checks if Flow is Running
+   */
+  boolean isRunning();
 }

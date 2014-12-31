@@ -141,7 +141,6 @@ public class RouterPathTest {
   public void testServicePath() throws Exception {
     // Service Path "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
     // Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
-    //TODO: Add tests that test for a non-default namespaceId
 
     String servicePath = "/v2/apps//PurchaseHistory///services/CatalogLookup///methods//ping/1";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
@@ -170,6 +169,38 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
     servicePath = "v2/apps/otherAppName/services/CatalogLookup//methods////";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    // v3 servicePaths
+    servicePath = "/v3/namespaces/testnamespace/apps//PurchaseHistory///services/CatalogLookup///methods//ping/1";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service.testnamespace.PurchaseHistory.CatalogLookup", result);
+
+    servicePath = "///v3/namespaces/testnamespace//apps/PurchaseHistory-123//services/weird!service@@NAme///methods/" +
+      "echo/someParam";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service.testnamespace.PurchaseHistory-123.weird!service@@NAme", result);
+
+    servicePath = "v3/namespaces/testnamespace/apps/SomeApp_Name/services/CatalogLookup/methods/getHistory/itemID";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service.testnamespace.SomeApp_Name.CatalogLookup", result);
+
+    servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup//methods////";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup////methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
@@ -268,6 +299,14 @@ public class RouterPathTest {
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), procPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
+  }
+
+  @Test
+  public void testRouterExplorePathLookUp() throws Exception {
+    String explorePath = "/v2//data///explore//datasets////mydataset//enable";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), explorePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, explorePath, httpRequest);
+    Assert.assertEquals(Constants.Service.EXPLORE_HTTP_USER_SERVICE, result);
   }
 
   @Test

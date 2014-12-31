@@ -13,16 +13,38 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
+package co.cask.cdap.examples.sparkkmeans;
 
-import java.util.concurrent.Callable;
+import java.io.Serializable;
 
 /**
- *
+ * Represents a point in space.
  */
-public interface MapReduceRunnerFactory {
+public class Point implements Serializable {
 
-  Callable<MapReduceContext> create(String name);
+  private final double x;
+  private final double y;
+  private final double z;
+
+  /**
+   * Creates an instance with the given coordinates.
+   */
+  public Point(double x, double y, double z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  public double getX() {
+    return x;
+  }
+
+  public double getY() {
+    return y;
+  }
+
+  public double getZ() {
+    return z;
+  }
 }

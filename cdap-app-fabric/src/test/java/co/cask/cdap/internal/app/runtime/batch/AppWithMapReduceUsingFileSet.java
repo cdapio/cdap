@@ -78,8 +78,6 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);
       job.setReducerClass(FileReducer.class);
-      job.setMapOutputKeyClass(Text.class);
-      job.setMapOutputValueClass(LongWritable.class);
     }
   }
 
