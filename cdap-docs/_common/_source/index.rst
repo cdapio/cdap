@@ -4,11 +4,12 @@
     :copyright: Copyright © 2014 Cask Data, Inc.
 
 :hide-relations: true
+:hide-global-toc: true
 
 .. _documentation-index:
 
 ==================================================
-CDAP Documentation
+CDAP Documentation v\ |version|
 ==================================================
 
 .. rubric:: Introduction to the Cask Data Application Platform

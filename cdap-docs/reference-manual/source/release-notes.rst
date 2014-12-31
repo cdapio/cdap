@@ -3,6 +3,7 @@
     :description: Release notes for the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+:hide-nav: true
 :orphan:
 
 .. _overview_release-notes:
@@ -22,8 +23,8 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
-Release 2.6.0
-=============
+`Release 2.6.0 <http://docs.cask.co/cdap/2.6.0/index.html>`__
+=============================================================
 
 API Changes
 -----------
@@ -131,8 +132,8 @@ Known Issues
 - Writing to datasets through Hive is not supported in CDH4.x
   (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
 
-Release 2.5.2
-=============
+`Release 2.5.2 <http://docs.cask.co/cdap/2.5.2/index.html>`__
+=============================================================
 
 CDAP Bug Fixes
 --------------
@@ -177,8 +178,8 @@ Known Issues
 - See also the *Known Issues* of `version 2.5.0. <#known-issues-250>`_
 
 
-Release 2.5.1
-=============
+`Release 2.5.1 <http://docs.cask.co/cdap/2.5.1/index.html>`__
+=============================================================
 
 CDAP Bug Fixes
 --------------
@@ -210,8 +211,8 @@ Known Issues
 See *Known Issues* of `the previous version. <#known-issues-250>`_
 
 
-Release 2.5.0
-=============
+`Release 2.5.0 <http://docs.cask.co/cdap/2.5.0/index.html>`__
+=============================================================
 
 New Features
 ------------

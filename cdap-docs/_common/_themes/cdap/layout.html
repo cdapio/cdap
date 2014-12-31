@@ -109,7 +109,7 @@
     {%- endfor %}
     
 {#
-    Code to hide table-of-contents on pages, by setting in a field list at the top as
+    Code to hide table-of-contents on pages, by setting in the field list at the top
 :hide-toc: true
 #}
     {%- set hidetoc = '' %}
@@ -123,10 +123,21 @@
         <link rel="stylesheet" href="{{ pathto('_static/hide-toc.css', 1) }}" type="text/css" />
     {%- endif %}
 
-{#  Code to hide navigation on certain pages #}
-   {%- if pagename in ['release-notes', 'glossary', 'faq']%}
+{#  Code to hide sidebar navigation on certain pages, by setting in the field list at the top
+:hide-nav: true
+#}
+ 
+    {%- set hidenav = '' %}
+    {%- set hidenav_key = 'hide-nav' %}
+    {%- if meta is defined %}
+        {%- if hidenav_key in meta.viewkeys() %}
+            {%- set hidenav = meta.get(hidenav_key) %}
+        {%- endif %}
+    {%- endif %}
+    {%- if hidenav %}
         <link rel="stylesheet" href="{{ pathto('_static/hide-nav.css', 1) }}" type="text/css" />
-   {%- endif %}
+    {%- endif %}
+   
 {%- endmacro %}
 
 <html xmlns="http://www.w3.org/1999/xhtml">
