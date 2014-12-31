@@ -122,7 +122,7 @@ with the arguments as a JSON string in the body::
 
   { "instances" : 2 }
   
-Example using the CDAP Standalone SDK and ``curl`` (reformatted to fit)::
+Example using the :ref:`CDAP Standalone SDK<standalone-index>` and ``curl`` (reformatted to fit)::
 
   curl -w '\n' -XPUT -v 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances' \
     -d '{ "instances" : 2 }'
