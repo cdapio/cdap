@@ -17,14 +17,31 @@ angular.module(PKG.name+'.feature.home')
     $stateProvider
 
       .state('home', {
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all
-        },
         url: '/',
         templateUrl: '/assets/features/home/home.html',
         controller: 'HomeCtrl',
         ncyBreadcrumb: {
           label: 'Home'
+        }
+      })
+
+      .state('ns', {
+        url: '/ns/:namespace',
+        abstract: true,
+        template: '<ui-view/>'
+      })
+
+      .state('ns-picker', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all
+        },
+        controller: function(myNamespace, $state) {
+          myNamespace.getList()
+            .then(function(list) {
+              $state.go('overview', {
+                namespace: list[0].displayName
+              });
+            });
         }
       })
 

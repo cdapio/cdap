@@ -10,8 +10,8 @@ angular.module(PKG.name+'.feature.overview')
         data: {
           authorizedRoles: MYAUTH_ROLE.all
         },
-        // url: '/temporary_overview_url',
-        // parent: 'ns',
+        parent: 'ns',
+        url: '',
         templateUrl: '/assets/features/overview/overview.html',
         controller: 'OverviewCtrl',
         ncyBreadcrumb: {
