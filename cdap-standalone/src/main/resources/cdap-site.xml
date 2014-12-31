@@ -16,7 +16,7 @@
 <configuration>
     <property>
         <name>cdap.site</name>
-        <value>/opt/cdap</value>
+        <value></value>
         <description>Path to SDK root directory</description>
     </property>
     <!--

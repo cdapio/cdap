@@ -42,7 +42,7 @@ see the :ref:`configuration-security` section.
      - ``/tmp``
      - Temp directory
    * - ``cdap.site``
-     - ``/opt/cdap``
+     - ````
      - Path to CDAP SDK root directory
    * - ``dashboard.bind.port``
      - ``9999``
