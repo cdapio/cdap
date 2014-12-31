@@ -14,7 +14,7 @@
   <ul class="nav navbar-nav hidden-sm">
     <li class="dropdown">
       <a href="" class="dropdown-toggle">
-        <span class="" ng-bind="currentNamespace"></span>
+        <span class="" ng-bind="$stateParams.namespace"></span>
         <span class="caret"></span>
       </a>
     </li>
@@ -22,11 +22,14 @@
 
   <nav ng-click="navbarCollapsed = false">
     <ul class="nav navbar-nav">
-      <li
-        ng-repeat="link in navbarLinks"
-        ng-class="{active: $state.includes(link.parent || link.sref)}"
-      >
-        <a ng-click="goToTab(link)" href="" ng-bind="link.label"></a>
+      <li ng-class="{active: highlightTab == 'development'}">
+        <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
+      </li>
+      <li ng-class="{active: highlightTab == 'operations'}">
+        <a ui-sref="dashboard"> Dashboard </a>
+      </li>
+      <li ng-class="{active: highlightTab == 'admin'}">
+        <a ui-sref="admin"> Admin </a>
       </li>
     </ul>
   </nav>

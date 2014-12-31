@@ -12,7 +12,7 @@ function myNavbarDirective (MYAUTH_EVENT, $state, $dropdown, $alert, myAuth, cas
     link: function (scope, element, attrs) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
-
+      console.log(toggles);
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
         template: 'navbar/namespace.html',
