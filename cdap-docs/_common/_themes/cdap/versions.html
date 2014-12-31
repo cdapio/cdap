@@ -29,16 +29,16 @@
       document.write('<h3>Versions</h3>');
       document.write('<ul class="this-page-menu">');
     }
-    if (data.development) {
-      writelink(data.development, "CDAP Version " + data.development + " (Development)", "Development Version");
-    }
+//     if (data.development) {
+//       writelink(data.development, "Development Version", "CDAP Version " + data.development);
+//     }
     if (data.current) {
-      writelink("current", "CDAP Version " + data.current + " (Current)", "Current Version");
+      writelink("current", "Current CDAP Release", "CDAP Version " + data.current);
     }
     if (data.versions) {
       for (i in data.versions) {
         var version = data.versions[i];
-        writelink(version, "CDAP Version " + version, "Version " + version);
+        writelink(version, "", "CDAP Version " + version);
       }
     }
     if (data) {

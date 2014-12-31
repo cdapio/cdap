@@ -34,8 +34,8 @@ def get_sdk_version():
     # Sets the Build Version
     grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
+    full_version = None
     try:
-#         version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("-SNAPSHOT", "").replace("<version>", "").replace("</version>", "")
         full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("<version>", "").replace("</version>", "")
         version = full_version.replace("-SNAPSHOT", "")
         if version == full_version:
