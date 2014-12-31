@@ -1,11 +1,20 @@
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function($scope, $state) {
+  .controller('navbarCtrl', function($rootScope, MYAUTH_EVENT, myNamespace, $scope, $state) {
+
+    $rootScope.$on (MYAUTH_EVENT.loginSuccess, function (event) {
+      myNamespace.getList().then(function(list) {
+        $scope.namespaces = list;
+        if (!$state.includes('overview')) {
+          $scope.currentNamespace = list[0].displayName;
+        }
+      });
+    });
 
     $scope.navbarLinks = [
       {
         label: 'Development',
         parent: 'ns',
-        sref: 'ns.overview',
+        sref: 'overview',
         name: 'overview'
       },
       {
@@ -20,20 +29,20 @@ angular.module(PKG.name + '.commons')
         name: 'admin'
       }
     ];
-    $scope.$watch('$state.params.namespaceId', function(newValue, oldValue) {
+    $scope.$watch('$state.params.namespace', function(newValue, oldValue) {
       if (newValue) {
         $scope.currentNamespace = newValue;
       }
     });
     $scope.onSelectNamespace = function(state) {
-      $state.go('ns.overview', {namespaceId: state.displayName})
+      $state.go('overview', {namespace: state.displayName})
         .then(function() {
           $scope.currentNamespace = state.displayName;
         });
     };
     $scope.goToTab = function(tab) {
       if (tab.name === 'overview') {
-          $state.go(tab.sref, {namespaceId: $scope.currentNamespace});
+          $state.go(tab.sref, {namespace: $scope.currentNamespace});
       } else {
         $state.go(tab.sref);
       }
