@@ -16,12 +16,23 @@ angular.module(PKG.name+'.feature.login')
 
 
   })
-  .run(function ($rootScope, $state, $alert, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, MY_CONFIG) {
+  .run(function ($rootScope, $state, $alert, $location, MYAUTH_EVENT) {
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
-      var next = $state.is('login') && $state.get($state.params.next);
-      $state.go(next || 'home');
+      var next = $state.is('login') && $state.params.next;
+      if(next) {
+        console.log("After login, will redirect to:", next);
+        $rootScope.$applyAsync(function() {
+          $location.path(next).search({}).replace();
+        });
+      }
+      else {
+        $state.go('home');
+      }
     });
+
+  })
+  .run(function ($rootScope, $state, $alert, MYAUTH_EVENT, MY_CONFIG) {
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
       $alert({title:'Bye!', content:'You are now logged out.', type:'info'});

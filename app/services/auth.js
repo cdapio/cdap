@@ -39,7 +39,7 @@ module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
     event.preventDefault();
 
     // and go to login instead
-    $state.go('login', {next: next.name});
+    $state.go('login', {next: next.url});
 
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
