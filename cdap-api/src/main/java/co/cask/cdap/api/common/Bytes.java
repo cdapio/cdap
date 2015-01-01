@@ -137,13 +137,9 @@ public class Bytes {
   public static byte[] toBytes(ByteBuffer bb) {
     int length = bb.remaining();
     byte [] result = new byte[length];
-    if (bb.hasArray()) {
-      System.arraycopy(bb.array(), bb.position(), result, 0, length);
-    } else {
-      int pos = bb.position();
-      bb.get(result);
-      bb.position(pos);
-    }
+    int pos = bb.position();
+    bb.get(result);
+    bb.position(pos);
     return result;
   }
 

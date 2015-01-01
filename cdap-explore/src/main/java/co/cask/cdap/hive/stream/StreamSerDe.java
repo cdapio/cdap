@@ -52,6 +52,7 @@ import java.util.Properties;
  */
 public class StreamSerDe implements SerDe {
   private static final Logger LOG = LoggerFactory.getLogger(StreamSerDe.class);
+  private static final int BODY_OFFSET = 2;
   private ArrayList<String> columnNames;
   private ArrayList<TypeInfo> columnTypes;
   private List<String> bodyColumnNames;
@@ -72,8 +73,10 @@ public class StreamSerDe implements SerDe {
     // object inspectors will reflect them.
     columnNames = Lists.newArrayList(properties.getProperty(serdeConstants.LIST_COLUMNS).split(","));
     columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(properties.getProperty(serdeConstants.LIST_COLUMN_TYPES));
-    bodyColumnNames = columnNames.subList(2, columnNames.size());
-    bodyColumnTypes = columnTypes.subList(2, columnTypes.size());
+    // timestamp and headers are guaranteed to be the first columns in a stream table.
+    // the rest of the columns are for the stream body.
+    bodyColumnNames = columnNames.subList(BODY_OFFSET, columnNames.size());
+    bodyColumnTypes = columnTypes.subList(BODY_OFFSET, columnTypes.size());
 
     int numCols = columnNames.size();
 

@@ -51,27 +51,19 @@ public class SchemaConverter {
    * @return hive schema that can be used in a create statement.
    */
   public static String toHiveSchema(Schema schema) throws UnsupportedTypeException {
-    if (schema.getType() != Schema.Type.RECORD) {
-      throw new UnsupportedTypeException("Schema must be of type record");
+    if (schema.getType() != Schema.Type.RECORD || schema.getFields().size() < 1) {
+      throw new UnsupportedTypeException("Schema must be of type record and have at least one field.");
     }
 
     StringBuilder builder = new StringBuilder();
     builder.append("(");
 
-    switch (schema.getType()) {
-      case NULL:
-        break;
-      case RECORD:
-        Iterator<Schema.Field> fieldIter = schema.getFields().iterator();
-        appendField(builder, fieldIter.next(), false);
-        while (fieldIter.hasNext()) {
-          builder.append(", ");
-          appendField(builder, fieldIter.next(), false);
-        }
-        break;
-      default:
-        builder.append("value ");
-        appendType(builder, schema);
+    // schema is guaranteed to have at least one field, and all field names are guaranteed to be unique.
+    Iterator<Schema.Field> fieldIter = schema.getFields().iterator();
+    appendField(builder, fieldIter.next(), false);
+    while (fieldIter.hasNext()) {
+      builder.append(", ");
+      appendField(builder, fieldIter.next(), false);
     }
 
     builder.append(")");
