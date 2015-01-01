@@ -73,8 +73,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
   private static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1000;
 
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {
-  }.getType();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final ExploreService exploreService;
 
@@ -85,8 +84,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/queries")
-  public void query(HttpRequest request, HttpResponder responder, @QueryParam("query") String query) {
+  public void query(HttpRequest request, HttpResponder responder) {
     try {
+      Map<String, String> args = decodeArguments(request);
+      String query = args.get("query");
       LOG.trace("Received query: {}", query);
       responder.sendJson(HttpResponseStatus.OK, exploreService.execute(query));
     } catch (IllegalArgumentException e) {
@@ -182,8 +183,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder,
-                                  @PathParam("id") final String id,
-                                  @QueryParam("size") @DefaultValue("100") int size) {
+                                  @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       QueryHandle handle = QueryHandle.fromId(id);
@@ -191,6 +191,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       if (handle.equals(QueryHandle.NO_OP)) {
         results = Lists.newArrayList();
       } else {
+        Map<String, String> args = decodeArguments(request);
+        int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
         results = exploreService.nextResults(handle, size);
       }
       responder.sendJson(HttpResponseStatus.OK, results);
@@ -350,6 +352,24 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
           return Longs.compare(second.getTimestamp(), first.getTimestamp());
         }
       });
+  }
+
+  // get arguments contained in the request body
+  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return ImmutableMap.of();
+    }
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
+      return args == null ? ImmutableMap.<String, String>of() : args;
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      throw e;
+    } finally {
+      reader.close();
+    }
   }
 
   private String getCSVHeaders(List<ColumnDesc> schema) throws HandleNotFoundException, SQLException, ExploreException {
