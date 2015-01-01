@@ -42,8 +42,14 @@
         Router configuration
     -->
     <property>
-        <name>router.bind.address</name>
+        <name>router.address</name>
         <value>127.0.0.1</value>
+        <description>Specifies a common address for both router and UI to bind to</description>
+    </property>
+
+    <property>
+        <name>router.bind.address</name>
+        <value>${router.address}</value>
         <description>Specifies the address for router server to bind to</description>
     </property>
 
@@ -51,6 +57,12 @@
         <name>router.forward.rule</name>
         <value>10000:gateway,20000:webapp/$HOST</value>
         <description>Forward rules for router (port:service -> forward port to service)</description>
+    </property>
+
+    <property>
+        <name>router.server.address</name>
+        <value>${router.address}</value>
+        <description>Specifies the address of the router for the UI to bind to</description>
     </property>
 
     <!--
