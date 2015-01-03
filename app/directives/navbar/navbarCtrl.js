@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function(MYAUTH_EVENT, myNamespace, $scope, $state) {
+  .controller('navbarCtrl', function ($alert, MYAUTH_EVENT, myNamespace, $scope, $state) {
 
     $scope.namespaces = [];
 

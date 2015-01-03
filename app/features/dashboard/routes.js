@@ -15,6 +15,7 @@ angular.module(PKG.name+'.feature.dashboard')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'operations'
         },
+        parent: 'ns',
         url: '/dashboard/:tab',
         templateUrl: '/assets/features/dashboard/main.html',
         controller: 'DashboardCtrl'

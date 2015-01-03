@@ -21,12 +21,12 @@
   </ul>
 
   <nav ng-click="navbarCollapsed = false">
-    <ul class="nav navbar-nav">
+    <ul class="nav navbar-nav" ng-show="currentUser">
       <li ng-class="{active: highlightTab == 'development'}">
         <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
       </li>
       <li ng-class="{active: highlightTab == 'operations'}">
-        <a ui-sref="dashboard"> Operations </a>
+        <a ui-sref="dashboard({namespace: $stateParams.namespace})"> Operations </a>
       </li>
       <li ng-class="{active: highlightTab == 'management'}">
         <a ui-sref="admin.overview"> Management </a>

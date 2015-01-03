@@ -3,17 +3,12 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myNamespace) {
+function ($scope, MyDataSource, $state) {
 
   if(!$state.params.namespace) {
-    myNamespace.getList().then(function (list) {
-      $state.go($state.current, {
-        namespace: list[0].displayName
-      }, {reload: true});
-    });
+    // avoid making useless api calls on empty namespace
     return;
   }
-
 
   $scope.apps = null;
   $scope.hideWelcomeMessage = false;
