@@ -16,17 +16,15 @@ angular.module(PKG.name + '.services')
 
         queryInProgress = $q.defer();
 
-        var that = this;
-
         data.request({
             _cdapPath: '/namespaces',
             method: 'GET'
           },
-          function(res) {
-            that.namespaceList = res;
+          (function(res) {
+            this.namespaceList = res;
             queryInProgress.resolve(res);
             queryInProgress = null;
-          }
+          }).bind(this)
         );
 
       }
