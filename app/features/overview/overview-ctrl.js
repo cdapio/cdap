@@ -3,7 +3,18 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource) {
+function ($scope, MyDataSource, $state, myNamespace) {
+
+  if(!$state.params.namespace) {
+    myNamespace.getList().then(function (list) {
+      $state.go($state.current, {
+        namespace: list[0].displayName
+      }, {reload: true});
+    });
+    return;
+  }
+
+
   $scope.apps = null;
   $scope.hideWelcomeMessage = false;
 
