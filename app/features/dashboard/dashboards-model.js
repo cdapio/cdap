@@ -10,7 +10,7 @@ function ($q, Widget) {
     var c = [[]];
     for (var i = 1; i < (colCount||3); i++) {
       c.push([]);
-    };
+    }
 
     c[0].push(new Widget());
     this.title = title || 'Dashboard';

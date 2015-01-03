@@ -12,7 +12,7 @@ angular.module(PKG.name+'.feature.dashboard')
     }
 
     Widget.prototype.getPartial = function () {
-      return '/assets/features/dashboard/widgets/' + this.type + '.html'
+      return '/assets/features/dashboard/widgets/' + this.type + '.html';
     };
 
     Widget.prototype.getClassName = function () {
@@ -35,7 +35,7 @@ angular.module(PKG.name+'.feature.dashboard')
             return {
               x: o.time,
               y: o.value
-            }
+            };
           })
         }
       ];

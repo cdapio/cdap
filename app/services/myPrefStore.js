@@ -64,7 +64,7 @@ angular.module(PKG.name + '.services')
         }
       );
 
-      return queryInProgress.promise.finally(function() {
+      return queryInProgress.promise.finally(function () {
         queryInProgress = null;
       });
     };

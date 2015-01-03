@@ -21,7 +21,7 @@ angular.module(PKG.name+'.feature.login')
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
       var next = $state.is('login') && $state.params.next;
       if(next) {
-        console.log("After login, will redirect to:", next);
+        console.log('After login, will redirect to:', next);
         $rootScope.$applyAsync(function() {
           $location.path(next).search({}).replace();
         });
