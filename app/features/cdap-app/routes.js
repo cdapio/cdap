@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.feature.cdap-app')
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
     /**
      * State Configurations
@@ -10,6 +10,10 @@ angular.module(PKG.name+'.feature.cdap-app')
         abstract: true,
         template: '<ui-view/>',
         url: '/app',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'development'
+        },
         parent: 'ns'
       })
 
