@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, $state) {
+  .service('myNamespace', function myNamespace($q, MyDataSource) {
 
     this.namespaceList = [];
 
@@ -16,7 +16,8 @@ angular.module(PKG.name + '.services')
 
         queryInProgress = $q.defer();
 
-        data.request({
+        data.request(
+          {
             _cdapPath: '/namespaces',
             method: 'GET'
           },
@@ -31,4 +32,5 @@ angular.module(PKG.name + '.services')
 
       return queryInProgress.promise;
     };
-});
+
+  });
