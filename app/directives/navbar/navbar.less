@@ -13,7 +13,8 @@
     }
   }
 
-  .navbar-form {
+  #navbar-search,
+  #navbar-namespace {
     visibility: hidden;
   }
 
@@ -21,7 +22,16 @@
 
 body.state-home,
 body.state-apps {
-  [my-navbar] .navbar-form {
+  #navbar-search {
+    visibility: visible;
+  }
+}
+
+
+body.state-overview,
+body.state-dashboard,
+body.state-cdap-app {
+  #navbar-namespace {
     visibility: visible;
   }
 }

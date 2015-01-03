@@ -18,9 +18,13 @@ angular.module(PKG.name+'.feature.home')
       .state('home', {
         url: '/',
         templateUrl: '/assets/features/home/home.html',
-        controller: 'HomeCtrl',
         ncyBreadcrumb: {
           label: 'Home'
+        },
+        controller: function (myAuth, $state) {
+          if(myAuth.currentUser) {
+            $state.go('overview');
+          }
         }
       })
 
