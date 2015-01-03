@@ -27,7 +27,7 @@ angular.module(PKG.name+'.feature.login')
         });
       }
       else {
-        $state.go('ns-picker');
+        $state.go('overview');
       }
     });
 

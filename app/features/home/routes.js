@@ -30,20 +30,6 @@ angular.module(PKG.name+'.feature.home')
         template: '<ui-view/>'
       })
 
-      .state('ns-picker', {
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all
-        },
-        controller: function(myNamespace, $state) {
-          myNamespace.getList()
-            .then(function(list) {
-              $state.go('overview', {
-                namespace: list[0].displayName
-              });
-            });
-        }
-      })
-
       .state('404', {
         templateUrl: '/assets/features/home/404.html'
       })
