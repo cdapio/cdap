@@ -56,28 +56,28 @@ describe('mySocket', function(){
       expect(Object.keys(arg)).toEqual(['user', 'foo']);
     });
 
-    describe('after unfolding _cdap resource obj key', function() {
+    describe('after unfolding _cdapPath resource obj key', function() {
 
       it('without method', function() {
-        var obj = {resource:{_cdap:'/foo/bar'}};
+        var obj = {resource:{_cdapPath:'/foo/bar'}};
         mySocket.send(obj);
         expect(mocked.SockJS_send).toHaveBeenCalled();
         var arg = JSON.parse(mocked.SockJS_send.calls.mostRecent().args[0]);
 
         expect(arg.resource.method).toEqual('GET');
-        expect(arg.resource.url).toMatch(/\/v2\/foo\/bar$/);
-        expect(arg.resource._cdap).toBeUndefined();
+        expect(arg.resource.url).toMatch(/\/v3\/foo\/bar$/);
+        expect(arg.resource._cdapPath).toBeUndefined();
       });
 
       it('with method', function() {
-        var obj = {resource:{_cdap:'POST /foo/bar'}};
+        var obj = {resource:{_cdapPath:'/foo/bar', method: 'POST'}};
         mySocket.send(obj);
         expect(mocked.SockJS_send).toHaveBeenCalled();
         var arg = JSON.parse(mocked.SockJS_send.calls.mostRecent().args[0]);
 
         expect(arg.resource.method).toEqual('POST');
-        expect(arg.resource.url).toMatch(/\/v2\/foo\/bar$/);
-        expect(arg.resource._cdap).toBeUndefined();
+        expect(arg.resource.url).toMatch(/\/v3\/foo\/bar$/);
+        expect(arg.resource._cdapPath).toBeUndefined();
       });
 
     });
