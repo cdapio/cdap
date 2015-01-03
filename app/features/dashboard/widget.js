@@ -27,7 +27,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
     var dataSrc = new MyDataSource($scope);
 
-    dataSrc.fetch({_cdap: 'GET '+$scope.wdgt.metric}, function (result) {
+    dataSrc.request({_cdapPath: $scope.wdgt.metric}, function (result) {
       $scope.chartHistory = [
         {
           label: $scope.wdgt.metric,
