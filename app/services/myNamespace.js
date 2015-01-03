@@ -1,9 +1,9 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, $rootScope, $state) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, $state) {
 
     this.namespaceList = [];
 
-    var data = new MyDataSource($rootScope.$new()),
+    var data = new MyDataSource(),
         queryInProgress = null;
 
 
