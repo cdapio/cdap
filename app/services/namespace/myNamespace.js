@@ -20,13 +20,11 @@ angular.module(PKG.name + '.services')
             _cdapPath: '/namespaces',
             method: 'GET'
           },
-          function(res) {
-
+          (function(res) {
             this.namespaceList = res;
-
             queryInProgress.resolve(res);
             queryInProgress = null;
-          }
+          }).bind(this)
         );
 
       }

@@ -17,30 +17,29 @@ angular.module(PKG.name+'.feature.home')
 
       .state('home', {
         url: '/',
-        templateUrl: '/assets/features/home/home.html',
-        controller: 'HomeCtrl',
-        ncyBreadcrumb: {
-          label: 'Home'
-        }
+        templateUrl: '/assets/features/home/home.html'
       })
 
       .state('ns', {
         url: '/ns/:namespace',
         abstract: true,
-        template: '<ui-view/>'
-      })
-
-      .state('ns-picker', {
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all
+        template: '<ui-view/>',
+        resolve: {
+          rNsList: function (myNamespace) {
+            return myNamespace.getList();
+          }
         },
-        controller: function(myNamespace, $state) {
-          myNamespace.getList()
-            .then(function(list) {
-              $state.go('overview', {
-                namespace: list[0].displayName
-              });
-            });
+        controller: function ($state, rNsList) {
+          // check that $state.params.namespace is valid
+          var n = rNsList.filter(function (one) {
+            return one.displayName === $state.params.namespace;
+          });
+
+          if(!n.length) {
+            var d = rNsList[0].displayName;
+            console.warn('invalid namespace, defaulting to ', d);
+            $state.go($state.current, { namespace: d }, {reload: true});
+          }
         }
       })
 

@@ -29,7 +29,7 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
         content: 'You are already logged in!',
         type: 'warning'
       });
-      $state.go('ns-picker');
+      $state.go('overview');
     }
     else {
 

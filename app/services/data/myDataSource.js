@@ -46,6 +46,15 @@ angular.module(PKG.name+'.services')
       });
     }
 
+    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
+      $log.log('[DataSource] reconnected, reloading...');
+
+      // https://github.com/angular-ui/ui-router/issues/582
+      $state.transitionTo($state.current, $state.$current.params,
+        { reload: true, inherit: true, notify: true }
+      );
+    });
+
     function DataSource (scope) {
       var id = scope.$id,
           self = this;
@@ -66,15 +75,6 @@ angular.module(PKG.name+'.services')
             scope.$apply(b.callback.bind(null, data.response));
           }
         });
-      });
-
-      scope.$on(MYSOCKET_EVENT.reconnected, function () {
-        $log.log('[DataSource] reconnected, reloading...');
-
-        // https://github.com/angular-ui/ui-router/issues/582
-        $state.transitionTo($state.current, $state.$current.params,
-          { reload: true, inherit: true, notify: true }
-        );
       });
 
       scope.$on('$destroy', function () {

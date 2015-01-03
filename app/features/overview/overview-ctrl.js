@@ -3,7 +3,15 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource) {
+function ($scope, MyDataSource, $state) {
+
+  if(!$state.params.namespace) {
+    // the controller for "ns" state should handle the case of
+    // an empty namespace. but this nested state controller will
+    // still be instantiated. avoid making useless api calls.
+    return;
+  }
+
   $scope.apps = null;
   $scope.hideWelcomeMessage = false;
 

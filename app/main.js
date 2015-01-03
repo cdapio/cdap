@@ -57,6 +57,9 @@ angular
     // to active whenever 'contacts.list' or one of its decendents is active.
     $rootScope.$state = $state;
     $rootScope.$stateParams = $stateParams;
+
+    // for debugging... or to trigger easter eggs?
+    window.$go = $state.go;
   })
 
 
@@ -101,6 +104,15 @@ angular
     });
 
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
+
+      if(data.statusCode>399) {
+        $alert({
+          title: data.statusCode.toString(),
+          content: data.response || 'Something went terribly wrong',
+          type: 'danger'
+        });
+      }
+
       if(data.warning) {
         $alert({
           content: data.warning,
