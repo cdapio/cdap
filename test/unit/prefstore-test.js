@@ -13,6 +13,11 @@ describe('myUiPrefs', function(){
 
   // actual testing follows
 
+  it('has the expected endpoint', function() {
+    expect(myUiPrefs.endpoint).toEqual('/preferences/uisettings');
+  });
+
+
   describe('get', function() {
 
     it('is a method', function() {

@@ -4,6 +4,10 @@ angular.module(PKG.name + '.services')
     return new MyPrefStore('uisettings');
   })
 
+  .factory('myDashboardPrefs', function (MyPrefStore) {
+    return new MyPrefStore('dashboard');
+  })
+
   .factory('MyPrefStore', function MyPrefStoreFactory($q, MyDataSource) {
 
     var data = new MyDataSource();
