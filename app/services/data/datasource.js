@@ -56,6 +56,8 @@ angular.module(PKG.name+'.services')
     });
 
     function DataSource (scope) {
+      scope = scope || $rootScope.$new();
+
       var id = scope.$id,
           self = this;
 
@@ -96,6 +98,11 @@ angular.module(PKG.name+'.services')
       this.scope = scope;
     }
 
+
+
+    /**
+     * poll a resource
+     */
     DataSource.prototype.poll = function (resource, cb) {
       this.bindings.push({
         resource: resource,
@@ -109,6 +116,12 @@ angular.module(PKG.name+'.services')
       _pollStart(resource);
     };
 
+
+
+
+    /**
+     * fetch a resource
+     */
     DataSource.prototype.request = function (resource, cb) {
       var once = false;
 

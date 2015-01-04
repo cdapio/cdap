@@ -14,7 +14,7 @@ angular.module(PKG.name + '.commons')
       $scope.namespaces = [];
     });
 
-    $scope.$on("$stateChangeSuccess", function(event, toState) {
+    $scope.$on('$stateChangeSuccess', function(event, toState) {
       $scope.highlightTab = toState.data && toState.data.highlightTab;
     });
 

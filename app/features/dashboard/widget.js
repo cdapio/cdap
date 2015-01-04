@@ -12,7 +12,7 @@ angular.module(PKG.name+'.feature.dashboard')
     }
 
     Widget.prototype.getPartial = function () {
-      return '/assets/features/dashboard/widgets/' + this.type + '.html'
+      return '/assets/features/dashboard/widgets/' + this.type + '.html';
     };
 
     Widget.prototype.getClassName = function () {
@@ -27,7 +27,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
     var dataSrc = new MyDataSource($scope);
 
-    dataSrc.fetch({_cdap: 'GET '+$scope.wdgt.metric}, function (result) {
+    dataSrc.request({_cdapPath: $scope.wdgt.metric}, function (result) {
       $scope.chartHistory = [
         {
           label: $scope.wdgt.metric,
@@ -35,7 +35,7 @@ angular.module(PKG.name+'.feature.dashboard')
             return {
               x: o.time,
               y: o.value
-            }
+            };
           })
         }
       ];

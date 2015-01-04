@@ -10,7 +10,7 @@ angular.module(PKG.name + '.services')
         var namespace = $stateParams.namespace;
 
         if(!namespace) {
-          throw new Error("_cdapNsPath requires $stateParams.namespace to be defined");
+          throw new Error('_cdapNsPath requires $stateParams.namespace to be defined');
         }
 
         resource._cdapPath = [

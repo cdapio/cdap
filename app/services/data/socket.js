@@ -81,9 +81,7 @@ angular.module(PKG.name+'.services')
 
     function doSend(obj) {
       var msg = angular.extend({
-
-            user: myAuth.currentUser
-
+            user: myAuth.currentUser || null
           }, obj),
 
           r = obj.resource;
@@ -95,8 +93,12 @@ angular.module(PKG.name+'.services')
         msg.resource.json = true;
 
         // sugar for prefixing the path with namespace
-        if (!msg.resource.url) {
+        if (!r.url) {
           msg.resource.url = myCdapUrl.constructUrl(msg.resource);
+        }
+
+        if (!r.method) {
+          msg.resource.method = 'GET';
         }
 
         if(MY_CONFIG.securityEnabled) {
@@ -104,9 +106,10 @@ angular.module(PKG.name+'.services')
             authorization: 'Bearer ' + myAuth.currentUser.token
           });
         }
+
+        $log.log('[mySocket] →', msg.action, r.method, r.url);
       }
 
-      $log.log('[mySocket] →', msg.action, r.method, r.url);
       socket.send(JSON.stringify(msg));
     }
 
