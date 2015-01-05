@@ -436,7 +436,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             schedules.add(specification.getSchedules().get(scheduleName));
           }
         }
-        if(!schedules.isEmpty()) {
+        if (!schedules.isEmpty()) {
           scheduler.schedule(programId, ProgramType.WORKFLOW, schedules);
         }
       }
