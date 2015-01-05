@@ -8,15 +8,15 @@
       versionscallback({ "development": "2.6.0-SNAPSHOT", "current": "2.5.2", "versions": ["2.5.1", "2.5.0"] });
       
     One development version; one current version; list of additional versions
-    the tool builder.py will generate this from scanning the current directory
+    the tool versionscallback-gen.py will generate this from scanning the current directory
 
 #}
   <div role="note" aria-label="versions links">
   <script type="text/javascript">
     var this_version = "{{ release }}";
     var writelink = function(dir, title, label){
-      style_o = '';
-      style_c = '';
+      var style_o = '';
+      var style_c = '';
       if (dir == this_version) {
         style_o = '<b>';
         style_c = '</b>';
@@ -24,27 +24,26 @@
       document.write('<li>' + style_o + '<a href="http://docs.cask.co/cdap/' + dir + '/index.html"' + 
                      'rel="nofollow" title="' + title + '">' + label + '</a>' + style_c + '</li>');
     }
-    var versionscallback = function(data){
-    if (data) {
-      document.write('<h3>Versions</h3>');
-      document.write('<ul class="this-page-menu">');
-    }
+    window.versionscallback = function(data){
+      if (data) {
+        document.write('<h3>Versions</h3>');
+        document.write('<ul class="this-page-menu">');
+      }
 //     if (data.development) {
 //       writelink(data.development, "Development Version", "CDAP Version " + data.development);
 //     }
-    if (data.current) {
-      writelink("current", "Current CDAP Release", "CDAP Version " + data.current);
-    }
-    if (data.versions) {
-      for (i in data.versions) {
-        var version = data.versions[i];
-        writelink(version, "", "CDAP Version " + version);
+      if (data.current) {
+        writelink("current", "Current CDAP Release", "CDAP Version " + data.current);
+      }
+      if (data.versions) {
+        for (i in data.versions) {
+          writelink(data.versions[i], "", "CDAP Version " + data.versions[i]);
+        }
+      }
+      if (data) {
+        document.write('</ul>');
       }
     }
-    if (data) {
-      document.write('</ul>');
-    }
-  }
   </script>
   <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
   </div>
