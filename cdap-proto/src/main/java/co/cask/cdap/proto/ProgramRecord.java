@@ -34,6 +34,14 @@ public class ProgramRecord {
     this.description = description;
   }
 
+  public ProgramRecord(ProgramType type, String app, String id) {
+    this.type = type;
+    this.app = app;
+    this.id = id;
+    this.name = id;
+    this.description = null;
+  }
+
   public ProgramType getType() {
     return type;
   }

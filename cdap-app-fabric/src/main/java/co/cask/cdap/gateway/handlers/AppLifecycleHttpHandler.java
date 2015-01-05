@@ -37,7 +37,12 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTableDataset;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -55,11 +60,15 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -155,6 +164,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
+  private final DatasetFramework dsFramework;
+
+  private final TransactionExecutorFactory executorFactory;
+
   private final StreamConsumerFactory streamConsumerFactory;
 
   private final QueueAdmin queueAdmin;
@@ -167,7 +180,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient) {
+                                 DiscoveryServiceClient discoveryServiceClient, DatasetFramework dsFramework,
+                                 TransactionExecutorFactory executorFactory) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -180,6 +194,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.executorFactory = executorFactory;
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration,
+                                                                                               Namespace.SYSTEM));
   }
 
   /**
@@ -492,6 +509,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  private void deleteStateStore(final Id.Application appId) throws Exception {
+    final StateStoreTableDataset stateStore = dsFramework.getDataset(Constants.StateStore.STATE_STORE_TABLE,
+                                                                     null, null);
+    if (stateStore == null) {
+      LOG.warn("Unable to find StateStoreTable. Can't delete StateStore for {}", appId.getId());
+      return;
+    }
+
+    final TransactionExecutor executor = executorFactory.createExecutor(ImmutableList.<TransactionAware>of(stateStore));
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() {
+        stateStore.deleteState(appId);
+      }
+    });
+  }
+
   /**
    * Protected only to support v2 APIs
    */
@@ -574,6 +608,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
+    deleteStateStore(appId);
 
     Location appArchive = store.getApplicationArchiveLocation(appId);
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());

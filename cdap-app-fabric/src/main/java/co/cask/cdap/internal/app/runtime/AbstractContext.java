@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -29,8 +30,16 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTable;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTableDataset;
+import co.cask.cdap.proto.ProgramRecord;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -56,6 +65,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ProgramRecord record;
+  private StateStoreTableDataset stateStore;
 
   public AbstractContext(Program program, RunId runId,
                          Arguments arguments,
@@ -83,7 +94,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
     this.dsInstantiator = new DatasetInstantiator(dsFramework, conf, program.getClassLoader(),
                                                   datasetMetrics, programMetrics);
-
+    DatasetFramework sysds = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(conf,
+                                                                                                     Namespace.SYSTEM));
+    this.stateStore = null;
+    try {
+      this.stateStore = DatasetsUtil.getOrCreateDataset(sysds, Constants.StateStore.STATE_STORE_TABLE,
+                                                        StateStoreTable.class.getName(), DatasetProperties.EMPTY,
+                                                        null, null);
+      this.dsInstantiator.addTransactionAware(stateStore);
+    } catch (Exception e) {
+      LOG.error("Unable to create/get StateStore Table", e);
+      Throwables.propagate(e);
+    }
+    record = new ProgramRecord(program.getType(), program.getApplicationId(), program.getName());
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
     this.datasets = Datasets.createDatasets(dsInstantiator, datasets, runtimeArguments);
@@ -162,6 +185,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     for (Closeable ds : datasets.values()) {
       closeDataSet(ds);
     }
+    closeDataSet(stateStore);
   }
 
   /**
@@ -178,5 +202,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   @Override
   public DiscoveryServiceClient getDiscoveryServiceClient() {
     return discoveryServiceClient;
+  }
+
+  @Override
+  public Map<String, String> getState() {
+    return stateStore.getState(record);
+  }
+
+  @Override
+  public void saveState(Map<String, String> state) {
+    stateStore.saveState(record, state);
   }
 }

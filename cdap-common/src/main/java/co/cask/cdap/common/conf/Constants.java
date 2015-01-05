@@ -68,6 +68,13 @@ public final class Constants {
   }
 
   /**
+   * StateStore Options.
+   */
+  public static final class StateStore {
+    public static final String STATE_STORE_TABLE = "statestore";
+  }
+
+  /**
    * App Fabric Configuration.
    */
   public static final class AppFabric {
