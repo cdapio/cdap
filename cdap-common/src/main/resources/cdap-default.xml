@@ -92,8 +92,14 @@
     </property>
 
     <property>
+        <name>user.dir</name>
+        <value>.</value>
+        <description>Path to SDK root directory</description>
+    </property>
+
+    <property>
         <name>local.data.dir</name>
-        <value>data</value>
+        <value>${user.dir}/data</value>
         <description>Data directory for local mode</description>
     </property>
 
