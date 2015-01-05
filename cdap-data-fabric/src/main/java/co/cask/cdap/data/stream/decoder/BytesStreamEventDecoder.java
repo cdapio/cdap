@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream;
+package co.cask.cdap.data.stream.decoder;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;

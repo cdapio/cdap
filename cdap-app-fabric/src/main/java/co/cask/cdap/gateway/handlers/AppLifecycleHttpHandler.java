@@ -375,7 +375,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // time during the initialization of CDAP.
         if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
           NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
-                                                           .setName(Constants.DEFAULT_NAMESPACE)
+                                                           .setId(Constants.DEFAULT_NAMESPACE)
                                                            .setDisplayName(Constants.DEFAULT_NAMESPACE)
                                                            .setDescription(Constants.DEFAULT_NAMESPACE).build());
           if (existing != null) {

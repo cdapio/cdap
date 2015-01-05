@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +79,18 @@ public class DefaultServiceManager implements ServiceManager {
   }
 
   @Override
-  public int getRunnableInstances(String runnableName) {
+  public int getRequestedInstances(String runnableName) {
+    ServiceInstances instances = getRunnableInstances(runnableName);
+    return instances.getRequested();
+  }
+
+  @Override
+  public int getProvisionedInstances(String runnableName) {
+    ServiceInstances instances = getRunnableInstances(runnableName);
+    return instances.getProvisioned();
+  }
+
+  private ServiceInstances getRunnableInstances(String runnableName) {
     try {
       return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
     } catch (Exception e) {
@@ -144,8 +157,8 @@ public class DefaultServiceManager implements ServiceManager {
     }
     String hostName = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.API_VERSION_2, applicationId, serviceName);
+    String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/", hostName, port,
+                                Constants.Gateway.API_VERSION_3, accountId, applicationId, serviceName);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

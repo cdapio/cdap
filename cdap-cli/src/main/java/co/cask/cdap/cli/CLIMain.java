@@ -18,6 +18,7 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.HelpCommand;
+import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.common.cli.CLI;
@@ -79,9 +80,9 @@ public class CLIMain {
     this.commands = Iterables.concat(new DefaultCommands(injector).get(),
                                      ImmutableList.<Command>of(helpCommand));
     this.completers = new DefaultCompleters(injector).get();
-    this.cli = new CLI<Command>(commands, completers);
-    this.cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
-    this.cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
+    cli = new CLI<Command>(commands, completers);
+    cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
+    cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public void handleException(PrintStream output, Exception e) {
         if (e instanceof SSLHandshakeException) {
@@ -95,6 +96,7 @@ public class CLIMain {
         }
       }
     });
+    cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
 
     this.cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
