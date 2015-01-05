@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -51,8 +52,8 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
    */
   @Override
   public Callable<RuntimeContext> create(String name) {
-
-    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduce().get(name);
+    ApplicationSpecification spec = workflowProgram.getSpecification();
+    final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());
 

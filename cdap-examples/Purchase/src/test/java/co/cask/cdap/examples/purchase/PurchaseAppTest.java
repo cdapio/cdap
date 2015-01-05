@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -102,7 +102,7 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromService.getLastName(), "bernard");
 
     // Run PurchaseHistoryWorkflow which will process the data
-    MapReduceManager mapReduceManager = appManager.startMapReduce("PurchaseHistoryWorkflow_PurchaseHistoryBuilder",
+    MapReduceManager mapReduceManager = appManager.startMapReduce("PurchaseHistoryBuilder",
                                                                   ImmutableMap.<String, String>of());
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 

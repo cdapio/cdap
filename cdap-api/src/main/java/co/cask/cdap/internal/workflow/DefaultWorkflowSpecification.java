@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,7 @@
  */
 package co.cask.cdap.internal.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionEntry;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.common.base.Objects;
@@ -32,37 +30,27 @@ import java.util.Map;
  */
 public final class DefaultWorkflowSpecification implements WorkflowSpecification {
 
+
   private final String className;
   private final String name;
   private final String description;
-  private final List<WorkflowActionSpecification> actions;
-  private final Map<String, MapReduceSpecification> mapReduces;
-  private final Map<String, SparkSpecification> sparks;
-  private final List<Schedule> schedules;
-
-  public DefaultWorkflowSpecification(String name, String description, List<WorkflowActionSpecification> actions,
-                                      Map<String, MapReduceSpecification> mapReduces,
-                                      Map<String, SparkSpecification> sparks, List<Schedule> schedules) {
-    this(null, name, description, actions, mapReduces, sparks, schedules);
-  }
-
-  public DefaultWorkflowSpecification(String className, WorkflowSpecification spec) {
-    this(className, spec.getName(), spec.getDescription(),
-         spec.getActions(), spec.getMapReduce(), spec.getSparks(), spec.getSchedules());
-  }
+  private final Map<String, WorkflowActionSpecification> customActionMap;
+  private final List<WorkflowActionEntry> actions;
+  private final List<String> schedules;
+  private final Map<String, String> properties;
 
   public DefaultWorkflowSpecification(String className, String name, String description,
-                                      List<WorkflowActionSpecification> actions,
-                                      Map<String, MapReduceSpecification> mapReduces,
-                                      Map<String, SparkSpecification> sparks,
-                                      List<Schedule> schedules) {
+                                      Map<String, String> properties,
+                                      List<WorkflowActionEntry> actions,
+                                      Map<String, WorkflowActionSpecification> customActionMap,
+                                      List<String> schedules) {
     this.className = className;
     this.name = name;
     this.description = description;
+    this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.actions = ImmutableList.copyOf(actions);
-    this.mapReduces = ImmutableMap.copyOf(mapReduces);
-    this.sparks = ImmutableMap.copyOf(sparks);
     this.schedules = ImmutableList.copyOf(schedules);
+    this.customActionMap = ImmutableMap.copyOf(customActionMap);
   }
 
   @Override
@@ -81,34 +69,40 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
   }
 
   @Override
-  public List<WorkflowActionSpecification> getActions() {
-    return actions;
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   @Override
-  public Map<String, MapReduceSpecification> getMapReduce() {
-    return mapReduces;
+  public String getProperty(String key) {
+    return properties.get(key);
   }
 
   @Override
-  public Map<String, SparkSpecification> getSparks() {
-    return sparks;
+  public List<WorkflowActionEntry> getActions() {
+    return ImmutableList.copyOf(actions);
   }
 
   @Override
-  public List<Schedule> getSchedules() {
+  public List<String> getSchedules() {
     return schedules;
+  }
+
+  @Override
+  public Map<String, WorkflowActionSpecification> getCustomActionMap() {
+    return ImmutableMap.copyOf(customActionMap);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(WorkflowSpecification.class)
+      .add("className", className)
       .add("name", name)
-      .add("class", className)
+      .add("description", description)
+      .add("customActionMap", customActionMap)
       .add("actions", actions)
-      .add("mapReduces", mapReduces)
-      .add("sparks", sparks)
       .add("schedules", schedules)
+      .add("properties", properties)
       .toString();
   }
 }

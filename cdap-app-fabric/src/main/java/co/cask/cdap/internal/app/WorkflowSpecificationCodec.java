@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,7 @@
  */
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionEntry;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
@@ -44,10 +42,10 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("actions", serializeList(src.getActions(), context, WorkflowActionSpecification.class));
-    jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
-    jsonObj.add("sparks", serializeMap(src.getSparks(), context, SparkSpecification.class));
-    jsonObj.add("schedules", serializeList(src.getSchedules(), context, Schedule.class));
+    jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
+    jsonObj.add("actions", serializeList(src.getActions(), context, WorkflowActionEntry.class));
+    jsonObj.add("customActionMap", serializeMap(src.getCustomActionMap(), context, WorkflowActionSpecification.class));
+    jsonObj.add("schedules", serializeList(src.getSchedules(), context, String.class));
 
 
     return jsonObj;
@@ -61,15 +59,15 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    List<WorkflowActionSpecification> actions = deserializeList(jsonObj.get("actions"), context,
-                                                                WorkflowActionSpecification.class);
-    Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"), context,
-                                                                    MapReduceSpecification.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    List<WorkflowActionEntry> actions = deserializeList(jsonObj.get("actions"), context,
+                                                                WorkflowActionEntry.class);
+    Map<String, WorkflowActionSpecification> customActionMap = deserializeMap(jsonObj.get("customActionMap"), context,
+                                                                    WorkflowActionSpecification.class);
 
-    Map<String, SparkSpecification> sparks = deserializeMap(jsonObj.get("sparks"), context, SparkSpecification.class);
+    List<String> schedules = deserializeList(jsonObj.get("schedules"), context, String.class);
 
-    List<Schedule> schedules = deserializeList(jsonObj.get("schedules"), context, Schedule.class);
-
-    return new DefaultWorkflowSpecification(className, name, description, actions, mapReduces, sparks, schedules);
+    return new DefaultWorkflowSpecification(className, name, description, properties, actions,
+                                            customActionMap, schedules);
   }
 }

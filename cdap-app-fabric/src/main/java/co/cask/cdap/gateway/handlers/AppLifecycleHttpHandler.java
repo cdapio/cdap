@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -426,7 +427,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
       // Add new schedules.
       if (!entry.getValue().getSchedules().isEmpty()) {
-        scheduler.schedule(programId, ProgramType.WORKFLOW, entry.getValue().getSchedules());
+        List<Schedule> schedules = Lists.newArrayList();
+        for (String scheduleName : entry.getValue().getSchedules()) {
+          Schedule schedule = specification.getSchedules().get(scheduleName);
+          if (schedule == null) {
+            LOG.error("Schedule '{}' cannot be found in the Application.", scheduleName);
+          } else {
+            schedules.add(specification.getSchedules().get(scheduleName));
+          }
+        }
+        if(!schedules.isEmpty()) {
+          scheduler.schedule(programId, ProgramType.WORKFLOW, schedules);
+        }
       }
     }
   }

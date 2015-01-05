@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionEntry;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -25,6 +30,8 @@ import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -104,10 +111,42 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ClassLoader classLoader = program.getClassLoader();
 
     // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
-    Iterator<WorkflowActionSpecification> iterator = workflowSpec.getActions().iterator();
+
+    ApplicationSpecification appSpec = program.getSpecification();
+
+    Iterator<WorkflowActionEntry> iterator = workflowSpec.getActions().iterator();
     int step = 0;
     while (running && iterator.hasNext()) {
-      WorkflowActionSpecification actionSpec = iterator.next();
+      WorkflowActionSpecification actionSpec;
+      WorkflowActionEntry actionEntry = iterator.next();
+      switch (actionEntry.getType()) {
+        case MAPREDUCE:
+          MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionEntry.getName());
+          if (mapReduceSpec == null) {
+            LOG.error("MapReduce program '{}' is not configured with the application.", actionEntry.getName());
+            throw new IllegalStateException("Workflow stopped without executing all tasks");
+          }
+          actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(mapReduceSpec.getName(),
+                                                                                        mapReduceSpec.getName(),
+                                                 WorkflowSupportedProgram.MAPREDUCE));
+          break;
+        case SPARK:
+          SparkSpecification sparkSpec = appSpec.getSpark().get(actionEntry.getName());
+          if (sparkSpec == null) {
+            LOG.error("Spark program '{}' is not configured with the application.", actionEntry.getName());
+            throw new IllegalStateException("Workflow stopped without executing all tasks");
+          }
+          actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(sparkSpec.getName(),
+                                                                                        sparkSpec.getName(),
+                                                 WorkflowSupportedProgram.SPARK));
+          break;
+        case CUSTOM_ACTION:
+          actionSpec = workflowSpec.getCustomActionMap().get(actionEntry.getName());
+          break;
+        default:
+          LOG.error("Unknown Program '{}' in the workflow.", actionEntry.getName());
+          throw new IllegalStateException("Workflow stopped without executing all tasks");
+      }
       workflowStatus = new WorkflowStatus(state(), actionSpec, step++);
 
       WorkflowAction action = initialize(actionSpec, classLoader, instantiator);

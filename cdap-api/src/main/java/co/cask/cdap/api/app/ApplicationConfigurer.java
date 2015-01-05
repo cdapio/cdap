@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
@@ -150,4 +151,11 @@ public interface ApplicationConfigurer {
    * @param service The service to include in the Application
    */
   void addService(Service service);
+
+  /**
+   * Adds a {@link Schedule} to the Application.
+   *
+   * @param schedule The schedule to be included in the Application
+   */
+  void addSchedule(Schedule schedule);
 }

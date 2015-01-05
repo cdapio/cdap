@@ -17,9 +17,30 @@
 package co.cask.cdap.api.workflow;
 
 /**
- * An Enum of supported Programs in {@link Workflow}
+ * Represents entry for the {@link WorkflowAction}
  */
+public final class WorkflowActionEntry {
+  private final String name;
+  private final WorkflowSupportedProgram type;
 
-public enum WorkflowSupportedProgram {
-  MAPREDUCE, SPARK, CUSTOM_ACTION
+  public WorkflowActionEntry(String name, WorkflowSupportedProgram type) {
+    this.name = name;
+    this.type = type;
+  }
+
+  /**
+   *
+   * @return name of the {@link WorkflowAction} represented by this entry
+   */
+  public String getName() {
+    return name;
+  }
+
+  /**
+   *
+   * @return type of the {@link WorkflowAction} represented by this entry
+   */
+  public WorkflowSupportedProgram getType() {
+    return type;
+  }
 }

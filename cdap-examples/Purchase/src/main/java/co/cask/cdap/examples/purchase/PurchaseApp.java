@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 
 /**
@@ -47,6 +48,7 @@ public class PurchaseApp extends AbstractApplication {
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
+    addMapReduce(new PurchaseHistoryBuilder());
     // Run a MapReduce job on the acquired data using a Workflow
     addWorkflow(new PurchaseHistoryWorkflow());
 
@@ -58,6 +60,11 @@ public class PurchaseApp extends AbstractApplication {
 
     // Provide a Service to Application components
     addService(new CatalogLookupService());
+
+    // Add schedule to the Application which can be referred by underlying programs
+    // such as Workflow
+    addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
+                             Schedule.Action.START));
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());

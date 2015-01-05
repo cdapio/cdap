@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,12 @@
 package co.cask.cdap.api.workflow;
 
 /**
- * Configures the {@link Workflow} by returning a {@link WorkflowSpecification}.
+ * Defines an interface for the Workflow program
  */
 public interface Workflow {
 
   /**
-   * Configures the {@link Workflow} by returning a {@link WorkflowSpecification}.
-   *
-   * @return An instance of {@link WorkflowSpecification}.
+   * Configures a {@link Workflow} program using the given {@link WorkflowConfigurer}
    */
-  WorkflowSpecification configure();
+  void configure(WorkflowConfigurer configurer);
 }
