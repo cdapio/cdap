@@ -24,6 +24,8 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -35,6 +37,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -51,7 +54,9 @@ import javax.annotation.Nullable;
 public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinator.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
   // Executor for performing update action asynchronously
   private final Executor updateExecutor;
@@ -130,7 +135,8 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
               StreamConfig newConfig = new StreamConfig(streamConfig.getName(), streamConfig.getPartitionDuration(),
                                                         streamConfig.getIndexInterval(), newTTL,
-                                                        streamConfig.getLocation());
+                                                        streamConfig.getLocation(),
+                                                        streamConfig.getFormat());
               saveConfig(newConfig);
               resultFuture.set(new StreamProperty(currentGeneration, newTTL));
             } catch (IOException e) {

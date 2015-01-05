@@ -47,12 +47,15 @@ public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
-    // create dataset instances
+    // create stream instances
     ApplicationSpecification specification = input.getSpecification();
     for (String streamName : specification.getStreams().keySet()) {
-      StreamUtils.ensureExists(streamAdmin, streamName);
-      if (enableExplore) {
-        exploreFacade.enableExploreStream(streamName);
+      // create the stream and enable exploration if the stream doesn't already exist.
+      if (!streamAdmin.exists(streamName)) {
+        streamAdmin.create(streamName);
+        if (enableExplore) {
+          exploreFacade.enableExploreStream(streamName);
+        }
       }
     }
 

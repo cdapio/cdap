@@ -606,6 +606,10 @@ public final class Constants {
    * Default namespace to be used by v2 APIs
    */
   public static final String DEFAULT_NAMESPACE = "default";
+  /**
+   * 'system' reserved namespace name
+   */
+  public static final String SYSTEM_NAMESPACE = "system";
 
   /**
    * Constants related to external systems.

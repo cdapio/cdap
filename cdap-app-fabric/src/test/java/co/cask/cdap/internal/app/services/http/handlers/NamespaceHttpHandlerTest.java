@@ -22,6 +22,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -38,32 +39,29 @@ import java.util.List;
 public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final String NAME_FIELD = "name";
+  private static final String ID_FIELD = "id";
   private static final String DISPLAY_NAME_FIELD = "displayName";
   private static final String DESCRIPTION_FIELD = "description";
-  private static final String NAME = "test";
+  private static final String ID = "test";
   private static final String DISPLAY_NAME = "displayTest";
   private static final String DESCRIPTION = "test description";
-  private static final NamespaceMeta METADATA_VALID = new NamespaceMeta.Builder().setName(NAME)
-    .setDisplayName(DISPLAY_NAME).setDescription(DESCRIPTION).build();
-  private static final NamespaceMeta METADATA_MISSING_NAME = new NamespaceMeta.Builder()
-    .setDisplayName(DISPLAY_NAME).setDescription(DESCRIPTION).build();
-  private static final NamespaceMeta METADATA_EMPTY_NAME = new NamespaceMeta.Builder().setName("")
-    .setDisplayName(DISPLAY_NAME).setDescription(DESCRIPTION).build();
-  private static final NamespaceMeta METADATA_MISSING_DISPLAY_NAME = new NamespaceMeta.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_VALID = new NamespaceMeta.Builder().setDisplayName(DISPLAY_NAME)
     .setDescription(DESCRIPTION).build();
-  private static final NamespaceMeta METADATA_EMPTY_DISPLAY_NAME = new NamespaceMeta.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_MISSING_DISPLAY_NAME = new NamespaceMeta.Builder()
+    .setDescription(DESCRIPTION).build();
+  private static final NamespaceMeta METADATA_EMPTY_DISPLAY_NAME = new NamespaceMeta.Builder()
     .setDisplayName("").setDescription(DESCRIPTION).build();
-  private static final NamespaceMeta METADATA_MISSING_DESCRIPTION = new NamespaceMeta.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_MISSING_DESCRIPTION = new NamespaceMeta.Builder()
     .setDisplayName(DISPLAY_NAME).build();
   private static final String METADATA_INVALID_JSON = "invalid";
+  private static final String INVALID_ID = "!nv@l*d/";
 
-  private HttpResponse createNamespace(NamespaceMeta metadata) throws Exception {
-    return createNamespace(GSON.toJson(metadata));
+  private HttpResponse createNamespace(NamespaceMeta metadata, String id) throws Exception {
+    return createNamespace(GSON.toJson(metadata), id);
   }
 
-  private HttpResponse createNamespace(String metadata) throws Exception {
-    return doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3), metadata);
+  private HttpResponse createNamespace(String metadata, String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), metadata);
   }
 
   private HttpResponse listAllNamespaces() throws Exception {
@@ -101,16 +99,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     List<JsonObject> namespaces = readListResponse(response);
     Assert.assertEquals(0, namespaces.size());
     // create and verify
-    response = createNamespace(METADATA_VALID);
+    response = createNamespace(METADATA_VALID, ID);
     assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
     Assert.assertEquals(1, namespaces.size());
-    Assert.assertEquals(NAME, namespaces.get(0).get(NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespaces.get(0).get(ID_FIELD).getAsString());
     Assert.assertEquals(DISPLAY_NAME, namespaces.get(0).get(DISPLAY_NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespaces.get(0).get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(NAME);
+    response = deleteNamespace(ID);
     assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
@@ -120,92 +118,99 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateDuplicate() throws Exception {
     // prepare - create namespace
-    HttpResponse response = createNamespace(METADATA_VALID);
+    HttpResponse response = createNamespace(METADATA_VALID, ID);
     assertResponseCode(200, response);
-    response = getNamespace(NAME);
+    response = getNamespace(ID);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
     Assert.assertEquals(DISPLAY_NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
 
     // create again with the same name
-    response = createNamespace(METADATA_EMPTY_DISPLAY_NAME);
-    assertResponseCode(409, response);
+    response = createNamespace(METADATA_EMPTY_DISPLAY_NAME, ID);
+    // create is idempotent, so response code is 200, but no updates should happen
+    assertResponseCode(200, response);
     // check that no updates happened
-    response = getNamespace(NAME);
+    response = getNamespace(ID);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
     Assert.assertEquals(DISPLAY_NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(NAME);
+    response = deleteNamespace(ID);
     assertResponseCode(200, response);
+  }
+
+  @Test
+  public void testInvalidReservedId() throws Exception {
+    HttpResponse response = createNamespace(METADATA_VALID, INVALID_ID);
+    assertResponseCode(400, response);
+    // 'default' and 'system' are reserved namespaces
+    response = createNamespace(METADATA_VALID, Constants.DEFAULT_NAMESPACE);
+    assertResponseCode(400, response);
+    response = createNamespace(METADATA_VALID, Constants.SYSTEM_NAMESPACE);
+    assertResponseCode(400, response);
+    response = deleteNamespace(Constants.DEFAULT_NAMESPACE);
+    assertResponseCode(403, response);
+    response = deleteNamespace(Constants.SYSTEM_NAMESPACE);
+    assertResponseCode(403, response);
   }
 
   @Test
   public void testCreateInvalidJson() throws Exception {
     // invalid json should return 400
-    HttpResponse response = createNamespace(METADATA_INVALID_JSON);
+    HttpResponse response = createNamespace(METADATA_INVALID_JSON, ID);
     assertResponseCode(400, response);
     // verify
-    response = getNamespace(NAME);
+    response = getNamespace(ID);
     assertResponseCode(404, response);
-  }
-
-  @Test
-  public void testCreateMissingOrEmptyName() throws Exception {
-    // name must be non-null, non-empty
-    HttpResponse response = createNamespace(METADATA_MISSING_NAME);
-    assertResponseCode(400, response);
-    response = createNamespace(METADATA_EMPTY_NAME);
-    assertResponseCode(400, response);
   }
 
   @Test
   public void testCreateMissingOrEmptyDisplayName() throws Exception {
     // create with missing displayName
-    HttpResponse response = createNamespace(METADATA_MISSING_DISPLAY_NAME);
+    HttpResponse response = createNamespace(METADATA_MISSING_DISPLAY_NAME, ID);
     assertResponseCode(200, response);
     // verify
-    response = getNamespace(NAME);
+    response = getNamespace(ID);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
-    Assert.assertEquals(NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(DISPLAY_NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(NAME);
+    response = deleteNamespace(ID);
     assertResponseCode(200, response);
 
     // create with empty displayName
-    response = createNamespace(METADATA_EMPTY_DISPLAY_NAME);
+    response = createNamespace(METADATA_EMPTY_DISPLAY_NAME, ID);
     assertResponseCode(200, response);
     // verify
-    response = getNamespace(NAME);
+    response = getNamespace(ID);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
-    Assert.assertEquals(NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(DISPLAY_NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(NAME);
+    response = deleteNamespace(ID);
     assertResponseCode(200, response);
   }
 
   @Test
   public void testCreateMissingDescription() throws Exception {
     // create with missing description
-    HttpResponse response = createNamespace(METADATA_MISSING_DESCRIPTION);
+    HttpResponse response = createNamespace(METADATA_MISSING_DESCRIPTION, ID);
     assertResponseCode(200, response);
-    response = getNamespace(NAME);
+    response = getNamespace(ID);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
     Assert.assertEquals(DISPLAY_NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
     Assert.assertEquals("", namespace.get(DESCRIPTION_FIELD).getAsString());
-    response = deleteNamespace(NAME);
+    response = deleteNamespace(ID);
     assertResponseCode(200, response);
   }
 

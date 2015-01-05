@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.explore.executor;
+package co.cask.cdap.explore.schema;
 
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
@@ -31,33 +30,7 @@ import java.util.Map;
 /**
  *
  */
-public class ExploreExecutorHttpHandlerTest {
-  @SuppressWarnings("unused")
-  enum Enum { FOO, BAR }
-
-  @SuppressWarnings("unused")
-  static class Record {
-    int a;
-    long b;
-    boolean c;
-    float d;
-    double e;
-    String f;
-    byte[] g;
-    Enum[] h;
-    Collection<Boolean> i;
-    Map<Integer, String> j;
-  }
-
-  @SuppressWarnings("unused")
-  static class Int {
-    Integer value;
-  }
-
-  @SuppressWarnings("unused")
-  static class Longg {
-    long value;
-  }
+public class SchemaConverterTest {
 
   public static class KeyValue {
     private final String key;
@@ -140,6 +113,35 @@ public class ExploreExecutorHttpHandlerTest {
   }
 
   @SuppressWarnings("unused")
+  enum Foo { FOO, BAR }
+
+  @SuppressWarnings("unused")
+  static class Record {
+    int a;
+    long b;
+    boolean c;
+    float d;
+    double e;
+    String f;
+    byte[] g;
+    Foo[] h;
+    Collection<Boolean> i;
+    Map<Integer, String> j;
+  }
+
+  @SuppressWarnings("unused")
+  static class Record2 {
+    String s2;
+    Record record;
+  }
+
+  @SuppressWarnings("unused")
+  static class Record3 {
+    int i3;
+    Record2 record2;
+  }
+
+  @SuppressWarnings("unused")
   public class Recursive {
     private final int a;
     private final Recursive b;
@@ -181,32 +183,18 @@ public class ExploreExecutorHttpHandlerTest {
 
   @Test
   public void testHiveSchemaFor() throws Exception {
-
-    Assert.assertEquals("(value int)", ExploreExecutorHttpHandler.hiveSchemaFor(Int.class));
-    Assert.assertEquals("(value bigint)", ExploreExecutorHttpHandler.hiveSchemaFor(Longg.class));
-    Assert.assertEquals("(first int, second string)",
-                        ExploreExecutorHttpHandler.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() {
-                        }.getType()));
     Assert.assertEquals("(a int, b bigint, c boolean, d float, e double, f string, g binary, " +
                           "h array<string>, i array<boolean>, j map<int,string>)",
-                        ExploreExecutorHttpHandler.hiveSchemaFor(Record.class));
+                        SchemaConverter.toHiveSchema(Record.class));
 
-    Assert.assertEquals("(key string, value struct<name:string,ints:array<int>>)",
-                        ExploreExecutorHttpHandler.hiveSchemaFor(KeyValue.class));
-    Assert.assertEquals("(ts bigint, body string, headers map<string,string>)",
-                        ExploreExecutorHttpHandler.hiveSchemaForStream());
-  }
+    Assert.assertEquals("(key string, value struct<ints:array<int>,name:string>)",
+                        SchemaConverter.toHiveSchema(KeyValue.class));
 
-
-  private void verifyUnsupportedSchema(Type type) {
-    String schema;
-    try {
-      schema = ExploreExecutorHttpHandler.hiveSchemaFor(type);
-    } catch (UnsupportedTypeException e) {
-      // expected
-      return;
-    }
-    Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+    Assert.assertEquals("(i3 int, record2 struct<" +
+                          "record:struct<a:int,b:bigint,c:boolean,d:float,e:double,f:string,g:binary," +
+                            "h:array<string>,i:array<boolean>,j:map<int,string>>," +
+                          "s2:string>)",
+                        SchemaConverter.toHiveSchema(Record3.class));
   }
 
   @Test
@@ -222,6 +210,17 @@ public class ExploreExecutorHttpHandlerTest {
   @Test
   public void testSupportedTypes() throws Exception {
     // Should not throw an exception
-    ExploreExecutorHttpHandler.hiveSchemaFor(NotRecursive.class);
+    SchemaConverter.toHiveSchema(NotRecursive.class);
+  }
+
+  private void verifyUnsupportedSchema(Type type) {
+    String schema;
+    try {
+      schema = SchemaConverter.toHiveSchema(type);
+    } catch (UnsupportedTypeException e) {
+      // expected
+      return;
+    }
+    Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
   }
 }

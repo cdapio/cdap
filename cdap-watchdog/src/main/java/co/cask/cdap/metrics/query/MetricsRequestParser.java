@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricRequest;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeMathParser;

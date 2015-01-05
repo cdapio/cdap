@@ -37,6 +37,7 @@ public class MockLogReader implements LogReader {
 
   private final Multimap<String, LogLine> logMap;
   private static final int MAX = 80;
+  public static final String TEST_NAMESPACE = "testNamespace";
 
   MockLogReader() {
     logMap = ArrayListMultimap.create();
@@ -64,6 +65,16 @@ public class MockLogReader implements LogReader {
                  new LogLine(i, "testMapReduce1<img>-" + i));
     }
 
+    // Add log lines for app testApp1, flow testFlow1 in testNamespace
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(TEST_NAMESPACE + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+    }
+
+    // Add log lines for app testApp1, flow testService1 in testNamespace
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(TEST_NAMESPACE + "/testApp4/userservice-testService1",
+                 new LogLine(i, "testService1<img>-" + i));
+    }
   }
 
   @Override

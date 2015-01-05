@@ -44,7 +44,6 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +57,12 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Provides REST endpoints for {@link co.cask.cdap.explore.service.ExploreService} operations.
@@ -181,7 +182,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/queries/{id}/next")
-  public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void getQueryNextResults(HttpRequest request, HttpResponder responder,
+                                  @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       QueryHandle handle = QueryHandle.fromId(id);
@@ -211,15 +213,12 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/explore/queries")
-  public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
+  public void getQueryLiveHandles(HttpRequest request, HttpResponder responder,
+                                  @QueryParam("offset") @DefaultValue("9223372036854775807") long offset,
+                                  @QueryParam("cursor") @DefaultValue("next") String cursor,
+                                  @QueryParam("limit") @DefaultValue("50") int limit) {
     try {
-      Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
-
-      int limit = args.containsKey("limit") ? Integer.parseInt(args.get("limit").get(0)) : 50;
-      long offset = args.containsKey("offset") ? Long.parseLong(args.get("offset").get(0)) : Long.MAX_VALUE;
-      String cursor = args.containsKey("cursor") ? args.get("cursor").get(0).toLowerCase() : "next";
-
-      boolean isForward = "next".equals(cursor) ? true : false;
+      boolean isForward = "next".equals(cursor);
 
       List<QueryInfo> queries = exploreService.getQueries();
       // return the queries by after filtering (> offset) and limiting number of queries
@@ -270,7 +269,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       if (handle.equals(QueryHandle.NO_OP) ||
-          !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
+        !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
         responder.sendStatus(HttpResponseStatus.CONFLICT);
         return;
       }
@@ -331,30 +330,31 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                                         final boolean isForward, final int limit) {
     // Reverse the list if the pagination is in the reverse from the offset until the max limit
     if (!isForward) {
-     queries =  Lists.reverse(queries);
+      queries = Lists.reverse(queries);
     }
 
     return FluentIterable.from(queries)
-                         .filter(new Predicate<QueryInfo>() {
-                           @Override
-                           public boolean apply(@Nullable QueryInfo queryInfo) {
-                             if (isForward) {
-                               return queryInfo.getTimestamp() < offset;
-                             } else {
-                               return queryInfo.getTimestamp() > offset;
-                             }
-                           }
-                         })
-                         .limit(limit)
-                         .toSortedImmutableList(new Comparator<QueryInfo>() {
-                           @Override
-                           public int compare(QueryInfo first, QueryInfo second) {
-                             //sort descending.
-                             return Longs.compare(second.getTimestamp(), first.getTimestamp());
-                           }
-                         });
+      .filter(new Predicate<QueryInfo>() {
+        @Override
+        public boolean apply(@Nullable QueryInfo queryInfo) {
+          if (isForward) {
+            return queryInfo.getTimestamp() < offset;
+          } else {
+            return queryInfo.getTimestamp() > offset;
+          }
+        }
+      })
+      .limit(limit)
+      .toSortedImmutableList(new Comparator<QueryInfo>() {
+        @Override
+        public int compare(QueryInfo first, QueryInfo second) {
+          //sort descending.
+          return Longs.compare(second.getTimestamp(), first.getTimestamp());
+        }
+      });
   }
 
+  // get arguments contained in the request body
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
