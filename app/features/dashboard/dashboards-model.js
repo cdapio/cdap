@@ -3,7 +3,10 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function ($q, Widget) {
+function (Widget, MyDataSource) {
+
+  var data = new MyDataSource(),
+      API_PATH = '/configuration/dashboards';
 
 
   function Dashboard (title, colCount) {
@@ -13,6 +16,7 @@ function ($q, Widget) {
     }
 
     c[0].push(new Widget());
+
     this.title = title || 'Dashboard';
     this.columns = c;
   }
@@ -24,6 +28,7 @@ function ($q, Widget) {
   Dashboard.prototype.renameWidget = function (widget, newName) {
     if(newName) {
       widget.title = newName;
+      this.persist();
     }
   };
 
@@ -39,6 +44,7 @@ function ($q, Widget) {
         return widget !== p;
       });
     });
+    this.persist();
   };
 
 
@@ -61,6 +67,7 @@ function ($q, Widget) {
     }
 
     this.columns[index].unshift(w || new Widget({title: 'just added'}));
+    this.persist();
   };
 
 
@@ -71,6 +78,36 @@ function ($q, Widget) {
   Dashboard.prototype.rename = function (newName) {
     if(newName) {
       this.title = newName;
+      this.persist();
+    }
+  };
+
+
+
+  /**
+   * save to backend
+   */
+  Dashboard.prototype.persist = function () {
+    if(this.id) { // updating
+      data.request(
+        {
+          method: 'POST',
+          _cdapNsPath: API_PATH + '/' + this.id,
+          body: this
+        }
+      );
+    }
+    else { // saving
+      data.request(
+        {
+          method: 'POST',
+          _cdapNsPath: API_PATH,
+          body: this
+        },
+        angular.bind(this, function (result) {
+          this.id = result.id || result;
+        })
+      );
     }
   };
 
@@ -79,12 +116,19 @@ function ($q, Widget) {
 
 
   function Model () {
-    this.data = [
-      new Dashboard('grid'),
-      new Dashboard('full-width', 1)
-    ];
-
+    this.data = [];
     this.data.activeIndex = 0;
+
+    data.request(
+      {
+        method: 'GET',
+        _cdapNsPath: API_PATH
+      },
+      angular.bind(this, function (result) {
+        console.log(result);
+      })
+    );
+
   }
 
 
@@ -109,7 +153,10 @@ function ($q, Widget) {
    * add a new dashboard tab
    */
   Model.prototype.add = function (title, colCount) {
-    var n = this.data.push(new Dashboard(title, colCount));
+    var d = new Dashboard(title, colCount);
+    d.persist();
+
+    var n = this.data.push(d);
     this.data.activeIndex = n-1;
   };
 

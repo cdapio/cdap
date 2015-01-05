@@ -15,9 +15,9 @@ angular.module(PKG.name+'.feature.foo')
       .state('test-prefs', {
         url: '/test/prefs',
         templateUrl: '/assets/features/foo/prefs.html',
-        controller: function ($scope, myUiPrefs) {
-          // window.myUiPrefs = myUiPrefs;
-          $scope.model = myUiPrefs.get('test');
+        controller: function ($scope, myUiSettings) {
+          // window.myUiSettings = myUiSettings;
+          $scope.model = myUiSettings.get('test');
         }
       });
 

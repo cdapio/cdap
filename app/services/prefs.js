@@ -1,12 +1,9 @@
 angular.module(PKG.name + '.services')
 
-  .factory('myUiPrefs', function (MyPrefStore) {
+  .factory('myUiSettings', function (MyPrefStore) {
     return new MyPrefStore('uisettings');
   })
 
-  .factory('myDashboardPrefs', function (MyPrefStore) {
-    return new MyPrefStore('dashboard');
-  })
 
   .factory('MyPrefStore', function MyPrefStoreFactory($q, MyDataSource) {
 
@@ -22,7 +19,6 @@ angular.module(PKG.name + '.services')
       // flag so we dont fire off multiple similar queries
       this.pending = null;
     }
-
 
     /**
      * set a preference
@@ -93,4 +89,4 @@ angular.module(PKG.name + '.services')
     };
 
     return MyPrefStore;
-});
+  });

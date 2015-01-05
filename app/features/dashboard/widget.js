@@ -1,9 +1,9 @@
 /**
- * Widget model & controller
+ * Widget model & controllers
  */
 
 angular.module(PKG.name+'.feature.dashboard')
-  .factory('Widget', function ($q) {
+  .factory('Widget', function () {
 
     function Widget (opts) {
       opts = opts || {};
@@ -16,7 +16,7 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     Widget.prototype.getClassName = function () {
-      return 'panel-default widget-'+this.type;
+      return 'panel-default widget-' + this.type;
     };
 
     return Widget;
@@ -27,19 +27,24 @@ angular.module(PKG.name+'.feature.dashboard')
 
     var dataSrc = new MyDataSource($scope);
 
-    dataSrc.request({_cdapPath: $scope.wdgt.metric}, function (result) {
-      $scope.chartHistory = [
-        {
-          label: $scope.wdgt.metric,
-          values: result.data.map(function (o) {
-            return {
-              x: o.time,
-              y: o.value
-            };
-          })
-        }
-      ];
-    });
+    dataSrc.request(
+      {
+        _cdapNsPath: $scope.wdgt.metric
+      },
+      function (result) {
+        $scope.chartHistory = [
+          {
+            label: $scope.wdgt.metric,
+            values: result.data.map(function (o) {
+              return {
+                x: o.time,
+                y: o.value
+              };
+            })
+          }
+        ];
+      }
+    );
 
   })
 
