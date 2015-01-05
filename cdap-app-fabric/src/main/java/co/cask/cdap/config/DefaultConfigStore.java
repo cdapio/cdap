@@ -82,7 +82,7 @@ public class DefaultConfigStore implements ConfigStore {
       @Override
       public Void apply(ConfigTable configTable) throws Exception {
         if (configTable.table.get(rowKey(namespace, type), Bytes.toBytes(config.getId())) != null) {
-          throw new ConfigAlreadyPresentException(namespace, type, config.getId());
+          throw new ConfigExistsException(namespace, type, config.getId());
         }
         configTable.table.put(rowKey(namespace, type), Bytes.toBytes(config.getId()),
                               Bytes.toBytes(GSON.toJson(config.getProperties())));

@@ -19,12 +19,13 @@ package co.cask.cdap.config;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
- * Configuration.
+ * Configuration Class that holds an Id and properties as a Map.
  */
-public class Config {
+public final class Config {
   private String id;
   private Map<String, String> properties;
 
@@ -32,7 +33,7 @@ public class Config {
     Preconditions.checkNotNull(name);
     Preconditions.checkNotNull(properties);
     this.id = name;
-    this.properties = properties;
+    this.properties = Collections.unmodifiableMap(properties);
   }
 
   public String getId() {
@@ -50,7 +51,7 @@ public class Config {
     }
 
     Config config = (Config) o;
-    return this.id.equals(config.getId()) && this.getProperties().equals(config.getProperties());
+    return Objects.equal(this.id, config.id) && Objects.equal(this.properties, config.properties);
   }
 
   @Override

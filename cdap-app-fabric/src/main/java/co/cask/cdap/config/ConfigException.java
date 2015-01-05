@@ -17,21 +17,16 @@
 package co.cask.cdap.config;
 
 /**
- * Thrown when a Configuration is present when it is not expected to be.
+ * Base Class for Configuration related Exceptions.
  */
-public class ConfigAlreadyPresentException extends Exception {
-  private final String namespace;
-  private final String type;
-  private final String id;
+public class ConfigException extends Exception {
+  protected final String namespace;
+  protected final String type;
+  protected final String id;
 
-  public ConfigAlreadyPresentException(String namespace, String type, String id) {
+  public ConfigException(String namespace, String type, String id) {
     this.namespace = namespace;
     this.type = type;
     this.id = id;
-  }
-
-  @Override
-  public String getMessage() {
-    return String.format("Configuration: %s of Type: %s in Namespace: %s is already present", id, type, namespace);
   }
 }
