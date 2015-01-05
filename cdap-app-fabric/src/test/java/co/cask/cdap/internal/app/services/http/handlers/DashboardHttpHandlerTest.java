@@ -80,16 +80,16 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testProperties() throws Exception {
-    Map<String, String> propMap = Maps.newHashMap();
-    propMap.put("k1", "v1");
-    propMap.put("k2", "v2");
-    String dash = createDashboard("newspace", GSON.toJson(propMap), 200);
+    Map<String, Integer> intMap = Maps.newHashMap();
+    intMap.put("k1", 123);
+    intMap.put("k2", 324);
+    String dash = createDashboard("newspace", GSON.toJson(intMap), 200);
     Map<String, String> contents = getContents("newspace", dash, 200);
     Assert.assertEquals(2, contents.size());
-    Assert.assertEquals("v1", contents.get("k1"));
-    Assert.assertEquals("v2", contents.get("k2"));
+    Assert.assertEquals("123", contents.get("k1"));
+    Assert.assertEquals("324", contents.get("k2"));
 
-    propMap.clear();
+    Map<String, String> propMap = Maps.newHashMap();
     propMap.put("k2", "value2");
     propMap.put("k1", "value1");
     addProperty("newspace", dash, propMap, 200);
@@ -108,6 +108,11 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     addProperty("newspace", anotherDash, new HashMap<String, String>(), 200);
     contents = getContents("newspace", anotherDash, 200);
     Assert.assertEquals(0, contents.size());
+
+    String str = "some123 random string!@#";
+    String randDash = createDashboard("space", str, 200);
+    Assert.assertEquals(str, getContentsAsString("space", randDash, 200));
+    deleteDashboard("space", randDash, 200);
 
     deleteDashboard("newspace", dash, 200);
     deleteDashboard("newspace", dash, 404);
@@ -134,11 +139,14 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   }
 
   private Map<String, String> getContents(String namespace, String name, int expectedStatus) throws Exception {
+    return GSON.fromJson(getContentsAsString(namespace, name, expectedStatus), MAP_STRING_STRING_TYPE);
+  }
+
+  private String getContentsAsString(String namespace, String name, int expectedStatus) throws Exception {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
+    return EntityUtils.toString(response.getEntity());
   }
 
   private String createDashboard(String namespace, int expectedStatus) throws Exception {
@@ -148,7 +156,10 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   private String createDashboard(String namespace, String contents, int expectedStatus) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/configuration/dashboards", namespace), contents);
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    return EntityUtils.toString(response.getEntity());
+    String jsonData = EntityUtils.toString(response.getEntity());
+    Map<String, String> idMap = GSON.fromJson(jsonData, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(true, idMap.containsKey("id"));
+    return idMap.get("id");
   }
 
   private Map<String, String> getDashboards(String namespace) throws Exception {

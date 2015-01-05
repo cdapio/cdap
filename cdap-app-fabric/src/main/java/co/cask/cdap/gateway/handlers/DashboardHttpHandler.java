@@ -21,6 +21,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -57,10 +58,12 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   @POST
   public synchronized void create(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
+    Map<String, String> jsonMap = Maps.newHashMap();
     String dashboardId = UUID.randomUUID().toString();
     String body = request.getContent().toString(Charsets.UTF_8);
     configStore.put(namespace, dashboardId, body);
-    responder.sendString(HttpResponseStatus.OK, dashboardId);
+    jsonMap.put("id", dashboardId);
+    responder.sendJson(HttpResponseStatus.OK, jsonMap);
   }
 
   @Path("/")
