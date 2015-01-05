@@ -18,8 +18,8 @@ package co.cask.cdap.config;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -33,7 +33,7 @@ public final class Config {
     Preconditions.checkNotNull(name);
     Preconditions.checkNotNull(properties);
     this.id = name;
-    this.properties = Collections.unmodifiableMap(properties);
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   public String getId() {
