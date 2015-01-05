@@ -43,8 +43,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
   private static final String TEST_NAMESPACE_ID = "testnamespace";
   private static final String TEST_DISPLAY_NAME = "testdisplayname";
   private static final String TEST_DESCRIPTION = "testdescription";
-  private static final String NO_DISPLAY_NAME = "nodisplayname";
-  private static final String NO_DESCRIPTION = "nodescription";
+  private static final String TEST_DEFAULT_FIELDS = "testdefaultfields";
 
   @Before
   public void setup() {
@@ -77,32 +76,35 @@ public class NamespaceClientTestRun extends ClientTestBase {
     Assert.assertEquals(TEST_DISPLAY_NAME, meta.getDisplayName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
-    // create and verify namespace without displayName
+    // try creating a namespace with the same id again
+    builder.setDisplayName("existing").setDescription("existing");
+    try {
+      namespaceClient.create(builder.build());
+      Assert.fail("Should not be able to re-create an existing namespace");
+    } catch (AlreadyExistsException e) {
+    }
+    // verify that the existing namespace was not updated
+    meta = namespaceClient.get(TEST_NAMESPACE_ID);
+    Assert.assertEquals(TEST_NAMESPACE_ID, meta.getId());
+    Assert.assertEquals(TEST_DISPLAY_NAME, meta.getDisplayName());
+    Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
+
+    // create and verify namespace without displayName and description
     builder = new NamespaceMeta.Builder();
-    builder.setId(NO_DISPLAY_NAME).setDescription(TEST_DESCRIPTION);
+    builder.setId(TEST_DEFAULT_FIELDS);
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
     Assert.assertEquals(2, namespaces.size());
-    meta = namespaceClient.get(NO_DISPLAY_NAME);
-    Assert.assertEquals(NO_DISPLAY_NAME, meta.getId());
-    Assert.assertEquals(NO_DISPLAY_NAME, meta.getDisplayName());
-    Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
-
-    // create and verify namespace without description
-    builder = new NamespaceMeta.Builder();
-    builder.setId(NO_DESCRIPTION).setDisplayName(TEST_DISPLAY_NAME);
-    namespaceClient.create(builder.build());
-    namespaces = namespaceClient.list();
-    Assert.assertEquals(3, namespaces.size());
-    meta = namespaceClient.get(NO_DESCRIPTION);
-    Assert.assertEquals(NO_DESCRIPTION, meta.getId());
-    Assert.assertEquals(TEST_DISPLAY_NAME, meta.getDisplayName());
+    meta = namespaceClient.get(TEST_DEFAULT_FIELDS);
+    Assert.assertEquals(TEST_DEFAULT_FIELDS, meta.getId());
+    Assert.assertEquals(TEST_DEFAULT_FIELDS, meta.getDisplayName());
     Assert.assertEquals("", meta.getDescription());
 
     // cleanup
     namespaceClient.delete(TEST_NAMESPACE_ID);
-    namespaceClient.delete(NO_DISPLAY_NAME);
-    namespaceClient.delete(NO_DESCRIPTION);
+    namespaceClient.delete(TEST_DEFAULT_FIELDS);
+
+    Assert.assertEquals(0, namespaceClient.list().size());
   }
 
   private void verifyDoesNotExist(String namespaceId)

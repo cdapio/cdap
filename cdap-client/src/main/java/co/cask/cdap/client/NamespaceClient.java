@@ -41,10 +41,10 @@ import javax.inject.Inject;
  * Client to interact with CDAP namespaces
  */
 public class NamespaceClient {
+  private static final String NAMESPACE_ENTITY_TYPE = "namespace";
+
   private final RESTClient restClient;
   private final ClientConfig config;
-
-  private static final String NAMESPACE_ENTITY_TYPE = "namespace";
 
   @Inject
   public NamespaceClient(ClientConfig config) {
@@ -53,7 +53,7 @@ public class NamespaceClient {
   }
 
   /**
-   * Lists all namespaces in CDAP.
+   * Lists all namespaces.
    *
    * @return a list of {@link NamespaceMeta} for each namespace in CDAP.
    * @throws IOException if a network error occurred
@@ -137,7 +137,8 @@ public class NamespaceClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException("Bad request: " + responseBody);
     }
-    if (responseBody != null && responseBody.contains("already exists")) {
+    if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
+                                                                  namespaceMeta.getId()))) {
       throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
     }
   }
