@@ -37,7 +37,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,12 +44,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handler that implements explore metadata APIs.
@@ -69,13 +67,10 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/tables")
-  public void getTables(HttpRequest request, HttpResponder responder) {
+  public void getTables(HttpRequest request, HttpResponder responder, @QueryParam("db") String databaseName) {
     LOG.trace("Received get tables for current user");
-    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-    List<String> databaseNames = queryParams.get("db");
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(
-        (databaseNames != null && !databaseNames.isEmpty()) ? databaseNames.get(0) : null));
+      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(databaseName));
     } catch (ExploreException e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

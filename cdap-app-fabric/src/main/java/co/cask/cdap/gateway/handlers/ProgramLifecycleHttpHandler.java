@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -53,6 +54,7 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ServiceInstances;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -362,7 +364,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
-      String specification = getProgramSpecification(id, type);
+      String specification = programSpecificationToString(id, type);
       if (specification == null || specification.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -911,6 +913,113 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Return the number of instances for the given runnable of a service.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
+  public void getServiceInstances(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId,
+                           @PathParam("app-id") String appId,
+                           @PathParam("service-id") String serviceId,
+                           @PathParam("runnable-name") String runnableName) {
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
+      if (!store.programExists(programId, ProgramType.SERVICE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
+      ServiceSpecification specification = (ServiceSpecification) getProgramSpecification(programId,
+                                                                                          ProgramType.SERVICE);
+      if (specification == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      // If the runnable name is the same as the service name, then uses the service spec, otherwise use the worker spec
+      int instances;
+      if (specification.getName().equals(runnableName)) {
+        instances = specification.getInstances();
+      } else {
+        ServiceWorkerSpecification workerSpec = specification.getWorkers().get(runnableName);
+        if (workerSpec == null) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          return;
+        }
+        instances = workerSpec.getInstances();
+      }
+
+      responder.sendJson(HttpResponseStatus.OK,
+                         new ServiceInstances(instances, getRunnableCount(namespaceId, appId, ProgramType.SERVICE,
+                                                                          serviceId, runnableName)));
+
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Set instances.
+   */
+  @PUT
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
+  public void setServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId,
+                                  @PathParam("runnable-name") String runnableName) {
+
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
+      if (!store.programExists(programId, ProgramType.SERVICE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
+      int instances = getInstances(request);
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+
+      // If the runnable name is the same as the service name, it's setting the service instances
+      // TODO: This REST API is bad, need to update (CDAP-388)
+      int oldInstances = (runnableName.equals(serviceId)) ? store.getServiceInstances(programId)
+        : store.getServiceWorkerInstances(programId, runnableName);
+      if (oldInstances != instances) {
+        if (runnableName.equals(serviceId)) {
+          store.setServiceInstances(programId, instances);
+        } else {
+          store.setServiceWorkerInstances(programId, runnableName, instances);
+        }
+
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                        programId.getApplicationId(),
+                                                                        programId.getId(),
+                                                                        ProgramType.SERVICE, runtimeService);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                              ImmutableMap.of("runnable", runnableName,
+                                                              "newInstances", String.valueOf(instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable throwable) {
+      if (respondIfElementNotFound(throwable, responder)) {
+        return;
+      }
+      LOG.error("Got exception : ", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
 
   /**
    * Populates requested and provisioned instances for a program type.
@@ -1082,7 +1191,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Temporary protected. Should become private when all v3 APIs have been implemented.
+   * 'protected' only to support v2 webapp APIs
    */
   protected ProgramStatus getProgramStatus(Id.Program id, ProgramType type) {
     try {
@@ -1091,7 +1200,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (runtimeInfo == null) {
         if (type != ProgramType.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
-          String spec = getProgramSpecification(id, type);
+          String spec = programSpecificationToString(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
@@ -1158,36 +1267,48 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Temporarily protected. Should become private when all v3 APIs have been implemented
+   * Returns {@link ProgramSpecification} as a JSON string if the program exists.
+   * If the program does not exist, it returns an empty string.
    */
-  protected String getProgramSpecification(Id.Program id, ProgramType type)
-    throws Exception {
+  private String programSpecificationToString(Id.Program id, ProgramType type) throws Exception {
+    ProgramSpecification programSpec = getProgramSpecification(id, type);
+    if (programSpec == null) {
+      return "";
+    }
+    return GSON.toJson(programSpec);
+  }
 
+  @Nullable
+  private ProgramSpecification getProgramSpecification(Id.Program id, ProgramType type) throws Exception {
     ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(id.getApplication());
       if (appSpec == null) {
-        return "";
+        return null;
       }
+
       String runnableId = id.getId();
+      ProgramSpecification programSpec;
       if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getFlows().get(id.getId()));
+        programSpec = appSpec.getFlows().get(id.getId());
       } else if (type == ProgramType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getProcedures().get(id.getId()));
+        programSpec = appSpec.getProcedures().get(id.getId());
       } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
+        programSpec = appSpec.getMapReduce().get(id.getId());
       } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getSpark().get(id.getId()));
+        programSpec = appSpec.getSpark().get(id.getId());
       } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
+        programSpec = appSpec.getWorkflows().get(id.getId());
       } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getServices().get(id.getId()));
+        programSpec = appSpec.getServices().get(id.getId());
+      } else {
+        programSpec = null;
       }
+      return programSpec;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
     }
-    return "";
   }
 
   /** NOTE: This was a temporary hack done to map the status to something that is
@@ -1591,8 +1712,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @return
    */
   private int getRunnableCount(String namespaceId, String appId, ProgramType programType,
-                               String programId, String runnableId) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, programId), programType);
+                               String programId, String runnableId) throws OperationException {
+    Id.Program id = Id.Program.from(namespaceId, appId, programId);
+    ProgramLiveInfo info = runtimeService.getLiveInfo(id, programType);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
@@ -1606,8 +1728,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
       return count;
     }
+    // TODO: CDAP-1091: For standalone mode, returning the requested instances instead of provisioned only for services.
+    // Doing this only for services to keep it consistent with the existing contract for flowlets right now.
+    // The get instances contract for both flowlets and services should be re-thought and fixed as part of CDAP-1091
+    if (programType == ProgramType.SERVICE) {
+      return getRequestedServiceInstances(id, runnableId);
+    }
+
     // Not running on YARN default 1
     return 1;
+  }
+
+  private int getRequestedServiceInstances(Id.Program serviceId, String runnableId) throws OperationException {
+    // Not running on YARN, get it from store
+    // If the runnable name is the same as the service name, get the instances from service spec.
+    // Otherwise get it from worker spec.
+    // TODO: This is due to the improper REST API design that treats everything in service as Runnable
+    if (runnableId.equals(serviceId.getId())) {
+      return store.getServiceInstances(serviceId);
+    } else {
+      return store.getServiceWorkerInstances(serviceId, runnableId);
+    }
   }
 
   private boolean isValidAction(String action) {
