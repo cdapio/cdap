@@ -1,30 +1,47 @@
 angular.module(PKG.name + '.services')
-  .service('myPrefStore', function myPrefStore($q, MyDataSource) {
 
-    this.preferences = {};
+  .factory('myUiPrefs', function (MyPrefStore) {
+    return new MyPrefStore('uisettings');
+  })
 
-    var self = this,
-        data = new MyDataSource(),
-        queryInProgress = null,
-        RESOURCE = {
-          _cdapNsPath: '/preferences'
-        };
+  .factory('myDashboardPrefs', function (MyPrefStore) {
+    return new MyPrefStore('dashboard');
+  })
+
+  .factory('MyPrefStore', function MyPrefStoreFactory($q, MyDataSource) {
+
+    var data = new MyDataSource();
+
+    function MyPrefStore (type) {
+      // the cdap path for this preference type
+      this.endpoint = '/preferences/'+type;
+
+      // our cache of the server-side data
+      this.preferences = {};
+
+      // flag so we dont fire off multiple similar queries
+      this.pending = null;
+    }
+
 
     /**
      * set a preference
      * @param {string} key
      * @param {mixed} value
-     * @return {promise} resolved with the value
+     * @return {promise} resolved with the response from server
      */
-    this.setPref = function (key, value) {
+    MyPrefStore.prototype.set = function (key, value) {
 
       var deferred = $q.defer();
 
+      this.preferences[key] = value;
+
       data.request(
-        angular.extend(
-          { method: 'PUT', body: value },
-          RESOURCE
-        ),
+        {
+          method: 'PUT',
+          _cdapPath: this.endpoint + '/properties/' + key,
+          body: value
+        },
         deferred.resolve
       );
 
@@ -38,36 +55,42 @@ angular.module(PKG.name + '.services')
      * @param {boolean} force true to bypass cache
      * @return {promise} resolved with the value
      */
-    this.getPref = function (key, force) {
+    MyPrefStore.prototype.get = function (key, force) {
       if (!force && this.preferences[key]) {
-          return $q.when(this.preferences[key]);
+        return $q.when(this.preferences[key]);
       }
 
-      if (queryInProgress) {
+      var self = this;
+
+      if (this.pending) {
         var deferred = $q.defer();
-        queryInProgress.promise.then(function () {
+        this.pending.promise.then(function () {
           deferred.resolve(self.preferences[key]);
         });
         return deferred.promise;
       }
 
-      queryInProgress = $q.defer();
+      this.pending = $q.defer();
 
       data.request(
-        angular.extend(
-          { method: 'GET' },
-          RESOURCE
-        ),
+        {
+          method: 'GET',
+          _cdapPath: this.endpoint
+        },
         function (res) {
           self.preferences = res;
-          queryInProgress.resolve(res[key]);
+          self.pending.resolve(res[key]);
         }
       );
 
-      queryInProgress.promise.finally(function () {
-        queryInProgress = null;
+      var promise = this.pending.promise;
+
+      promise.finally(function () {
+        self.pending = null;
       });
 
-      return queryInProgress.promise;
+      return promise;
     };
+
+    return MyPrefStore;
 });
