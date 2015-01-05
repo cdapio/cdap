@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -154,12 +154,14 @@ function build_all() {
   echo "Moving GitHub Docs."
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
+  bell
 }
 
 function build_docs() {
   build "docs"
   build_docs_outer_level
   build_zip $WEB
+  bell
 }
 
 function build_docs_javadocs() {
@@ -170,12 +172,14 @@ function build_docs_github() {
   build "build-github"
   build_docs_outer_level $GOOGLE_ANALYTICS_GITHUB
   build_zip $GITHUB
+  bell
 }
 
 function build_docs_web() {
   build "build-web"
   build_docs_outer_level $GOOGLE_ANALYTICS_WEB
   build_zip $WEB
+  bell
 }
 
 function build() {
@@ -216,6 +220,10 @@ function build_license_depends() {
 function print_version() {
   cd developers-manual
   ./build.sh version $ARG_2 $ARG_3
+}
+
+function bell() {
+  echo -e "\a"
 }
 
 set_project_path
