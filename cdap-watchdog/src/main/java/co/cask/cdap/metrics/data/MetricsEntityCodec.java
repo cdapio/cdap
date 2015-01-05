@@ -92,7 +92,9 @@ final class MetricsEntityCodec {
    * the remaining bytes would be padded by the given padding.
    * @param type Type of the entity.
    * @param entity Value of the entity.
-   * @param padding Padding byte to apply for padding.
+   * @param padding Padding byte to apply for padding. Eg: typically start rows use 0 padding and
+   *                end rows use '0xff' padding for getting metric-entity byte array,
+   *                the extra bytes in the end are filled with this padding value.
    * @return byte[] representing the given entity that may have padding at the end.
    */
   public byte[] paddedEncode(MetricsEntityType type, String entity, int padding) {
@@ -119,9 +121,8 @@ final class MetricsEntityCodec {
   }
 
   /**
-   * Encode with padding and return the rowkey. contextPrefix is passed as encoded byte-array while other
-   * parts are not encoded yet. The rowkey consists of the following params and we use
-   * the padding byte to apply for padding.
+   * The rowkey consists of the following params in that order,
+   * while padding parameter is used to apply padding during individual parameter encoding.
    * @param contextPrefix Context the metric belongs to.
    * @param metricPrefix  metric string
    * @param tagPrefix metric tag.
