@@ -80,13 +80,16 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testProperties() throws Exception {
-    String dash = createDashboard("newspace", "{'k1':'v1', 'k2':'v2'}", 200);
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("k1", "v1");
+    propMap.put("k2", "v2");
+    String dash = createDashboard("newspace", GSON.toJson(propMap), 200);
     Map<String, String> contents = getContents("newspace", dash, 200);
     Assert.assertEquals(2, contents.size());
     Assert.assertEquals("v1", contents.get("k1"));
     Assert.assertEquals("v2", contents.get("k2"));
 
-    Map<String, String> propMap = Maps.newHashMap();
+    propMap.clear();
     propMap.put("k2", "value2");
     propMap.put("k1", "value1");
     addProperty("newspace", dash, propMap, 200);
@@ -95,7 +98,9 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("value2", contents.get("k2"));
     Assert.assertEquals("value1", contents.get("k1"));
 
-    String anotherDash = createDashboard("newspace", "{'m1':'n1'}", 200);
+    propMap.clear();
+    propMap.put("m1", "n1");
+    String anotherDash = createDashboard("newspace", GSON.toJson(propMap), 200);
     contents = getContents("newspace", anotherDash, 200);
     Assert.assertEquals(1, contents.size());
     Assert.assertEquals("n1", contents.get("m1"));

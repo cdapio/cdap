@@ -18,11 +18,10 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -42,9 +41,8 @@ import javax.ws.rs.PathParam;
  * Dashboard HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
-public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
+public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
-  private static final Gson GSON = new Gson();
 
   //TODO: https://issues.cask.co/browse/CDAP-699 PersistenceStore will be used instead of inMemory implementation.
   private final Table<String, String, String> configStore;
@@ -60,7 +58,8 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
   public synchronized void create(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
     String dashboardId = UUID.randomUUID().toString();
-    configStore.put(namespace, dashboardId, GSON.toJson(decodeArguments(request)));
+    String body = request.getContent().toString(Charsets.UTF_8);
+    configStore.put(namespace, dashboardId, body);
     responder.sendString(HttpResponseStatus.OK, dashboardId);
   }
 
@@ -105,7 +104,8 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     if (!configStore.contains(namespace, id)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      configStore.put(namespace, id, GSON.toJson(decodeArguments(request)));
+      String body = request.getContent().toString(Charsets.UTF_8);
+      configStore.put(namespace, id, body);
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
