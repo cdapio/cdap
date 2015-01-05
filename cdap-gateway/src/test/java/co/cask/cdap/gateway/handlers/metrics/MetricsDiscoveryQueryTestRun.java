@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -121,9 +122,9 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMetricsContexts() throws Exception {
-    metricsResponseCheck("/v2/metrics/available/context", 2);
-    metricsResponseCheck("/v2/metrics/available/context/WordCount.f", 1);
-    metricsResponseCheck("/v2/metrics/available/context/WCount", 3);
+    metricsResponseCheck("/v2/metrics/available/context", 2, ImmutableList.<String>of("WCount", "WordCount"));
+    metricsResponseCheck("/v2/metrics/available/context/WordCount.f", 1, ImmutableList.<String>of("WordCounter"));
+    metricsResponseCheck("/v2/metrics/available/context/WCount", 3, ImmutableList.<String>of("b", "f", "p"));
 
     String base = "/v2/metrics/available/context/WCount.f";
     HttpResponse response = doGet(base);
@@ -137,12 +138,15 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   }
 
-  private void metricsResponseCheck(String url, int expected) throws Exception {
+  private void metricsResponseCheck(String url, int expected, List<String> expectedValues) throws Exception {
     HttpResponse response = doGet(url);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
     List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
     Assert.assertEquals(expected, reply.size());
+    for (int i = 0; i < expectedValues.size(); i++) {
+      Assert.assertEquals(expectedValues.get(i), reply.get(i));
+    }
   }
 
   @Test

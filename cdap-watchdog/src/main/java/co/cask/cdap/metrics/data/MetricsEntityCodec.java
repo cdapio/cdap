@@ -120,14 +120,15 @@ final class MetricsEntityCodec {
 
   /**
    * Encode with padding and return the rowkey. contextPrefix is passed as encoded byte-array while other
-   * parts are not encoded yet.
-   * @param contextPrefix
-   * @param metricPrefix
-   * @param tagPrefix
-   * @param timeBase
-   * @param runId
-   * @param padding
-   * @return
+   * parts are not encoded yet. The rowkey consists of the following params and we use
+   * the padding byte to apply for padding.
+   * @param contextPrefix Context the metric belongs to.
+   * @param metricPrefix  metric string
+   * @param tagPrefix metric tag.
+   * @param timeBase timeBase.
+   * @param runId runId if the metric belongs to a program.
+   * @param padding Padding byte to apply for padding.
+   * @return byte[] representing the rowkey that may have padding for each part.
    */
   public byte[] paddedEncode(String contextPrefix,  String metricPrefix, String tagPrefix,
                              int timeBase, String runId, int padding) {
