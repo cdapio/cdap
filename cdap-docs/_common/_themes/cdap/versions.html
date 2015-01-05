@@ -13,38 +13,40 @@
 #}
   <div role="note" aria-label="versions links">
   <script type="text/javascript">
-    var this_version = "{{ release }}";
-    var writelink = (function(dir, title, label){
-      var style_o = '';
-      var style_c = '';
-      if (dir == this_version) {
-        style_o = '<b>';
-        style_c = '</b>';
-      }
-      document.write('<li>' + style_o + '<a href="http://docs.cask.co/cdap/' + dir + '/index.html"' + 
-                     'rel="nofollow" title="' + title + '">' + label + '</a>' + style_c + '</li>');
-    })
-    window.versionscallback = (function(data){
-      if (data) {
-        document.write('<h3>Versions</h3>');
-        document.write('<ul class="this-page-menu">');
-      }
-//     if (data.development) {
-//       writelink(data.development, "Development Version", "CDAP Version " + data.development);
-//     }
-      if (data.current) {
-        writelink("current", "Current CDAP Release", "CDAP Version " + data.current);
-      }
-      if (data.versions) {
-        var i;
-        for (i in data.versions) {
-          writelink(data.versions[i], "", "CDAP Version " + data.versions[i]);
+  (function() {
+      var this_version = "{{ release }}";
+      var writelink = (function(dir, title, label){
+        var style_o = '';
+        var style_c = '';
+        if (dir == this_version) {
+          style_o = '<b>';
+          style_c = '</b>';
         }
-      }
-      if (data) {
-        document.write('</ul>');
-      }
-    })
+        document.write('<li>' + style_o + '<a href="http://docs.cask.co/cdap/' + dir + '/index.html"' + 
+                       'rel="nofollow" title="' + title + '">' + label + '</a>' + style_c + '</li>');
+      });
+      window.versionscallback = (function(data){
+        if (data) {
+          document.write('<h3>Versions</h3>');
+          document.write('<ul class="this-page-menu">');
+        }
+  //     if (data.development) {
+  //       writelink(data.development, "Development Version", "CDAP Version " + data.development);
+  //     }
+        if (data.current) {
+          writelink("current", "Current CDAP Release", "CDAP Version " + data.current);
+        }
+        if (data.versions) {
+          var i;
+          for (i in data.versions) {
+            writelink(data.versions[i], "", "CDAP Version " + data.versions[i]);
+          }
+        }
+        if (data) {
+          document.write('</ul>');
+        }
+      });
+    })();
   </script>
   <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
   </div>
