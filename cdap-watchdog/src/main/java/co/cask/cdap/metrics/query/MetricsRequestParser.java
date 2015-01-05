@@ -50,6 +50,7 @@ final class MetricsRequestParser {
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
   private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
+  private static final String AUTO_RESOLUTION = "auto";
 
   public enum PathType {
     APPS,
@@ -388,6 +389,10 @@ final class MetricsRequestParser {
     return queryParams.containsKey(COUNT) || queryParams.containsKey(START_TIME) || queryParams.containsKey(END_TIME);
   }
 
+  private static boolean isAutoResolution(Map<String, List<String>> queryParams) {
+    return queryParams.get(RESOLUTION).get(0).equals(AUTO_RESOLUTION);
+  }
+
   private static void parseTimeseries(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
     int count;
     long startTime;
@@ -395,7 +400,7 @@ final class MetricsRequestParser {
     int resolution = 1;
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 
-    if (queryParams.containsKey(RESOLUTION) && !queryParams.get(RESOLUTION).get(0).equals("auto")) {
+    if (queryParams.containsKey(RESOLUTION) && !isAutoResolution(queryParams)) {
       resolution = TimeMathParser.resolutionInSeconds(queryParams.get(RESOLUTION).get(0));
       if ((resolution == 3600) || (resolution == 60) || (resolution == 1)) {
         builder.setTimeSeriesResolution(resolution);
@@ -412,11 +417,11 @@ final class MetricsRequestParser {
       startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
       endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
       if (queryParams.containsKey(RESOLUTION)) {
-        if (queryParams.get(RESOLUTION).get(0).equals("auto")) {
-          //auto determine resolution, based on time difference.
+        if (isAutoResolution(queryParams)) {
+          // auto determine resolution, based on time difference.
           MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
-          builder.setTimeSeriesResolution(autoResolution.getResolution());
           resolution = autoResolution.getResolution();
+          builder.setTimeSeriesResolution(resolution);
         }
       } else {
         builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND.getResolution());
