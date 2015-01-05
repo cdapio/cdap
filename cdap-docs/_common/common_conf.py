@@ -29,6 +29,7 @@
 import sys
 import os
 import subprocess
+from datetime import datetime
 
 def get_sdk_version():
     # Sets the Build Version
@@ -90,7 +91,7 @@ master_doc = 'table-of-contents'
 
 # General information about the project.
 project = u'Cask Data Application Platform'
-copyright = u'2014 Cask Data, Inc.'
+copyright = u'2014-%s Cask Data, Inc.' % datetime.now().year
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
