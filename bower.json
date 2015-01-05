@@ -20,6 +20,7 @@
     "cask-angular-sortable": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-sortable.zip?raw=true",
     "cask-angular-confirmable": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-confirmable.zip?raw=true",
     "cask-angular-promptable": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-promptable.zip?raw=true",
+    "cask-angular-json-edit": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-json-edit.zip?raw=true",
     "sockjs-client": "~0.3.4",
     "d3": "~3.4.13",
     "epoch": "~0.6.0",
