@@ -25,36 +25,36 @@ public interface ConfigStore {
 
   /**
    * Create a Configuration.
-   * @param namespace Namespace.
-   * @param type Configuration Type.
-   * @param config Configuration Object.
+   * @param namespace namespace
+   * @param type configuration type
+   * @param config configuration object
    * @throws Exception
    */
   void create(String namespace, String type, Config config) throws Exception;
 
   /**
    * Delete a Configuration.
-   * @param namespace Namespace.
-   * @param type Configuration Type.
-   * @param id Name of the Configuration.
+   * @param namespace namespace
+   * @param type configuration type
+   * @param id name of the configuration
    * @throws Exception
    */
   void delete(String namespace, String type, String id) throws Exception;
 
   /**
    * List all Configurations which are of a specific type.
-   * @param namespace Namespace.
-   * @param type Configuration Type.
-   * @return List of {@link Config} objects.
+   * @param namespace namespace
+   * @param type configuration type
+   * @return list of {@link Config} objects
    * @throws Exception
    */
   List<Config> list(String namespace, String type) throws Exception;
 
   /**
    * Read a Configuration.
-   * @param namespace Namespace.
-   * @param type Configuration Type.
-   * @param id Name of the Configuration.
+   * @param namespace namespace
+   * @param type configuration type
+   * @param id name of the configuration
    * @return {@link Config}
    * @throws Exception
    */
@@ -62,8 +62,8 @@ public interface ConfigStore {
 
   /**
    * Update a Configuration.
-   * @param namespace Namespace.
-   * @param type Configuration Type.
+   * @param namespace namespace
+   * @param type configuration type
    * @param config {@link Config}
    * @throws Exception
    */
