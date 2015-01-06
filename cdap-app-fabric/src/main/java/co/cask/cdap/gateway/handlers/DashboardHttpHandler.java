@@ -19,21 +19,20 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.DELETE;
@@ -51,7 +50,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
 
   //TODO: https://issues.cask.co/browse/CDAP-699 PersistenceStore will be used instead of inMemory implementation.
-  private final Table<String, String, byte[]> configStore;
+  private final Table<String, String, String> configStore;
 
   @Inject
   public DashboardHttpHandler(Authenticator authenticator) {
@@ -71,7 +70,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
     Map<String, String> jsonMap = Maps.newHashMap();
     String dashboardId = UUID.randomUUID().toString();
-    configStore.put(namespace, dashboardId, request.getContent().array());
+    configStore.put(namespace, dashboardId, data);
     jsonMap.put("id", dashboardId);
     responder.sendJson(HttpResponseStatus.OK, jsonMap);
   }
@@ -80,15 +79,15 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   @GET
   public synchronized void list(final HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
-    List<Map<String, byte[]>> dashList = Lists.newArrayList();
-    Map<String, byte[]> row = configStore.row(namespace);
-    for (Map.Entry<String, byte[]> dash : row.entrySet()) {
-      Map<String, byte[]> dashEntry = Maps.newHashMap();
-      dashEntry.put("id", dash.getKey().getBytes());
-      dashEntry.put("config", dash.getValue());
-      dashList.add(dashEntry);
+    JsonArray jsonArray = new JsonArray();
+    Map<String, String> row = configStore.row(namespace);
+    for (Map.Entry<String, String> dash : row.entrySet()) {
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("id", dash.getKey());
+      jsonObject.add("config", new JsonParser().parse(dash.getValue()));
+      jsonArray.add(jsonObject);
     }
-    responder.sendJson(HttpResponseStatus.OK, dashList);
+    responder.sendJson(HttpResponseStatus.OK, jsonArray);
   }
 
   @Path("/{dashboard-id}")
@@ -112,10 +111,10 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
     if (!configStore.contains(namespace, id)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      Map<String, byte[]> dashboard = Maps.newHashMap();
-      dashboard.put("id", id.getBytes());
-      dashboard.put("config", configStore.get(namespace, id));
-      responder.sendJson(HttpResponseStatus.OK, dashboard);
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("id", id);
+      jsonObject.add("config", new JsonParser().parse(configStore.get(namespace, id)));
+      responder.sendJson(HttpResponseStatus.OK, jsonObject);
     }
   }
 
@@ -133,20 +132,16 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
         return;
       }
 
-      configStore.put(namespace, id, request.getContent().array());
+      configStore.put(namespace, id, data);
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
 
   private boolean isValidJSON(String json) {
     try {
-      new JSONObject(json);
-    } catch (JSONException ex) {
-      try {
-        new JSONArray(json);
-      } catch (JSONException ex1) {
-        return false;
-      }
+      new JsonParser().parse(json);
+    } catch (JsonSyntaxException ex) {
+      return false;
     }
     return true;
   }
