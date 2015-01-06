@@ -178,8 +178,8 @@ public final class TimeSeriesTable {
     int endTimeBase = getTimeBase(query.getEndTime());
     byte[][] columns = null;
     String tagPrefix = query.getTagPrefix();
-    int contextOffset = 0 , contextLength = 0;
-    int metricsOffset = 0, metricsLength = 0;
+    int contextOffset = -1, contextLength = -1;
+    int metricsOffset = -1, metricsLength = -1;
     if (tagPrefix == null) {
       tagPrefix = MetricsConstants.EMPTY_TAG;
     }

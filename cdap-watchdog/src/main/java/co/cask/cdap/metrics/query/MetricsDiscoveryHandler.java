@@ -64,7 +64,9 @@ import javax.ws.rs.QueryParam;
 public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
-  private static final int HOUR_RESOLUTION = 3600;
+  // NOTE: Hour is the lowest resolution and also has the highest TTL compared to minute and second resolutions.
+  // highest TTL ensures, this is good for querying all available metrics and also has fewer rows of data points.
+  private static final int LOWEST_RESOLUTION = 3600;
 
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
   private final Supplier<Map<MetricsScope, TimeSeriesTable>> timeSeriesTables;
@@ -144,7 +146,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
         Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
-        for (final MetricsScope scope : MetricsScope.values()) {
+        for (MetricsScope scope : MetricsScope.values()) {
           map.put(scope, metricsTableFactory.createAggregates(scope.name()));
         }
         return map;
@@ -155,8 +157,8 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       @Override
       public Map<MetricsScope, TimeSeriesTable> get() {
         Map<MetricsScope, TimeSeriesTable> map = Maps.newHashMap();
-        for (final MetricsScope scope : MetricsScope.values()) {
-          map.put(scope, metricsTableFactory.createTimeSeries(scope.name(), HOUR_RESOLUTION));
+        for (MetricsScope scope : MetricsScope.values()) {
+          map.put(scope, metricsTableFactory.createTimeSeries(scope.name(), LOWEST_RESOLUTION));
         }
         return map;
       }

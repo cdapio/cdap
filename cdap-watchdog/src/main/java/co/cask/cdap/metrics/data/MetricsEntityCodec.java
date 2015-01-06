@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Class for encode/decode metric entities (context, metric and tag).
@@ -91,9 +92,8 @@ final class MetricsEntityCodec {
    * The entity string is split by {@link java.util.regex.Pattern}ENTITY_SPLITTER
    * and return the length of this split array.
    */
-  public int getEntityPartsLength(String entity) {
-    String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity);
-    return entityParts.length;
+  public int getEntityPartsLength(@Nullable String entity) {
+    return entity == null ? 0 : ENTITY_SPLITTER.split(entity).length;
   }
 
   /**
