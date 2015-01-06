@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.exception.NotFoundException;
@@ -51,9 +52,10 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
   @Override
   public int complete(String buffer, int cursor, List<CharSequence> candidates) {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
-    String[] programId = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
-    if (programId != null) {
-      completer.setEndpoints(getEndpoints(programId[0], programId[1], arguments.get(METHOD)));
+    ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
+    if (programIdArgument != null) {
+      completer.setEndpoints(getEndpoints(programIdArgument.getAppId(), programIdArgument.getProgramId(),
+                                          arguments.get(METHOD)));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
     }

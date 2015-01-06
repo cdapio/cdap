@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.util;
 
+import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.common.cli.util.Parser;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -37,12 +38,11 @@ public class ArgumentParser {
 
   /**
    * Parses program id from user input.
-   * For example, HelloWorld.Greeting will be parsed to [HelloWorld, Greeting].
    *
    * @param programId the program id
-   * @return split id
+   * @return ProgramIdArgument
    */
-  public static String[] parseProgramId(String programId) {
+  public static ProgramIdArgument parseProgramId(String programId) {
     if (programId == null) {
       return null;
     }
@@ -50,7 +50,7 @@ public class ArgumentParser {
     if (split.length != 2) {
       return null;
     }
-    return split;
+    return new ProgramIdArgument(split[0], split[1]);
   }
 
   /**
