@@ -28,27 +28,26 @@ public interface ConfigStore {
    * @param namespace namespace
    * @param type configuration type
    * @param config configuration object
-   * @throws Exception
+   * @throws ConfigExistsException if configuration to be created already exists
    */
-  void create(String namespace, String type, Config config) throws Exception;
+  void create(String namespace, String type, Config config) throws ConfigExistsException;
 
   /**
    * Delete a Configuration.
    * @param namespace namespace
    * @param type configuration type
    * @param id name of the configuration
-   * @throws Exception
+   * @throws ConfigNotFoundException if configuration is not found
    */
-  void delete(String namespace, String type, String id) throws Exception;
+  void delete(String namespace, String type, String id) throws ConfigNotFoundException;
 
   /**
    * List all Configurations which are of a specific type.
    * @param namespace namespace
    * @param type configuration type
    * @return list of {@link Config} objects
-   * @throws Exception
    */
-  List<Config> list(String namespace, String type) throws Exception;
+  List<Config> list(String namespace, String type);
 
   /**
    * Read a Configuration.
@@ -56,16 +55,16 @@ public interface ConfigStore {
    * @param type configuration type
    * @param id name of the configuration
    * @return {@link Config}
-   * @throws Exception
+   * @throws ConfigNotFoundException if configuration is not found
    */
-  Config get(String namespace, String type, String id) throws Exception;
+  Config get(String namespace, String type, String id) throws ConfigNotFoundException;
 
   /**
    * Update a Configuration.
    * @param namespace namespace
    * @param type configuration type
    * @param config {@link Config}
-   * @throws Exception
+   * @throws ConfigNotFoundException if configuration is not found
    */
-  void update(String namespace, String type, Config config) throws Exception;
+  void update(String namespace, String type, Config config) throws ConfigNotFoundException;
 }

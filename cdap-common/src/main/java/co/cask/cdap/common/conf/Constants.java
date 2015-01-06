@@ -134,6 +134,7 @@ public final class Constants {
    */
   public static final class ConfigStore {
     public static final String CONFIG_TABLE = "config.store.table";
+    public static final Byte VERSION = 0;
   }
 
   /**

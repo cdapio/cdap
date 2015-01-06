@@ -27,6 +27,7 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.tephra.TransactionExecutor;
@@ -41,6 +42,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
@@ -76,37 +78,49 @@ public class DefaultConfigStore implements ConfigStore {
     });
   }
 
+  public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
+    dsFramework.addInstance(Table.class.getName(), Constants.ConfigStore.CONFIG_TABLE, DatasetProperties.EMPTY);
+  }
+
   @Override
-  public void create(final String namespace, final String type, final Config config) throws Exception {
-    txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Void>() {
+  public void create(final String namespace, final String type, final Config config) throws ConfigExistsException {
+    Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override
-      public Void apply(ConfigTable configTable) throws Exception {
+      public Boolean apply(ConfigTable configTable) throws Exception {
         if (configTable.table.get(rowKey(namespace, type), Bytes.toBytes(config.getId())) != null) {
-          throw new ConfigExistsException(namespace, type, config.getId());
+          return false;
         }
         configTable.table.put(rowKey(namespace, type), Bytes.toBytes(config.getId()),
                               Bytes.toBytes(GSON.toJson(config.getProperties())));
-        return null;
+        return true;
       }
     });
+
+    if (!success) {
+      throw new ConfigExistsException(namespace, type, config.getId());
+    }
   }
 
   @Override
-  public void delete(final String namespace, final String type, final String id) throws Exception {
-    txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Void>() {
+  public void delete(final String namespace, final String type, final String id) throws ConfigNotFoundException {
+    Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override
-      public Void apply(ConfigTable configTable) throws Exception {
+      public Boolean apply(ConfigTable configTable) throws Exception {
         if (configTable.table.get(rowKey(namespace, type), Bytes.toBytes(id)) == null) {
-          throw new ConfigNotFoundException(namespace, type, id);
+          return false;
         }
         configTable.table.delete(rowKey(namespace, type), Bytes.toBytes(id));
-        return null;
+        return true;
       }
     });
+
+    if (!success) {
+      throw new ConfigNotFoundException(namespace, type, id);
+    }
   }
 
   @Override
-  public List<Config> list(final String namespace, final String type) throws Exception {
+  public List<Config> list(final String namespace, final String type) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, List<Config>>() {
       @Override
       public List<Config> apply(ConfigTable configTable) throws Exception {
@@ -122,37 +136,49 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   @Override
-  public Config get(final String namespace, final String type, final String id) throws Exception {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Config>() {
+  public Config get(final String namespace, final String type, final String id) throws ConfigNotFoundException {
+    Config config = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Config>() {
       @Override
       public Config apply(ConfigTable configTable) throws Exception {
         if (configTable.table.get(rowKey(namespace, type), Bytes.toBytes(id)) == null) {
-          throw new ConfigNotFoundException(namespace, type, id);
+          return null;
         }
         byte[] prop = configTable.table.get(rowKey(namespace, type), Bytes.toBytes(id));
         Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(prop), MAP_STRING_STRING_TYPE);
         return new Config(id, propertyMap);
       }
     });
+
+    if (config == null) {
+      throw new ConfigNotFoundException(namespace, type, id);
+    } else {
+      return config;
+    }
   }
 
   @Override
-  public void update(final String namespace, final String type, final Config config) throws Exception {
-    txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Void>() {
+  public void update(final String namespace, final String type, final Config config) throws ConfigNotFoundException {
+    Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override
-      public Void apply(ConfigTable configTable) throws Exception {
+      public Boolean apply(ConfigTable configTable) throws Exception {
         if (configTable.table.get(rowKey(namespace, type), Bytes.toBytes(config.getId())) == null) {
-          throw new ConfigNotFoundException(namespace, type, config.getId());
+          return false;
         }
         configTable.table.put(rowKey(namespace, type), Bytes.toBytes(config.getId()),
                               Bytes.toBytes(GSON.toJson(config.getProperties())));
-        return null;
+        return true;
       }
     });
+
+    if (!success) {
+      throw new ConfigNotFoundException(namespace, type, config.getId());
+    }
   }
 
   private String rowKeyString(String namespace, String type) {
-    return String.format("%s.%s", namespace, type);
+    int nsSize = namespace.length();
+    int typeSize = type.length();
+    return String.format("%b%d%s%d%s", Constants.ConfigStore.VERSION, nsSize, namespace, typeSize, type);
   }
 
   private byte[] rowKey(String namespace, String type) {

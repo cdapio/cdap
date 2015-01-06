@@ -53,4 +53,57 @@ public class ConfigStoreTest extends AppFabricTestBase {
     configList = configStore.list(namespace, type);
     Assert.assertEquals(0, configList.size());
   }
+
+  @Test(expected = ConfigExistsException.class)
+  public void testDuplicateConfig() throws Exception {
+    String namespace = "space";
+    String type = "user";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    Config myConfig = new Config("abcd", ImmutableMap.<String, String>of());
+    configStore.create(namespace, type, myConfig);
+    Assert.assertEquals(1, configStore.list(namespace, type).size());
+    configStore.create(namespace, type, myConfig);
+  }
+
+  @Test(expected = ConfigNotFoundException.class)
+  public void testDeleteUnknownConfig() throws Exception {
+    String namespace = "newspace";
+    String type = "prefs";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    configStore.delete(namespace, type, "someid");
+  }
+
+  @Test(expected = ConfigNotFoundException.class)
+  public void testGetUnknownConfig() throws Exception {
+    String namespace = "newspace";
+    String type = "prefs";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    configStore.get(namespace, type, "someid");
+  }
+
+  @Test(expected = ConfigNotFoundException.class)
+  public void testUpdateUnknownConfig() throws Exception {
+    String namespace = "newspace";
+    String type = "prefs";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    Config myConfig = new Config("abcd", ImmutableMap.<String, String>of());
+    configStore.update(namespace, type, myConfig);
+  }
+
+  @Test
+  public void testRandomData() throws Exception {
+    String namespace = "somesp@#ace123!@";
+    String type = "s231!@#";
+    String id = "kj324";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    Map<String, String> prop = Maps.newHashMap();
+    prop.put("j342", "9834@#($");
+    prop.put("123jsd123@#", "????213");
+    Config myConfig = new Config(id, prop);
+    configStore.create(namespace, type, myConfig);
+    Assert.assertEquals(1, configStore.list(namespace, type).size());
+    Assert.assertEquals(myConfig, configStore.get(namespace, type, id));
+    configStore.delete(namespace, type, id);
+    Assert.assertEquals(0, configStore.list(namespace, type).size());
+  }
 }

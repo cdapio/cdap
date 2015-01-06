@@ -26,9 +26,14 @@ import java.util.Map;
  * Configuration Class that holds an Id and properties as a Map.
  */
 public final class Config {
-  private String id;
-  private Map<String, String> properties;
+  private final String id;
+  private final Map<String, String> properties;
 
+  /**
+   * Constructor for Config Class.
+   * @param name name of the configuration
+   * @param properties map of properties
+   */
   public Config(String name, Map<String, String> properties) {
     Preconditions.checkNotNull(name);
     Preconditions.checkNotNull(properties);
