@@ -9,12 +9,7 @@ angular.module(PKG.name + '.commons')
           $scope.namespaces = list;
         });
     });
-    $scope.getDisplayName = function(id) {
-      var ns = $scope.namespaces.filter(function(namespace) {
-        return namespace.id === id;
-      });
-      return ns[0].displayName;
-    };
+    $scope.getDisplayName = myNamespace.getDisplayName.bind(myNamespace);
 
     $scope.$on (MYAUTH_EVENT.logoutSuccess, function (event) {
       $scope.namespaces = [];
