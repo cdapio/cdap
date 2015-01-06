@@ -64,7 +64,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
                                   @PathParam("namespace-id") String namespace) throws Exception {
     String data = request.getContent().toString(Charsets.UTF_8);
     if (!data.equals("") && !isValidJSON(data)) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json");
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
       return;
     }
 
@@ -128,7 +128,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
     } else {
       String data = request.getContent().toString(Charsets.UTF_8);
       if (!isValidJSON(data)) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json");
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
         return;
       }
 
