@@ -119,10 +119,10 @@ function (Widget, MyDataSource, $log) {
           _cdapNsPath: API_PATH,
           body: body
         },
-        angular.bind(this, function (result) {
+        (function (result) {
           // FIXME: result format in flux
           this.id = result.id || result;
-        })
+        }).bind(this)
       );
     }
   };
@@ -132,28 +132,30 @@ function (Widget, MyDataSource, $log) {
 
 
   function Model () {
-    this.data = [];
-    this.data.activeIndex = 0;
+    var data = [];
+    data.activeIndex = 0;
+
+    this.data = data;
 
     dSrc.request(
       {
         method: 'GET',
         _cdapNsPath: API_PATH
       },
-      angular.bind(this, function (result) {
+      function (result) {
 
         $log.log('dashboard model', result);
 
         angular.forEach(result, function (v, k) {
 
-          // FIXME: API should not returned nested strings of JSON!
+          // FIXME: API should not return nested strings of JSON!
           var properties = JSON.parse(v);
           properties.id = k;
 
-          this.push(new Dashboard(properties));
+          data.push(new Dashboard(properties));
 
-        }, this.data);
-      })
+        });
+      }
     );
 
   }
