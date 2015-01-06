@@ -3,7 +3,7 @@
 var _ = require('lodash'),
     request = require('request'),
     colors = require('colors/safe'),
-    HashTable = require('./hashtable.js');
+    HashTable = require('object-hash').HashTable;
 
 
 var POLL_INTERVAL = 1000;
