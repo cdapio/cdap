@@ -149,7 +149,7 @@ final class MetricsEntityCodec {
     byte[] result = new byte[idSize * totalDepth + sizeOfTimeBase];
     int offset = 0;
     paddedEncode(MetricsEntityType.CONTEXT, contextPrefix, padding, result, offset);
-    offset += idSize * getDepth(MetricsEntityType.METRIC);
+    offset += idSize * getDepth(MetricsEntityType.CONTEXT);
     paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding, result, offset);
     offset += idSize * getDepth(MetricsEntityType.METRIC);
     paddedEncode(MetricsEntityType.TAG, tagPrefix, padding, result, offset);

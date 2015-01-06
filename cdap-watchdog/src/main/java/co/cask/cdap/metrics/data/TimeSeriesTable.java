@@ -281,10 +281,20 @@ public final class TimeSeriesTable {
       return null;
     }
     // next row-key
-    return  Bytes.concat(Bytes.head(rowKey, offset), stopKey,
-                         Bytes.tail(rowKey, rowKey.length - (offset + length)));
+    byte[] nextRow = new byte[rowKey.length];
+
+    copyByteArray(rowKey, nextRow, 0, 0 , offset);
+    copyByteArray(stopKey, nextRow, 0, offset , stopKey.length);
+    copyByteArray(rowKey, nextRow, offset + stopKey.length, offset + stopKey.length,
+                  rowKey.length - (offset + stopKey.length));
+    return nextRow;
   }
 
+  private void copyByteArray(byte[] source, byte[] destination, int sourceOffset, int destinationOffset, int length) {
+    for (int i = 0; i < length; i++) {
+      destination[destinationOffset + i] = source[sourceOffset + i];
+    }
+  }
   public MetricsScanner scanAllTags(MetricsScanQuery query) throws OperationException {
     return scanFor(query, true);
   }
@@ -577,7 +587,7 @@ public final class TimeSeriesTable {
     int endTimeBase = getTimeBase(query.getEndTime());
 
     byte[][] columns = null;
-    if ((startTimeBase == endTimeBase) && (startTimeBase != -1)) {
+    if (startTimeBase == endTimeBase) {
       // If on the same timebase, we only need subset of columns
       int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
       int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
