@@ -133,7 +133,8 @@ public class ArgumentParser {
    * @return cutted input
    */
   private static String cutNotFullyEnteredToken(String input) {
-    return input.substring(0, input.lastIndexOf(" "));
+    int index = input.lastIndexOf(" ");
+    return input.substring(0, index == -1 ? input.length() : index);
   }
 
   /**
