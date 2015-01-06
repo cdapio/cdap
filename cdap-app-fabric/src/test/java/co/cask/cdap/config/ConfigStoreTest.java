@@ -54,6 +54,32 @@ public class ConfigStoreTest extends AppFabricTestBase {
     Assert.assertEquals(0, configList.size());
   }
 
+  @Test
+  public void testMultipleConfigs() throws Exception {
+    String ns1 = "space1";
+    String ns2 = "space2";
+    String type = "type";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    Config config1 = new Config("config1", ImmutableMap.<String, String>of());
+    Config config2 = new Config("config2", ImmutableMap.<String, String>of());
+    Config config3 = new Config("config3", ImmutableMap.<String, String>of());
+    configStore.create(ns1, type, config1);
+    configStore.create(ns1, type, config2);
+    configStore.create(ns2, type, config3);
+    Assert.assertEquals(2, configStore.list(ns1, type).size());
+    Assert.assertTrue(configStore.list(ns1, type).contains(config1));
+    Assert.assertTrue(configStore.list(ns1, type).contains(config2));
+    Assert.assertEquals(1, configStore.list(ns2, type).size());
+    Assert.assertTrue(configStore.list(ns2, type).contains(config3));
+    configStore.delete(ns1, type, config1.getId());
+    configStore.delete(ns1, type, config2.getId());
+    Assert.assertEquals(0, configStore.list(ns1, type).size());
+    Assert.assertEquals(1, configStore.list(ns2, type).size());
+    Assert.assertTrue(configStore.list(ns2, type).contains(config3));
+    configStore.delete(ns2, type, config3.getId());
+    Assert.assertEquals(0, configStore.list(ns2, type).size());
+  }
+
   @Test(expected = ConfigExistsException.class)
   public void testDuplicateConfig() throws Exception {
     String namespace = "space";
