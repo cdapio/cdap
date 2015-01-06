@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
 .. _appendix-cdap-site.xml:
 
@@ -41,7 +41,7 @@ see the :ref:`configuration-security` section.
    * - ``app.temp.dir``
      - ``/tmp``
      - Temp directory
-   * - ``cdap.site``
+   * - ``local.root.dir``
      - ``.``
      - Path to CDAP SDK root directory
    * - ``dashboard.bind.port``
