@@ -43,7 +43,7 @@ public final class StreamProperties {
   /**
    * @return The time to live in seconds for events in this stream.
    */
-  public long getTTL() {
+  public Long getTTL() {
     return ttl;
   }
 

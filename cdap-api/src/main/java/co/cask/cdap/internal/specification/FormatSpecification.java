@@ -31,6 +31,11 @@ public class FormatSpecification {
   private final Schema schema;
   private final Map<String, String> settings;
 
+  // for Gson deserialization
+  private FormatSpecification() {
+    this(null, null, Collections.<String, String>emptyMap());
+  }
+
   public FormatSpecification(String name, Schema schema, Map<String, String> settings) {
     this.name = name;
     this.schema = schema;
