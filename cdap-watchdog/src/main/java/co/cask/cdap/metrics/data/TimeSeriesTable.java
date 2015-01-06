@@ -174,37 +174,41 @@ public final class TimeSeriesTable {
   private List<String> getAvailableContextAndMetrics(MetricsScanQuery query, boolean isContextQuery)
     throws OperationException {
     List<String> metricsScanResults = Lists.newArrayList();
-    int startTimeBase = getTimeBase(query.getStartTime());
-    int endTimeBase = getTimeBase(query.getEndTime());
-    byte[][] columns = null;
-    String tagPrefix = query.getTagPrefix();
-    int contextOffset = -1, contextLength = -1;
-    int metricsOffset = -1, metricsLength = -1;
-    if (tagPrefix == null) {
-      tagPrefix = MetricsConstants.EMPTY_TAG;
-    }
+    int targetOffset = -1, length = -1;
+
 
     if (isContextQuery) {
       // initialize context-offset and length-of-context to obtain all available context's after
       // the given context-prefix.
-      String contextPrefix = query.getContextPrefix();
-      int entityParts = contextPrefix == null ? 0 : entityCodec.getEntityPartsLength(contextPrefix);
       int idSize = entityCodec.getIdSize();
-      contextOffset = idSize * entityParts;
-      contextLength = idSize;
+      targetOffset = idSize * entityCodec.getEntityPartsLength(query.getContextPrefix());
+      length = idSize;
     } else {
       // initialize metrics-offset and length of metrics entity type to obtain
       // all available metrics in the given context
-      metricsOffset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
-      metricsLength = entityCodec.getEncodedSize(MetricsEntityType.METRIC);
+      targetOffset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
+      length = entityCodec.getEncodedSize(MetricsEntityType.METRIC);
     }
 
-    byte[] startRow = entityCodec.paddedEncode(query.getContextPrefix(), query.getMetricPrefix(), tagPrefix,
-                                        startTimeBase, query.getRunId(), 0);
-    byte[] endRow = entityCodec.paddedEncode(query.getContextPrefix(), query.getMetricPrefix(), tagPrefix,
-                                      endTimeBase, query.getRunId(), 0xff);
+    byte[] startRow = entityCodec.paddedEncode(query.getContextPrefix(), query.getMetricPrefix(),
+                                               MetricsConstants.EMPTY_TAG,
+                                               getTimeBase(query.getStartTime()), query.getRunId(), 0);
+    byte[] endRow = entityCodec.paddedEncode(query.getContextPrefix(), query.getMetricPrefix(),
+                                             MetricsConstants.EMPTY_TAG,
+                                             getTimeBase(query.getEndTime()), query.getRunId(), 0xff);
+    return getUniqueContextAndMetrics(startRow, endRow, getFilter(query, -1, -1, false),
+                                      isContextQuery, query.getContextPrefix(),
+                                      targetOffset, length);
+  }
 
+  private List<String> getUniqueContextAndMetrics(byte[] startRow, byte[] endRow, FuzzyRowFilter filter,
+                                                  boolean isContextQuery, String contextPrefix,
+                                                  int targetOffset, int length) throws OperationException {
+
+    List<String> metricsScanResults = Lists.newArrayList();
     Row rowResult;
+    int contextOffset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
+
 
     // multiple scans with incrementing the scans startRow row-key to get the next unique part of a context or
     // next unique metric based on the parameter isContextQuery.
@@ -213,8 +217,7 @@ public final class TimeSeriesTable {
     // we stop when we cannot find any rows which matches the given contextPrefix or if there are no rows
     // returned from the scan.
     do {
-      FuzzyRowFilter filter = getFilter(query, -1, -1, false);
-      ScannerFields fields = new ScannerFields(startRow, endRow, columns, filter);
+      ScannerFields fields = new ScannerFields(startRow, endRow, null, filter);
       Scanner scanner = null;
       try {
         scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
@@ -225,39 +228,26 @@ public final class TimeSeriesTable {
       rowResult = scanner.next();
       if (rowResult != null) {
         byte[] rowKey = rowResult.getRow();
-        int offset = 0;
-        String contextStr = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
-
-        if (query.getContextPrefix() != null && !contextStr.startsWith(query.getContextPrefix())) {
+        String contextStr = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, 0);
+        if (contextPrefix != null && !contextStr.startsWith(contextPrefix)) {
           // if retrieved rowkey's contextPrefix does not match with the contextPrefix in query,
           // we stop scanning and return
           scanner.close();
           break;
         }
 
-        offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
-
         if (isContextQuery) {
           metricsScanResults.add(contextStr);
-          // With the next scan we fast-forward to the next row that has different context name
-          // that we are searching for.
-          startRow = getNextRow(rowKey, contextOffset, contextLength);
-          if (startRow == null) {
-            //reached max possible key for the context, we will stop scanning now and return.
-            scanner.close();
-            break;
-          }
         } else {
-          String metricName = entityCodec.decode(MetricsEntityType.METRIC, rowKey, offset);
-          metricsScanResults.add(metricName);
-          // With the next scan we fast-forward to the next row that has different metric name part
-          // that we are searching for.
-          startRow = getNextRow(rowKey, metricsOffset, metricsLength);
-          if (startRow == null) {
-            //reached max possible metrics key for the given context, we will stop scanning now and return.
-            scanner.close();
-            break;
-          }
+          metricsScanResults.add(entityCodec.decode(MetricsEntityType.METRIC, rowKey, contextOffset));
+        }
+        // With the next scan we fast-forward to the next row that has different context/metric name
+        // that we are searching for.
+        startRow = getNextRow(rowKey, targetOffset, length);
+        if (startRow == null) {
+          //reached max possible key for the context, we will stop scanning now and return.
+          scanner.close();
+          break;
         }
       }
       // no more matching rows found
@@ -526,8 +516,8 @@ public final class TimeSeriesTable {
     ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
                                                                              query.getMetricPrefix(), 0);
     ImmutablePair<byte[], byte[]> tagPair = (!shouldMatchAllTags && tag == null)
-                                                ? defaultTagFuzzyPair
-                                                : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
+      ? defaultTagFuzzyPair
+      : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
     ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, query.getRunId(), 0);
 
     // For each timbase, construct a fuzzy filter pair
