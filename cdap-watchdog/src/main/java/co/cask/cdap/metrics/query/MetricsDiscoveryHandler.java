@@ -34,6 +34,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -47,6 +48,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -57,10 +60,11 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.cdap.common.metrics.MetricsScope#USER} scope.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
+//todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
 public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
-  private static final int SECONDS_RESOLUTION = 1;
+  private static final int HOUR_RESOLUTION = 3600;
 
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
   private final Supplier<Map<MetricsScope, TimeSeriesTable>> timeSeriesTables;
@@ -152,7 +156,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       public Map<MetricsScope, TimeSeriesTable> get() {
         Map<MetricsScope, TimeSeriesTable> map = Maps.newHashMap();
         for (final MetricsScope scope : MetricsScope.values()) {
-          map.put(scope, metricsTableFactory.createTimeSeries(scope.name(), SECONDS_RESOLUTION));
+          map.put(scope, metricsTableFactory.createTimeSeries(scope.name(), HOUR_RESOLUTION));
         }
         return map;
       }
@@ -254,18 +258,18 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   public void listContextMetrics(HttpRequest request, HttpResponder responder,
                                  @PathParam("context-prefix") final String context) throws IOException {
     try {
-      responder.sendJson(HttpResponseStatus.OK, getNextMetrics(context));
+      responder.sendJson(HttpResponseStatus.OK, getAvailableMetricNames(context));
     } catch (OperationException e) {
       LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  private List<String> getNextContext(String contextPrefix) throws OperationException {
-    List<String> nextLevelContexts = Lists.newArrayList();
+  private Set<String> getNextContext(String contextPrefix) throws OperationException {
+    SortedSet<String> nextLevelContexts = Sets.newTreeSet();
     for (TimeSeriesTable table : timeSeriesTables.get().values()) {
       MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
-        allowEmptyMetric().build(0, 0);
+        allowEmptyMetric().build(-1, -1);
       List<String> results = table.getNextLevelContexts(query);
 
       for (String nextContext : results) {
@@ -277,18 +281,16 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
         }
       }
     }
-    Collections.sort(nextLevelContexts);
     return nextLevelContexts;
   }
 
-  private List<String> getNextMetrics(String contextPrefix) throws OperationException {
-    List<String> metrics = Lists.newArrayList();
+  private Set<String> getAvailableMetricNames(String contextPrefix) throws OperationException {
+    SortedSet<String> metrics = Sets.newTreeSet();
     for (TimeSeriesTable table : timeSeriesTables.get().values()) {
       MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
-        allowEmptyMetric().build(0, 0);
+        allowEmptyMetric().build(-1, -1);
       metrics.addAll(table.getAllMetrics(query));
     }
-    Collections.sort(metrics);
     return metrics;
   }
 

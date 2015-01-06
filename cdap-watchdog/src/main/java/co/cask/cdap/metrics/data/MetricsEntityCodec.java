@@ -88,6 +88,15 @@ final class MetricsEntityCodec {
   }
 
   /**
+   * The entity string is split by {@link java.util.regex.Pattern}ENTITY_SPLITTER
+   * and return the length of this split array.
+   */
+  public int getEntityPartsLength(String entity) {
+    String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity);
+    return entityParts.length;
+  }
+
+  /**
    * Encodes a '.' separated entity into bytes. If the entity has less than the given parts or {@code null},
    * the remaining bytes would be padded by the given padding.
    * @param type Type of the entity.
