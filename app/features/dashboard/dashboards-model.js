@@ -3,9 +3,9 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function (Widget, MyDataSource) {
+function (Widget, MyDataSource, $log) {
 
-  var data = new MyDataSource(),
+  var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
 
 
@@ -16,7 +16,7 @@ function (Widget, MyDataSource) {
         title: 'Dashboard',
         columns: [[]]
       },
-      properties
+      properties || {}
     );
   }
 
@@ -65,7 +65,11 @@ function (Widget, MyDataSource) {
       }
     }
 
-    this.columns[index].unshift(w || new Widget({title: 'just added'}));
+    w = w || new Widget({
+      title: 'just added'
+    });
+
+    this.columns[index].unshift(w);
     this.persist();
   };
 
@@ -84,26 +88,39 @@ function (Widget, MyDataSource) {
 
 
   /**
+   * benefit from angular's toJsonReplacer
+   */
+  Dashboard.prototype.properties = function () {
+    return angular.fromJson(angular.toJson(this));
+  };
+
+
+  /**
    * save to backend
    */
   Dashboard.prototype.persist = function () {
+    var body = this.properties();
+
+    $log.log('persist', body);
+
     if(this.id) { // updating
-      data.request(
+      dSrc.request(
         {
           method: 'POST',
           _cdapNsPath: API_PATH + '/' + this.id,
-          body: this
+          body: body
         }
       );
     }
     else { // saving
-      data.request(
+      dSrc.request(
         {
           method: 'POST',
           _cdapNsPath: API_PATH,
-          body: this
+          body: body
         },
         angular.bind(this, function (result) {
+          // FIXME: result format in flux
           this.id = result.id || result;
         })
       );
@@ -118,14 +135,23 @@ function (Widget, MyDataSource) {
     this.data = [];
     this.data.activeIndex = 0;
 
-    data.request(
+    dSrc.request(
       {
         method: 'GET',
         _cdapNsPath: API_PATH
       },
       angular.bind(this, function (result) {
-        angular.forEach(result, function (o) {
-          this.push(new Dashboard(o));
+
+        $log.log('dashboard model', result);
+
+        angular.forEach(result, function (v, k) {
+
+          // FIXME: API should not returned nested strings of JSON!
+          var properties = JSON.parse(v);
+          properties.id = k;
+
+          this.push(new Dashboard(properties));
+
         }, this.data);
       })
     );
@@ -146,7 +172,17 @@ function (Widget, MyDataSource) {
    * remove a dashboard tab
    */
   Model.prototype.remove = function (index) {
-    this.data.splice(index, 1);
+    var removed = this.data.splice(index, 1)[0];
+
+    dSrc.request(
+      {
+        method: 'DELETE',
+        _cdapNsPath: API_PATH + '/' + removed.id
+      },
+      function () {
+        $log.log('removed', removed);
+      }
+    );
   };
 
 
@@ -154,8 +190,6 @@ function (Widget, MyDataSource) {
    * add a new dashboard tab
    */
   Model.prototype.add = function (properties, colCount) {
-    properties = properties || {};
-
     var d = new Dashboard(properties);
 
     // add columns as needed
