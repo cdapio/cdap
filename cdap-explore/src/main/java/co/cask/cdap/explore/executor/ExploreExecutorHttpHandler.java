@@ -24,13 +24,16 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.schema.SchemaConverter;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -44,7 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Map;
+import java.util.List;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -76,8 +79,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
 
       String streamLocationURI;
+      StreamConfig streamConfig;
       try {
-        StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+        streamConfig = streamAdmin.getConfig(streamName);
         Location streamLocation = streamConfig.getLocation();
         if (streamLocation == null) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find location of stream " + streamName);
@@ -93,7 +97,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocationURI);
       String createStatement;
       try {
-        createStatement = generateStreamCreateStatement(streamName, streamLocationURI);
+        createStatement = generateStreamCreateStatement(streamName, streamLocationURI,
+                                                        streamConfig.getFormat().getSchema());
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for stream {}", streamName, e);
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -273,11 +278,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    *
    * @param name name of the stream
    * @param location location of the stream
+   * @param bodySchema schema for the body of a stream event
    * @return hive statement to use when creating the external table for querying the stream
    * @throws UnsupportedTypeException
    */
-  public static String generateStreamCreateStatement(String name, String location) throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaForStream();
+  public static String generateStreamCreateStatement(String name, String location, Schema bodySchema)
+    throws UnsupportedTypeException {
+    // schema of a stream is always timestamp, headers, and then the schema of the body.
+    List<Schema.Field> fields = Lists.newArrayList(
+      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
+    fields.addAll(bodySchema.getFields());
+    Schema schema = Schema.recordOf("streamEvent", fields);
+    String hiveSchema = SchemaConverter.toHiveSchema(schema);
     String tableName = getStreamTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
@@ -316,10 +329,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
   }
 
-  static String hiveSchemaForStream() throws UnsupportedTypeException {
-    return hiveSchemaFor(StreamSchema.class);
-  }
-
+  // TODO: replace with SchemaConverter.toHiveSchema when we tackle queries on Tables.
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
     // This call will make sure that the type is not recursive
     new ReflectionSchemaGenerator().generate(type, false);
@@ -347,17 +357,5 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     sb.append(")");
 
     return sb.toString();
-  }
-
-  // hardcoded schema for a stream. This will be replaced with a schema that comes from the stream when
-  // schema is exposed to users.
-  @SuppressWarnings("unused")
-  private static class StreamSchema {
-    // can't use 'timestamp' as it is a reserved Hive keyword (though not for all versions of Hive)
-    private long ts;
-    // the body is actually a byte array, but that is not very useful when performing queries.
-    // we therefore assume the body is a string.
-    private String body;
-    private Map<String, String> headers;
   }
 }

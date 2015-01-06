@@ -24,10 +24,12 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableMap;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -135,9 +137,11 @@ public class Bytes {
    * @return the byte array
    */
   public static byte[] toBytes(ByteBuffer bb) {
-    int length = bb.limit();
+    int length = bb.remaining();
     byte [] result = new byte[length];
-    System.arraycopy(bb.array(), bb.arrayOffset(), result, 0, length);
+    int pos = bb.position();
+    bb.get(result);
+    bb.position(pos);
     return result;
   }
 
@@ -204,11 +208,23 @@ public class Bytes {
    * @return String made from <code>buf</code> or null
    */
   public static String toString(ByteBuffer buf) {
+    return toString(buf, Charsets.UTF_8);
+  }
+
+  /**
+   * This method will convert the remaining bytes of an
+   * encoded byte buffer into a string of the given charset.
+   *
+   * @param buf Encoded byte buffer.
+   * @param charset Charset of the string encoded in the byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf, Charset charset) {
     if (buf == null) {
       return null;
     }
     buf.mark();
-    String s = Charsets.UTF_8.decode(buf).toString();
+    String s = charset.decode(buf).toString();
     buf.reset();
     return s;
   }
@@ -733,6 +749,27 @@ public class Bytes {
     return result;
   }
 
+  /**
+   * Returns a copy of the byte representation of the given UUID.
+   * @param uuid UUID to get the byte representation of
+   * @return byte representation of the given UUID
+   */
+  public static byte[] toBytes(UUID uuid) {
+    ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+    bb.putLong(uuid.getMostSignificantBits());
+    bb.putLong(uuid.getLeastSignificantBits());
+    return bb.array();
+  }
+
+  /**
+   * Convert the given byte representation of a UUID into a UUID.
+   * @param bytes byte representation of a UUID
+   * @return UUID
+   */
+  public static UUID toUUID(byte [] bytes) {
+    ByteBuffer bb = ByteBuffer.wrap(bytes);
+    return new UUID(bb.getLong(), bb.getLong());
+  }
 
   /**
    * Converts a byte array to a BigDecimal.

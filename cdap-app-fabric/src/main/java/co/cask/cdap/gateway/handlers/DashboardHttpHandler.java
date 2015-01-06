@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,15 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -42,9 +46,8 @@ import javax.ws.rs.PathParam;
  * Dashboard HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
-public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
+public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
-  private static final Gson GSON = new Gson();
 
   //TODO: https://issues.cask.co/browse/CDAP-699 PersistenceStore will be used instead of inMemory implementation.
   private final Table<String, String, String> configStore;
@@ -59,17 +62,32 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   public synchronized void create(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
+    String data = request.getContent().toString(Charsets.UTF_8);
+    if (!data.equals("") && !isValidJSON(data)) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
+      return;
+    }
+
+    Map<String, String> jsonMap = Maps.newHashMap();
     String dashboardId = UUID.randomUUID().toString();
-    configStore.put(namespace, dashboardId, GSON.toJson(decodeArguments(request)));
-    responder.sendString(HttpResponseStatus.OK, dashboardId);
+    configStore.put(namespace, dashboardId, data);
+    jsonMap.put("id", dashboardId);
+    responder.sendJson(HttpResponseStatus.OK, jsonMap);
   }
 
   @Path("/")
   @GET
   public synchronized void list(final HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
+    JsonArray jsonArray = new JsonArray();
     Map<String, String> row = configStore.row(namespace);
-    responder.sendJson(HttpResponseStatus.OK, row);
+    for (Map.Entry<String, String> dash : row.entrySet()) {
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("id", dash.getKey());
+      jsonObject.add("config", new JsonParser().parse(dash.getValue()));
+      jsonArray.add(jsonObject);
+    }
+    responder.sendJson(HttpResponseStatus.OK, jsonArray);
   }
 
   @Path("/{dashboard-id}")
@@ -93,7 +111,10 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     if (!configStore.contains(namespace, id)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      responder.sendString(HttpResponseStatus.OK, configStore.get(namespace, id));
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("id", id);
+      jsonObject.add("config", new JsonParser().parse(configStore.get(namespace, id)));
+      responder.sendJson(HttpResponseStatus.OK, jsonObject);
     }
   }
 
@@ -105,8 +126,23 @@ public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
     if (!configStore.contains(namespace, id)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      configStore.put(namespace, id, GSON.toJson(decodeArguments(request)));
+      String data = request.getContent().toString(Charsets.UTF_8);
+      if (!isValidJSON(data)) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
+        return;
+      }
+
+      configStore.put(namespace, id, data);
       responder.sendStatus(HttpResponseStatus.OK);
     }
+  }
+
+  private boolean isValidJSON(String json) {
+    try {
+      new JsonParser().parse(json);
+    } catch (JsonSyntaxException ex) {
+      return false;
+    }
+    return true;
   }
 }
