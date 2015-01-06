@@ -250,7 +250,6 @@ public final class TimeSeriesTable {
           break;
         }
       }
-      // no more matching rows found
       scanner.close();
     } while (rowResult != null);
 
@@ -273,18 +272,13 @@ public final class TimeSeriesTable {
     // next row-key
     byte[] nextRow = new byte[rowKey.length];
 
-    copyByteArray(rowKey, nextRow, 0, 0 , offset);
-    copyByteArray(stopKey, nextRow, 0, offset , stopKey.length);
-    copyByteArray(rowKey, nextRow, offset + stopKey.length, offset + stopKey.length,
-                  rowKey.length - (offset + stopKey.length));
+    System.arraycopy(rowKey, 0, nextRow, 0, offset);
+    System.arraycopy(stopKey, 0, nextRow, offset, stopKey.length);
+    //fill zero's after the incremented stop key.
+    Arrays.fill(nextRow, offset + stopKey.length, rowKey.length, (byte) 0);
     return nextRow;
   }
 
-  private void copyByteArray(byte[] source, byte[] destination, int sourceOffset, int destinationOffset, int length) {
-    for (int i = 0; i < length; i++) {
-      destination[destinationOffset + i] = source[sourceOffset + i];
-    }
-  }
   public MetricsScanner scanAllTags(MetricsScanQuery query) throws OperationException {
     return scanFor(query, true);
   }
