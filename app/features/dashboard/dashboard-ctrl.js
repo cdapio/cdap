@@ -63,7 +63,9 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
 
 
   $scope.addDashboard = function () {
-    myDashboardsModel.add('new dashboard');
+    myDashboardsModel.add({
+      title: 'new dashboard'
+    });
   };
 
   $scope.removeDashboard = function () {

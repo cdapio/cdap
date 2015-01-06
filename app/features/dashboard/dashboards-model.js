@@ -9,16 +9,15 @@ function (Widget, MyDataSource) {
       API_PATH = '/configuration/dashboards';
 
 
-  function Dashboard (title, colCount) {
-    var c = [[]];
-    for (var i = 1; i < (colCount||3); i++) {
-      c.push([]);
-    }
-
-    c[0].push(new Widget());
-
-    this.title = title || 'Dashboard';
-    this.columns = c;
+  function Dashboard (properties) {
+    angular.extend(
+      this,
+      {
+        title: 'Dashboard',
+        columns: [[]]
+      },
+      properties
+    );
   }
 
 
@@ -125,7 +124,9 @@ function (Widget, MyDataSource) {
         _cdapNsPath: API_PATH
       },
       angular.bind(this, function (result) {
-        console.log(result);
+        angular.forEach(result, function (o) {
+          this.push(new Dashboard(o));
+        }, this.data);
       })
     );
 
@@ -152,10 +153,23 @@ function (Widget, MyDataSource) {
   /**
    * add a new dashboard tab
    */
-  Model.prototype.add = function (title, colCount) {
-    var d = new Dashboard(title, colCount);
+  Model.prototype.add = function (properties, colCount) {
+    properties = properties || {};
+
+    var d = new Dashboard(properties);
+
+    // add columns as needed
+    for (var i = 1; i < (colCount||3); i++) {
+      d.columns.push([]);
+    }
+
+    // default widget in first column
+    d.columns[0].push(new Widget());
+
+    // save to backend
     d.persist();
 
+    // newly created tab becomes active
     var n = this.data.push(d);
     this.data.activeIndex = n-1;
   };
