@@ -19,7 +19,7 @@ package co.cask.cdap.api.workflow;
 import java.util.Map;
 
 /**
- * Configurer for configuring the {@link Workflow}
+ * Configurer for configuring the {@link Workflow}.
  */
 public interface WorkflowConfigurer {
 
@@ -46,33 +46,35 @@ public interface WorkflowConfigurer {
   void setProperties(Map<String, String> properties);
 
   /**
-   * Add MapReduce program to the {@link Workflow}
+   * Add a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be
+   * configured when the Application is defined.
    *
    * @param mapReduce name of the MapReduce program to be added to the {@link Workflow}
-   * Make sure to configure the MapReduce program with the Application
+   *
    */
   void addMapReduce(String mapReduce);
 
   /**
-   * Add Spark program to the {@link Workflow}
+   * Add a Spark program as a next sequential step in the {@link Workflow}. Spark program must be
+   * configured when the Application is defined.
    *
    * @param spark name of the Spark program to be added to the {@link Workflow}
-   * Make sure to configure the Spark program with the Application
+   *
    */
   void addSpark(String spark);
 
   /**
-   * Add Custom action to the {@link Workflow}
+   * Add a custom action as a next sequential step in the {@link Workflow}
    *
    * @param action to be added to the {@link Workflow}
    */
   void addAction(WorkflowAction action);
 
   /**
-   * Add schedule to the {@link Workflow}
+   * Add a Schedule to the {@link Workflow}. Schedule must be configured when the Application is defined.
    *
    * @param schedule name of the Schedule to be added to the {@link Workflow}
-   * Make sure to configure the Schedule with the Application
+   *
    */
   void addSchedule(String schedule);
 }

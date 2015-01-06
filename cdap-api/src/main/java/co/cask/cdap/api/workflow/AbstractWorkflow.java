@@ -19,7 +19,7 @@ package co.cask.cdap.api.workflow;
 import java.util.Map;
 
 /**
- * This abstract class provides a default implementation of {@link Workflow} methods for easy extension.
+ * Provides a default implementation of {@link Workflow} methods for easy extension.
  */
 public abstract class AbstractWorkflow implements Workflow {
 
@@ -60,7 +60,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Sets a set of properties that will be available through the {@link WorkflowSpecification#getProperties()}
+   * Sets the properties that will be available through the {@link WorkflowSpecification#getProperties()}
    * at runtime.
    *
    * @param properties the properties to set
@@ -70,7 +70,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds custom action to the {@link Workflow}
+   * Adds a custom action to the {@link Workflow}
    * @param action the action to be added
    */
   protected final void addAction(WorkflowAction action) {
@@ -78,7 +78,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds MapReduce program to the {@link Workflow}
+   * Adds a MapReduce program to the {@link Workflow}
    * @param mapReduce the name of MapReduce program to be added
    */
   protected final void addMapReduce(String mapReduce) {
@@ -86,7 +86,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds Spark program to the {@link Workflow}
+   * Adds a Spark program to the {@link Workflow}
    * @param spark the name of the Spark program to be added
    */
   protected final void addSpark(String spark) {
@@ -94,7 +94,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds schedule to the {@link Workflow}
+   * Adds a Schedule to the {@link Workflow}
    * @param schedule the name of the Schedule to be added
    */
   protected final void addSchedule(String schedule) {

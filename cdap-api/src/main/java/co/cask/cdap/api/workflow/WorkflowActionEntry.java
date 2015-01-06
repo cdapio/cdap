@@ -17,7 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 /**
- * Represents entry for the {@link WorkflowAction}
+ * Represents an entry for the {@link WorkflowAction}.
  */
 public final class WorkflowActionEntry {
   private final String name;

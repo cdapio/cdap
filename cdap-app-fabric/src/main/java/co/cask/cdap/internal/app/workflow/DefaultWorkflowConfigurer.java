@@ -24,7 +24,6 @@ import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Default implementation of {@link WorkflowConfigurer}
+ * Default implementation of {@link WorkflowConfigurer}.
  */
 public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
 
@@ -94,7 +93,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   }
 
   public WorkflowSpecification createSpecification() {
-    return new DefaultWorkflowSpecification(className, name, description, properties,
+    return new WorkflowSpecification(className, name, description, properties,
                                             actions, customActionMap, schedules);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,8 +48,10 @@ public class PurchaseApp extends AbstractApplication {
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
+    // Specify MapReduce job to run on the acquired data
     addMapReduce(new PurchaseHistoryBuilder());
-    // Run a MapReduce job on the acquired data using a Workflow
+
+    // Run a Workflow that uses the MapReduce on the acquired data
     addWorkflow(new PurchaseHistoryWorkflow());
 
     // Retrieve the processed data using a Service
@@ -61,8 +63,7 @@ public class PurchaseApp extends AbstractApplication {
     // Provide a Service to Application components
     addService(new CatalogLookupService());
 
-    // Add schedule to the Application which can be referred by underlying programs
-    // such as Workflow
+    // Add a Schedule to the Application which can be referred to by other programs such as a Workflow
     addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
                              Schedule.Action.START));
 

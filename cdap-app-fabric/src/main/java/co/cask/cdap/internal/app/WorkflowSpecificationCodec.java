@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.workflow.WorkflowActionEntry;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -67,7 +66,7 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
 
     List<String> schedules = deserializeList(jsonObj.get("schedules"), context, String.class);
 
-    return new DefaultWorkflowSpecification(className, name, description, properties, actions,
+    return new WorkflowSpecification(className, name, description, properties, actions,
                                             customActionMap, schedules);
   }
 }
