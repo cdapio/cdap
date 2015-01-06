@@ -39,7 +39,7 @@ public abstract class AbstractAuthCommand implements Command {
     try {
       perform(arguments, printStream);
     } catch (UnAuthorizedAccessTokenException e) {
-      cliConfig.updateAceessToken(printStream);
+      cliConfig.updateAccessToken(printStream);
       perform(arguments, printStream);
     }
   }

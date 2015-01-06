@@ -102,7 +102,7 @@ public class CLIConfig {
 
   }
 
-  public void updateAceessToken(PrintStream output) throws IOException {
+  public void updateAccessToken(PrintStream output) throws IOException {
     if (connectionInfo != null) {
       setAccessToken(getNewAccessToken(connectionInfo, output, false));
     }
