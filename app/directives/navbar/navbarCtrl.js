@@ -9,6 +9,7 @@ angular.module(PKG.name + '.commons')
           $scope.namespaces = list;
         });
     });
+    $scope.getDisplayName = myNamespace.getDisplayName.bind(myNamespace);
 
     $scope.$on (MYAUTH_EVENT.logoutSuccess, function (event) {
       $scope.namespaces = [];

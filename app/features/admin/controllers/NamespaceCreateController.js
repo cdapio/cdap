@@ -9,9 +9,9 @@ angular.module(PKG.name + '.feature.admin')
     $scope.submitHandler = function() {
       myDataSrc.request({
         method: 'PUT',
-        _cdapPath: '/namespaces/' + $scope.model.displayName,
+        _cdapPath: '/namespaces/' + $scope.model.id,
         body: {
-          name: $scope.model.name,
+          id: $scope.model.id,
           displayName: $scope.model.displayName,
           description: $scope.model.description
         }
