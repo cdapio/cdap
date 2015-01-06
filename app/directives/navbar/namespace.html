@@ -2,7 +2,7 @@
 
   <li role="presentation">
     <li ng-repeat="ns in namespaces">
-      <a role="menuitem" ui-sref="overview({namespace: ns.displayName})" tabindex="-1">
+      <a role="menuitem" ui-sref="overview({namespace: ns.id})" tabindex="-1">
         <span ng-bind="ns.displayName"></span>
       </a>
     </li>

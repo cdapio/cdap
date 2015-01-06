@@ -32,11 +32,11 @@ angular.module(PKG.name+'.feature.home')
         controller: function ($state, rNsList) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
-            return one.displayName === $state.params.namespace;
+            return one.id === $state.params.namespace;
           });
 
           if(!n.length) {
-            var d = rNsList[0].displayName;
+            var d = rNsList[0].id;
             console.warn('invalid namespace, defaulting to ', d);
             $state.go($state.current, { namespace: d }, {reload: true});
           }
