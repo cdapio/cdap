@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function (Widget, MyDataSource, $log) {
+function (Widget, MyDataSource, $log, $timeout) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
@@ -200,10 +200,13 @@ function (Widget, MyDataSource, $log) {
     }
 
     // default widget in first column
-    d.columns[0].push(new Widget());
+    // FIXME: figure out why asSortable throws an error without $timeout
+    $timeout(function () {
+      d.columns[0].push(new Widget());
 
-    // save to backend
-    d.persist();
+      // save to backend
+      d.persist();
+    });
 
     // newly created tab becomes active
     var n = this.data.push(d);
