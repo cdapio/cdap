@@ -154,13 +154,9 @@ function (Widget, MyDataSource, $timeout) {
       function (result) {
 
         angular.forEach(result, function (v) {
-          data.push(new Dashboard(angular.extend(
-            {
-              id: v.id
-            },
-            v.config
-          )));
-
+          var p = v.config;
+          p.id = v.id;
+          data.push(new Dashboard(p));
         });
       }
     );
