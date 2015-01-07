@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,15 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 
 import java.util.concurrent.Callable;
 
 /**
- * An interface for Programs which can run in a {@link Workflow}. Please see {@link WorkflowSupportedProgram}.
+ * An interface for Programs which can run in a {@link Workflow}. Please see {@link SchedulableProgram}.
  */
 public interface ProgramWorkflowRunner {
 

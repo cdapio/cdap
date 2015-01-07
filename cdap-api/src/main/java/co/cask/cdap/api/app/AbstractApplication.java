@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
@@ -217,9 +218,11 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addSchedule(Schedule)
+   * Schedule the specified {@link Workflow}
+   * @param workflow the name of Workflow program
+   * @param schedule the schedule to be added for the Workflow program
    */
-  protected void addSchedule(Schedule schedule) {
-    configurer.addSchedule(schedule);
+  protected void scheduleWorkflow(String workflow, Schedule schedule) {
+    configurer.addSchedule(SchedulableProgram.WORKFLOW, workflow, schedule);
   }
 }

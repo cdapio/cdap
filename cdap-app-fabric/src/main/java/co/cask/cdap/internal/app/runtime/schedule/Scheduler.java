@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 
 import java.util.List;
 
@@ -29,12 +29,11 @@ public interface Scheduler {
 
   /**
    * Schedule a program to be run in a defined schedule.
-   *
-   * @param program Program that needs to be run.
+   *  @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedules Schedule with which the program runs.
    */
-  public void schedule(Id.Program program, ProgramType programType, Iterable<Schedule> schedules);
+  public void schedule(Id.Program program, SchedulableProgram programType, Iterable<Schedule> schedules);
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
@@ -45,7 +44,7 @@ public interface Scheduler {
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    */
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, ProgramType programType);
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgram programType);
 
   /**
    * Get Schedule ids for a given program and program type.
@@ -54,7 +53,7 @@ public interface Scheduler {
    * @param programType type of program.
    * @return List of scheduleIds, empty List if there are no matching schedules.
    */
-  public List<String> getScheduleIds(Id.Program program, ProgramType programType);
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgram programType);
 
   /**
    * Suspends a schedule with the given ScheduleId. Sub-sequent schedules will not be for the job.
@@ -73,12 +72,11 @@ public interface Scheduler {
 
   /**
    * Delete the schedule. Don't schedule any more jobs.
-   *
-   * @param programId
+   *  @param programId
    * @param programType
    * @param scheduleIds
    */
-  public void deleteSchedules(Id.Program programId, ProgramType programType, List<String> scheduleIds);
+  public void deleteSchedules(Id.Program programId, SchedulableProgram programType, List<String> scheduleIds);
 
   /**
    * Get state of a particular schedule.

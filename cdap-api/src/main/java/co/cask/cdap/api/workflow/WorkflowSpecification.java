@@ -50,22 +50,19 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final String name;
   private final String description;
   private final Map<String, WorkflowActionSpecification> customActionMap;
-  private final List<WorkflowActionEntry> actions;
-  private final List<String> schedules;
+  private final List<ProgramNameTypeInfo> actions;
   private final Map<String, String> properties;
 
   public WorkflowSpecification(String className, String name, String description,
                                       Map<String, String> properties,
-                                      List<WorkflowActionEntry> actions,
-                                      Map<String, WorkflowActionSpecification> customActionMap,
-                                      List<String> schedules) {
+                                      List<ProgramNameTypeInfo> actions,
+                                      Map<String, WorkflowActionSpecification> customActionMap) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties == null ? Collections.unmodifiableMap(new HashMap<String, String>()) :
                                            Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.actions = Collections.unmodifiableList(new ArrayList<WorkflowActionEntry>(actions));
-    this.schedules = Collections.unmodifiableList(new ArrayList<String>(schedules));
+    this.actions = Collections.unmodifiableList(new ArrayList<ProgramNameTypeInfo>(actions));
     this.customActionMap = Collections.unmodifiableMap(new HashMap(customActionMap));
   }
 
@@ -94,12 +91,8 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     return properties.get(key);
   }
 
-  public List<WorkflowActionEntry> getActions() {
+  public List<ProgramNameTypeInfo> getActions() {
     return actions;
-  }
-
-  public List<String> getSchedules() {
-    return schedules;
   }
 
   public Map<String, WorkflowActionSpecification> getCustomActionMap() {
@@ -114,7 +107,6 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     sb.append(", description='").append(description).append('\'');
     sb.append(", customActionMap=").append(customActionMap);
     sb.append(", actions=").append(actions);
-    sb.append(", schedules=").append(schedules);
     sb.append(", properties=").append(properties);
     sb.append('}');
     return sb.toString();

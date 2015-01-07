@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -56,7 +56,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("sparks", serializeMap(src.getSpark(), context, SparkSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
-    jsonObj.add("schedules", serializeMap(src.getSchedules(), context, Schedule.class));
+    jsonObj.add("schedules", serializeMap(src.getSchedules(), context, ScheduleSpecification.class));
 
     return jsonObj;
   }
@@ -89,8 +89,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, ServiceSpecification> services = deserializeMap(jsonObj.get("services"),
                                                                 context, ServiceSpecification.class);
 
-    Map<String, Schedule> schedules = deserializeMap(jsonObj.get("schedules"),
-                                                                context, Schedule.class);
+    Map<String, ScheduleSpecification> schedules = deserializeMap(jsonObj.get("schedules"),
+                                                                context, ScheduleSpecification.class);
 
     return new DefaultApplicationSpecification(name, description, streams,
                                                datasetModules, datasetInstances,

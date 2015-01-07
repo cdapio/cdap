@@ -24,7 +24,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
@@ -107,8 +107,7 @@ public interface ApplicationSpecification {
   Map<String, ServiceSpecification> getServices();
 
   /**
-   * @return An immutable {@link Map} from schedule name to {@link Schedule}
-   *          configured for the Application.
+   * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
    */
-  Map<String, Schedule> getSchedules();
+  Map<String, ScheduleSpecification> getSchedules();
 }

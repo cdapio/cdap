@@ -16,31 +16,33 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.schedule.SchedulableProgram;
+
 /**
- * Represents an entry for the {@link WorkflowAction}.
+ * Represents name and type information of the program.
  */
-public final class WorkflowActionEntry {
-  private final String name;
-  private final WorkflowSupportedProgram type;
+public final class ProgramNameTypeInfo {
+  private final String programName;
+  private final SchedulableProgram programType;
 
-  public WorkflowActionEntry(String name, WorkflowSupportedProgram type) {
-    this.name = name;
-    this.type = type;
+  public ProgramNameTypeInfo(String programName, SchedulableProgram programType) {
+    this.programName = programName;
+    this.programType = programType;
   }
 
   /**
    *
-   * @return name of the {@link WorkflowAction} represented by this entry
+   * @return name of the program
    */
-  public String getName() {
-    return name;
+  public String getProgramName() {
+    return programName;
   }
 
   /**
    *
-   * @return type of the {@link WorkflowAction} represented by this entry
+   * @return type of the program
    */
-  public WorkflowSupportedProgram getType() {
-    return type;
+  public SchedulableProgram getProgramType() {
+    return programType;
   }
 }

@@ -29,11 +29,14 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.ProgramNameTypeInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -64,7 +67,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
-  private final Map<String, Schedule> schedules = Maps.newHashMap();
+  private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
@@ -192,9 +195,18 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addSchedule(Schedule schedule) {
+  public void addSchedule(SchedulableProgram programType, String programName, Schedule schedule) {
     Preconditions.checkArgument(schedule != null, "Schedule cannot be null.");
-    schedules.put(schedule.getName(), schedule);
+    Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
+    Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
+
+    ScheduleSpecification spec = schedules.get(schedule.getName());
+    if (spec == null) {
+      spec = new ScheduleSpecification(schedule);
+      schedules.put(schedule.getName(), spec);
+    }
+
+    spec.addProgram(new ProgramNameTypeInfo(programName, programType));
   }
 
   public ApplicationSpecification createSpecification() {

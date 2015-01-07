@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A Factory for {@link ProgramWorkflowRunner} which returns the appropriate {@link ProgramWorkflowRunner}
- * depending upon the program from the {@link WorkflowSupportedProgram}.
+ * depending upon the program from the {@link SchedulableProgram}.
  * It acts as the single point for conditionally creating the needed {@link ProgramWorkflowRunner} for programs.
- * Currently we support {@link MapReduce} and {@link Spark} in Workflow (See {@link WorkflowSupportedProgram}.
+ * Currently we support {@link MapReduce} and {@link Spark} in Workflow (See {@link SchedulableProgram}.
  */
 public class ProgramWorkflowRunnerFactory {
 
@@ -68,7 +68,7 @@ public class ProgramWorkflowRunnerFactory {
 
 
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
-      switch (WorkflowSupportedProgram.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
+      switch (SchedulableProgram.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
           return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
                                                     userArguments, logicalStartTime);

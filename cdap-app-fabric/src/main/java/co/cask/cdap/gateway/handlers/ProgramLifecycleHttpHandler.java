@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -793,7 +794,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, ProgramType.WORKFLOW);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgram.WORKFLOW);
 
       JsonArray array = new JsonArray();
       for (ScheduledRuntime runtime : runtimes) {
@@ -821,7 +822,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, ProgramType.WORKFLOW));
+      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, SchedulableProgram.WORKFLOW));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

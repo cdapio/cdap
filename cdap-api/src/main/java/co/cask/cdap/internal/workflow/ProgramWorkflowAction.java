@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 package co.cask.cdap.internal.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -41,10 +41,10 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   private final String name;
   private String programName;
   private Callable<RuntimeContext> programRunner;
-  private WorkflowSupportedProgram programType;
+  private SchedulableProgram programType;
   private WorkflowContext context;
 
-  public ProgramWorkflowAction(String name, String programName, WorkflowSupportedProgram programType) {
+  public ProgramWorkflowAction(String name, String programName, SchedulableProgram programType) {
     this.name = name;
     this.programName = programName;
     this.programType = programType;
@@ -71,7 +71,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
     programRunner = context.getProgramRunner(programName);
     programType = context.getRuntimeArguments().containsKey(PROGRAM_TYPE) ? 
-                              WorkflowSupportedProgram.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
+                              SchedulableProgram.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
 
     LOG.info("Initialized for {} Program {} in workflow action",
              programType != null ? programType.name() : null, programName);

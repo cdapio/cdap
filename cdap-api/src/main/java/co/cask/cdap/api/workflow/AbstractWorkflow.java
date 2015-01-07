@@ -92,12 +92,4 @@ public abstract class AbstractWorkflow implements Workflow {
   protected final void addSpark(String spark) {
     configurer.addSpark(spark);
   }
-
-  /**
-   * Adds a Schedule to the {@link Workflow}
-   * @param schedule the name of the Schedule to be added
-   */
-  protected final void addSchedule(String schedule) {
-    configurer.addSchedule(schedule);
-  }
 }

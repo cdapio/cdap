@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.test.internal.guice;
 
+import co.cask.cdap.api.schedule.SchedulableProgram;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -36,7 +37,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
@@ -95,16 +95,16 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
-      public void schedule(Id.Program program, ProgramType programType, Iterable<Schedule> schedules) {
+      public void schedule(Id.Program program, SchedulableProgram programType, Iterable<Schedule> schedules) {
       }
 
       @Override
-      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, ProgramType programType) {
+      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgram programType) {
         return ImmutableList.of();
       }
 
       @Override
-      public List<String> getScheduleIds(Id.Program program, ProgramType programType) {
+      public List<String> getScheduleIds(Id.Program program, SchedulableProgram programType) {
         return ImmutableList.of();
       }
 
@@ -117,7 +117,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void deleteSchedules(Id.Program programId, ProgramType programType, List<String> scheduleIds) {
+      public void deleteSchedules(Id.Program programId, SchedulableProgram programType, List<String> scheduleIds) {
       }
 
       @Override

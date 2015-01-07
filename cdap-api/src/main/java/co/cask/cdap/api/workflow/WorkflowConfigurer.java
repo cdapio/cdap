@@ -69,12 +69,4 @@ public interface WorkflowConfigurer {
    * @param action to be added to the {@link Workflow}
    */
   void addAction(WorkflowAction action);
-
-  /**
-   * Add a Schedule to the {@link Workflow}. Schedule must be configured when the Application is defined.
-   *
-   * @param schedule name of the Schedule to be added to the {@link Workflow}
-   *
-   */
-  void addSchedule(String schedule);
 }

@@ -16,13 +16,13 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.workflow.ProgramNameTypeInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionEntry;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.api.workflow.WorkflowSupportedProgram;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -42,9 +42,8 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   private String description;
   private Map<String, String> properties;
 
-  private final List<WorkflowActionEntry> actions = Lists.newArrayList();
+  private final List<ProgramNameTypeInfo> actions = Lists.newArrayList();
   private final Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
-  private final List<String> schedules = Lists.newArrayList();
 
   public DefaultWorkflowConfigurer(Workflow workflow) {
     this.className = workflow.getClass().getName();
@@ -69,14 +68,14 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
 
   @Override
   public void addMapReduce(String mapReduce) {
-    actions.add(new WorkflowActionEntry
-                  (mapReduce, WorkflowSupportedProgram.MAPREDUCE));
+    actions.add(new ProgramNameTypeInfo
+                  (mapReduce, SchedulableProgram.MAPREDUCE));
   }
 
   @Override
   public void addSpark(String spark) {
-    actions.add(new WorkflowActionEntry
-                  (spark, WorkflowSupportedProgram.SPARK));
+    actions.add(new ProgramNameTypeInfo
+                  (spark, SchedulableProgram.SPARK));
   }
 
   @Override
@@ -84,16 +83,11 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
     customActionMap.put(spec.getName(), spec);
-    actions.add(new WorkflowActionEntry(spec.getName(), WorkflowSupportedProgram.CUSTOM_ACTION));
-  }
-
-  @Override
-  public void addSchedule(String schedule) {
-    schedules.add(schedule);
+    actions.add(new ProgramNameTypeInfo(spec.getName(), SchedulableProgram.CUSTOM_ACTION));
   }
 
   public WorkflowSpecification createSpecification() {
     return new WorkflowSpecification(className, name, description, properties,
-                                            actions, customActionMap, schedules);
+                                            actions, customActionMap);
   }
 }

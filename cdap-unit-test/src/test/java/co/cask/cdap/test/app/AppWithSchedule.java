@@ -41,7 +41,7 @@ public class AppWithSchedule extends AbstractApplication {
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
-      addSchedule(new Schedule("Schedule", "Run every second", "0/1 * * * * ?",
+      scheduleWorkflow("SampleWorkflow", new Schedule("Schedule", "Run every second", "0/1 * * * * ?",
                                Schedule.Action.START));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
@@ -59,7 +59,6 @@ public class AppWithSchedule extends AbstractApplication {
         setDescription("SampleWorkflow description");
         addAction(new DummyAction());
         addAction(new DummyAction());
-        addSchedule("Schedule");
     }
   }
 
