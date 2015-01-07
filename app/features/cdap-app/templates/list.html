@@ -1,4 +1,10 @@
 <div ncy-breadcrumb></div>
+<button class="btn btn-default pull-right"
+        file-select
+        on-file-select="onFileSelected($files, $event)">
+  <span class="fa fa-upload"></span>
+  <span> Upload an App </span>
+</button>
 <table class="table table-striped table-responsive" cask-sortable>
   <thead ng-class="{'sort-enabled': apps.length>0}">
     <tr>
