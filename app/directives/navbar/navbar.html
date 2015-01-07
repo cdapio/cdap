@@ -21,7 +21,7 @@
   </ul>
 
   <nav ng-click="navbarCollapsed = false">
-    <ul class="nav navbar-nav">
+    <ul class="nav navbar-nav" ng-show="currentUser">
       <li ng-class="{active: highlightTab == 'development'}">
         <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
       </li>

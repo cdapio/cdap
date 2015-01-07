@@ -3,18 +3,33 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function ($q, Widget) {
+function (Widget, MyDataSource, $timeout) {
+
+  var dSrc = new MyDataSource(),
+      API_PATH = '/configuration/dashboards';
 
 
-  function Dashboard (title, colCount) {
-    var c = [[]];
-    for (var i = 1; i < (colCount||3); i++) {
-      c.push([]);
+  function Dashboard (p) {
+    angular.extend(
+      this,
+      {
+        id: p.id,
+        title: p.title || 'Dashboard',
+        columns: []
+      }
+    );
+
+    if(angular.isArray(p.columns)) {
+      angular.forEach(p.columns, function (c) {
+        this.push(c.map(function (o) {
+          return new Widget(o);
+        }));
+      }, this.columns);
     }
-
-    c[0].push(new Widget());
-    this.title = title || 'Dashboard';
-    this.columns = c;
+    else {
+      // default is a single empty column
+      this.columns.push([]);
+    }
   }
 
 
@@ -24,6 +39,7 @@ function ($q, Widget) {
   Dashboard.prototype.renameWidget = function (widget, newName) {
     if(newName) {
       widget.title = newName;
+      this.persist();
     }
   };
 
@@ -39,6 +55,7 @@ function ($q, Widget) {
         return widget !== p;
       });
     });
+    this.persist();
   };
 
 
@@ -60,7 +77,12 @@ function ($q, Widget) {
       }
     }
 
-    this.columns[index].unshift(w || new Widget({title: 'just added'}));
+    w = w || new Widget({
+      title: 'just added'
+    });
+
+    this.columns[index].unshift(w);
+    this.persist();
   };
 
 
@@ -71,6 +93,46 @@ function ($q, Widget) {
   Dashboard.prototype.rename = function (newName) {
     if(newName) {
       this.title = newName;
+      this.persist();
+    }
+  };
+
+
+
+  /**
+   * benefit from angular's toJsonReplacer
+   */
+  Dashboard.prototype.properties = function () {
+    return angular.fromJson(angular.toJson(this));
+  };
+
+
+  /**
+   * save to backend
+   */
+  Dashboard.prototype.persist = function () {
+    var body = this.properties();
+
+    if(this.id) { // updating
+      dSrc.request(
+        {
+          method: 'PUT',
+          _cdapNsPath: API_PATH + '/' + this.id,
+          body: body
+        }
+      );
+    }
+    else { // saving
+      dSrc.request(
+        {
+          method: 'POST',
+          _cdapNsPath: API_PATH,
+          body: body
+        },
+        (function (result) {
+          this.id = result.id;
+        }).bind(this)
+      );
     }
   };
 
@@ -79,12 +141,26 @@ function ($q, Widget) {
 
 
   function Model () {
-    this.data = [
-      new Dashboard('grid'),
-      new Dashboard('full-width', 1)
-    ];
+    var data = [];
+    data.activeIndex = 0;
 
-    this.data.activeIndex = 0;
+    this.data = data;
+
+    dSrc.request(
+      {
+        method: 'GET',
+        _cdapNsPath: API_PATH
+      },
+      function (result) {
+
+        angular.forEach(result, function (v) {
+          var p = v.config;
+          p.id = v.id;
+          data.push(new Dashboard(p));
+        });
+      }
+    );
+
   }
 
 
@@ -101,15 +177,39 @@ function ($q, Widget) {
    * remove a dashboard tab
    */
   Model.prototype.remove = function (index) {
-    this.data.splice(index, 1);
+    var removed = this.data.splice(index, 1)[0];
+
+    dSrc.request(
+      {
+        method: 'DELETE',
+        _cdapNsPath: API_PATH + '/' + removed.id
+      }
+    );
   };
 
 
   /**
    * add a new dashboard tab
    */
-  Model.prototype.add = function (title, colCount) {
-    var n = this.data.push(new Dashboard(title, colCount));
+  Model.prototype.add = function (properties, colCount) {
+    var d = new Dashboard(properties);
+
+    // add columns as needed
+    for (var i = 1; i < (colCount||3); i++) {
+      d.columns.push([]);
+    }
+
+    // default widget in first column
+    // FIXME: figure out why asSortable throws an error without $timeout
+    $timeout(function () {
+      d.columns[0].push(new Widget());
+
+      // save to backend
+      d.persist();
+    });
+
+    // newly created tab becomes active
+    var n = this.data.push(d);
     this.data.activeIndex = n-1;
   };
 

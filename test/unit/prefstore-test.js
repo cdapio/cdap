@@ -1,31 +1,31 @@
 'use strict';
 
-describe('myUiPrefs', function(){
+describe('myUiSettings', function(){
 
   // include the module
   beforeEach(module('cdap-ui.services'));
 
   // get ref to the service to test
-  var myUiPrefs;
+  var myUiSettings;
   beforeEach(inject(function($injector) {
-    myUiPrefs = $injector.get('myUiPrefs');
+    myUiSettings = $injector.get('myUiSettings');
   }));
 
   // actual testing follows
 
   it('has the expected endpoint', function() {
-    expect(myUiPrefs.endpoint).toEqual('/preferences/uisettings');
+    expect(myUiSettings.endpoint).toEqual('/preferences/uisettings');
   });
 
 
   describe('get', function() {
 
     it('is a method', function() {
-      expect(myUiPrefs.get).toEqual(jasmine.any(Function));
+      expect(myUiSettings.get).toEqual(jasmine.any(Function));
     });
 
     it('returns a promise', function() {
-      var result = myUiPrefs.get('test');
+      var result = myUiSettings.get('test');
       expect(result.then).toEqual(jasmine.any(Function));
     });
 

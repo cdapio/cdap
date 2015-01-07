@@ -22,6 +22,14 @@ angular.module(PKG.name + '.services')
             method: 'GET'
           },
           (function(res) {
+
+            if(!res.length) {
+              res = [{
+                id: 'default',
+                displayName: 'Default'
+              }];
+            }
+
             this.namespaceList = res;
             queryInProgress.resolve(res);
             queryInProgress = null;
@@ -37,7 +45,7 @@ angular.module(PKG.name + '.services')
       var ns = this.namespaceList.filter(function(namespace) {
         return namespace.id === id;
       });
-      return ns[0].displayName;
+      return ns[0].displayName || id;
     };
 
   });

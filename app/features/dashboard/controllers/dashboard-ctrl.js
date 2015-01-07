@@ -63,7 +63,9 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
 
 
   $scope.addDashboard = function () {
-    myDashboardsModel.add('new dashboard');
+    myDashboardsModel.add({
+      title: 'new dashboard'
+    });
   };
 
   $scope.removeDashboard = function () {
@@ -91,6 +93,7 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
     },
     dragEnd: function (drag) {
       console.log('dragEnd', drag.source, drag.dest);
+      myDashboardsModel.current().persist();
     }
   };
 

@@ -85,13 +85,17 @@ angular.module(PKG.name+'.services')
 
       scope.$on(caskWindowManager.event.blur, function () {
         angular.forEach(self.bindings, function (b) {
-          _pollStop(b.resource);
+          if(b.poll) {
+            _pollStop(b.resource);
+          }
         });
       });
 
       scope.$on(caskWindowManager.event.focus, function () {
         angular.forEach(self.bindings, function (b) {
-          _pollStart(b.resource);
+          if(b.poll) {
+            _pollStart(b.resource);
+          }
         });
       });
 
@@ -105,6 +109,7 @@ angular.module(PKG.name+'.services')
      */
     DataSource.prototype.poll = function (resource, cb) {
       this.bindings.push({
+        poll: true,
         resource: resource,
         callback: cb
       });
@@ -130,7 +135,7 @@ angular.module(PKG.name+'.services')
         callback: function() {
           if(!once) {
             once = true;
-            cb.apply(this, arguments);
+            cb && cb.apply(this, arguments);
           }
         }
       });
