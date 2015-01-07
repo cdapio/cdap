@@ -18,10 +18,10 @@ package co.cask.cdap.common.conf;
 
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Comment;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -132,8 +132,7 @@ import javax.xml.transform.stream.StreamResult;
  * of the System property with that name.
  */
 public class Configuration implements Iterable<Map.Entry<String, String>> {
-  private static final Log LOG =
-    LogFactory.getLog(Configuration.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
 
   private boolean quietmode = true;
 
@@ -1637,7 +1636,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         root = doc.getDocumentElement();
       }
       if (!"configuration".equals(root.getTagName())) {
-        LOG.fatal("bad conf file: top-level element not <configuration>");
+        LOG.error("bad conf file: top-level element not <configuration>");
       }
       NodeList props = root.getChildNodes();
       for (int i = 0; i < props.getLength(); i++) {
@@ -1690,16 +1689,16 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         }
       }
     } catch (IOException e) {
-      LOG.fatal("error parsing conf file: " + e);
+      LOG.error("error parsing conf file.", e);
       throw new RuntimeException(e);
     } catch (DOMException e) {
-      LOG.fatal("error parsing conf file: " + e);
+      LOG.error("error parsing conf file.", e);
       throw new RuntimeException(e);
     } catch (SAXException e) {
-      LOG.fatal("error parsing conf file: " + e);
+      LOG.error("error parsing conf file.", e);
       throw new RuntimeException(e);
     } catch (ParserConfigurationException e) {
-      LOG.fatal("error parsing conf file: " + e);
+      LOG.error("error parsing conf file.", e);
       throw new RuntimeException(e);
     }
   }

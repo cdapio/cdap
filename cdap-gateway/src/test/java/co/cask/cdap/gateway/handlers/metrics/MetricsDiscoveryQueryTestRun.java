@@ -18,17 +18,22 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   @BeforeClass
-  public static void setup() throws InterruptedException {
+  public static void setup() throws Exception {
     setupMetrics();
   }
 
@@ -116,7 +121,61 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private static void setupMetrics() throws InterruptedException {
+  @Test
+  public void testMetricsContexts() throws Exception {
+    metricsResponseCheck("/v2/metrics/available/context", 2, ImmutableList.<String>of("WCount", "WordCount"));
+    metricsResponseCheck("/v2/metrics/available/context/WordCount.f", 1, ImmutableList.<String>of("WordCounter"));
+    metricsResponseCheck("/v2/metrics/available/context/WCount", 3, ImmutableList.<String>of("b", "f", "p"));
+
+    String base = "/v2/metrics/available/context/WCount.f";
+    HttpResponse response = doGet(base);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(2, resultList.size());
+    Assert.assertEquals("WCounter", resultList.get(0));
+    Assert.assertEquals("WordCounter", resultList.get(1));
+
+  }
+
+  private void metricsResponseCheck(String url, int expected, List<String> expectedValues) throws Exception {
+    HttpResponse response = doGet(url);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(expected, reply.size());
+    for (int i = 0; i < expectedValues.size(); i++) {
+      Assert.assertEquals(expectedValues.get(i), reply.get(i));
+    }
+  }
+
+  @Test
+  public void testMetrics() throws Exception {
+    String base = "/v2/metrics/available/context/WordCount.f.WordCounter.splitter/metrics";
+    HttpResponse response = doGet(base);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(2, resultList.size());
+
+    base = "/v2/metrics/available/context/WordCount.f.WordCounter.collector/metrics";
+    response = doGet(base);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    result = EntityUtils.toString(response.getEntity());
+    resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(3, resultList.size());
+    Assert.assertEquals("aa", resultList.get(0));
+    Assert.assertEquals("ab", resultList.get(1));
+    Assert.assertEquals("zz", resultList.get(2));
+
+  }
+
+  private static void setupMetrics() throws Exception {
+    HttpResponse response = doDelete("/v2/metrics");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     MetricsCollector collector =
       collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
     collector.increment("reads", 1);
@@ -136,6 +195,11 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
     collector.increment("reads", 1);
     collector.increment("writes", 1);
+
+    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.collector", "0");
+    collector.increment("aa", 1);
+    collector.increment("zz", 1);
+    collector.increment("ab", 1);
 
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);

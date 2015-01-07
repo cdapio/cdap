@@ -19,6 +19,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -228,12 +232,27 @@ public class StreamInputFormatTest {
     ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
     headers.put("key1", "value1");
     headers.put("key2", "value2");
-    ByteBuffer buffer = ByteBuffer.wrap("testdata".getBytes(Charsets.UTF_8));
-    StreamEvent event = new StreamEvent(new StreamEventData(headers.build(), buffer), System.currentTimeMillis());
-    StreamEventDecoder decoder = new IdentityStreamEventDecoder();
-    StreamEventDecoder.DecodeResult result = decoder.decode(event, new StreamEventDecoder.DecodeResult());
+    ByteBuffer buffer = Charsets.UTF_8.encode("testdata");
+    StreamEvent event = new StreamEvent(headers.build(), buffer, System.currentTimeMillis());
+    StreamEventDecoder<LongWritable, StreamEvent> decoder = new IdentityStreamEventDecoder();
+    StreamEventDecoder.DecodeResult<LongWritable, StreamEvent> result
+      = new StreamEventDecoder.DecodeResult<LongWritable, StreamEvent>();
+    result = decoder.decode(event, result);
     Assert.assertEquals(new LongWritable(event.getTimestamp()), result.getKey());
     Assert.assertEquals(event, result.getValue());
+  }
+
+  @Test
+  public void testStringStreamEventDecoder() {
+    String body = "Testing";
+    StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
+    StreamEventDecoder<LongWritable, String> decoder = new StringStreamEventDecoder();
+    StreamEventDecoder.DecodeResult<LongWritable, String> result
+      = new StreamEventDecoder.DecodeResult<LongWritable, String>();
+    result = decoder.decode(event, result);
+
+    Assert.assertEquals(event.getTimestamp(), result.getKey().get());
+    Assert.assertEquals(body, result.getValue());
   }
 
   @Test
@@ -243,6 +262,8 @@ public class StreamInputFormatTest {
     Assert.assertEquals(BytesStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
     StreamInputFormat.inferDecoderClass(conf, Text.class);
     Assert.assertEquals(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, String.class);
+    Assert.assertEquals(StringStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
     StreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
     Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
     StreamInputFormat.inferDecoderClass(conf, StreamEventData.class);

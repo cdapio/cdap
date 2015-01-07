@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
@@ -45,6 +46,7 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("actions", serializeList(src.getActions(), context, WorkflowActionSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
+    jsonObj.add("sparks", serializeMap(src.getSparks(), context, SparkSpecification.class));
     jsonObj.add("schedules", serializeList(src.getSchedules(), context, Schedule.class));
 
 
@@ -64,8 +66,10 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"), context,
                                                                     MapReduceSpecification.class);
 
+    Map<String, SparkSpecification> sparks = deserializeMap(jsonObj.get("sparks"), context, SparkSpecification.class);
+
     List<Schedule> schedules = deserializeList(jsonObj.get("schedules"), context, Schedule.class);
 
-    return new DefaultWorkflowSpecification(className, name, description, actions, mapReduces, schedules);
+    return new DefaultWorkflowSpecification(className, name, description, actions, mapReduces, sparks, schedules);
   }
 }
