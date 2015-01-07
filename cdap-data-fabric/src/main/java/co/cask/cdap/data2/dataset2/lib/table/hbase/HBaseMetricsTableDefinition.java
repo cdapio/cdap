@@ -69,12 +69,13 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
   }
 
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) {
+  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) throws IOException {
     final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
     hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    columnDescriptor.setMaxVersions(1);
+    // to support read-less increments
+    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
@@ -83,6 +84,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
+    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName());
     return tableDescriptor;
   }
 }

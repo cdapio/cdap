@@ -105,12 +105,12 @@ public class HBaseMetricsTable implements MetricsTable {
 
   @Override
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    Increment increment = new Increment(row);
+    Put increment = getIncrementalPut(row);
     for (Map.Entry<byte[], Long> column : increments.entrySet()) {
-      increment.addColumn(DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
+      increment.add(DATA_COLUMN_FAMILY, column.getKey(), System.currentTimeMillis(), Bytes.toBytes(column.getValue()));
     }
     try {
-      hTable.increment(increment);
+      hTable.put(increment);
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -122,18 +122,26 @@ public class HBaseMetricsTable implements MetricsTable {
     hTable.flushCommits();
   }
 
+  private Put getIncrementalPut(byte[] row) {
+    Put put = new Put(row);
+    put.setAttribute(HBaseOrderedTable.DELTA_WRITE, Bytes.toBytes(true));
+    return put;
+  }
+
   @Override
   public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
-    List<Increment> increments = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
-      Increment increment = new Increment(entry.getKey());
-      for (Map.Entry<byte[], Long> column : entry.getValue().entrySet()) {
-        increment.addColumn(DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
+    List<Put> puts = Lists.newArrayList();
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> update : updates.entrySet()) {
+      Put increment = getIncrementalPut(update.getKey());
+      for (Map.Entry<byte[], Long> column : update.getValue().entrySet()) {
+        increment.add(DATA_COLUMN_FAMILY, column.getKey(), System.currentTimeMillis(),
+                      Bytes.toBytes(column.getValue()));
       }
-      increments.add(increment);
+      puts.add(increment);
     }
+
     try {
-      hTable.batch(increments);
+      hTable.put(puts);
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -257,7 +265,8 @@ public class HBaseMetricsTable implements MetricsTable {
                                   @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
-    scan.setMaxVersions(1);
+    // to support read-less increments
+    scan.setMaxVersions();
 
     if (startRow != null) {
       scan.setStartRow(startRow);
