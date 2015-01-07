@@ -19,9 +19,9 @@ package co.cask.cdap.config;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
@@ -56,8 +56,9 @@ public class DefaultConfigStore implements ConfigStore {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultConfigStore.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final String PROPERTY_COLUMN = "properties";
 
-  private final Transactional<ConfigTable, KeyValueTable> txnl;
+  private final Transactional<ConfigTable, Table> txnl;
 
   @Inject
   public DefaultConfigStore(CConfiguration cConf, final DatasetFramework datasetFramework,
@@ -68,8 +69,8 @@ public class DefaultConfigStore implements ConfigStore {
       @Override
       public ConfigTable get() {
         try {
-          KeyValueTable table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.ConfigStore.CONFIG_TABLE,
-                                                                "keyValueTable", DatasetProperties.EMPTY,
+          Table table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.ConfigStore.CONFIG_TABLE,
+                                                                "table", DatasetProperties.EMPTY,
                                                                 DatasetDefinition.NO_ARGUMENTS, null);
           return new ConfigTable(table);
         } catch (Exception e) {
@@ -81,7 +82,7 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
-    dsFramework.addInstance(KeyValueTable.class.getName(), Constants.ConfigStore.CONFIG_TABLE, DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), Constants.ConfigStore.CONFIG_TABLE, DatasetProperties.EMPTY);
   }
 
   @Override
@@ -89,11 +90,11 @@ public class DefaultConfigStore implements ConfigStore {
     Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override
       public Boolean apply(ConfigTable configTable) throws Exception {
-        if (configTable.table.read(rowKey(namespace, type, config.getId())) != null) {
+        if (!configTable.table.get(rowKey(namespace, type, config.getId())).isEmpty()) {
           return false;
         }
-        configTable.table.write(rowKey(namespace, type, config.getId()),
-                                Bytes.toBytes(GSON.toJson(config.getProperties())));
+        configTable.table.put(rowKey(namespace, type, config.getId()), Bytes.toBytes(PROPERTY_COLUMN),
+                              Bytes.toBytes(GSON.toJson(config.getProperties())));
         return true;
       }
     });
@@ -108,7 +109,7 @@ public class DefaultConfigStore implements ConfigStore {
     Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override
       public Boolean apply(ConfigTable configTable) throws Exception {
-        if (configTable.table.read(rowKey(namespace, type, id)) == null) {
+        if (configTable.table.get(rowKey(namespace, type, id)).isEmpty()) {
           return false;
         }
         configTable.table.delete(rowKey(namespace, type, id));
@@ -128,12 +129,12 @@ public class DefaultConfigStore implements ConfigStore {
       public List<Config> apply(ConfigTable configTable) throws Exception {
         List<Config> configList = Lists.newArrayList();
         byte[] prefixBytes = rowKeyPrefix(namespace, type);
-        CloseableIterator<KeyValue<byte[], byte[]>> rows = configTable.table.scan(prefixBytes,
-                                                                                  Bytes.stopKeyForPrefix(prefixBytes));
-        while (rows.hasNext()) {
-          KeyValue<byte[], byte[]> row = rows.next();
-          Map<String, String> properties = GSON.fromJson(Bytes.toString(row.getValue()), MAP_STRING_STRING_TYPE);
-          configList.add(new Config(getId(row.getKey(), prefixBytes), properties));
+        Scanner rows = configTable.table.scan(prefixBytes, Bytes.stopKeyForPrefix(prefixBytes));
+        Row row;
+        while ((row = rows.next()) != null) {
+          Map<String, String> properties = GSON.fromJson(Bytes.toString(row.get(Bytes.toBytes(PROPERTY_COLUMN))),
+                                                         MAP_STRING_STRING_TYPE);
+          configList.add(new Config(getId(row.getRow(), prefixBytes), properties));
         }
         return configList;
       }
@@ -145,11 +146,12 @@ public class DefaultConfigStore implements ConfigStore {
     Config config = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Config>() {
       @Override
       public Config apply(ConfigTable configTable) throws Exception {
-        byte[] prop = configTable.table.read(rowKey(namespace, type, id));
-        if (prop == null) {
+        Row row = configTable.table.get(rowKey(namespace, type, id));
+        if (row.isEmpty()) {
           return null;
         }
-        Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(prop), MAP_STRING_STRING_TYPE);
+        Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(row.get(Bytes.toBytes(PROPERTY_COLUMN))),
+                                                        MAP_STRING_STRING_TYPE);
         return new Config(id, propertyMap);
       }
     });
@@ -166,11 +168,11 @@ public class DefaultConfigStore implements ConfigStore {
     Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override
       public Boolean apply(ConfigTable configTable) throws Exception {
-        if (configTable.table.read(rowKey(namespace, type, config.getId())) == null) {
+        if (configTable.table.get(rowKey(namespace, type, config.getId())).isEmpty()) {
           return false;
         }
-        configTable.table.write(rowKey(namespace, type, config.getId()),
-                                Bytes.toBytes(GSON.toJson(config.getProperties())));
+        configTable.table.put(rowKey(namespace, type, config.getId()), Bytes.toBytes(PROPERTY_COLUMN),
+                              Bytes.toBytes(GSON.toJson(config.getProperties())));
         return true;
       }
     });
@@ -203,15 +205,15 @@ public class DefaultConfigStore implements ConfigStore {
     return Bytes.toBytes(rowKeyPrefixString(namespace, type));
   }
 
-  private static final class ConfigTable implements Iterable<KeyValueTable> {
-    private final KeyValueTable table;
+  private static final class ConfigTable implements Iterable<Table> {
+    private final Table table;
 
-    private ConfigTable(KeyValueTable table) {
+    private ConfigTable(Table table) {
       this.table = table;
     }
 
     @Override
-    public Iterator<KeyValueTable> iterator() {
+    public Iterator<Table> iterator() {
       return Iterators.singletonIterator(table);
     }
   }
