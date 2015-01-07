@@ -46,7 +46,7 @@ public interface WorkflowConfigurer {
   void setProperties(Map<String, String> properties);
 
   /**
-   * Add a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be
+   * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be
    * configured when the Application is defined.
    *
    * @param mapReduce name of the MapReduce program to be added to the {@link Workflow}
@@ -55,7 +55,7 @@ public interface WorkflowConfigurer {
   void addMapReduce(String mapReduce);
 
   /**
-   * Add a Spark program as a next sequential step in the {@link Workflow}. Spark program must be
+   * Adds a Spark program as a next sequential step in the {@link Workflow}. Spark program must be
    * configured when the Application is defined.
    *
    * @param spark name of the Spark program to be added to the {@link Workflow}
@@ -64,7 +64,7 @@ public interface WorkflowConfigurer {
   void addSpark(String spark);
 
   /**
-   * Add a custom action as a next sequential step in the {@link Workflow}
+   * Adds a custom action as a next sequential step in the {@link Workflow}
    *
    * @param action to be added to the {@link Workflow}
    */
