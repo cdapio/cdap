@@ -29,7 +29,7 @@ public interface Scheduler {
 
   /**
    * Schedule a program to be run in a defined schedule.
-   *  @param program Program that needs to be run.
+   * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedules Schedule with which the program runs.
    */
@@ -72,7 +72,7 @@ public interface Scheduler {
 
   /**
    * Delete the schedule. Don't schedule any more jobs.
-   *  @param programId
+   * @param programId
    * @param programType
    * @param scheduleIds
    */
