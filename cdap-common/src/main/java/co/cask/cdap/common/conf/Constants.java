@@ -504,6 +504,8 @@ public final class Constants {
 
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
+    public static final String TABLE_DATASET_NAME = "explore.dataset.table.name";
+    public static final String TABLE_DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.table.TableStorageHandler";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.stream.StreamStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";

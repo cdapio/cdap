@@ -27,7 +27,10 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Represents a mapred InputSplit for stream.
+ * Represents a mapred InputSplit for stream. Any InputSplit used by Hive MUST be a FileInputSplit otherwise
+ * Hive will choke and die. Hive will pass this into HiveInputSplit, which happily returns an invalid path if this is
+ * not a FileSplit. The invalid path causes mapred to die, but not in a way where any sensible error message is logged.
+ * Luckily for us stream splits are file splits.
  */
 public final class StreamInputSplit extends FileSplit implements Writable {
 

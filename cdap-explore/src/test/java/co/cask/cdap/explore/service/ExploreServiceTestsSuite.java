@@ -30,6 +30,8 @@ import org.junit.runners.Suite;
   ExploreMetadataTestRun.class,
   HiveExploreServiceTestRun.class,
   WritableDatasetTestRun.class,
+  HiveExploreServiceTableTestRun.class,
+  // TODO: remove order dependency and make it so the stop test does not need to run last
   HiveExploreServiceStopTestRun.class
 })
 public class ExploreServiceTestsSuite {
