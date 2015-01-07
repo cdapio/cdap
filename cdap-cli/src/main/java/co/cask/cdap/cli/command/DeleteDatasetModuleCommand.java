@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -28,17 +29,18 @@ import java.io.PrintStream;
 /**
  * Deletes a dataset module.
  */
-public class DeleteDatasetModuleCommand implements Command {
+public class DeleteDatasetModuleCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient datasetClient;
 
   @Inject
-  public DeleteDatasetModuleCommand(DatasetModuleClient datasetClient) {
+  public DeleteDatasetModuleCommand(DatasetModuleClient datasetClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.datasetClient = datasetClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String datasetModuleName = arguments.get(ArgumentName.DATASET_MODULE.toString());
 
     datasetClient.delete(datasetModuleName);

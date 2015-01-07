@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 
@@ -30,20 +31,21 @@ import java.util.Map;
 /**
  * Sets the runtime arguments of a program.
  */
-public class SetProgramRuntimeArgsCommand implements Command {
+public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public SetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient) {
+  public SetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
     String programId = programIdParts[1];

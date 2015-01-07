@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -28,18 +29,19 @@ import java.io.PrintStream;
 /**
  * Deletes an application.
  */
-public class DeleteAppCommand implements Command {
+public class DeleteAppCommand extends AbstractAuthCommand {
 
   public static final String SUCCESS_MSG = "Successfully deleted application '%s'";
   private final ApplicationClient appClient;
 
   @Inject
-  public DeleteAppCommand(ApplicationClient appClient) {
+  public DeleteAppCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.appClient = appClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String appId = arguments.get(ArgumentName.APP.toString());
 
     appClient.delete(appId);
