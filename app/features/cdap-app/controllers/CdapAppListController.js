@@ -19,8 +19,8 @@ angular.module(PKG.name + '.feature.cdap-app')
             function success() {
               $alert({
                 type: 'success',
-                title: 'Upload sucess!',
-                message: 'The file is uploaded successfully!'
+                title: 'Upload success!',
+                message: 'The Application has been uploaded successfully!'
               });
 
               $state.transitionTo($state.current, $stateParams, {
@@ -29,11 +29,11 @@ angular.module(PKG.name + '.feature.cdap-app')
                   notify: true
               });
             },
-            function error() {
+            function error(err) {
               $alert({
                 type: 'error',
-                title: 'Boink!',
-                message: 'Something is goofed up!'
+                title: 'Appliation upload failed!',
+                message: err
               });
             }
           );
