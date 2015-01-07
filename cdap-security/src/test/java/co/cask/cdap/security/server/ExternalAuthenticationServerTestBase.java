@@ -115,7 +115,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
       port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
     } else {
-      port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
 
     try {
@@ -141,7 +141,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
 
     // Use random port for testing
-    cConf.setInt(Constants.Security.AUTH_SERVER_PORT, Networks.getRandomPort());
+    cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, Networks.getRandomPort());
     cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
 
     cConf.set(Constants.Security.AUTH_HANDLER_CLASS, LDAPAuthenticationHandler.class.getName());

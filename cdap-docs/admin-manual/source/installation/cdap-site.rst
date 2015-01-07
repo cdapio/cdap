@@ -284,7 +284,7 @@ see the :ref:`configuration-security` section.
    * - ``scheduler.max.thread.pool.size``
      - ``30``
      - Size of the scheduler thread pool
-   * - ``security.auth.server.address``
+   * - ``security.auth.server.bind.address``
      - ``127.0.0.1``
      - IP address that the CDAP Authentication Server should bind to
    * - ``security.auth.server.bind.port``
