@@ -89,7 +89,11 @@ function makeApp (authAddress, cdapConfig) {
     );
   });
 
-  app.post('/namespaces/:namespace/apps', function (req, res) {
+  /*
+    Handle POST requests made outside of the websockets from front-end.
+    For now it handles file upload POST /namespaces/:namespace/apps API
+  */
+  app.post('/namespaces/:namespace/:path(*)', function (req, res) {
     var url = 'http://' + cdapConfig['router.server.address'] +
               ':' +
               cdapConfig['router.server.port'] +
