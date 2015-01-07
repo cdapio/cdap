@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.services')
-  .factory('fileUploader', function($q, $state) {
+  .factory('fileUploader', function($q, $window) {
     function upload(fileObj){
       var deferred = $q.defer();
-      var xhr = new XMLHttpRequest();
+      var xhr = new $window.XMLHttpRequest();
       xhr.upload.addEventListener('progress', function (e) {
         if (e.type === "progress") {
           console.log("Progress! ");
