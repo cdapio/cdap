@@ -9,15 +9,27 @@ function (Widget, MyDataSource, $log, $timeout) {
       API_PATH = '/configuration/dashboards';
 
 
-  function Dashboard (properties) {
+  function Dashboard (p) {
     angular.extend(
       this,
       {
-        title: 'Dashboard',
-        columns: [[]]
-      },
-      properties || {}
+        id: p.id,
+        title: p.title || 'Dashboard',
+        columns: []
+      }
     );
+
+    if(p.columns && p.columns.length) {
+      angular.forEach(p.columns, function (c) {
+        this.push(c.map(function (o) {
+          return new Widget(o);
+        }));
+      }, this.columns);
+    }
+    else {
+      // default is a single empty column
+      this.columns.push([]);
+    }
   }
 
 
@@ -146,13 +158,13 @@ function (Widget, MyDataSource, $log, $timeout) {
 
         $log.log('dashboard model', result);
 
-        angular.forEach(result, function (v, k) {
-
-          // FIXME: API should not return nested strings of JSON!
-          var properties = JSON.parse(v);
-          properties.id = k;
-
-          data.push(new Dashboard(properties));
+        angular.forEach(result, function (v) {
+          data.push(new Dashboard(angular.extend(
+            {
+              id: v.id
+            },
+            v.config
+          )));
 
         });
       }

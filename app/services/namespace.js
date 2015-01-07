@@ -25,7 +25,8 @@ angular.module(PKG.name + '.services')
 
             if(!res.length) {
               res = [{
-                id: 'default'
+                id: 'default',
+                displayName: 'Default'
               }];
             }
 
