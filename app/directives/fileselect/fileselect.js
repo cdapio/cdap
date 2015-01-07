@@ -4,7 +4,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       templateUrl: 'fileselect/fileselect.html',
       link: function(scope, element, attrs) {
-        var fileElement = angular.element('<input style="width: 1px; height: 1px" type="file" multiple="true">');
+        var fileElement = angular.element('<input class="sr-only" type="file" multiple="true">');
         element.append(fileElement);
         element.bind('click', function(e) {
           fileElement[0].click();
@@ -14,9 +14,9 @@ angular.module(PKG.name + '.commons')
           onFileSelect(scope, {
             $files: e.target.files,
             $event: e
-          })
+          });
         });
 
       }
-    }
-  })
+    };
+  });
