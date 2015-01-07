@@ -19,7 +19,7 @@ function (Widget, MyDataSource, $timeout) {
       }
     );
 
-    if(p.columns && p.columns.length) {
+    if(angular.isArray(p.columns)) {
       angular.forEach(p.columns, function (c) {
         this.push(c.map(function (o) {
           return new Widget(o);
