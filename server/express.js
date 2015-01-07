@@ -89,6 +89,22 @@ function makeApp (authAddress, cdapConfig) {
     );
   });
 
+  app.post('/namespaces/:namespace/apps', function (req, res) {
+    var url = 'http://' + cdapConfig['router.server.address'] +
+              ':' +
+              cdapConfig['router.server.port'] +
+              '/v3/namespaces/' +
+              req.param('namespace') +
+              '/apps';
+
+    var opts = {
+      method: 'POST',
+      url: url
+    };
+
+    req.pipe(request.post(opts)).pipe(res);
+  });
+
   // serve static assets
   app.use('/assets', [
     httpStaticLogger,
@@ -120,5 +136,3 @@ function makeApp (authAddress, cdapConfig) {
   return app;
 
 }
-
-
