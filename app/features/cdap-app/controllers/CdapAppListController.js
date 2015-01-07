@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.cdap-app')
         });
         $state.go($state.current, {}, {reload: true});
       }
-
+      // Independent xhr request. Failure case will not be handled by $rootScope.
       function error(err) {
         $alert({
           type: 'danger',
@@ -40,23 +40,15 @@ angular.module(PKG.name + '.feature.cdap-app')
         _cdapNsPath: '/apps/' + app,
         method: 'DELETE'
       }, function(res) {
-        if (res.statusCode === 200) {
-          $alert({
-            type: 'success',
-            title: 'Delete Success!',
-            content: '<strong>' + app + '</strong> app been deleted successfully'
-          });
-          // FIXME: Have to avoid $timeout here. Un-necessary.
-          $timeout(function() {
-            $state.go($state.current, {}, {reload: true});
-          }, 1);
-        } else {
-          $alert({
-            type: 'error',
-            title: 'Delete failed!',
-            content: '<strong>' + app + '</strong> app delete failed.'
-          })
-        }
+        $alert({
+          type: 'success',
+          title: 'Delete Success!',
+          content: '<strong>' + app + '</strong> app been deleted successfully'
+        });
+        // FIXME: Have to avoid $timeout here. Un-necessary.
+        $timeout(function() {
+          $state.go($state.current, {}, {reload: true});
+        }, 1);
       })
     }
   });
