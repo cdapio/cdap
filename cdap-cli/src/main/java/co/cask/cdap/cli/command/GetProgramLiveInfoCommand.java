@@ -16,15 +16,16 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
 
 import java.io.PrintStream;
@@ -32,18 +33,19 @@ import java.io.PrintStream;
 /**
  * Gets the live info of a program.
  */
-public class GetProgramLiveInfoCommand implements Command {
+public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient) {
+  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);

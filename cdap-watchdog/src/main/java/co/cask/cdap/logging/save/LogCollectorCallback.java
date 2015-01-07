@@ -134,7 +134,10 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
       }
       ++count;
     }
-    LOG.debug("Got {} messages from kafka", count);
+    LOG.trace("Got {} messages from kafka", count);
+    if (count > 0) {
+      LOG.debug("Got {} messages from kafka", count);
+    }
   }
 
   @Override

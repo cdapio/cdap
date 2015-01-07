@@ -26,31 +26,27 @@ import co.cask.cdap.metrics.data.AggregatesTable;
 import co.cask.cdap.metrics.data.MetricsScanQuery;
 import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handlers for clearing metrics.
@@ -60,26 +56,16 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
-  private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
+
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
   private final int tsRetentionSeconds;
+  private final TimeSeriesTables timeSeriesTables;
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
-    this.metricsTableCaches = Maps.newHashMap();
-    for (final MetricsScope scope : MetricsScope.values()) {
-      LoadingCache<Integer, TimeSeriesTable> cache =
-        CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
-          @Override
-          public TimeSeriesTable load(Integer key) throws Exception {
-            return metricsTableFactory.createTimeSeries(scope.name(), key);
-          }
-        });
-      this.metricsTableCaches.put(scope, cache);
-    }
-
+    this.timeSeriesTables = new TimeSeriesTables(metricsTableFactory);
     this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
@@ -110,9 +96,9 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   }
 
   @DELETE
-  public void deleteAllMetrics(HttpRequest request, HttpResponder responder) throws IOException {
+  public void deleteAllMetrics(HttpRequest request, HttpResponder responder,
+                               @QueryParam("prefixEntity") String metricPrefix) throws IOException {
     try {
-      String metricPrefix = getMetricPrefixFromRequest(request);
       if (metricPrefix == null) {
         LOG.debug("Request to delete all metrics");
       } else {
@@ -131,9 +117,9 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   @DELETE
   @Path("/{scope}")
   public void deleteScope(HttpRequest request, HttpResponder responder,
-                          @PathParam("scope") String scope) throws IOException {
+                          @PathParam("scope") String scope,
+                          @QueryParam("prefixEntity") String metricPrefix) throws IOException {
     try {
-      String metricPrefix = getMetricPrefixFromRequest(request);
       if (metricPrefix == null) {
         LOG.debug("Request to delete all metrics in scope {} ", scope);
       } else {
@@ -157,46 +143,52 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   // ex: /system/apps/appX, /system/streams/streamX, /system/dataset/datasetX
   @DELETE
   @Path("/{scope}/{type}/{type-id}")
-  public void deleteType(HttpRequest request, HttpResponder responder) throws IOException {
-    handleDelete(request, responder);
+  public void deleteType(HttpRequest request, HttpResponder responder,
+                         @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    handleDelete(request, responder, metricPrefix);
   }
 
   // ex: /system/apps/appX/flows
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}")
-  public void deleteProgramType(HttpRequest request, HttpResponder responder) throws IOException {
-    handleDelete(request, responder);
+  public void deleteProgramType(HttpRequest request, HttpResponder responder,
+                                @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    handleDelete(request, responder, metricPrefix);
   }
 
   // ex: /system/apps/appX/flows/flowY
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}")
-  public void deleteProgram(HttpRequest request, HttpResponder responder) throws IOException {
-    handleDelete(request, responder);
+  public void deleteProgram(HttpRequest request, HttpResponder responder,
+                            @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    handleDelete(request, responder, metricPrefix);
   }
 
   // ex: /system/apps/appX/mapreduce/jobId/mappers
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
-  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
-    handleDelete(request, responder);
+  public void handleComponentType(HttpRequest request, HttpResponder responder,
+                                  @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    handleDelete(request, responder, metricPrefix);
   }
 
   // ex: /system/apps/appX/flows/flowY/flowlets/flowletZ
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
-  public void deleteComponent(HttpRequest request, HttpResponder responder) throws IOException {
-    handleDelete(request, responder);
+  public void deleteComponent(HttpRequest request, HttpResponder responder,
+                              @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    handleDelete(request, responder, metricPrefix);
   }
 
   // ex: /system/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver
   @DELETE
   @Path("/system/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}")
-  public void deleteFlowletDatasetMetrics(HttpRequest request, HttpResponder responder) throws IOException {
-    handleDelete(request, responder);
+  public void deleteFlowletDatasetMetrics(HttpRequest request, HttpResponder responder,
+                                          @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    handleDelete(request, responder, metricPrefix);
   }
 
-  private void handleDelete(HttpRequest request, HttpResponder responder) {
+  private void handleDelete(HttpRequest request, HttpResponder responder, String metricPrefix) {
     try {
       URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
       MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
@@ -205,7 +197,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
       MetricsRequest metricsRequest = requestBuilder.build();
 
       deleteTableEntries(metricsRequest.getScope(), metricsRequest.getContextPrefix(),
-                         getMetricPrefixFromRequest(request), metricsRequest.getTagPrefix());
+                         metricPrefix, metricsRequest.getTagPrefix());
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -219,26 +211,15 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     }
   }
 
-  // get the prefix of the metric to delete if its specified.  Prefixes can only be done at the entity level,
-  // meaning the entire string within a '.'.  For example, for metic store.bytes, 'store' as a prefix will match
-  // 'store.bytes', but 'stor' as a prefix will not match.
-  private String getMetricPrefixFromRequest(HttpRequest request) {
-    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-    List<String> prefixEntity = queryParams.get("prefixEntity");
-    // shouldn't be in params more than once, but if it is, just take any one
-    return (prefixEntity == null || prefixEntity.isEmpty()) ? null : prefixEntity.get(0);
-  }
-
   private void deleteTableEntries(MetricsScope scope, String contextPrefix,
                                   String metricPrefix, String tag) throws OperationException {
-    TimeSeriesTable ts1Table = metricsTableCaches.get(scope).getUnchecked(1);
     AggregatesTable aggTable = aggregatesTables.get().get(scope);
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
-      ts1Table.clear();
+      timeSeriesTables.clear(scope);
       aggTable.clear();
     } else if (tag == null) {
-      ts1Table.delete(contextPrefix, metricPrefix);
+      timeSeriesTables.delete(scope, contextPrefix, metricPrefix);
       aggTable.delete(contextPrefix, metricPrefix);
     } else {
       long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
@@ -249,7 +230,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
         .setRunId("0")
         .setTag(tag)
         .build(now - tsRetentionSeconds, now + 10);
-      ts1Table.delete(scanQuery);
+      timeSeriesTables.delete(scope, scanQuery);
       aggTable.delete(contextPrefix, metricPrefix, "0", tag);
     }
   }

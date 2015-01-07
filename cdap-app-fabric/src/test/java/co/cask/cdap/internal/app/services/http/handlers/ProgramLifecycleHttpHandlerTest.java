@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
@@ -25,13 +26,17 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpMethod;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -56,16 +61,14 @@ import javax.annotation.Nullable;
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
-  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE1)
+  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE1)
     .setDisplayName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
   private static final String TEST_NAMESPACE2 = "testnamespace2";
-  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE2)
+  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE2)
     .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
@@ -80,16 +83,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
   private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
+  private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
+  private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
 
   @BeforeClass
   public static void setup() throws Exception {
-    HttpResponse response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+    HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
@@ -597,7 +602,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start flow
     int status = getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
-                                       WORDCOUNT_FLOW_NAME, "start");
+                                      WORDCOUNT_FLOW_NAME, "start");
     Assert.assertEquals(200, status);
 
     liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
@@ -618,6 +623,138 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
   }
 
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowSchedules() throws Exception {
+    // Steps for the test:
+    // 1. Deploy the app
+    // 2. Verify the schedules
+    // 3. Verify the history after waiting a while
+    // 4. Suspend the schedule
+    // 5. Verify there are no runs after the suspend by looking at the history
+    // 6. Resume the schedule
+    // 7. Verify there are runs after the resume by looking at the history
+
+    // deploy app with schedule in namespace 2
+    HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //TODO: cannot test the /current endpoint because of CDAP-66. Enable after that bug is fixed.
+//    Assert.assertEquals(200, getWorkflowCurrentStatus(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+//                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME));
+
+    // get schedule id
+    String scheduleId = getScheduleId(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    long current = System.currentTimeMillis();
+    Long nextRunTime = getNextScheduledRunTime(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                               APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId);
+    Assert.assertNotNull(nextRunTime);
+    Assert.assertTrue(nextRunTime > current);
+
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    scheduleHistoryCheck(5, runsUrl, 0);
+
+    //Check schedule status
+    String statusUrl = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
+                                    scheduleId);
+    scheduleStatusCheck(5, statusUrl, "SCHEDULED");
+
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
+    //check paused state
+    scheduleStatusCheck(5, statusUrl, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+
+    int workflowRuns = getRuns(runsUrl);
+
+    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
+    TimeUnit.SECONDS.sleep(10);
+
+    int workflowRunsAfterSuspend = getRuns(runsUrl);
+    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
+
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                            APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
+
+    scheduleHistoryCheck(5, runsUrl, workflowRunsAfterSuspend);
+
+    //check scheduled state
+    scheduleStatusCheck(5, statusUrl, "SCHEDULED");
+
+    //Check status of a non existing schedule
+    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
+                                  "invalid");
+    scheduleStatusCheck(5, invalid, "NOT_FOUND");
+
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleId));
+
+    //check paused state
+    scheduleStatusCheck(5, statusUrl, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+  }
+
+  @Test
+  public void testServices() throws Exception {
+    HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    
+    // start service in wrong namespace
+    int code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
+                                    ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");
+    Assert.assertEquals(404, code);
+
+    code = getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");
+    Assert.assertEquals(200, code);
+
+    // verify instances
+    try {
+      getServiceInstances(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
+                          APP_WITH_SERVICES_SERVICE_NAME);
+      Assert.fail("Should not find service in " + TEST_NAMESPACE1);
+    } catch (AssertionError e) {
+    }
+    ServiceInstances instances = getServiceInstances(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                     APP_WITH_SERVICES_SERVICE_NAME);
+    Assert.assertEquals(1, instances.getRequested());
+    Assert.assertEquals(1, instances.getProvisioned());
+
+    // request 2 additional instances
+    code = setServiceInstances(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, 3);
+    Assert.assertEquals(404, code);
+    code = setServiceInstances(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, 3);
+    Assert.assertEquals(200, code);
+
+    // verify that additional instances were provisioned
+    instances = getServiceInstances(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                     APP_WITH_SERVICES_SERVICE_NAME);
+    Assert.assertEquals(3, instances.getRequested());
+    Assert.assertEquals(3, instances.getProvisioned());
+
+    // verify that endpoints are not available in the wrong namespace
+    response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.POST,
+                       "multi");
+    code = response.getStatusLine().getStatusCode();
+    Assert.assertEquals(404, code);
+
+    response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.GET,
+                       "multi/ping");
+    code = response.getStatusLine().getStatusCode();
+    Assert.assertEquals(404, code);
+
+    // stop service
+    code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
+                                APP_WITH_SERVICES_SERVICE_NAME, "stop");
+    Assert.assertEquals(404, code);
+
+    code = getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
+                                APP_WITH_SERVICES_SERVICE_NAME, "stop");
+    Assert.assertEquals(200, code);
+  }
+
   @After
   public void cleanup() throws Exception {
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -626,11 +763,104 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    HttpResponse response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
-                                                   TEST_NAMESPACE1));
+    doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1));
+    doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
+  }
+
+  private ServiceInstances getServiceInstances(String namespace, String app, String service) throws Exception {
+    String instanceUrl = String.format("apps/%s/services/%s/runnables/%s/instances", app, service, service);
+    String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedInstanceUrl);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    ServiceInstances instances = readResponse(response, ServiceInstances.class);
+    return instances;
+  }
+
+  private int setServiceInstances(String namespace, String app, String service, int instances) throws Exception {
+    String instanceUrl = String.format("apps/%s/services/%s/runnables/%s/instances", app, service, service);
+    String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    String instancesBody = GSON.toJson(new Instances(instances));
+    return doPut(versionedInstanceUrl, instancesBody).getStatusLine().getStatusCode();
+  }
+
+  private HttpResponse callService(String namespace, String app, String service, HttpMethod method, String endpoint)
+    throws Exception {
+    String serviceUrl = String.format("apps/%s/service/%s/methods/%s", app, service, endpoint);
+    String versionedServiceUrl = getVersionedAPIPath(serviceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response;
+    if (HttpMethod.GET.equals(method)) {
+      response = doGet(versionedServiceUrl);
+    } else if (HttpMethod.POST.equals(method)) {
+      response = doPost(versionedServiceUrl);
+    } else {
+      throw new IllegalArgumentException("Only GET and POST supported right now.");
+    }
+    return response;
+  }
+
+  private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/current", app, workflow);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(versionedUrl).getStatusLine().getStatusCode();
+  }
+
+  private Long getNextScheduledRunTime(String namespace, String app, String workflow, String schedule)
+    throws Exception {
+    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/nextruntime", app, workflow);
+    String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    JsonArray array = readResponse(response, JsonArray.class);
+    JsonObject wfObject = (JsonObject) array.get(0);
+    Assert.assertNotNull(wfObject);
+    String id = wfObject.get("id").getAsString();
+    Long time = wfObject.get("time").getAsLong();
+    Assert.assertTrue(id.contains(schedule));
+    return time;
+  }
+
+  private String getStatusUrl(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String statusUrl = String.format("apps/%s/workflows/%s/schedules/%s/status", appName, workflow, schedule);
+    return getVersionedAPIPath(statusUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private int resumeSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String scheduleResume = String.format("apps/%s/workflows/%s/schedules/%s/resume", appName, workflow, schedule);
+    HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                       namespace));
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private int suspendSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String scheduleSuspend = String.format("apps/%s/workflows/%s/schedules/%s/suspend", appName, workflow, schedule);
+    String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           namespace);
+    HttpResponse response = doPost(versionedScheduledSuspend);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private int getRuns(String runsUrl) throws Exception {
+    HttpResponse response = doGet(runsUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    return history.size();
+  }
+
+  private String getRunsUrl(String namespace, String appName, String workflow) {
+    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=completed", appName, workflow);
+    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private String getScheduleId(String namespace, String appName, String workflowName) throws Exception {
+    String scheduleIdsUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(scheduleIdsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(1, schedules.size());
+    String scheduleId = schedules.get(0);
+    Assert.assertNotNull(scheduleId);
+    Assert.assertFalse(scheduleId.isEmpty());
+    return scheduleId;
   }
 
   private int deleteQueues(String namespace, String appId, String flow) throws Exception {

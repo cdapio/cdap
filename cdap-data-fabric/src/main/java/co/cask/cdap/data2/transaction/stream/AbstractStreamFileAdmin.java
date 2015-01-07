@@ -23,6 +23,8 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -31,6 +33,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -53,7 +56,9 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   public static final String CONFIG_FILE_NAME = "config.json";
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileAdmin.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
   private final Location streamBaseLocation;
   private final StreamCoordinator streamCoordinator;
@@ -261,7 +266,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                                      cConf.get(Constants.Stream.TTL)));
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
     CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
       Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
 
@@ -311,7 +316,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       StreamConfig.class);
 
     return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), streamLocation);
+                            config.getTTL(), streamLocation, config.getFormat());
   }
 
   private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {

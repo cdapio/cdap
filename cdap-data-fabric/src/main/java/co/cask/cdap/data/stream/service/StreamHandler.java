@@ -27,6 +27,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
@@ -74,6 +76,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StreamProperties.class, new StreamPropertiesAdapter())
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
   private final CConfiguration cConf;
@@ -277,7 +280,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       if (ttl.isJsonPrimitive()) {
         // TTL in the REST API is in seconds. Convert it to ms for the config.
         return new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                                TimeUnit.SECONDS.toMillis(ttl.getAsLong()), config.getLocation());
+                                TimeUnit.SECONDS.toMillis(ttl.getAsLong()), config.getLocation(), config.getFormat());
       }
     }
     return config;

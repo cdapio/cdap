@@ -448,6 +448,32 @@ public final class Schema {
     return checkCompatible(target, recordCompared);
   }
 
+  /**
+   * Check if this is a nullable type, which is a union of a null and one other non-null type.
+   *
+   * @return true if it is a nullable type, false if not.
+   */
+  public boolean isNullable() {
+    if ((type == Schema.Type.UNION) && (unionSchemas.size() == 2)) {
+      Schema.Type type1 = unionSchemas.get(0).getType();
+      Schema.Type type2 = unionSchemas.get(1).getType();
+      // may not need to check that both are not null, but better to be safe
+      return (type1 == Schema.Type.NULL && type2 != Schema.Type.NULL) ||
+        (type1 != Schema.Type.NULL && type2 == Schema.Type.NULL);
+    }
+    return false;
+  }
+
+  /**
+   * Assuming this is a union of a null and one non-null type, return the non-null schema.
+   *
+   * @return non-null schema from a union of a null and non-null schema.
+   */
+  public Schema getNonNullable() {
+    Schema firstSchema = unionSchemas.get(0);
+    return firstSchema.getType() == Schema.Type.NULL ? unionSchemas.get(1) : firstSchema;
+  }
+
   private boolean checkCompatible(Schema target, Multimap<String, String> recordCompared) {
     if (type.isSimpleType()) {
       if (type == target.getType()) {

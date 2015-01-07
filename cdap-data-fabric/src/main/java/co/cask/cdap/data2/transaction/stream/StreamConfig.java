@@ -15,9 +15,12 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.data.format.SingleStringRecordFormat;
+import co.cask.cdap.internal.specification.FormatSpecification;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
+import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -29,15 +32,18 @@ public final class StreamConfig {
   private final long partitionDuration;
   private final long indexInterval;
   private final long ttl;
+  private final FormatSpecification format;
 
   private final transient Location location;
 
-  public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl, Location location) {
+  public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl,
+                      Location location, FormatSpecification format) {
     this.name = name;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
     this.ttl = ttl;
     this.location = location;
+    this.format = format == null ? getDefaultFormat() : format;
   }
 
   public StreamConfig() {
@@ -46,6 +52,7 @@ public final class StreamConfig {
     this.indexInterval = 0;
     this.ttl = Long.MAX_VALUE;
     this.location = null;
+    this.format = getDefaultFormat();
   }
 
   /**
@@ -84,6 +91,20 @@ public final class StreamConfig {
     return location;
   }
 
+  /**
+   * @return The format of the stream body.
+   */
+  public FormatSpecification getFormat() {
+    return format;
+  }
+
+  private static FormatSpecification getDefaultFormat() {
+    return new FormatSpecification(
+      SingleStringRecordFormat.class.getCanonicalName(),
+      new SingleStringRecordFormat().getSchema(),
+      Collections.<String, String>emptyMap());
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -92,6 +113,7 @@ public final class StreamConfig {
       .add("indexInterval", indexInterval)
       .add("ttl", ttl)
       .add("location", location.toURI())
+      .add("format", format)
       .toString();
   }
 }

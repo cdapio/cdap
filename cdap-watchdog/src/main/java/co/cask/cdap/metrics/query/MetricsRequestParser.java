@@ -41,6 +41,7 @@ final class MetricsRequestParser {
 
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
+  private static final String RESOLUTION = "resolution";
   private static final String END_TIME = "end";
   private static final String RUN_ID = "runs";
   private static final String INTERPOLATE = "interpolate";
@@ -49,6 +50,7 @@ final class MetricsRequestParser {
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
   private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
+  private static final String AUTO_RESOLUTION = "auto";
 
   public enum PathType {
     APPS,
@@ -387,29 +389,58 @@ final class MetricsRequestParser {
     return queryParams.containsKey(COUNT) || queryParams.containsKey(START_TIME) || queryParams.containsKey(END_TIME);
   }
 
+  private static boolean isAutoResolution(Map<String, List<String>> queryParams) {
+    return queryParams.get(RESOLUTION).get(0).equals(AUTO_RESOLUTION);
+  }
+
   private static void parseTimeseries(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
     int count;
     long startTime;
     long endTime;
+    int resolution = 1;
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+    if (queryParams.containsKey(RESOLUTION) && !isAutoResolution(queryParams)) {
+      resolution = TimeMathParser.resolutionInSeconds(queryParams.get(RESOLUTION).get(0));
+      if ((resolution == 3600) || (resolution == 60) || (resolution == 1)) {
+        builder.setTimeSeriesResolution(resolution);
+      } else {
+        throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
+                                             "1 hour resolutions are supported currently");
+      }
+    } else {
+      // if resolution is not provided set 1
+      builder.setTimeSeriesResolution(1);
+    }
 
     if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
       startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
       endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
-      count = (int) (endTime - startTime) + 1;
+      if (queryParams.containsKey(RESOLUTION)) {
+        if (isAutoResolution(queryParams)) {
+          // auto determine resolution, based on time difference.
+          MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
+          resolution = autoResolution.getResolution();
+          builder.setTimeSeriesResolution(resolution);
+        }
+      } else {
+        builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND.getResolution());
+        resolution = MetricsRequest.TimeSeriesResolution.SECOND.getResolution();
+      }
+      count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
       if (queryParams.containsKey(START_TIME)) {
         startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
-        endTime = startTime + count - 1;
+        endTime = startTime + (count * resolution) - resolution;
       } else if (queryParams.containsKey(END_TIME)) {
         endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
-        startTime = endTime - count + 1;
+        startTime = endTime - (count * resolution) + resolution;
       } else {
         // if only count is specified, assume the current time is desired as the end.
         endTime = now - MetricsConstants.QUERY_SECOND_DELAY;
-        startTime = endTime - count + 1;
+        startTime = endTime - (count * resolution) + resolution;
       }
     } else {
       throw new IllegalArgumentException("must specify 'count', or both 'start' and 'end'");
@@ -422,6 +453,15 @@ final class MetricsRequestParser {
     setInterpolator(queryParams, builder);
   }
 
+  private static MetricsRequest.TimeSeriesResolution getResolution(long difference) {
+    if (difference >= MetricsConstants.METRICS_HOUR_RESOLUTION_CUTOFF) {
+      return  MetricsRequest.TimeSeriesResolution.HOUR;
+    } else if (difference >= MetricsConstants.METRICS_MINUTE_RESOLUTION_CUTOFF) {
+      return MetricsRequest.TimeSeriesResolution.MINUTE;
+    } else {
+      return MetricsRequest.TimeSeriesResolution.SECOND;
+    }
+  }
   private static void setInterpolator(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
     Interpolator interpolator = null;
 

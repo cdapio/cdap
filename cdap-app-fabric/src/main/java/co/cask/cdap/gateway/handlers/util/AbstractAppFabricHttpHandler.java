@@ -316,17 +316,18 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return false;
   }
 
-
-
   /**
    * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
+   * Note: This piece of code is duplicated in LogHandler, but its ok since this temporary, till we
+   * support v2 APIs
    *
    * @param request the original {@link HttpRequest}
    * @return {@link HttpRequest} with modified URI
    */
   public HttpRequest rewriteRequest(HttpRequest request) {
     String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst("/v2", "/v3/" + Constants.DEFAULT_NAMESPACE));
+    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
+      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
     return request;
   }
 }

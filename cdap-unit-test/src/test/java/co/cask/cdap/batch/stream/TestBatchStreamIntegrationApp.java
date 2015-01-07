@@ -72,8 +72,6 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       setMapperClass(job);
-      job.setMapOutputKeyClass(Text.class);
-      job.setMapOutputValueClass(Text.class);
       job.setReducerClass(StreamTestBatchReducer.class);
     }
 

@@ -42,8 +42,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.DatasetRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -63,7 +61,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -126,8 +123,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
-  private final WorkflowClient workflowClient;
-
   private final QueueAdmin queueAdmin;
 
   private final StreamAdmin streamAdmin;
@@ -139,8 +134,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
 
-  private final Scheduler scheduler;
-
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -148,8 +141,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
-                              WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              TransactionSystemClient txClient, DatasetFramework dsFramework,
+                              QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
 
@@ -158,8 +150,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.store = storeFactory.create();
-    this.workflowClient = workflowClient;
-    this.scheduler = service;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
     this.dsFramework =
@@ -643,27 +633,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId,
-                                  @PathParam("workflow-id") final String workflowId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, ProgramType.WORKFLOW);
-
-      JsonArray array = new JsonArray();
-      for (ScheduledRuntime runtime : runtimes) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", runtime.getScheduleId());
-        object.addProperty("time", runtime.getTime());
-        array.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, array);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("workflow-id") String workflowId) {
+   programLifecycleHttpHandler.getScheduledRunTime(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                   appId, workflowId);
   }
 
   /**
@@ -672,18 +645,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void workflowSchedules(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id") final String workflowId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, workflowId);
-      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, ProgramType.WORKFLOW));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                @PathParam("app-id") String appId,
+                                @PathParam("workflow-id") String workflowId) {
+    programLifecycleHttpHandler.workflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                  appId, workflowId);
   }
 
   /**
@@ -691,22 +656,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
-  public void getScheuleState(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("workflow-id") final String workflowId,
-                              @PathParam("schedule-id") final String scheduleId) {
-    try {
-      // get the accountId to catch if there is a security exception
-      String accountId = getAuthenticatedAccountId(request);
-      JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  public void getScheduleState(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") String appId,
+                              @PathParam("workflow-id") String workflowId,
+                              @PathParam("schedule-id") String scheduleId) {
+    programLifecycleHttpHandler.getScheduleState(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                 appId, workflowId, scheduleId);
   }
 
   /**
@@ -715,31 +670,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("workflow-id") final String workflowId,
-                                      @PathParam("schedule-id") final String scheduleId) {
-    try {
-      // get the accountId to catch if there is a security exception
-      String accountId = getAuthenticatedAccountId(request);
-      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          scheduler.suspendSchedule(scheduleId);
-          responder.sendJson(HttpResponseStatus.OK, "OK");
-          break;
-        case SUSPENDED:
-          responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                      @PathParam("app-id") String appId,
+                                      @PathParam("workflow-id") String workflowId,
+                                      @PathParam("schedule-id") String scheduleId) {
+    programLifecycleHttpHandler.workflowScheduleSuspend(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                        appId, workflowId, scheduleId);
   }
 
   /**
@@ -748,32 +683,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("workflow-id") final String workflowId,
-                                     @PathParam("schedule-id") final String scheduleId) {
-
-    try {
-      // get the accountId to catch if there is a security exception
-      String accountId = getAuthenticatedAccountId(request);
-      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
-          break;
-        case SUSPENDED:
-          scheduler.resumeSchedule(scheduleId);
-          responder.sendJson(HttpResponseStatus.OK, "OK");
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("workflow-id") String workflowId,
+                                     @PathParam("schedule-id") String scheduleId) {
+    programLifecycleHttpHandler.workflowScheduleResume(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                       appId, workflowId, scheduleId);
   }
 
   /**
@@ -941,36 +855,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
-  public void workflowStatus(HttpRequest request, final HttpResponder responder,
+  public void workflowStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      workflowClient.getWorkflowStatus(accountId, appId, workflowName,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
-
-                                           } else {
-                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                 status.getResult());
-                                           }
-                                         }
-                                       });
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programLifecycleHttpHandler.workflowStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                               workflowName);
   }
 
   /**

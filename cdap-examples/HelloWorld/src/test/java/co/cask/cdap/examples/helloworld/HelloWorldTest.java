@@ -45,6 +45,7 @@ public class HelloWorldTest extends TestBase {
 
     // Start WhoFlow
     FlowManager flowManager = appManager.startFlow("WhoFlow");
+    Assert.assertTrue(flowManager.isRunning());
 
     // Send stream events to the "who" Stream
     StreamWriter streamWriter = appManager.getStreamWriter("who");
@@ -60,6 +61,7 @@ public class HelloWorldTest extends TestBase {
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
+      Assert.assertFalse(flowManager.isRunning());
     }
 
     // Start Greeting service and use it

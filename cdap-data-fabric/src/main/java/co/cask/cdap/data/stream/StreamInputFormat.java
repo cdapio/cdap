@@ -17,6 +17,10 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
@@ -79,6 +83,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     }
   };
 
+  // Keys for storing in job configuration
   private static final String EVENT_START_TIME = "input.streaminputformat.event.starttime";
   private static final String EVENT_END_TIME = "input.streaminputformat.event.endtime";
   private static final String STREAM_PATH = "input.streaminputformat.stream.path";
@@ -233,14 +238,23 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   public static void inferDecoderClass(Configuration conf, Type vClass) {
     if (Text.class.equals(vClass)) {
       setDecoderClassName(conf, TextStreamEventDecoder.class.getName());
-    } else if (BytesWritable.class.equals(vClass)) {
-      setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
-    } else if (vClass instanceof Class && ((Class) vClass).isAssignableFrom(StreamEvent.class)) {
-      setDecoderClassName(conf, IdentityStreamEventDecoder.class.getName());
-    } else {
-      throw new IllegalArgumentException("The value class must be of type BytesWritable, Text, StreamEvent or " +
-                                           "StreamEventData if no decoder type is provided");
+      return;
     }
+    if (String.class.equals(vClass)) {
+      setDecoderClassName(conf, StringStreamEventDecoder.class.getName());
+      return;
+    }
+    if (BytesWritable.class.equals(vClass)) {
+      setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
+      return;
+    }
+    if (vClass instanceof Class && ((Class<?>) vClass).isAssignableFrom(StreamEvent.class)) {
+      setDecoderClassName(conf, IdentityStreamEventDecoder.class.getName());
+      return;
+    }
+
+    throw new IllegalArgumentException("The value class must be of type BytesWritable, Text, StreamEvent or " +
+                                         "StreamEventData if no decoder type is provided");
   }
 
   @Override

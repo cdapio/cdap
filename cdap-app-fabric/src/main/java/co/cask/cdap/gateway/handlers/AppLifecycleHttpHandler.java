@@ -102,7 +102,7 @@ import javax.ws.rs.PathParam;
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
  */
 @Singleton
-@Path(Constants.Gateway.API_VERSION_3)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
@@ -186,7 +186,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deploys an application with the specified name.
    */
   @PUT
-  @Path("/{namespace-id}/apps/{app-id}")
+  @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
@@ -204,7 +204,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deploys an application.
    */
   @POST
-  @Path("/{namespace-id}/apps")
+  @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
@@ -221,7 +221,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of applications associated with a namespace.
    */
   @GET
-  @Path("/{namespace-id}/apps")
+  @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
     getAppDetails(responder, namespaceId, null);
@@ -231,7 +231,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the info associated with the application.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}")
+  @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("app-id") final String appId) {
@@ -242,7 +242,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Delete an application specified by appId.
    */
   @DELETE
-  @Path("/{namespace-id}/apps/{app-id}")
+  @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appId) {
@@ -264,7 +264,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes all applications in CDAP.
    */
   @DELETE
-  @Path("/{namespace-id}/apps")
+  @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
     try {
@@ -374,7 +374,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // time during the initialization of CDAP.
         if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
           NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
-                                                           .setName(Constants.DEFAULT_NAMESPACE)
+                                                           .setId(Constants.DEFAULT_NAMESPACE)
                                                            .setDisplayName(Constants.DEFAULT_NAMESPACE)
                                                            .setDescription(Constants.DEFAULT_NAMESPACE).build());
           if (existing != null) {
