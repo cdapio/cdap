@@ -106,6 +106,15 @@ public class MonitorClient {
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
 
+  /**
+   * Sets the number of instances the system service is running on.
+   *
+   * @param serviceName name of the system service
+   * @param instances number of instances the system service is running on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the system service with the specified name was not found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
   public void setSystemServiceInstances(String serviceName, int instances)
     throws IOException, NotFoundException, BadRequestException, UnAuthorizedAccessTokenException {
 
