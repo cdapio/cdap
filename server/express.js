@@ -99,7 +99,7 @@ function makeApp (authAddress, cdapConfig) {
               cdapConfig['router.server.port'] +
               '/v3/namespaces/' +
               req.param('namespace') +
-              '/apps';
+              '/' + req.param('path');
 
     var opts = {
       method: 'POST',

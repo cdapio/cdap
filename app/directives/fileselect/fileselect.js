@@ -12,8 +12,7 @@ angular.module(PKG.name + '.commons')
         var onFileSelect = $parse(attrs.onFileSelect);
         fileElement.bind('change', function(e) {
           onFileSelect(scope, {
-            $files: e.target.files,
-            $event: e
+            $files: e.target.files
           });
         });
 
