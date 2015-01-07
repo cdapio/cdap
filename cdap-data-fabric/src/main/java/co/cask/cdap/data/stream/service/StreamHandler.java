@@ -85,6 +85,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
+  private final StreamLeaderManager streamLeaderManager;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -98,13 +99,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade) {
+                       ExploreFacade exploreFacade, StreamLeaderManager streamLeaderManager) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    this.streamLeaderManager = streamLeaderManager;
 
     this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
@@ -179,6 +181,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         LOG.error(msg, e);
       }
     }
+
+    streamLeaderManager.affectLeader(stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
