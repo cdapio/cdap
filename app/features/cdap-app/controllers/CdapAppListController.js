@@ -22,19 +22,22 @@ angular.module(PKG.name + '.feature.cdap-app')
         $alert({
           type: 'success',
           title: 'Upload success!',
-          content: 'The Application has been uploaded successfully!'
+          content: 'The application has been uploaded successfully!'
         });
-        $state.go($state.current, {}, {reload: true});
+        $state.reload();
       }
+
       // Independent xhr request. Failure case will not be handled by $rootScope.
       function error(err) {
         $alert({
           type: 'danger',
-          title: 'Application upload failed!',
-          content: err
+          title: 'Upload failed!',
+          content: err || ''
         });
       }
     };
+
+
     $scope.deleteApp = function(app) {
       data.request({
         _cdapNsPath: '/apps/' + app,
@@ -42,13 +45,11 @@ angular.module(PKG.name + '.feature.cdap-app')
       }, function(res) {
         $alert({
           type: 'success',
-          title: 'Delete Success!',
-          content: '<strong>' + app + '</strong> app been deleted successfully'
+          title: app,
+          content: 'App deleted successfully'
         });
         // FIXME: Have to avoid $timeout here. Un-necessary.
-        $timeout(function() {
-          $state.go($state.current, {}, {reload: true});
-        }, 1);
+        $timeout($state.reload);
       })
     }
   });

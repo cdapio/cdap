@@ -17,7 +17,7 @@ angular.module(PKG.name + '.services')
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
           if (xhr.status > 399){
-            deferred.reject(xhr.responseText);
+            deferred.reject(xhr.response);
           } else {
             deferred.resolve();
           }
