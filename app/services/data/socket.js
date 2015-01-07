@@ -107,10 +107,8 @@ angular.module(PKG.name+'.services')
           });
         }
 
+        $log.log('[mySocket] →', msg.action, r.method, r.url);
       }
-
-      // $log.log('[mySocket] →', msg.action, r.method, r.url);
-      $log.log('[mySocket] →', msg.resource);
 
       socket.send(JSON.stringify(msg));
     }

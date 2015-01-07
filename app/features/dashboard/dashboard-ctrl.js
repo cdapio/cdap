@@ -93,6 +93,7 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
     },
     dragEnd: function (drag) {
       console.log('dragEnd', drag.source, drag.dest);
+      myDashboardsModel.current().persist();
     }
   };
 

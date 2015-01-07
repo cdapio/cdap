@@ -135,7 +135,7 @@ angular.module(PKG.name+'.services')
         callback: function() {
           if(!once) {
             once = true;
-            cb.apply(this, arguments);
+            cb && cb.apply(this, arguments);
           }
         }
       });

@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function (Widget, MyDataSource, $log, $timeout) {
+function (Widget, MyDataSource, $timeout) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
@@ -113,12 +113,10 @@ function (Widget, MyDataSource, $log, $timeout) {
   Dashboard.prototype.persist = function () {
     var body = this.properties();
 
-    $log.log('persist', body);
-
     if(this.id) { // updating
       dSrc.request(
         {
-          method: 'POST',
+          method: 'PUT',
           _cdapNsPath: API_PATH + '/' + this.id,
           body: body
         }
@@ -132,8 +130,7 @@ function (Widget, MyDataSource, $log, $timeout) {
           body: body
         },
         (function (result) {
-          // FIXME: result format in flux
-          this.id = result.id || result;
+          this.id = result.id;
         }).bind(this)
       );
     }
@@ -155,8 +152,6 @@ function (Widget, MyDataSource, $log, $timeout) {
         _cdapNsPath: API_PATH
       },
       function (result) {
-
-        $log.log('dashboard model', result);
 
         angular.forEach(result, function (v) {
           data.push(new Dashboard(angular.extend(
@@ -192,9 +187,6 @@ function (Widget, MyDataSource, $log, $timeout) {
       {
         method: 'DELETE',
         _cdapNsPath: API_PATH + '/' + removed.id
-      },
-      function () {
-        $log.log('removed', removed);
       }
     );
   };
