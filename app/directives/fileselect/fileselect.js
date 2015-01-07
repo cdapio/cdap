@@ -1,7 +1,8 @@
 angular.module(PKG.name + '.commons')
-  .directive('fileSelect', function($parse) {
+  .directive('myFileSelect', function($parse) {
     return {
-      restrict: 'A',
+      restrict: 'E',
+      templateUrl: 'fileselect/fileselect.html',
       link: function(scope, element, attrs) {
         var fileElement = angular.element('<input style="width: 1px; height: 1px" type="file" multiple="true">');
         element.append(fileElement);
