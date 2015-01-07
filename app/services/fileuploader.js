@@ -1,11 +1,11 @@
 angular.module(PKG.name + '.services')
-  .factory('fileUploader', function($q, $window) {
+  .factory('fileUploader', function($q, $window, cfpLoadingBar) {
     function upload(fileObj){
       var deferred = $q.defer();
       var xhr = new $window.XMLHttpRequest();
       xhr.upload.addEventListener('progress', function (e) {
         if (e.type === 'progress') {
-          console.log('Progress! ');
+          console.log('App Upload in progress!');
         }
       });
       var path = fileObj.path;
@@ -13,9 +13,15 @@ angular.module(PKG.name + '.services')
       xhr.setRequestHeader('Content-type', 'application/octet-stream');
       xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
       xhr.send(fileObj.file);
+      cfpLoadingBar.start();
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-          deferred.resolve();
+          if (xhr.status > 399){
+            deferred.reject(xhr.responseText);
+          } else {
+            deferred.resolve();
+          }
+          cfpLoadingBar.complete();
         }
       };
       return deferred.promise;
