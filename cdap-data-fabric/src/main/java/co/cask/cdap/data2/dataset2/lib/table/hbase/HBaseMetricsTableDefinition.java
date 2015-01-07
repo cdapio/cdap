@@ -58,6 +58,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
       .build();
   }
 
+
   @Override
   public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
@@ -69,7 +70,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
   }
 
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) {
+  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) throws IOException {
     final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
@@ -83,6 +84,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
+    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName());
     return tableDescriptor;
   }
 }

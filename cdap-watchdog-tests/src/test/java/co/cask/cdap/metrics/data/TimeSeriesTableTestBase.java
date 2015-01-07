@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test base for {@link TimeSeriesTable}.
@@ -142,6 +143,44 @@ public abstract class TimeSeriesTableTestBase {
         return (int) (1770 + (ts - time) * 60);
       }
     });
+  }
+
+  @Test
+  public void testReadLessIncrements() throws OperationException, InterruptedException {
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("seconds", 1);
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // Insert metrics for flow
+    String context = "app.f.flow.flowlet";
+    String metric = "input";
+
+    List<MetricsRecord> records = Lists.newArrayList();
+    records.add(new MetricsRecord(context, "runId", metric, ImmutableList.<TagMetric>of(),
+                                  time, 1, MetricType.COUNTER));
+    timeSeriesTable.save(records);
+    records.clear();
+    TimeUnit.SECONDS.sleep(1);
+    records.add(new MetricsRecord(context, "runId", metric, ImmutableList.<TagMetric>of(),
+                                  time, 2, MetricType.COUNTER));
+    timeSeriesTable.save(records);
+    records.clear();
+    records.add(new MetricsRecord(context, "runId", metric, ImmutableList.<TagMetric>of(),
+                                  time, 3, MetricType.COUNTER));
+    timeSeriesTable.save(records);
+
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow.flowlet")
+      .setMetric("input")
+      .build(time, time + 1);
+
+    assertAggregate(query, timeSeriesTable.scan(query), 1, 1, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return 6;
+      }
+    });
+
   }
   @Test
   public void testTimeSeriesMinuteResolution() throws OperationException {
