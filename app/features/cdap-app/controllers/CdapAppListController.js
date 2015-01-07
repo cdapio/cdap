@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.cdap-app')
-  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, fileUploader, $alert, $state, $stateParams) {
+  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myFileUploader, $alert, $state) {
     var data = new MyDataSource($scope);
 
     data.request({
@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.cdap-app')
 
     $scope.onFileSelected = function(files) {
       for (var i = 0; i < files.length; i++) {
-        fileUploader.upload({
+        myFileUploader.upload({
           path: '/namespaces/' + $state.params.namespace + '/apps',
           file: files[i]
         })

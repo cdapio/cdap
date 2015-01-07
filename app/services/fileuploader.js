@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('fileUploader', function($q, $window, cfpLoadingBar) {
+  .factory('myFileUploader', function($q, $window, cfpLoadingBar) {
     function upload(fileObj){
       var deferred = $q.defer();
       var xhr = new $window.XMLHttpRequest();
