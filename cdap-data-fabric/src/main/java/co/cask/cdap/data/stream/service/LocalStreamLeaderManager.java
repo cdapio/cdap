@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Local implementation of the {@link StreamLeaderManager}. Only one Stream handler can exist in local mode, hence
@@ -44,6 +45,11 @@ public class LocalStreamLeaderManager extends AbstractIdleService implements Str
 
   @Override
   protected void shutDown() throws Exception {
+    // No-op
+  }
+
+  @Override
+  public void setHandlerDiscoverable(Discoverable discoverable) {
     // No-op
   }
 

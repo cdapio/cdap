@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Manages Streams leaders. One Stream handler leader is affected to every Stream. The leader can perform any
@@ -25,6 +26,8 @@ import com.google.common.util.concurrent.Service;
  * The {@link Service#start} method of this class affects a leader to all existing Streams at CDAP startup.
  */
 public interface StreamLeaderManager extends Service {
+
+  void setHandlerDiscoverable(Discoverable discoverable);
 
   /**
    * Affect a Stream handler leader to a stream.

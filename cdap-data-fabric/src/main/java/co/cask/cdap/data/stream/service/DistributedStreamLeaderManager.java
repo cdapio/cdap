@@ -18,7 +18,6 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
@@ -27,6 +26,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import com.google.common.base.Functions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -41,9 +41,6 @@ import org.apache.twill.zookeeper.ZKClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -56,6 +53,8 @@ import javax.annotation.Nullable;
 public class DistributedStreamLeaderManager extends AbstractIdleService implements StreamLeaderManager {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamLeaderManager.class);
 
+  public static final String STREAMS_COORDINATOR = "streams.coordinator";
+
   private static final String STREAMS_RESOURCE = "streams";
 
   private final CConfiguration cConf;
@@ -66,6 +65,7 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
 
   private LeaderElection leaderElection;
   private ResourceCoordinator streamsResourceCoordinator;
+  private Discoverable handlerDiscoverable;
   private Cancellable handlerSubscription;
 
   @Inject
@@ -77,15 +77,17 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
     this.streamsResourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
+    this.handlerDiscoverable = null;
   }
 
   @Override
   protected void startUp() throws Exception {
+    Preconditions.checkNotNull(handlerDiscoverable, "Stream Handler discoverable has not been set");
     streamsResourceCoordinatorClient.startAndWait();
 
     // Start the resource coordinator that will map Streams to Stream handlers
     leaderElection = new LeaderElection(
-      zkClient, "/election/" + Constants.Service.STREAMS_COORDINATOR, new ElectionHandler() {
+      zkClient, "/election/" + STREAMS_COORDINATOR, new ElectionHandler() {
       @Override
       public void leader() {
         LOG.info("Became Stream handler leader. Starting resource coordinator.");
@@ -117,12 +119,8 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
       }
     });
 
-    // All handlers subscribe to the resource coordinator
-    // Discoverables here have to be unique, don't care about the name and port but for comparison
-    final int instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 1);
-    Discoverable discoverable = createDiscoverable(String.format("stream-handler-%d", instanceId), 30000 + instanceId);
-    handlerSubscription = streamsResourceCoordinatorClient.subscribe(discoverable.getName(),
-                                                                     new StreamsLeaderHandler(discoverable));
+    handlerSubscription = streamsResourceCoordinatorClient.subscribe(handlerDiscoverable.getName(),
+                                                                     new StreamsLeaderHandler());
   }
 
   @Override
@@ -139,6 +137,11 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
     if (streamsResourceCoordinatorClient != null) {
       streamsResourceCoordinatorClient.stopAndWait();
     }
+  }
+
+  @Override
+  public void setHandlerDiscoverable(Discoverable discoverable) {
+    handlerDiscoverable = discoverable;
   }
 
   @Override
@@ -166,38 +169,13 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
     return Futures.transform(future, Functions.<Void>constant(null));
   }
 
-  private Discoverable createDiscoverable(final String serviceName, final int port) {
-    InetSocketAddress address;
-    try {
-      address = new InetSocketAddress(InetAddress.getLocalHost(), port);
-    } catch (UnknownHostException e) {
-      address = new InetSocketAddress(port);
-    }
-    final InetSocketAddress finalAddress = address;
-
-    return new Discoverable() {
-      @Override
-      public String getName() {
-        return serviceName;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalAddress;
-      }
-    };
-  }
-
   /**
    * Class that defines the bahavior of a leader of a collection of Streams.
    */
-  private static final class StreamsLeaderHandler extends ResourceHandler {
+  private final class StreamsLeaderHandler extends ResourceHandler {
 
-    private final Discoverable discoverable;
-
-    protected StreamsLeaderHandler(Discoverable discoverable) {
-      super(discoverable);
-      this.discoverable = discoverable;
+    protected StreamsLeaderHandler() {
+      super(handlerDiscoverable);
     }
 
     @Override
@@ -210,7 +188,7 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
     @Override
     public void finished(Throwable failureCause) {
       if (failureCause != null) {
-        LOG.error("Finished with failure for Stream handler instance {}", discoverable.getName(), failureCause);
+        LOG.error("Finished with failure for Stream handler instance {}", handlerDiscoverable.getName(), failureCause);
       }
     }
   }

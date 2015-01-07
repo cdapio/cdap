@@ -41,7 +41,6 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
-    public static final String STREAMS_COORDINATOR = "streams.coordinator";
   }
 
   /**
