@@ -512,6 +512,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
+.. highlight:: console
+
 1. Stop all CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
@@ -534,8 +536,7 @@ and then restart CDAP.
 
 #. Run the upgrade tool (on one line)::
 
-     /opt/cdap/cdap-master/bin/svc-master run
-       com.cdap.data.tools.Main upgrade
+     /opt/cdap/cdap-master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
 
 #. Restart the CDAP processes::
 
