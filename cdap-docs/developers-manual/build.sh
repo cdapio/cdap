@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -27,19 +27,6 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 
-function version_tag_rewrite() {
-  # Re-writes tags in an RST-snippet file to have the current tag version.
-  cd $SCRIPT_PATH
-  local rewrite_source=$1
-  local rewrite_target=$2
-  local sub_string=$3
-  local new_sub_string=$4  
-  echo "Re-writing $rewrite_source to $rewrite_target"
-  echo "   $sub_string -> $new_sub_string "
-  
-  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
-}
-
 function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   INCLUDES_DIR=$1
@@ -63,40 +50,29 @@ function pandoc_includes() {
   if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
     echo "Using $TEST_INCLUDES includes..."
 
-    #   authentication-client java
-    pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $java_client_working
-  
-    #   authentication-client python
+    pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
     pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
-  
-    #   file-drop-zone
-    pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md  -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-  
-    #   file-tailer
-    pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md  -o $INCLUDES_DIR/cdap-file-tailer.rst
-  
-    #   flume
-    pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md  -o $INCLUDES_DIR/cdap-flume.rst
-  
-    #   stream-client java
-    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md  -o $INCLUDES_DIR/cdap-stream-clients-java.rst
-  
-    #   stream-client python
-    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+
+    pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md        -o $INCLUDES_DIR/cdap-file-drop-zone.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md           -o $INCLUDES_DIR/cdap-file-tailer.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md                 -o $INCLUDES_DIR/cdap-flume.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md   -o $INCLUDES_DIR/cdap-stream-clients-java.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md -o $INCLUDES_DIR/cdap-stream-clients-python.rst
   else
     echo -e "$WARNING Not testing includes: $TEST_INCLUDES includes..."
     local java_client_source="$SCRIPT_PATH/$SOURCE/$INCLUDES/cdap-authentication-clients-java.rst"
     cp -f $java_client_source $java_client_working
   fi
+  
   # Fix version(s)
   version_tag_rewrite $java_client_working $java_client "{version}" $version
   
   version
   cd $SCRIPT_PATH
   local get_start="$SCRIPT_PATH/$SOURCE/getting-started"
-  version_tag_rewrite $get_start/dev-env-version.txt               $INCLUDES_DIR/dev-env-versioned.rst         "<version>" $PROJECT_VERSION
-  version_tag_rewrite $get_start/start-stop-cdap-version.txt       $INCLUDES_DIR/start-stop-cdap-versioned.rst "<version>" $PROJECT_VERSION
-  version_tag_rewrite $get_start/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst      "<version>" $PROJECT_VERSION
+  rewrite $get_start/dev-env-version.txt               $INCLUDES_DIR/dev-env-versioned.rst         "<version>" $PROJECT_VERSION
+  rewrite $get_start/start-stop-cdap-version.txt       $INCLUDES_DIR/start-stop-cdap-versioned.rst "<version>" $PROJECT_VERSION
+  rewrite $get_start/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst      "<version>" $PROJECT_VERSION
 }
 
 function test_includes () {
