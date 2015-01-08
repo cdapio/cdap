@@ -1447,4 +1447,41 @@ public class Bytes {
       .put(key1, value1)
       .put(key2, value2).build();
   }
+
+  /**
+   * MultiPart Key Builder.
+   */
+  public static final class KeyBuilder {
+    private byte[] key;
+
+    public KeyBuilder() {
+      key = new byte[0];
+    }
+
+    public KeyBuilder(byte[] start) {
+      this.key = start;
+    }
+
+    public KeyBuilder add(String part) {
+      byte[] b = Bytes.toBytes(part);
+      key = Bytes.add(key, Bytes.toBytes(b.length), b);
+      return this;
+    }
+
+    public KeyBuilder add(String... parts) {
+      for (String part : parts) {
+        add(part);
+      }
+      return this;
+    }
+
+    public byte[] build() {
+      return key;
+    }
+
+    public static byte[] getPart(byte[] data) {
+      int length = Bytes.toInt(data, 0, Bytes.SIZEOF_INT);
+      return Arrays.copyOfRange(data, Bytes.SIZEOF_INT, length + Bytes.SIZEOF_INT);
+    }
+  }
 }

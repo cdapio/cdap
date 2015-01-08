@@ -30,7 +30,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -46,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -184,18 +184,16 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   private byte[] rowKey(String namespace, String type, String id) {
-    MetadataStoreDataset.Key key = new MetadataStoreDataset.Key.Builder().add(id).build();
-    return Bytes.concat(rowKeyPrefix(namespace, type), key.getKey());
+    return new Bytes.KeyBuilder(rowKeyPrefix(namespace, type)).add(id).build();
   }
 
   private byte[] rowKeyPrefix(String namespace, String type) {
-    MetadataStoreDataset.Key key = new MetadataStoreDataset.Key.Builder().add(namespace, type).build();
-    return Bytes.concat(new byte[]{Constants.ConfigStore.VERSION}, key.getKey());
+    return new Bytes.KeyBuilder(new byte[]{Constants.ConfigStore.VERSION}).add(namespace, type).build();
   }
 
   private String getId(byte[] rowBytes, byte[] prefixBytes) {
-    int idSize = Bytes.toInt(rowBytes, prefixBytes.length, Bytes.SIZEOF_INT);
-    return Bytes.toString(rowBytes, prefixBytes.length + Bytes.SIZEOF_INT, idSize);
+    byte[] idArray = Arrays.copyOfRange(rowBytes, prefixBytes.length, rowBytes.length);
+    return Bytes.toString(Bytes.KeyBuilder.getPart(idArray));
   }
 
   private static final class ConfigTable implements Iterable<Table> {
