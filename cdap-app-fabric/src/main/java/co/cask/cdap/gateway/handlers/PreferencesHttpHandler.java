@@ -139,7 +139,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("resolved") String resolved) throws Exception {
     if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-                                                                       namespace, appId));
+                                                                       appId, namespace));
     } else {
       if (resolved != null && resolved.equals("true")) {
         responder.sendJson(HttpResponseStatus.OK, preferencesWrapper.getResolvedProperties(namespace, appId));
@@ -156,7 +156,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
     if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-                                                                       namespace, appId));
+                                                                       appId, namespace));
       return;
     }
 
@@ -176,7 +176,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
     if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-                                                                       namespace, appId));
+                                                                       appId, namespace));
     } else {
       preferencesWrapper.deleteProperties(namespace, appId);
       responder.sendStatus(HttpResponseStatus.OK);

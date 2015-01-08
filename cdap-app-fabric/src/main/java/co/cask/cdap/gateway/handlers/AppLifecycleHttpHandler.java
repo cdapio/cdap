@@ -556,16 +556,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
 
-    //Delete all preferences of programs associated with this application
-    deletePreferences(new Predicate<Id.Program>() {
-      @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().equals(appId);
-      }
-    });
-
-    //Delete preferences associated with this application
-    preferencesWrapper.deleteProperties(identifier.getAccountId(), appId.getId());
+    //Delete all preferences of the application and all its programs
+    deletePreferences(appId);
 
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
@@ -654,6 +646,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) throws OperationException {
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
+                                                                   appSpec.getMapReduce().values(),
+                                                                   appSpec.getProcedures().values(),
+                                                                   appSpec.getWorkflows().values());
+    return programSpecs;
+  }
+
   /**
    * Delete the jar location of the program.
    *
@@ -661,13 +662,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @throws IOException if there are errors with location IO
    */
   private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
-    ApplicationSpecification specification = store.getApplication(appId);
-
-    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
-                                                                   specification.getMapReduce().values(),
-                                                                   specification.getProcedures().values(),
-                                                                   specification.getWorkflows().values());
-
+    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());
@@ -692,20 +687,20 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Delete stored Preferences for all Programs that match the predicate.
-   * @param predicate programs belonging to a given application
-   * @param types types of program to check
+   * Delete stored Preferences of the application and all its programs.
+   * @param appId applicationId
    */
-  private void deletePreferences(Predicate<Id.Program> predicate, ProgramType... types) {
-    for (ProgramType type : types) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry: runtimeService.list(type).entrySet()) {
-        Id.Program programId = entry.getValue().getProgramId();
-        if (predicate.apply(programId)) {
-          preferencesWrapper.deleteProperties(programId.getAccountId(), programId.getApplicationId(),
-                                              type.getCategoryName(), programId.getId());
-        }
-      }
+  private void deletePreferences(Id.Application appId) throws OperationException {
+    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
+    for (ProgramSpecification spec : programSpecs) {
+
+      preferencesWrapper.deleteProperties(appId.getAccountId(), appId.getId(),
+                                          ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
+      LOG.trace("Deleting Preferences of Program : {}, {}, {}, {}", appId.getAccountId(), appId.getId(),
+                ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
     }
+    preferencesWrapper.deleteProperties(appId.getAccountId(), appId.getId());
+    LOG.trace("Deleting Preferences of Application : {}, {}", appId.getAccountId(), appId.getId());
   }
 
   /**
