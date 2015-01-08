@@ -81,6 +81,10 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
                          ImmutableList.<String>of("WordCounter"));
     metricsResponseCheck("/v3/namespaces/default/metrics/user/WCount?search=childContext", 3,
                          ImmutableList.<String>of("b", "f", "p"));
+    metricsResponseCheck("/v3/namespaces/default/metrics/user/WCount.b.ClassicWordCount?search=childContext", 2,
+                         ImmutableList.<String>of("m", "r"));
+    metricsResponseCheck("/v3/namespaces/default/metrics/user/WCount.b.ClassicWordCount.m?search=childContext", 0,
+                         ImmutableList.<String>of());
   }
 
   private void metricsResponseCheck(String url, int expected, List<String> expectedValues) throws Exception {

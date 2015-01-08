@@ -49,7 +49,7 @@ import javax.ws.rs.QueryParam;
  * Handler to list metrics top-level-contexts , get next-level contexts and obtain metrics at a given context.
  */
 
-//todo : when MetricsQueryHandler class supports namespaces, these endpoints with conflict,
+//todo : when MetricsQueryHandler class supports namespaces, these endpoints will conflict,
 // we might want to combine this logic into MetricsQueryHandler or change the endpoint here based on API Review.
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/metrics")
 public class MetricsSearchHandler extends  BaseMetricsHandler {
@@ -86,19 +86,16 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
                                 @PathParam("scope") final String scope,
                                 @QueryParam("search") String search) throws IOException {
     try {
-      if (search == null) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "please provide search=childContext " +
-          "for getting next context");
+      if (search == null || !search.equals("childContext")) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST,
+                           "please provide queryparam search for childContext for getting contexts at next level");
         return;
       }
       MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      if (metricsScope == null) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "only" + MetricsScope.SYSTEM + " and " +
-          MetricsScope.USER + "are supported currently");
-        return;
-      }
-
       responder.sendJson(HttpResponseStatus.OK, getNextContext(metricsScope, null));
+    } catch (IllegalArgumentException exception) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
+        MetricsScope.USER);
     } catch (OperationException e) {
       LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -115,18 +112,16 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
                                    @PathParam("context") final String context,
                                    @QueryParam("search") String search) throws IOException {
     try {
-      if (search == null) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "please provide search=childContext " +
-          "for getting next context");
+      if (search == null || !search.equals("childContext")) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST,
+                           "please provide queryparam search for childContext for getting contexts at next level");
         return;
       }
       MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      if (metricsScope == null) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "only" + MetricsScope.SYSTEM + " and " +
-          MetricsScope.USER + "are supported currently");
-        return;
-      }
       responder.sendJson(HttpResponseStatus.OK, getNextContext(metricsScope, context));
+    } catch (IllegalArgumentException exception) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
+        MetricsScope.USER);
     } catch (OperationException e) {
       LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -143,12 +138,10 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
                                  @PathParam("context") final String context) throws IOException {
     try {
       MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      if (metricsScope == null) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "only" + MetricsScope.SYSTEM + " and " +
-          MetricsScope.USER + "are supported currently");
-        return;
-      }
       responder.sendJson(HttpResponseStatus.OK, getAvailableMetricNames(metricsScope, context));
+    } catch (IllegalArgumentException exception) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
+        MetricsScope.USER);
     } catch (OperationException e) {
       LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -163,22 +156,19 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
 
     List<String> results = table.getNextLevelContexts(query);
     for (String nextContext : results) {
-      if (contextPrefix == null) {
-        int index = nextContext.indexOf(".");
-        if (index == -1) {
-          nextLevelContexts.add(nextContext);
-        } else {
-          nextLevelContexts.add(nextContext.substring(0, index));
-        }
-      } else {
-        String context = nextContext.substring(contextPrefix.length() + 1);
-        if (context.indexOf(".") != -1) {
-          nextLevelContexts.add(context.substring(0, context.indexOf(".")));
-        }
-      }
+      nextContext = (contextPrefix == null) ? nextContext : nextContext.substring(contextPrefix.length() + 1);
+      nextLevelContexts.add(getNextContext(nextContext));
     }
-
     return nextLevelContexts;
+  }
+
+  private String getNextContext(String context) {
+    int index = context.indexOf(".");
+    if (index == -1) {
+      return context;
+    } else {
+      return context.substring(0, context.indexOf("."));
+    }
   }
 
   private Set<String> getAvailableMetricNames(MetricsScope scope, String contextPrefix) throws OperationException {
