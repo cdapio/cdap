@@ -49,7 +49,6 @@ function pandoc_includes() {
   if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
     echo "Using $TEST_INCLUDES includes..."
 
-    # authentication-client java
     pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
     pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
 
