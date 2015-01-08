@@ -22,13 +22,8 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import com.google.common.base.Throwables;
-import org.apache.spark.network.ConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.channels.Selector;
 
 /**
  * Class which wraps around user's program class to integrate the spark program with CDAP.
@@ -172,77 +167,19 @@ public class SparkProgramWrapper {
    * Stops the Spark program by calling {@link org.apache.spark.SparkContext#stop()}
    */
   public static void stopSparkProgram() {
-
-    sparkContextStopBugFixer(); // to close the selector which causes a thread deadlock
-
-    // Now stop the program
-    if (isScalaProgram()) {
-      ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
-    } else {
-      ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
-    }
-  }
-
-  /**
-   * Fixes the thread deadlock issue in {@link org.apache.spark.SparkContext#stop} where the {@link Selector} field
-   * in {@link ConnectionManager} waits for an interrupt.
-   */
-  private static void sparkContextStopBugFixer() {
-    ConnectionManager connectionManager = getConnectionManager(getSparkContext());
-    if (!closeSelector(connectionManager)) {
-      LOG.warn("Failed to get the Selector which can cause thread deadlock in SparkContext.stop()");
-    }
-  }
-
-  /**
-   * Gets the {@link Selector} field in the {@link ConnectionManager} and closes it which makes it come out of deadlock
-   *
-   * @param connectionManager : the {@link ConnectionManager} of this {@link SparkContext}
-   */
-  private static boolean closeSelector(ConnectionManager connectionManager) {
-    // Get the selector field from the ConnectionManager and make it accessible
-    boolean selectorClosed = false;
-    for (Field field : connectionManager.getClass().getDeclaredFields()) {
-      if (Selector.class.isAssignableFrom(field.getType())) {
-        if (!field.isAccessible()) {
-          field.setAccessible(true);
-        }
-        try {
-          Selector selector = (Selector) field.get(connectionManager);
-          selector.close();
-          selectorClosed = true;
-          break;
-        } catch (IllegalAccessException iae) {
-          LOG.warn("Unable to access the selector field", iae);
-          throw Throwables.propagate(iae);
-        } catch (IOException ioe) {
-          LOG.info("Close on Selector threw IOException", ioe);
-          throw Throwables.propagate(ioe);
-        }
+    if (getSparkContext() != null) {
+      if (isScalaProgram()) {
+        ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
+      } else {
+        ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
       }
     }
-    return selectorClosed;
-  }
-
-  /**
-   * @return {@link ConnectionManager} from the {@link SparkContext}
-   */
-  private static ConnectionManager getConnectionManager(SparkContext sparkContext) {
-    ConnectionManager connectionManager;
-    if (isScalaProgram()) {
-      connectionManager = ((org.apache.spark.SparkContext) sparkContext.getOriginalSparkContext()).env()
-        .blockManager().connectionManager();
-    } else {
-      connectionManager = ((org.apache.spark.api.java.JavaSparkContext) sparkContext.getOriginalSparkContext())
-        .env().blockManager().connectionManager();
-    }
-    return connectionManager;
   }
 
   /**
    * @return {@link SparkContext}
    */
-  public static SparkContext getSparkContext() {
+  private static SparkContext getSparkContext() {
     return sparkContext;
   }
 
@@ -284,6 +221,7 @@ public class SparkProgramWrapper {
   /**
    * Used to set the same {@link BasicSparkContext} which is inside {@link SparkRuntimeService} for accessing resources
    * like Service Discovery, Metrics collection etc.
+   *
    * @param basicSparkContext the {@link BasicSparkContext} to set from
    */
   public static void setBasicSparkContext(BasicSparkContext basicSparkContext) {
