@@ -184,16 +184,16 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   private byte[] rowKey(String namespace, String type, String id) {
-    return new Bytes.KeyBuilder(rowKeyPrefix(namespace, type)).add(id).build();
+    return Bytes.concat(rowKeyPrefix(namespace, type), getMultipartKey(id));
   }
 
   private byte[] rowKeyPrefix(String namespace, String type) {
-    return new Bytes.KeyBuilder(new byte[]{Constants.ConfigStore.VERSION}).add(namespace, type).build();
+    return Bytes.concat(new byte[]{Constants.ConfigStore.VERSION}, getMultipartKey(namespace, type));
   }
 
   private String getId(byte[] rowBytes, byte[] prefixBytes) {
     byte[] idArray = Arrays.copyOfRange(rowBytes, prefixBytes.length, rowBytes.length);
-    return Bytes.toString(Bytes.KeyBuilder.getPart(idArray));
+    return Bytes.toString(getPart(idArray));
   }
 
   private static final class ConfigTable implements Iterable<Table> {
@@ -207,5 +207,18 @@ public class DefaultConfigStore implements ConfigStore {
     public Iterator<Table> iterator() {
       return Iterators.singletonIterator(table);
     }
+  }
+
+  private byte[] getMultipartKey(String... parts) {
+    byte[] result = new byte[0];
+    for (String part : parts) {
+      result = Bytes.concat(result, Bytes.toBytes(part.length()), part.getBytes());
+    }
+    return result;
+  }
+
+  private byte[] getPart(byte[] part) {
+    int length = Bytes.toInt(part, 0, Bytes.SIZEOF_INT);
+    return Arrays.copyOfRange(part, Bytes.SIZEOF_INT, length + Bytes.SIZEOF_INT);
   }
 }
