@@ -4,7 +4,7 @@
 
     Master layout template for Sphinx themes.
     Modified by Cask Data, Inc.
-    Portions Copyright © 2014 Cask Data, Inc.
+    Portions © Copyright 2014-2015 Cask Data, Inc.
     
     :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -37,6 +37,14 @@
           {%- if not loop.first %}{{ reldelim2 }}{% endif %}</li>
         {%- endfor %}
         {%- block rootrellink %}
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="{{ theme_versions }}"/></script>
+<!-- 
+        <script>versionscallback({{ theme_versions_data }});</script>
+ -->
+        <script>window.setVersion('{{ release }}');</script>
+       
         <li><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
         {%- endblock %}
         {%- for parent in parents %}

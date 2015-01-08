@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -172,26 +172,30 @@ html_theme = 'cdap'
 # further.  For a list of options available for each theme, see the
 # documentation.
 # html_theme_options = {"showtoc_include_showtocs":"false"}
-# manuals and manualtitles are lists of the manuals in the doc set
+# manuals and manual_titles are lists of the manuals in the doc set
+# versions points to the JSON file on the webservers
+# versions_data is a local version, used in testing
 html_theme_options = {
   "manuals":["developers-manual","admin-manual","examples-manual","reference-manual",],
-  "manualtitles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
+  "manual_titles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
+  "versions":"http://docs.cask.co/cdap/json-versions.js",
+  "versions_data":{ "development": [["2.6.0-SNAPSHOT", "2.6.0"],], "current": ["2.5.2", "2.5.2"], "older": [ ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],], },
 }
 
 def get_manuals():
     return html_theme_options["manuals"]
 
 def get_manual_titles():
-    return html_theme_options["manualtitles"]
+    return html_theme_options["manual_titles"]
 
 def get_manual_titles_bash():
     PREFIX = "declare -a MANUAL_TITLES=("
     SUFFIX = ");"
-    manualtitles = PREFIX
-    for title in html_theme_options["manualtitles"]:
-        manualtitles += "'%s'" % title
-    manualtitles += SUFFIX
-    return manualtitles 
+    manual_titles = PREFIX
+    for title in html_theme_options["manual_titles"]:
+        manual_titles += "'%s'" % title
+    manual_titles += SUFFIX
+    return manual_titles 
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']
@@ -235,7 +239,7 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['manuals.html', 'globaltoc.html', 'relations.html', 'downloads.html', 'versions.html', 'searchbox.html', ],}
+html_sidebars = {'**': ['manuals.html', 'globaltoc.html', 'relations.html', 'downloads.html', 'searchbox.html', ],}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

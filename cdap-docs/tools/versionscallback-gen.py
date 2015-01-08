@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2015 Cask Data, Inc.
 #
 # Used to generate JSONP from a CDAP documentation directory on a webserver.
 # 
@@ -29,7 +29,7 @@ def add_object(call, name, value):
 
 
 def walk_directory(path=''):
-    global current, development, versions
+    global current, development, older
 
     if not path:
         path = getcwd()
@@ -43,19 +43,19 @@ def walk_directory(path=''):
             if islink(d_path):
                 current = readlink(d_path)
         elif d.endswith('SNAPSHOT'):
-            development = d
+            development.append(d)
         elif d and d != current:
-             versions.append(d)
+            older.append(d)
 
 def build(path=''):
-    global current, development, versions
+    global current, development, older
     call = ''
 
     walk_directory(path)
 
-    call = add_value(call, 'development', development)
+    call = add_object(call, 'development', development)
     call = add_value(call, 'current', current)
-    call = add_object(call, 'versions', versions)
+    call = add_object(call, 'older', older)
 
     target = join(path, 'json-versions.js')
         
@@ -69,8 +69,8 @@ def usage():
 #  Main
 if __name__ == '__main__':
     current = ''
-    development = ''
-    versions = []
+    development = []
+    older = []
     path = ''
     if len(sys.argv) > 1:
         path = sys.argv[1]

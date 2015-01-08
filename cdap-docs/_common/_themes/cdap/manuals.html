@@ -4,7 +4,7 @@
     Sphinx sidebar template: "CDAP Manuals" links.
 #}
 {%- set master_url_root = pathto(master_doc, 1) %}
-{%- set titles = ['CDAP Documentation'] + theme_manualtitles %}
+{%- set titles = ['CDAP Documentation'] + theme_manual_titles %}
 {%- if master_url_root == '#' %}{% set master_url_root = '' %}{% endif %}
 {%- if   pagename == 'release-notes' %}{% set doc5 = '<b>' %}{% set doc5b = '</b>' %}
 {%- elif pagename == 'glossary'      %}{% set doc6 = '<b>' %}{% set doc6b = '</b>' %}
