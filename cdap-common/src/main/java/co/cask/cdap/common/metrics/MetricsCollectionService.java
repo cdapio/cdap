@@ -26,8 +26,8 @@ public interface MetricsCollectionService extends Service {
 
   /**
    * Returns the metric collector for the given context.
-   * @param tags The tags that define the metrics context.
+   * @param context The tags that define the metrics context.
    * @return A {@link MetricsCollector} for emitting metrics.
    */
-  MetricsCollector getCollector(MetricsScope scope, Map<String, String> tags);
+  MetricsCollector getCollector(MetricsScope scope, Map<String, String> context);
 }
