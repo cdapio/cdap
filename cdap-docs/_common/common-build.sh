@@ -231,6 +231,34 @@ function make_zip_localized() {
   zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
 }
 
+function make_zip_localized_web() {
+# This creates a named zip that unpacks to the Package, with inside the Project Version, localized to english
+  version
+  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
+  PACKAGE_NAME="$PROJECT_VERSION-Package"
+  cd $SCRIPT_PATH/$BUILD
+  mkdir $PROJECT_VERSION
+  mkdir $PACKAGE_NAME
+  mv $HTML $PROJECT_VERSION/en
+  # Add a redirect index.html file
+  echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
+  mv $PROJECT_VERSION $PACKAGE_NAME/$PROJECT_VERSION
+  # Add JSON file
+  build_json $SCRIPT_PATH/$BUILD/$PACKAGE_NAME/$JSON_FILE
+#   cd $SCRIPT_PATH/$BUILD/$SOURCE
+#   JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
+#   echo `python -c 'import conf; conf.print_json_versions();'` > $SCRIPT_PATH/$BUILD/$PACKAGE_NAME/$JSON_FILE
+  cd $SCRIPT_PATH/$BUILD
+  zip -qr $ZIP_DIR_NAME.zip $PACKAGE_NAME/*
+}
+
+function build_json() {
+  cd $SCRIPT_PATH/$BUILD/$SOURCE
+  JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
+  echo "$SCRIPT_PATH/$BUILD/$JSON_FILE"
+  echo `python -c 'import conf; conf.print_json_versions();'` > $1
+}
+
 function build_extras() {
   # Over-ride this function in guides where Javadocs or licenses are being built or copied.
   # Currently performed in reference-manual
