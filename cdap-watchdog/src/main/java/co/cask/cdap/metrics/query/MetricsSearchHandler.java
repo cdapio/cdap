@@ -164,10 +164,17 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
     List<String> results = table.getNextLevelContexts(query);
     for (String nextContext : results) {
       if (contextPrefix == null) {
-        nextLevelContexts.add(nextContext.substring(0, nextContext.indexOf(".")));
+        int index = nextContext.indexOf(".");
+        if (index == -1) {
+          nextLevelContexts.add(nextContext);
+        } else {
+          nextLevelContexts.add(nextContext.substring(0, index));
+        }
       } else {
         String context = nextContext.substring(contextPrefix.length() + 1);
-        nextLevelContexts.add(context.substring(0, context.indexOf(".")));
+        if (context.indexOf(".") != -1) {
+          nextLevelContexts.add(context.substring(0, context.indexOf(".")));
+        }
       }
     }
 
