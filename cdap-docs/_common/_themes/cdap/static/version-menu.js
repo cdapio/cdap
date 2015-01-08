@@ -40,7 +40,7 @@
   });
   window.versionscallback = (function(data){
     if (data) {
-      document.write('<li class="left" style="margin-left: -150px; padding-right: 30px;">');
+      document.write('<li style="width: 120px; position: absolute; margin-left: -165px; text-align: right; top: 6px;">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
     if (data.development) {
