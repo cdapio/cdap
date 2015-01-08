@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.runtime;
 
+import co.cask.cdap.MissingMapReduceWorkflowApp;
+import co.cask.cdap.MissingSparkWorkflowApp;
 import co.cask.cdap.OneActionWorkflowApp;
 import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.app.program.Program;
@@ -108,6 +110,31 @@ public class WorkflowTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.get();
+  }
+
+  @Test(timeout = 120 * 1000L)
+  public void testMissingProgramsInWorkflow() throws Exception {
+    // try deploying app containing Workflow configured with non-existent MapReduce program
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        MissingMapReduceWorkflowApp.class,
+        TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because MapReduce program is missing in the Application.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "MapReduce program 'SomeMapReduceProgram' is not configured with the Application.");
+    }
+
+    // try deploying app containing Workflow configured with non-existent Spark program
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        MissingSparkWorkflowApp.class,
+        TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Spark program is missing in the Application.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "Spark program 'SomeSparkProgram' is not configured with the Application.");
+    }
   }
 
   @Test(timeout = 120 * 1000L)

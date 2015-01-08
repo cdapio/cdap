@@ -18,6 +18,8 @@ package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -29,7 +31,7 @@ public final class ScheduleSpecification {
 
   public ScheduleSpecification(Schedule schedule, Set<ScheduleProgramInfo> programs) {
     this.schedule = schedule;
-    this.programs = programs;
+    this.programs = Collections.unmodifiableSet(new HashSet<ScheduleProgramInfo>(programs));
   }
 
   /**

@@ -57,14 +57,7 @@ public final class ScheduleProgramInfo {
 
     ScheduleProgramInfo that = (ScheduleProgramInfo) o;
 
-    if (!programName.equals(that.programName)) {
-      return false;
-    }
-    if (programType != that.programType) {
-      return false;
-    }
-
-    return true;
+    return programName.equals(that.programName) && programType == that.programType;
   }
 
   @Override
