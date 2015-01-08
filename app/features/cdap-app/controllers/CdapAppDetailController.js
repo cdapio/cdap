@@ -34,25 +34,4 @@ angular.module(PKG.name + '.feature.cdap-app')
       }
       $scope.tabs.activeTab = tab;
     });
-
-    var data = new MyDataSource($scope);
-    var appId = $state.params.appId;
-    data.request({
-      _cdapNsPath: '/apps/' + appId + '/status',
-      method: 'GET',
-    }, function(res) {
-      if (!angular.isArray(res)) {
-        return;
-      }
-      $scope.programs = res;
-      $scope.programs.runningCount = getProgramCount($scope.programs, 'ALIVE');
-      $scope.programs.failedCount = getProgramCount($scope.programs, 'FAILED');
-      $scope.programs.deployedCount = getProgramCount($scope.programs, 'DEPLOYED');
-    });
-
-    function getProgramCount (programs, s) {
-      return programs.filter(function(prog) {
-        return prog.status === s;
-      }).length;
-    }
 });
