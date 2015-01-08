@@ -589,7 +589,7 @@
     -->
     <property>
         <name>router.bind.address</name>
-        <value>0.0.0.0</value>
+        <value>127.0.0.1</value>
         <description>Specifies the address for router server to bind to</description>
     </property>
 

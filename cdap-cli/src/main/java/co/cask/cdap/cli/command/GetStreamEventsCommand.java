@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.AsciiTable;
@@ -35,17 +36,16 @@ import java.util.List;
  */
 public class GetStreamEventsCommand extends AbstractCommand {
 
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-
   private final StreamClient streamClient;
 
   @Inject
-  public GetStreamEventsCommand(StreamClient streamClient) {
+  public GetStreamEventsCommand(StreamClient streamClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.streamClient = streamClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     long currentTime = System.currentTimeMillis();
 
     String streamId = arguments.get(ArgumentName.STREAM.toString());

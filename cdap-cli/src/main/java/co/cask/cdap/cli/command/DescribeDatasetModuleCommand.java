@@ -17,13 +17,14 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -33,17 +34,18 @@ import java.io.PrintStream;
 /**
  * Shows information about a dataset module.
  */
-public class DescribeDatasetModuleCommand implements Command {
+public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient datasetModuleClient;
 
   @Inject
-  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient) {
+  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.datasetModuleClient = datasetModuleClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String moduleName = arguments.get(ArgumentName.DATASET_MODULE.toString());
     DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleName);
 

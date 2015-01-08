@@ -191,7 +191,7 @@ public class StreamClient {
    */
   public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, long startTime,
                                                                  long endTime, int limit, final T results)
-                                                                 throws IOException, StreamNotFoundException {
+    throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
     getEvents(streamId, startTime, endTime, limit, new Function<StreamEvent, Boolean>() {
       @Override
       public Boolean apply(StreamEvent input) {
@@ -215,7 +215,8 @@ public class StreamClient {
    * @throws StreamNotFoundException If the given stream does not exists
    */
   public void getEvents(String streamId, long startTime, long endTime, int limit,
-                        Function<? super StreamEvent, Boolean> callback) throws IOException, StreamNotFoundException {
+                        Function<? super StreamEvent, Boolean> callback)
+    throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
                                               streamId, startTime, endTime, limit));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
@@ -233,6 +234,9 @@ public class StreamClient {
     }
 
     try {
+      if (urlConn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
+      }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         throw new StreamNotFoundException(streamId);
       }

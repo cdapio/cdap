@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -28,17 +29,18 @@ import java.io.PrintStream;
 /**
  * Creates a dataset.
  */
-public class CreateDatasetInstanceCommand implements Command {
+public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
   private final DatasetClient datasetClient;
 
   @Inject
-  public CreateDatasetInstanceCommand(DatasetClient datasetClient) {
+  public CreateDatasetInstanceCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.datasetClient = datasetClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String datasetType = arguments.get(ArgumentName.DATASET_TYPE.toString());
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
 

@@ -16,13 +16,14 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -31,17 +32,18 @@ import java.util.List;
 /**
  * Lists all dataset modules.
  */
-public class ListDatasetModulesCommand implements Command {
+public class ListDatasetModulesCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient client;
 
   @Inject
-  public ListDatasetModulesCommand(DatasetModuleClient client) {
+  public ListDatasetModulesCommand(DatasetModuleClient client, CLIConfig cliConfig) {
+    super(cliConfig);
     this.client = client;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetModuleMeta> list = client.list();
     new AsciiTable<DatasetModuleMeta>(
       new String[] { "name", "className" },

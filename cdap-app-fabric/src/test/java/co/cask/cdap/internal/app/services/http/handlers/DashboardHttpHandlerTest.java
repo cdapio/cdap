@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,12 @@ import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
@@ -39,18 +44,21 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testCleanSlate() throws Exception {
-    Map<String, String> dash = getDashboards("mynamespace");
-    Assert.assertEquals(0, dash.size());
+    JsonElement dash = getDashboards("mynamespace");
+    Assert.assertTrue(dash.isJsonArray());
+    Assert.assertEquals(0, dash.getAsJsonArray().size());
 
     String s = createDashboard("mynamespace", 200);
     dash = getDashboards("mynamespace");
-    Assert.assertEquals(1, dash.size());
+    Assert.assertTrue(dash.isJsonArray());
+    Assert.assertEquals(1, dash.getAsJsonArray().size());
 
     deleteDashboard("mynamespace", s, 200);
     deleteDashboard("mynamespace", s, 404);
 
     dash = getDashboards("mynamespace");
-    Assert.assertEquals(0, dash.size());
+    Assert.assertTrue(dash.isJsonArray());
+    Assert.assertEquals(0, dash.getAsJsonArray().size());
   }
 
   @Test
@@ -63,46 +71,54 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
         dashboardIds.put(nsId, createDashboard("myspace" + nsId, 200));
       }
 
-      Map<String, String> dashboards;
+      JsonArray dashboards;
       for (int nsId = 0; nsId < maxNamespace; nsId++) {
-        dashboards = getDashboards("myspace" + nsId);
+        dashboards = getDashboards("myspace" + nsId).getAsJsonArray();
         Assert.assertEquals(1, dashboards.size());
-        Assert.assertTrue(dashboards.keySet().contains(dashboardIds.get(nsId)));
+        Assert.assertEquals(dashboardIds.get(nsId), dashboards.get(0).getAsJsonObject().get("id").getAsString());
       }
 
       for (int nsId = 0; nsId < maxNamespace; nsId++) {
         deleteDashboard("myspace" + nsId, dashboardIds.get(nsId), 200);
         deleteDashboard("myspace" + nsId, dashboardIds.get(nsId), 404);
-        Assert.assertEquals(0, getDashboards("myspace" + nsId).size());
+        Assert.assertEquals(0, getDashboards("myspace" + nsId).getAsJsonArray().size());
       }
     }
   }
 
   @Test
   public void testProperties() throws Exception {
-    String dash = createDashboard("newspace", "{'k1':'v1', 'k2':'v2'}", 200);
-    Map<String, String> contents = getContents("newspace", dash, 200);
-    Assert.assertEquals(2, contents.size());
-    Assert.assertEquals("v1", contents.get("k1"));
-    Assert.assertEquals("v2", contents.get("k2"));
+    Map<String, Integer> intMap = Maps.newHashMap();
+    intMap.put("k1", 123);
+    intMap.put("k2", 324);
+    String dash = createDashboard("newspace", GSON.toJson(intMap), 200);
+    JsonObject jsonObject = getContents("newspace", dash, 200).getAsJsonObject().get("config").getAsJsonObject();
+    Assert.assertEquals(2, jsonObject.entrySet().size());
+    Assert.assertEquals(123, jsonObject.get("k1").getAsInt());
+    Assert.assertEquals(324, jsonObject.get("k2").getAsInt());
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("k2", "value2");
     propMap.put("k1", "value1");
     addProperty("newspace", dash, propMap, 200);
-    contents = getContents("newspace", dash, 200);
-    Assert.assertEquals(2, contents.size());
-    Assert.assertEquals("value2", contents.get("k2"));
-    Assert.assertEquals("value1", contents.get("k1"));
+    jsonObject = getContents("newspace", dash, 200).getAsJsonObject().get("config").getAsJsonObject();
+    Assert.assertEquals(2, jsonObject.entrySet().size());
+    Assert.assertEquals("value1", jsonObject.get("k1").getAsString());
+    Assert.assertEquals("value2", jsonObject.get("k2").getAsString());
 
-    String anotherDash = createDashboard("newspace", "{'m1':'n1'}", 200);
-    contents = getContents("newspace", anotherDash, 200);
-    Assert.assertEquals(1, contents.size());
-    Assert.assertEquals("n1", contents.get("m1"));
+    propMap.clear();
+    propMap.put("m1", "n1");
+    String anotherDash = createDashboard("newspace", GSON.toJson(propMap), 200);
+    jsonObject = getContents("newspace", anotherDash, 200).getAsJsonObject().get("config").getAsJsonObject();
+    Assert.assertEquals(1, jsonObject.entrySet().size());
+    Assert.assertEquals("n1", jsonObject.get("m1").getAsString());
 
     addProperty("newspace", anotherDash, new HashMap<String, String>(), 200);
-    contents = getContents("newspace", anotherDash, 200);
-    Assert.assertEquals(0, contents.size());
+    jsonObject = getContents("newspace", anotherDash, 200).getAsJsonObject().get("config").getAsJsonObject();
+    Assert.assertEquals(0, jsonObject.entrySet().size());
+
+    String str = "some123 random string!@#";
+    createDashboard("space", str, 400);
 
     deleteDashboard("newspace", dash, 200);
     deleteDashboard("newspace", dash, 404);
@@ -114,7 +130,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     String dash1 = createDashboard("space1", 200);
     String dash2 = createDashboard("space2", 200);
 
-    Map<String, String> dashList = getDashboards("space1");
+    JsonArray dashList = getDashboards("space1").getAsJsonArray();
     Assert.assertEquals(1, dashList.size());
 
     deleteDashboard("space1", dash1, 200);
@@ -128,12 +144,12 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
-  private Map<String, String> getContents(String namespace, String name, int expectedStatus) throws Exception {
+  private JsonElement getContents(String namespace, String name, int expectedStatus) throws Exception {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
+    return new JsonParser().parse(s);
   }
 
   private String createDashboard(String namespace, int expectedStatus) throws Exception {
@@ -143,15 +159,22 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   private String createDashboard(String namespace, String contents, int expectedStatus) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/configuration/dashboards", namespace), contents);
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    return EntityUtils.toString(response.getEntity());
+    if (expectedStatus == HttpResponseStatus.OK.code()) {
+      String jsonData = EntityUtils.toString(response.getEntity());
+      Map<String, String> idMap = GSON.fromJson(jsonData, MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, idMap.size());
+      Assert.assertEquals(true, idMap.containsKey("id"));
+      return idMap.get("id");
+    }
+    return null;
   }
 
-  private Map<String, String> getDashboards(String namespace) throws Exception {
+  private JsonElement getDashboards(String namespace) throws Exception {
     String req = String.format("/v3/namespaces/%s/configuration/dashboards", namespace);
     HttpResponse response = doGet(req);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
+    return new JsonParser().parse(s);
   }
 
   private void deleteDashboard(String namespace, String name, int expectedStatus) throws Exception {
