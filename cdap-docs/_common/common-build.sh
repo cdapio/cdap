@@ -125,7 +125,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must specify source if used"
+  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo " "
 #   exit 1
 }
@@ -280,11 +280,16 @@ function test_an_include() {
   BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
   SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
   EXAMPLE=$1
-  if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
-    echo "Tested $1; matches checked-in include file."
+  if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
+    if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
+      echo "Tested $1; matches checked-in include file."
+    else
+      echo -e "$WARNING Tested $1; does not match checked-in include file. Copying to source directory."
+      cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    fi
   else
-    echo -e "$WARNING Tested $1; does not match checked-in include file. Copying to source directory."
-    cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    echo -e "$WARNING Not testing includes: using checked-in version..."
+    cp -f $SOURCE_INCLUDES_DIR/$1 $BUILD_INCLUDES_DIR/$1
   fi
 }
 
