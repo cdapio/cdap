@@ -37,6 +37,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.config.PreferencesWrapper;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -161,13 +162,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
+  private final PreferencesWrapper preferencesWrapper;
+
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient) {
+                                 DiscoveryServiceClient discoveryServiceClient, PreferencesWrapper preferencesWrapper) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -180,6 +183,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.preferencesWrapper = preferencesWrapper;
   }
 
   /**
@@ -552,6 +556,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
 
+    //Delete all preferences of programs associated with this application
+    deletePreferences(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().equals(appId);
+      }
+    });
+
+    //Delete preferences associated with this application
+    preferencesWrapper.deleteProperties(identifier.getAccountId(), appId.getId());
+
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
     for (FlowSpecification flowSpecification : spec.getFlows().values()) {
@@ -673,6 +688,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       location.delete();
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.
+    }
+  }
+
+  /**
+   * Delete stored Preferences for all Programs that match the predicate.
+   * @param predicate programs belonging to a given application
+   * @param types types of program to check
+   */
+  private void deletePreferences(Predicate<Id.Program> predicate, ProgramType... types) {
+    for (ProgramType type : types) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry: runtimeService.list(type).entrySet()) {
+        Id.Program programId = entry.getValue().getProgramId();
+        if (predicate.apply(programId)) {
+          preferencesWrapper.deleteProperties(programId.getAccountId(), programId.getApplicationId(),
+                                              type.getCategoryName(), programId.getId());
+        }
+      }
     }
   }
 

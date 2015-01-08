@@ -105,6 +105,18 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   @Override
+  public void createOrUpdate(final String namespace, final String type, final Config config) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Void>() {
+      @Override
+      public Void apply(ConfigTable configTable) throws Exception {
+        configTable.table.put(rowKey(namespace, type, config.getId()), Bytes.toBytes(PROPERTY_COLUMN),
+                              Bytes.toBytes(GSON.toJson(config.getProperties())));
+        return null;
+      }
+    });
+  }
+
+  @Override
   public void delete(final String namespace, final String type, final String id) throws ConfigNotFoundException {
     Boolean success = txnl.executeUnchecked(new TransactionExecutor.Function<ConfigTable, Boolean>() {
       @Override

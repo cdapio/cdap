@@ -80,7 +80,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
       Map<String, String> returnMap = ImmutableMap.of(ID, dashboardId);
       responder.sendJson(HttpResponseStatus.OK, returnMap);
     } catch (ConfigExistsException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Dashboard already exists");
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, String.format("Dashboard %s already exists", dashboardId));
     }
   }
 
@@ -134,7 +134,6 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
                                @PathParam("namespace-id") String namespace,
                                @PathParam("dashboard-id") String id) throws Exception {
     try {
-      configStore.get(namespace, CONFIG_TYPE, id);
       String data = request.getContent().toString(Charsets.UTF_8);
       if (!isValidJSON(data)) {
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");

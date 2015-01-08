@@ -100,11 +100,7 @@ public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
     Map<String, String> propMap = ImmutableMap.of(PROPERTY_NAME, data);
     String userId = getAuthenticatedAccountId(request);
     Config userConfig = new Config(userId, propMap);
-    try {
-      configStore.update(NAMESPACE, CONFIG_TYPE, userConfig);
-    } catch (ConfigNotFoundException e) {
-      configStore.create(NAMESPACE, CONFIG_TYPE, userConfig);
-    }
+    configStore.createOrUpdate(NAMESPACE, CONFIG_TYPE, userConfig);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
