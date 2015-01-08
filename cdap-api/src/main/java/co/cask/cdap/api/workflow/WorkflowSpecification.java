@@ -38,7 +38,6 @@ import java.util.Map;
  *        setName("PurchaseHistoryWorkflow");
  *        setDescription("PurchaseHistoryWorkflow description");
  *        addMapReduce("PurchaseHistoryBuilder");
- *        addSchedule("DailySchedule");
  *      }
  *    </code>
  *  </pre>
@@ -50,19 +49,19 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final String name;
   private final String description;
   private final Map<String, WorkflowActionSpecification> customActionMap;
-  private final List<ProgramNameTypeInfo> actions;
+  private final List<ScheduleProgramInfo> actions;
   private final Map<String, String> properties;
 
   public WorkflowSpecification(String className, String name, String description,
                                       Map<String, String> properties,
-                                      List<ProgramNameTypeInfo> actions,
+                                      List<ScheduleProgramInfo> actions,
                                       Map<String, WorkflowActionSpecification> customActionMap) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties == null ? Collections.unmodifiableMap(new HashMap<String, String>()) :
                                            Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.actions = Collections.unmodifiableList(new ArrayList<ProgramNameTypeInfo>(actions));
+    this.actions = Collections.unmodifiableList(new ArrayList<ScheduleProgramInfo>(actions));
     this.customActionMap = Collections.unmodifiableMap(new HashMap(customActionMap));
   }
 
@@ -91,7 +90,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     return properties.get(key);
   }
 
-  public List<ProgramNameTypeInfo> getActions() {
+  public List<ScheduleProgramInfo> getActions() {
     return actions;
   }
 
@@ -101,7 +100,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("WorkflowSpecification{");
+    StringBuilder sb = new StringBuilder("WorkflowSpecification{");
     sb.append("className='").append(className).append('\'');
     sb.append(", name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');

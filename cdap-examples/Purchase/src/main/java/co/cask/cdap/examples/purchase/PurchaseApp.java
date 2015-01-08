@@ -64,9 +64,8 @@ public class PurchaseApp extends AbstractApplication {
     addService(new CatalogLookupService());
 
     // Schedule a Workflow
-    scheduleWorkflow("PurchaseHistoryWorkflow",
-                        new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
-                                     Schedule.Action.START));
+    scheduleWorkflow(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
+                                  Schedule.Action.START), "PurchaseHistoryWorkflow");
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());

@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
@@ -219,10 +219,10 @@ public abstract class AbstractApplication implements Application {
 
   /**
    * Schedule the specified {@link Workflow}
+   * @param schedule the schedule to be added for the Workflow
    * @param workflow the name of Workflow program
-   * @param schedule the schedule to be added for the Workflow program
    */
-  protected void scheduleWorkflow(String workflow, Schedule schedule) {
-    configurer.addSchedule(SchedulableProgram.WORKFLOW, workflow, schedule);
+  protected void scheduleWorkflow(Schedule schedule, String workflow) {
+    configurer.addSchedule(schedule, workflow, SchedulableProgramType.WORKFLOW);
   }
 }

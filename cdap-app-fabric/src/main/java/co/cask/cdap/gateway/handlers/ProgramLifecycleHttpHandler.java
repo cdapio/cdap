@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -794,7 +794,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgram.WORKFLOW);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
 
       JsonArray array = new JsonArray();
       for (ScheduledRuntime runtime : runtimes) {
@@ -822,7 +822,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, SchedulableProgram.WORKFLOW));
+      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, SchedulableProgramType.WORKFLOW));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

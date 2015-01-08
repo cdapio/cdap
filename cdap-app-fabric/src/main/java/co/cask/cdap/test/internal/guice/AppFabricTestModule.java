@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.test.internal.guice;
 
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -95,16 +95,16 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
-      public void schedule(Id.Program program, SchedulableProgram programType, Iterable<Schedule> schedules) {
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
       }
 
       @Override
-      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgram programType) {
+      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }
 
       @Override
-      public List<String> getScheduleIds(Id.Program program, SchedulableProgram programType) {
+      public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }
 
@@ -117,7 +117,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void deleteSchedules(Id.Program programId, SchedulableProgram programType, List<String> scheduleIds) {
+      public void deleteSchedules(Id.Program programId, SchedulableProgramType programType, List<String> scheduleIds) {
       }
 
       @Override

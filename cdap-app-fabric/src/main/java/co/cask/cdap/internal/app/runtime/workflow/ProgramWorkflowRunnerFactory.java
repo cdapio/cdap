@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A Factory for {@link ProgramWorkflowRunner} which returns the appropriate {@link ProgramWorkflowRunner}
- * depending upon the program from the {@link SchedulableProgram}.
+ * depending upon the program from the {@link SchedulableProgramType}.
  * It acts as the single point for conditionally creating the needed {@link ProgramWorkflowRunner} for programs.
- * Currently we support {@link MapReduce} and {@link Spark} in Workflow (See {@link SchedulableProgram}.
+ * Currently we support {@link MapReduce} and {@link Spark} in Workflow (See {@link SchedulableProgramType}.
  */
 public class ProgramWorkflowRunnerFactory {
 
@@ -68,7 +68,7 @@ public class ProgramWorkflowRunnerFactory {
 
 
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
-      switch (SchedulableProgram.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
+      switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
           return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
                                                     userArguments, logicalStartTime);

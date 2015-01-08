@@ -16,12 +16,12 @@
 package co.cask.cdap.api.workflow;
 
 /**
- * Defines an interface for the Workflow program.
+ * Defines an interface for the Workflow.
  */
 public interface Workflow {
 
   /**
-   * Configures a {@link Workflow} program using the given {@link WorkflowConfigurer}
+   * Configures a {@link Workflow} using the given {@link WorkflowConfigurer}
    */
   void configure(WorkflowConfigurer configurer);
 }

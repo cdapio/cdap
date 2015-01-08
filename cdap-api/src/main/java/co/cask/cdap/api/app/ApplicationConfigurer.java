@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
@@ -156,9 +156,9 @@ public interface ApplicationConfigurer {
   /**
    * Adds a {@link Schedule} to the specified program in the Application.
    *
-   * @param programType the type of the program
-   * @param programName the name of the program
    * @param schedule the schedule to be included for the program
+   * @param programName the name of the program
+   * @param programType the type of the program
    */
-  void addSchedule(SchedulableProgram programType, String programName, Schedule schedule);
+  void addSchedule(Schedule schedule, String programName, SchedulableProgramType programType);
 }

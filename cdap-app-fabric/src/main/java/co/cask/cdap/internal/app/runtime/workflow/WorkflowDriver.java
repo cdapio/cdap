@@ -16,9 +16,9 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.workflow.ProgramNameTypeInfo;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -114,37 +114,30 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     ApplicationSpecification appSpec = program.getSpecification();
 
-    Iterator<ProgramNameTypeInfo> iterator = workflowSpec.getActions().iterator();
+    Iterator<ScheduleProgramInfo> iterator = workflowSpec.getActions().iterator();
     int step = 0;
     while (running && iterator.hasNext()) {
       WorkflowActionSpecification actionSpec;
-      ProgramNameTypeInfo actionInfo = iterator.next();
+      ScheduleProgramInfo actionInfo = iterator.next();
       switch (actionInfo.getProgramType()) {
         case MAPREDUCE:
           MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
-          if (mapReduceSpec == null) {
-            LOG.error("MapReduce program '{}' is not configured with the application.", actionInfo.getProgramName());
-            throw new IllegalStateException("Workflow stopped without executing all tasks");
-          }
           actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(mapReduceSpec.getName(),
                                                                                         mapReduceSpec.getName(),
-                                                 SchedulableProgram.MAPREDUCE));
+                                                 SchedulableProgramType.MAPREDUCE));
           break;
         case SPARK:
           SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
-          if (sparkSpec == null) {
-            LOG.error("Spark program '{}' is not configured with the application.", actionInfo.getProgramName());
-            throw new IllegalStateException("Workflow stopped without executing all tasks");
-          }
           actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(sparkSpec.getName(),
                                                                                         sparkSpec.getName(),
-                                                 SchedulableProgram.SPARK));
+                                                 SchedulableProgramType.SPARK));
           break;
         case CUSTOM_ACTION:
           actionSpec = workflowSpec.getCustomActionMap().get(actionInfo.getProgramName());
           break;
         default:
-          LOG.error("Unknown Program '{}' in the workflow.", actionInfo.getProgramName());
+          LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
+                    actionInfo.getProgramName());
           throw new IllegalStateException("Workflow stopped without executing all tasks");
       }
       workflowStatus = new WorkflowStatus(state(), actionSpec, step++);

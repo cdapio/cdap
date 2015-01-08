@@ -16,7 +16,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -24,7 +24,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import java.util.concurrent.Callable;
 
 /**
- * An interface for Programs which can run in a {@link Workflow}. Please see {@link SchedulableProgram}.
+ * An interface for Programs which can run in a {@link Workflow}. Please see {@link SchedulableProgramType}.
  */
 public interface ProgramWorkflowRunner {
 

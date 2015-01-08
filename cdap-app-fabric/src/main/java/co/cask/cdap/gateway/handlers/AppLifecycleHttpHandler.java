@@ -19,10 +19,10 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.workflow.ProgramNameTypeInfo;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -90,7 +90,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -406,8 +405,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           stopProgramIfRunning(programId, type);
           break;
         case WORKFLOW:
-          List<String> scheduleIds = scheduler.getScheduleIds(programId, SchedulableProgram.WORKFLOW);
-          scheduler.deleteSchedules(programId, SchedulableProgram.WORKFLOW, scheduleIds);
+          List<String> scheduleIds = scheduler.getScheduleIds(programId, SchedulableProgramType.WORKFLOW);
+          scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW, scheduleIds);
           break;
         case MAPREDUCE:
           //no-op
@@ -421,27 +420,32 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  private void deleteSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
+    // Delete the existing schedules.
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      for (ScheduleProgramInfo programInfo : entry.getValue().getPrograms()) {
+        Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
+        List<String> existingSchedules = scheduler.getScheduleIds(programId, programInfo.getProgramType());
+        if (!existingSchedules.isEmpty()) {
+          scheduler.deleteSchedules(programId, programInfo.getProgramType(), existingSchedules);
+        }
+      }
+    }
+  }
+
   private void setupSchedules(String namespaceId, ApplicationSpecification specification)  throws IOException {
 
-    Set<Id.Program> programsWithDeletedExistingSchedules = new HashSet<Id.Program>();
-    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      List<ProgramNameTypeInfo> programList = entry.getValue().getProgramList();
-      for (int i = 0; i < programList.size(); i++) {
-        Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
-                                               programList.get(i).getProgramName());
-        if (!programsWithDeletedExistingSchedules.contains(programId)) {
-          List<String> existingSchedules = scheduler.getScheduleIds(programId, programList.get(i).getProgramType());
-          //Delete the existing schedules.
-          if (!existingSchedules.isEmpty()) {
-            scheduler.deleteSchedules(programId, programList.get(i).getProgramType(), existingSchedules);
-          }
-          programsWithDeletedExistingSchedules.add(programId);
-        }
+    deleteSchedules(namespaceId, specification);
 
-        // Add new schedule.
+    // Add new schedules.
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      Set<ScheduleProgramInfo> programs = entry.getValue().getPrograms();
+      for (ScheduleProgramInfo programInfo : programs) {
+        Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
+                                               programInfo.getProgramName());
         List<Schedule> scheduleList = Lists.newArrayList();
         scheduleList.add(entry.getValue().getSchedule());
-        scheduler.schedule(programId, programList.get(i).getProgramType(), scheduleList);
+        scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
       }
     }
   }
@@ -559,9 +563,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
-      List<String> schedules = scheduler.getScheduleIds(workflowProgramId, SchedulableProgram.WORKFLOW);
+      List<String> schedules = scheduler.getScheduleIds(workflowProgramId, SchedulableProgramType.WORKFLOW);
       if (!schedules.isEmpty()) {
-        scheduler.deleteSchedules(workflowProgramId, SchedulableProgram.WORKFLOW, schedules);
+        scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW, schedules);
       }
     }
 

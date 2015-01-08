@@ -32,7 +32,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Override this method to configure this {@link Workflow} job.
+   * Override this method to configure this {@link Workflow}.
    */
   protected void configure() {
     // Default no-op

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -86,17 +86,17 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgram programType, Iterable<Schedule> schedules) {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
     delegate.schedule(programId, programType, schedules);
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgram programType) {
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
    return delegate.nextScheduledRuntime(program, programType);
   }
 
   @Override
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgram programType) {
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
     return delegate.getScheduleIds(program, programType);
   }
 
@@ -111,7 +111,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void deleteSchedules(Id.Program program, SchedulableProgram programType,
+  public void deleteSchedules(Id.Program program, SchedulableProgramType programType,
                               List<String> scheduleIds) {
     delegate.deleteSchedules(program, programType, scheduleIds);
   }
@@ -152,7 +152,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void schedule(Id.Program programId, SchedulableProgram programType, Iterable<Schedule> schedules) {
+    public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       Preconditions.checkNotNull(schedules);
 
@@ -191,7 +191,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgram programType) {
+    public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
 
       List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
@@ -209,7 +209,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public List<String> getScheduleIds(Id.Program program, SchedulableProgram programType) {
+    public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
 
       List<String> scheduleIds = Lists.newArrayList();
@@ -246,7 +246,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void deleteSchedules(Id.Program program, SchedulableProgram programType, List<String> scheduleIds) {
+    public void deleteSchedules(Id.Program program, SchedulableProgramType programType, List<String> scheduleIds) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
         for (String scheduleId : scheduleIds) {
@@ -280,7 +280,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
 
-    private String getJobKey(Id.Program program, SchedulableProgram programType) {
+    private String getJobKey(Id.Program program, SchedulableProgramType programType) {
       return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
                            program.getApplicationId(), program.getId());
     }

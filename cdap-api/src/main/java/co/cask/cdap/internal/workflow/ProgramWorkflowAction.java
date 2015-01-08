@@ -16,7 +16,7 @@
 package co.cask.cdap.internal.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -41,10 +41,10 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   private final String name;
   private String programName;
   private Callable<RuntimeContext> programRunner;
-  private SchedulableProgram programType;
+  private SchedulableProgramType programType;
   private WorkflowContext context;
 
-  public ProgramWorkflowAction(String name, String programName, SchedulableProgram programType) {
+  public ProgramWorkflowAction(String name, String programName, SchedulableProgramType programType) {
     this.name = name;
     this.programName = programName;
     this.programType = programType;
@@ -71,7 +71,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
     programRunner = context.getProgramRunner(programName);
     programType = context.getRuntimeArguments().containsKey(PROGRAM_TYPE) ? 
-                              SchedulableProgram.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
+                              SchedulableProgramType.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
 
     LOG.info("Initialized for {} Program {} in workflow action",
              programType != null ? programType.name() : null, programName);

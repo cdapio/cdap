@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,6 @@ package co.cask.cdap.api.schedule;
 /**
  * Defines types of programs that can be scheduled by the Application.
  */
-public enum SchedulableProgram {
+public enum SchedulableProgramType {
   WORKFLOW, MAPREDUCE, SPARK, CUSTOM_ACTION
 }

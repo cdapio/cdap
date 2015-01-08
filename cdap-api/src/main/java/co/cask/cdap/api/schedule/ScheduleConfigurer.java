@@ -18,31 +18,30 @@ package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Specification for {@link Schedule}.
+ * Configures the {@link Schedule}.
  */
-public final class ScheduleSpecification {
+public final class ScheduleConfigurer {
   private final Schedule schedule;
   private final Set<ScheduleProgramInfo> programs;
 
-  public ScheduleSpecification(Schedule schedule, Set<ScheduleProgramInfo> programs) {
+  public ScheduleConfigurer(Schedule schedule) {
     this.schedule = schedule;
-    this.programs = programs;
+    this.programs = new HashSet<ScheduleProgramInfo>();
   }
 
   /**
-   * @return the {@link Set} of programs associated with {@link ScheduleSpecification}
+   * Add a program to the {@link Schedule}
+   * @param scheduleProgramInfo the program name and program type information
    */
-  public Set<ScheduleProgramInfo> getPrograms() {
-    return programs;
+  public void addProgram(ScheduleProgramInfo scheduleProgramInfo) {
+    this.programs.add(scheduleProgramInfo);
   }
 
-  /**
-   * @return the {@link Schedule} associated with {@link ScheduleSpecification}
-   */
-  public Schedule getSchedule() {
-    return schedule;
+  public ScheduleSpecification createSpecification() {
+    return new ScheduleSpecification(schedule, programs);
   }
 }

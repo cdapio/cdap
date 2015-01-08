@@ -47,7 +47,8 @@ public interface WorkflowConfigurer {
 
   /**
    * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be
-   * configured when the Application is defined.
+   * configured when the Application is defined. Application deployment will fail if the MapReduce program does
+   * not exist.
    *
    * @param mapReduce name of the MapReduce program to be added to the {@link Workflow}
    *
@@ -56,7 +57,8 @@ public interface WorkflowConfigurer {
 
   /**
    * Adds a Spark program as a next sequential step in the {@link Workflow}. Spark program must be
-   * configured when the Application is defined.
+   * configured when the Application is defined. Application deployment will fail if the Spark program
+   * does not exist.
    *
    * @param spark name of the Spark program to be added to the {@link Workflow}
    *

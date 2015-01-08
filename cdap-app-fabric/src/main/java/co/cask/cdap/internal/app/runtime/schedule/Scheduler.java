@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgram;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.proto.Id;
 
@@ -33,7 +33,7 @@ public interface Scheduler {
    * @param programType type of program.
    * @param schedules Schedule with which the program runs.
    */
-  public void schedule(Id.Program program, SchedulableProgram programType, Iterable<Schedule> schedules);
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules);
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
@@ -44,7 +44,7 @@ public interface Scheduler {
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    */
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgram programType);
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType);
 
   /**
    * Get Schedule ids for a given program and program type.
@@ -53,7 +53,7 @@ public interface Scheduler {
    * @param programType type of program.
    * @return List of scheduleIds, empty List if there are no matching schedules.
    */
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgram programType);
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType);
 
   /**
    * Suspends a schedule with the given ScheduleId. Sub-sequent schedules will not be for the job.
@@ -76,7 +76,7 @@ public interface Scheduler {
    * @param programType
    * @param scheduleIds
    */
-  public void deleteSchedules(Id.Program programId, SchedulableProgram programType, List<String> scheduleIds);
+  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType, List<String> scheduleIds);
 
   /**
    * Get state of a particular schedule.
