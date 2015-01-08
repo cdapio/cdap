@@ -39,7 +39,8 @@ angular.module(PKG.name+'.feature.cdap-app')
         .state('cdap-app.detail.tab', {
           url: '/:tab',
           ncyBreadcrumb: {
-            skip: true
+            parent: 'cdap-app.detail',
+            label: '{{$state.params.tabId}}'
           }
         });
 
