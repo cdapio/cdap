@@ -30,6 +30,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -182,27 +183,19 @@ public class DefaultConfigStore implements ConfigStore {
     }
   }
 
-  private String rowKeyString(String namespace, String type, String id) {
-    return String.format("%s%04d%s", rowKeyPrefixString(namespace, type), id.length(), id);
-  }
-
   private byte[] rowKey(String namespace, String type, String id) {
-    return Bytes.toBytes(rowKeyString(namespace, type, id));
-  }
-
-  private String rowKeyPrefixString(String namespace, String type) {
-    int nsSize = namespace.length();
-    int typeSize = type.length();
-    return String.format("%01x%04d%s%04d%s", Constants.ConfigStore.VERSION, nsSize, namespace, typeSize, type);
-  }
-
-  private String getId(byte[] rowBytes, byte[] prefixBytes) {
-    int idSize = Integer.valueOf(Bytes.toString(rowBytes, prefixBytes.length, Bytes.SIZEOF_INT));
-    return Bytes.toString(rowBytes, prefixBytes.length + Bytes.SIZEOF_INT, idSize);
+    MetadataStoreDataset.Key key = new MetadataStoreDataset.Key.Builder().add(id).build();
+    return Bytes.concat(rowKeyPrefix(namespace, type), key.getKey());
   }
 
   private byte[] rowKeyPrefix(String namespace, String type) {
-    return Bytes.toBytes(rowKeyPrefixString(namespace, type));
+    MetadataStoreDataset.Key key = new MetadataStoreDataset.Key.Builder().add(namespace, type).build();
+    return Bytes.concat(new byte[]{Constants.ConfigStore.VERSION}, key.getKey());
+  }
+
+  private String getId(byte[] rowBytes, byte[] prefixBytes) {
+    int idSize = Bytes.toInt(rowBytes, prefixBytes.length, Bytes.SIZEOF_INT);
+    return Bytes.toString(rowBytes, prefixBytes.length + Bytes.SIZEOF_INT, idSize);
   }
 
   private static final class ConfigTable implements Iterable<Table> {
