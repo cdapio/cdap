@@ -9,6 +9,7 @@ angular.module(PKG.name+'.feature.dashboard')
       opts = opts || {};
       this.title = opts.title || 'Widget';
       this.type = opts.type || 'welcome';
+      this.metric = opts.metric;
     }
 
     Widget.prototype.getPartial = function () {
