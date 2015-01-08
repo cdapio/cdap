@@ -161,6 +161,7 @@
     <module>cdap-master</module>
     <module>cdap-web-app</module>
     <module>cdap-proto</module>
+    <module>cdap-notifications</module>
     <module>cdap-client</module>
     <module>cdap-client-tests</module>
     <module>cdap-cli</module>
