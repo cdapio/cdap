@@ -35,7 +35,7 @@ function pandoc_includes() {
     # For the local to work, must have the local sources synced to the correct branch as the remote.
     MD_CLIENTS="../../../cdap-clients"
     MD_INGEST="../../../cdap-ingest"
-  else
+  elif [ $TEST_INCLUDES == $TEST_INCLUDES_REMOTE ]; then
     # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.md
     # https://raw.githubusercontent.com/caskdata/cdap-ingest/release/1.0.0/cdap-file-drop-zone/README.md
     GITHUB_URL="https://raw.githubusercontent.com/caskdata"
@@ -43,19 +43,26 @@ function pandoc_includes() {
     MD_INGEST="$GITHUB_URL/cdap-ingest/release/1.0.0"
   fi
 
-  echo "Using $TEST_INCLUDES includes..."
-
-  # authentication-client java
   local java_client_working="$INCLUDES_DIR/cdap-authentication-clients-java_working.rst"
   local java_client="$INCLUDES_DIR/cdap-authentication-clients-java.rst"
-  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
-  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
 
-  pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md        -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-  pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md           -o $INCLUDES_DIR/cdap-file-tailer.rst
-  pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md                 -o $INCLUDES_DIR/cdap-flume.rst
-  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md   -o $INCLUDES_DIR/cdap-stream-clients-java.rst
-  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+  if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
+    echo "Using $TEST_INCLUDES includes..."
+
+    # authentication-client java
+    pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
+    pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
+
+    pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md        -o $INCLUDES_DIR/cdap-file-drop-zone.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md           -o $INCLUDES_DIR/cdap-file-tailer.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md                 -o $INCLUDES_DIR/cdap-flume.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md   -o $INCLUDES_DIR/cdap-stream-clients-java.rst
+    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+  else
+    echo -e "$WARNING Not testing includes: $TEST_INCLUDES includes..."
+    local java_client_source="$SCRIPT_PATH/$SOURCE/$INCLUDES/cdap-authentication-clients-java.rst"
+    cp -f $java_client_source $java_client_working
+  fi
   
   # Fix version(s)
   local release_version="1.1.0-SNAPSHOT" # Version to be written into file

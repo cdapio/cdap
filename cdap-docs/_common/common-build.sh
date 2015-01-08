@@ -76,11 +76,17 @@ SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 CHECK_INCLUDES="false"
 TEST_INCLUDES_LOCAL="local"
+TEST_INCLUDES_REMOTE="remote"
 if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="remote"
+  TEST_INCLUDES="$TEST_INCLUDES_REMOTE"
 else
   TEST_INCLUDES="$3"
 fi
+
+RED='\033[0;31m'
+BOLD='\033[1m'
+NC='\033[0m'
+WARNING="${RED}${BOLD}WARNING:${NC}"
 
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
@@ -119,7 +125,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must specify source if used"
+  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo " "
 #   exit 1
 }
@@ -258,7 +264,7 @@ function check_includes() {
       # Test included files
       test_includes
     else
-      echo "WARNING: pandoc is not installed; checked-in includes will be used instead."
+      echo -e "$WARNING pandoc is not installed; checked-in includes will be used instead."
     fi
   else
     echo "No includes to be checked."
@@ -274,11 +280,16 @@ function test_an_include() {
   BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
   SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
   EXAMPLE=$1
-  if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
-    echo "Tested $1; matches checked-in include file."
+  if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
+    if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
+      echo "Tested $1; matches checked-in include file."
+    else
+      echo -e "$WARNING Tested $1; does not match checked-in include file. Copying to source directory."
+      cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    fi
   else
-    echo "WARNING: Tested $1; does not match checked-in include file. Copying to source directory."
-    cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    echo -e "$WARNING Not testing includes: using checked-in version..."
+    cp -f $SOURCE_INCLUDES_DIR/$1 $BUILD_INCLUDES_DIR/$1
   fi
 }
 
@@ -290,7 +301,7 @@ function build_includes() {
     mkdir $SOURCE_INCLUDES_DIR
     pandoc_includes $SOURCE_INCLUDES_DIR
   else
-    echo "WARNING: pandoc not installed; checked-in README includes will be used instead."
+    echo -e "$WARNING pandoc not installed; checked-in README includes will be used instead."
   fi
 }
 
