@@ -62,8 +62,9 @@ SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 CHECK_INCLUDES="false"
 TEST_INCLUDES_LOCAL="local"
+TEST_INCLUDES_REMOTE="remote"
 if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="remote"
+  TEST_INCLUDES="$TEST_INCLUDES_REMOTE"
 else
   TEST_INCLUDES="$3"
 fi
