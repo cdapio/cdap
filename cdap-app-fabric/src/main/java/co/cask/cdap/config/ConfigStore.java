@@ -33,6 +33,14 @@ public interface ConfigStore {
   void create(String namespace, String type, Config config) throws ConfigExistsException;
 
   /**
+   * Create or update a Configuration.
+   * @param namespace namespace
+   * @param type configuration type
+   * @param config configuration object
+   */
+  void createOrUpdate(String namespace, String type, Config config);
+
+  /**
    * Delete a Configuration.
    * @param namespace namespace
    * @param type configuration type

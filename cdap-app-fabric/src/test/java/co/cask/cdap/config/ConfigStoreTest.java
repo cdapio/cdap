@@ -91,6 +91,17 @@ public class ConfigStoreTest extends AppFabricTestBase {
     configStore.create(namespace, type, myConfig);
   }
 
+  @Test
+  public void testDuplicateConfigUpdate() throws Exception {
+    String namespace = "oldspace";
+    String type = "user";
+    ConfigStore configStore = getInjector().getInstance(ConfigStore.class);
+    Config myConfig = new Config("abcd", ImmutableMap.<String, String>of());
+    configStore.create(namespace, type, myConfig);
+    Assert.assertEquals(1, configStore.list(namespace, type).size());
+    configStore.createOrUpdate(namespace, type, myConfig);
+  }
+
   @Test(expected = ConfigNotFoundException.class)
   public void testDeleteUnknownConfig() throws Exception {
     String namespace = "newspace";
