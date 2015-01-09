@@ -24,7 +24,7 @@
             <td ng-bind="program.description"></td>
             <td>
               <a ng-bind="program.type"
-                  ui-sref="programs.type({programType: (program.type + 's'| lowercase)})"
+                  ui-sref="programs.type({programType: (program.type_plural | lowercase)})"
               ></a>
             </td>
           </tr>

@@ -18,6 +18,9 @@ angular.module(PKG.name + '.feature.apps')
           _cdapNsPath: basePath + '/' + program
         },
         function(res) {
+          res.map(function(program) {
+            program.type_plural = program.type + 's';
+          });
           $scope.programs = $scope.programs.concat(res);
           res.forEach(function(prog) {
             fetchStatus(program, prog.id);
