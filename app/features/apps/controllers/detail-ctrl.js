@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.cdap-app')
+angular.module(PKG.name + '.feature.apps')
   .controller('CdapAppDetailController', function CdapAppDetail($scope, $state, MyDataSource) {
     $scope.tabs = [
       'Status',
@@ -12,7 +12,7 @@ angular.module(PKG.name + '.feature.cdap-app')
       return {
         title: t,
         state: t.toLowerCase(),
-        partial: '/assets/features/cdap-app/templates/tabs/' + t.toLowerCase() + '.html'
+        partial: '/assets/features/apps/templates/tabs/' + t.toLowerCase() + '.html'
       };
     });
 

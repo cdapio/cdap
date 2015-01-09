@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.cdap-app')
+angular.module(PKG.name + '.feature.apps')
   .controller('CdapAppDetailStatusController', function($scope, $stateParams, MyDataSource) {
     var programTypes = [
           'flows',

@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.programs')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('cdap-programs', {
-        parent: 'cdap-app.detail',
+        parent: 'apps.detail',
         url: '/programs/:programType',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,

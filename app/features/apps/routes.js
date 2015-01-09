@@ -1,4 +1,4 @@
-angular.module(PKG.name+'.feature.cdap-app')
+angular.module(PKG.name+'.feature.apps')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
     /**
@@ -6,7 +6,7 @@ angular.module(PKG.name+'.feature.cdap-app')
      */
     $stateProvider
 
-      .state('cdap-app', {
+      .state('apps', {
         abstract: true,
         template: '<ui-view/>',
         url: '/apps',
@@ -17,9 +17,9 @@ angular.module(PKG.name+'.feature.cdap-app')
         parent: 'ns'
       })
 
-      .state('cdap-app.list', {
+      .state('apps.list', {
         url: '',
-        templateUrl: '/assets/features/cdap-app/templates/list.html',
+        templateUrl: '/assets/features/apps/templates/list.html',
         controller: 'CdapAppListController',
         ncyBreadcrumb: {
           label: 'Applications',
@@ -27,25 +27,25 @@ angular.module(PKG.name+'.feature.cdap-app')
         }
       })
 
-      .state('cdap-app.detail', {
+      .state('apps.detail', {
         url: '/:appId',
         abstract: true,
         template: '<ui-view/>'
       })
         .state('app-overview', {
           url: '/overview',
-          parent: 'cdap-app.detail',
-          templateUrl: '/assets/features/cdap-app/templates/detail.html',
+          parent: 'apps.detail',
+          templateUrl: '/assets/features/apps/templates/detail.html',
           controller: 'CdapAppDetailController',
           ncyBreadcrumb: {
-            parent: 'cdap-app.list',
+            parent: 'apps.list',
             label: '{{$state.params.appId}}'
           }
         })
           .state('app-overview.tab', {
             url: '/:tab',
             ncyBreadcrumb: {
-              parent: 'cdap-app.detail',
+              parent: 'apps.detail',
               label: '{{$state.params.tabId}}'
             }
           });

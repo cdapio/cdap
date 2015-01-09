@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.cdap-app')
+angular.module(PKG.name + '.feature.apps')
   .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myFileUploader, $alert, $state) {
     var data = new MyDataSource($scope);
 
