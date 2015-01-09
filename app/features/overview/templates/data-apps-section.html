@@ -4,17 +4,13 @@
     <div class="clearfix">
       <h3 class="pull-left"> Apps </h3>
       <div class="btn-group pull-right">
-        <a ui-sref="cdap-app.list">
-          <button class="btn btn-default">
-            <span class="fa fa-bars"> </span>
-             All Apps
-          </button>
+        <a ui-sref="apps.list" class="btn btn-default">
+          <span class="fa fa-bars"> </span>
+           All Apps
         </a>
-        <a ui-sref="cdap-app.list">
-          <button class="btn btn-default">
-            <span class="fa fa-edit"> </span>
+        <a class="btn btn-default" ui-sref="apps.list">
+          <span class="fa fa-edit"> </span>
            ETL
-          </button>
         </a>
       </div>
     </div>
@@ -22,7 +18,7 @@
     <div class="list-group">
       <a class="list-group-item"
          ng-repeat="app in apps"
-         ui-sref="cdap-app.detail({appId: app.id})">
+         ui-sref="apps.detail.overview({appId: app.id})">
         <strong ng-bind="app.name">  </strong>
         <div ng-bind="app.description"> </div>
       </a>
@@ -33,28 +29,24 @@
     <div class="clearfix">
       <h3 class="pull-left"> Data </h3>
       <div class="btn-group pull-right">
-        <a ui-sref="cdap-app.list">
-          <button class="btn btn-default">
-            <span class="fa fa-bars"> </span>
-            All Datasets
-          </button>
+        <a ui-sref="apps.list" class="btn btn-default">
+          <span class="fa fa-bars"> </span>
+          All Datasets
         </a>
-        <a ui-sref="cdap-app.list">
-          <button class="btn btn-default">
-            <span class="fa fa-edit"> </span>
-            ETL
-          </button>
+        <a ui-sref="apps.list" class="btn btn-default">
+          <span class="fa fa-edit"> </span>
+          ETL
         </a>
       </div>
     </div>
     <hr />
     <div class="list-group">
-      <a class="list-group-item"
+      <!-- <a class="list-group-item"
          ng-repeat="app in apps"
-         ui-sref="cdap-app.details({appId: app.id})">
+         ui-sref="apps.detail.overview({appId: app.id})">
         <strong ng-bind="app.name">  </strong>
         <div ng-bind="app.description"> </div>
-      </a>
+      </a> -->
     </div>
   </div>
   </div>
