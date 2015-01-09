@@ -22,7 +22,7 @@
     <div class="list-group">
       <a class="list-group-item"
          ng-repeat="app in apps"
-         ui-sref="cdap-app.detail({appId: app.id})">
+         ui-sref="app-overview({appId: app.id})">
         <strong ng-bind="app.name">  </strong>
         <div ng-bind="app.description"> </div>
       </a>
@@ -49,12 +49,12 @@
     </div>
     <hr />
     <div class="list-group">
-      <a class="list-group-item"
+      <!-- <a class="list-group-item"
          ng-repeat="app in apps"
-         ui-sref="cdap-app.details({appId: app.id})">
+         ui-sref="app-overview({appId: app.id})">
         <strong ng-bind="app.name">  </strong>
         <div ng-bind="app.description"> </div>
-      </a>
+      </a> -->
     </div>
   </div>
   </div>
