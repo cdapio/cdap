@@ -37,6 +37,7 @@ import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 import java.util.Map;
@@ -171,24 +172,15 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  @Deprecated
   public ProcedureManager startProcedure(final String procedureName) {
-    return startProcedure(procedureName, ImmutableMap.<String, String>of());
+    throw new NotImplementedException();
   }
 
   @Override
+  @Deprecated
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
-    final ProgramId procedureId = startProgram(procedureName, arguments, ProgramType.PROCEDURE);
-    return new ProcedureManager() {
-      @Override
-      public void stop() {
-        stopProgram(procedureId);
-      }
-
-      @Override
-      public ProcedureClient getClient() {
-        return new RemoteProcedureClient(clientConfig, applicationId, procedureName);
-      }
-    };
+    throw new NotImplementedException();
   }
 
   @Override
