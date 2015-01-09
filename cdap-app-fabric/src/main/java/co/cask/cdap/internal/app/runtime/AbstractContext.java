@@ -57,8 +57,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
 
-
-
   public AbstractContext(Program program, RunId runId,
                          Arguments arguments,
                          Set<String> datasets,
