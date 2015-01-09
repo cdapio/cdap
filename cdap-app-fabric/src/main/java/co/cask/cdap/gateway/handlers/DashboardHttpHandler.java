@@ -80,7 +80,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
     //Dashboard Config has the following layout:
     //Config ID = dashboardId (randomUUID)
-    //Config Properties = Map (Key = CONFIG_PROPERTY, value = Serialized JSON string of dashboard configuration
+    //Config Properties = Map (Key = CONFIG_PROPERTY, value = Serialized JSON string of dashboard configuration)
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
     String dashboardId = UUID.randomUUID().toString();
     try {
