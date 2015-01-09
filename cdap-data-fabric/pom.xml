@@ -43,7 +43,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-notifications</artifactId>
+      <artifactId>cdap-notifications-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
