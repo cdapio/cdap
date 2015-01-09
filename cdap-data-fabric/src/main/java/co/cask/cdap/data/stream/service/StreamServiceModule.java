@@ -16,6 +16,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatsAggregator;
+import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
@@ -35,6 +37,8 @@ public class StreamServiceModule extends PrivateModule {
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(StreamFetchHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
+
+    bind(StreamsHeartbeatsAggregator.class).to(NotificationHeartbeatsAggregator.class).in(Scopes.SINGLETON);
 
     bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);

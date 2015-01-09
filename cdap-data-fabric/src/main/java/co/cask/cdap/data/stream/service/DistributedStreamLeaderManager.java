@@ -17,7 +17,6 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
@@ -25,9 +24,12 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
+import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
+import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -57,11 +59,11 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
 
   private static final String STREAMS_RESOURCE = "streams";
 
-  private final CConfiguration cConf;
   private final ZKClient zkClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient streamsResourceCoordinatorClient;
+  private final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator;
 
   private LeaderElection leaderElection;
   private ResourceCoordinator streamsResourceCoordinator;
@@ -69,13 +71,13 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
   private Cancellable handlerSubscription;
 
   @Inject
-  public DistributedStreamLeaderManager(CConfiguration cConf, ZKClient zkClient,
-                                        DiscoveryServiceClient discoveryServiceClient,
-                                        StreamMetaStore streamMetaStore) {
-    this.cConf = cConf;
+  public DistributedStreamLeaderManager(ZKClient zkClient, DiscoveryServiceClient discoveryServiceClient,
+                                        StreamMetaStore streamMetaStore,
+                                        StreamsHeartbeatsAggregator streamsHeartbeatsAggregator) {
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
+    this.streamsHeartbeatsAggregator = streamsHeartbeatsAggregator;
     this.streamsResourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.handlerDiscoverable = null;
   }
@@ -170,7 +172,7 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
   }
 
   /**
-   * Class that defines the bahavior of a leader of a collection of Streams.
+   * Class that defines the behavior of a leader of a collection of Streams.
    */
   private final class StreamsLeaderHandler extends ResourceHandler {
 
@@ -180,9 +182,15 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      // TODO use the names of the ParitionReplicas to retrieve the streams names and do something on them
-      // TODO here, we are in the master for all the streams represented by the partitions replicas. We need to do
-      // aggregation, etc.
+      Collection<String> streamNames = Collections2.transform(
+        partitionReplicas, new Function<PartitionReplica, String>() {
+          @Nullable
+          @Override
+          public String apply(@Nullable PartitionReplica input) {
+            return input != null ? input.getName() : null;
+          }
+        });
+      streamsHeartbeatsAggregator.listenToStreams(streamNames);
     }
 
     @Override

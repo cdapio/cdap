@@ -63,8 +63,7 @@ public interface NotificationService extends Service {
 
   /**
    * Subscribe to the notification received on the {@code feed}, and handle the notifications with the {@code handler}.
-   * Before this call is made, the {@code feed} has to be created using the
-   * {@link NotificationFeedManager}.
+   * Before this call is made, the {@code feed} has to be created using the  {@link NotificationFeedManager}.
    * Multiple subscriptions to a same feed with different handlers are possible.
    *
    * @param feed {@link NotificationFeed} to subscribe to.
@@ -80,8 +79,7 @@ public interface NotificationService extends Service {
 
   /**
    * Subscribe to the notification received on the {@code feed}, and handle the notifications with the {@code handler}.
-   * Before this call is made, the {@code feed} has to be created using the
-   * {@link NotificationFeedManager}.
+   * Before this call is made, the {@code feed} has to be created using the {@link NotificationFeedManager}.
    * Multiple subscriptions to a same feed with different handlers are possible.
    *
    * @param feed {@link NotificationFeed} to subscribe to.

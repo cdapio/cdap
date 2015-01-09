@@ -36,6 +36,8 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedClientModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -84,7 +86,9 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
         new ExploreClientModule(),
-        new StreamServiceRuntimeModule().getDistributedModules()
+        new StreamServiceRuntimeModule().getDistributedModules(),
+        new NotificationFeedClientModule(),
+        new NotificationServiceRuntimeModule().getDistributedModules()
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();

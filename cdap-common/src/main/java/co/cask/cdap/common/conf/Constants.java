@@ -547,6 +547,16 @@ public final class Constants {
    */
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
+
+    /**
+     * Notifications in Streams constants.
+     */
+    public static final class Stream {
+      public static final String STREAM_HEARTBEAT_FEED_CATEGORY = "streamHeartbeats";
+      public static final String STREAM_FEED_CATEGORY = "streams";
+
+      public static final int DEFAULT_DATA_THRESHOLD = 1000;
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

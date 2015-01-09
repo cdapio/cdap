@@ -80,7 +80,6 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
 
   @Override
   public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
-
     HttpRequest request = HttpRequest.put(resolve(String.format("feeds/%s", feed.getId())))
       .withBody(GSON.toJson(feed)).build();
     HttpResponse response = execute(request);

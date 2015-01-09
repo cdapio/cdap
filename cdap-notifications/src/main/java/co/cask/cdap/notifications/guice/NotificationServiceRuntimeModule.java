@@ -29,7 +29,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 
 /**
- *
+ * Notification Service guice modules.
  */
 public class NotificationServiceRuntimeModule extends RuntimeModule {
 

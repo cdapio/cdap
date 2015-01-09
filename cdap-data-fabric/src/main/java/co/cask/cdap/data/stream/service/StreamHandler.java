@@ -29,6 +29,9 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
@@ -86,6 +89,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
   private final StreamLeaderManager streamLeaderManager;
+  private final NotificationFeedManager notificationFeedManager;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -95,16 +99,16 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final StreamMetaStore streamMetaStore;
 
   @Inject
-  public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                       StreamFileWriterFactory writerFactory,
-                       MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade, StreamLeaderManager streamLeaderManager) {
+  public StreamHandler(CConfiguration cConf, Authenticator authenticator, StreamCoordinator streamCoordinator,
+                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
+                       MetricsCollectionService metricsCollectionService, ExploreFacade exploreFacade,
+                       StreamLeaderManager streamLeaderManager, NotificationFeedManager notificationFeedManager) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
+    this.notificationFeedManager = notificationFeedManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.streamLeaderManager = streamLeaderManager;
 
@@ -164,7 +168,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     // Verify stream name
     if (!isValidName(stream)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+                           "Stream name can only contain alphanumeric, '-' and '_' characters.");
       return;
     }
 
@@ -182,10 +186,41 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
+    // Create the notification feeds linked to that stream
+    createStreamFeeds(stream);
+
     streamLeaderManager.affectLeader(stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void createStreamFeeds(String stream) {
+    // TODO use accountID as namespace?
+    try {
+      NotificationFeed streamFeed = new NotificationFeed.Builder()
+        .setNamespace("default")
+        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+        .setName(stream)
+        .setDescription(String.format("Size updates feed for Stream %s every %dMB",
+                                      stream, Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD))
+        .build();
+      notificationFeedManager.createFeed(streamFeed);
+    } catch (NotificationFeedException e) {
+      LOG.error("Cannot create feed for Stream {}", stream, e);
+    }
+
+    try {
+      NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
+        .setNamespace("default")
+        .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
+        .setName(stream)
+        .setDescription(String.format("Heartbeats feed for Stream %s.", stream))
+        .build();
+      notificationFeedManager.createFeed(streamHeartbeatsFeed);
+    } catch (NotificationFeedException e) {
+      LOG.error("Cannot create feed for Stream {} heartbeats.", stream, e);
+    }
   }
 
   @POST
