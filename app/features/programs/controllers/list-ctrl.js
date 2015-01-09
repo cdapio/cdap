@@ -11,12 +11,12 @@ angular.module(PKG.name + '.feature.programs')
       },
       function(res) {
         $scope.programs = res;
-        res.forEach(fetchStatus);
+        res.forEach(pollStatus);
       }
     );
 
     // FIXME: Not DRY. Almost same thing done in CdapAppDetailStatusController
-    function fetchStatus(program) {
+    function pollStatus(program) {
       var programId = program.id;
       datasrc.poll(
         {
@@ -24,10 +24,7 @@ angular.module(PKG.name + '.feature.programs')
                         programId + '/status'
         },
         function (res) {
-          var program = $scope.programs.filter(function(item) {
-            return item.id === programId;
-          });
-          program[0].status = res.status;
+          program.status = res.status;
         }
       );
     }
