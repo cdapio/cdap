@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * Tests for {@link UserSettingsHttpHandler}
  */
-public class UserSetttingsHttpHandlerTest extends AppFabricTestBase {
+public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
