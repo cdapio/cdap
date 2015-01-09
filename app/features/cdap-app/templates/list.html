@@ -8,6 +8,7 @@
       <th> Deployed </th>
       <th> Description </th>
       <th> Owner </th>
+      <th> </th>
     </tr>
   </thead>
   <tbody>
@@ -22,7 +23,15 @@
       <td ng-bind="app.deployed">  </td>
       <td ng-bind="app.description">  </td>
       <td ng-bind="app.owner">  </td>
-
+      <td>
+        <a ng-click="caskConfirm()"
+            class="btn btn-danger btn-xs"
+            cask-confirmable="deleteApp(app.id)"
+            data-confirmable-content="Are you sure you want to delete the App?"
+          >
+          <span class="fa fa-trash"> </span>
+        </a>
+      </td>
     </tr>
   <tbody>
 </table>
