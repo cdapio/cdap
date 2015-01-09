@@ -52,11 +52,7 @@ import javax.ws.rs.PathParam;
 public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final String CONFIG_TYPE = "dashboard";
-<<<<<<< HEAD
-  private static final String PROPERTY_NAME = "config";
-=======
   private static final String CONFIG_PROPERTY = "config";
->>>>>>> origin/develop
   private static final String ID = "id";
 
   private final ConfigStore configStore;
@@ -82,14 +78,10 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-<<<<<<< HEAD
-    Map<String, String> propMap = ImmutableMap.of(PROPERTY_NAME, data);
-=======
     //Dashboard Config has the following layout:
     //Config ID = dashboardId (randomUUID)
     //Config Properties = Map (Key = CONFIG_PROPERTY, value = Serialized JSON string of dashboard configuration)
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
->>>>>>> origin/develop
     String dashboardId = UUID.randomUUID().toString();
     try {
       configStore.create(namespace, CONFIG_TYPE, new Config(dashboardId, propMap));
@@ -109,11 +101,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
     for (Config config : configList) {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty(ID, config.getId());
-<<<<<<< HEAD
-      jsonObject.add(PROPERTY_NAME, new JsonParser().parse(config.getProperties().get(PROPERTY_NAME)));
-=======
       jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(config.getProperties().get(CONFIG_PROPERTY)));
->>>>>>> origin/develop
       jsonArray.add(jsonObject);
     }
     responder.sendJson(HttpResponseStatus.OK, jsonArray);
