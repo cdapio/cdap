@@ -65,7 +65,7 @@ function pandoc_includes() {
   fi
   
   # Fix version(s)
-  version_tag_rewrite $java_client_working $java_client "{version}" $version
+  rewrite $java_client_working $java_client "{version}" $version
   
   version
   cd $SCRIPT_PATH
