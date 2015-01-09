@@ -121,58 +121,6 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  @Test
-  public void testMetricsContexts() throws Exception {
-    metricsResponseCheck("/v2/metrics/available/context", 2, ImmutableList.<String>of("WCount", "WordCount"));
-    metricsResponseCheck("/v2/metrics/available/context/WordCount.f", 1, ImmutableList.<String>of("WordCounter"));
-    metricsResponseCheck("/v2/metrics/available/context/WCount", 3, ImmutableList.<String>of("b", "f", "p"));
-
-    String base = "/v2/metrics/available/context/WCount.f";
-    HttpResponse response = doGet(base);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    String result = EntityUtils.toString(response.getEntity());
-    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(2, resultList.size());
-    Assert.assertEquals("WCounter", resultList.get(0));
-    Assert.assertEquals("WordCounter", resultList.get(1));
-
-  }
-
-  private void metricsResponseCheck(String url, int expected, List<String> expectedValues) throws Exception {
-    HttpResponse response = doGet(url);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(expected, reply.size());
-    for (int i = 0; i < expectedValues.size(); i++) {
-      Assert.assertEquals(expectedValues.get(i), reply.get(i));
-    }
-  }
-
-  @Test
-  public void testMetrics() throws Exception {
-    String base = "/v2/metrics/available/context/WordCount.f.WordCounter.splitter/metrics";
-    HttpResponse response = doGet(base);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    String result = EntityUtils.toString(response.getEntity());
-    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(2, resultList.size());
-
-    base = "/v2/metrics/available/context/WordCount.f.WordCounter.collector/metrics";
-    response = doGet(base);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    result = EntityUtils.toString(response.getEntity());
-    resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(3, resultList.size());
-    Assert.assertEquals("aa", resultList.get(0));
-    Assert.assertEquals("ab", resultList.get(1));
-    Assert.assertEquals("zz", resultList.get(2));
-
-  }
-
   private static void setupMetrics() throws Exception {
     HttpResponse response = doDelete("/v2/metrics");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
