@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.cdap-app')
+angular.module(PKG.name + '.feature.apps')
   .controller('CdapAppDetailController', function CdapAppDetail($scope, $state, MyDataSource) {
     $scope.tabs = [
       'Status',
@@ -12,7 +12,7 @@ angular.module(PKG.name + '.feature.cdap-app')
       return {
         title: t,
         state: t.toLowerCase(),
-        partial: '/assets/features/cdap-app/templates/tabs/' + t.toLowerCase() + '.html'
+        partial: '/assets/features/apps/templates/tabs/' + t.toLowerCase() + '.html'
       };
     });
 
@@ -34,25 +34,4 @@ angular.module(PKG.name + '.feature.cdap-app')
       }
       $scope.tabs.activeTab = tab;
     });
-
-    var data = new MyDataSource($scope);
-    var appId = $state.params.appId;
-    data.request({
-      _cdapNsPath: '/apps/' + appId + '/status',
-      method: 'GET',
-    }, function(res) {
-      if (!angular.isArray(res)) {
-        return;
-      }
-      $scope.programs = res;
-      $scope.programs.runningCount = getProgramCount($scope.programs, 'ALIVE');
-      $scope.programs.failedCount = getProgramCount($scope.programs, 'FAILED');
-      $scope.programs.deployedCount = getProgramCount($scope.programs, 'DEPLOYED');
-    });
-
-    function getProgramCount (programs, s) {
-      return programs.filter(function(prog) {
-        return prog.status === s;
-      }).length;
-    }
 });

@@ -89,6 +89,26 @@ function makeApp (authAddress, cdapConfig) {
     );
   });
 
+  /*
+    Handle POST requests made outside of the websockets from front-end.
+    For now it handles file upload POST /namespaces/:namespace/apps API
+  */
+  app.post('/namespaces/:namespace/:path(*)', function (req, res) {
+    var url = 'http://' + cdapConfig['router.server.address'] +
+              ':' +
+              cdapConfig['router.server.port'] +
+              '/v3/namespaces/' +
+              req.param('namespace') +
+              '/' + req.param('path');
+
+    var opts = {
+      method: 'POST',
+      url: url
+    };
+
+    req.pipe(request.post(opts)).pipe(res);
+  });
+
   // serve static assets
   app.use('/assets', [
     httpStaticLogger,
@@ -120,5 +140,3 @@ function makeApp (authAddress, cdapConfig) {
   return app;
 
 }
-
-
