@@ -69,7 +69,8 @@ public class OutputFormatWrapper<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
 
     String outputFormatClass = context.getConfiguration().get(OUTPUT_FORMAT_CLASS);
     try {
-      return (OutputFormat<KEY, VALUE>) programClassLoader.loadClass(outputFormatClass).newInstance();
+      outputFormat = (OutputFormat<KEY, VALUE>) programClassLoader.loadClass(outputFormatClass).newInstance();
+      return outputFormat;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
