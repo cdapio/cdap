@@ -81,6 +81,7 @@ function run_command() {
     licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
+    test )              test; exit 1;;
     * )                 usage; exit 1;;
   esac
 }
@@ -178,7 +179,11 @@ function build_docs_github() {
 function build_docs_web() {
   build "build-web"
   build_docs_outer_level $GOOGLE_ANALYTICS_WEB
-  build_zip $WEB
+  cd $SCRIPT_PATH
+  set_project_path
+  display_version
+  make_zip_localized_web $WEB
+  echo "Building zip completed."
   bell
 }
 
@@ -224,6 +229,19 @@ function print_version() {
 
 function bell() {
   echo -e "\a"
+}
+
+
+function test() {
+#   echo "Test..."
+#   echo "Version..."
+#   display_version
+#   echo "Build all docs..."
+#   build
+#   echo "Build SDK..."
+#   build_sdk
+  build_json
+  echo "Test completed."
 }
 
 set_project_path
