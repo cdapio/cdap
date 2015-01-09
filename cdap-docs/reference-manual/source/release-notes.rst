@@ -135,10 +135,16 @@ Known Issues
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
-  dashboard at port 8080 will provide the application id of the process; the command ``yarn
-  application kill <app-id>`` will kill the process. All versions of CDAP running Twill
-  version 0.4.0 with this configuration can exhibit this problem (`TWILL-110
-  <https://issues.apache.org/jira/browse/TWILL-110>`__).
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
+
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 
 Release 2.5.2
