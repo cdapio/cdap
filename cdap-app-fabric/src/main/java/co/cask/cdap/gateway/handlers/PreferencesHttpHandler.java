@@ -61,20 +61,20 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   //Instance Level Properties
   @Path("/")
   @GET
-  public void getInstance(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void getInstance(HttpRequest request, HttpResponder responder) throws Exception {
     responder.sendJson(HttpResponseStatus.OK, preferencesWrapper.getProperties());
   }
 
   @Path("/")
   @DELETE
-  public void deleteInstance(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void deleteInstance(HttpRequest request, HttpResponder responder) throws Exception {
     preferencesWrapper.deleteProperties();
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/")
   @PUT
-  public void setInstance(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void setInstance(HttpRequest request, HttpResponder responder) throws Exception {
     try {
       Map<String, String> propMap = decodeArguments(request);
       preferencesWrapper.setProperties(propMap);
@@ -87,7 +87,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   //Namespace Level Properties
   @Path("/namespaces/{namespace-id}")
   @GET
-  public void getNamespace(final HttpRequest request, final HttpResponder responder,
+  public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace, @QueryParam("resolved") String resolved)
     throws Exception {
     if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
@@ -103,7 +103,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}")
   @PUT
-  public void setNamespace(final HttpRequest request, final HttpResponder responder,
+  public void setNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace) throws Exception {
     if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
@@ -121,7 +121,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}")
   @DELETE
-  public void deleteNamespace(final HttpRequest request, final HttpResponder responder,
+  public void deleteNamespace(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace) throws Exception {
     if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
@@ -134,7 +134,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   //Application Level Properties
   @Path("/namespaces/{namespace-id}/apps/{application-id}")
   @GET
-  public void getApplication(final HttpRequest request, final HttpResponder responder,
+  public void getApplication(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                              @QueryParam("resolved") String resolved) throws Exception {
     if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
@@ -151,7 +151,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}")
   @PUT
-  public void putApplication(final HttpRequest request, final HttpResponder responder,
+  public void putApplication(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
     if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
@@ -171,7 +171,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}")
   @DELETE
-  public void deleteApplication(final HttpRequest request, final HttpResponder responder,
+  public void deleteApplication(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
     if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
@@ -186,7 +186,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   //Program Level Properties
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}")
   @GET
-  public void getProgram(final HttpRequest request, final HttpResponder responder,
+  public void getProgram(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                          @PathParam("program-type") String programType, @PathParam("program-id") String programId,
                          @QueryParam("resolved") String resolved) throws Exception {
@@ -203,7 +203,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}")
   @PUT
-  public void putProgram(final HttpRequest request, final HttpResponder responder,
+  public void putProgram(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                          @PathParam("program-type") String programType, @PathParam("program-id") String programId)
     throws Exception {
@@ -220,7 +220,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}")
   @DELETE
-  public void deleteProgram(final HttpRequest request, final HttpResponder responder,
+  public void deleteProgram(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                             @PathParam("program-type") String programType, @PathParam("program-id") String programId)
     throws Exception {
