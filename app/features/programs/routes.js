@@ -17,7 +17,7 @@ angular.module(PKG.name + '.feature.programs')
           controller: 'ProgramsListController',
           ncyBreadcrumb: {
             label: '{{$state.params.programType}}',
-            parent: 'app-overview'
+            parent: 'apps.detail.overview'
           }
         })
 

@@ -32,7 +32,7 @@ angular.module(PKG.name+'.feature.apps')
         abstract: true,
         template: '<ui-view/>'
       })
-        .state('app-overview', {
+        .state('apps.detail.overview', {
           url: '/overview',
           parent: 'apps.detail',
           templateUrl: '/assets/features/apps/templates/detail.html',
@@ -42,7 +42,7 @@ angular.module(PKG.name+'.feature.apps')
             label: '{{$state.params.appId}}'
           }
         })
-          .state('app-overview.tab', {
+          .state('apps.detail.overview.tab', {
             url: '/:tab',
             ncyBreadcrumb: {
               parent: 'apps.detail',
