@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.programs')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
-      .state('cdap-programs', {
+      .state('programs', {
         parent: 'apps.detail',
         url: '/programs/:programType',
         data: {
@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.programs')
         template: '<ui-view/>',
         abstract: true
       })
-        .state('cdap-programs.type', {
+        .state('programs.type', {
           url: '',
           templateUrl: '/assets/features/programs/templates/list.html',
           controller: 'ProgramsListController',
@@ -33,7 +33,7 @@ angular.module(PKG.name + '.feature.programs')
         //     controller: 'ProgramsDetailController',
         //     ncyBreadcrumb: {
         //       label: '{{$state.params.programTypeId}}',
-        //       parent: 'cdap-programs.type'
+        //       parent: 'programs.type'
         //     }
         //   })
         //   .state('programs.detail.tab', {
