@@ -146,7 +146,7 @@ public class DefaultConfigStore implements ConfigStore {
         while ((row = rows.next()) != null) {
           Map<String, String> properties = GSON.fromJson(Bytes.toString(row.get(Bytes.toBytes(PROPERTY_COLUMN))),
                                                          MAP_STRING_STRING_TYPE);
-          configList.add(new Config(getId(row.getRow(), prefixBytes), properties));
+          configList.add(new Config(getPart(row.getRow(), prefixBytes.length), properties));
         }
         return configList;
       }
@@ -194,27 +194,36 @@ public class DefaultConfigStore implements ConfigStore {
     }
   }
 
-  private String rowKeyString(String namespace, String type, String id) {
-    return String.format("%s%04d%s", rowKeyPrefixString(namespace, type), id.length(), id);
-  }
-
   private byte[] rowKey(String namespace, String type, String id) {
-    return Bytes.toBytes(rowKeyString(namespace, type, id));
-  }
-
-  private String rowKeyPrefixString(String namespace, String type) {
-    int nsSize = namespace.length();
-    int typeSize = type.length();
-    return String.format("%01x%04d%s%04d%s", Constants.ConfigStore.VERSION, nsSize, namespace, typeSize, type);
-  }
-
-  private String getId(byte[] rowBytes, byte[] prefixBytes) {
-    int idSize = Integer.valueOf(Bytes.toString(rowBytes, prefixBytes.length, Bytes.SIZEOF_INT));
-    return Bytes.toString(rowBytes, prefixBytes.length + Bytes.SIZEOF_INT, idSize);
+    return getMultipartKey(namespace, type, id);
   }
 
   private byte[] rowKeyPrefix(String namespace, String type) {
-    return Bytes.toBytes(rowKeyPrefixString(namespace, type));
+    return getMultipartKey(namespace, type);
+  }
+
+  private String getPart(byte[] rowBytes, int offset) {
+    int length = Bytes.toInt(rowBytes, offset, Bytes.SIZEOF_INT);
+    return Bytes.toString(rowBytes, offset + Bytes.SIZEOF_INT, length);
+  }
+
+  private byte[] getMultipartKey(String... parts) {
+    int sizeOfParts = 0;
+    for (String part : parts) {
+      sizeOfParts += part.length();
+    }
+
+    byte[] result = new byte[1 + sizeOfParts + (parts.length * Bytes.SIZEOF_INT)];
+    Bytes.putByte(result, 0, Constants.ConfigStore.VERSION);
+
+    int offset = 1;
+    for (String part : parts) {
+      Bytes.putInt(result, offset, part.length());
+      offset += Bytes.SIZEOF_INT;
+      Bytes.putBytes(result, offset, part.getBytes(), 0, part.length());
+      offset += part.length();
+    }
+    return result;
   }
 
   private static final class ConfigTable implements Iterable<Table> {
