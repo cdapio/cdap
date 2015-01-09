@@ -33,14 +33,14 @@ angular.module(PKG.name+'.services')
     var instances = {}; // keyed by scopeid
 
     function _pollStart (resource) {
-      mySocket.send({
+      return mySocket.send({
         action: 'poll-start',
         resource: resource
       });
     }
 
     function _pollStop (resource) {
-      mySocket.send({
+      return mySocket.send({
         action: 'poll-stop',
         resource: resource
       });
@@ -118,7 +118,7 @@ angular.module(PKG.name+'.services')
         _pollStop(resource);
       });
 
-      _pollStart(resource);
+      return _pollStart(resource);
     };
 
 
@@ -140,7 +140,7 @@ angular.module(PKG.name+'.services')
         }
       });
 
-      mySocket.send({
+      return mySocket.send({
         action: 'request',
         resource: resource
       });

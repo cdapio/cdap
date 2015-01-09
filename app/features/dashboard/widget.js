@@ -16,14 +16,16 @@ angular.module(PKG.name+'.feature.dashboard')
       if(m) {
         this.metric = m;
 
-        dataSrc.request(
+        var t = dataSrc.request(
           {
-            _cdapNsPath: m
+            _cdapPathV2: m
           },
           (function (result) {
             this.data = result;
           }).bind(this)
         );
+
+        console.log(t);
       }
     }
 

@@ -22,17 +22,21 @@ angular.module(PKG.name + '.services')
       }
 
       // further sugar for building absolute url
-      if(resource._cdapPath) {
+      if(resource._cdapPath || resource._cdapPathV2) {
         url = [
           'http://',
           MY_CONFIG.cdap.routerServerUrl,
           ':',
           MY_CONFIG.cdap.routerServerPort,
-          '/v3',
-          resource._cdapPath
+          resource._cdapPathV2 ? '/v2' : '/v3',
+          resource._cdapPath || resource._cdapPathV2
         ].join('');
+
         delete resource._cdapPath;
+        delete resource._cdapPathV2;
       }
+
+
       return url;
     }
 

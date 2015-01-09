@@ -74,9 +74,7 @@ angular.module(PKG.name+'.services')
         return false;
       }
 
-      doSend(obj);
-
-      return true;
+      return doSend(obj);
     }
 
     function doSend(obj) {
@@ -110,7 +108,7 @@ angular.module(PKG.name+'.services')
         $log.log('[mySocket] →', msg.action, r.method, r.url);
       }
 
-      socket.send(JSON.stringify(msg));
+      return socket.send(JSON.stringify(msg));
     }
 
     init();
