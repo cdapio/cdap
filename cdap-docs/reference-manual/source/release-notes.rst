@@ -131,6 +131,14 @@ Known Issues
   <https://issues.cask.co/browse/CDAP-745>`__).
 - Writing to datasets through Hive is not supported in CDH4.x
   (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
+- Currently, when a CDAP application is deleted, all metrics are deleted along with the
+  application. Depending on the amount of metrics data to be deleted, an application
+  deletion timeout can result. A recent change (`CDAP PR-928
+  <https://github.com/caskdata/cdap/pull/928>`__) attempts to address this problem by only
+  deleting aggregated metrics when an application is deleted. A side effect of this change
+  is that if you re-deploy an application immediately after deletion, you may still see
+  metrics from the previous session on timeseries charts. (`CDAP-1124
+  <https://issues.cask.co/browse/CDAP-1124>`__).
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has Zookeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
