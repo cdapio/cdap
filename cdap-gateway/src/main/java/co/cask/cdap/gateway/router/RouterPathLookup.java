@@ -140,6 +140,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if (uriParts.length >= 8 && uriParts[7].equals("logs")) {
       //Log Handler Path /v3/namespaces/<namespaceid>apps/<appid>/<programid-type>/<programid>/logs
       return Constants.Service.METRICS;
+    } else if (uriParts.length >= 5 && uriParts[3].equals("metrics")) {
+      //Metrics Search Handler Path /v3/namespaces/<namespaceid>/metrics/<scope>
+      return Constants.Service.METRICS;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }
