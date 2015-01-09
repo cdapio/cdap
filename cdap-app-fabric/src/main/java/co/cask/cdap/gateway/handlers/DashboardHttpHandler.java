@@ -52,7 +52,11 @@ import javax.ws.rs.PathParam;
 public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final String CONFIG_TYPE = "dashboard";
+<<<<<<< HEAD
   private static final String PROPERTY_NAME = "config";
+=======
+  private static final String CONFIG_PROPERTY = "config";
+>>>>>>> origin/develop
   private static final String ID = "id";
 
   private final ConfigStore configStore;
@@ -68,12 +72,24 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   public void create(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
     String data = request.getContent().toString(Charsets.UTF_8);
-    if (!data.equals("") && !isValidJSON(data)) {
+    // Initialize with empty config if no data is sent during creation of the dashboard
+    if (data.equals("")) {
+      data = "{}";
+    }
+
+    if (!isValidJSON(data)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
       return;
     }
 
+<<<<<<< HEAD
     Map<String, String> propMap = ImmutableMap.of(PROPERTY_NAME, data);
+=======
+    //Dashboard Config has the following layout:
+    //Config ID = dashboardId (randomUUID)
+    //Config Properties = Map (Key = CONFIG_PROPERTY, value = Serialized JSON string of dashboard configuration)
+    Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
+>>>>>>> origin/develop
     String dashboardId = UUID.randomUUID().toString();
     try {
       configStore.create(namespace, CONFIG_TYPE, new Config(dashboardId, propMap));
@@ -93,7 +109,11 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
     for (Config config : configList) {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty(ID, config.getId());
+<<<<<<< HEAD
       jsonObject.add(PROPERTY_NAME, new JsonParser().parse(config.getProperties().get(PROPERTY_NAME)));
+=======
+      jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(config.getProperties().get(CONFIG_PROPERTY)));
+>>>>>>> origin/develop
       jsonArray.add(jsonObject);
     }
     responder.sendJson(HttpResponseStatus.OK, jsonArray);
@@ -121,7 +141,10 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
       Config dashConfig = configStore.get(namespace, CONFIG_TYPE, id);
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty(ID, id);
-      jsonObject.add(PROPERTY_NAME, new JsonParser().parse(dashConfig.getProperties().get(PROPERTY_NAME)));
+
+      //Dashboard Config is stored in ConfigStore as serialized JSON string with CONFIG_PROPERTY key.
+      //When we send the data back, we send it as JSON object instead of sending the serialized string.
+      jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(dashConfig.getProperties().get(CONFIG_PROPERTY)));
       responder.sendJson(HttpResponseStatus.OK, jsonObject);
     } catch (ConfigNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
@@ -140,7 +163,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
         return;
       }
 
-      Map<String, String> propMap = ImmutableMap.of(PROPERTY_NAME, data);
+      Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
       configStore.update(namespace, CONFIG_TYPE, new Config(id, propMap));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (ConfigNotFoundException e) {
