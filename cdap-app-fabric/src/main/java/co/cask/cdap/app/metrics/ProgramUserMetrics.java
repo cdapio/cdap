@@ -16,19 +16,29 @@
 
 package co.cask.cdap.app.metrics;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.common.metrics.MetricsCollector;
 
 /**
- * Metrics Collector for Service.
+ * Implementation of {@link Metrics} for user-defined metrics.
+ * Metrics will be emitted through {@link MetricsCollectionService}.
  */
-public class ServiceRunnableMetrics extends AbstractProgramMetrics {
+public class ProgramUserMetrics implements Metrics {
 
-  public ServiceRunnableMetrics(MetricsCollectionService collectionService, String metricsContext, String runId) {
-    super(collectionService.getCollector(
-      MetricsScope.USER, metricsContext, runId
-    ));
+  private final MetricsCollector metricsCollector;
+
+  public ProgramUserMetrics(MetricsCollector metricsCollector) {
+    this.metricsCollector = metricsCollector;
+  }
+
+  @Override
+  public void count(String metricName, int delta) {
+    metricsCollector.increment(metricName, delta);
+  }
+
+  @Override
+  public void gauge(String metricName, long value) {
+    metricsCollector.gauge(metricName, value);
   }
 }

@@ -24,6 +24,8 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -40,6 +42,7 @@ import org.junit.Test;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
 import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -89,8 +92,9 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", "0",
-                                                        new NoOpMetricsCollectionService(), "test.scope");
+    MetricsCollector noOpsMetricsCollector =
+      new NoOpMetricsCollectionService().getCollector(MetricsScope.SYSTEM, new HashMap<String, String>());
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsCollector);
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {

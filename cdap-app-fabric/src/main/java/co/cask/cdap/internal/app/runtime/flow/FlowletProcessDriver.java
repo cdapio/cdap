@@ -22,14 +22,19 @@ import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.app.queue.InputDatum;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.internal.app.queue.SingleItemQueueReader;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -317,6 +322,15 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     final int processedCount = processEntry.getProcessSpec().getProcessMethod().needsInput() ? input.size() : 1;
 
     return new ProcessMethodCallback() {
+      private final LoadingCache<String, MetricsCollector> queueMetricsCollectors = CacheBuilder.newBuilder()
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build(new CacheLoader<String, MetricsCollector>() {
+          @Override
+          public MetricsCollector load(String key) throws Exception {
+            return flowletContext.getProgramMetrics().childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
+          }
+        });
+
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
@@ -383,8 +397,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         } else if (inputQueueName == null) {
           flowletContext.getProgramMetrics().increment("process.events.processed", processedCount);
         } else {
-          String tag = "input." + inputQueueName.toString();
-          flowletContext.getProgramMetrics().increment("process.events.processed", processedCount, tag);
+          queueMetricsCollectors.getUnchecked("input." + inputQueueName.toString())
+            .increment("process.events.processed", processedCount);
         }
       }
     };

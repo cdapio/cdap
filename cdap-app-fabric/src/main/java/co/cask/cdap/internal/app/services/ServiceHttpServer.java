@@ -26,6 +26,8 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
@@ -258,8 +260,9 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                   Iterable<HandlerDelegatorContext> delegatorContexts,
                                                   MetricsCollectionService metricsCollectionService) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
-    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, runId.getId(),
-                                                        metricsCollectionService, getMetricsContext());
+    MetricsCollector collector =
+      getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program, runId.getId());
+    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, collector);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (HandlerDelegatorContext context : delegatorContexts) {
@@ -272,10 +275,20 @@ public class ServiceHttpServer extends AbstractIdleService {
       .build();
   }
 
-  private String getMetricsContext() {
-    return String.format("%s.%s.%s.%s", program.getApplicationId(),
-                                        TypeId.getMetricContextId(ProgramType.SERVICE),
-                                        program.getName(), program.getName());
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
+                                                     MetricsScope scope, Program program,
+                                                     String runId) {
+    if (service == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));
+    tags.put(Constants.Metrics.Tag.PROGRAM, program.getName());
+    if (runId != null) {
+      tags.put(Constants.Metrics.Tag.RUN_ID, runId);
+    }
+    return service.getCollector(scope, tags);
   }
 
   /**
