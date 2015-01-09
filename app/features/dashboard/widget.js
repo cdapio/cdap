@@ -21,7 +21,7 @@ angular.module(PKG.name+'.feature.dashboard')
             _cdapPathV2: m
           },
           (function (result) {
-            this.data = result;
+            this.data = result.data;
           }).bind(this)
         );
       }
@@ -32,10 +32,6 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     Widget.prototype.getClassName = function () {
-      return 'panel-default widget-' + this.type;
-    };
-
-    Widget.prototype.data = function () {
       return 'panel-default widget-' + this.type;
     };
 
