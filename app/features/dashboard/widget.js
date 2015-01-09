@@ -3,12 +3,28 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard')
-  .factory('Widget', function () {
+  .factory('Widget', function (MyDataSource) {
+
+    var dataSrc = new MyDataSource();
 
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
       this.type = opts.type || 'welcome';
+
+      var m = opts.metric;
+      if(m) {
+        this.metric = m;
+
+        dataSrc.request(
+          {
+            _cdapPathV2: m
+          },
+          (function (result) {
+            this.data = result.data;
+          }).bind(this)
+        );
+      }
     }
 
     Widget.prototype.getPartial = function () {
@@ -23,19 +39,15 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-  .controller('WidgetTimeseriesCtrl', function ($scope, MyDataSource) {
+  .controller('WidgetTimeseriesCtrl', function ($scope) {
 
-    var dataSrc = new MyDataSource($scope);
+    $scope.$watch('wdgt.data', function (newVal) {
+      if(angular.isArray(newVal)) {
 
-    dataSrc.request(
-      {
-        _cdapNsPath: $scope.wdgt.metric
-      },
-      function (result) {
         $scope.chartHistory = [
           {
             label: $scope.wdgt.metric,
-            values: result.data.map(function (o) {
+            values: newVal.map(function (o) {
               return {
                 x: o.time,
                 y: o.value
@@ -43,8 +55,10 @@ angular.module(PKG.name+'.feature.dashboard')
             })
           }
         ];
+
       }
-    );
+
+    });
 
   })
 
