@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
@@ -96,6 +97,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -128,6 +130,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getStandaloneModules() {
 
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -161,6 +164,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
 
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getDistributedModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

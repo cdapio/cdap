@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,6 +127,14 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+  }
+
+  /**
+   * Configuration Store.
+   */
+  public static final class ConfigStore {
+    public static final String CONFIG_TABLE = "config.store.table";
+    public static final Byte VERSION = 0;
   }
 
   /**

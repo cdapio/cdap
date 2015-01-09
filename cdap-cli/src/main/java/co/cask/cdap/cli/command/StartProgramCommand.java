@@ -17,11 +17,12 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 
@@ -31,20 +32,21 @@ import java.util.Map;
 /**
  * Starts a program.
  */
-public class StartProgramCommand implements Command {
+public class StartProgramCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public StartProgramCommand(ElementType elementType, ProgramClient programClient) {
+  public StartProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,25 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.Config;
+import co.cask.cdap.config.ConfigExistsException;
+import co.cask.cdap.config.ConfigNotFoundException;
+import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import com.google.gson.Gson;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.DELETE;
@@ -42,71 +49,122 @@ import javax.ws.rs.PathParam;
  * Dashboard HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
-public class DashboardHttpHandler extends AbstractAppFabricHttpHandler {
+public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final String CONFIG_TYPE = "dashboard";
+  private static final String CONFIG_PROPERTY = "config";
+  private static final String ID = "id";
 
-  //TODO: https://issues.cask.co/browse/CDAP-699 PersistenceStore will be used instead of inMemory implementation.
-  private final Table<String, String, String> configStore;
+  private final ConfigStore configStore;
 
   @Inject
-  public DashboardHttpHandler(Authenticator authenticator) {
+  public DashboardHttpHandler(Authenticator authenticator, ConfigStore configStore) {
     super(authenticator);
-    this.configStore = HashBasedTable.create();
+    this.configStore = configStore;
   }
 
   @Path("/")
   @POST
-  public synchronized void create(final HttpRequest request, final HttpResponder responder,
+  public void create(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
+    String data = request.getContent().toString(Charsets.UTF_8);
+    // Initialize with empty config if no data is sent during creation of the dashboard
+    if (data.equals("")) {
+      data = "{}";
+    }
+
+    if (!isValidJSON(data)) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
+      return;
+    }
+
+    //Dashboard Config has the following layout:
+    //Config ID = dashboardId (randomUUID)
+    //Config Properties = Map (Key = CONFIG_PROPERTY, value = Serialized JSON string of dashboard configuration)
+    Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
     String dashboardId = UUID.randomUUID().toString();
-    configStore.put(namespace, dashboardId, GSON.toJson(decodeArguments(request)));
-    responder.sendString(HttpResponseStatus.OK, dashboardId);
+    try {
+      configStore.create(namespace, CONFIG_TYPE, new Config(dashboardId, propMap));
+      Map<String, String> returnMap = ImmutableMap.of(ID, dashboardId);
+      responder.sendJson(HttpResponseStatus.OK, returnMap);
+    } catch (ConfigExistsException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, String.format("Dashboard %s already exists", dashboardId));
+    }
   }
 
   @Path("/")
   @GET
-  public synchronized void list(final HttpRequest request, final HttpResponder responder,
+  public void list(final HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
-    Map<String, String> row = configStore.row(namespace);
-    responder.sendJson(HttpResponseStatus.OK, row);
+    JsonArray jsonArray = new JsonArray();
+    List<Config> configList = configStore.list(namespace, CONFIG_TYPE);
+    for (Config config : configList) {
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty(ID, config.getId());
+      jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(config.getProperties().get(CONFIG_PROPERTY)));
+      jsonArray.add(jsonObject);
+    }
+    responder.sendJson(HttpResponseStatus.OK, jsonArray);
   }
 
   @Path("/{dashboard-id}")
   @DELETE
-  public synchronized void delete(final HttpRequest request, final HttpResponder responder,
+  public void delete(final HttpRequest request, final HttpResponder responder,
                                   @PathParam("namespace-id") String namespace,
                                   @PathParam("dashboard-id") String id) throws Exception {
-    if (!configStore.contains(namespace, id)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      configStore.remove(namespace, id);
+    try {
+      configStore.delete(namespace, CONFIG_TYPE, id);
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (ConfigNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
     }
   }
 
   @Path("/{dashboard-id}")
   @GET
-  public synchronized void get(final HttpRequest request, final HttpResponder responder,
+  public void get(final HttpRequest request, final HttpResponder responder,
                                @PathParam("namespace-id") String namespace,
                                @PathParam("dashboard-id") String id) throws Exception {
-    if (!configStore.contains(namespace, id)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      responder.sendString(HttpResponseStatus.OK, configStore.get(namespace, id));
+    try {
+      Config dashConfig = configStore.get(namespace, CONFIG_TYPE, id);
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty(ID, id);
+
+      //Dashboard Config is stored in ConfigStore as serialized JSON string with CONFIG_PROPERTY key.
+      //When we send the data back, we send it as JSON object instead of sending the serialized string.
+      jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(dashConfig.getProperties().get(CONFIG_PROPERTY)));
+      responder.sendJson(HttpResponseStatus.OK, jsonObject);
+    } catch (ConfigNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
     }
   }
 
   @Path("/{dashboard-id}")
   @PUT
-  public synchronized void set(final HttpRequest request, final HttpResponder responder,
+  public void set(final HttpRequest request, final HttpResponder responder,
                                @PathParam("namespace-id") String namespace,
                                @PathParam("dashboard-id") String id) throws Exception {
-    if (!configStore.contains(namespace, id)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      configStore.put(namespace, id, GSON.toJson(decodeArguments(request)));
+    try {
+      String data = request.getContent().toString(Charsets.UTF_8);
+      if (!isValidJSON(data)) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
+        return;
+      }
+
+      Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
+      configStore.update(namespace, CONFIG_TYPE, new Config(id, propMap));
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (ConfigNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
     }
+  }
+
+  private boolean isValidJSON(String json) {
+    try {
+      new JsonParser().parse(json);
+    } catch (JsonSyntaxException ex) {
+      return false;
+    }
+    return true;
   }
 }
