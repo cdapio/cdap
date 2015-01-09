@@ -21,19 +21,12 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.AggregatesTable;
-import co.cask.cdap.metrics.data.MetricsScanQuery;
-import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -47,7 +40,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -55,30 +47,18 @@ import javax.ws.rs.PathParam;
 /**
  * Handlers for clearing metrics.
  */
+// todo: expire metrics where possible instead of explicit delete: CDAP-1124
 @Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
 public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
-  private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
-  private final int tsRetentionSeconds;
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
-    this.metricsTableCaches = Maps.newHashMap();
-    for (final MetricsScope scope : MetricsScope.values()) {
-      LoadingCache<Integer, TimeSeriesTable> cache =
-        CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
-          @Override
-          public TimeSeriesTable load(Integer key) throws Exception {
-            return metricsTableFactory.createTimeSeries(scope.name(), key);
-          }
-        });
-      this.metricsTableCaches.put(scope, cache);
-    }
 
     this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
       @Override
@@ -90,11 +70,6 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
         return map;
       }
     });
-
-    String retentionStr = cConf.get(MetricsConstants.ConfigKeys.RETENTION_SECONDS);
-    this.tsRetentionSeconds = (retentionStr == null) ?
-      (int) TimeUnit.SECONDS.convert(MetricsConstants.DEFAULT_RETENTION_HOURS, TimeUnit.HOURS) :
-      Integer.parseInt(retentionStr);
   }
 
   @Override
@@ -231,25 +206,13 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private void deleteTableEntries(MetricsScope scope, String contextPrefix,
                                   String metricPrefix, String tag) throws OperationException {
-    TimeSeriesTable ts1Table = metricsTableCaches.get(scope).getUnchecked(1);
     AggregatesTable aggTable = aggregatesTables.get().get(scope);
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
-      ts1Table.clear();
       aggTable.clear();
     } else if (tag == null) {
-      ts1Table.delete(contextPrefix, metricPrefix);
       aggTable.delete(contextPrefix, metricPrefix);
     } else {
-      long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-      MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
-        .setContext(contextPrefix)
-        .setMetric(metricPrefix)
-        .allowEmptyMetric()
-        .setRunId("0")
-        .setTag(tag)
-        .build(now - tsRetentionSeconds, now + 10);
-      ts1Table.delete(scanQuery);
       aggTable.delete(contextPrefix, metricPrefix, "0", tag);
     }
   }
