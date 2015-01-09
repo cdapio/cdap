@@ -84,23 +84,7 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
       if (alreadyListeningStreams.remove(streamName)) {
         continue;
       }
-
-      // Keep track of the heartbeats received for the current stream
-      final Map<Integer, StreamWriterHeartbeat> heartbeats = Maps.newHashMap();
-      final AtomicInteger baseCount = new AtomicInteger(0);
-
-      final NotificationFeed streamFeed = new NotificationFeed.Builder()
-        .setNamespace("default")
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamName)
-        .build();
-
-      subscribeToStreamHeartbeats(streamName, heartbeats, baseCount);
-
-
-      // Schedule aggregation logic
-      scheduledExecutor.schedule(new Aggregator(heartbeats, streamFeed, baseCount),
-                                 Constants.Notification.Stream.INIT_AGGREGATION_DELAY, TimeUnit.SECONDS);
+      listenToStream(streamName);
     }
 
     // Remove subscriptions to the heartbeats we used to listen to before the call to that method,
@@ -111,6 +95,30 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
         cancellable.cancel();
       }
     }
+  }
+
+  @Override
+  public void listenToStream(String streamName) {
+    if (streamHeartbeatsSubscriptions.containsKey(streamName)) {
+      return;
+    }
+
+    // Keep track of the heartbeats received for the current stream
+    final Map<Integer, StreamWriterHeartbeat> heartbeats = Maps.newHashMap();
+    final AtomicInteger baseCount = new AtomicInteger(0);
+
+    final NotificationFeed streamFeed = new NotificationFeed.Builder()
+      .setNamespace("default")
+      .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+      .setName(streamName)
+      .build();
+
+    subscribeToStreamHeartbeats(streamName, heartbeats, baseCount);
+
+
+    // Schedule aggregation logic
+    scheduledExecutor.schedule(new Aggregator(heartbeats, streamFeed, baseCount),
+                               Constants.Notification.Stream.INIT_AGGREGATION_DELAY, TimeUnit.SECONDS);
   }
 
   /**

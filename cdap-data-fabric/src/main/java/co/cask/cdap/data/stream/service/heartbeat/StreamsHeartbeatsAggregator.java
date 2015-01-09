@@ -32,4 +32,13 @@ public interface StreamsHeartbeatsAggregator extends Service {
    * @param streamNames names of the streams to perform data sizes aggregation on.
    */
   void listenToStreams(Collection<String> streamNames);
+
+  /**
+   * Perform aggregation on the Stream described by the {@code streamName}.
+   * This method does not cancel aggregation done on other Streams.
+   * This call does nothing this aggregator already listens to the Stream.
+   *
+   * @param streamName name of the stream to perform data sizes aggregation on.
+   */
+  void listenToStream(String streamName);
 }
