@@ -16,7 +16,7 @@ angular.module(PKG.name+'.feature.dashboard')
       if(m) {
         this.metric = m;
 
-        var t = dataSrc.request(
+        dataSrc.request(
           {
             _cdapPathV2: m
           },
@@ -24,8 +24,6 @@ angular.module(PKG.name+'.feature.dashboard')
             this.data = result;
           }).bind(this)
         );
-
-        console.log(t);
       }
     }
 
