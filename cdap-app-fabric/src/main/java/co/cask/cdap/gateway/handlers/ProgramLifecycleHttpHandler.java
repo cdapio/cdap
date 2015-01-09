@@ -719,6 +719,28 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                 runtimeService);
   }
 
+  @GET
+  @Path("/apps/{app-id}/schedules/{program-type}/{program-name}")
+  public void programSchedules(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("program-type") String programType,
+                                  @PathParam("program-name") String programName) {
+    ProgramType type = getProgramType(programType);
+
+    // TODO [Sagar]:
+    // 1. Currently we only support schedulable Workflows. When we add support for schedulable MapReduce and Spark
+    //    programs revisit this code again.
+    // 2. We should use SchedulableProgramType to validate program-type.
+    if (type != ProgramType.WORKFLOW) {
+      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED,
+                           String.format("Schedule is not supported for program type '%s'", programType));
+    }
+
+    getProgramSchedules(responder, namespaceId, appId, programName,
+                        ProgramType.valueOfCategoryName(programType), store);
+  }
+
   /**
    * Deletes queues.
    */

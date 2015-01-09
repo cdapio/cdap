@@ -218,11 +218,19 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * Schedule the specified {@link Workflow}
-   * @param schedule the schedule to be added for the Workflow
-   * @param workflow the name of Workflow program
+   * Adds a {@link Schedule} to the Application
+   * @param schedule the schedule to be added
    */
-  protected void scheduleWorkflow(Schedule schedule, String workflow) {
+  protected void addSchedule(Schedule schedule) {
+    configurer.addSchedule(schedule);
+  }
+
+  /**
+   * Schedule the specified {@link Workflow}
+   * @param schedule the name of the schedule to be added for the Workflow
+   * @param workflow the name of Workflow
+   */
+  protected void scheduleWorkflow(String schedule, String workflow) {
     configurer.addSchedule(schedule, workflow, SchedulableProgramType.WORKFLOW);
   }
 }

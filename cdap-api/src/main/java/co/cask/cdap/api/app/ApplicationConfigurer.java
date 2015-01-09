@@ -154,11 +154,18 @@ public interface ApplicationConfigurer {
   void addService(Service service);
 
   /**
-   * Adds a {@link Schedule} to the specified program in the Application.
+   * Adds a {@link Schedule} to the Application.
    *
-   * @param schedule the schedule to be included for the program
+   * @param schedule the schedule to include in the Application
+   */
+  void addSchedule(Schedule schedule);
+
+  /**
+   * Adds a {@link Schedule} to the specified program in the Application
+   *
+   * @param scheduleName the name of the schedule to be included for the program
    * @param programName the name of the program
    * @param programType the type of the program
    */
-  void addSchedule(Schedule schedule, String programName, SchedulableProgramType programType);
+  void addSchedule(String scheduleName, String programName, SchedulableProgramType programType);
 }

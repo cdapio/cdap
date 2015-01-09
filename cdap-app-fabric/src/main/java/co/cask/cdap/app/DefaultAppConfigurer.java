@@ -196,17 +196,21 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addSchedule(Schedule schedule, String programName, SchedulableProgramType programType) {
+  public void addSchedule(Schedule schedule) {
     Preconditions.checkArgument(schedule != null, "Schedule cannot be null.");
-    Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
     Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
-
     ScheduleConfigurer configurer = schedules.get(schedule.getName());
+
     if (configurer == null) {
       configurer = new ScheduleConfigurer(schedule);
       schedules.put(schedule.getName(), configurer);
     }
+  }
 
+  @Override
+  public void addSchedule(String scheduleName, String programName, SchedulableProgramType programType) {
+    ScheduleConfigurer configurer = schedules.get(scheduleName);
+    Preconditions.checkArgument(configurer != null, "Schedule is not configured with the Application.");
     configurer.addProgram(new ScheduleProgramInfo(programName, programType));
   }
 

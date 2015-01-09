@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -772,6 +772,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
   }
+
+  @GET
+  @Path("/apps/{app-id}/schedules/{program-type}/{program-id}")
+  public void programSchedules(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") String appId,
+                               @PathParam("program-type") String programType,
+                               @PathParam("program-id") String programId) {
+    programLifecycleHttpHandler.programSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                 appId, programType, programId);
+
+  }
+
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}")

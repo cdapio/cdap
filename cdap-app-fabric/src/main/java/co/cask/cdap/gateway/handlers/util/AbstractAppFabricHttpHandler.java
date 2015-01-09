@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,10 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -294,6 +298,43 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  protected void getProgramSchedules(HttpResponder responder, String namespaceId,
+                                     final String applicationId, final String programId,
+                                     ProgramType programType, Store store) {
+
+    try {
+      Id.Application appId = Id.Application.from(namespaceId, applicationId);
+      List<ProgramRecord> programRecords = listProgramsByApp(appId, programType, store);
+      if (programRecords == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        for (ProgramRecord programRecord : programRecords) {
+          if (programRecord.getName().equals(programId)) {
+            ApplicationSpecification specification = store.getApplication(appId);
+            if (specification == null) {
+              responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+              return;
+            }
+
+            List<Schedule> programSchedules = Lists.newArrayList();
+            for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+              if (entry.getValue().getPrograms().contains(
+                new ScheduleProgramInfo(programId, SchedulableProgramType.WORKFLOW))) {
+                programSchedules.add(entry.getValue().getSchedule());
+              }
+            }
+            responder.sendJson(HttpResponseStatus.OK, programSchedules);
+          }
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
