@@ -16,6 +16,7 @@
 
 package co.cask.cdap.config;
 
+import co.cask.cdap.api.common.Bytes;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -133,31 +134,36 @@ public class PreferencesWrapper {
   }
 
   private String generateId() {
-    return generateId(null, null, null, null);
+    return getMultipartKey(INSTANCE_NAME);
   }
 
   private String generateId(String namespace) {
-    return generateId(namespace, null, null, null);
+    return getMultipartKey(INSTANCE_NAME, namespace);
   }
 
   private String generateId(String namespace, String appId) {
-    return generateId(namespace, appId, null, null);
+    return getMultipartKey(INSTANCE_NAME, namespace, appId);
   }
 
   private String generateId(String namespace, String appId, String programType, String programId) {
-    String id = String.format("%04d%s", INSTANCE_NAME.length(), INSTANCE_NAME);
-    if (namespace != null) {
-      id = String.format("%s%04d%s", id, namespace.length(), namespace);
+    return getMultipartKey(INSTANCE_NAME, namespace, appId, programType, programId);
+  }
+
+  private String getMultipartKey(String... parts) {
+    int sizeOfParts = 0;
+    for (String part : parts) {
+      sizeOfParts += part.length();
     }
 
-    if (appId != null) {
-      id = String.format("%s%04d%s", id, appId.length(), appId);
-    }
+    byte[] result = new byte[sizeOfParts + (parts.length * Bytes.SIZEOF_INT)];
 
-    if (programType != null && programId != null) {
-      id = String.format("%s%04d%s%04d%s", id, programType.length(), programType, programId.length(), programId);
+    int offset = 0;
+    for (String part : parts) {
+      Bytes.putInt(result, offset, part.length());
+      offset += Bytes.SIZEOF_INT;
+      Bytes.putBytes(result, offset, part.getBytes(), 0, part.length());
+      offset += part.length();
     }
-
-    return id;
+    return Bytes.toString(result);
   }
 }

@@ -24,11 +24,7 @@ import java.util.Map;
  * Enum for the different types of scopes.
  */
 public enum Scope {
-  DATASET("dataset"),
-  INSTANCE("instance"),
-  NAMESPACE("namespace"),
-  APPLICATION("application"),
-  PROGRAM("program");
+  DATASET("dataset");
 
   private final String displayName;
 
