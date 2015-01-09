@@ -67,7 +67,7 @@ function usage() {
   echo ""
   echo "  with"
   echo "    source         Path to $PROJECT source, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must specify source if used"
+  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo ""
 }
 
