@@ -14,7 +14,21 @@
   the License.
 -->
 
-<h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}: Table&nbsp;of&nbsp;Contents</a></h3>
+{#
+    Code to hide table-of-contents on pages, by setting in the field list at the top
+:hide-global-toc: true
+#}
+{%- set hideglobaltoc = '' %}
+{%- set hideglobaltoc_key = 'hide-global-toc' %}
+{%- if meta is defined %}
+    {%- if hideglobaltoc_key in meta.viewkeys() %}
+      {%- set hideglobaltoc = meta.get(hideglobaltoc_key) %}
+    {%- endif %}
+{%- endif %}
+{%- if not hideglobaltoc %}
+{%- if html_short_title_toc|length > 20 %}{% set title_br = '<br>' %}{%- endif %}
+<h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}:{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
 <nav class="pagenav">
 {{ toctree() }}
 </nav>
+{%- endif %}

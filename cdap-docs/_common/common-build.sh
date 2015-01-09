@@ -23,62 +23,25 @@
 # Targets for both a limited and complete set of javadocs
 # Targets not included in usage are intended for internal usage by script
 
-FALSE="false"
-TRUE="true"
-DATE_STAMP=`date`
-SCRIPT=`basename $0`
-
-SOURCE="source"
+API="cdap-api"
+APIDOCS="apidocs"
+APIS="apis"
 BUILD="build"
 BUILD_PDF="build-pdf"
 HTML="html"
 INCLUDES="_includes"
-
-API="cdap-api"
-APIDOCS="apidocs"
-APIS="apis"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
-REFERENCE="reference"
+REFERENCE="reference-manual"
+SOURCE="source"
 
-SCRIPT_PATH=`pwd`
+FALSE="false"
+TRUE="true"
 
-SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
-BUILD_PATH="$SCRIPT_PATH/$BUILD"
-HTML_PATH="$BUILD_PATH/$HTML"
-
-DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
-
-if [ "x$2" == "x" ]; then
-  PROJECT_PATH="$SCRIPT_PATH/../../"
-else
-  PROJECT_PATH="$SCRIPT_PATH/../../../$2"
-fi
-# PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
-SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
-
-CHECK_INCLUDES="false"
-TEST_INCLUDES_LOCAL="local"
-if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="remote"
-else
-  TEST_INCLUDES="$3"
-fi
-
-ZIP_FILE_NAME=$HTML
-ZIP="$ZIP_FILE_NAME.zip"
-
-# Set Google Analytics Codes
-# Corporate Docs Code
-GOOGLE_ANALYTICS_WEB="UA-55077523-3"
-WEB="web"
-# CDAP Project Code
-GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
-GITHUB="github"
-
+# Redirect placed in top to redirect to 'en' directory
 REDIRECT_EN_HTML=`cat <<EOF
 <!DOCTYPE HTML>
 <html lang="en-US">
@@ -95,12 +58,55 @@ REDIRECT_EN_HTML=`cat <<EOF
 </html>
 EOF`
 
+SCRIPT=`basename $0`
+SCRIPT_PATH=`pwd`
+
+DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
+BUILD_PATH="$SCRIPT_PATH/$BUILD"
+HTML_PATH="$BUILD_PATH/$HTML"
+SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
+
+if [ "x$2" == "x" ]; then
+  PROJECT_PATH="$SCRIPT_PATH/../../"
+else
+  PROJECT_PATH="$SCRIPT_PATH/../../../$2"
+fi
+
+SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
+
+CHECK_INCLUDES="false"
+TEST_INCLUDES_LOCAL="local"
+TEST_INCLUDES_REMOTE="remote"
+if [ "x$3" == "x" ]; then
+  TEST_INCLUDES="$TEST_INCLUDES_REMOTE"
+else
+  TEST_INCLUDES="$3"
+fi
+
+RED='\033[0;31m'
+BOLD='\033[1m'
+NC='\033[0m'
+WARNING="${RED}${BOLD}WARNING:${NC}"
+
+ZIP_FILE_NAME=$HTML
+ZIP="$ZIP_FILE_NAME.zip"
+
+# Set Google Analytics Codes
+
+# Corporate Docs Code
+GOOGLE_ANALYTICS_WEB="UA-55077523-3"
+WEB="web"
+
+# CDAP Project Code
+GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
+GITHUB="github"
+
 
 function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '$PROJECT_CAPS' docs"
-  echo "Usage: $SCRIPT < option > [source]"
+  echo "Usage: $SCRIPT < option > [source test_includes]"
   echo ""
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
@@ -119,7 +125,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must specify source if used"
+  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo " "
 #   exit 1
 }
@@ -165,6 +171,7 @@ function copy_javadocs_sdk() {
 function build_license_pdfs() {
   version
   cd $SCRIPT_PATH
+  PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
   rm -rf $SCRIPT_PATH/$LICENSES_PDF
   mkdir $SCRIPT_PATH/$LICENSES_PDF
   E_DEP="cdap-enterprise-dependencies"
@@ -175,13 +182,13 @@ function build_license_pdfs() {
   LIC_RST="../$REFERENCE/source/$LICENSES"
   echo ""
   echo "Building $E_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$E_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf -b $PROJECT_VERSION_TRIMMED $LIC_RST/$E_DEP.rst
   echo ""
   echo "Building $L_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$L_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf -b $PROJECT_VERSION_TRIMMED $LIC_RST/$L_DEP.rst
   echo ""
   echo "Building $S_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$S_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf -b $PROJECT_VERSION_TRIMMED $LIC_RST/$S_DEP.rst
 }
 
 function copy_license_pdfs() {
@@ -213,7 +220,19 @@ function make_zip() {
 }
 
 function make_zip_localized() {
-# This creates a named zip that unpacks to the Project Version, localized to english
+  _make_zip_localized $1
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function make_zip_localized_web() {
+  _make_zip_localized $1
+  # Add JSON file
+  build_json $SCRIPT_PATH/$BUILD/$PROJECT_VERSION
+  cd $SCRIPT_PATH/$BUILD
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function _make_zip_localized() {
   version
   ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
   cd $SCRIPT_PATH/$BUILD
@@ -221,14 +240,18 @@ function make_zip_localized() {
   mv $HTML $PROJECT_VERSION/en
   # Add a redirect index.html file
   echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
-  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function build_json() {
+  cd $SCRIPT_PATH/$BUILD/$SOURCE
+  JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
+  echo `python -c 'import conf; conf.print_json_versions();'` > $1/$JSON_FILE
 }
 
 function build_extras() {
   # Over-ride this function in guides where Javadocs or licenses are being built or copied.
+  # Currently performed in reference-manual
   echo "No extras being built."
-#   build_javadocs_sdk
-#   copy_license_pdfs
 }
 
 function build() {
@@ -258,7 +281,7 @@ function check_includes() {
       # Test included files
       test_includes
     else
-      echo "WARNING: pandoc is not installed; checked-in includes will be used instead."
+      echo -e "$WARNING pandoc is not installed; checked-in includes will be used instead."
     fi
   else
     echo "No includes to be checked."
@@ -274,11 +297,16 @@ function test_an_include() {
   BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
   SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
   EXAMPLE=$1
-  if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
-    echo "Tested $1; matches checked-in include file."
+  if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
+    if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
+      echo "Tested $1; matches checked-in include file."
+    else
+      echo -e "$WARNING Tested $1; does not match checked-in include file. Copying to source directory."
+      cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    fi
   else
-    echo "WARNING: Tested $1; does not match checked-in include file. Copying to source directory."
-    cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    echo -e "$WARNING Not testing includes: using checked-in version..."
+    cp -f $SOURCE_INCLUDES_DIR/$1 $BUILD_INCLUDES_DIR/$1
   fi
 }
 
@@ -290,7 +318,7 @@ function build_includes() {
     mkdir $SOURCE_INCLUDES_DIR
     pandoc_includes $SOURCE_INCLUDES_DIR
   else
-    echo "WARNING: pandoc not installed; checked-in README includes will be used instead."
+    echo -e "$WARNING pandoc not installed; checked-in README includes will be used instead."
   fi
 }
 
@@ -323,28 +351,27 @@ function version() {
   GIT_BRANCH="${branch[1]}"
 }
 
-function print_version() {
+function display_version() {
   version
   echo "PROJECT_PATH: $PROJECT_PATH"
   echo "PROJECT_VERSION: $PROJECT_VERSION"
   echo "GIT_BRANCH: $GIT_BRANCH"
 }
 
-function test() {
-  echo "Test..."
-  echo "Version..."
-  print_version
-#   echo "Build all docs..."
-#   build
-#   echo "Build SDK..."
-#   build_sdk
-  echo "Test completed."
+function rewrite() {
+  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
+  cd $SCRIPT_PATH
+  local rewrite_source=$1
+  local rewrite_target=$2
+  local sub_string=$3
+  local new_sub_string=$4  
+  echo "Re-writing"
+  echo "    $rewrite_source"
+  echo "  to"
+  echo "    $rewrite_target"
+  echo "  $sub_string -> $new_sub_string "
+  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
 }
-
-if [ $# -lt 1 ]; then
-  usage
-#   exit 1
-fi
 
 function run_command() {
   case "$1" in
@@ -362,8 +389,7 @@ function run_command() {
     javadocs-full )     build_javadocs_full; exit 1;;
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
-    version )           print_version; exit 1;;
-    test )              test; exit 1;;
+    version )           display_version; exit 1;;
     zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
   esac

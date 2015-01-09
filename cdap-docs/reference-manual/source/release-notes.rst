@@ -59,6 +59,8 @@ Other Changes
   - Added navigation aids at the bottom of each page; and
   - Tested and updated the Standalone CDAP examples and their documentation.
 
+.. _known-issues-252:
+
 Known Issues
 ------------
 - Currently, applications that include Spark or Scala classes in user classes not extended
@@ -66,7 +68,21 @@ Known Issues
   fail with a class loading error. Spark or Scala classes should not be used outside of the
   Spark program. (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__)
 - See also the *Known Issues* of `version 2.5.0. <#known-issues-250>`_
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has Zookeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
 
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 Release 2.5.1
 =============
@@ -98,8 +114,8 @@ Other Changes
 
 Known Issues
 ------------
-See *Known Issues* of `the previous version. <#known-issues-250>`_
-
+- See *Known Issues* of `the previous version. <#known-issues-250>`_
+- See also the *TWILL-110 Known Issue* of `version 2.5.2. <#known-issues-252>`_
 
 Release 2.5.0
 =============
@@ -173,3 +189,4 @@ Known Issues
 - Metrics for MapReduce jobs aren't populated on secure Hadoop clusters
 - The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
   unless YARN has been configured to enable virtual cores
+- See also the *TWILL-110 Known Issue* of `version 2.5.2. <#known-issues-252>`_
