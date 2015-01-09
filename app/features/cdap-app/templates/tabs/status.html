@@ -22,7 +22,11 @@
             <td ng-bind="program.status"></td>
             <td ng-bind="program.name"></td>
             <td ng-bind="program.description"></td>
-            <td ng-bind="program.type"></td>
+            <td>
+              <a ng-bind="program.type"
+                  ui-sref="programs.list({programType: (program.type + 's'| lowercase)})"
+              ></a>
+            </td>
           </tr>
         </tbody>
       </table>

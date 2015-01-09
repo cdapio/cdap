@@ -9,7 +9,7 @@ angular.module(PKG.name+'.feature.cdap-app')
       .state('cdap-app', {
         abstract: true,
         template: '<ui-view/>',
-        url: '/app',
+        url: '/apps',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
@@ -18,7 +18,7 @@ angular.module(PKG.name+'.feature.cdap-app')
       })
 
       .state('cdap-app.list', {
-        url: '/list',
+        url: '',
         templateUrl: '/assets/features/cdap-app/templates/list.html',
         controller: 'CdapAppListController',
         ncyBreadcrumb: {
@@ -28,20 +28,26 @@ angular.module(PKG.name+'.feature.cdap-app')
       })
 
       .state('cdap-app.detail', {
-        url: '/view/:appId',
-        templateUrl: '/assets/features/cdap-app/templates/detail.html',
-        controller: 'CdapAppDetailController',
-        ncyBreadcrumb: {
-          parent: 'cdap-app.list',
-          label: '{{$state.params.appId}}'
-        }
+        url: '/:appId',
+        abstract: true,
+        template: '<ui-view/>'
       })
-        .state('cdap-app.detail.tab', {
-          url: '/:tab',
+        .state('app-overview', {
+          url: '/overview',
+          parent: 'cdap-app.detail',
+          templateUrl: '/assets/features/cdap-app/templates/detail.html',
+          controller: 'CdapAppDetailController',
           ncyBreadcrumb: {
-            parent: 'cdap-app.detail',
-            label: '{{$state.params.tabId}}'
+            parent: 'cdap-app.list',
+            label: '{{$state.params.appId}}'
           }
-        });
+        })
+          .state('app-overview.tab', {
+            url: '/:tab',
+            ncyBreadcrumb: {
+              parent: 'cdap-app.detail',
+              label: '{{$state.params.tabId}}'
+            }
+          });
 
   });
