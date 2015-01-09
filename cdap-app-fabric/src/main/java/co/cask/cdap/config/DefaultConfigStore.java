@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +134,7 @@ public class DefaultConfigStore implements ConfigStore {
         while ((row = rows.next()) != null) {
           Map<String, String> properties = GSON.fromJson(Bytes.toString(row.get(Bytes.toBytes(PROPERTY_COLUMN))),
                                                          MAP_STRING_STRING_TYPE);
-          configList.add(new Config(getId(row.getRow(), prefixBytes), properties));
+          configList.add(new Config(getPart(row.getRow(), prefixBytes.length), properties));
         }
         return configList;
       }
@@ -184,16 +183,35 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   private byte[] rowKey(String namespace, String type, String id) {
-    return Bytes.concat(rowKeyPrefix(namespace, type), getMultipartKey(id));
+    return getMultipartKey(namespace, type, id);
   }
 
   private byte[] rowKeyPrefix(String namespace, String type) {
-    return Bytes.concat(new byte[]{Constants.ConfigStore.VERSION}, getMultipartKey(namespace, type));
+    return getMultipartKey(namespace, type);
   }
 
-  private String getId(byte[] rowBytes, byte[] prefixBytes) {
-    byte[] idArray = Arrays.copyOfRange(rowBytes, prefixBytes.length, rowBytes.length);
-    return Bytes.toString(getPart(idArray));
+  private String getPart(byte[] rowBytes, int offset) {
+    int length = Bytes.toInt(rowBytes, offset, Bytes.SIZEOF_INT);
+    return Bytes.toString(rowBytes, offset + Bytes.SIZEOF_INT, length);
+  }
+
+  private byte[] getMultipartKey(String... parts) {
+    int sizeOfParts = 0;
+    for (String part : parts) {
+      sizeOfParts += part.length();
+    }
+
+    byte[] result = new byte[1 + sizeOfParts + (parts.length * Bytes.SIZEOF_INT)];
+    Bytes.putByte(result, 0, Constants.ConfigStore.VERSION);
+
+    int offset = 1;
+    for (String part : parts) {
+      Bytes.putInt(result, offset, part.length());
+      offset += Bytes.SIZEOF_INT;
+      Bytes.putBytes(result, offset, part.getBytes(), 0, part.length());
+      offset += part.length();
+    }
+    return result;
   }
 
   private static final class ConfigTable implements Iterable<Table> {
@@ -207,18 +225,5 @@ public class DefaultConfigStore implements ConfigStore {
     public Iterator<Table> iterator() {
       return Iterators.singletonIterator(table);
     }
-  }
-
-  private byte[] getMultipartKey(String... parts) {
-    byte[] result = new byte[0];
-    for (String part : parts) {
-      result = Bytes.concat(result, Bytes.toBytes(part.length()), part.getBytes());
-    }
-    return result;
-  }
-
-  private byte[] getPart(byte[] part) {
-    int length = Bytes.toInt(part, 0, Bytes.SIZEOF_INT);
-    return Arrays.copyOfRange(part, Bytes.SIZEOF_INT, length + Bytes.SIZEOF_INT);
   }
 }
