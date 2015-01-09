@@ -3,6 +3,7 @@
     :description: Release notes for the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+:hide-nav: true
 :orphan:
 
 .. _overview_release-notes:
@@ -22,8 +23,8 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
-Release 2.6.0
-=============
+`Release 2.6.0 <http://docs.cask.co/cdap/2.6.0/index.html>`__
+=============================================================
 
 API Changes
 -----------
@@ -147,8 +148,8 @@ Known Issues
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 
-Release 2.5.2
-=============
+`Release 2.5.2 <http://docs.cask.co/cdap/2.5.2/index.html>`__
+=============================================================
 
 CDAP Bug Fixes
 --------------
@@ -193,8 +194,8 @@ Known Issues
 - See also the *Known Issues* of `version 2.5.0. <#known-issues-250>`_
 - See also the *TWILL-110 Known Issue* of `version 2.6.0. <#known-issues-260>`_
 
-Release 2.5.1
-=============
+`Release 2.5.1 <http://docs.cask.co/cdap/2.5.1/index.html>`__
+=============================================================
 
 CDAP Bug Fixes
 --------------
@@ -227,8 +228,8 @@ Known Issues
 - See also the *TWILL-110 Known Issue* of `version 2.6.0. <#known-issues-260>`_
 
 
-Release 2.5.0
-=============
+`Release 2.5.0 <http://docs.cask.co/cdap/2.5.0/index.html>`__
+=============================================================
 
 New Features
 ------------
