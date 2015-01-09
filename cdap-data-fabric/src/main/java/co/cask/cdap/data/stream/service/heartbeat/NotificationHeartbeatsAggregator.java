@@ -24,6 +24,8 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -45,7 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * uses the {@link NotificationService} to subscribe to heartbeats sent by Stream writers.
  */
 // TODO this guy should have a way to get the Threshold for the streams it is doing aggregation
-public class NotificationHeartbeatsAggregator implements StreamsHeartbeatsAggregator {
+public class NotificationHeartbeatsAggregator extends AbstractIdleService implements StreamsHeartbeatsAggregator {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationHeartbeatsAggregator.class);
 
   private static final int AGGREGATION_EXECUTOR_POOL_SIZE = 10;
@@ -64,8 +66,20 @@ public class NotificationHeartbeatsAggregator implements StreamsHeartbeatsAggreg
   }
 
   @Override
+  protected void startUp() throws Exception {
+    // No-op
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    for (Cancellable subscription : streamHeartbeatsSubscriptions.values()) {
+      subscription.cancel();
+    }
+  }
+
+  @Override
   public synchronized void listenToStreams(Collection<String> streamNames) {
-    Set<String> alreadyListeningStreams = streamHeartbeatsSubscriptions.keySet();
+    Set<String> alreadyListeningStreams = Sets.newHashSet(streamHeartbeatsSubscriptions.keySet());
     for (final String streamName : streamNames) {
       if (alreadyListeningStreams.remove(streamName)) {
         continue;
@@ -85,7 +99,8 @@ public class NotificationHeartbeatsAggregator implements StreamsHeartbeatsAggreg
 
 
       // Schedule aggregation logic
-      scheduledExecutor.schedule(new Aggregator(heartbeats, streamFeed, baseCount), 1, TimeUnit.SECONDS);
+      scheduledExecutor.schedule(new Aggregator(heartbeats, streamFeed, baseCount),
+                                 Constants.Notification.Stream.INIT_AGGREGATION_DELAY, TimeUnit.SECONDS);
     }
 
     // Remove subscriptions to the heartbeats we used to listen to before the call to that method,
@@ -158,6 +173,9 @@ public class NotificationHeartbeatsAggregator implements StreamsHeartbeatsAggreg
 
     @Override
     public void run() {
+      // TODO we should also send a notification when CDAP starts, with all the init heartbeats...
+      // could the condition be: all heartbeats are init heartbeats?
+
       // For now just count the last heartbeat present in the map, but we should set a sort of sliding window for
       // the aggregator, and it would look for the last heartbeat in that window only
       // TODO why should we remember more than the last heartbeat?
@@ -173,7 +191,8 @@ public class NotificationHeartbeatsAggregator implements StreamsHeartbeatsAggreg
           streamBaseCount.set(sum);
         }
       }
-      scheduledExecutor.schedule(new Aggregator(heartbeats, streamFeed, streamBaseCount), 5, TimeUnit.SECONDS);
+      scheduledExecutor.schedule(new Aggregator(heartbeats, streamFeed, streamBaseCount),
+                                 Constants.Notification.Stream.AGGREGATION_DELAY, TimeUnit.SECONDS);
     }
 
     private void publishNotification(int updatedCount) {

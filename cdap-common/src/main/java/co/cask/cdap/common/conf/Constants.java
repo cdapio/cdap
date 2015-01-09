@@ -556,6 +556,9 @@ public final class Constants {
       public static final String STREAM_FEED_CATEGORY = "streams";
 
       public static final int DEFAULT_DATA_THRESHOLD = 1000;
+
+      public static final int INIT_AGGREGATION_DELAY = 2;
+      public static final int AGGREGATION_DELAY = 5;
     }
   }
 

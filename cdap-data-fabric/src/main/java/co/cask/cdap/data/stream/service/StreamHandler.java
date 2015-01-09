@@ -29,8 +29,6 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
-import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
@@ -186,41 +184,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
-    // Create the notification feeds linked to that stream
-    createStreamFeeds(stream);
-
     streamLeaderManager.affectLeader(stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private void createStreamFeeds(String stream) {
-    // TODO use accountID as namespace?
-    try {
-      NotificationFeed streamFeed = new NotificationFeed.Builder()
-        .setNamespace("default")
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(stream)
-        .setDescription(String.format("Size updates feed for Stream %s every %dMB",
-                                      stream, Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD))
-        .build();
-      notificationFeedManager.createFeed(streamFeed);
-    } catch (NotificationFeedException e) {
-      LOG.error("Cannot create feed for Stream {}", stream, e);
-    }
-
-    try {
-      NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-        .setNamespace("default")
-        .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
-        .setName(stream)
-        .setDescription(String.format("Heartbeats feed for Stream %s.", stream))
-        .build();
-      notificationFeedManager.createFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
-      LOG.error("Cannot create feed for Stream {} heartbeats.", stream, e);
-    }
   }
 
   @POST

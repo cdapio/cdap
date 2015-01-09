@@ -24,6 +24,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -57,7 +58,8 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new TransactionMetricsModule(),
-      new LocationRuntimeModule().getDistributedModules()
+      new LocationRuntimeModule().getDistributedModules(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     zkClient = injector.getInstance(ZKClientService.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,55 +13,51 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
+
+package co.cask.cdap.data.stream.heartbeat;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.filesystem.LocationFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
-
-import java.io.IOException;
 
 /**
  *
  */
-public class LocalMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderTestBase {
+public class LocalNotificationHeartbeatsAggregatorTest extends NotificationHeartbeatsAggregatorTestBase {
 
-  private static LocationFactory locationFactory;
   private static StreamAdmin streamAdmin;
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
+    Injector injector = createInjector(
+      cConf, new Configuration(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
+      new TransactionMetricsModule()
     );
 
-    locationFactory = injector.getInstance(LocationFactory.class);
+    startServices(injector);
     streamAdmin = injector.getInstance(StreamAdmin.class);
   }
 
-  @Override
-  protected LocationFactory getLocationFactory() {
-    return locationFactory;
+  @AfterClass
+  public static void shutDown() throws Exception {
+    stopServices();
   }
 
   @Override
   protected StreamAdmin getStreamAdmin() {
     return streamAdmin;
   }
+
 }

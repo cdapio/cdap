@@ -123,6 +123,8 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
 
     handlerSubscription = streamsResourceCoordinatorClient.subscribe(handlerDiscoverable.getName(),
                                                                      new StreamsLeaderHandler());
+
+    streamsHeartbeatsAggregator.startAndWait();
   }
 
   @Override
@@ -136,9 +138,11 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
       handlerSubscription.cancel();
     }
 
-    if (streamsResourceCoordinatorClient != null) {
-      streamsResourceCoordinatorClient.stopAndWait();
+    if (streamsHeartbeatsAggregator != null) {
+      streamsHeartbeatsAggregator.stopAndWait();
     }
+
+    streamsResourceCoordinatorClient.stopAndWait();
   }
 
   @Override

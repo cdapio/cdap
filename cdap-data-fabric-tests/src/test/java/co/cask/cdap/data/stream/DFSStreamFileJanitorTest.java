@@ -27,6 +27,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -82,7 +83,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
         }
       }),
-      new DataSetsModules().getDistributedModule()
+      new DataSetsModules().getDistributedModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

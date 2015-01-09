@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,17 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
+
+package co.cask.cdap.data.stream.heartbeat;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,20 +31,16 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-
 /**
  *
  */
-public class DFSStreamDataFileTest extends StreamDataFileTestBase {
+public class DFSNotificationHeartbeatsAggregatorTest extends NotificationHeartbeatsAggregatorTestBase {
 
-  private static LocationFactory locationFactory;
   private static StreamAdmin streamAdmin;
   private static MiniDFSCluster dfsCluster;
 
-
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
@@ -54,8 +48,8 @@ public class DFSStreamDataFileTest extends StreamDataFileTestBase {
 
     CConfiguration cConf = CConfiguration.create();
 
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
+    Injector injector = createInjector(
+      cConf, hConf,
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -64,22 +58,16 @@ public class DFSStreamDataFileTest extends StreamDataFileTestBase {
       },
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
-    );
+      new DataFabricDistributedModule());
 
-    locationFactory = injector.getInstance(LocationFactory.class);
+    startServices(injector);
     streamAdmin = injector.getInstance(StreamAdmin.class);
   }
 
   @AfterClass
-  public static void finish() {
+  public static void finish() throws Exception {
+    stopServices();
     dfsCluster.shutdown();
-  }
-
-  @Override
-  protected LocationFactory getLocationFactory() {
-    return locationFactory;
   }
 
   @Override

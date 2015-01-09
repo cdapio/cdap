@@ -16,12 +16,14 @@
 
 package co.cask.cdap.data.stream.service.heartbeat;
 
+import com.google.common.util.concurrent.Service;
+
 import java.util.Collection;
 
 /**
  * Aggregator of heartbeats sent by Stream writers.
  */
-public interface StreamsHeartbeatsAggregator {
+public interface StreamsHeartbeatsAggregator extends Service {
 
   /**
    * Perform aggregation on the Streams described by the {@code streamNames}, and no other Streams.

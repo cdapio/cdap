@@ -21,6 +21,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,7 +64,8 @@ public class DFSMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderT
       },
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule()
+      new DataFabricDistributedModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

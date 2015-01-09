@@ -26,6 +26,7 @@ import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -55,6 +56,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
 
         @Override

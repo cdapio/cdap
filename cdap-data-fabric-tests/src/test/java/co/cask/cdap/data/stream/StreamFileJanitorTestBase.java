@@ -25,6 +25,7 @@ import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -148,9 +149,11 @@ public abstract class StreamFileJanitorTestBase {
   protected static final class TestStreamFileAdmin extends AbstractStreamFileAdmin {
 
     @Inject
-    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator
-                        streamCoordinator, StreamConsumerStateStoreFactory stateStoreFactory) {
-      super(locationFactory, cConf, streamCoordinator, stateStoreFactory, new NoopStreamAdmin());
+    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator streamCoordinator,
+                        NotificationFeedManager notificationFeedManager,
+                        StreamConsumerStateStoreFactory stateStoreFactory) {
+      super(locationFactory, cConf, streamCoordinator, stateStoreFactory, notificationFeedManager,
+            new NoopStreamAdmin());
     }
   }
 

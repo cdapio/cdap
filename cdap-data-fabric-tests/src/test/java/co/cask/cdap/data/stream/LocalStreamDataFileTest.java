@@ -22,6 +22,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
@@ -46,7 +47,8 @@ public class LocalStreamDataFileTest extends StreamDataFileTestBase {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule()
+      new TransactionMetricsModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
