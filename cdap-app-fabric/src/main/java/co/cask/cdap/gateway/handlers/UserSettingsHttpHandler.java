@@ -45,9 +45,10 @@ import javax.ws.rs.Path;
 @Path(Constants.Gateway.API_VERSION_3 + "/configuration/usersettings")
 public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(UserSettingsHttpHandler.class);
+  private static final JsonParser JSON_PARSER = new JsonParser();
+  private static final String NAMESPACE = Constants.DEFAULT_NAMESPACE;
   private static final String CONFIG_TYPE = "usersettings";
   private static final String CONFIG_PROPERTY = "property";
-  private static final String NAMESPACE = Constants.DEFAULT_NAMESPACE;
   private static final String ID = "id";
 
   private final ConfigStore configStore;
@@ -60,7 +61,7 @@ public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/")
   @GET
-  public void get(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void get(HttpRequest request, HttpResponder responder) throws Exception {
     String userId = getAuthenticatedAccountId(request);
     Config userConfig;
     try {
@@ -74,13 +75,13 @@ public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
     jsonObject.addProperty(ID, userConfig.getId());
 
     //We store the serialized JSON string of the properties in ConfigStore and we return a JsonObject back
-    jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(userConfig.getProperties().get(CONFIG_PROPERTY)));
+    jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(userConfig.getProperties().get(CONFIG_PROPERTY)));
     responder.sendJson(HttpResponseStatus.OK, jsonObject);
   }
 
   @Path("/")
   @DELETE
-  public void delete(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void delete(HttpRequest request, HttpResponder responder) throws Exception {
     String userId = getAuthenticatedAccountId(request);
     try {
       configStore.delete(NAMESPACE, CONFIG_TYPE, userId);
@@ -92,7 +93,7 @@ public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/")
   @PUT
-  public void set(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void set(HttpRequest request, HttpResponder responder) throws Exception {
     String data = request.getContent().toString(Charsets.UTF_8);
     if (!isValidJSON(data)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
@@ -112,7 +113,7 @@ public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
 
   private boolean isValidJSON(String json) {
     try {
-      new JsonParser().parse(json);
+      JSON_PARSER.parse(json);
     } catch (JsonSyntaxException ex) {
       return false;
     }
