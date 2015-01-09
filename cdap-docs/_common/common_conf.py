@@ -28,6 +28,7 @@
 
 import sys
 import os
+import os.path
 import subprocess
 from datetime import datetime
 
@@ -39,14 +40,18 @@ def get_sdk_version():
     try:
         full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("<version>", "").replace("</version>", "")
         version = full_version.replace("-SNAPSHOT", "")
-        if version == full_version:
-            print "SDK Version: %s" % version
-        else: 
-            print "SDK Version: %s (%s)" % (version, full_version)
     except:
-        print "Could not get version from grep"
-        sys.exit(1)
+        pass
     return version, full_version
+
+def print_sdk_version():
+    version, full_version = get_sdk_version()
+    if version == full_version:
+        print "SDK Version: %s" % version
+    elif version and full_version: 
+        print "SDK Version: %s (%s)" % (version, full_version)
+    else:
+        print "Could not get version (%s), full version (%s) from grep" % (version, full_version)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -174,12 +179,20 @@ html_theme = 'cdap'
 # html_theme_options = {"showtoc_include_showtocs":"false"}
 # manuals and manual_titles are lists of the manuals in the doc set
 # versions points to the JSON file on the webservers
-# versions_data is a local version, used in testing
+# versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
+# format is a dictionary, with "development" and "older" lists of lists, and "current" a list, 
+# the inner-lists being the directory and a label
 html_theme_options = {
   "manuals":["developers-manual","admin-manual","examples-manual","reference-manual",],
   "manual_titles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
   "versions":"http://docs.cask.co/cdap/json-versions.js",
-  "versions_data":{ "development": [["2.6.0-SNAPSHOT", "2.6.0"],], "current": ["2.5.2", "2.5.2"], "older": [ ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],], },
+  "versions_data":
+    { "development": 
+        [ ["2.6.0-SNAPSHOT", "2.6.0"], ], 
+      "current": ["2.5.2", "2.5.2"], 
+      "older": 
+        [ ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
+    },
 }
 
 def get_manuals():
@@ -196,6 +209,16 @@ def get_manual_titles_bash():
         manual_titles += "'%s'" % title
     manual_titles += SUFFIX
     return manual_titles 
+
+def get_json_versions():
+    return "versionscallback(%s);" % html_theme_options["versions_data"]
+
+def print_json_versions():
+    print "versionscallback(%s);" % html_theme_options["versions_data"]
+
+def print_json_versions_file():
+    head, tail = os.path.split(html_theme_options["versions"])
+    print tail
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']

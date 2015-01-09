@@ -29,9 +29,6 @@ from sphinx.util.console import bold
 sys.path.append(os.path.abspath('../../_common'))
 from common_conf import *
 
-print "imported common_conf; Project: %s" % project
-
-
 def setup(app):
     # Define handler to build the common index
     app.connect('build-finished', build_common_index)
