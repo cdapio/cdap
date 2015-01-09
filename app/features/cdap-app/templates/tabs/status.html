@@ -24,7 +24,7 @@
             <td ng-bind="program.description"></td>
             <td>
               <a ng-bind="program.type"
-                  ui-sref="programs.list({programType: (program.type + 's'| lowercase)})"
+                  ui-sref="cdap-programs.type({programType: (program.type + 's'| lowercase)})"
               ></a>
             </td>
           </tr>
