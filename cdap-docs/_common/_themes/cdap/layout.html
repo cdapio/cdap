@@ -38,7 +38,7 @@
         {%- endfor %}
         {%- block rootrellink %}
         
-        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script type="text/javascript" src="{{ pathto('_static/version-menu.js', 1) }}"></script>
         <script src="{{ theme_versions }}"/></script>
         <script>window.setVersion('{{ release }}');</script>
        
