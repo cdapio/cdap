@@ -220,7 +220,19 @@ function make_zip() {
 }
 
 function make_zip_localized() {
-# This creates a named zip that unpacks to the Project Version, localized to english
+  _make_zip_localized $1
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function make_zip_localized_web() {
+  _make_zip_localized $1
+  # Add JSON file
+  build_json $SCRIPT_PATH/$BUILD/$PROJECT_VERSION
+  cd $SCRIPT_PATH/$BUILD
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function _make_zip_localized() {
   version
   ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
   cd $SCRIPT_PATH/$BUILD
@@ -228,23 +240,6 @@ function make_zip_localized() {
   mv $HTML $PROJECT_VERSION/en
   # Add a redirect index.html file
   echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
-  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
-}
-
-function make_zip_localized_web() {
-# This creates a named zip that unpacks to the Package, with inside the Project Version zip and a JSON file
-  make_zip_localized $WEB
-  version
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
-  PACKAGE_NAME="$ZIP_DIR_NAME-package"
-  cd $SCRIPT_PATH/$BUILD
-  # Make Package
-  mkdir $PACKAGE_NAME
-  mv -f $ZIP_DIR_NAME.zip $PACKAGE_NAME
-  # Add JSON file
-  build_json $SCRIPT_PATH/$BUILD/$PACKAGE_NAME
-  cd $SCRIPT_PATH/$BUILD
-  zip -qr $PACKAGE_NAME.zip $PACKAGE_NAME/*
 }
 
 function build_json() {
@@ -363,17 +358,6 @@ function display_version() {
   echo "GIT_BRANCH: $GIT_BRANCH"
 }
 
-function test() {
-  echo "Test..."
-  echo "Version..."
-  display_version
-#   echo "Build all docs..."
-#   build
-#   echo "Build SDK..."
-#   build_sdk
-  echo "Test completed."
-}
-
 function rewrite() {
   # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
   cd $SCRIPT_PATH
@@ -406,7 +390,6 @@ function run_command() {
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           display_version; exit 1;;
-    test )              test; exit 1;;
     zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
   esac
