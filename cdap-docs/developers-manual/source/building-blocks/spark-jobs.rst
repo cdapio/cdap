@@ -13,7 +13,7 @@ data into memory and query them repeatedly. This makes it suitable for both iter
 interactive programs. Similar to MapReduce, Spark can access **Datasets** as both input
 and output. Spark programs in CDAP can be written in either Java or Scala.
 
-In the current release, Spark is supported only in the Standalone CDAP.
+In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP.
 
 To process data using Spark, specify ``addSpark()`` in your Application specification::
 
