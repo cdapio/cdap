@@ -188,10 +188,10 @@ html_theme_options = {
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": 
-        [ ["2.6.0-SNAPSHOT", "2.6.0"], ], 
-      "current": ["2.5.2", "2.5.2"], 
+        [ ["2.7.0-SNAPSHOT", "2.7.0"], ], 
+      "current": ["2.6.0", "2.6.0"], 
       "older": 
-        [ ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
+        [ ["2.5.2", "2.5.2"], ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
     },
 }
 
