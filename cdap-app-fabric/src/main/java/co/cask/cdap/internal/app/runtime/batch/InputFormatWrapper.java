@@ -47,7 +47,7 @@ public class InputFormatWrapper<KEY, VALUE> extends InputFormat<KEY, VALUE> {
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-    // this should be called from the MapReduceRuntimeService, where it is using the program classloader
+    // this should be called when the job is submitted from the MapReduceRuntimeService
     return getInputFormat(context.getConfiguration(),
                           Thread.currentThread().getContextClassLoader()).getSplits(context);
   }
@@ -65,11 +65,8 @@ public class InputFormatWrapper<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   private InputFormat<KEY, VALUE> getInputFormat(Configuration conf, ClassLoader classLoader) {
     String className = conf.get(INPUT_FORMAT_CLASS);
     try {
-      if (classLoader == null) {
-        return (InputFormat<KEY, VALUE>) Class.forName(className).newInstance();
-      } else {
-        return (InputFormat<KEY, VALUE>) classLoader.loadClass(className).newInstance();
-      }
+      classLoader = classLoader == null ? Thread.currentThread().getContextClassLoader() : classLoader;
+      return (InputFormat<KEY, VALUE>) classLoader.loadClass(className).newInstance();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

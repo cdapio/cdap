@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import com.google.common.base.Throwables;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -50,7 +51,8 @@ public class OutputFormatWrapper<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
 
   @Override
   public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
-    // TODO: do something here
+    // this is called during job submission, not on the map/reduce tasks.
+    getOutputFormat(context.getConfiguration(), null).checkOutputSpecs(context);
   }
 
   @Override
@@ -59,17 +61,22 @@ public class OutputFormatWrapper<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
   }
 
   private OutputFormat<KEY, VALUE> getOutputFormat(TaskAttemptContext context) {
-    if (outputFormat != null) {
-      return outputFormat;
-    }
     // we are assuming the wrapped format doesn't emit cdap metrics, otherwise the actual TaskType should be passed in.
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
     BasicMapReduceContext mrContext = contextProvider.get();
     ClassLoader programClassLoader = mrContext.getProgram().getClassLoader();
 
-    String outputFormatClass = context.getConfiguration().get(OUTPUT_FORMAT_CLASS);
+    return getOutputFormat(context.getConfiguration(), programClassLoader);
+  }
+
+  private OutputFormat<KEY, VALUE> getOutputFormat(Configuration conf, ClassLoader classLoader) {
+    if (outputFormat != null) {
+      return outputFormat;
+    }
+    String className = conf.get(OUTPUT_FORMAT_CLASS);
     try {
-      outputFormat = (OutputFormat<KEY, VALUE>) programClassLoader.loadClass(outputFormatClass).newInstance();
+      classLoader = classLoader == null ? Thread.currentThread().getContextClassLoader() : classLoader;
+      outputFormat = (OutputFormat<KEY, VALUE>) classLoader.loadClass(className).newInstance();
       return outputFormat;
     } catch (Exception e) {
       throw Throwables.propagate(e);
