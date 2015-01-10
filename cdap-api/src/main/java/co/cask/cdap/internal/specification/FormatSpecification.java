@@ -31,7 +31,7 @@ public class FormatSpecification {
   private final Schema schema;
   private final Map<String, String> settings;
 
-  // for Gson deserialization
+  // for Gson deserialization, to make sure settings is an empty map and not null.
   private FormatSpecification() {
     this(null, null, Collections.<String, String>emptyMap());
   }
