@@ -41,6 +41,7 @@ angular
       'mgcrea.ngStrap.tooltip',
       'mgcrea.ngStrap.popover',
       'mgcrea.ngStrap.dropdown',
+      'mgcrea.ngStrap.typeahead',
       'mgcrea.ngStrap.collapse',
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',

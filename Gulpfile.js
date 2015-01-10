@@ -86,6 +86,9 @@ gulp.task('js:lib', function() {
       './bower_components/angular-strap/dist/modules/popover.js',
       './bower_components/angular-strap/dist/modules/popover.tpl.js',
       './bower_components/angular-strap/dist/modules/collapse.js',
+      './bower_components/angular-strap/dist/modules/parse-options.js',
+      './bower_components/angular-strap/dist/modules/typeahead.js',
+      './bower_components/angular-strap/dist/modules/typeahead.tpl.js',
       './bower_components/angular-breadcrumb/release/angular-breadcrumb.js',
       './bower_components/angular-recursion/angular-recursion.js',
 
