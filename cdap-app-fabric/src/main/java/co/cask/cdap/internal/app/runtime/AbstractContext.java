@@ -26,12 +26,12 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.TypeId;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -60,8 +60,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   public AbstractContext(Program program, RunId runId,
                          Arguments arguments,
                          Set<String> datasets,
-                         String metricsContext,
-                         MetricsCollectionService metricsCollectionService,
+                         final MetricsCollector metricsCollector,
                          DatasetFramework dsFramework,
                          CConfiguration conf,
                          DiscoveryServiceClient discoveryServiceClient) {
@@ -71,18 +70,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
 
-    MetricsCollector datasetMetrics;
-    if (metricsCollectionService != null) {
-      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, runId.getId());
-      datasetMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM,
-                                                             Constants.Metrics.DATASET_CONTEXT, runId.getId());
-    } else {
-      this.programMetrics = null;
-      datasetMetrics = null;
-    }
-
-    this.dsInstantiator = new DatasetInstantiator(dsFramework, conf, program.getClassLoader(),
-                                                  datasetMetrics, programMetrics);
+    this.programMetrics = metricsCollector;
+    this.dsInstantiator = new DatasetInstantiator(dsFramework, conf, program.getClassLoader(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
@@ -178,5 +167,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   @Override
   public DiscoveryServiceClient getDiscoveryServiceClient() {
     return discoveryServiceClient;
+  }
+
+  protected static Map<String, String> getMetricsContext(Program program, String runId) {
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));
+    tags.put(Constants.Metrics.Tag.PROGRAM, program.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, runId);
+    return tags;
   }
 }
