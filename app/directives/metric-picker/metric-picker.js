@@ -1,10 +1,7 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function ($log, $q, MyDataSource) {
+  .directive('myMetricPicker', function (MyDataSource) {
 
     var dSrc = new MyDataSource();
-    $log.log('dSrc', dSrc);
-    window.dSrc = dSrc;
-
 
     function MetricPickerCtrl ($scope) {
 
@@ -99,7 +96,6 @@ angular.module(PKG.name + '.commons')
       controller: MetricPickerCtrl,
 
       link: function (scope, elem, attr) {
-        $log.log('link', scope.model, elem);
         scope.fetchAhead();
       }
     };
