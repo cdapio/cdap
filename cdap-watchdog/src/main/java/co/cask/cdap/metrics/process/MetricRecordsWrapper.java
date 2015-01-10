@@ -129,9 +129,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
       return null;
     }
 
-    MetricsRecord next = current.next();
-    LOG.info("METRICS_RECORD: " + next.toString());
-    return next;
+    return current.next();
   }
 
   private List<MetricsRecord> fanout(MetricValue metricValue) {
