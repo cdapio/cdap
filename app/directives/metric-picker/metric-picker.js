@@ -1,10 +1,10 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricSearch', function () {
+  .directive('myMetricPicker', function () {
     return {
       restrict: 'E',
       scope: {
         model: '='
       },
-      templateUrl: 'metric-search/metric-search.html'
+      templateUrl: 'metric-picker/metric-picker.html'
     };
   });
