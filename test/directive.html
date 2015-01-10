@@ -11,16 +11,29 @@
     <link rel="stylesheet" type="text/css" href="../dist/assets/bundle/lib.css" />
     <link rel="stylesheet" type="text/css" href="../dist/assets/bundle/app.css" />
 </head>
-<body>
+<body class="theme-default">
 
   <header class="container">
-    <h1>Directives</h1>
+    <h1>Directives Test</h1>
+    <hr />
   </header>
 
-  <div class="container">
-    <hr />
+  <div class="container" ng-init="testObj={metric:''}">
+    <div class="row">
+      <div class="col-xs-8">
 
-    <pre>test directives here</pre>
+
+        <my-metric-picker
+          data-model="testObj.metric"
+        ></my-metric-picker>
+
+
+      </div>
+      <div class="col-xs-4">
+        <pre ng-bind="testObj | json"></pre>
+      </div>
+
+    </div>
 
   </div>
 
@@ -29,10 +42,9 @@
   <script>
     angular.element(document).ready( function () {
       setTimeout(function(){
+        console.log('angular bootstrap');
         angular.bootstrap(document, [
-          PKG.name+'.commons',
-          'ngSanitize',
-          'ngAnimate'
+          PKG.name+'.commons'
         ]);
       }, 1);
     });
