@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,15 @@ import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
+import co.cask.cdap.cli.util.AsciiTable;
+import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -33,6 +37,7 @@ import co.cask.common.cli.CLI;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -46,6 +51,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -235,6 +241,72 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
   }
 
+  @Test
+  public void testNamespaces() throws Exception {
+    final String id = PREFIX + "testNamespace";
+    final String displayName = "testDisplayName";
+    final String description = "testDescription";
+    final String defaultFields = PREFIX + "defaultFields";
+    String doesNotExist = "doesNotExist";
+
+    //TODO: Remove when default version becomes v3
+    String origVersion = cliConfig.getClientConfig().getApiVersion();
+    cliConfig.getClientConfig().setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+
+    // initially only default namespace should be present
+    NamespaceMeta defaultNs = new NamespaceMeta.Builder()
+      .setId("default").setDisplayName("default").setDescription("default").build();
+    List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
+    testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
+
+    // describe non-existing namespace
+    testCommandOutputContains(cli, String.format("describe namespace %s", doesNotExist),
+                              String.format("Error: namespace '%s' was not found", doesNotExist));
+    // delete non-existing namespace
+    testCommandOutputContains(cli, String.format("delete namespace %s", doesNotExist),
+                              String.format("Error: namespace '%s' was not found", doesNotExist));
+
+    // create a namespace
+    String command = String.format("create namespace %s %s %s", id, displayName, description);
+    testCommandOutputContains(cli, command, String.format("Namespace %s created successfully.", id));
+
+    NamespaceMeta expected = new NamespaceMeta.Builder()
+      .setId(id).setDisplayName(displayName).setDescription(description).build();
+    expectedNamespaces = Lists.newArrayList(defaultNs, expected);
+    // list namespaces and verify
+    testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
+
+    // get namespace details and verify
+    expectedNamespaces = Lists.newArrayList(expected);
+    command = String.format("describe namespace %s", id);
+    testNamespacesOutput(cli, command, expectedNamespaces);
+
+    // try creating a namespace with existing id
+    command = String.format("create namespace %s", id);
+    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", id));
+
+    // create a namespace with default displayName and description
+    command = String.format("create namespace %s", defaultFields);
+    testCommandOutputContains(cli, command, String.format("Namespace %s created successfully.", defaultFields));
+
+    NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
+      .setId(defaultFields).setDisplayName(defaultFields).setDescription("").build();
+    // test that there are 3 namespaces including default
+    expectedNamespaces = Lists.newArrayList(defaultNs, namespaceDefaultFields, expected);
+    testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
+    // describe namespace with default fields
+    expectedNamespaces = Lists.newArrayList(namespaceDefaultFields);
+    testNamespacesOutput(cli, String.format("describe namespace %s", defaultFields), expectedNamespaces);
+
+
+    // delete namespace and verify
+    command = String.format("delete namespace %s", id);
+    testCommandOutputContains(cli, command, String.format("Namespace %s deleted successfully.", id));
+
+    //reset API version
+    cliConfig.getClientConfig().setApiVersion(origVersion);
+  }
+
   private static File createAppJarFile(Class<?> cls) {
     return new File(AppFabricTestHelper.createAppJar(cls).toURI());
   }
@@ -297,4 +369,29 @@ public class CLIMainTest extends StandaloneTestBase {
     assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
   }
 
+  private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)
+    throws Exception {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    PrintStream printStream = new PrintStream(outputStream);
+    new AsciiTable<NamespaceMeta>(
+      new String[] {"id", "display_name", "description"},
+      expected,
+      new RowMaker<NamespaceMeta>() {
+        @Override
+        public Object[] makeRow(NamespaceMeta object) {
+          return new Object[] {object.getId(), object.getDisplayName(), object.getDescription()};
+        }
+      }
+    ).print(printStream);
+    final String expectedOutput = outputStream.toString();
+    testCommand(cli, command, new Function<String, Void>() {
+      @Nullable
+      @Override
+      public Void apply(@Nullable String output) {
+        Assert.assertNotNull(output);
+        Assert.assertEquals(expectedOutput, output);
+        return null;
+      }
+    });
+  }
 }
