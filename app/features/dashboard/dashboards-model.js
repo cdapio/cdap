@@ -10,6 +10,7 @@ function (Widget, MyDataSource, $timeout) {
 
 
   function Dashboard (p) {
+    p = p || {};
     angular.extend(
       this,
       {
@@ -151,14 +152,20 @@ function (Widget, MyDataSource, $timeout) {
         method: 'GET',
         _cdapNsPath: API_PATH
       },
-      function (result) {
+      (function (result) {
 
-        angular.forEach(result, function (v) {
-          var p = v.config;
-          p.id = v.id;
-          data.push(new Dashboard(p));
-        });
-      }
+        if(result.length) {
+          // recreate saved dashboards
+          angular.forEach(result, function (v) {
+            var p = v.config;
+            p.id = v.id;
+            data.push(new Dashboard(p));
+          });
+
+        } else { // no dashboards yet
+          this.add(); // create a new default one
+        }
+      }).bind(this)
     );
 
   }
