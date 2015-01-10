@@ -2,8 +2,8 @@ angular.module(PKG.name + '.commons')
   .directive('myMetricPicker', function ($log, $q, MyDataSource) {
 
     var dSrc = new MyDataSource();
-    // $log.log('dSrc', dSrc);
-    // window.dSrc = dSrc;
+    $log.log('dSrc', dSrc);
+    window.dSrc = dSrc;
 
 
     function MetricPickerCtrl ($scope) {
@@ -19,7 +19,9 @@ angular.module(PKG.name + '.commons')
 
       $scope.getContext = function (v) {
         $log.log('getContext', v);
-        return $q.when(['foo', 'bar', 'baz']);
+        return dSrc.request({
+          _cdapNsPath: ''
+        });
       };
 
     }

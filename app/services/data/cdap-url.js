@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('myCdapUrl', function myCdapUrl($stateParams, MY_CONFIG) {
+  .factory('myCdapUrl', function myCdapUrl($stateParams, $log, MY_CONFIG) {
 
     function constructUrl(resource) {
 
@@ -10,7 +10,8 @@ angular.module(PKG.name + '.services')
         var namespace = $stateParams.namespace;
 
         if(!namespace) {
-          throw new Error('_cdapNsPath requires $stateParams.namespace to be defined');
+          $log.warn('_cdapNsPath using default namespace');
+          namespace = 'default';
         }
 
         resource._cdapPath = [
