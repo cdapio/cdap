@@ -1,5 +1,10 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function ($log) {
+  .directive('myMetricPicker', function ($log, MyDataSource) {
+
+    var dSrc = new MyDataSource();
+    $log.log('dSrc', dSrc);
+    window.dSrc = dSrc;
+
     return {
       restrict: 'E',
       scope: {
@@ -8,11 +13,16 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'metric-picker/metric-picker.html',
 
       controller: function ($scope) {
-        $log.log('controller', $scope);
+
+        var a = ['system', 'user'];
+        $scope.availableTypes = a;
+        $scope.metricType = a[0];
+
+
       },
 
       link: function (scope, elem, attr) {
-        $log.log('link', arguments);
+        $log.log('link', scope.model, elem);
       }
     };
   });

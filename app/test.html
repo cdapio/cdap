@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" ng-strict-di>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
+</head>
+<body class="theme-default">
+
+  <header class="container">
+    <h1>Directives' Playground</h1>
+    <hr />
+  </header>
+
+  <div class="container" ng-init="testObj={metric:'whatever'}">
+    <div class="row">
+      <div class="col-xs-9">
+
+        <form class="form-horizontal" novalidate>
+
+            <div class="form-group">
+              <label class="col-xs-3 control-label">Metric</label>
+              <div class="col-xs-9">
+
+
+                <my-metric-picker
+                  data-model="testObj.metric"
+                ></my-metric-picker>
+
+
+              </div>
+            </div>
+
+        </form>
+
+      </div>
+      <div class="col-xs-3">
+
+        <pre ng-bind="testObj | json"></pre>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script type="text/javascript" src="/assets/bundle/lib.js"></script>
+  <script type="text/javascript" src="/config.js"></script>
+  <script>
+    angular.element(document).ready( function () {
+      setTimeout(function(){
+        angular.bootstrap(document, [
+          'cdap-ui.commons'
+        ]);
+      }, 1);
+    });
+  </script>
+  <script type="text/javascript" src="/assets/bundle/app.js"></script>
+  <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
+  <script type="text/javascript">
+    if(location.host==='localhost:8080') {
+      document.write('<script src="http://localhost'
+        + ':35729/livereload.js"></' + 'script>');
+    }
+  </script>
+</body>
+</html>

@@ -1,1 +1,28 @@
-<h1>template for metric search</h1>
+<div class="row">
+
+  <div class="col-xs-2">
+    <select class="form-control"
+      ng-model="metricType"
+      ng-options="type for type in availableTypes"
+      ></select>
+  </div>
+
+  <div class="col-xs-5">
+    <div class="input-group">
+      <span class="input-group-addon">context</span>
+      <input type="text" class="form-control"
+        ng-model="metricContext"
+       />
+    </div>
+  </div>
+
+  <div class="col-xs-5">
+    <div class="input-group">
+      <span class="input-group-addon">name</span>
+      <input type="text" class="form-control"
+        ng-model="metricName"
+       />
+    </div>
+  </div>
+
+</div>

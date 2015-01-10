@@ -129,6 +129,13 @@ function makeApp (authAddress, cdapConfig) {
   ]);
 
 
+  app.get('/test/playground', [
+    httpStaticLogger,
+    function (req, res) {
+      res.sendFile(DIST_PATH + '/test.html');
+    }
+  ]);
+
   // any other path, serve index.html
   app.all('*', [
     httpIndexLogger,
