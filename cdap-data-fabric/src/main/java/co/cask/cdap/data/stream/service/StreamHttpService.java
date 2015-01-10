@@ -48,17 +48,19 @@ public final class StreamHttpService extends AbstractIdleService {
   private final NettyHttpService httpService;
   private final StreamCoordinator streamCoordinator;
   private final StreamFileJanitorService janitorService;
+  private final StreamWriterSizeManager sizeManager;
   private Cancellable cancellable;
 
   @Inject
-  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
-                           StreamCoordinator streamCoordinator,
+  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService, StreamCoordinator streamCoordinator,
                            StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
-                           @Nullable MetricsCollectionService metricsCollectionService) {
+                           @Nullable MetricsCollectionService metricsCollectionService,
+                           StreamWriterSizeManager sizeManager) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
     this.janitorService = janitorService;
+    this.sizeManager = sizeManager;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -94,10 +96,12 @@ public final class StreamHttpService extends AbstractIdleService {
     });
 
     janitorService.startAndWait();
+    sizeManager.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    sizeManager.stopAndWait();
     janitorService.stopAndWait();
 
     try {

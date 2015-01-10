@@ -15,10 +15,16 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
+
 
 /**
  * Defines Guice modules in different runtime environments.
@@ -32,7 +38,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       protected void configure() {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
-
+        bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
         super.configure();
       }
     };
@@ -44,6 +50,8 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeManager.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
         super.configure();
       }
     };
@@ -55,7 +63,14 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeManager.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
         super.configure();
+      }
+
+      @Provides
+      @Named(Constants.Stream.CONTAINER_INSTANCE_ID)
+      public final int providesInstanceId(CConfiguration cConf) {
+        return cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
       }
     };
   }

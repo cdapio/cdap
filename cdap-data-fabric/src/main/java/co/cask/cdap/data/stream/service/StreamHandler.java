@@ -93,17 +93,20 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
+  private final StreamWriterSizeManager sizeManager;
+
   @Inject
-  public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                       StreamFileWriterFactory writerFactory,
-                       MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade) {
+  public StreamHandler(CConfiguration cConf, Authenticator authenticator, StreamCoordinator streamCoordinator,
+                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
+                       MetricsCollectionService metricsCollectionService, ExploreFacade exploreFacade,
+                       StreamWriterSizeManager sizeManager) {
+    // TODO get a StreamWriterSizeManager here, started in the HttpService
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
+    this.sizeManager = sizeManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
@@ -129,6 +132,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                                                          createAsyncRejectedExecutionHandler());
     executor.allowCoreThreadTimeOut(true);
     asyncExecutor = executor;
+
+    // TODO do the counting of instance id files here
+    // then pass the info to the concurrentStreamWriter. Or rather, have concurrentStreamWriter pass the size of
+    // events to the handler, all counting logic/sending of heartbeats is done in the handler
+
+    // Note: We only have to worry about the distributed case here. With local, cdap start up always has
+    // all writer instances start with 0 data. We can't have case: less instances, then more again,
+    // because in memory, there is only one instance always
+    // With in-memory, don't have to count the size of files in startup, it will always be 0 -
+    // see InMemoryStreamFileWriterFactory
+
+//    streamAdmin.getConfig("name").getLocation();
   }
 
   @Override
