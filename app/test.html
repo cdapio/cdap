@@ -17,33 +17,28 @@
   </header>
 
   <div class="container" ng-init="testObj={metric:'whatever'}">
+
+    <form class="form-horizontal" novalidate>
+
+        <div class="form-group">
+          <label class="col-xs-3 control-label">Metric</label>
+          <div class="col-xs-9">
+
+
+            <my-metric-picker
+              data-model="testObj.metric"
+            ></my-metric-picker>
+
+
+          </div>
+        </div>
+
+    </form>
+
     <div class="row">
-      <div class="col-xs-9">
-
-        <form class="form-horizontal" novalidate>
-
-            <div class="form-group">
-              <label class="col-xs-3 control-label">Metric</label>
-              <div class="col-xs-9">
-
-
-                <my-metric-picker
-                  data-model="testObj.metric"
-                ></my-metric-picker>
-
-
-              </div>
-            </div>
-
-        </form>
-
-      </div>
-      <div class="col-xs-3">
-
+      <div class="col-xs-9 col-xs-offset-3">
         <pre ng-bind="testObj | json"></pre>
-
       </div>
-
     </div>
 
   </div>

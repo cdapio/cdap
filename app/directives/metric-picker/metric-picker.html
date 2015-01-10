@@ -15,7 +15,8 @@
       <input type="text" class="form-control"
         placeholder="Context"
         ng-model="metric.context"
-        ng-options="c for c in getContext($viewValue)"
+        ng-options="c for c in available.contexts"
+        data-watch-options="1"
         data-min-length="0"
         bs-typeahead />
     </div>
@@ -27,9 +28,12 @@
         <i class="fa fa-line-chart"></i>
       </span>
       <input type="text" class="form-control"
-        placeholder="Metric"
+        placeholder="Metric Name"
         ng-model="metric.name"
-       />
+        ng-options="m for m in available.metrics"
+        data-watch-options="1"
+        data-min-length="0"
+        bs-typeahead />
     </div>
   </div>
 
