@@ -20,21 +20,23 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
  * Metrics collection service for tests.
  */
 public class MockMetricsCollectionService implements MetricsCollectionService {
-  private final Table<String, String, Long> metrics = HashBasedTable.create();
+  private final Table<Map<String, String>, String, Long> metrics = HashBasedTable.create();
 
   @Override
-  public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
-    return new MockMetricsCollector(context);
+  public MetricsCollector getCollector(MetricsScope scope, Map<String, String> tags) {
+    return new MockMetricsCollector(tags);
   }
 
   @Override
@@ -78,14 +80,14 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
   }
 
   private class MockMetricsCollector implements MetricsCollector {
-    private final String context;
+    private final Map<String, String> context;
 
-    private MockMetricsCollector(String context) {
+    private MockMetricsCollector(Map<String, String> context) {
       this.context = context;
     }
 
     @Override
-    public void increment(String metricName, int value, String... tags) {
+    public void increment(String metricName, int value) {
       synchronized (MockMetricsCollectionService.this) {
         Long v = metrics.get(context, metricName);
         metrics.put(context, metricName, v == null ? value : v + value);
@@ -93,10 +95,20 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     }
 
     @Override
-    public void gauge(String metricName, long value, String... tags) {
+    public void gauge(String metricName, long value) {
       synchronized (MockMetricsCollectionService.this) {
         metrics.put(context, metricName, value);
       }
+    }
+
+    @Override
+    public MetricsCollector childCollector(Map<String, String> tags) {
+      return new MockMetricsCollector(ImmutableMap.<String, String>builder().putAll(context).putAll(tags).build());
+    }
+
+    @Override
+    public MetricsCollector childCollector(String tagName, String tagValue) {
+      return childCollector(ImmutableMap.of(tagName, tagValue));
     }
   }
 }

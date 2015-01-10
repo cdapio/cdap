@@ -28,7 +28,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -281,13 +281,10 @@ public class ServiceHttpServer extends AbstractIdleService {
     if (service == null) {
       return null;
     }
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
-    tags.put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));
-    tags.put(Constants.Metrics.Tag.PROGRAM, program.getName());
-    if (runId != null) {
-      tags.put(Constants.Metrics.Tag.RUN_ID, runId);
-    }
+    Map<String, String> tags = Maps.newHashMap(AbstractContext.getMetricsContext(program, runId));
+    // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
+    tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
+
     return service.getCollector(scope, tags);
   }
 
