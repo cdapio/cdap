@@ -34,16 +34,11 @@ angular.module(PKG.name + '.commons')
           }
         );
 
-        if(v) {
-          dSrc.request(
-            {
-              _cdapNsPath: u + '/metrics'
-            },
-            function (r) {
-              $scope.available.metrics = r;
-            }
-          );
-        }
+        $scope.available.metrics = v ? dSrc.request(
+          {
+            _cdapNsPath: u + '/metrics'
+          }
+        ) : [];
 
       }
       $scope.fetchAhead = fetchAhead;
@@ -63,8 +58,7 @@ angular.module(PKG.name + '.commons')
         }
 
 
-        // when the name changes...
-        if(newVal.name) {
+        if(newVal.context && newVal.name) {
           var m = [
             '/metrics',
             newVal.type,

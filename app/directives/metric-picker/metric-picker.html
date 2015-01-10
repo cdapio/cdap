@@ -30,6 +30,7 @@
       <input type="text" class="form-control"
         placeholder="Metric Name"
         ng-model="metric.name"
+        ng-disabled="!metric.context"
         ng-options="m for m in available.metrics"
         data-watch-options="1"
         data-min-length="0"
