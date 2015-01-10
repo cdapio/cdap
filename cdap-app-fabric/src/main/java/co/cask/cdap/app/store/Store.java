@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -335,4 +336,39 @@ public interface Store {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> listNamespaces();
+
+  /**
+   * Creates a new namespace.
+   *
+   * @param id {@link Id.Namespace} of the requested pipe
+   * @param pipeMetaData {@link PipeMeta} representing the pipe metadata
+   */
+  @Nullable
+  void createPipe(Id.Namespace id, PipeMeta pipeMetaData);
+
+  /**
+   * Retrieves a {@link PipeMeta} by id.
+   *
+   * @param id {@link Id.Namespace} of the requested pipe
+   * @param pipeId id of the requested pipe
+   * @return {@link PipeMeta} of the requested pipe
+   */
+  @Nullable
+  PipeMeta getPipe(Id.Namespace id, String pipeId);
+
+  /**
+   * Deletes a {@link PipeMeta} by id.
+   *
+   * @param id {@link Id.Namespace} of the pipe to delete
+   * @param pipeId of the pipe to delete
+   */
+  @Nullable
+  void deletePipe(Id.Namespace id, String pipeId);
+
+  /**
+   * Lists all existing pipes.
+   *
+   * @return a list of all existing pipes
+   */
+  List<PipeMeta> listPipes(Id.Namespace id);
 }

@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
@@ -60,6 +61,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_PIPE = "pipeMeta";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -272,5 +274,21 @@ public class AppMetadataStore extends MetadataStoreDataset {
       builder.add(name);
     }
     return builder.build();
+  }
+
+  public void createPipe(Id.Namespace namespace, PipeMeta metadata) {
+    write(new Key.Builder().add(TYPE_PIPE, namespace.getId(), metadata.getId()).build(), metadata);
+  }
+
+  public PipeMeta getPipe(Id.Namespace namespace, String pipeId) {
+    return get(new Key.Builder().add(TYPE_PIPE, namespace.getId(), pipeId).build(), PipeMeta.class);
+  }
+
+  public void deletePipe(Id.Namespace namespace, String pipeId) {
+    deleteAll(new Key.Builder().add(TYPE_PIPE, namespace.getId(), pipeId).build());
+  }
+
+  public List<PipeMeta> listPipes(Id.Namespace namespace) {
+    return list(new Key.Builder().add(TYPE_PIPE, namespace.getId()).build(), PipeMeta.class);
   }
 }

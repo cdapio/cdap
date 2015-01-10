@@ -50,6 +50,7 @@ import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -722,6 +723,54 @@ public class DefaultStore implements Store {
       @Override
       public List<NamespaceMeta> apply(AppMds input) throws Exception {
         return input.apps.listNamespaces();
+      }
+    });
+  }
+
+  @Nullable
+  @Override
+  public void createPipe(final Id.Namespace id, final PipeMeta pipeMetaData) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds input) throws Exception {
+        input.apps.createPipe(id, pipeMetaData);
+        return null;
+      }
+    });
+  }
+
+  @Nullable
+  @Override
+  public PipeMeta getPipe(final Id.Namespace id, final String pipeId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, PipeMeta>() {
+      @Override
+      public PipeMeta apply(AppMds input) throws Exception {
+        return input.apps.getPipe(id, pipeId);
+      }
+    });
+  }
+
+  @Nullable
+  @Override
+  public void deletePipe(final Id.Namespace id, final String pipeId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds input) throws Exception {
+        PipeMeta existing = input.apps.getPipe(id, pipeId);
+        if (existing != null) {
+          input.apps.deletePipe(id, pipeId);
+        }
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public List<PipeMeta> listPipes(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<PipeMeta>>() {
+      @Override
+      public List<PipeMeta> apply(AppMds input) throws Exception {
+        return input.apps.listPipes(id);
       }
     });
   }

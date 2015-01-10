@@ -28,13 +28,16 @@ import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -62,6 +65,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
+  private static final Type PIPE_META_LIST_TYPE = new TypeToken<List<PipeMeta>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
@@ -753,6 +757,89 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     code = getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
                                 APP_WITH_SERVICES_SERVICE_NAME, "stop");
     Assert.assertEquals(200, code);
+  }
+
+  @Test
+  public void testPipeLifeCycle() throws Exception {
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String pipeId = "pipeId";
+    PipeMeta pipeToPut = new PipeMeta(pipeId, "someStream", "someDataset", "someFrequency");
+
+    HttpResponse response = listPipes(namespaceId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    List<PipeMeta> list = readResponse(response, PIPE_META_LIST_TYPE);
+    Assert.assertTrue(list.isEmpty());
+
+    response = createPipe(namespaceId, pipeId, pipeToPut);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = listPipes(namespaceId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    list = readResponse(response, PIPE_META_LIST_TYPE);
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(pipeToPut, list.get(0));
+
+    response = getPipe(namespaceId, pipeId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    PipeMeta receivedPipeMeta = readResponse(response, PipeMeta.class);
+    Assert.assertEquals(pipeToPut, receivedPipeMeta);
+
+    response = deletePipe(namespaceId, pipeId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = getPipe(namespaceId, pipeId);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = listPipes(namespaceId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    list = readResponse(response, PIPE_META_LIST_TYPE);
+    Assert.assertTrue(list.isEmpty());
+  }
+
+  @Test
+  public void testNonexistentPipe() throws Exception {
+    String nonexistentPipeId = "nonexistentPipeId";
+    HttpResponse response = getPipe(Constants.DEFAULT_NAMESPACE, nonexistentPipeId);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = deletePipe(Constants.DEFAULT_NAMESPACE, nonexistentPipeId);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testMultiplePipes() throws Exception {
+    List<PipeMeta> pipesToPut = ImmutableList.of(new PipeMeta("pipeId", "someStream", "someDataset", "someFrequency"));
+    for (PipeMeta pipeMeta : pipesToPut) {
+      HttpResponse response = createPipe(Constants.DEFAULT_NAMESPACE, pipeMeta.getId(), pipeMeta);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    }
+
+    HttpResponse response = listPipes(Constants.DEFAULT_NAMESPACE);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    List<PipeMeta> retrievedPipes = readResponse(response, PIPE_META_LIST_TYPE);
+    Assert.assertEquals(pipesToPut.size(), retrievedPipes.size());
+    Assert.assertEquals(Sets.newHashSet(pipesToPut), Sets.newHashSet(retrievedPipes));
+  }
+
+  private HttpResponse createPipe(String namespaceId, String pipeId, PipeMeta pipeMeta) throws Exception {
+    return createPipe(namespaceId, pipeId, GSON.toJson(pipeMeta));
+  }
+
+  private HttpResponse createPipe(String namespaceId, String pipeId, String metadata) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/pipes/%s", Constants.Gateway.API_VERSION_3, namespaceId, pipeId), metadata);
+  }
+
+  private HttpResponse listPipes(String namespaceId) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/pipes", Constants.Gateway.API_VERSION_3, namespaceId));
+  }
+
+  private HttpResponse getPipe(String namespaceId, String pipeId) throws Exception {
+//    Preconditions.checkArgument(pipeId != null, "pipeId cannot be null");
+    return doGet(String.format("%s/namespaces/%s/pipes/%s", Constants.Gateway.API_VERSION_3, namespaceId, pipeId));
+  }
+
+  private HttpResponse deletePipe(String namespaceId, String pipeId) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/pipes/%s", Constants.Gateway.API_VERSION_3, namespaceId, pipeId));
   }
 
   @After
