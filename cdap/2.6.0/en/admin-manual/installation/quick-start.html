@@ -1,0 +1,533 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Installation Quick Start &mdash; Cask Data Application Platform 2.6.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.0 Documentation" href="../index.html" />
+    <link rel="up" title="Installation" href="index.html" />
+    <link rel="next" title="Installation and Configuration" href="installation.html" />
+    <link rel="prev" title="Installation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="Installation and Configuration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Installation"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Installation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-quick-start">
+<span id="id1"></span><h1>Installation Quick Start<a class="headerlink" href="#installation-quick-start" title="Permalink to this headline">¶</a></h1>
+<p>These instructions will take you from determining your deployment architecture, installing
+CDAP on a Hadoop cluster, through the running of a verification application in CDAP.</p>
+<div class="section" id="deployment">
+<h2>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Determine your deployment architecture, following <a class="reference internal" href="installation.html#deployment-architectures"><em>the suggested setups</em></a>.</li>
+<li>Check that you have <a class="reference internal" href="installation.html#install-hardware-requirements"><em>the required hardware</em></a>.</li>
+</ul>
+</div>
+<div class="section" id="software-prerequisites">
+<h2>Software Prerequisites<a class="headerlink" href="#software-prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>Install:</p>
+<ul class="simple">
+<li>Java runtime (<a class="reference external" href="http://www.java.com/en/download/manual.jsp">JDK or JRE version 1.6.xx or 1.7.xx</a>)
+on CDAP and Hadoop nodes. Set the JAVA_HOME environment variable. (<a class="reference internal" href="installation.html#install-java-runtime"><em>details</em></a>)</li>
+<li><a class="reference external" href="http://nodejs.org">Node.js</a> on CDAP nodes. (<a class="reference internal" href="installation.html#install-node-js"><em>details</em></a>)</li>
+<li>Hadoop and HBase (and possibly Hive) environment to run against. (<a class="reference internal" href="installation.html#install-hadoop-hbase"><em>details</em></a>)</li>
+<li>CDAP nodes require Hadoop and HBase client installation and configuration.
+<strong>Note:</strong> No Hadoop services need to be running.</li>
+</ul>
+</div>
+<div class="section" id="preparing-the-cluster">
+<h2>Preparing the Cluster<a class="headerlink" href="#preparing-the-cluster" title="Permalink to this headline">¶</a></h2>
+<p>To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level <tt class="docutils literal"><span class="pre">/cdap</span></tt> directory in HDFS, owned by an HDFS user <tt class="docutils literal"><span class="pre">yarn</span></tt>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo -u hdfs hadoop fs -mkdir /cdap &amp;&amp; hadoop fs -chown yarn /cdap</span>
+</pre></div>
+</div>
+<p>In the CDAP packages, the default HDFS namespace is <tt class="docutils literal"><span class="pre">/cdap</span></tt> and the default HDFS user is
+<tt class="docutils literal"><span class="pre">yarn</span></tt>. If you set up your cluster as above, no further changes are required.</p>
+<p>If your cluster is not setup with these defaults, you&#8217;ll need to
+<a class="reference internal" href="#quick-start-configuration"><em>edit your CDAP configuration</em></a> once you have downloaded and installed
+the packages, and prior to starting services.</p>
+<ul class="simple">
+<li>For a <em>Secure Hadoop</em> installation, see the discussion in <a class="reference internal" href="installation.html#install-secure-hadoop"><em>the installation guide</em></a>.</li>
+<li>The <tt class="docutils literal"><span class="pre">ulimit</span></tt> for the cluster should already be configured correctly for HBase; if not,
+details are covered in <a class="reference internal" href="installation.html#install-ulimit"><em>the installation guide</em></a>.</li>
+<li>The CDAP user should be able to write temp files; if not, see the instructions in
+<a class="reference internal" href="installation.html#install-tmp-files"><em>the installation guide</em></a>.</li>
+</ul>
+</div>
+<div class="section" id="configuring-package-managers">
+<h2>Configuring Package Managers<a class="headerlink" href="#configuring-package-managers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="rpm-using-yum">
+<h3>RPM using Yum<a class="headerlink" href="#rpm-using-yum" title="Permalink to this headline">¶</a></h3>
+<p>Download the Cask Yum repo definition file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo</span>
+</pre></div>
+</div>
+<p>This will create the file <tt class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></tt> with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[cask]</span>
+<span class="go">name=Cask Packages</span>
+<span class="go">baseurl=http://repository.cask.co/centos/6/x86_64/releases</span>
+<span class="go">enabled=1</span>
+<span class="go">gpgcheck=1</span>
+</pre></div>
+</div>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="debian-using-apt">
+<h3>Debian using APT<a class="headerlink" href="#debian-using-apt" title="Permalink to this headline">¶</a></h3>
+<p>Download the Cask Apt repo definition file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list</span>
+</pre></div>
+</div>
+<p>This will create the file <tt class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></tt> with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases</span>
+</pre></div>
+</div>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Install the CDAP packages by using one of these methods:</p>
+<p>Using Chef:</p>
+<blockquote>
+<div>If you are using <a class="reference external" href="https://www.getchef.com">Chef</a> to install CDAP, an <a class="reference external" href="https://supermarket.getchef.com/cookbooks/cdap">official
+cookbook is available</a>.</div></blockquote>
+<p>Using Yum:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app</span>
+</pre></div>
+</div>
+<p>Using APT:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo apt-get update</span>
+<span class="go">sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app</span>
+</pre></div>
+</div>
+<p>Do this on each of the boxes that are being used for the CDAP components; our
+recommended installation is a minimum of two boxes.</p>
+<p>This will download and install the latest version of CDAP with all of its dependencies.</p>
+<span class="target" id="quick-start-configuration"></span></div>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>CDAP packages utilize a central configuration, stored by default in <tt class="docutils literal"><span class="pre">/etc/cdap</span></tt>.</p>
+<p>When you install the CDAP base package, a default configuration is placed in
+<tt class="docutils literal"><span class="pre">/etc/cdap/conf.dist</span></tt>. The <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt> file is a placeholder
+where you can define your specific configuration for all CDAP components.
+The <tt class="docutils literal"><span class="pre">cdap-site.xml.example</span></tt> file shows the properties that usually require customization
+for all installations.</p>
+<p>To configure your particular installation, follow one of these two approaches:</p>
+<ol class="arabic">
+<li><p class="first">Modify <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>, using <tt class="docutils literal"><span class="pre">cdap-site.example</span></tt> as a model to follow.</p>
+<p>To make alterations to your configuration, create (or edit if existing) an <cite>.xml</cite> file
+<tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt> (see the <a class="reference internal" href="cdap-site.html#appendix-cdap-site-xml"><em>Appendix: cdap-site.xml</em></a>) and set appropriate
+properties.</p>
+</li>
+<li><p class="first">Add these properties to <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>; they are the minimal required configuration:</p>
+</li>
+</ol>
+<blockquote>
+<div><div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;configuration&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">    Cluster configurations</span>
+<span class="c">  --&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>root.namespace<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>cdap<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the root namespace<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!-- Substitute the zookeeper quorum for components here --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>zookeeper.quorum<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>FQDN1:2181,FQDN2:2181/${root.namespace}<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the zookeeper host:port<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>hdfs.namespace<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>/${root.namespace}<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Namespace for HDFS files<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>hdfs.user<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>yarn<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>User name for accessing HDFS<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">    Router configuration</span>
+<span class="c">  --&gt;</span>
+  <span class="c">&lt;!-- Substitue the IP to which Router service should bind to and listen on --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>LOCAL-ROUTER-IP<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the inet address on which the Router service will listen<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">    App Fabric configuration</span>
+<span class="c">  --&gt;</span>
+  <span class="c">&lt;!-- Substitute the IP to which App-Fabric service should bind to and listen on --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>app.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>LOCAL-APP-FABRIC-IP<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the inet address on which the app fabric service will listen<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">    Data Fabric configuration</span>
+<span class="c">  --&gt;</span>
+  <span class="c">&lt;!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>data.tx.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>LOCAL-DATA-FABRIC-IP<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the inet address on which the transaction service will listen<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!-- </span>
+<span class="c">    Kafka Configuration</span>
+<span class="c">  --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>kafka.log.dir<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>/data/cdap/kafka-logs<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Directory to store Kafka logs<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!-- Substitute with a list of all machines which will run the Kafka component --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>kafka.seed.brokers<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>FQDN1:9092,FQDN2:9092<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>List of Kafka brokers (comma separated)<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!-- Must be &lt;= the number of kafka.seed.brokers configured above.  For HA this should be at least 2. --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>kafka.default.replication.factor<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Kafka replication factor<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">    Watchdog Configuration</span>
+<span class="c">  --&gt;</span>
+  <span class="c">&lt;!-- Substitute the IP to which metrics-query service should bind to and listen on --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>metrics.query.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>LOCAL-WATCHDOG-IP<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the inet address on which the metrics-query service will listen<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">    Web-App Configuration</span>
+<span class="c">  --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>dashboard.bind.port<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>9999<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the port on which dashboard listens<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="c">&lt;!-- Substitute the IP of the Router service to which the UI should connect --&gt;</span>
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.server.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>ROUTER-HOST-IP<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the destination IP where Router service is running<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.server.port<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>10000<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Specifies the destination Port where Router service is listening<span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+<span class="nt">&lt;/configuration&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Depending on your installation, you may want to set these properties:</p>
+<ul>
+<li><p class="first">If you want to use <strong>an HDFS directory with a name</strong> other than <tt class="docutils literal"><span class="pre">/cdap</span></tt>:</p>
+<ol class="arabic">
+<li><p class="first">Create the HDFS directory you want to use, such as <tt class="docutils literal"><span class="pre">/myhadoop/myspace</span></tt>.</p>
+</li>
+<li><p class="first">Create an <tt class="docutils literal"><span class="pre">hdfs.namespace</span></tt> property for the HDFS directory in <tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>hdfs.namespace<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>/myhadoop/myspace<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>Default HDFS namespace<span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Ensure that the default HDFS user <tt class="docutils literal"><span class="pre">yarn</span></tt> owns that HDFS directory.</p>
+</li>
+</ol>
+</li>
+<li><p class="first">If you want to use <strong>a different HDFS user</strong> than <tt class="docutils literal"><span class="pre">yarn</span></tt>:</p>
+<ol class="arabic">
+<li><p class="first">Check that there is—and create if necessary—a corresponding user on all machines
+in the cluster on which YARN is running (typically, all of the machines).</p>
+</li>
+<li><p class="first">Create an <tt class="docutils literal"><span class="pre">hdfs.user</span></tt> property for that user in <tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>hdfs.user<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>my_username<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>User for accessing HDFS<span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check that the HDFS user owns the HDFS directory described by <tt class="docutils literal"><span class="pre">hdfs.namespace</span></tt> on all machines.</p>
+</li>
+</ol>
+</li>
+<li><p class="first">Set the <tt class="docutils literal"><span class="pre">router.server.address</span></tt> property in <tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt> to the <strong>hostname of the CDAP Router</strong>.
+The CDAP Console uses this property to connect to the Router:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>router.server.address<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>{router-host-name}<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-services">
+<h2>Starting Services<a class="headerlink" href="#starting-services" title="Permalink to this headline">¶</a></h2>
+<p>When all the packages and dependencies have been installed, and the configuration
+parameters set, you can start the services on each of the CDAP boxes by running the
+command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done</span>
+</pre></div>
+</div>
+<p>When all the services have completed starting, the CDAP Console should then be
+accessible through a browser at port <tt class="docutils literal"><span class="pre">9999</span></tt>.</p>
+<p>The URL will be <tt class="docutils literal"><span class="pre">http://&lt;host&gt;:9999</span></tt> where <tt class="docutils literal"><span class="pre">&lt;host&gt;</span></tt> is the IP address of
+one of the machines where you installed the packages and started the services.</p>
+</div>
+<div class="section" id="verification">
+<h2>Verification<a class="headerlink" href="#verification" title="Permalink to this headline">¶</a></h2>
+<p>To verify that the CDAP software is successfully installed and you are able to use your
+Hadoop cluster, run an example application.
+We provide in our SDK pre-built <tt class="docutils literal"><span class="pre">.JAR</span></tt> files for convenience.</p>
+<ol class="arabic simple">
+<li>Download and install the latest <a class="reference external" href="http://cask.co/downloads/#cdap">CDAP Software Development Kit (SDK)</a>.</li>
+<li>Extract to a folder (<tt class="docutils literal"><span class="pre">CDAP_HOME</span></tt>).</li>
+<li>Open a command prompt and navigate to <tt class="docutils literal"><span class="pre">CDAP_HOME/examples</span></tt>.</li>
+<li>Each example folder has a <tt class="docutils literal"><span class="pre">.jar</span></tt> file in its <tt class="docutils literal"><span class="pre">target</span></tt> directory.
+For verification, we will use the <tt class="docutils literal"><span class="pre">WordCount</span></tt> example.</li>
+<li>Open a web browser to the CDAP Console.
+It is located on port <tt class="docutils literal"><span class="pre">9999</span></tt> of the box where you installed CDAP.</li>
+<li>On the Console, click the button <em>Load an App</em>.</li>
+<li>Find the pre-built <tt class="docutils literal"><span class="pre">WordCount-&lt;cdap-version&gt;.jar</span></tt> using the dialog box to navigate to
+<tt class="docutils literal"><span class="pre">CDAP_HOME/examples/WordCount/target/</span></tt>, substituting your version for <em>&lt;cdap-version&gt;</em>.</li>
+<li>Once the application is deployed, instructions on running the example can be found at the
+<a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">WordCount example.</em></a></li>
+<li>You should be able to start the application, inject sentences, and retrieve results.</li>
+<li>When finished, you can stop and remove the application as described in the section on
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running" title="(in Cask Data Application Platform v2.6.0)"><em>Building and Running CDAP Applications</em></a>.</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.0</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+      <li><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+      <li><b><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+      <li><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Installation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Quick Start</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deployment">Deployment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#software-prerequisites">Software Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#preparing-the-cluster">Preparing the Cluster</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-package-managers">Configuring Package Managers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-services">Starting Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verification">Verification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html"> Installation and Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html"> Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitoring.html"> Monitoring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-site.html"> Appendix: cdap-site.xml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-security.html"> Appendix: cdap-security.xml</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Installation</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="Next Chapter">Installation and Configuration</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.0/cdap-docs-2.6.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Installation" href="index.html" />Installation</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Installation and Configuration" href="installation.html" />Installation and Configuration</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

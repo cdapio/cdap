@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Troubleshooting CDAP &mdash; Cask Data Application Platform 2.6.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.0 Documentation" href="../index.html" />
+    <link rel="up" title="Operations" href="index.html" />
+    <link rel="prev" title="CDAP Console" href="cdap-console.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-console.html" title="CDAP Console"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Operations</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="troubleshooting-cdap">
+<h1>Troubleshooting CDAP<a class="headerlink" href="#troubleshooting-cdap" title="Permalink to this headline">¶</a></h1>
+<p>Here are some selected examples of potential problems and possible resolutions.</p>
+<p class="rubric">Application Won&#8217;t Start</p>
+<p>Check HDFS write permissions. It should show an obvious exception in the YARN logs.</p>
+<p class="rubric">CDAP services on distributed CDAP don’t start up due to <tt class="docutils literal"><span class="pre">java.lang.ClassNotFoundException</span></tt></p>
+<p>If the CDAP services on a distributed CDAP environment wouldn&#8217;t start up, you will see errors
+in the logs. You will find in the logs for <tt class="docutils literal"><span class="pre">cdap-master</span></tt> under <tt class="docutils literal"><span class="pre">/var/log/cdap/master*.log</span></tt>
+errors such as these:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="s">&quot;Exception in thread &quot;</span><span class="n">main</span><span class="s">&quot; java.lang.NoClassDefFoundError:</span>
+<span class="s">  co.cask.cdap.data.runtime.main.MasterServiceMain</span>
+<span class="s">    at gnu.java.lang.MainThread.run(libgcj.so.10)&quot;</span>
+</pre></div>
+</div>
+<p>Things to check as possible solutions:</p>
+<ol class="arabic">
+<li><p class="first">Check if the JDK being used is <a class="reference internal" href="../installation/installation.html#install-java-runtime"><em>supported by CDAP</em></a>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">java</span> <span class="o">-</span><span class="n">version</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check if the CDAP user is using a correct version of the JDK:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">sudo</span> <span class="n">su</span> <span class="o">-</span> <span class="o">&lt;</span><span class="n">cdap</span><span class="o">-</span><span class="n">user</span><span class="o">&gt;</span>
+<span class="n">java</span> <span class="o">-</span><span class="n">version</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Run this command to see if all the CDAP classpaths are included:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">cdap</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">svc</span><span class="o">-</span><span class="n">master</span> <span class="n">classpath</span> <span class="o">|</span> <span class="n">tr</span> <span class="sc">&#39;:&#39;</span> <span class="sc">&#39;\n&#39;</span>
+</pre></div>
+</div>
+<p>Expect to see (where <em>&lt;version&gt;</em> is one of <tt class="docutils literal"><span class="pre">0.94</span></tt>, <tt class="docutils literal"><span class="pre">0.96</span></tt>, or <tt class="docutils literal"><span class="pre">0.98</span></tt>):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">cdap</span><span class="o">/</span><span class="n">conf</span><span class="o">/</span>
+<span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">cdap</span><span class="o">/</span><span class="n">hbase</span><span class="o">-</span><span class="n">compat</span><span class="o">-&lt;</span><span class="n">version</span><span class="o">&gt;/</span><span class="n">lib</span><span class="o">/*</span>
+<span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">cdap</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">conf</span><span class="o">/</span>
+<span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">cdap</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">lib</span><span class="o">/*</span>
+</pre></div>
+</div>
+<p>If the classpath is incorrect, review the <a class="reference internal" href="../installation/installation.html#install"><em>installation instructions</em></a> and correct.</p>
+</li>
+</ol>
+<p class="rubric">No Metrics/logs</p>
+<p>Make sure the <em>Kafka</em> server is running, and make sure local the logs directory is created and accessible.
+On the initial startup, the number of available seed brokers must be greater than or equal to the
+<em>Kafka</em> default replication factor.</p>
+<p>In a two-box setup with a replication factor of two, if one box fails to startup,
+metrics will not show up though the application will still run:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">[</span><span class="mi">2013</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">10</span> <span class="mi">20</span><span class="o">:</span><span class="mi">48</span><span class="o">:</span><span class="mi">46</span><span class="o">,</span><span class="mi">160</span><span class="o">]</span> <span class="n">ERROR</span> <span class="o">[</span><span class="n">KafkaApi</span><span class="o">-</span><span class="mi">1511941310</span><span class="o">]</span>
+      <span class="n">Error</span> <span class="k">while</span> <span class="n">retrieving</span> <span class="n">topic</span> <span class="nf">metadata</span> <span class="o">(</span><span class="n">kafka</span><span class="o">.</span><span class="na">server</span><span class="o">.</span><span class="na">KafkaApis</span><span class="o">)</span>
+      <span class="n">kafka</span><span class="o">.</span><span class="na">admin</span><span class="o">.</span><span class="na">AdministrationException</span><span class="o">:</span>
+             <span class="n">replication</span> <span class="nl">factor:</span> <span class="mi">2</span> <span class="n">larger</span> <span class="n">than</span> <span class="n">available</span> <span class="nl">brokers:</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p class="rubric">Only the First Flowlet Showing Activity</p>
+<p>Check that YARN has the capacity to start any of the remaining containers.</p>
+<p class="rubric">YARN Application Shows ACCEPTED For Some Time But Then Fails</p>
+<p>It&#8217;s possible that YARN can&#8217;t extract the .JARs to the <tt class="docutils literal"><span class="pre">/tmp</span></tt>,
+either due to a lack of disk space or permissions.</p>
+<p class="rubric">Log Saver Process Throws an Out-of-Memory Error, CDAP Console Shows Service Not OK</p>
+<p>The CDAP Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
+Errors when applications create excessive amounts of logs. One symptom of this is that the CDAP
+Console <em>Services Explorer</em> shows the <tt class="docutils literal"><span class="pre">log.saver</span></tt> Service as not OK, in addition to seeing error
+messages in the logs.</p>
+<p>By default, the Log Saver process is limited to 1GB of memory and the buffer keeps eight buckets of events
+in-memory. Each event bucket contains logs generated for one second. When it is expected that logs exceeding
+these settings will be produced—for example, greater than 1GB of logs generated in eight seconds—increase
+the memory allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has
+limited memory or containers available, you can choose instead to decrease the number of in-memory event buckets.
+However, decreasing the number of in-memory buckets may lead to out-of-order log events.</p>
+<p>In the <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>, you can:</p>
+<ul class="simple">
+<li>Increase the memory by adjusting <tt class="docutils literal"><span class="pre">log.saver.run.memory.megs</span></tt>;</li>
+<li>Increase the number of Log Saver instances using <tt class="docutils literal"><span class="pre">log.saver.num.instances</span></tt>; and</li>
+<li>Adjust the number of in-memory log buckets <tt class="docutils literal"><span class="pre">log.saver.event.max.inmemory.buckets</span></tt>.</li>
+</ul>
+<p>See the <tt class="docutils literal"><span class="pre">log.saver</span></tt> parameter section of the <a class="reference internal" href="../installation/cdap-site.html#appendix-cdap-site-xml"><em>Appendix cdap-site.xml</em></a> for a list of these configuration parameters and their
+values that can be adjusted.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.0</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+      <li><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+      <li><b><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+      <li><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Operations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="logging.html"> Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html"> Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime-arguments.html"> Runtime Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scaling-instances.html"> Scaling Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-console.html"> CDAP Console</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="cdap-console.html"
+                        title="Previous Chapter">CDAP Console</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.0/cdap-docs-2.6.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Console" href="cdap-console.html" />CDAP Console</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

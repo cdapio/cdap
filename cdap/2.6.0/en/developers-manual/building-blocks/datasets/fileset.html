@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>FileSet Dataset &mdash; Cask Data Application Platform 2.6.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.0 Documentation" href="../../index.html" />
+    <link rel="up" title="Datasets" href="index.html" />
+    <link rel="next" title="System and Custom Datasets" href="system-custom.html" />
+    <link rel="prev" title="Table API" href="table.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="system-custom.html" title="System and Custom Datasets"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="table.html" title="Table API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.0');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Building Blocks</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Datasets</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fileset-dataset">
+<span id="datasets-fileset"></span><h1>FileSet Dataset<a class="headerlink" href="#fileset-dataset" title="Permalink to this headline">¶</a></h1>
+<p>While realtime programs such as Flows normally require datasets with random access, batch-oriented
+programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
+The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
+CDAP&#8217;s abstraction for files is the FileSet Dataset.</p>
+<p>A FileSet represents a set of files on the file system that share certain properties:</p>
+<ul class="simple">
+<li>The location in the file system. All files in a FileSet are located relative to a
+base path, which is created when the FileSet is created. Deleting the
+FileSet will also delete this directory and all the files it contains.</li>
+<li>The Hadoop input and output format. They are given as dataset properties by their
+class names.  When a FileSet is used as the input or output of a MapReduce Job,
+these classes are injected into the Hadoop configuration by the CDAP runtime
+system.</li>
+<li>Additional properties of the specified input and output format. Each format has its own
+properties; consult the format&#8217;s documentation for details. For example, the
+<tt class="docutils literal"><span class="pre">TextOutputFormat</span></tt> allows configuring the field separator character by setting the
+property <tt class="docutils literal"><span class="pre">mapreduce.output.textoutputformat.separator</span></tt>. These properties are also set
+into the Hadoop configuration by the CDAP runtime system.</li>
+</ul>
+<p>These properties are configured at the time the FileSet is created. They apply to all
+files in the Dataset. Every time you use a FileSet in your application code, you can
+address either the entire Dataset or, by specifying its relative path as a runtime argument,
+an individual file in the Dataset. Specifying an individual file is only supported for
+MapReduce Jobs.</p>
+<p>Support for FileSet datasets is experimental in CDAP 2.6.0.</p>
+<div class="section" id="creating-a-fileset">
+<h2>Creating a FileSet<a class="headerlink" href="#creating-a-fileset" title="Permalink to this headline">¶</a></h2>
+<p>To create and use a FileSet in an application, you create it as part of the application configuration:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileSetExample</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="s">&quot;example/data/lines&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;:&quot;</span><span class="o">)</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>This creates a new FileSet named <em>lines</em> that uses <tt class="docutils literal"><span class="pre">TextInputFormat</span></tt> and <tt class="docutils literal"><span class="pre">TextOutputFormat.</span></tt>
+For the output format, we specify an additional property to make it use a colon as the separator
+between the key and the value in each line of output.</p>
+<p>Input and output formats must be implementations of the standard Apache Hadoop
+<a class="reference external" href="https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputFormat.html">InputFormat</a>
+and
+<a class="reference external" href="https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html">OutputFormat</a>
+specifications.</p>
+<p>If you do not specify a base path, the dataset framework will generate a path
+based on the dataset name. If you do not specify an input format, you will not be able
+to use this as the input for a MapReduce Job; similarly, for the output format.</p>
+</div>
+<div class="section" id="using-a-fileset-in-mapreduce">
+<h2>Using a FileSet in MapReduce<a class="headerlink" href="#using-a-fileset-in-mapreduce" title="Permalink to this headline">¶</a></h2>
+<p>Using a FileSet as input or output of a MapReduce Job is the same as for any other Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCount</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setInputDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">);</span>
+    <span class="n">setOutputDataset</span><span class="o">(</span><span class="s">&quot;counts&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+</pre></div>
+</div>
+<p>The MapReduce program only needs to specify the names of the input and output datasets.
+Whether they are FileSets or another type of Dataset is handled by the CDAP runtime system.</p>
+<p>However, you do need to tell CDAP the relative paths of the input and output files. Currently,
+this is only possible by specifying them as runtime arguments when the MapReduce Job is started:</p>
+<div class="highlight-java"><div class="highlight"><pre>curl -v &lt;base-url&gt;/apps/FileSetExample/mapreduce/WordCount/start -d &#39;{ \
+    &quot;dataset.lines.input.paths&quot;:  &quot;monday/my.txt&quot;, \
+    &quot;dataset.counts.output.path&quot;: &quot;monday/counts.out&quot; }&#39;
+</pre></div>
+</div>
+<p>Note that for the input you can specify multiple paths separated by commas:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="s">&quot;dataset.lines.input.paths&quot;</span><span class="o">:</span>  <span class="s">&quot;monday/lines.txt,tuesday/lines.txt&quot;</span>
+</pre></div>
+</div>
+<p>If you do not specify both the input and output paths, your MapReduce Job will fail with an error.</p>
+</div>
+<div class="section" id="using-a-fileset-programmatically">
+<h2>Using a FileSet Programmatically<a class="headerlink" href="#using-a-fileset-programmatically" title="Permalink to this headline">¶</a></h2>
+<p>You can interact with the files of a FileSet directly, through the <tt class="docutils literal"><span class="pre">Location</span></tt> abstraction
+of the file system. For example, a Service can use a FileSet by declaring it with a <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt>
+annotation, and then obtaining a <tt class="docutils literal"><span class="pre">Location</span></tt> for a relative path within the FileSet:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">)</span>
+<span class="kd">private</span> <span class="n">FileSet</span> <span class="n">lines</span><span class="o">;</span>
+
+<span class="nd">@GET</span>
+<span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;{fileSet}&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">read</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                 <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;path&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">filePath</span><span class="o">)</span> <span class="o">{</span>
+
+  <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="na">getLocation</span><span class="o">(</span><span class="n">filePath</span><span class="o">);</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">InputStream</span> <span class="n">inputStream</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">();</span>
+    <span class="o">...</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Unable to read path &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">filePath</span><span class="o">));</span>
+    <span class="k">return</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>See the Apache™ Twill®
+<a class="reference external" href="http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html">API documentation</a>
+for additional information about the <tt class="docutils literal"><span class="pre">Location</span></tt> abstraction.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.0</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+      <li><b><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+      <li><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+      <li><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Datasets</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="table.html"> Table API</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href=""> File Sets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system-custom.html"> System and Custom Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets-mapreduce.html"> Datasets and MapReduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-jobs.html"> MapReduce Jobs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="table.html"
+                        title="Previous Chapter">Table API</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="system-custom.html"
+                        title="Next Chapter">System and Custom Datasets</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.0/cdap-docs-2.6.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Table API" href="table.html" />Table API</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="System and Custom Datasets" href="system-custom.html" />System and Custom Datasets</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

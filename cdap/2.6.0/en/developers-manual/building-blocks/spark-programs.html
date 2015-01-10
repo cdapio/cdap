@@ -1,0 +1,433 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Spark Programs (Beta, Standalone CDAP only) &mdash; Cask Data Application Platform 2.6.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.0 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Procedures" href="procedures.html" />
+    <link rel="prev" title="Workflows" href="workflows.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="procedures.html" title="Procedures"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="workflows.html" title="Workflows"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="spark-programs-beta-standalone-cdap-only">
+<span id="spark"></span><h1>Spark Programs <em>(Beta, Standalone CDAP only)</em><a class="headerlink" href="#spark-programs-beta-standalone-cdap-only" title="Permalink to this headline">¶</a></h1>
+<p><strong>Apache Spark</strong> is used for in-memory cluster computing. It lets you load large sets of
+data into memory and query them repeatedly. This makes it suitable for both iterative and
+interactive programs. Similar to MapReduce, Spark can access <strong>Datasets</strong> as both input
+and output. Spark programs in CDAP can be written in either Java or Scala.</p>
+<p>In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP.</p>
+<p>To process data using Spark, specify <tt class="docutils literal"><span class="pre">addSpark()</span></tt> in your Application specification:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCountProgram</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>You must implement the <tt class="docutils literal"><span class="pre">Spark</span></tt> interface, which requires the
+implementation of three methods:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">configure()</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">onFinish()</span></tt></li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountProgram</span> <span class="kd">implements</span> <span class="n">Spark</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">SparkSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">SparkSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;WordCountProgram&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Calculates word frequency&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setMainClassName</span><span class="o">(</span><span class="s">&quot;com.example.WordCounter&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>The configure method is similar to the one found in Flows and
+MapReduce jobs. It defines the name, description, and the class containing the main method of a Spark program.</p>
+<p>The <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method is invoked at runtime, before the
+Spark program is executed. Because many Spark programs do not
+need this method, the <tt class="docutils literal"><span class="pre">AbstractSpark</span></tt> class provides a default
+implementation that does nothing:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">SparkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="c1">// Do nothing by default</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">onFinish()</span></tt> method is invoked after the Spark program has
+finished. You could perform cleanup or send a notification of program
+completion, if that was required. Like <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt>, since many Spark programs do not
+need this method, the <tt class="docutils literal"><span class="pre">AbstractSpark</span></tt> class also provides a default
+implementation for this method that does nothing:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">SparkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="c1">// Do nothing by default</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="cdap-sparkcontext">
+<h2>CDAP SparkContext<a class="headerlink" href="#cdap-sparkcontext" title="Permalink to this headline">¶</a></h2>
+<p>CDAP provides its own <tt class="docutils literal"><span class="pre">SparkContext</span></tt> which is needed to access <strong>Datasets</strong>.</p>
+<p>CDAP Spark programs must implement either <tt class="docutils literal"><span class="pre">JavaSparkProgram</span></tt> or <tt class="docutils literal"><span class="pre">ScalaSparkProgram</span></tt>,
+depending upon the language (Java or Scala) in which the program is written. You can also access the Spark&#8217;s
+<tt class="docutils literal"><span class="pre">SparkContext</span></tt> (for Scala programs) and <tt class="docutils literal"><span class="pre">JavaSparkContext</span></tt> (for Java programs) in your CDAP Spark program by calling
+<tt class="docutils literal"><span class="pre">getOriginalSparkContext()</span></tt> on CDAP <tt class="docutils literal"><span class="pre">SparkContext</span></tt>.</p>
+<ul>
+<li><p class="first">Java:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyJavaSparkProgram</span> <span class="kd">implements</span> <span class="n">JavaSparkProgram</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">SparkContext</span> <span class="n">sparkContext</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">JavaSparkContext</span> <span class="n">originalSparkContext</span> <span class="o">=</span> <span class="n">sparkContext</span><span class="o">.</span><span class="na">originalSparkContext</span><span class="o">();</span>
+      <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Scala:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">class</span> <span class="nc">MyScalaSparkProgram</span> <span class="kd">implements</span> <span class="n">ScalaSparkProgram</span> <span class="o">{</span>
+  <span class="n">override</span> <span class="n">def</span> <span class="nf">run</span><span class="o">(</span><span class="nl">sparkContext:</span> <span class="n">SparkContext</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">val</span> <span class="n">originalSparkContext</span> <span class="o">=</span> <span class="n">sparkContext</span><span class="o">.</span><span class="na">originalSparkContext</span><span class="o">();</span>
+      <span class="o">...</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="spark-and-datasets">
+<h2>Spark and Datasets<a class="headerlink" href="#spark-and-datasets" title="Permalink to this headline">¶</a></h2>
+<p>Spark programs in CDAP can directly access <strong>Dataset</strong> similar to the way a MapReduce or
+Procedure can. These programs can create Spark&#8217;s Resilient Distributed Dataset (RDD) by
+reading a Dataset and can also write RDD to a Dataset.</p>
+<ul>
+<li><p class="first">Creating an RDD from Dataset</p>
+<ul class="simple">
+<li>Java:</li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Purchase</span><span class="o">&gt;</span> <span class="n">purchaseRDD</span> <span class="o">=</span> <span class="n">sparkContext</span><span class="o">.</span><span class="na">readFromDataset</span><span class="o">(</span><span class="s">&quot;purchases&quot;</span><span class="o">,</span>
+                                                                          <span class="kt">byte</span><span class="o">[].</span><span class="na">class</span><span class="o">,</span>
+                                                                          <span class="n">Purchase</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Scala:</li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">val</span> <span class="nl">purchaseRDD:</span> <span class="n">RDD</span><span class="o">[(</span><span class="n">Array</span><span class="o">[</span><span class="n">Byte</span><span class="o">],</span> <span class="n">Purchase</span><span class="o">)]</span> <span class="o">=</span> <span class="n">sparkContext</span><span class="o">.</span><span class="na">readFromDataset</span><span class="o">(</span><span class="s">&quot;purchases&quot;</span><span class="o">,</span>
+                                                                              <span class="n">classOf</span><span class="o">[</span><span class="n">Array</span><span class="o">[</span><span class="n">Byte</span><span class="o">]],</span>
+                                                                              <span class="n">classOf</span><span class="o">[</span><span class="n">Purchase</span><span class="o">]);</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Writing an RDD to Dataset</p>
+<ul class="simple">
+<li>Java:</li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">sparkContext</span><span class="o">.</span><span class="na">writeToDataset</span><span class="o">(</span><span class="n">purchaseRDD</span><span class="o">,</span> <span class="s">&quot;purchases&quot;</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[].</span><span class="na">class</span><span class="o">,</span> <span class="n">Purchase</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Scala:</li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">sparkContext</span><span class="o">.</span><span class="na">writeToDataset</span><span class="o">(</span><span class="n">purchaseRDD</span><span class="o">,</span> <span class="s">&quot;purchases&quot;</span><span class="o">,</span> <span class="n">classOf</span><span class="o">[</span><span class="n">Array</span><span class="o">[</span><span class="n">Byte</span><span class="o">]],</span> <span class="n">classOf</span><span class="o">[</span><span class="n">Purchase</span><span class="o">])</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="spark-and-streams">
+<h2>Spark and Streams<a class="headerlink" href="#spark-and-streams" title="Permalink to this headline">¶</a></h2>
+<p>Spark programs in CDAP can directly access <strong>Streams</strong> similar to the way a MapReduce can.
+These programs can create Spark&#8217;s Resilient Distributed Dataset (RDD) by reading a Stream.
+You can read from a Stream using:</p>
+<ul>
+<li><p class="first">Java:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="n">backlinkURLs</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">readFromStream</span><span class="o">(</span><span class="s">&quot;backlinkURLStream&quot;</span><span class="o">,</span>
+                                                                  <span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Scala:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">val</span> <span class="nl">ratingsDataset:</span> <span class="n">NewHadoopRDD</span><span class="o">[</span><span class="n">Array</span><span class="o">[</span><span class="n">Byte</span><span class="o">],</span> <span class="n">Text</span><span class="o">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">readFromStream</span><span class="o">(</span><span class="s">&quot;ratingsStream&quot;</span><span class="o">,</span>
+                                                                         <span class="n">classOf</span><span class="o">[</span><span class="n">Text</span><span class="o">])</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>It’s possible to read parts of a Stream by specifying start and end timestamps using:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">sc</span><span class="o">.</span><span class="na">readFromStream</span><span class="o">(</span><span class="n">streamName</span><span class="o">,</span> <span class="n">vClass</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>You can read custom objects from a Stream by providing a decoderType extended from
+<a class="reference external" href="../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html">StreamEventDecoder</a>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">sc</span><span class="o">.</span><span class="na">readFromStream</span><span class="o">(</span><span class="n">streamName</span><span class="o">,</span> <span class="n">vClass</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span> <span class="n">decoderType</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-and-services">
+<h2>Spark and Services<a class="headerlink" href="#spark-and-services" title="Permalink to this headline">¶</a></h2>
+<p>Spark programs in CDAP, including worker nodes, can discover Services.
+Service Discovery by worker nodes ensures that if an endpoint changes during the execution of a Spark program,
+due to failure or another reason, worker nodes will see the most recent endpoint.</p>
+<p>Here is an example of service discovery in a Spark program:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">final</span> <span class="n">ServiceDiscoverer</span> <span class="n">discoveryServiceContext</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">getServiceDiscoverer</span><span class="o">();</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">ranksRaw</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;,</span>
+                                                        <span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">tuple</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">URL</span> <span class="n">serviceURL</span> <span class="o">=</span> <span class="n">discoveryServiceContext</span><span class="o">.</span><span class="na">getServiceURL</span><span class="o">(</span><span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">GOOGLE_TYPE_PR_SERVICE_NAME</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">serviceURL</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">&quot;Failed to discover service: &quot;</span> <span class="o">+</span>
+                                                             <span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">GOOGLE_TYPE_PR_SERVICE_NAME</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">URLConnection</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">new</span> <span class="n">URL</span><span class="o">(</span><span class="n">serviceURL</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;transform/%s&quot;</span><span class="o">,</span>
+                                                                  <span class="n">tuple</span><span class="o">.</span><span class="na">_2</span><span class="o">().</span><span class="na">toString</span><span class="o">())).</span><span class="na">openConnection</span><span class="o">();</span>
+      <span class="n">BufferedReader</span> <span class="n">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BufferedReader</span><span class="o">(</span><span class="k">new</span> <span class="n">InputStreamReader</span><span class="o">(</span><span class="n">connection</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">(),</span>
+                                                                       <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">));</span>
+      <span class="k">try</span> <span class="o">{</span>
+        <span class="n">String</span> <span class="n">pr</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="na">readLine</span><span class="o">();</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;(</span><span class="n">tuple</span><span class="o">.</span><span class="na">_1</span><span class="o">().</span><span class="na">getBytes</span><span class="o">(</span><span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">),</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">pr</span><span class="o">));</span>
+      <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="n">Closeables</span><span class="o">.</span><span class="na">closeQuietly</span><span class="o">(</span><span class="n">reader</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Failed to read the Stream for service {}&quot;</span><span class="o">,</span>
+                                                          <span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">GOOGLE_PR_SERVICE</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+      <span class="k">throw</span> <span class="n">Throwables</span><span class="o">.</span><span class="na">propagate</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-metrics">
+<h2>Spark Metrics<a class="headerlink" href="#spark-metrics" title="Permalink to this headline">¶</a></h2>
+<p>Spark programs in CDAP emit metrics, similar to a MapReduce program.
+CDAP collect system metrics emitted by Spark and display them in the <strong>CDAP Console</strong>.
+This helps in monitoring the progress and resources used by a Spark program.
+You can also emit custom user metrics from the worker nodes of your Spark Program:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">final</span> <span class="n">Metrics</span> <span class="n">sparkMetrics</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">getMetrics</span><span class="o">();</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">ranksRaw</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;,</span>
+                                                        <span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">tuple</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">tuple</span><span class="o">.</span><span class="na">_2</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sparkMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="n">MORE_THAN_100_KEY</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+</pre></div>
+</div>
+<p class="rubric">Examples of Using Spark Programs</p>
+<ul class="simple">
+<li>For an example of <strong>a Spark Program,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Spark K-Means</em></a>
+and <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Spark Page Rank</em></a> examples.</li>
+<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-spark-guide.html#cdap-spark-guide" title="(in Cask Data Application Platform v2.6.0)"><em>Iterative Data Processing with Apache Spark</em></a> gives another demonstration.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.0</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+      <li><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+      <li><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+      <li><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-jobs.html"> MapReduce Jobs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Spark Programs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-sparkcontext">CDAP SparkContext</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-datasets">Spark and Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-streams">Spark and Streams</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-services">Spark and Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-metrics">Spark Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="workflows.html"
+                        title="Previous Chapter">Workflows</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="procedures.html"
+                        title="Next Chapter">Procedures</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.0/cdap-docs-2.6.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Workflows" href="workflows.html" />Workflows</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Procedures" href="procedures.html" />Procedures</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

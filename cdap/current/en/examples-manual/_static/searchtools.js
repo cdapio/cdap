@@ -8,6 +8,9 @@
  * :license: BSD, see LICENSE for details.
  *
  */
+ 
+var manuals = {
+"developers-manual":"Developers’ Manual","admin-manual":"Administration Manual","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual", };
 
 
 /**
@@ -212,7 +215,7 @@ var Scorer = {
   // or matches in the last dotted part of the object name
   objPartialMatch: 6,
   // Additive scores depending on the priority of the object
-  objPrio: {0:  15,   // used to be importantResults
+  objPrio: {0: 15,   // used to be importantResults
             1:  5,   // used to be objectResults
             2: -5},  // used to be unimportantResults
   //  Used when the priority is not in the mapping.
@@ -427,6 +430,9 @@ var Search = {
           listItem.append($('<a/>').attr('href',
             item[0] + DOCUMENTATION_OPTIONS.FILE_SUFFIX +
             highlightstring + item[2]).html(item[1]));
+          var manual = (item[0].split('/')); //.split('-');
+          if ( manual.length > 1)
+            listItem.append(" <i>" + manuals[manual[0]] + "</i>");
         }
         if (item[3]) {
           listItem.append($('<span> (' + item[3] + ')</span>'));
@@ -462,7 +468,10 @@ var Search = {
         if (!resultCount)
           Search.status.text(_('Your search did not match any documents. Please make sure that all words are spelled correctly and that you\'ve selected enough categories.'));
         else
-            Search.status.text(_('Search finished, found %s page(s) matching the search query.').replace('%s', resultCount));
+          if (resultCount==1)
+            Search.status.text(_('Search finished, found one page matching the search query:'));
+          else
+            Search.status.text(_('Search finished, found %s pages matching the search query:').replace('%s', resultCount));
         Search.status.fadeIn(500);
       }
     }
