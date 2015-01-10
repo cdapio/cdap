@@ -18,12 +18,15 @@ package co.cask.cdap.data.stream.service;
 
 import com.google.common.util.concurrent.Service;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
  * Keep track of the sizes of the files written by one Stream handler.
  * The start up method of the implementations of this interface will process the size of data
  * already written to existing Streams using that Stream handler, and send an initial heartbeat
  * for each Stream..
  */
+@ThreadSafe
 public interface StreamWriterSizeManager extends Service {
 
   /**

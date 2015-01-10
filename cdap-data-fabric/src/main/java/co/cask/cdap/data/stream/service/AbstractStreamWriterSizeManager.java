@@ -70,6 +70,10 @@ public abstract class AbstractStreamWriterSizeManager extends AbstractIdleServic
 
   @Override
   public void received(String streamName, long dataSize) {
+    if (dataSize <= 0) {
+      return;
+    }
+
     boolean success;
     do {
       Long currentSize = absoluteSizes.get(streamName);
