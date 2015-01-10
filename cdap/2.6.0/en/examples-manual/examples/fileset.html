@@ -1,0 +1,555 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform WordCount Application" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>File Sets &mdash; Cask Data Application Platform 2.6.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.0 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Count Random" href="count-random.html" />
+    <link rel="prev" title="Word Count" href="word-count.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="count-random.html" title="Count Random"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="word-count.html" title="Word Count"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="file-sets">
+<span id="examples-fileset"></span><h1>File Sets<a class="headerlink" href="#file-sets" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) Example demonstrating the FileSet dataset and its use in Services and MapReduce.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This application demonstrates the use of the FileSet dataset:</p>
+<blockquote>
+<div><ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">lines</span></tt> FileSet is used as input for the <tt class="docutils literal"><span class="pre">WordCount</span></tt> MapReduce Job.</li>
+<li>The <tt class="docutils literal"><span class="pre">counts</span></tt> FileSet is used as output for the <tt class="docutils literal"><span class="pre">WordCount</span></tt> MapReduce Job.</li>
+<li>The <tt class="docutils literal"><span class="pre">FileSetService</span></tt> allows uploading and downloading files within these two file sets.</li>
+</ul>
+</div></blockquote>
+<p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
+<div class="section" id="the-filesetexample-application">
+<h3>The FileSetExample Application<a class="headerlink" href="#the-filesetexample-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><em>examples,</em></a> the components
+of the Application are tied together by the class <tt class="docutils literal"><span class="pre">FileSetExample</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileSetExample</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;FileSetExample&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Application with a MapReduce that uses a FileSet dataset&quot;</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="s">&quot;example/data/lines&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;counts&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;:&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">FileSetService</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCount</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">configure()</span></tt> method creates the two FileSet datasets used in this example. For the first
+FileSet—<tt class="docutils literal"><span class="pre">lines</span></tt>—we specify an explicit base path; for the second FileSet—<tt class="docutils literal"><span class="pre">counts</span></tt>—we let
+CDAP generate a path. Also, we configure the output format to use &#8221;:&#8221; as the separator for the
+<tt class="docutils literal"><span class="pre">counts</span></tt> FileSet.</p>
+<p>We will use the <tt class="docutils literal"><span class="pre">FileSetService</span></tt> to upload a file into the <tt class="docutils literal"><span class="pre">lines</span></tt> file set, then count the words in
+that file using MapReduce, and finally download the word counts from the <tt class="docutils literal"><span class="pre">counts</span></tt> file set.</p>
+</div>
+<div class="section" id="filesetservice">
+<h3>FileSetService<a class="headerlink" href="#filesetservice" title="Permalink to this headline">¶</a></h3>
+<p>This service has two handler methods: one to upload and another to download a file.
+It declares the datasets that it needs to access using <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt> annotations:</p>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">FileSet</span> <span class="n">lines</span><span class="o">;</span>
+
+    <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;counts&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">FileSet</span> <span class="n">counts</span><span class="o">;</span>
+</pre></div>
+</div>
+<p>Both methods of this Service have two arguments: the name of the FileSet and the relative path within that FileSet.
+For example, the <tt class="docutils literal"><span class="pre">read</span></tt> method returns the contents of the requested file for a GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="nd">@GET</span>
+    <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;{fileSet}&quot;</span><span class="o">)</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">read</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                     <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;fileSet&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">set</span><span class="o">,</span> <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;path&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">filePath</span><span class="o">)</span> <span class="o">{</span>
+
+      <span class="n">FileSet</span> <span class="n">fileSet</span><span class="o">;</span>
+      <span class="k">try</span> <span class="o">{</span>
+        <span class="n">fileSet</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getDataset</span><span class="o">(</span><span class="n">set</span><span class="o">);</span>
+      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">DatasetInstantiationException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Invalid file set name &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">set</span><span class="o">));</span>
+        <span class="k">return</span><span class="o">;</span>
+      <span class="o">}</span>
+
+      <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">fileSet</span><span class="o">.</span><span class="na">getLocation</span><span class="o">(</span><span class="n">filePath</span><span class="o">);</span>
+      <span class="n">ByteBuffer</span> <span class="n">content</span><span class="o">;</span>
+      <span class="k">try</span> <span class="o">{</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">wrap</span><span class="o">(</span><span class="n">ByteStreams</span><span class="o">.</span><span class="na">toByteArray</span><span class="o">(</span><span class="n">location</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">()));</span>
+      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Unable to read path &#39;%s&#39; in file set &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">filePath</span><span class="o">,</span> <span class="n">set</span><span class="o">));</span>
+        <span class="k">return</span><span class="o">;</span>
+      <span class="o">}</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="n">content</span><span class="o">,</span> <span class="s">&quot;application/octet-stream&quot;</span><span class="o">,</span> <span class="n">ImmutableMultimap</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span><span class="n">of</span><span class="o">());</span>
+    <span class="o">}</span>
+</pre></div>
+</div>
+<p>It uses the <tt class="docutils literal"><span class="pre">getLocation()</span></tt> of the file set to obtain the location representing the requested file,
+and then opens an input stream for that location. <tt class="docutils literal"><span class="pre">Location</span></tt> is a file system abstraction from
+<a class="reference external" href="http://twill.incubator.apache.org">Apache™ Twill®</a>; you can read more about its interface in the Apache Twill
+<a class="reference external" href="http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html">Javadocs</a>.</p>
+</div>
+</div>
+<div class="section" id="mapreduce-over-files">
+<h2>MapReduce over Files<a class="headerlink" href="#mapreduce-over-files" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">WordCount</span></tt> is a simple word counting implementation in MapReduce. It reads its input from the
+<tt class="docutils literal"><span class="pre">lines</span></tt> file set and writes its output to the <tt class="docutils literal"><span class="pre">counts</span></tt> FileSet:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCount</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setInputDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">);</span>
+    <span class="n">setOutputDataset</span><span class="o">(</span><span class="s">&quot;counts&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">Tokenizer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">Counter</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputKeyClass</span><span class="o">(</span><span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputValueClass</span><span class="o">(</span><span class="n">IntWritable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>It is worth mentioning that nothing in <tt class="docutils literal"><span class="pre">WordCount</span></tt> is specifically programmed to use a FileSet. Instead of
+<tt class="docutils literal"><span class="pre">lines</span></tt> and <tt class="docutils literal"><span class="pre">counts</span></tt>, it could use any other dataset as long as the key and value types match.</p>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>) or use the pre-built JAR file included in the CDAP SDK.</li>
+<li>Start CDAP, deploy and start the application and its component as described below in
+<a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.
+Make sure you start the Service as described below.</li>
+<li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
+</ul>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the
+example code that is running on it as an &#8220;Application&#8221;.</p>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+<p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Dragging and dropping the application JAR file (<tt class="docutils literal"><span class="pre">example/target/&lt;example&gt;-&lt;version&gt;.jar</span></tt>) onto the CDAP Console
+running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
+</li>
+<li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Command Line Interface (CLI):</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP Console by clicking on the
+Application&#8217;s name in the <em>Overview</em> page. (It can be reached by clicking on the
+<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
+of the Processes or Queries associated with the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Command Line Interface</em></a>.
+In each CDAP example, the CLI commands for that particular example are provided.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Name of the Application being called</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
+the Process and Query lists, if the application has either of them; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all Processes (Flows, MapReduce Jobs, Workflows,
+etc.), Queries, and Services are stopped—you can click the <em>Delete</em> button on the
+Application&#8217;s detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.</p>
+<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Java Client API</em></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.0)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="starting-the-service">
+<h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">FileSetExample</span></tt> in the Overview page of the CDAP Console to get to the
+Application detail page, click <tt class="docutils literal"><span class="pre">FileSetService</span></tt> in the <em>Service</em> pane to get to the
+Service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">FileSetExample.FileSetService</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">FileSetExample.FileSetService</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="uploading-and-downloading-files">
+<h3>Uploading and Downloading Files<a class="headerlink" href="#uploading-and-downloading-files" title="Permalink to this headline">¶</a></h3>
+<p>First we will upload a text file that we will use as input for the WordCount.
+This is done by making a REST call to the <tt class="docutils literal"><span class="pre">FileSetService</span></tt>.
+A sample text file is included in the <tt class="docutils literal"><span class="pre">resources</span></tt> directory of the example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \</span>
+<span class="go">  -XPUT --data-binary @resources/lines.txt</span>
+</pre></div>
+</div>
+<p>Now we start the MapReduce Job and configure it to use this file as its input, and to write its output to
+<tt class="docutils literal"><span class="pre">counts.out</span></tt>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -v localhost:10000/v2/apps/FileSetExample/mapreduce/WordCount/start \</span>
+<span class="go">  -d &#39;{ &quot;dataset.lines.input.paths&quot;: &quot;some.txt&quot;, \</span>
+<span class="go">        &quot;dataset.counts.output.path&quot;: &quot;counts.out&quot; }&#39;</span>
+</pre></div>
+</div>
+<p>Wait for the MapReduce Job to finish, and you can download the results of the computation:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000</span>
+</pre></div>
+</div>
+<p>Note that we have to download a part file that is under the output path that was specified for the MapReduce Job.
+This is because in MapReduce, every reducer writes a separate part file into the output directory.
+In this case, as we have fixed the number of reducers to one, there is only a single part file to download.</p>
+<p><strong>Note:</strong> A version of <tt class="docutils literal"><span class="pre">curl</span></tt> that works with Windows is included in the CDAP Standalone
+SDK in <tt class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></tt></p>
+</div>
+<div class="section" id="stopping-the-application">
+<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the step:</p>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">FileSetExample</span></tt> in the Overview page of the CDAP Console to get to the
+Application detail page, click <tt class="docutils literal"><span class="pre">FileSetService</span></tt> in the <em>Service</em> pane to get to the
+Service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">FileSetExample.FileSetService</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">FileSetExample.FileSetService</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.0</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+      <li><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+      <li><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+      <li><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+      <li><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">File Sets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mapreduce-over-files">MapReduce over Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="word-count.html"
+                        title="Previous Chapter">Word Count</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="count-random.html"
+                        title="Next Chapter">Count Random</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.0/cdap-docs-2.6.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Word Count" href="word-count.html" />Word Count</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Count Random" href="count-random.html" />Count Random</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
