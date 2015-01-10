@@ -25,15 +25,10 @@ import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,48 +36,27 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@link StreamWriterSizeManager} implementation for Streams written to files.
  */
-public class StreamFileWriterSizeManager extends AbstractIdleService implements StreamWriterSizeManager {
+public class StreamFileWriterSizeManager extends AbstractStreamWriterSizeManager {
   private static final Logger LOG = LoggerFactory.getLogger(StreamFileWriterSizeManager.class);
 
-  private static final int EXECUTOR_POOL_SIZE = 10;
-  private static final int HEARTBEAT_DELAY = 2;
-
   private final StreamMetaStore streamMetaStore;
-  private final HeartbeatPublisher heartbeatPublisher;
   private final StreamAdmin streamAdmin;
-  private final int instanceId;
-
-  // Note: Stores stream name to absolute size in bytes.
-  private final ConcurrentMap<String, Long> absoluteSizes;
-
-  private ListeningScheduledExecutorService scheduledExecutor;
 
   @Inject
   public StreamFileWriterSizeManager(StreamMetaStore streamMetaStore, HeartbeatPublisher heartbeatPublisher,
                                      StreamAdmin streamAdmin,
                                      @Named(Constants.Stream.CONTAINER_INSTANCE_ID) int instanceId) {
+    super(heartbeatPublisher, instanceId);
     this.streamMetaStore = streamMetaStore;
-    this.heartbeatPublisher = heartbeatPublisher;
     this.streamAdmin = streamAdmin;
-    this.instanceId = instanceId;
-    this.absoluteSizes = Maps.newConcurrentMap();
   }
 
   @Override
-  protected void startUp() throws Exception {
-    heartbeatPublisher.startAndWait();
-
-    scheduledExecutor = MoreExecutors.listeningDecorator(
-      Executors.newScheduledThreadPool(EXECUTOR_POOL_SIZE,
-                                       Threads.createDaemonThreadFactory("stream-writer-size-manager")));
-
+  protected void init() throws Exception {
     List<ListenableFuture<StreamWriterHeartbeat>> futures = Lists.newArrayList();
     for (StreamSpecification streamSpecification : streamMetaStore.listStreams()) {
       final StreamConfig config = streamAdmin.getConfig(streamSpecification.getName());
@@ -93,65 +67,25 @@ public class StreamFileWriterSizeManager extends AbstractIdleService implements 
     Futures.allAsList(futures).get();
   }
 
-  @Override
-  protected void shutDown() throws Exception {
-    heartbeatPublisher.stopAndWait();
-    scheduledExecutor.shutdownNow();
-  }
-
-  @Override
-  public void received(String streamName, long dataSize) {
-    boolean success;
-    do {
-      Long currentSize = absoluteSizes.get(streamName);
-      long newSize = currentSize + dataSize;
-      success = absoluteSizes.replace(streamName, currentSize, newSize);
-    } while (!success);
-  }
-
-  private int convertToMB(long byteSize) {
-    return (int) (byteSize / 1000000);
-  }
-
   /**
    * Start counting the sizes of the files owned by this stream handler, related to the stream
    * which {@code config} is in parameter. The first step is to read the file system
    * to get the sizes of those files, and to send an initial heartbeat with the computed size.
    */
   private ListenableFuture<StreamWriterHeartbeat> initStreamSizeManagement(final StreamConfig config) {
-    return scheduledExecutor.submit(new Callable<StreamWriterHeartbeat>() {
+    return getScheduledExecutor().submit(new Callable<StreamWriterHeartbeat>() {
       @Override
       public StreamWriterHeartbeat call() throws Exception {
         long size = getStreamWriterFilesSize(config);
-        absoluteSizes.putIfAbsent(config.getName(), size);
+        getAbsoluteSizes().putIfAbsent(config.getName(), size);
 
-        LOG.debug("Sending initial heartbeat for Stream handler {} with base size {}B", instanceId, size);
-        return heartbeatPublisher.sendHeartbeat(
+        LOG.debug("Sending initial heartbeat for Stream handler {} with base size {}B", getInstanceId(), size);
+        return getHeartbeatPublisher().sendHeartbeat(
           new StreamWriterHeartbeat(System.currentTimeMillis(), convertToMB(size),
-                                    instanceId, StreamWriterHeartbeat.Type.INIT))
+                                    getInstanceId(), StreamWriterHeartbeat.Type.INIT))
           .get();
       }
     });
-  }
-
-  /**
-   * Schedule publishing heartbeats for the {@code streamName}. At fixed rate, a heartbeat will be send
-   * with containing the absolute size of the files own by this stream handler and concerning the stream
-   * {@code streamName}.
-   */
-  private void scheduleHeartbeats(final String streamName) {
-    scheduledExecutor.scheduleAtFixedRate(new Runnable() {
-      @Override
-      public void run() {
-        Long size = absoluteSizes.get(streamName);
-
-        // We don't want to block this executor, or make it fail if the get method on the future fails,
-        // hence we don't call the get method
-        heartbeatPublisher.sendHeartbeat(
-          new StreamWriterHeartbeat(System.currentTimeMillis(), convertToMB(size),
-                                    instanceId, StreamWriterHeartbeat.Type.REGULAR));
-      }
-    }, HEARTBEAT_DELAY, HEARTBEAT_DELAY, TimeUnit.SECONDS);
   }
 
   /**
@@ -177,7 +111,7 @@ public class StreamFileWriterSizeManager extends AbstractIdleService implements 
       for (Location partitionFile : partitionFiles) {
         if (!partitionFile.isDirectory()
           && StreamFileType.EVENT.isMatched(partitionFile.getName())
-          && StreamUtils.getWriterInstanceId(partitionFile.getName()) == instanceId) {
+          && StreamUtils.getWriterInstanceId(partitionFile.getName()) == getInstanceId()) {
           size += partitionFile.length();
         }
       }

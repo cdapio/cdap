@@ -38,6 +38,7 @@ public class StreamServiceModule extends PrivateModule {
     handlerBinder.addBinding().to(StreamFetchHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
 
+    // TODO change this binding once notifications are here
     bind(HeartbeatPublisher.class).to(NoopHeartbeatPublisher.class).in(Scopes.SINGLETON);
 
     bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
