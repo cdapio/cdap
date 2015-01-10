@@ -435,7 +435,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
     // some library CDAP depends on (Avro for example).
     job.setInputFormatClass(InputFormatWrapper.class);
-    InputFormatWrapper.setInputFormatClass(job, inputFormatClass.getCanonicalName());
+    InputFormatWrapper.setInputFormatClass(job, inputFormatClass.getName());
 
     Map<String, String> inputConfig = inputDataset.getInputFormatConfiguration();
     if (inputConfig != null) {
@@ -479,7 +479,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
     // some library CDAP depends on (Avro for example).
     job.setOutputFormatClass(OutputFormatWrapper.class);
-    OutputFormatWrapper.setOutputFormatClass(job, outputFormatClass.getCanonicalName());
+    OutputFormatWrapper.setOutputFormatClass(job, outputFormatClass.getName());
 
     Map<String, String> outputConfig = outputDataset.getOutputFormatConfiguration();
     if (outputConfig != null) {
