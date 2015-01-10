@@ -76,11 +76,17 @@ SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 CHECK_INCLUDES="false"
 TEST_INCLUDES_LOCAL="local"
+TEST_INCLUDES_REMOTE="remote"
 if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="remote"
+  TEST_INCLUDES="$TEST_INCLUDES_REMOTE"
 else
   TEST_INCLUDES="$3"
 fi
+
+RED='\033[0;31m'
+BOLD='\033[1m'
+NC='\033[0m'
+WARNING="${RED}${BOLD}WARNING:${NC}"
 
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
@@ -119,7 +125,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must specify source if used"
+  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo " "
 #   exit 1
 }
@@ -214,7 +220,19 @@ function make_zip() {
 }
 
 function make_zip_localized() {
-# This creates a named zip that unpacks to the Project Version, localized to english
+  _make_zip_localized $1
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function make_zip_localized_web() {
+  _make_zip_localized $1
+  # Add JSON file
+  build_json $SCRIPT_PATH/$BUILD/$PROJECT_VERSION
+  cd $SCRIPT_PATH/$BUILD
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function _make_zip_localized() {
   version
   ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
   cd $SCRIPT_PATH/$BUILD
@@ -222,7 +240,12 @@ function make_zip_localized() {
   mv $HTML $PROJECT_VERSION/en
   # Add a redirect index.html file
   echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
-  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+}
+
+function build_json() {
+  cd $SCRIPT_PATH/$BUILD/$SOURCE
+  JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
+  echo `python -c 'import conf; conf.print_json_versions();'` > $1/$JSON_FILE
 }
 
 function build_extras() {
@@ -258,7 +281,7 @@ function check_includes() {
       # Test included files
       test_includes
     else
-      echo "WARNING: pandoc is not installed; checked-in includes will be used instead."
+      echo -e "$WARNING pandoc is not installed; checked-in includes will be used instead."
     fi
   else
     echo "No includes to be checked."
@@ -274,11 +297,16 @@ function test_an_include() {
   BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
   SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
   EXAMPLE=$1
-  if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
-    echo "Tested $1; matches checked-in include file."
+  if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
+    if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
+      echo "Tested $1; matches checked-in include file."
+    else
+      echo -e "$WARNING Tested $1; does not match checked-in include file. Copying to source directory."
+      cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    fi
   else
-    echo "WARNING: Tested $1; does not match checked-in include file. Copying to source directory."
-    cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+    echo -e "$WARNING Not testing includes: using checked-in version..."
+    cp -f $SOURCE_INCLUDES_DIR/$1 $BUILD_INCLUDES_DIR/$1
   fi
 }
 
@@ -290,7 +318,7 @@ function build_includes() {
     mkdir $SOURCE_INCLUDES_DIR
     pandoc_includes $SOURCE_INCLUDES_DIR
   else
-    echo "WARNING: pandoc not installed; checked-in README includes will be used instead."
+    echo -e "$WARNING pandoc not installed; checked-in README includes will be used instead."
   fi
 }
 
@@ -330,17 +358,6 @@ function display_version() {
   echo "GIT_BRANCH: $GIT_BRANCH"
 }
 
-function test() {
-  echo "Test..."
-  echo "Version..."
-  display_version
-#   echo "Build all docs..."
-#   build
-#   echo "Build SDK..."
-#   build_sdk
-  echo "Test completed."
-}
-
 function rewrite() {
   # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
   cd $SCRIPT_PATH
@@ -373,7 +390,6 @@ function run_command() {
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           display_version; exit 1;;
-    test )              test; exit 1;;
     zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
   esac
