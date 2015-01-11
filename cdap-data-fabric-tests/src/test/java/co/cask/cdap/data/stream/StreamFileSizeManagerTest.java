@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.gateway;
+package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
-import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
+import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -32,18 +33,17 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
-import co.cask.cdap.gateway.handlers.log.MockLogReader;
+import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -52,20 +52,21 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -74,26 +75,23 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-// TODO: refactor this test. It is complete mess
-public abstract class GatewayTestBase {
-  private static final Gson GSON = new Gson();
-
+public class StreamFileSizeManagerTest {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
-  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
+  private static final byte[] TWO_BYTES = new byte[] { 'a', 'b' };
 
-  private static final String hostname = "127.0.0.1";
+  private static final String HOSTNAME = "127.0.0.1";
   private static int port;
   private static CConfiguration conf;
 
   private static Injector injector;
-  private static AppFabricServer appFabricServer;
   private static NettyRouter router;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+  private static MockHeartbeatPublisher heartbeatPublisher;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -107,8 +105,7 @@ public abstract class GatewayTestBase {
     }
     tmpFolder.create();
     conf = CConfiguration.create();
-    conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.set(Constants.Router.ADDRESS, hostname);
+    conf.set(Constants.Router.ADDRESS, HOSTNAME);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = startGateway(conf);
@@ -147,13 +144,7 @@ public abstract class GatewayTestBase {
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
-          // It's a bit hacky to add it here. Need to refactor these
-          // bindings out as it overlaps with
-          // AppFabricServiceModule
-          bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-
-          MockMetricsCollectionService metricsCollectionService = new
-            MockMetricsCollectionService();
+          MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
           bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
           bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
 
@@ -162,9 +153,10 @@ public abstract class GatewayTestBase {
           bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
+
+          bind(HeartbeatPublisher.class).to(MockHeartbeatPublisher.class).in(Scopes.SINGLETON);
         }
-      })
-    );
+      }));
 
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
@@ -172,12 +164,11 @@ public abstract class GatewayTestBase {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
-    appFabricServer.startAndWait();
     metrics.startAndWait();
     streamHttpService.startAndWait();
+    heartbeatPublisher = (MockHeartbeatPublisher) injector.getInstance(HeartbeatPublisher.class);
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -192,7 +183,6 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
-    appFabricServer.stopAndWait();
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
     router.stopAndWait();
@@ -202,34 +192,63 @@ public abstract class GatewayTestBase {
     conf.clear();
   }
 
-  public static Injector getInjector() {
-    return injector;
+  private HttpURLConnection openURL(String location, HttpMethod method) throws IOException {
+    URL url = new URL(location);
+    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    urlConn.setRequestMethod(method.getName());
+    urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
+
+    return urlConn;
   }
 
-  public static int getPort() {
-    return port;
-  }
+  @Test
+  public void streamPublishesHeartbeatTest() throws Exception {
+    // Now, create the new stream.
+    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", HOSTNAME, port),
+                                        HttpMethod.PUT);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
 
-  public static Header getAuthHeader() {
-    return AUTH_HEADER;
-  }
-
-  public static URI getEndPoint(String path) throws URISyntaxException {
-    return new URI("http://" + hostname + ":" + port + path);
-  }
-
-  protected static void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
-    int trials = 0;
-    // it may take a while for workflow/mr to start...
-    while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v2/apps/%s/%s/%s/status",
-                                                                        appId, runnableType, runnableId));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
+    // Enqueue 10 entries
+    for (int i = 0; i < 10; ++i) {
+      urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", HOSTNAME, port), HttpMethod.POST);
+      urlConn.setDoOutput(true);
+      urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
+      urlConn.getOutputStream().write(TWO_BYTES);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+      urlConn.disconnect();
     }
-    Assert.assertTrue(trials < 20);
+
+    TimeUnit.SECONDS.sleep(Constants.Stream.HEARTBEAT_DELAY + 1);
+    StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
+    Assert.assertNotNull(heartbeat);
+    Assert.assertEquals(20, heartbeat.getAbsoluteDataSize());
+    Assert.assertEquals(StreamWriterHeartbeat.Type.REGULAR, heartbeat.getType());
+  }
+
+  private static final class MockHeartbeatPublisher extends AbstractIdleService implements HeartbeatPublisher {
+    private static final Logger LOG = LoggerFactory.getLogger(MockHeartbeatPublisher.class);
+    private StreamWriterHeartbeat heartbeat = null;
+
+    @Override
+    protected void startUp() throws Exception {
+      LOG.info("Starting Publisher.");
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      LOG.info("Stopping Publisher.");
+    }
+
+    @Override
+    public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) {
+      LOG.info("Received heartbeat {}", heartbeat);
+      this.heartbeat = heartbeat;
+      return Futures.immediateFuture(heartbeat);
+    }
+
+    public StreamWriterHeartbeat getHeartbeat() {
+      return heartbeat;
+    }
   }
 }

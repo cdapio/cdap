@@ -143,6 +143,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static StreamWriterSizeManager sizeManager;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -250,6 +251,7 @@ public class TestBase {
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeManager.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
           bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
+          expose(StreamWriterSizeManager.class);
           expose(StreamHandler.class);
         }
       },
@@ -284,6 +286,8 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
+    sizeManager = injector.getInstance(StreamWriterSizeManager.class);
+    sizeManager.startAndWait();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
     ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -341,6 +345,7 @@ public class TestBase {
 
   @AfterClass
   public static final void finish() {
+    sizeManager.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();

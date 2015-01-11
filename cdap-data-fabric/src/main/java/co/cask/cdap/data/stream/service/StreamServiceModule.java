@@ -40,6 +40,7 @@ public class StreamServiceModule extends PrivateModule {
 
     // TODO change this binding once notifications are here
     bind(HeartbeatPublisher.class).to(NoopHeartbeatPublisher.class).in(Scopes.SINGLETON);
+    expose(HeartbeatPublisher.class);
 
     bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);

@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractStreamWriterSizeManager extends AbstractIdleService implements StreamWriterSizeManager {
   private static final int EXECUTOR_POOL_SIZE = 10;
-  private static final int HEARTBEAT_DELAY = 2;
 
   private final HeartbeatPublisher heartbeatPublisher;
   private final int instanceId;
@@ -121,13 +120,8 @@ public abstract class AbstractStreamWriterSizeManager extends AbstractIdleServic
         // We don't want to block this executor, or make it fail if the get method on the future fails,
         // hence we don't call the get method
         heartbeatPublisher.sendHeartbeat(
-          new StreamWriterHeartbeat(System.currentTimeMillis(), convertToMB(size),
-                                    instanceId, StreamWriterHeartbeat.Type.REGULAR));
+          new StreamWriterHeartbeat(System.currentTimeMillis(), size, instanceId, StreamWriterHeartbeat.Type.REGULAR));
       }
-    }, HEARTBEAT_DELAY, HEARTBEAT_DELAY, TimeUnit.SECONDS);
-  }
-
-  protected int convertToMB(long byteSize) {
-    return (int) (byteSize / 1000000);
+    }, Constants.Stream.HEARTBEAT_DELAY, Constants.Stream.HEARTBEAT_DELAY, TimeUnit.SECONDS);
   }
 }

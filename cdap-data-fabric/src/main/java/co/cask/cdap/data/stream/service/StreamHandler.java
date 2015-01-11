@@ -104,7 +104,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        StreamAdmin streamAdmin, StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService, ExploreFacade exploreFacade,
                        StreamWriterSizeManager sizeManager) {
-    // TODO get a StreamWriterSizeManager here, started in the HttpService
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;

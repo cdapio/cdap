@@ -16,8 +16,10 @@
 
 package co.cask.cdap.data.stream.service.heartbeat;
 
+import com.google.common.base.Objects;
+
 /**
- * Heartbeat sent by a Stream writer containing the total size of its files.
+ * Heartbeat sent by a Stream writer containing the total size of its files, in bytes..
  */
 public class StreamWriterHeartbeat {
 
@@ -37,11 +39,11 @@ public class StreamWriterHeartbeat {
   }
 
   private final long timestamp;
-  private final int absoluteDataSize;
+  private final long absoluteDataSize;
   private final int writerID;
   private final Type type;
 
-  public StreamWriterHeartbeat(long timestamp, int absoluteDataSize, int writerID, Type type) {
+  public StreamWriterHeartbeat(long timestamp, long absoluteDataSize, int writerID, Type type) {
     this.timestamp = timestamp;
     this.absoluteDataSize = absoluteDataSize;
     this.writerID = writerID;
@@ -56,11 +58,21 @@ public class StreamWriterHeartbeat {
     return writerID;
   }
 
-  public int getAbsoluteDataSize() {
+  public long getAbsoluteDataSize() {
     return absoluteDataSize;
   }
 
   public Type getType() {
     return type;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(StreamWriterHeartbeat.class)
+      .add("timestamp", timestamp)
+      .add("absoluteDataSize", absoluteDataSize)
+      .add("writerID", writerID)
+      .add("type", type)
+      .toString();
   }
 }
