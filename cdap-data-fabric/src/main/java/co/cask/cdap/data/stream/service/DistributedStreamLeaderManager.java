@@ -47,8 +47,8 @@ import javax.annotation.Nullable;
 
 /**
  * Distributed implementation of the {@link StreamLeaderManager} that uses a {@link ResourceCoordinator} to
- * affect Streams fairly among Stream handlers. One Stream handler will be the leader of a collection of streams.
- * This ensures that not only one stream handler gets overloaded with this task.
+ * allocate Streams equally amongst Stream handlers. One Stream handler will be the leader of a collection of streams.
+ * This ensures that no one stream handler gets overloaded with this task.
  */
 public class DistributedStreamLeaderManager extends AbstractIdleService implements StreamLeaderManager {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamLeaderManager.class);
@@ -170,7 +170,7 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
   }
 
   /**
-   * Class that defines the bahavior of a leader of a collection of Streams.
+   * Class that defines the behavior of a leader of a collection of Streams.
    */
   private final class StreamsLeaderHandler extends ResourceHandler {
 
@@ -180,8 +180,8 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      // TODO use the names of the ParitionReplicas to retrieve the streams names and do something on them
-      // TODO here, we are in the master for all the streams represented by the partitions replicas. We need to do
+      // TODO Use the names of the ParitionReplicas to retrieve the streams names and do something on them.
+      // TODO Here, we are in the master for all the streams represented by the partitions replicas. We need to do
       // aggregation, etc.
     }
 

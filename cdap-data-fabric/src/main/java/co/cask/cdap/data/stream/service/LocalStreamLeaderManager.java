@@ -25,7 +25,7 @@ import org.apache.twill.discovery.Discoverable;
 
 /**
  * Local implementation of the {@link StreamLeaderManager}. Only one Stream handler can exist in local mode, hence
- * every stream is affected the same leader: that one Stream handler.
+ * every stream is allocated the same Stream handler as a leader.
  */
 public class LocalStreamLeaderManager extends AbstractIdleService implements StreamLeaderManager {
 

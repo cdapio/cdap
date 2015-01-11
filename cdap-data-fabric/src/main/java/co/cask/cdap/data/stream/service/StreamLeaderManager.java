@@ -21,8 +21,9 @@ import com.google.common.util.concurrent.Service;
 import org.apache.twill.discovery.Discoverable;
 
 /**
- * Manages Streams leaders. One Stream handler leader is affected to every Stream. The leader can perform any
- * global processing on the stream, like aggregating the size of the stream as given by each individual stream writers.
+ * Manages Streams leaders. One Stream handler leader is allocated to each Stream.
+ * The leader can perform any global processing on the stream, such as aggregating
+ * the size of the stream as given by each individual stream writers.
  * The {@link Service#start} method of this class affects a leader to all existing Streams at CDAP startup.
  */
 public interface StreamLeaderManager extends Service {
