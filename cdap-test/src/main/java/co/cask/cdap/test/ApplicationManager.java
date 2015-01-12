@@ -95,8 +95,8 @@ public interface ApplicationManager {
   StreamWriter getStreamWriter(String streamName);
 
   /**
-   * Gets an instance of {@link co.cask.cdap.api.data.DataSet} of the given dataset name.
-   * Operations on the returned {@link co.cask.cdap.api.data.DataSet} always performed synchronously,
+   * Gets an instance of {@link co.cask.cdap.api.dataset.Dataset} of the given dataset name.
+   * Operations on the returned {@link co.cask.cdap.api.dataset.Dataset} always performed synchronously,
    * i.e. no support for multi-operations transaction.
    * @param dataSetName Name of the dataset to retrieve.
    * @param <T> Type of the dataset.

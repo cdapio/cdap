@@ -67,6 +67,8 @@ you for the required credentials to acquire an access token from the CDAP instan
 the CLI will save it to ~/.cdap.accesstoken.<hostname> for later use and use it for the rest of
 the current CLI session.
 
+.. _cli-available-commands:
+
 Available Commands
 ==================
 
