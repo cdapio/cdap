@@ -26,7 +26,6 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
@@ -37,7 +36,6 @@ import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 import java.util.Map;
@@ -83,6 +81,16 @@ public class RemoteApplicationManager implements ApplicationManager {
       @Override
       public void stop() {
         stopProgram(flowId);
+      }
+
+      @Override
+      public boolean isRunning() {
+        try {
+          String status = programClient.getStatus(applicationId, ProgramType.FLOW, flowName);
+          return "RUNNING".equals(status);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
     };
   }
@@ -174,13 +182,13 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   @Deprecated
   public ProcedureManager startProcedure(final String procedureName) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   @Deprecated
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
