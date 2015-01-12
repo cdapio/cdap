@@ -1076,10 +1076,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * TODO: use name from path or data? consolidate? remove name from path?
    */
   @PUT
-  @Path("/pipes/{pipeId}")
+  @Path("/pipes")
   public void createPipe(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("pipeId") String pipeId) {     //TODO: handle IOException
+                         @PathParam("namespace-id") String namespaceId) {
     try {
       PipeMeta pipeMeta = parseBody(request, PipeMeta.class);
       store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);

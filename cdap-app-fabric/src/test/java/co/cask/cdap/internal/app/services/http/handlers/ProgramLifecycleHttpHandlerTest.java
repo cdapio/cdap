@@ -770,7 +770,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<PipeMeta> list = readResponse(response, PIPE_META_LIST_TYPE);
     Assert.assertTrue(list.isEmpty());
 
-    response = createPipe(namespaceId, pipeId, pipeToPut);
+    response = createPipe(namespaceId, pipeToPut);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = listPipes(namespaceId);
@@ -810,7 +810,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testMultiplePipes() throws Exception {
     List<PipeMeta> pipesToPut = ImmutableList.of(new PipeMeta("pipeId", "someStream", "someDataset", "someFrequency"));
     for (PipeMeta pipeMeta : pipesToPut) {
-      HttpResponse response = createPipe(Constants.DEFAULT_NAMESPACE, pipeMeta.getId(), pipeMeta);
+      HttpResponse response = createPipe(Constants.DEFAULT_NAMESPACE, pipeMeta);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
@@ -821,12 +821,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(Sets.newHashSet(pipesToPut), Sets.newHashSet(retrievedPipes));
   }
 
-  private HttpResponse createPipe(String namespaceId, String pipeId, PipeMeta pipeMeta) throws Exception {
-    return createPipe(namespaceId, pipeId, GSON.toJson(pipeMeta));
+  private HttpResponse createPipe(String namespaceId, PipeMeta pipeMeta) throws Exception {
+    return createPipe(namespaceId, GSON.toJson(pipeMeta));
   }
 
-  private HttpResponse createPipe(String namespaceId, String pipeId, String metadata) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/pipes/%s", Constants.Gateway.API_VERSION_3, namespaceId, pipeId), metadata);
+  private HttpResponse createPipe(String namespaceId, String metadata) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/pipes", Constants.Gateway.API_VERSION_3, namespaceId), metadata);
   }
 
   private HttpResponse listPipes(String namespaceId) throws Exception {

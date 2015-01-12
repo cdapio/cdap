@@ -343,7 +343,6 @@ public interface Store {
    * @param id {@link Id.Namespace} of the requested pipe
    * @param pipeMetaData {@link PipeMeta} representing the pipe metadata
    */
-  @Nullable
   void createPipe(Id.Namespace id, PipeMeta pipeMetaData);
 
   /**
@@ -362,7 +361,6 @@ public interface Store {
    * @param id {@link Id.Namespace} of the pipe to delete
    * @param pipeId of the pipe to delete
    */
-  @Nullable
   void deletePipe(Id.Namespace id, String pipeId);
 
   /**
