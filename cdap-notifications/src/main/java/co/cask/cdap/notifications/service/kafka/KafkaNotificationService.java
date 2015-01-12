@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -149,19 +149,19 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
 
   @Override
   public <N> ListenableFuture<N> publish(NotificationFeed feed, N notification)
-    throws NotificationException, NotificationFeedException {
+    throws NotificationException {
     return publish(feed, notification, notification.getClass());
   }
 
   @Override
   public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, final Type notificationType)
-    throws NotificationException, NotificationFeedException {
+    throws NotificationException {
     LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
     return publishingExecutor.submit(new Callable<N>() {
       @Override
       public N call() throws Exception {
         try {
-          KafkaMessage message = new KafkaMessage(KafkaNotificationUtils.buildKafkaMessageKey(feed),
+          KafkaMessage message = new KafkaMessage(KafkaNotificationUtils.getMessageKey(feed),
                                                   GSON.toJsonTree(notification, notificationType));
           ByteBuffer bb = KafkaMessageCodec.encode(message);
 
@@ -303,7 +303,7 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
           for (NotificationFeed feedForTopic : topicsToFeeds.get(topicPartition)) {
             // Find the NotificationFeed that the received notification - encoded in the message - belongs to
             if (!decodedMessage.getMessageKey().equals(
-              KafkaNotificationUtils.buildKafkaMessageKey(feedForTopic))) {
+              KafkaNotificationUtils.getMessageKey(feedForTopic))) {
               continue;
             }
 
@@ -323,7 +323,7 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
                 }
               } catch (JsonSyntaxException e) {
                 LOG.info("Could not decode Kafka message '{}' using Gson for handler {}. " +
-                           "Make sure that the getNotificationFeedType() method is correctly set.",
+                           "Make sure that the getNotificationFeedType method is correctly set.",
                          decodedMessage, handlerForFeed);
               }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,11 +25,12 @@ import co.cask.cdap.notifications.service.kafka.KafkaNotificationService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 
 /**
- *
+ * Guice modules to use the {@link NotificationService}.
  */
 public class NotificationServiceRuntimeModule extends RuntimeModule {
 
@@ -45,10 +46,11 @@ public class NotificationServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
         bind(KafkaNotificationService.class).in(Scopes.SINGLETON);
+        expose(NotificationService.class);
       }
 
       @Provides

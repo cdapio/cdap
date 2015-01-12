@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,21 +18,27 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -40,12 +46,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Http handler to access the service managing {@link NotificationFeed} objects.
+ * HTTP handler to access the service managing {@link NotificationFeed} objects.
  * These endpoints are only reachable internally.
  */
 @Path(Constants.Gateway.API_VERSION_3)
-public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
+public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedHttpHandler.class);
+
+  private static final Gson GSON = new Gson();
   private final NotificationFeedManager feedManager;
 
   @Inject
@@ -65,7 +73,9 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
           .setDescription(feed == null ? null : feed.getDescription())
           .build();
       } catch (IllegalArgumentException e) {
-        throw new NotificationFeedException(e);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("Could not create Notification Feed. %s", e.getMessage()));
+        return;
       }
       if (feedManager.createFeed(combinedFeed)) {
         responder.sendStatus(HttpResponseStatus.OK);
@@ -74,8 +84,8 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendStatus(HttpResponseStatus.CONFLICT);
       }
     } catch (NotificationFeedException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Could not create Notification Feed. %s", e.getMessage()));
+      LOG.error("Could not create notification feed.", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid json object provided in request body.");
     } catch (IOException e) {
@@ -136,6 +146,23 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            String.format("Could not check subscribe permission for Notification Feed. %s",
                                          e.getMessage()));
+    }
+  }
+
+  @Nullable
+  private <T> T parseBody(HttpRequest request, Class<T> type) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return null;
+    }
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      return GSON.fromJson(reader, type);
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
+      throw e;
+    } finally {
+      reader.close();
     }
   }
 }

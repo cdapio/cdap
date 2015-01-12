@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the {@link NotificationFeedManager} that connects to a remote feed manager service
- * through internal REST APIs.
+ * through internal RESTful APIs.
  */
 public class RemoteNotificationFeedManager implements NotificationFeedManager {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteNotificationFeedManager.class);
@@ -80,7 +80,6 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
 
   @Override
   public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
-
     HttpRequest request = HttpRequest.put(resolve(String.format("feeds/%s", feed.getId())))
       .withBody(GSON.toJson(feed)).build();
     HttpResponse response = execute(request);
@@ -96,7 +95,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
     HttpResponse response = execute(HttpRequest.delete(resolve(String.format("feeds/%s", feed.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(String.format("Notification feed %s does not exist.", feed.getId()));
+      throw new NotificationFeedNotFoundException(String.format("Notification feed %s was not found.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
     }
@@ -106,7 +105,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
     HttpResponse response = execute(HttpRequest.get(resolve(String.format("feeds/%s", feed.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(String.format("Notification feed %s does not exist.", feed.getId()));
+      throw new NotificationFeedNotFoundException(String.format("Notification feed %s was not found.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot get notification feed. Reason: " + getDetails(response));
     }
@@ -134,7 +133,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
 
   private URL resolve(String resource) throws NotificationFeedException {
     InetSocketAddress addr = getServiceAddress();
-    String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
+    String url = String.format("http://%s:%d%s/%s", addr.getHostName(), addr.getPort(),
                                Constants.Gateway.API_VERSION_3, resource);
     LOG.trace("Notification Feed Service URL = {}", url);
     try {

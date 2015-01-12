@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,10 +26,10 @@ public interface NotificationFeedManager {
   /**
    * Create a notification feed.
    *
-   * @param feed the feed to create.
-   * @return false if the {@code feed} already exists, true if it was created successfully.
-   * @throws NotificationFeedException if the feed has an incorrect structure,
-   * for example if it is missing a name, a namespace or a category.
+   * @param feed the feed to create
+   * @return {@code true} if the feed was created successfully; {@code false} if the {@code feed} already exists
+   * @throws NotificationFeedException if the feed has an incorrect structure;
+   * for example, if it is missing a name, a namespace or a category
    */
   boolean createFeed(NotificationFeed feed) throws NotificationFeedException;
 
@@ -37,25 +37,25 @@ public interface NotificationFeedManager {
    * Deletes the {@code feed} from the manager store. To determine if the feed exists,
    * the {@link NotificationFeed#getId} method is used.
    *
-   * @param feed the {@link NotificationFeed} to delete.
-   * @throws NotificationFeedNotFoundException if the feed does not exist.
+   * @param feed the {@link NotificationFeed} to delete
+   * @throws NotificationFeedNotFoundException if the feed does not exist
    */
   void deleteFeed(NotificationFeed feed) throws NotificationFeedException;
 
   /**
    * Get a {@link NotificationFeed} based on the {@code feed.getId()} method of the {@code feed} argument.
    *
-   * @param feed feed containing the feed Id of the feed to retrieve.
-   * @return {@link NotificationFeed} of the feed which ID is the same as {@code feed}.
-   * @throws NotificationFeedNotFoundException if the feed does not exist.
+   * @param feed feed containing the feed Id of the feed to retrieve
+   * @return {@link NotificationFeed} of the feed which ID is the same as {@code feed}
+   * @throws NotificationFeedNotFoundException if the feed does not exist
    */
   NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException;
 
   /**
    * List all the {@link NotificationFeed}s present in the manager store.
    *
-   * @return all the {@link NotificationFeed}s present in the manager store.
-   * @throws NotificationFeedException in case of unforeseen error.
+   * @return all the {@link NotificationFeed}s present in the manager store
+   * @throws NotificationFeedException in case of unforeseen error
    */
   List<NotificationFeed> listFeeds() throws NotificationFeedException;
 }
