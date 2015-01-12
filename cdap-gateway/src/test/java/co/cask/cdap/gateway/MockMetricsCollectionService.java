@@ -19,7 +19,12 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.metrics.process.MetricRecordsWrapper;
+import co.cask.cdap.metrics.transport.MetricType;
+import co.cask.cdap.metrics.transport.MetricValue;
+import co.cask.cdap.metrics.transport.MetricsRecord;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
@@ -32,7 +37,7 @@ import java.util.concurrent.Executor;
  * Metrics collection service for tests.
  */
 public class MockMetricsCollectionService implements MetricsCollectionService {
-  private final Table<Map<String, String>, String, Long> metrics = HashBasedTable.create();
+  private final Table<String, String, Long> metrics = HashBasedTable.create();
 
   @Override
   public MetricsCollector getCollector(MetricsScope scope, Map<String, String> tags) {
@@ -89,15 +94,25 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     @Override
     public void increment(String metricName, int value) {
       synchronized (MockMetricsCollectionService.this) {
-        Long v = metrics.get(context, metricName);
-        metrics.put(context, metricName, v == null ? value : v + value);
+        MetricValue mv = new MetricValue(context, metricName, System.currentTimeMillis(), value, MetricType.COUNTER);
+        MetricRecordsWrapper records = new MetricRecordsWrapper(ImmutableList.of(mv).iterator());
+        while (records.hasNext()) {
+          MetricsRecord record = records.next();
+          Long v = metrics.get(record.getContext(), metricName);
+          metrics.put(record.getContext(), metricName, v == null ? value : v + value);
+        }
       }
     }
 
     @Override
     public void gauge(String metricName, long value) {
       synchronized (MockMetricsCollectionService.this) {
-        metrics.put(context, metricName, value);
+        MetricValue mv = new MetricValue(context, metricName, System.currentTimeMillis(), value, MetricType.COUNTER);
+        MetricRecordsWrapper records = new MetricRecordsWrapper(ImmutableList.of(mv).iterator());
+        while (records.hasNext()) {
+          MetricsRecord record = records.next();
+          metrics.put(record.getContext(), metricName, value);
+        }
       }
     }
 

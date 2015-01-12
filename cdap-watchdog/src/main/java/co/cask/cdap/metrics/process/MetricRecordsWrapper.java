@@ -106,6 +106,10 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     // note: weird rule, but this is what we had before
     rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.DATASET), Constants.Metrics.Tag.DATASET));
 
+    // service, handler, method
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.HANDLER,
+                                        Constants.Metrics.Tag.METHOD)));
+
     Collections.reverse(rules);
 
     AGGREGATE_RULES = ImmutableList.copyOf(rules);
