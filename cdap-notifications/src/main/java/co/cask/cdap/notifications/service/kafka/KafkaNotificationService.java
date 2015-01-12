@@ -24,7 +24,6 @@ import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -149,8 +148,6 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
           try {
             preparer.send().get();
             return notification;
-          } catch (InterruptedException e) {
-            throw Throwables.propagate(e);
           } catch (ExecutionException e) {
             throw new NotificationException(e.getCause());
           }
