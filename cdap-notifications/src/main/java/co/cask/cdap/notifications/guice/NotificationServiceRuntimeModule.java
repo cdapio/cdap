@@ -21,13 +21,14 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
-import co.cask.cdap.notifications.service.kafka.KafkaNotificationService2;
+import co.cask.cdap.notifications.service.kafka.KafkaNotificationService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
 /**
@@ -50,7 +51,7 @@ public class NotificationServiceRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(KafkaNotificationService2.class).in(Scopes.SINGLETON);
+        bind(KafkaNotificationService.class).in(Scopes.SINGLETON);
         bind(InMemoryNotificationService.class)
           .annotatedWith(Names.named(Constants.Notification.KAFKA_DELEGATE_NOTIFICATION_SERVICE))
           .to(InMemoryNotificationService.class)
@@ -59,11 +60,12 @@ public class NotificationServiceRuntimeModule extends RuntimeModule {
       }
 
       @Provides
+      @Singleton
       @SuppressWarnings("unused")
-      private NotificationService notificationPublisher(CConfiguration cConf, Injector injector) {
+      private NotificationService provideNotificationService(CConfiguration cConf, Injector injector) {
         // TODO use that constant once we have more core systems
         String coreSystem = cConf.get(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
-        return injector.getInstance(KafkaNotificationService2.class);
+        return injector.getInstance(KafkaNotificationService.class);
       }
     };
   }

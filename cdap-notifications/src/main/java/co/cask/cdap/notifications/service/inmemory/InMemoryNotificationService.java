@@ -87,7 +87,7 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
   public <N> ListenableFuture<N> publish(NotificationFeed feed, N notification, Type notificationType)
     throws NotificationException {
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
-    synchronized(subscribers) {
+    synchronized (subscribers) {
       callers = ImmutableList.copyOf(callers);
     }
     for (NotificationCaller caller : callers) {
@@ -106,7 +106,7 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
    */
   public ListenableFuture<JsonElement> publish(NotificationFeed feed, JsonElement notificationJson) {
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
-    synchronized(subscribers) {
+    synchronized (subscribers) {
       callers = ImmutableList.copyOf(callers);
     }
     for (NotificationCaller caller : callers) {
