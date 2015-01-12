@@ -33,7 +33,7 @@ COMMON="_common"
 COMMON_SOURCE="$COMMON/_source"
 COMMON_CONF_PY="$COMMON/common_conf.py"
 COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
-COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index.rst"
+COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
 
 ARG_1="$1"
 ARG_2="$2"
@@ -114,7 +114,8 @@ function copy_html() {
 
 function build_docs_outer_level() {
   clean
-
+  version
+  
   # Copies placeholder file and renames it
   copy_source admin-manual      "Administration Manual"
   copy_source developers-manual "Developers’ Manual"
@@ -124,9 +125,8 @@ function build_docs_outer_level() {
   # Build outer-level docs
   cd $SCRIPT_PATH
   cp $COMMON_HIGHLEVEL_PY $BUILD/$SOURCE/conf.py
-  cp $COMMON_SOURCE/index.rst $BUILD/$SOURCE/
-  cp $COMMON_SOURCE/table-of-contents.rst $BUILD/$SOURCE/
-
+  cp $COMMON_SOURCE/*.rst $BUILD/$SOURCE/
+  
   if [ "x$1" == "x" ]; then
     sphinx-build -b html -d build/doctrees build/source build/html
   else

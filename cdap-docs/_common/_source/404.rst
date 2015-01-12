@@ -1,0 +1,107 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :description: Missing Page
+    :copyright: Copyright © 2015 Cask Data, Inc.
+
+:hide-relations: true
+:hide-global-toc: true
+:hide-nav: true
+:orphan:
+
+
+
+.. _404:
+
+==================================================
+Page Not Found (404 error message)
+==================================================
+
+Unfortunately, whatever you were looking for, we can't locate.
+
+Here's what we can offer in the way of help:
+
+
+.. rubric:: Perhaps you were trying to reach...
+
+.. |developers-manual| replace:: **Developers’ Manual**
+.. _developers-manual: developers-manual/index.html
+
+.. |admin-manual| replace:: **Administration Manual**
+.. _admin-manual: admin-manual/index.html
+
+.. |examples-manual| replace:: **Examples, Guides, and Tutorials**
+.. _examples-manual: examples-manual/index.html
+
+.. |reference-manual| replace:: **Reference Manual**
+.. _reference-manual: reference-manual/index.html
+
+.. |release-notes| replace:: **Release Notes**
+.. _release-notes: reference-manual/release-notes.html
+
+.. |glossary| replace:: **Glossary**
+.. _glossary: reference-manual/glossary.html
+
+.. |faq| replace:: **FAQ**
+.. _faq: reference-manual/faq.html
+
+- |developers-manual|_
+- |admin-manual|_ 
+- |examples-manual|_
+- |reference-manual|_
+- |release-notes|_ 
+- |glossary|_ 
+- |faq|_ 
+
+
+.. rubric:: Try the Homepage
+
+The **main page for the documentation:** :ref:`CDAP Documentation <documentation-index>`
+
+
+.. rubric:: Search
+
+Another option: use a search engine for this site to try and find it.
+
+The site has a **Quick Search**, located in the left sidebar and below.
+Each word is searched separately, unless you put them together with quotes:
+
+.. raw:: html
+
+  <form class="search" action="search.html" method="get">
+      <input type="hidden" name="check_keywords" value="yes">
+      <input type="hidden" name="area" value="default">
+      <input type="text" maxlength="256" size="40" name="q">
+      <input type="submit" value="Quick Search">
+    </form>
+
+Or, you can **search the site using Google:**
+
+.. raw:: html
+
+  <form action="http://www.google.com/search" name="searchbox" method="get" /> 
+    <input type="hidden" name="hl" value="en" /> 
+    <input type="hidden" name="ie" value="ISO-8859-1" /> 
+    <input type="hidden" name="sitesearch" value="docs.cask.co/cdap/" /> 
+    <input maxlength="256" size="40" name="q" value="" /> 
+    <input type="submit" value="Search using Google" name="btnG" 
+      style="font-size:75%;" /> 
+  </form>
+
+
+.. rubric:: Contact Us
+
+Post a message at either the two CDAP groups:
+
+- `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
+
+- `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
+
+We also have a `JIRA for filing issues. <https://issues.cask.co/browse/CDAP>`__
+
+
+
+.. |(TM)| unicode:: U+2122 .. trademark sign
+   :ltrim:
+
+.. |(R)| unicode:: U+00AE .. registered trademark sign
+   :ltrim:
