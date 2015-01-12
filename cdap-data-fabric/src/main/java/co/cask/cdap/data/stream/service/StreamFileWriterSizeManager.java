@@ -106,7 +106,11 @@ public class StreamFileWriterSizeManager extends AbstractStreamWriterSizeManager
         continue;
       }
 
-      // TODO add a note about TTL here
+      // Note: by analyzing the size of all the files written to the FS by one stream writer,
+      // we may also include data that has expired already, due to TTL. That is okay though,
+      // because the point of the system is to keep track of increments of data. This initial
+      // count is not meant to be accurate.
+
       List<Location> partitionFiles = location.list();
       for (Location partitionFile : partitionFiles) {
         if (!partitionFile.isDirectory()

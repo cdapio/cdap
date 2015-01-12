@@ -31,7 +31,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Common implementation of a {@link StreamWriterSizeManager}.
+ * Common implementation of a {@link StreamWriterSizeManager} that keeps the size of data ingested by one stream writer
+ * for all streams in memory.
  */
 public abstract class AbstractStreamWriterSizeManager extends AbstractIdleService implements StreamWriterSizeManager {
   private static final int EXECUTOR_POOL_SIZE = 10;

@@ -39,7 +39,6 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -67,8 +66,6 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -77,7 +74,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class StreamFileSizeManagerTest {
   private static final String API_KEY = "SampleTestApiKey";
-  private static final String CLUSTER = "SampleTestClusterName";
   private static final byte[] TWO_BYTES = new byte[] { 'a', 'b' };
 
   private static final String HOSTNAME = "127.0.0.1";
@@ -94,15 +90,8 @@ public class StreamFileSizeManagerTest {
   private static MockHeartbeatPublisher heartbeatPublisher;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  // Controls for test suite for whether to run BeforeClass/AfterClass
-  public static boolean runBefore = true;
-  public static boolean runAfter = true;
-
   @BeforeClass
   public static void beforeClass() throws IOException {
-    if (!runBefore) {
-      return;
-    }
     tmpFolder.create();
     conf = CConfiguration.create();
     conf.set(Constants.Router.ADDRESS, HOSTNAME);
@@ -113,16 +102,11 @@ public class StreamFileSizeManagerTest {
 
   @AfterClass
   public static void afterClass() {
-    if (!runAfter) {
-      return;
-    }
     stopGateway(conf);
     tmpFolder.delete();
   }
 
   public static Injector startGateway(final CConfiguration conf) {
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
     // Set up our Guice injections
     injector = Guice.createInjector(
       Modules.override(
@@ -226,6 +210,9 @@ public class StreamFileSizeManagerTest {
     Assert.assertEquals(StreamWriterHeartbeat.Type.REGULAR, heartbeat.getType());
   }
 
+  /**
+   * Mock heartbeat publisher that allows to do assertions on the hearbeats being published.
+   */
   private static final class MockHeartbeatPublisher extends AbstractIdleService implements HeartbeatPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(MockHeartbeatPublisher.class);
     private StreamWriterHeartbeat heartbeat = null;
