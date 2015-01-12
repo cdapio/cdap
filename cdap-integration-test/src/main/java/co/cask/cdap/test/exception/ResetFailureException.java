@@ -17,7 +17,7 @@
 package co.cask.cdap.test.exception;
 
 /**
- *
+ * Thrown when there was an error in resetting the CDAP instance.
  */
 public class ResetFailureException extends Exception {
 

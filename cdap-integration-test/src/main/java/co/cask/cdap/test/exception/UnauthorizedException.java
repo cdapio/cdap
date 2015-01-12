@@ -17,7 +17,7 @@
 package co.cask.cdap.test.exception;
 
 /**
- *
+ * Thrown when a user is not authorized to perform an operation.
  */
 public class UnauthorizedException extends Exception {
 

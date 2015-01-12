@@ -17,7 +17,7 @@
 package co.cask.cdap.test.exception;
 
 /**
- *
+ * Thrown when reset is not enabled for the CDAP instance.
  */
 public class ResetNotEnabledException extends Exception {
 
