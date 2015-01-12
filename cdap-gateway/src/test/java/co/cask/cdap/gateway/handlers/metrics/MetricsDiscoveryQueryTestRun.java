@@ -19,17 +19,22 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   @BeforeClass
-  public static void setup() throws InterruptedException {
+  public static void setup() throws Exception {
     setupMetrics();
   }
 
@@ -117,7 +122,9 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private static void setupMetrics() throws InterruptedException {
+  private static void setupMetrics() throws Exception {
+    HttpResponse response = doDelete("/v2/metrics");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     MetricsCollector collector =
       collectionService.getCollector(MetricsScope.USER,
                                      getFlowletContext("WordCount", "WordCounter", "splitter"));
@@ -151,6 +158,11 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
                                                getFlowletContext("WordCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
+
+    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.collector", "0");
+    collector.increment("aa", 1);
+    collector.increment("zz", 1);
+    collector.increment("ab", 1);
 
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);

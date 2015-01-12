@@ -7,7 +7,19 @@
     :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 #}
-{%- if display_toc %}
-  <h3><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }} {{ _('Table of Contents') }}</a></h3>
+{#
+    Code to hide table-of-contents on pages, by setting in the field list at the top
+:hide-local-toc: true
+#}
+{%- set hidelocaltoc = '' %}
+{%- set hidelocaltoc_key = 'hide-local-toc' %}
+{%- if meta is defined %}
+    {%- if hidelocaltoc_key in meta.viewkeys() %}
+      {%- set hidelocaltoc = meta.get(hidelocaltoc_key) %}
+    {%- endif %}
+{%- endif %}
+
+{%- if display_toc and not hidelocaltoc %}
+  <h3 class="localtoc"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }} {{ _('Table of Contents') }}</a></h3>
   {{ toc }}
 {%- endif %}

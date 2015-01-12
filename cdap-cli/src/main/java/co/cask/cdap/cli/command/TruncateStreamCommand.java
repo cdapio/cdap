@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -28,17 +29,18 @@ import java.io.PrintStream;
 /**
  * Truncates a stream.
  */
-public class TruncateStreamCommand implements Command {
+public class TruncateStreamCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
 
   @Inject
-  public TruncateStreamCommand(StreamClient streamClient) {
+  public TruncateStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.streamClient = streamClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String streamId = arguments.get(ArgumentName.STREAM.toString());
     streamClient.truncate(streamId);
     output.printf("Successfully truncated stream '%s'\n", streamId);
