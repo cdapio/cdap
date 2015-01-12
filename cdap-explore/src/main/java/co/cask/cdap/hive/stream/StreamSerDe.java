@@ -19,6 +19,7 @@ package co.cask.cdap.hive.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.format.ByteBufferRecordFormat;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
@@ -97,7 +98,7 @@ public class StreamSerDe implements SerDe {
       StreamAdmin streamAdmin = context.getStreamAdmin();
       StreamConfig streamConfig = streamAdmin.getConfig(streamName);
       FormatSpecification formatSpec = streamConfig.getFormat();
-      this.streamFormat = (ByteBufferRecordFormat) Class.forName(formatSpec.getFormatClass()).newInstance();
+      this.streamFormat = (ByteBufferRecordFormat) RecordFormats.create(formatSpec.getName());
       this.streamFormat.initialize(formatSpec);
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
