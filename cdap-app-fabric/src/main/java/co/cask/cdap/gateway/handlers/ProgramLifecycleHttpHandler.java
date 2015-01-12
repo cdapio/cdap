@@ -19,8 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -57,7 +55,6 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
-import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -1034,127 +1031,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception : ", throwable);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-
-  //TODO: improved docs
-  /**
-   * Retrieves a list of pipes
-   */
-  @GET
-  @Path("/pipes")
-  public void listPipes(HttpRequest request, HttpResponder responder,
-                       @PathParam("namespace-id") String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, store.listPipes(Id.Namespace.from(namespaceId)));
-  }
-
-  /**
-   * Retrieves a pipe
-   */
-  @GET
-  @Path("/pipes/{pipeId}")
-  public void getPipe(HttpRequest request, HttpResponder responder,
-                      @PathParam("namespace-id") String namespaceId,
-                      @PathParam("pipeId") String pipeId) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
-      return;
-    }
-    responder.sendJson(HttpResponseStatus.OK, pipeMeta);
-  }
-
-  /**
-   * Deletes a pipe
-   */
-  @DELETE
-  @Path("/pipes/{pipeId}")
-  public void deletePipe(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("pipeId") String pipeId) {
-    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
-      return;
-    }
-    store.deletePipe(Id.Namespace.from(namespaceId), pipeId);
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  /**
-   * Creates a pipe
-   */
-  @PUT
-  @Path("/pipes")
-  public void createPipe(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) {
-    try {
-      if (!namespaceExists(store, namespaceId)) {
-        String errorMessage = String.format("Create pipe failed - namespace '%s' does not exist.", namespaceId);
-        LOG.warn(errorMessage);
-        responder.sendString(HttpResponseStatus.NOT_FOUND, errorMessage);
-        return;
-      }
-
-      PipeMeta pipeMeta = parseBody(request, PipeMeta.class);
-      Preconditions.checkNotNull(pipeMeta, "Pipemeta is null");
-      Preconditions.checkNotNull(pipeMeta.getDatasetName(), "Pipemeta's datasetName is null");
-      Preconditions.checkNotNull(pipeMeta.getId(), "Pipemeta's id is null");
-      Preconditions.checkNotNull(pipeMeta.getStreamName(), "Pipemeta's streamName is null");
-
-      String pipeId = pipeMeta.getId();
-      PipeMeta existingPipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-      if (existingPipeMeta != null) {
-        String debugMessage = String.format("Existing pipe found while create: %s.%s", namespaceId, existingPipeMeta);
-        LOG.debug(debugMessage);
-        responder.sendString(HttpResponseStatus.OK, debugMessage);
-        return;
-      }
-
-      // create datasets
-      datasetFramework.addInstance(FileSet.class.getName(), pipeMeta.getDatasetName(), DatasetProperties.EMPTY);
-
-      // deploy App
-
-      // set schedule
-
-
-      store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (JsonSyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Invalid Pipe Json object provided in request body. %s", e.getMessage()));
-    } catch (Throwable throwable) {
-      String errorMessage = String.format("Create pipe failed: %s.", throwable);
-      LOG.error(errorMessage);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-  }
-
-  @POST
-  @Path("/pipes/{pipeId}/{action}")
-  public void startStopPipe(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("pipeId") String pipeId,
-                            @PathParam("action") String action) {
-    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
-      return;
-    }
-    if ("start".equals(action)) {
-      //start
-    } else if ("stop".equals(action)) {
-      //stop
-    } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Invalid pipe action: %s. Possible actions are: 'start', 'stop'.", action));
-    }
-  }
-
-  private boolean respondIfPipeNotFound(HttpResponder responder, String namespaceId, String pipeId) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
-      return true;
-    }
-    return false;
   }
 
   /**

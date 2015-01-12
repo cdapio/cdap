@@ -17,6 +17,8 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -38,7 +40,11 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -51,6 +57,7 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
@@ -66,6 +73,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -162,6 +170,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final PreferencesStore preferencesStore;
+  private final DatasetFramework datasetFramework;
+
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -169,7 +179,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore) {
+                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
+                                 DatasetFramework datasetFramework) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -183,6 +194,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
+    this.datasetFramework =
+      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**
@@ -282,6 +295,136 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception: ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+
+  //TODO: improved docs
+  /**
+   * Retrieves a list of pipes
+   */
+  @GET
+  @Path("/pipes")
+  public void listPipes(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId) {
+    responder.sendJson(HttpResponseStatus.OK, store.listPipes(Id.Namespace.from(namespaceId)));
+  }
+
+  /**
+   * Retrieves a pipe
+   */
+  @GET
+  @Path("/pipes/{pipeId}")
+  public void getPipe(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("pipeId") String pipeId) {
+    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+    if (pipeMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, pipeMeta);
+  }
+
+  /**
+   * Deletes a pipe
+   */
+  @DELETE
+  @Path("/pipes/{pipeId}")
+  public void deletePipe(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("pipeId") String pipeId) {
+    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
+      return;
+    }
+    store.deletePipe(Id.Namespace.from(namespaceId), pipeId);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
+   * Creates a pipe
+   */
+  @PUT
+  @Path("/pipes")
+  public void createPipe(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId) {
+    try {
+      if (!namespaceExists(store, namespaceId)) {
+        String errorMessage = String.format("Create pipe failed - namespace '%s' does not exist.", namespaceId);
+        LOG.warn(errorMessage);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, errorMessage);
+        return;
+      }
+
+      PipeMeta pipeMeta = parseBody(request, PipeMeta.class);
+      Preconditions.checkNotNull(pipeMeta, "Pipemeta is null");
+      Preconditions.checkNotNull(pipeMeta.getDatasetName(), "Pipemeta's datasetName is null");
+      Preconditions.checkNotNull(pipeMeta.getId(), "Pipemeta's id is null");
+      Preconditions.checkNotNull(pipeMeta.getStreamName(), "Pipemeta's streamName is null");
+
+      String pipeId = pipeMeta.getId();
+      PipeMeta existingPipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+      if (existingPipeMeta != null) {
+        String debugMessage = String.format("Existing pipe found while create: %s.%s", namespaceId, existingPipeMeta);
+        LOG.debug(debugMessage);
+        responder.sendString(HttpResponseStatus.OK, debugMessage);
+        return;
+      }
+
+      // create datasets
+      String datasetName = pipeMeta.getDatasetName();
+      if (!datasetFramework.hasInstance(datasetName)) {
+        datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
+      } else {
+        LOG.debug("Dataset instance {} already existed during create of pipe: {}", datasetName, pipeMeta);
+      }
+
+      // deploy App
+      String appId = "";
+      Location location = null;
+      deploy(namespaceId, appId, location);
+
+      // set schedule
+//      setSchedule();
+
+      // Write to mds
+      store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("Invalid Pipe Json object provided in request body. %s", e.getMessage()));
+    } catch (Throwable throwable) {
+      String errorMessage = String.format("Create pipe failed: %s.", throwable);
+      LOG.error(errorMessage);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+  }
+
+  @POST
+  @Path("/pipes/{pipeId}/{action}")
+  public void startStopPipe(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("pipeId") String pipeId,
+                            @PathParam("action") String action) {
+    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
+      return;
+    }
+    if ("start".equals(action)) {
+      //start
+    } else if ("stop".equals(action)) {
+      //stop
+    } else {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("Invalid pipe action: %s. Possible actions are: 'start', 'stop'.", action));
+    }
+  }
+
+  private boolean respondIfPipeNotFound(HttpResponder responder, String namespaceId, String pipeId) {
+    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+    if (pipeMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+      return true;
+    }
+    return false;
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
