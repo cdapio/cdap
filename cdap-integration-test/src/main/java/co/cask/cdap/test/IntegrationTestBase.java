@@ -199,9 +199,7 @@ public class IntegrationTestBase {
   private boolean isUserDataset(DatasetSpecification specification) {
     final DefaultDatasetNamespace systemDatasetNamespace = new DefaultDatasetNamespace(
       CConfiguration.create(), Namespace.SYSTEM);
-    // TODO: uncomment
-    // return !systemDatasetNamespace.contains(input.getName());
-    return systemDatasetNamespace.fromNamespaced(specification.getName()) == null;
+    return !systemDatasetNamespace.contains(specification.getName());
   }
 
   private void assertNoUserDatasets() throws Exception {
