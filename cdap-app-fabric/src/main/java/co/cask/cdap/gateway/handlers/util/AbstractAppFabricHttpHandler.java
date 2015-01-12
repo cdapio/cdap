@@ -27,6 +27,7 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpResponder;
@@ -314,6 +315,32 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       return true;
     }
     return false;
+  }
+
+  protected boolean namespaceExists(Store store, String namespace) {
+    boolean isValid = false;
+    if (namespace != null && !namespace.isEmpty()) {
+      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
+        isValid = true;
+      } else {
+        // null namespace found. check if this is default, and try to create it.
+        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
+        // time during the initialization of CDAP.
+        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
+          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
+                                                           .setId(Constants.DEFAULT_NAMESPACE)
+                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
+          if (existing != null) {
+            LOG.trace("Default namespace already exists.");
+          } else {
+            LOG.trace("Created default namespace.");
+          }
+          isValid = true;
+        }
+      }
+    }
+    return isValid;
   }
 
   /**

@@ -51,7 +51,6 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
@@ -288,7 +287,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
-    if (!namespaceExists(namespaceId)) {
+    if (!namespaceExists(store, namespaceId)) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));
@@ -365,32 +364,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn(e.getMessage(), e);
       throw new Exception(e.getMessage());
     }
-  }
-
-  private boolean namespaceExists(String namespace) {
-    boolean isValid = false;
-    if (namespace != null && !namespace.isEmpty()) {
-      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
-        isValid = true;
-      } else {
-        // null namespace found. check if this is default, and try to create it.
-        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
-        // time during the initialization of CDAP.
-        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
-          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
-                                                           .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
-                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
-          if (existing != null) {
-            LOG.trace("Default namespace already exists.");
-          } else {
-            LOG.trace("Created default namespace.");
-          }
-          isValid = true;
-        }
-      }
-    }
-    return isValid;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)

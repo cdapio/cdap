@@ -1062,9 +1062,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deletePipe(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("pipeId") String pipeId) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
       return;
     }
     store.deletePipe(Id.Namespace.from(namespaceId), pipeId);
@@ -1073,13 +1071,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Creates a pipe
-   * TODO: use name from path or data? consolidate? remove name from path?
    */
   @PUT
   @Path("/pipes")
   public void createPipe(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
     try {
+      if (!namespaceExists(store, namespaceId)) {
+        String errorMessage = String.format("Create pipe failed - namespace '%s' does not exist.", namespaceId);
+        LOG.warn(errorMessage);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, errorMessage);
+        return;
+      }
       PipeMeta pipeMeta = parseBody(request, PipeMeta.class);
       store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -1098,10 +1101,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("pipeId") String pipeId,
                             @PathParam("action") String action) {
-    //TODO: introduce a respondIfNotFound (returns true if responded & not found).
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
       return;
     }
     if ("start".equals(action)) {
@@ -1112,6 +1112,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("Invalid pipe action: %s. Possible actions are: 'start', 'stop'.", action));
     }
+  }
+
+  private boolean respondIfPipeNotFound(HttpResponder responder, String namespaceId, String pipeId) {
+    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+    if (pipeMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+      return true;
+    }
+    return false;
   }
 
   /**
