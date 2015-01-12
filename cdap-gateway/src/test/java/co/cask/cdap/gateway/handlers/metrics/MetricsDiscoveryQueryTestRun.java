@@ -19,14 +19,11 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -34,7 +31,6 @@ import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -159,7 +155,8 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.collector", "0");
+    collector = collectionService.getCollector(MetricsScope.USER,
+                                               getFlowletContext("WordCount", "WordCounter", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
