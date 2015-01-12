@@ -260,8 +260,9 @@ function(Components, Embeddables, HTTP, Util) {
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {
-
+				/*
 				86400: 'Last 24 Hours',
+				*/
 				3600: 'Last 1 Hour',
 				600: 'Last 10 Minutes',
 				60: 'Last 1 Minute'

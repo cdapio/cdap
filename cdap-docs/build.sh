@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -67,7 +67,7 @@ function usage() {
   echo ""
   echo "  with"
   echo "    source         Path to $PROJECT source, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must specify source if used"
+  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo ""
 }
 
@@ -81,6 +81,7 @@ function run_command() {
     licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
+    test )              test; exit 1;;
     * )                 usage; exit 1;;
   esac
 }
@@ -154,12 +155,14 @@ function build_all() {
   echo "Moving GitHub Docs."
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
+  bell
 }
 
 function build_docs() {
   build "docs"
   build_docs_outer_level
   build_zip $WEB
+  bell
 }
 
 function build_docs_javadocs() {
@@ -170,12 +173,18 @@ function build_docs_github() {
   build "build-github"
   build_docs_outer_level $GOOGLE_ANALYTICS_GITHUB
   build_zip $GITHUB
+  bell
 }
 
 function build_docs_web() {
   build "build-web"
   build_docs_outer_level $GOOGLE_ANALYTICS_WEB
-  build_zip $WEB
+  cd $SCRIPT_PATH
+  set_project_path
+  display_version
+  make_zip_localized_web $WEB
+  echo "Building zip completed."
+  bell
 }
 
 function build() {
@@ -216,6 +225,23 @@ function build_license_depends() {
 function print_version() {
   cd developers-manual
   ./build.sh version $ARG_2 $ARG_3
+}
+
+function bell() {
+  echo -e "\a"
+}
+
+
+function test() {
+#   echo "Test..."
+#   echo "Version..."
+#   display_version
+#   echo "Build all docs..."
+#   build
+#   echo "Build SDK..."
+#   build_sdk
+  build_json
+  echo "Test completed."
 }
 
 set_project_path

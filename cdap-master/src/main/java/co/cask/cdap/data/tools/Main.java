@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
@@ -171,6 +172,8 @@ public class Main {
     DatasetMetaTableUtil.setupDatasets(framework);
     // app metadata
     DefaultStore.setupDatasets(framework);
+    // config store
+    DefaultConfigStore.setupDatasets(framework);
     // logs metadata
     LogSaverTableUtil.setupDatasets(framework);
     // scheduler metadata

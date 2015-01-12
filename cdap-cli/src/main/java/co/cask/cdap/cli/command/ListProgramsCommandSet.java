@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.common.cli.Command;
@@ -31,15 +32,15 @@ import java.util.List;
 public class ListProgramsCommandSet extends CommandSet<Command> {
 
   @Inject
-  public ListProgramsCommandSet(ApplicationClient applicationClient) {
-    super(generateCommands(applicationClient));
+  public ListProgramsCommandSet(ApplicationClient applicationClient, CLIConfig cliConfig) {
+    super(generateCommands(applicationClient, cliConfig));
   }
 
-  private static List<Command> generateCommands(ApplicationClient applicationClient) {
+  private static List<Command> generateCommands(ApplicationClient applicationClient, CLIConfig cliConfig) {
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.getProgramType() != null && elementType.getProgramType().isListable()) {
-        commands.add(new ListProgramsCommand(elementType.getProgramType(), applicationClient));
+        commands.add(new ListProgramsCommand(elementType.getProgramType(), applicationClient, cliConfig));
       }
     }
     return commands;

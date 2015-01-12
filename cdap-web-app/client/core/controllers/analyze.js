@@ -373,8 +373,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
       start = Math.floor(start / 1000);
 
       this.get('selected').forEach(function (item) {
-        urls.push(item.path + '?start=' + start + '&end=' + Math.floor(now/1000));
-//        urls.push(item.path + '?start=' + start + '&count=' + C.__timeRange);
+        urls.push(item.path + '?start=' + start + '&count=' + C.__timeRange);
       });
 
       function findMetric (path) {

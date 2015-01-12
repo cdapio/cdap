@@ -16,14 +16,15 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
 
 import java.io.PrintStream;
@@ -34,17 +35,18 @@ import javax.inject.Inject;
 /**
  * Lists all programs.
  */
-public class ListAllProgramsCommand implements Command {
+public class ListAllProgramsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
 
   @Inject
-  public ListAllProgramsCommand(ApplicationClient appClient) {
+  public ListAllProgramsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.appClient = appClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     Map<ProgramType, List<ProgramRecord>> allPrograms = appClient.listAllPrograms();
     List<ProgramRecord> allProgramsList = Lists.newArrayList();
     for (List<ProgramRecord> subList : allPrograms.values()) {

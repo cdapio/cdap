@@ -17,14 +17,15 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -35,17 +36,18 @@ import java.util.Map;
 /**
  * Shows detailed information about an application.
  */
-public class DescribeAppCommand implements Command {
+public class DescribeAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient) {
+  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.applicationClient = applicationClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String appId = arguments.get(ArgumentName.APP.toString());
     Map<ProgramType, List<ProgramRecord>> programs = applicationClient.listPrograms(appId);
     List<ProgramRecord> programsList = Lists.newArrayList();
