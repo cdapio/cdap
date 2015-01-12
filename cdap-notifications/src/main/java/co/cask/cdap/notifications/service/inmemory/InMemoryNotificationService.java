@@ -33,6 +33,8 @@ import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -48,6 +50,7 @@ import java.util.concurrent.Executor;
  */
 public class InMemoryNotificationService extends AbstractIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
+  private static final Gson GSON = new Gson();
 
   private final Multimap<NotificationFeed, NotificationCaller<?>> subscribers;
 
@@ -81,7 +84,7 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, Type notificationType)
+  public <N> ListenableFuture<N> publish(NotificationFeed feed, N notification, Type notificationType)
     throws NotificationException {
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
     synchronized(subscribers) {
@@ -90,7 +93,27 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
     for (NotificationCaller caller : callers) {
       caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
     }
-    return Futures.immediateFuture(null);
+    return Futures.immediateFuture(notification);
+  }
+
+  /**
+   * Publishes a notification as a {@link JsonElement} to a {@code feed}.
+   *
+   * @param feed feed to publish notification to
+   * @param notificationJson json element representing the notification to publish
+   * @return a future describing the state of publishing this notification to all subscribers.
+   * @see #publish(NotificationFeed, Object, Type)
+   */
+  public ListenableFuture<JsonElement> publish(NotificationFeed feed, JsonElement notificationJson) {
+    Collection<NotificationCaller<?>> callers = subscribers.get(feed);
+    synchronized(subscribers) {
+      callers = ImmutableList.copyOf(callers);
+    }
+    for (NotificationCaller caller : callers) {
+      Object notification = GSON.fromJson(notificationJson, caller.getNotificationFeedType());
+      caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
+    }
+    return Futures.immediateFuture(notificationJson);
   }
 
   @Override
@@ -102,7 +125,7 @@ public class InMemoryNotificationService extends AbstractIdleService implements 
   // The executor passed as parameter will be used to push the notifications published via the
   // publish methods to the handler.
   @Override
-  public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler, Executor executor)
+  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
     throws NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);

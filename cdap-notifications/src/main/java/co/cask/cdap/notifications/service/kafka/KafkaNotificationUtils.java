@@ -47,4 +47,14 @@ public class KafkaNotificationUtils {
   public static String getMessageKey(NotificationFeed feed) {
     return feed.getId();
   }
+
+  /**
+   * Return the {@link NotificationFeed} attached to a Kafka message containing a notification.
+   *
+   * @param messageKey key of a Kafka message containing a Notification
+   * @return the {@link NotificationFeed} attached to a Kafka message containing a notification
+   */
+  public static NotificationFeed getMessageFeed(String messageKey) {
+    return NotificationFeed.fromId(messageKey);
+  }
 }
