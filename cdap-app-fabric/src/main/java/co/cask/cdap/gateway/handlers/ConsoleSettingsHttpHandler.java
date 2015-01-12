@@ -43,8 +43,8 @@ import javax.ws.rs.Path;
  * User Settings HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/configuration/usersettings")
-public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(UserSettingsHttpHandler.class);
+public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
   private static final String NAMESPACE = Constants.DEFAULT_NAMESPACE;
   private static final String CONFIG_TYPE = "usersettings";
@@ -54,7 +54,7 @@ public class UserSettingsHttpHandler extends AuthenticatedHttpHandler {
   private final ConfigStore configStore;
 
   @Inject
-  public UserSettingsHttpHandler(Authenticator authenticator, ConfigStore configStore) {
+  public ConsoleSettingsHttpHandler(Authenticator authenticator, ConfigStore configStore) {
     super(authenticator);
     this.configStore = configStore;
   }

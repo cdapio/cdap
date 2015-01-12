@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.gateway.handlers.UserSettingsHttpHandler;
+import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -34,9 +34,9 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
- * Tests for {@link UserSettingsHttpHandler}
+ * Tests for {@link ConsoleSettingsHttpHandler}
  */
-public class UserSetttingsHttpHandlerTest extends AppFabricTestBase {
+public class ConsoleSettingsHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -52,16 +52,16 @@ public class UserSetttingsHttpHandlerTest extends AppFabricTestBase {
     propMap.put("k1", "43242!@#!@#");
     propMap.put("@##@!#", "v2131231!@#!");
     putProperty(propMap, 200);
-    emptyElement = getProperty(200).getAsJsonObject();
-    Assert.assertEquals(2, emptyElement.entrySet().size());
-    Assert.assertEquals(propMap, GSON.fromJson(emptyElement.get("property"), MAP_STRING_STRING_TYPE));
+    JsonObject jsonObject = getProperty(200).getAsJsonObject();
+    Assert.assertEquals(2, jsonObject.entrySet().size());
+    Assert.assertEquals(propMap, GSON.fromJson(jsonObject.get("property"), MAP_STRING_STRING_TYPE));
 
     //Delete the settings and verify that its empty
     propMap.clear();
     deleteProperty(200);
-    emptyElement = getProperty(200).getAsJsonObject();
-    Assert.assertEquals(2, emptyElement.entrySet().size());
-    Assert.assertEquals(propMap, GSON.fromJson(emptyElement.get("property"), MAP_STRING_STRING_TYPE));
+    jsonObject = getProperty(200).getAsJsonObject();
+    Assert.assertEquals(2, jsonObject.entrySet().size());
+    Assert.assertEquals(propMap, GSON.fromJson(jsonObject.get("property"), MAP_STRING_STRING_TYPE));
   }
 
   private void putProperty(Map<String, String> props, int expectedStatus) throws Exception {
