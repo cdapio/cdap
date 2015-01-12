@@ -31,16 +31,30 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
  * Builds {@link MetricsRecord}s out of {@link MetricValue}s to be stored to serve metric queries
  * (to support CDAP built-in metrics system REST API).
+ * <p/>
+ *
+ * It uses "raw" emitted metric value to build {@link MetricsRecord}s to store in the metrics persistence. These
+ * {@link MetricsRecord}s a built based on how metrics data is going to be queried. You can think of them as
+ * pre-aggregations persisted for fast querying.
+ *
+ * The {@link MetricsRecord}s are built based on defined {@link #AGGREGATE_RULES}.
  */
 public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(MetricRecordsWrapper.class);
 
-  private static final List<Rule> FANOUT_RULES;
+  // Rules by which to build MetricsRecord aggregations.
+  // Note that one rule may be fully "contain" another rule in which case we want only the former to produce
+  // MetricsRecord and the letter one to be skipped when building MetricsRecord. We say rule A "contains" rule B
+  // if first tags of rule A are exactly the same as all the tags of rule B.
+  // The way metrics query works currently, if we persist MetricsRecords built from both rules, we would
+  // be double counting at query time.
+  private static final List<Rule> AGGREGATE_RULES;
 
   static {
     // For better readability we define rules from shorter to more detailed. The current fanout logic
@@ -94,7 +108,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
 
     Collections.reverse(rules);
 
-    FANOUT_RULES = ImmutableList.copyOf(rules);
+    AGGREGATE_RULES = ImmutableList.copyOf(rules);
   }
 
   private final Iterator<MetricValue> rawIterator;
@@ -116,7 +130,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
         return false;
       }
 
-      fanout = fanout(rawIterator.next());
+      fanout = getAggregations(rawIterator.next());
     }
 
     current = fanout.iterator();
@@ -126,18 +140,23 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
   @Override
   public MetricsRecord next() {
     if (!hasNext()) {
-      return null;
+      throw new NoSuchElementException();
     }
 
     return current.next();
   }
 
-  private List<MetricsRecord> fanout(MetricValue metricValue) {
-    List<MetricsRecord> result = Lists.newLinkedList();
+  private List<MetricsRecord> getAggregations(MetricValue metricValue) {
+    // We go thru all aggregate rules and build MetricsRecords for the given metricValue.
+    // All tags defined by the rule must be present in the given metricValue for MetricsRecord to be built. Otherwise
+    // the rule is skipped.
+    // Also, we skip metric rule if it is fully "contained" in the other metric rule that already produced MetricRecord
+    // to avoid double aggregation. See AGGREGATE_RULES comments for more info.
 
+    List<MetricsRecord> result = Lists.newLinkedList();
     List<String> rulesUsed = Lists.newLinkedList();
 
-    for (Rule rule : FANOUT_RULES) {
+    for (Rule rule : AGGREGATE_RULES) {
       if (!contains(rulesUsed, rule.canonicalName)) {
         MetricsRecord record = getMetricsRecord(metricValue, rule);
         if (record != null) {
