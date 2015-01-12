@@ -19,6 +19,8 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -35,7 +37,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -153,6 +159,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Scheduler scheduler;
 
   private final PreferencesStore preferencesStore;
+  private final DatasetFramework datasetFramework;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -200,7 +207,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler, PreferencesStore preferencesStore) {
+                                     Scheduler scheduler, PreferencesStore preferencesStore,
+                                     DatasetFramework datasetFramework) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -212,6 +220,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
+    this.datasetFramework =
+      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**
@@ -1083,15 +1093,39 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, errorMessage);
         return;
       }
+
       PipeMeta pipeMeta = parseBody(request, PipeMeta.class);
+      Preconditions.checkNotNull(pipeMeta, "Pipemeta is null");
+      Preconditions.checkNotNull(pipeMeta.getDatasetName(), "Pipemeta's datasetName is null");
+      Preconditions.checkNotNull(pipeMeta.getId(), "Pipemeta's id is null");
+      Preconditions.checkNotNull(pipeMeta.getStreamName(), "Pipemeta's streamName is null");
+
+      String pipeId = pipeMeta.getId();
+      PipeMeta existingPipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+      if (existingPipeMeta != null) {
+        String debugMessage = String.format("Existing pipe found while create: %s.%s", namespaceId, existingPipeMeta);
+        LOG.debug(debugMessage);
+        responder.sendString(HttpResponseStatus.OK, debugMessage);
+        return;
+      }
+
+      // create datasets
+      datasetFramework.addInstance(FileSet.class.getName(), pipeMeta.getDatasetName(), DatasetProperties.EMPTY);
+
+      // deploy App
+
+      // set schedule
+
+
       store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("Invalid Pipe Json object provided in request body. %s", e.getMessage()));
     } catch (Throwable throwable) {
-      LOG.error("Create pipe failed: {}.", throwable);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      String errorMessage = String.format("Create pipe failed: %s.", throwable);
+      LOG.error(errorMessage);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, errorMessage);
     }
   }
 
