@@ -1,23 +1,24 @@
 <div class="row">
 
-  <div class="col-xs-2">
-    <select class="form-control"
-      ng-model="metric.type"
-      ng-options="t for t in available.types"
-      ></select>
-  </div>
-
-  <div class="col-xs-5">
+  <div class="col-xs-7">
     <div class="input-group">
-      <span class="input-group-addon">
-        <i class="fa fa-level-down"></i>
-      </span>
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-default"
+          ng-model="metric.type"
+          ng-options="t for t in available.types"
+          data-container="body"
+          bs-select>
+            <strong ng-bind="metric.type"></strong>
+            <span class="caret"></span>
+        </button>
+      </div>
       <input type="text" class="form-control"
         placeholder="Context"
         ng-model="metric.context"
         ng-options="c for c in available.contexts"
         data-watch-options="1"
         data-min-length="0"
+        data-container="body"
         bs-typeahead />
     </div>
   </div>
@@ -34,6 +35,8 @@
         ng-options="m for m in available.metrics"
         data-watch-options="1"
         data-min-length="0"
+        data-container="body"
+        required
         bs-typeahead />
     </div>
   </div>

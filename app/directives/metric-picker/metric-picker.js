@@ -20,7 +20,7 @@ angular.module(PKG.name + '.commons')
       };
 
       function fetchAhead () {
-        var v = $scope.metric.context.replace(/\.$/, ''),
+        var v = ($scope.metric.context||'').replace(/\.$/, ''),
             u = ['/metrics', $scope.metric.type, v].join('/');
 
         dSrc.request(
@@ -54,6 +54,7 @@ angular.module(PKG.name + '.commons')
 
 
         if(newVal.context !== oldVal.context) {
+          $scope.metric.name = '';
           fetchAhead();
         }
 
