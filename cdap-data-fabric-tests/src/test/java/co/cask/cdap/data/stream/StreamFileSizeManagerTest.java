@@ -18,8 +18,15 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
@@ -33,24 +40,19 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
-import co.cask.cdap.gateway.MockMetricsCollectionService;
-import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.security.guice.InMemorySecurityModule;
-import co.cask.cdap.test.internal.guice.AppFabricTestModule;
+import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.tephra.TransactionManager;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
@@ -63,10 +65,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,8 +80,6 @@ public class StreamFileSizeManagerTest {
   private static CConfiguration conf;
 
   private static Injector injector;
-  private static NettyRouter router;
-  private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
@@ -110,30 +107,20 @@ public class StreamFileSizeManagerTest {
     // Set up our Guice injections
     injector = Guice.createInjector(
       Modules.override(
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-          }
-
-          @Provides
-          @Named(Constants.Router.ADDRESS)
-          public final InetAddress providesHostname(CConfiguration cConf) {
-            return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
-                                    new InetSocketAddress("localhost", 0).getAddress());
-          }
-        },
-        new InMemorySecurityModule(),
-        new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getStandaloneModules()
+        new StreamServiceRuntimeModule().getStandaloneModules(),
+        new DataFabricModules().getInMemoryModules(),
+        new DataSetsModules().getLocalModule(),
+        new DataSetServiceModules().getInMemoryModule(),
+        new ConfigModule(conf, new Configuration()),
+        new AuthModule(), new DiscoveryRuntimeModule().getInMemoryModules(),
+        new LocationRuntimeModule().getInMemoryModules(),
+        new ExploreClientModule()
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
-          MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+          bind(MetricsCollectionService.class).to(MockMetricsCollectionService.class);
 
-          bind(StreamConsumerStateStoreFactory.class)
-            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+          bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
           bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
@@ -148,28 +135,17 @@ public class StreamFileSizeManagerTest {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
-    metrics.startAndWait();
     streamHttpService.startAndWait();
     heartbeatPublisher = (MockHeartbeatPublisher) injector.getInstance(HeartbeatPublisher.class);
 
-    // Restart handlers to check if they are resilient across restarts.
-    router = injector.getInstance(NettyRouter.class);
-    router.startAndWait();
-    Map<String, Integer> serviceMap = Maps.newHashMap();
-    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
-      serviceMap.put(entry.getValue(), entry.getKey());
-    }
-    port = serviceMap.get(Constants.Service.GATEWAY);
+    port = streamHttpService.getBindAddress().getPort();
 
     return injector;
   }
 
   public static void stopGateway(CConfiguration conf) {
-    metrics.stopAndWait();
     streamHttpService.stopAndWait();
-    router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
@@ -236,6 +212,35 @@ public class StreamFileSizeManagerTest {
 
     public StreamWriterHeartbeat getHeartbeat() {
       return heartbeat;
+    }
+  }
+
+  private static final class MockMetricsCollectionService extends AbstractIdleService
+    implements MetricsCollectionService {
+
+    @Override
+    protected void startUp() throws Exception {
+      // No-op
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      // No-op
+    }
+
+    @Override
+    public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
+      return new MetricsCollector() {
+        @Override
+        public void increment(String metricName, int value, String... tags) {
+          // No-op
+        }
+
+        @Override
+        public void gauge(String metricName, long value, String... tags) {
+          // No-op
+        }
+      };
     }
   }
 }
