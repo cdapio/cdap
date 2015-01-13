@@ -17,6 +17,8 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
+import co.cask.cdap.metrics.process.MetricRecordsWrapper;
+import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.test.RuntimeStats;
 
@@ -28,15 +30,17 @@ import java.util.Iterator;
 public final class TestMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
+  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
     // Currently the test framework only supports system metrics.
     if (scope != MetricsScope.SYSTEM) {
       return;
     }
-    while (metrics.hasNext()) {
-      MetricsRecord metricsRecord = metrics.next();
+
+    Iterator<MetricsRecord> records = new MetricRecordsWrapper(metrics);
+    while (records.hasNext()) {
+      MetricsRecord metricsRecord = records.next();
       String context = metricsRecord.getContext();
-      // Remove the last part, which is the runID
+      // Remove the last part, which is the instance id
       int idx = context.lastIndexOf('.');
       if (idx >= 0) {
         context = context.substring(0, idx);

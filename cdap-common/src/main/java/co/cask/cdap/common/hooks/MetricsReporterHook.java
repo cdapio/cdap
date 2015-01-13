@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.hooks;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -25,11 +26,13 @@ import co.cask.http.HttpResponder;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,7 +45,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private final String serviceName;
 
-  private final LoadingCache<String, MetricsCollector> collectorCache;
+  private final LoadingCache<Map<String, String>, MetricsCollector> collectorCache;
 
   public MetricsReporterHook(final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
@@ -51,10 +54,10 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     if (metricsCollectionService != null) {
       this.collectorCache = CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)
-        .build(new CacheLoader<String, MetricsCollector>() {
+        .build(new CacheLoader<Map<String, String>, MetricsCollector>() {
           @Override
-          public MetricsCollector load(String key) throws Exception {
-            return metricsCollectionService.getCollector(MetricsScope.SYSTEM, key, "0");
+          public MetricsCollector load(Map<String, String> key) throws Exception {
+            return metricsCollectionService.getCollector(MetricsScope.SYSTEM, key);
           }
         });
     } else {
@@ -97,16 +100,21 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         } else {
           name = "unknown";
         }
-        collector.increment("response." + name, 1, "status:" + code);
+
+        // todo: report metrics broken down by status
+        collector.increment("response." + name, 1/*, "status:" + code*/);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
       }
     }
   }
 
-  private String createContext(HandlerInfo handlerInfo) {
-    return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
-                         handlerInfo.getMethodName());
+  private Map<String, String> createContext(HandlerInfo handlerInfo) {
+    // todo: really inefficient to call this on the intense data flow path
+    return ImmutableMap.of(
+      Constants.Metrics.Tag.SERVICE, serviceName,
+      Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
+      Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());
   }
 
   private String getSimpleName(String className) {

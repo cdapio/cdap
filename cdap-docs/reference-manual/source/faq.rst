@@ -3,6 +3,7 @@
     :description: Frequently Asked Questions about the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+:hide-nav: true
 :orphan:
 
 ==================================

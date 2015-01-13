@@ -20,6 +20,7 @@ import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.internal.specification.FormatSpecification;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -76,15 +77,19 @@ public abstract class RecordFormat<FROM, TO> {
    * @param formatSpecification specification for the format, containing the desired schema and settings.
    * @throws UnsupportedTypeException if the desired schema and properties are not supported.
    */
-  public void initialize(FormatSpecification formatSpecification)
-    throws UnsupportedTypeException {
-    Schema desiredSchema = formatSpecification.getSchema();
+  public void initialize(FormatSpecification formatSpecification) throws UnsupportedTypeException {
+    Schema desiredSchema = null;
+    Map<String, String> settings = Collections.emptyMap();
+    if (formatSpecification != null) {
+      desiredSchema = formatSpecification.getSchema();
+      settings = formatSpecification.getSettings();
+    }
     if (desiredSchema != null) {
       validateIsRecord(desiredSchema);
       validateDesiredSchema(desiredSchema);
       this.schema = desiredSchema;
     }
-    configure(formatSpecification.getSettings());
+    configure(settings);
   }
 
   /**
