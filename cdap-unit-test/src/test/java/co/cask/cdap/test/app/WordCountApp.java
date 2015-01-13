@@ -261,8 +261,6 @@ public class WordCountApp extends AbstractApplication {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(MyMapper.class);
-      job.setMapOutputKeyClass(BytesWritable.class);
-      job.setMapOutputValueClass(LongWritable.class);
       job.setReducerClass(MyReducer.class);
     }
 

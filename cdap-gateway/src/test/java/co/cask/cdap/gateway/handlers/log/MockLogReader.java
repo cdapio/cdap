@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
@@ -36,33 +37,44 @@ public class MockLogReader implements LogReader {
 
   private final Multimap<String, LogLine> logMap;
   private static final int MAX = 80;
+  public static final String TEST_NAMESPACE = "testNamespace";
 
   MockLogReader() {
     logMap = ArrayListMultimap.create();
 
     // Add log lines for app testApp1, flow testFlow1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTestRun.account + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
     // Add log lines for app testApp1, flow testService1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTestRun.account + "/testApp4/userservice-testService1",
+      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp4/userservice-testService1",
                  new LogLine(i, "testService1<img>-" + i));
     }
 
     // Add log lines for app testApp2, flow testProcedure1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTestRun.account + "/testApp2/procedure-testProcedure1",
+      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp2/procedure-testProcedure1",
                  new LogLine(i, "testProcedure1<img>-" + i));
     }
 
     // Add log lines for app testApp3, flow testMapReduce1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTestRun.account + "/testApp3/mapred-testMapReduce1",
+      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp3/mapred-testMapReduce1",
                  new LogLine(i, "testMapReduce1<img>-" + i));
     }
 
+    // Add log lines for app testApp1, flow testFlow1 in testNamespace
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(TEST_NAMESPACE + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+    }
+
+    // Add log lines for app testApp1, flow testService1 in testNamespace
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(TEST_NAMESPACE + "/testApp4/userservice-testService1",
+                 new LogLine(i, "testService1<img>-" + i));
+    }
   }
 
   @Override

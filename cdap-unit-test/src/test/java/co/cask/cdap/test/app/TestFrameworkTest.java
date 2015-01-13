@@ -287,9 +287,17 @@ public class TestFrameworkTest extends TestBase {
    * successive attempt.
    */
   private void runnableInstancesCheck(ServiceManager serviceManager, String runnableName,
-                                      int expected, int retries) throws InterruptedException {
+                                      int expected, int retries, String instanceType) throws InterruptedException {
     for (int i = 0; i <= retries; i++) {
-      int actualInstances = serviceManager.getRunnableInstances(runnableName);
+      int actualInstances;
+      if ("requested".equals(instanceType)) {
+        actualInstances = serviceManager.getRequestedInstances(runnableName);
+      } else if ("provisioned".equals(instanceType)) {
+        actualInstances = serviceManager.getProvisionedInstances(runnableName);
+      } else {
+        String error = String.format("instanceType can be 'requested' or 'provisioned'. Found %s.", instanceType);
+        throw new IllegalArgumentException(error);
+      }
       if (actualInstances == expected) {
         return;
       }
@@ -312,19 +320,19 @@ public class TestFrameworkTest extends TestBase {
       int retries = 5;
 
       // Should be 1 instance when first started.
-      runnableInstancesCheck(serviceManager, runnableName, 1, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 1, retries, "provisioned");
 
       // Test increasing instances.
       serviceManager.setRunnableInstances(runnableName, 5);
-      runnableInstancesCheck(serviceManager, runnableName, 5, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 5, retries, "provisioned");
 
       // Test decreasing instances.
       serviceManager.setRunnableInstances(runnableName, 2);
-      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
 
       // Test requesting same number of instances.
       serviceManager.setRunnableInstances(runnableName, 2);
-      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
 
       // Test that the worker starts with 5 instances
       DataSetManager<KeyValueTable> datasetManager = applicationManager
@@ -344,7 +352,7 @@ public class TestFrameworkTest extends TestBase {
       serviceStatusCheck(serviceManager, false);
 
       // Should be 0 instances when stopped.
-      runnableInstancesCheck(serviceManager, runnableName, 0, retries);
+      runnableInstancesCheck(serviceManager, runnableName, 0, retries, "provisioned");
 
     } finally {
       applicationManager.stopAll();
@@ -368,20 +376,23 @@ public class TestFrameworkTest extends TestBase {
 
       LOG.info("Service Started");
 
+      URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(serviceURL);
+
       // Call the ping endpoint
-      URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
+      URL url = new URL(serviceURL, "ping2");
       HttpRequest request = HttpRequest.get(url).build();
       HttpResponse response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
 
       // Call the failure endpoint
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+      url = new URL(serviceURL, "failure");
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(500, response.getResponseCode());
 
       // Call the verify ClassLoader endpoint
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
+      url = new URL(serviceURL, "verifyClassLoader");
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
@@ -415,7 +426,7 @@ public class TestFrameworkTest extends TestBase {
       // Test that a service can discover another service
       String path = String.format("discover/%s/%s",
                                   AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
+      url = new URL(serviceURL, path);
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
@@ -449,7 +460,8 @@ public class TestFrameworkTest extends TestBase {
       LOG.info("Service Started");
 
 
-      final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+      final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(baseUrl);
 
       // Make a request to write in a separate thread and wait for it to return.
       ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -799,12 +811,15 @@ public class TestFrameworkTest extends TestBase {
 
       // Wait for at least 10 records being generated
       RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
-      flowMetrics.waitForProcessed(10, 1000, TimeUnit.MILLISECONDS);
+      flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
       flowManager.stop();
 
-      // Query record
       ServiceManager serviceManager = appManager.startService("RecordQuery");
-      URL url = new URL(serviceManager.getServiceURL(2000, TimeUnit.MILLISECONDS), "query?type=public");
+      URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(serviceURL);
+
+      // Query record
+      URL url = new URL(serviceURL, "query?type=public");
       HttpRequest request = HttpRequest.get(url).build();
       HttpResponse response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());

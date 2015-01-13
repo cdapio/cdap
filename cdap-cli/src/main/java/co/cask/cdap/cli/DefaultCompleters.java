@@ -20,7 +20,7 @@ import co.cask.cdap.cli.completer.element.AppIdCompleter;
 import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetTypeNameCompleter;
-import co.cask.cdap.cli.completer.element.HttpMethodCompleter;
+import co.cask.cdap.cli.completer.element.EndpointCompleter;
 import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
 import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
@@ -50,7 +50,8 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.STREAM.getName(), injector.getInstance(StreamIdCompleter.class))
         .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
-        .put(ArgumentName.HTTP_METHOD.getName(), new HttpMethodCompleter())
+        .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
+        .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
         .putAll(generateProgramIdCompleters(injector))
         .build();
   }

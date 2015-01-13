@@ -95,7 +95,7 @@ public class EntityTableTest {
       entityTable.getId("app", "app" + i);
     }
 
-    // we we call getName for the 100 entries, it will be the latest entries 401-500
+    // we call getName for the 100 entries, it will be the latest entries 401-500
     for (long i = 1; i <= 100; i++) {
       Assert.assertEquals("app" + String.valueOf(400 + i), entityTable.getName(i, "app"));
     }

@@ -23,7 +23,7 @@ import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.transport.MetricsRecord;
+import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -88,7 +88,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService() {
           @Override
-          protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
+          protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
             // No-op
           }
         });

@@ -17,11 +17,12 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProcedureClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -31,17 +32,18 @@ import java.util.Map;
 /**
  * Calls a procedure.
  */
-public class CallProcedureCommand implements Command {
+public class CallProcedureCommand extends AbstractAuthCommand {
 
   private final ProcedureClient procedureClient;
 
   @Inject
-  public CallProcedureCommand(ProcedureClient procedureClient) {
+  public CallProcedureCommand(ProcedureClient procedureClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.procedureClient = procedureClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] appIdAndProcedureId = arguments.get(ArgumentName.PROCEDURE.toString()).split("\\.");
     if (appIdAndProcedureId.length < 2) {
       throw new CommandInputError(this);

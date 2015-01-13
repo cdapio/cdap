@@ -30,10 +30,12 @@ import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
@@ -53,6 +55,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayInputStream;
@@ -63,6 +66,8 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -79,6 +84,9 @@ public abstract class AppFabricTestBase {
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
   private static final String CLUSTER = "SampleTestClusterName";
+
+  protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   private static final String hostname = "127.0.0.1";
 
@@ -255,10 +263,21 @@ public abstract class AppFabricTestBase {
   protected static HttpResponse deploy(Class<?> application) throws Exception {
     return deploy(application, null);
   }
+
+  protected static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+    return deploy(application, null, null, appName);
+  }
+
+  protected static HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
+    throws Exception {
+    return deploy(application, apiVersion, namespace, null);
+  }
+
   /**
    * Deploys an application with (optionally) a defined app name
    */
-  protected static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+  protected static HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
+                                       @Nullable String appName) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
@@ -302,14 +321,79 @@ public abstract class AppFabricTestBase {
     }
 
     HttpEntityEnclosingRequestBase request;
+    String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     if (appName == null) {
-      request = getPost("/v2/apps");
+      request = getPost(versionedApiPath);
     } else {
-      request = getPut("/v2/apps/" + appName);
+      request = getPut(versionedApiPath + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return execute(request);
+  }
+
+  protected static String getVersionedAPIPath(String nonVersionedApiPath, @Nullable String version,
+                                              @Nullable String namespace) {
+    StringBuilder versionedApiBuilder = new StringBuilder("/");
+    // if not specified, treat v2 as the version, so existing tests do not need any updates.
+    if (version == null) {
+      version = Constants.Gateway.API_VERSION_2_TOKEN;
+    }
+
+    if (Constants.Gateway.API_VERSION_2_TOKEN.equals(version)) {
+      Preconditions.checkArgument(namespace == null,
+                                  String.format("Cannot specify namespace for v2 APIs. Namespace will default to '%s'" +
+                                                  " for all v2 APIs.", Constants.DEFAULT_NAMESPACE));
+      versionedApiBuilder.append(version).append("/");
+    } else if (Constants.Gateway.API_VERSION_3_TOKEN.equals(version)) {
+      Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3 APIs.");
+      versionedApiBuilder.append(version).append("/namespaces/").append(namespace).append("/");
+    } else {
+      throw new IllegalArgumentException(String.format("Unsupported version '%s'. Only v2 and v3 are supported.",
+                                                       version));
+    }
+    versionedApiBuilder.append(nonVersionedApiPath);
+    return versionedApiBuilder.toString();
+  }
+
+  protected void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+    int trial = 0;
+    int workflowRuns = 0;
+    List<Map<String, String>> history;
+    String json;
+    HttpResponse response;
+    while (trial++ < retries) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      workflowRuns = history.size();
+      if (workflowRuns > expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(workflowRuns > expected);
+  }
+
+  protected void scheduleStatusCheck(int retries, String url, String expected) throws Exception {
+    int trial = 0;
+    String status = null;
+    String json;
+    Map<String, String> output;
+    HttpResponse response;
+    while (trial++ < retries) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+      status = output.get("status");
+      if (status.equals(expected)) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expected, status);
   }
 }

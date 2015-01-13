@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,6 +127,14 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+  }
+
+  /**
+   * Configuration Store.
+   */
+  public static final class ConfigStore {
+    public static final String CONFIG_TABLE = "config.store.table";
+    public static final Byte VERSION = 0;
   }
 
   /**
@@ -275,7 +283,7 @@ public final class Constants {
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
     public static final String STREAM_HANDLER_NAME = "stream.rest";
-    public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
+    public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
   }
 
@@ -349,6 +357,31 @@ public final class Constants {
       /** Defines reporting interval for LevelDB stats, in seconds */
       public static final String LEVELDB_STATS_REPORT_INTERVAL = "metrics.dataset.leveldb.stats.report.interval";
     }
+
+    /**
+     * Metrics context tags
+     */
+    public static final class Tag {
+      // NOTES:
+      //   * tag names must be unique (keeping all possible here helps to ensure that)
+      //   * tag names better be short to reduce the serialized metric value size
+      public static final String RUN_ID = "run";
+      public static final String INSTANCE_ID = "ins";
+      public static final String COMPONENT = "cmp";
+      public static final String STREAM = "str";
+      public static final String DATASET = "ds";
+      public static final String SERVICE = "srv";
+      public static final String SERVICE_RUNNABLE = "srn";
+      public static final String HANDLER = "hnd";
+      public static final String METHOD = "mtd";
+      public static final String MR_TASK_TYPE = "mrt";
+      public static final String APP = "app";
+      public static final String PROGRAM = "prg";
+      public static final String PROGRAM_TYPE = "ptp";
+      public static final String FLOWLET = "flt";
+      public static final String FLOWLET_QUEUE = "flq";
+      public static final String CLUSTER_METRICS = "cls";
+    }
   }
 
   /**
@@ -415,10 +448,12 @@ public final class Constants {
     public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
-    /** Address the Authentication Server should bind to*/
+    /** TODO: Config param is deprecated, AUTH_SERVER_BIND_ADDRESS should be used instead. */
     public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
+    /** Address the Authentication Server should bind to. */
+    public static final String AUTH_SERVER_BIND_ADDRESS = "security.auth.server.bind.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.auth.server.bind.port";
+    public static final String AUTH_SERVER_BIND_PORT = "security.auth.server.bind.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
@@ -601,10 +636,13 @@ public final class Constants {
 
 
   /**
-   * Corresponds to account id used when running in local mode.
-   * NOTE: value should be in sync with the one used by UI.
+   * Default namespace to be used by v2 APIs
    */
-  public static final String DEVELOPER_ACCOUNT_ID = "developer";
+  public static final String DEFAULT_NAMESPACE = "default";
+  /**
+   * 'system' reserved namespace name
+   */
+  public static final String SYSTEM_NAMESPACE = "system";
 
   /**
    * Constants related to external systems.

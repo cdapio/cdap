@@ -250,8 +250,10 @@ The response is formatted in JSON; an example of this is shown in
 :ref:`CDAP Testing and Debugging. <developers:debugging-distributed>`
 
 
-Scale
------
+.. _http-restful-api-lifecycle-scale:
+
+Scaling
+-------
 
 You can retrieve the instance count executing different components from various applications and
 different program types using an HTTP POST method::

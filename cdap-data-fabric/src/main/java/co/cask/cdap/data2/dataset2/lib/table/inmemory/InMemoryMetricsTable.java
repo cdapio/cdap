@@ -75,6 +75,13 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+    for (Map.Entry<byte[] , NavigableMap<byte[], Long>> entry : updates.entrySet()) {
+      increment(entry.getKey(), entry.getValue());
+    }
+  }
+
+  @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
     return InMemoryOrderedTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
   }

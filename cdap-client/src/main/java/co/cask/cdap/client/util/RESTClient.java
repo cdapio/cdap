@@ -115,11 +115,14 @@ public class RESTClient {
   }
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException {
+    throws IOException, UnAuthorizedAccessTokenException {
     HttpResponse response = HttpRequests.execute(
       HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), uploadConfig);
     int responseCode = response.getResponseCode();
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+      if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
+      }
       throw new IOException(response.getResponseBodyAsString());
     }
     return response;

@@ -25,6 +25,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.CharMatcher;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -67,24 +69,25 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace}")
-  public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
+  @Path("/namespaces/{namespace-id}")
+  public void getNamespace(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) {
     try {
-      NamespaceMeta ns = store.getNamespace(Id.Namespace.from(namespace));
+      NamespaceMeta ns = store.getNamespace(Id.Namespace.from(namespaceId));
       if (ns == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
         return;
       }
       responder.sendJson(HttpResponseStatus.OK, ns);
     } catch (Exception e) {
-      LOG.error("Internal error while getting namespace '{}'", namespace, e);
+      LOG.error("Internal error while getting namespace '{}'", namespaceId, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @PUT
-  @Path("/namespaces")
-  public void create(HttpRequest request, HttpResponder responder) {
+  @Path("/namespaces/{namespace-id}")
+  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     NamespaceMeta metadata;
     try {
       metadata = parseBody(request, NamespaceMeta.class);
@@ -97,32 +100,46 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    String name = metadata.getName();
-    // name cannot be null or empty.
-    if (name == null || name.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Namespace name cannot be null or empty.");
+    if (!isValid(namespaceId)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Namespace id can contain only alphanumeric characters, '-' or '_'.");
       return;
     }
+
+    if (isReserved(namespaceId)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("'%s' and '%s' are reserved namespace ids.",
+                                         Constants.DEFAULT_NAMESPACE,
+                                         Constants.SYSTEM_NAMESPACE));
+      return;
+    }
+
     // displayName and description could be null
     String displayName = metadata.getDisplayName();
     if (displayName == null || displayName.isEmpty()) {
-      displayName = name;
+      displayName = namespaceId;
     }
     String description = metadata.getDescription();
     if (description == null) {
       description = "";
     }
 
-    try {
-      NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(name)
-                                                       .setDisplayName(displayName).setDescription(description)
-                                                       .build());
-      if (existing == null) {
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists.", name));
-      }
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
+    builder.setId(namespaceId)
+      .setDisplayName(displayName)
+      .setDescription(description)
+      .build();
 
+    try {
+      NamespaceMeta existing = store.createNamespace(builder.build());
+      // make the API idempotent, but send appropriate response
+      String response;
+      if (existing == null) {
+        response = String.format("Namespace '%s' created successfully.", namespaceId);
+      } else {
+        response = String.format("Namespace '%s' already exists.", namespaceId);
+      }
+      responder.sendString(HttpResponseStatus.OK, response);
     } catch (Exception e) {
       LOG.error("Internal error while creating namespace.", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -130,8 +147,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @DELETE
-  @Path("/namespaces/{namespace}")
-  public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
+  @Path("/namespaces/{namespace-id}")
+  public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
+    if (isReserved(namespace)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("'%s', '%s' are reserved namespace ids",
+                                         Constants.DEFAULT_NAMESPACE,
+                                         Constants.SYSTEM_NAMESPACE));
+      return;
+    }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
       // Store#deleteNamespace already checks for existence
@@ -145,5 +169,18 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private boolean isValid(String namespaceId) {
+    // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(namespaceId);
+  }
+
+  private boolean isReserved(String namespaceId) {
+    return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId);
   }
 }

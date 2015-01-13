@@ -27,11 +27,13 @@ import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
+import org.apache.hadoop.hbase.util.Strings;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +117,39 @@ public abstract class StreamDataFileTestBase {
       // Message is "Basic test " + timestamp
       Assert.assertEquals("Basic test " + entry.getKey(), entry.getValue().iterator().next());
     }
+  }
+
+  @Test
+  public void testLargeDataBlock() throws Exception {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           10000L);
+    // Write 1200 events in one data block with each event has size of 150 bytes.
+    // This make sure it crosses the 128K read buffer boundary that is observed in HDFS.
+    // The StreamDataFileWriter has an internal data block buffer size of 256K,
+    // hence writing ~175K data block shouldn't go over the flush limit in the writer, making sure all
+    // events are in one data block
+    ByteBuffer body = Charsets.UTF_8.encode(Strings.repeat('0', 150));
+    for (int i = 0; i < 1200; i++) {
+      writer.append(new StreamEvent(ImmutableMap.<String, String>of(), body.duplicate(), 0));
+    }
+    writer.close();
+
+    // Read event one by one
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    List<StreamEvent> events = Lists.newArrayList();
+    for (int i = 0; i < 1200; i++) {
+      Assert.assertEquals(1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+      Assert.assertEquals(body, events.get(0).getBody());
+      events.clear();
+    }
+
+    Assert.assertEquals(-1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+    reader.close();
   }
 
   @Test

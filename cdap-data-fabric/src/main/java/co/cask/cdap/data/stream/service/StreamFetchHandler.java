@@ -48,17 +48,17 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * A HTTP handler for handling getting stream events.
@@ -86,12 +86,12 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   /**
    * Handler for the HTTP API {@code /streams/[stream_name]/events?start=[start_ts]&end=[end_ts]&limit=[event_limit]}
-   *
+   * <p/>
    * Response with
-   *   404 if stream not exists.
-   *   204 if no event in the given start/end time range
-   *   200 if there is event
-   *
+   * 404 if stream not exists.
+   * 204 if no event in the given start/end time range
+   * 200 if there is event
+   * <p/>
    * Response body is an Json array of StreamEvent object
    *
    * @see StreamEventTypeAdapter for the format of StreamEvent object.
@@ -99,15 +99,12 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/events")
   public void fetch(HttpRequest request, HttpResponder responder,
-                        @PathParam("stream") String stream) throws Exception {
+                    @PathParam("stream") String stream,
+                    @QueryParam("start") long startTime,
+                    @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
+                    @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
-
-    Map<String, List<String>> parameters = new QueryStringDecoder(request.getUri()).getParameters();
-    long startTime = getTimestamp("start", parameters, 0);
-    long endTime = getTimestamp("end", parameters, Long.MAX_VALUE);
-    int limit = getLimit("limit", parameters, Integer.MAX_VALUE);
-
     if (!verifyGetEventsRequest(accountID, stream, startTime, endTime, limit, responder)) {
       return;
     }
@@ -169,48 +166,6 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
       Closeables.closeQuietly(chunkResponder);
     } finally {
       reader.close();
-    }
-  }
-
-  /**
-   * Parses and returns a timestamp from the query string.
-   *
-   * @param key Name of the key in the query string.
-   * @param parameters The query string represented as a map.
-   * @param defaultValue Value to return if the key is absent from the query string.
-   * @return A long value parsed from the query string, or the {@code defaultValue} if the key is absent.
-   *         If the key exists but fails to parse the number, {@code -1} is returned.
-   */
-  private long getTimestamp(String key, Map<String, List<String>> parameters, long defaultValue) {
-    List<String> values = parameters.get(key);
-    if (values == null || values.isEmpty()) {
-      return defaultValue;
-    }
-    try {
-      return Long.parseLong(values.get(0));
-    } catch (NumberFormatException e) {
-      return -1L;
-    }
-  }
-
-  /**
-   * Parses and returns the limit from the query string.
-   *
-   * @param key Name of the key in the query string.
-   * @param parameters The query string represented as a map.
-   * @param defaultValue Value to return if the key is absent from the query string.
-   * @return An int value parsed from the query string, or the {@code defaultValue} if the key is absent.
-   *         If the key exists but fails to parse the number, {@code -1} is returned.
-   */
-  private int getLimit(String key, Map<String, List<String>> parameters, int defaultValue) {
-    List<String> values = parameters.get(key);
-    if (values == null || values.isEmpty()) {
-      return defaultValue;
-    }
-    try {
-      return Integer.parseInt(values.get(0));
-    } catch (NumberFormatException e) {
-      return -1;
     }
   }
 
@@ -344,7 +299,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
    * Creates a {@link ReadFilter} to only read events that are within the given time range.
    *
    * @param startTime Start timestamp for event to be valid (inclusive).
-   * @param endTime End timestamp fo event to be valid (exclusive).
+   * @param endTime   End timestamp fo event to be valid (exclusive).
    * @return A {@link ReadFilter} with the specific filtering property.
    */
   private ReadFilter createReadFilter(final long startTime, final long endTime) {

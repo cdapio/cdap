@@ -84,8 +84,6 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
     HttpResponse response =
@@ -109,16 +107,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     HttpResponse response = doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" +
-                                                         flowletId + "/instances", json.toString());
+                                    flowletId + "/instances", json.toString());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-  }
-  private String getDeploymentStatus() throws Exception {
-    HttpResponse response =
-      doGet("/v2/deploy/status/");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
-    return o.get("status");
   }
 
   private int getRunnableStartStop(String runnableType, String appId, String runnableId, String action)
@@ -157,47 +147,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
-  }
-
-  private void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
-    int trial = 0;
-    int workflowRuns = 0;
-    List<Map<String, String>> history;
-    String json;
-    HttpResponse response;
-    while (trial++ < retries) {
-      response = doGet(url);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      json = EntityUtils.toString(response.getEntity());
-      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
-      workflowRuns = history.size();
-      if (workflowRuns > expected) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(workflowRuns > expected);
-  }
-
-  private void scheduleStatusCheck(int retires, String url,
-                                   String expected) throws Exception {
-    int trial = 0;
-    String status = null;
-    String json = null;
-    Map<String, String> output;
-    HttpResponse response;
-    while (trial++ < retires) {
-      response = doGet(url);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      json = EntityUtils.toString(response.getEntity());
-      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-      status = output.get("status");
-      if (status.equals(expected)) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(status, expected);
   }
 
   private void historyStatusWithRetry(String url, int size) throws Exception {
@@ -790,9 +739,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testStatus() throws Exception {
 
     //deploy and check the status
-    deploy(WordCountApp.class);
-    //check the status of the deployment
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus());
+    Assert.assertEquals(200, deploy(WordCountApp.class).getStatusLine().getStatusCode());
+
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //start flow and check the status

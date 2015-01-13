@@ -160,31 +160,12 @@ public class ApplicationClient {
    * @param jarFile jar file of the application to deploy
    * @throws IOException if a network error occurred
    */
-  public void deploy(File jarFile) throws IOException {
+  public void deploy(File jarFile) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("apps");
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
 
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
     restClient.upload(request, config.getAccessToken());
-  }
-
-  /**
-   * Promotes an application to another environment.
-   *
-   * @param appId ID of the application to promote
-   * @throws ApplicationNotFoundException if the application with the given ID was not found
-   * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public void promote(String appId) throws ApplicationNotFoundException, IOException,
-    UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("apps/" + appId);
-
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
-    }
   }
 
   /**

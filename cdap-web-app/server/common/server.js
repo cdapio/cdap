@@ -688,43 +688,6 @@ WebAppServer.prototype.bindRoutes = function() {
     x.pipe(res);
   });
 
-  this.app.get('/upload/status', function (req, res) {
-
-    var options = {
-      host: self.routerBindAddress,
-      port: self.routerBindPort,
-      path: '/' + self.API_VERSION + '/deploy/status',
-      method: 'GET',
-      headers: {
-        'X-ApiKey': req.session ? req.session.api_key : '',
-        'Authorization': 'Bearer ' + req.cookies.token
-      }
-    };
-
-    var request = self.lib.request(options, function (response) {
-
-      var data = '';
-      response.on('data', function (chunk) {
-        data += chunk;
-      });
-
-      response.on('end', function () {
-
-        if (response.statusCode !== 200) {
-          res.send(200, 'Upload error: ' + data);
-          self.logger.error('Could not upload file ' + req.params.file, data);
-        } else {
-          res.send(JSON.parse(data));
-        }
-
-      });
-
-    });
-
-    request.end();
-
-  });
-
   this.app.post('/unrecoverable/reset', this.checkAuth, function (req, res) {
 
     var host = self.routerBindAddress + ':' + self.routerBindPort;
@@ -812,7 +775,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.routerBindAddress,
       port: self.routerBindPort,
-      path: '/' + self.API_VERSION + '/deploy/status',
+      path: '/' + self.API_VERSION + '/ping',
       method: 'GET',
       headers: headerOpts
     };

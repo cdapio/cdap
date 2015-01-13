@@ -17,12 +17,13 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -31,17 +32,18 @@ import java.util.List;
 /**
  * Lists datasets.
  */
-public class ListDatasetInstancesCommand implements Command {
+public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   private final DatasetClient datasetClient;
 
   @Inject
-  public ListDatasetInstancesCommand(DatasetClient datasetClient) {
+  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.datasetClient = datasetClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetSpecification> datasetMetas = datasetClient.list();
 
     new AsciiTable<DatasetSpecification>(

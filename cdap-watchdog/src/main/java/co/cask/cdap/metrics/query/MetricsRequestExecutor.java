@@ -31,14 +31,11 @@ import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsScanResult;
 import co.cask.cdap.metrics.data.MetricsScanner;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.cdap.metrics.data.TimeValue;
 import co.cask.cdap.metrics.data.TimeValueAggregator;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -64,22 +61,11 @@ public class MetricsRequestExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsRequestExecutor.class);
   private static final Gson GSON = new Gson();
 
-  // It's a cache from metric table resolution to MetricsTable
-  private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
+  private final TimeSeriesTables timeSeriesTables;
 
   public MetricsRequestExecutor(final MetricsTableFactory metricsTableFactory) {
-    this.metricsTableCaches = Maps.newHashMap();
-    for (final MetricsScope scope : MetricsScope.values()) {
-      LoadingCache<Integer, TimeSeriesTable> cache =
-        CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
-          @Override
-          public TimeSeriesTable load(Integer key) throws Exception {
-            return metricsTableFactory.createTimeSeries(scope.name(), key);
-          }
-        });
-      this.metricsTableCaches.put(scope, cache);
-    }
+    this.timeSeriesTables = new TimeSeriesTables(metricsTableFactory);
     this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
@@ -105,24 +91,32 @@ public class MetricsRequestExecutor {
       } else {
         MetricsScanQuery scanQuery = createScanQuery(metricsRequest);
 
-        PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(queryTimeSeries(metricsRequest.getScope(),
-                                                                                     scanQuery,
-                                                                                     metricsRequest.getInterpolator()));
+        PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
+          queryTimeSeries(metricsRequest.getScope(),
+                          scanQuery,
+                          metricsRequest.getInterpolator(),
+                          metricsRequest.getTimeSeriesResolution()));
 
         // if this is an interpolated timeseries, we might have extended the "start" in order to interpolate.
         // so fast forward the iterator until we we're inside the actual query time window.
-        while (timeValueItor.hasNext() && (timeValueItor.peek().getTime() < metricsRequest.getStartTime())) {
-          timeValueItor.next();
+        if (metricsRequest.getInterpolator() != null) {
+          while (timeValueItor.hasNext() &&
+            ((timeValueItor.peek().getTime() +
+              metricsRequest.getTimeSeriesResolution()) <= metricsRequest.getStartTime())) {
+            timeValueItor.next();
+          }
         }
+        long resolution = metricsRequest.getTimeSeriesResolution();
+        long resultTimeStamp = (metricsRequest.getStartTime() / resolution) * resolution;
 
         for (int i = 0; i < metricsRequest.getCount(); i++) {
-          long resultTime = metricsRequest.getStartTime() + i;
-
-          if (timeValueItor.hasNext() && timeValueItor.peek().getTime() == resultTime) {
-            builder.addData(resultTime, timeValueItor.next().getValue());
-            continue;
+          if (timeValueItor.hasNext() && timeValueItor.peek().getTime() == resultTimeStamp) {
+            builder.addData(resultTimeStamp, timeValueItor.next().getValue());
+          } else {
+            // If the scan result doesn't have value for a timestamp, we add 0 to the result-returned for that timestamp
+            builder.addData(resultTimeStamp, 0);
           }
-          builder.addData(resultTime, 0);
+          resultTimeStamp += metricsRequest.getTimeSeriesResolution();
         }
       }
       resultObj = builder.build();
@@ -141,14 +135,18 @@ public class MetricsRequestExecutor {
 
   private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder)
     throws OperationException {
+    int resolution = metricsRequest.getTimeSeriesResolution();
+    long start = metricsRequest.getStartTime() / resolution * resolution;
+    long end = (metricsRequest.getEndTime() / resolution) * resolution;
     MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
       .setContext(metricsRequest.getContextPrefix())
       .setMetric("process.tuples.read")
-      .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
+      .build(start, end);
     MetricsScope scope = metricsRequest.getScope();
 
     PeekingIterator<TimeValue> tuplesReadItor =
-      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator()));
+      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator(),
+                                                metricsRequest.getTimeSeriesResolution()));
 
     scanQuery = new MetricsScanQueryBuilder()
       .setContext(metricsRequest.getContextPrefix())
@@ -156,24 +154,27 @@ public class MetricsRequestExecutor {
       .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
 
     PeekingIterator<TimeValue> eventsProcessedItor =
-      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator()));
+      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator(),
+                                                metricsRequest.getTimeSeriesResolution()));
+    long resultTimeStamp = start;
 
     for (int i = 0; i < metricsRequest.getCount(); i++) {
-      long resultTime = metricsRequest.getStartTime() + i;
       long tupleRead = 0;
       long eventProcessed = 0;
-      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTime) {
+      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTimeStamp) {
         tupleRead = tuplesReadItor.next().getValue();
       }
-      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTime) {
+      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTimeStamp) {
         eventProcessed = eventsProcessedItor.next().getValue();
       }
       if (eventProcessed != 0) {
         int busyness = (int) ((float) tupleRead / eventProcessed * 100);
-        builder.addData(resultTime, busyness > 100 ? 100 : busyness);
+        builder.addData(resultTimeStamp, busyness > 100 ? 100 : busyness);
       } else {
-        builder.addData(resultTime, 0);
+        // If the scan result doesn't have value for a timestamp, we add 0 to the returned result for that timestamp.
+        builder.addData(resultTimeStamp, 0);
       }
+      resultTimeStamp += metricsRequest.getTimeSeriesResolution();
     }
   }
 
@@ -219,7 +220,8 @@ public class MetricsRequestExecutor {
       enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "process.events.out", "0", pair.getFirst()));
     }
     for (String streamName : streamNames) {
-      enqueue += sumAll(aggregatesTable.scan(Constants.Gateway.METRICS_CONTEXT, "collect.events", "0", streamName));
+      String ctx = Constants.Gateway.METRICS_CONTEXT + "." + Constants.Gateway.STREAM_HANDLER_NAME;
+      enqueue += sumAll(aggregatesTable.scan(ctx, "collect.events", "0", streamName));
     }
 
     long len = enqueue - processed;
@@ -227,9 +229,9 @@ public class MetricsRequestExecutor {
   }
 
   private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery,
-                                              Interpolator interpolator) throws OperationException {
+                                              Interpolator interpolator, int resolution) throws OperationException {
     Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
-    MetricsScanner scanner = metricsTableCaches.get(scope).getUnchecked(1).scan(scanQuery);
+    MetricsScanner scanner = timeSeriesTables.scan(scope, resolution, scanQuery);
     while (scanner.hasNext()) {
       MetricsScanResult res = scanner.next();
       // if we get multiple scan results for the same logical timeseries, concatenate them together.
@@ -262,8 +264,9 @@ public class MetricsRequestExecutor {
   }
 
   private MetricsScanQuery createScanQuery(MetricsRequest request) {
-    long start = request.getStartTime();
-    long end = request.getEndTime();
+    int resolution = request.getTimeSeriesResolution();
+    long start = request.getStartTime() / resolution * resolution;
+    long end = (request.getEndTime() / resolution) * resolution;
 
     // if we're interpolating, expand the time window a little to allow interpolation at the start and end.
     // Before returning the results, we'll make sure to only return what the client requested.

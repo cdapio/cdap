@@ -25,6 +25,7 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
@@ -91,18 +92,18 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
-    // we use "0" as runId: it is required by metrics system to provide something at this point
-    MetricsCollector collector =
-      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
     for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetName == null) {
         // not a user dataset
         continue;
       }
+      MetricsCollector collector =
+        metricsService.getCollector(MetricsScope.SYSTEM,
+                                    ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
-      collector.increment("dataset.size.mb", sizeInMb, datasetName);
+      collector.increment("dataset.size.mb", sizeInMb);
     }
   }
 }

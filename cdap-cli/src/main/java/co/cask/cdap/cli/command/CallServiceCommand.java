@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -56,14 +57,15 @@ public class CallServiceCommand extends AbstractCommand {
   private final ServiceClient serviceClient;
 
   @Inject
-  public CallServiceCommand(ClientConfig clientConfig, ServiceClient serviceClient) {
+  public CallServiceCommand(ClientConfig clientConfig, ServiceClient serviceClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.clientConfig = clientConfig;
     this.restClient = RESTClient.create(clientConfig);
     this.serviceClient = serviceClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] appAndServiceId = arguments.get(ArgumentName.SERVICE.toString()).split("\\.");
     if (appAndServiceId.length < 2) {
       throw new CommandInputError(this);
@@ -77,8 +79,7 @@ public class CallServiceCommand extends AbstractCommand {
     String headers = arguments.get(ArgumentName.HEADERS.toString(), "");
     String body = arguments.get(ArgumentName.HTTP_BODY.toString(), "");
 
-    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() {
-    }.getType());
+    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
     URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);

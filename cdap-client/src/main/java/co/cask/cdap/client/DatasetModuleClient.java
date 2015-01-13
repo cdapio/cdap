@@ -84,7 +84,7 @@ public class DatasetModuleClient {
    * @throws IOException if a network error occurred
    */
   public void add(String moduleName, String className, File moduleJarFile)
-    throws BadRequestException, AlreadyExistsException, IOException {
+    throws BadRequestException, AlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
     Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);

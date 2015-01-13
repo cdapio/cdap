@@ -105,7 +105,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       this.datasetInstantiator = new DatasetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
-                                                         null, null);
+                                                         null);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -135,17 +135,20 @@ public class DefaultApplicationManager implements ApplicationManager {
       this.runnableId = runnableId;
       this.runnableType = runnableType;
     }
+
     public String getApplicationId() {
       return this.appId;
     }
+
     public String getRunnableId() {
       return this.runnableId;
     }
+
     public ProgramType getRunnableType() {
       return this.runnableType;
     }
   }
-  
+
   @Override
   public FlowManager startFlow(final String flowName) {
     return startFlow(flowName, ImmutableMap.<String, String>of());
@@ -154,22 +157,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     final ProgramId flowId = startProgram(flowName, arguments, ProgramType.FLOW);
-    return new FlowManager() {
-      @Override
-      public void setFlowletInstances(String flowletName, int instances) {
-        Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
-        try {
-          appFabricClient.setFlowletInstances(applicationId, flowName, flowletName, instances);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      @Override
-      public void stop() {
-        stopProgram(flowId);
-      }
-    };
+    return new DefaultFlowManager(flowName, flowId, applicationId, appFabricClient, this);
   }
 
   @Override
@@ -252,7 +240,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   private void programWaitForFinish(long timeout, TimeUnit timeoutUnit, ProgramId jobId)
-                                                                        throws InterruptedException, TimeoutException {
+    throws InterruptedException, TimeoutException {
     while (timeout > 0 && isRunning(jobId)) {
       timeoutUnit.sleep(1);
       timeout--;
@@ -283,7 +271,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
     };
   }
-
 
 
   @Override
@@ -406,7 +393,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     try {
 
       String status = appFabricClient.getStatus(programId.getApplicationId(),
-                                                    programId.getRunnableId(), programId.getRunnableType());
+                                                programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {

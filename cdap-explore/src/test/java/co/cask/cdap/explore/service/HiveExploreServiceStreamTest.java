@@ -75,9 +75,9 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                ),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("ts", "bigint", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("body", "string", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("headers", "map<string,string>",
-                                                            "from deserializer"))
+                                                            "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("body", "string", "from deserializer"))
                )
     );
   }
@@ -88,24 +88,24 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     // check schema
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
       new ColumnDesc(streamTableName + ".ts", "BIGINT", 1, null),
-      new ColumnDesc(streamTableName + ".body", "STRING", 2, null),
-      new ColumnDesc(streamTableName + ".headers", "map<string,string>", 3, null)
+      new ColumnDesc(streamTableName + ".headers", "map<string,string>", 2, null),
+      new ColumnDesc(streamTableName + ".body", "STRING", 3, null)
     );
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     // check each result, without checking timestamp since that changes for each test
     // first result
     List<Object> columns = results.next().getColumns();
-    Assert.assertEquals(body1, columns.get(1));
     // maps are returned as json objects...
-    Assert.assertEquals(headers, GSON.fromJson((String) columns.get(2), headerType));
+    Assert.assertEquals(headers, GSON.fromJson((String) columns.get(1), headerType));
+    Assert.assertEquals(body1, columns.get(2));
     // second result
     columns = results.next().getColumns();
-    Assert.assertEquals(body2, columns.get(1));
-    Assert.assertEquals(headers, GSON.fromJson((String) columns.get(2), headerType));
+    Assert.assertEquals(headers, GSON.fromJson((String) columns.get(1), headerType));
+    Assert.assertEquals(body2, columns.get(2));
     // third result
     columns = results.next().getColumns();
-    Assert.assertEquals(body3, columns.get(1));
-    Assert.assertEquals(headers, GSON.fromJson((String) columns.get(2), headerType));
+    Assert.assertEquals(headers, GSON.fromJson((String) columns.get(1), headerType));
+    Assert.assertEquals(body3, columns.get(2));
     // should not be any more
     Assert.assertFalse(results.hasNext());
   }

@@ -93,7 +93,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
     this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
       configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
-      configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+      configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
@@ -134,7 +134,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       server = new Server();
 
       try {
-        address = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_ADDRESS));
+        address = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
       } catch (UnknownHostException e) {
         LOG.error("Error finding host to connect to.", e);
         throw Throwables.propagate(e);

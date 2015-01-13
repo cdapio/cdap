@@ -59,12 +59,12 @@ public final class EntityTable {
 
 
   /**
-   * Creates an EntityTable with max id = 65535.
+   * Creates an EntityTable with max id = 16777215.
    *
    * See {@link #EntityTable(MetricsTable, long)}.
    */
   public EntityTable(MetricsTable table) {
-    this(table, 0x10000);
+    this(table, 0x1000000L);
   }
 
   /**
@@ -134,9 +134,9 @@ public final class EntityTable {
 
         /* we recycle the id's after reaching max-id to let the id's start from 1 again.
         this most likely won't happen for any entity other than run-id,
-        Even for run-id - its okay to recycle, as we would have truncated the old data when we reach 65k runs,
-        as our TTL is only 2 hours currently. The reasoning is the likelihood for running 65k programs
-        under 2 hours is very low. For mapping the id -> name , we use (id % maxId) */
+        Even for run-id - its okay to recycle, as we would have truncated the old data when we reach 16777215 runs,
+        as our max TTL is 30 days currently. The reasoning is the likelihood for running 16777215 programs
+        under 30 days is low. For mapping the id -> name , we use (id % maxId) */
         if (newId % maxId == 0) {
           newId = 1L;
           table.swap(maxIdRowKey, MAX_ID, Bytes.toBytes(maxId), Bytes.toBytes(newId));
