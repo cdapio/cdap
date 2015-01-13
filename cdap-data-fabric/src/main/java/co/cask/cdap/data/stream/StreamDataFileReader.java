@@ -17,7 +17,6 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.SeekableInputStream;
@@ -57,12 +56,12 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   private final InputSupplier<? extends InputStream> indexInputSupplier;
   private final long startTime;
   private final long offset;
+  private final StreamEventBuffer streamEventBuffer;
   private StreamDataFileIndex index;
   private SeekableInputStream eventInput;
   private long position;
   private byte[] timestampBuffer;
   private long timestamp;
-  private int length;
   private boolean closed;
   private boolean eof;
   private Decoder decoder;
@@ -112,11 +111,11 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
                                long startTime, long offset) {
     this.eventInputSupplier = eventInputSupplier;
     this.indexInputSupplier = indexInputSupplier;
+    this.streamEventBuffer = new StreamEventBuffer();
     this.startTime = startTime;
     this.offset = offset;
     this.timestampBuffer = new byte[8];
     this.timestamp = -1L;
-    this.length = -1;
   }
 
   @Override
@@ -193,8 +192,6 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
             break;
           }
 
-          position = eventInput.getPos();
-
         } catch (IOException e) {
           if (eventInput != null) {
             eventInput.close();
@@ -233,7 +230,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   /**
    * Returns the index for the stream data or {@code null} if index is absent.
    */
-  StreamDataFileIndex getIndex() {
+  private StreamDataFileIndex getIndex() {
     if (index == null && indexInputSupplier != null) {
       index = new StreamDataFileIndex(indexInputSupplier);
     }
@@ -248,10 +245,21 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
       eventInput = eventInputSupplier.getInput();
       decoder = new BinaryDecoder(eventInput);
 
+      // If position is <= 0, the reader is not being used yet, hence needs to initialize.
       if (position <= 0) {
         init();
+      } else {
+        // If position > 0, the reader has already been initialized.
+        // We just need to seek to beginning of a data-block, depending on whether there is event in the buffer
+        if (streamEventBuffer.hasEvent()) {
+          // If there is event in the buffer, we seek to the data block that come after the buffered events
+          // to prepare for the reading of the data block after the current buffered events are fully consumed.
+          eventInput.seek(streamEventBuffer.getEndPosition());
+        } else {
+          // Otherwise, we seek to the current position, which should be pointing to the beginning of a data block
+          eventInput.seek(position);
+        }
       }
-      eventInput.seek(position);
     } catch (IOException e) {
       position = 0;
       if (eventInput != null) {
@@ -272,7 +280,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
     // If it is constructed with an arbitrary offset, need to find an event position
     if (offset > 0) {
-      initByOffset();
+      initByOffset(offset);
     } else if (startTime > 0) {
       initByTime(startTime);
     }
@@ -295,7 +303,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     position = eventInput.getPos();
   }
 
-  private void initByOffset() throws IOException {
+  private void initByOffset(final long offset) throws IOException {
     // If index is provided, lookup the position smaller but closest to the offset.
     StreamDataFileIndex index = getIndex();
     long pos = index == null ? 0 : index.floorPosition(offset);
@@ -340,7 +348,8 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         long timestamp = readTimestamp();
 
         // If EOF or condition match, upper bound found. Break the loop.
-        if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
+        eof = timestamp == -1L;
+        if (eof || condition.apply(positionBound, timestamp)) {
           break;
         }
 
@@ -365,15 +374,12 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
       // search for the exact StreamData position within the bound.
       eventInput.seek(position);
+      readDataBlock(ReadFilter.ALWAYS_ACCEPT);
       while (position < positionBound) {
-        if (timestamp < 0) {
-          timestamp = readTimestamp();
-        }
         if (condition.apply(position, timestamp)) {
           break;
         }
         nextStreamEvent(ReadFilter.ALWAYS_REJECT_OFFSET);
-        position = eventInput.getPos();
       }
     } catch (IOException e) {
       // It's ok if hitting EOF, meaning it's could be a live stream file or closed by a dead stream handler.
@@ -408,19 +414,37 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     try {
       return decoder.readInt();
     } catch (IOException e) {
-      // If failed to read data block length, reset the timestamp as well,
-      // since the position hasn't been updated yet, and is still pointing to timestamp position.
-      timestamp = -1L;
       throw e;
     }
   }
 
-  private StreamEventData readStreamData() throws IOException {
-    return StreamEventDataCodec.decode(decoder);
-  }
+  private void readDataBlock(ReadFilter filter) throws IOException {
+    // Data block is <timestamp> <length> <stream_data>+
+    long timestamp = readTimestamp();
+    if (timestamp < 0) {
+      eof = true;
+      return;
+    }
 
-  private void skipStreamData() throws IOException {
-    StreamEventDataCodec.skip(decoder);
+    filter.reset();
+    if (filter.acceptTimestamp(timestamp)) {
+      streamEventBuffer.fillBuffer(eventInput, readLength());
+      this.timestamp = timestamp;
+      return;
+    }
+
+    long nextTimestamp = filter.getNextTimestampHint();
+    if (nextTimestamp > timestamp) {
+      initByTime(nextTimestamp);
+      readDataBlock(filter);
+      return;
+    }
+
+    int length = readLength();
+    long bytesSkipped = eventInput.skip(length);
+    if (bytesSkipped != length) {
+      throw new EOFException("Expected to skip " + length + " but only " + bytesSkipped + " was skipped.");
+    }
   }
 
   /**
@@ -431,87 +455,15 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * @return The next StreamEvent or {@code null} if the event is rejected by the filter or reached EOF.
    */
   private PositionStreamEvent nextStreamEvent(ReadFilter filter) throws IOException {
-    // Data block is <timestamp> <length> <stream_data>+
-    PositionStreamEvent event = null;
-    boolean done = false;
-
-    while (!done) {
-      boolean acceptTimestamp = true;
-      if (timestamp < 0) {
-        timestamp = readTimestamp();
-        if (timestamp >= 0) {
-          // See if this timestamp is accepted by the filter
-          filter.reset();
-          acceptTimestamp = filter.acceptTimestamp(timestamp);
-          if (!acceptTimestamp) {
-            // If not accepted, try to get a hint.
-            long nextTimestamp = filter.getNextTimestampHint();
-
-            // If have hint, re-init this reader with the hinted timestamp.
-            // The hint must be > timestamp of current block, as stream file can only read forward.
-            if (nextTimestamp > timestamp) {
-              timestamp = -1L;
-              initByTime(nextTimestamp);
-              continue;
-            }
-          }
-        }
-      }
-
-      // Timestamp == -1 indicate that's the end of file.
-      if (timestamp == -1L) {
-        eof = true;
-        break;
-      }
-
-      boolean isReadBlockLength = length < 0;
-      if (isReadBlockLength) {
-        length = readLength();
-      }
-
-      if (isReadBlockLength && !acceptTimestamp) {
-        // If able to read block length, but the timestamp filter return false without providing hint,
-        // just skip this timestamp block.
-        long bytesSkipped = eventInput.skip(length);
-        boolean skippedExpected = (bytesSkipped == length);
-        timestamp = -1L;
-        length = -1;
-
-        if (skippedExpected) {
-          continue;
-        } else {
-          throw new EOFException();
-        }
-      }
-
-      if (length > 0) {
-        long startPos = eventInput.getPos();
-
-        try {
-          if (filter.acceptOffset(startPos)) {
-            event = new PositionStreamEvent(readStreamData(), timestamp, startPos);
-          } else {
-            skipStreamData();
-          }
-        } catch (IOException e) {
-          // If failed to read first event in the data block, reset the timestamp and length to -1
-          // This is because position hasn't been updated yet and retry will start from the timestamp position.
-          if (isReadBlockLength) {
-            timestamp = -1L;
-            length = -1;
-          }
-          throw e;
-        }
-        long endPos = eventInput.getPos();
-        done = true;
-        length -= (int) (endPos - startPos);
-      }
-      if (length == 0) {
-        timestamp = -1L;
-        length = -1;
-      }
+    while (!streamEventBuffer.hasEvent()) {
+      readDataBlock(filter);
+    }
+    if (eof) {
+      return null;
     }
 
+    PositionStreamEvent event = streamEventBuffer.nextEvent(timestamp, filter);
+    position = streamEventBuffer.getPosition();
     return event;
   }
 

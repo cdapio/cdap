@@ -17,33 +17,33 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.TwillContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Reports resource metrics about the runnable program.
  */
 public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunnableResourceReporter.class);
   private final TwillContext runContext;
-  private final String metricContext;
 
   public ProgramRunnableResourceReporter(Program program, MetricsCollectionService collectionService,
                                          TwillContext context) {
-    super(collectionService);
+    super(collectionService.getCollector(MetricsScope.SYSTEM, getMetricContext(program, context)));
     this.runContext = context;
-    this.metricContext = getMetricContext(program, context);
   }
 
   @Override
   public void reportResources() {
-    sendMetrics(metricContext, 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores(),
-                runContext.getRunId().getId());
+    sendMetrics(new HashMap<String, String>(), 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores());
   }
 
   /**
@@ -51,12 +51,19 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
    * {applicationId}.{programTypeId}.{programId}.{componentId}.  So for flows, it will look like
    * appX.f.flowY.flowletZ.  For procedures, appX.p.procedureY.  For mapreduce jobs, appX.b.mapredY.{optional m|r}.
    */
-  private String getMetricContext(Program program, TwillContext context) {
-    String metricContext = program.getApplicationId() + "." + TypeId.getMetricContextId(program.getType());
+  private static Map<String, String> getMetricContext(Program program, TwillContext context) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.RUN_ID, context.getRunId().getId())
+      .put(Constants.Metrics.Tag.APP, program.getApplicationId())
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));
+
     if (program.getType() == ProgramType.FLOW) {
-      metricContext += "." + program.getName();
+      builder.put(Constants.Metrics.Tag.PROGRAM, program.getName());
+      builder.put(Constants.Metrics.Tag.FLOWLET, context.getSpecification().getName());
+    } else {
+      builder.put(Constants.Metrics.Tag.PROGRAM, context.getSpecification().getName());
     }
-    metricContext += "." + context.getSpecification().getName() + "." + context.getInstanceId();
-    return metricContext;
+
+    return builder.build();
   }
 }

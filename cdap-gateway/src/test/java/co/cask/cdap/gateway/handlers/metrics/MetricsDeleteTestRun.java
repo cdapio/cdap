@@ -39,16 +39,19 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
   @Test
   public void testContextDelete() throws Exception {
     // Insert some metrics
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WCount.f.WordCounter.unique", "0");
+    MetricsCollector collector =
+      collectionService.getCollector(MetricsScope.SYSTEM,
+                                     getFlowletContext("WCount", "WordCounter", "unique"));
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
 
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM,
+                                   getFlowletContext("WCount", "WordCounter", "counter"));
     collector.increment("process.events.processed", 4);
     collector.increment("process.events.out", 3);
 
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM,
+                                   getFlowletContext("WCount", "WCounter", "counter"));
     collector.increment("process.events.processed", 2);
     collector.increment("process.events.out", 1);
 
@@ -80,13 +83,16 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
   @Test
   public void testContextAndMetricDelete() throws Exception {
     // Insert some metrics
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WCount.f.WordCounter.unique", "0");
+    MetricsCollector collector =
+      collectionService.getCollector(MetricsScope.SYSTEM,
+                                     getFlowletContext("WCount", "WordCounter", "unique"));
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
     collector.increment("store.ops", 7);
 
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0");
+    collector =
+      collectionService.getCollector(MetricsScope.SYSTEM,
+                                     getFlowletContext("WCount", "WordCounter", "counter"));
     collector.increment("process.events.processed", 4);
     collector.increment("process.events.out", 3);
 
@@ -116,8 +122,9 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
   @Test
   public void testMetricNoContextDelete() throws Exception {
     // Insert some metrics
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WCount.f.WordCounter.unique", "0");
+    MetricsCollector collector =
+      collectionService.getCollector(MetricsScope.SYSTEM,
+                                     getFlowletContext("WCount", "WordCounter", "unique"));
     collector.increment("store.ops", 7);
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
