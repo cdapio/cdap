@@ -19,7 +19,7 @@ package co.cask.cdap.metrics.transport;
 import java.util.Map;
 
 /**
- *
+ * Carries the "raw" emitted metric data point: metric name, context, type, value, etc.
  */
 public class MetricValue {
   private final Map<String, String> tags;
