@@ -18,7 +18,7 @@ package co.cask.cdap.metrics.process;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.common.io.ByteBufferInputStream;

@@ -14,21 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package co.cask.cdap.api.data.format;
+
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Exception to indicate a given type is not supported.
+ * Exception to indicate data is of an unexpected format.
  */
-public class UnsupportedTypeException extends Exception {
-  public UnsupportedTypeException(String message) {
+@Beta
+public class UnexpectedFormatException extends Exception {
+  public UnexpectedFormatException(String message) {
     super(message);
   }
 
-  public UnsupportedTypeException(String message, Throwable cause) {
+  public UnexpectedFormatException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public UnsupportedTypeException(Throwable cause) {
+  public UnexpectedFormatException(Throwable cause) {
     super(cause);
   }
 }

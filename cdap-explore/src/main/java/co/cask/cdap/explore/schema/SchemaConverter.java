@@ -17,8 +17,8 @@
 package co.cask.cdap.explore.schema;
 
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 
 import java.lang.reflect.Type;
 import java.util.Iterator;

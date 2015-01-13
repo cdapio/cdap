@@ -24,7 +24,7 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

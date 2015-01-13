@@ -22,7 +22,7 @@ import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.data.format.SingleStringRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.GatewayTestBase;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.internal.specification.FormatSpecification;
 import co.cask.cdap.proto.StreamProperties;

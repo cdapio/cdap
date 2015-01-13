@@ -23,7 +23,7 @@ import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.ByteStreams;

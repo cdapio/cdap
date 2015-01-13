@@ -23,7 +23,7 @@ import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.FieldAccessorFactory;
 import co.cask.cdap.internal.io.ReflectionDatumReaderFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaGenerator;
+import co.cask.cdap.api.data.schema.SchemaGenerator;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 

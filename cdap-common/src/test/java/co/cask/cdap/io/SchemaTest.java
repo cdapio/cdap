@@ -17,9 +17,9 @@
 package co.cask.cdap.io;
 
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

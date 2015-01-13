@@ -30,7 +30,7 @@ import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;

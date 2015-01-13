@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.proto;
 
-import co.cask.cdap.internal.specification.FormatSpecification;
 import com.google.common.base.Objects;
+import co.cask.cdap.api.data.format.FormatSpecification;
 
 /**
  * Represents the properties of a stream.

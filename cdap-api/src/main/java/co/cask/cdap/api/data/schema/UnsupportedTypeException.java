@@ -13,22 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.reflect.TypeToken;
+package co.cask.cdap.api.data.schema;
+
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Factory for creating instance of {@link DatumReader}.
+ * Exception to indicate a given type is not supported.
  */
-public interface DatumReaderFactory {
+@Beta
+public class UnsupportedTypeException extends Exception {
+  public UnsupportedTypeException(String message) {
+    super(message);
+  }
 
-  /**
-   * Creates a {@link DatumReader} that can decode object of type {@code T}.
-   * @param type The object type to decode.
-   * @param schema Schema of the object to decode to.
-   * @param <T> Type of the object.
-   * @return A {@link DatumReader}.
-   */
-  <T> DatumReader<T> create(TypeToken<T> type, Schema schema);
+  public UnsupportedTypeException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public UnsupportedTypeException(Throwable cause) {
+    super(cause);
+  }
 }
