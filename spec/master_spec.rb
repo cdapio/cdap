@@ -25,7 +25,6 @@ describe 'cdap::master' do
     it 'creates cdap-master service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-master')
     end
-
   end
 
   context 'using cdap 2.5.2' do
@@ -43,6 +42,5 @@ describe 'cdap::master' do
     it 'does not install cdap-hbase-compat-0.98 package' do
       expect(chef_run).not_to install_package('cdap-hbase-compat-0.98')
     end
-
   end
 end
