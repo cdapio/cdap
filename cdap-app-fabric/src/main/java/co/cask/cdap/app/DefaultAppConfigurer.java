@@ -197,7 +197,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   @Override
   public void addSchedule(Schedule schedule) {
-    Preconditions.checkArgument(schedule != null, "Schedule cannot be null.");
+    Preconditions.checkNotNull(schedule, "Schedule cannot be null.");
     Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
     ScheduleConfigurer configurer = schedules.get(schedule.getName());
 
@@ -210,7 +210,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addSchedule(String scheduleName, String programName, SchedulableProgramType programType) {
     ScheduleConfigurer configurer = schedules.get(scheduleName);
-    Preconditions.checkArgument(configurer != null, "Schedule is not configured with the Application.");
+    Preconditions.checkNotNull(configurer, "Schedule is not configured with the Application.");
     configurer.addProgram(new ScheduleProgramInfo(programName, programType));
   }
 

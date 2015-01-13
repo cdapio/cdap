@@ -775,11 +775,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/schedules/{program-type}/{program-id}")
-  public void programSchedules(HttpRequest request, HttpResponder responder,
+  public void getProgramSchedules(HttpRequest request, HttpResponder responder,
                                @PathParam("app-id") String appId,
                                @PathParam("program-type") String programType,
                                @PathParam("program-id") String programId) {
-    programLifecycleHttpHandler.programSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.getProgramSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                  appId, programType, programId);
 
   }

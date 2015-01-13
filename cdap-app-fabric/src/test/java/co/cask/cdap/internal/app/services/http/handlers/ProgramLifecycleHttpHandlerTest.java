@@ -22,6 +22,7 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -639,6 +640,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    List<Schedule> scheduleList = getProgramSchedules(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                                      ProgramType.WORKFLOW.getCategoryName(),
+                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    Assert.assertNotNull(scheduleList);
+    Assert.assertEquals(1, scheduleList.size());
+    Assert.assertEquals("Schedule", scheduleList.get(0).getName());
+    Assert.assertEquals("Run every 2 seconds", scheduleList.get(0).getDescription());
+
     //TODO: cannot test the /current endpoint because of CDAP-66. Enable after that bug is fixed.
 //    Assert.assertEquals(200, getWorkflowCurrentStatus(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
 //                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME));
@@ -848,6 +857,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private String getRunsUrl(String namespace, String appName, String workflow) {
     String runsUrl = String.format("apps/%s/workflows/%s/runs?status=completed", appName, workflow);
     return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private List<Schedule> getProgramSchedules(String namespace, String appName, String programType, String programName)
+    throws Exception {
+    String programScheduleUrl = String.format("apps/%s/schedules/%s/%s", appName, programType, programName);
+    String versionedUrl = getVersionedAPIPath(programScheduleUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<Schedule> schedules = new Gson().fromJson(json, new TypeToken<List<Schedule>>() { }.getType());
+    return schedules;
   }
 
   private String getScheduleId(String namespace, String appName, String workflowName) throws Exception {
