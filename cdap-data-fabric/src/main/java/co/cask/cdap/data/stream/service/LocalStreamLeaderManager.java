@@ -21,12 +21,16 @@ import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
@@ -37,6 +41,7 @@ public class LocalStreamLeaderManager extends AbstractIdleService implements Str
 
   private final StreamMetaStore streamMetaStore;
   private final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator;
+  private ListeningExecutorService executor;
 
   @Inject
   public LocalStreamLeaderManager(StreamMetaStore streamMetaStore,
@@ -59,6 +64,9 @@ public class LocalStreamLeaderManager extends AbstractIdleService implements Str
       }
     });
     streamsHeartbeatsAggregator.listenToStreams(streamNames);
+
+    executor = MoreExecutors.listeningDecorator(
+      Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("stream-leader-manager")));
   }
 
   @Override
@@ -72,12 +80,14 @@ public class LocalStreamLeaderManager extends AbstractIdleService implements Str
   }
 
   @Override
-  public ListenableFuture<Void> affectLeader(String streamName) {
+  public ListenableFuture<Void> affectLeader(final String streamName) {
     // Note: the leader of a stream in local mode is always the only existing stream handler
-
-    // This call does not do any heavy processing, no need to make it run in an executor
-    // and return the future coming from it
-    streamsHeartbeatsAggregator.listenToStream(streamName);
-    return Futures.immediateFuture(null);
+    return executor.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        streamsHeartbeatsAggregator.listenToStream(streamName);
+        return null;
+      }
+    });
   }
 }

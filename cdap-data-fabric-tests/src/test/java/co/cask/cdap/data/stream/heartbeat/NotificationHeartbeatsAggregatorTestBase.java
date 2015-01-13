@@ -155,7 +155,7 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
     });
 
     // Send fake heartbeats describing large increments of data
-    int increment = Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD / 3;
+    long increment = Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD / 3;
     for (int i = 0; i <= 3; i++) {
       notificationService.publish(heartbeatFeed,
                                   new StreamWriterHeartbeat(System.currentTimeMillis(), increment, i,
@@ -167,6 +167,5 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
     TimeUnit.SECONDS.sleep(Constants.Notification.Stream.AGGREGATION_DELAY + 2);
     cancellable.cancel();
     Assert.assertTrue(notificationReceived.get());
-
   }
 }

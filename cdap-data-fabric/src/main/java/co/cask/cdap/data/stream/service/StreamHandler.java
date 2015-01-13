@@ -29,7 +29,6 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
@@ -87,7 +86,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
   private final StreamLeaderManager streamLeaderManager;
-  private final NotificationFeedManager notificationFeedManager;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -100,13 +98,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public StreamHandler(CConfiguration cConf, Authenticator authenticator, StreamCoordinator streamCoordinator,
                        StreamAdmin streamAdmin, StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService, ExploreFacade exploreFacade,
-                       StreamLeaderManager streamLeaderManager, NotificationFeedManager notificationFeedManager) {
+                       StreamLeaderManager streamLeaderManager) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
-    this.notificationFeedManager = notificationFeedManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.streamLeaderManager = streamLeaderManager;
 

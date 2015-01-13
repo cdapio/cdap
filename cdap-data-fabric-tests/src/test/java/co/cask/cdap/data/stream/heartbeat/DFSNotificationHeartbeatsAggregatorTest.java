@@ -18,11 +18,15 @@ package co.cask.cdap.data.stream.heartbeat;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -58,7 +62,14 @@ public class DFSNotificationHeartbeatsAggregatorTest extends NotificationHeartbe
       },
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule());
+      Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+
+        @Override
+        protected void configure() {
+          // Tests are running in same process, hence no need to have ZK to coordinate
+          bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
+        }
+      }));
 
     startServices(injector);
     streamAdmin = injector.getInstance(StreamAdmin.class);

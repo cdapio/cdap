@@ -37,11 +37,11 @@ public class StreamWriterHeartbeat {
   }
 
   private final long timestamp;
-  private final int absoluteDataSize;
+  private final long absoluteDataSize;
   private final int writerID;
   private final Type type;
 
-  public StreamWriterHeartbeat(long timestamp, int absoluteDataSize, int writerID, Type type) {
+  public StreamWriterHeartbeat(long timestamp, long absoluteDataSize, int writerID, Type type) {
     this.timestamp = timestamp;
     this.absoluteDataSize = absoluteDataSize;
     this.writerID = writerID;
@@ -56,7 +56,7 @@ public class StreamWriterHeartbeat {
     return writerID;
   }
 
-  public int getAbsoluteDataSize() {
+  public long getAbsoluteDataSize() {
     return absoluteDataSize;
   }
 
