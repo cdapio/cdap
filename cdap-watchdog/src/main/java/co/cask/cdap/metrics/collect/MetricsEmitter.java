@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.metrics.transport.MetricsRecord;
+import co.cask.cdap.metrics.transport.MetricValue;
 
 /**
  * A MetricsEmitter is a class that is able to emit {@link co.cask.cdap.metrics.transport.MetricsRecord}.
@@ -27,5 +27,5 @@ public interface MetricsEmitter {
    * @param timestamp The timestamp for the metrics.
    * @return A {@link co.cask.cdap.metrics.transport.MetricsRecord} representing metrics for the given timestamp.
    */
-  MetricsRecord emit(long timestamp);
+  MetricValue emit(long timestamp);
 }

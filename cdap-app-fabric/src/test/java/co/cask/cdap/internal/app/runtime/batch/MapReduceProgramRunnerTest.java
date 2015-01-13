@@ -120,7 +120,7 @@ public class MapReduceProgramRunnerTest {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetInstantiator =
       new DatasetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceProgramRunnerTest.class.getClassLoader(), null, null);
+                              MapReduceProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
   }
