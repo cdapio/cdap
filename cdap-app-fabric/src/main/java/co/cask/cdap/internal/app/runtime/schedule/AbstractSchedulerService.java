@@ -177,6 +177,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         String scheduleName = schedule.getName();
         String cronEntry = schedule.getCronEntry();
         String triggerKey = String.format("%s:%s", jobKey, scheduleName);
+
         LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
         Trigger trigger = TriggerBuilder.newTrigger()

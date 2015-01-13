@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -67,6 +68,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -80,6 +82,7 @@ import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -333,9 +336,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deletePipe(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("pipeId") String pipeId) {
-    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
+    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+    if (pipeMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
       return;
     }
+    // TODO: Update application specification
+    scheduler.deleteAssociatedSchedules(Id.Program.from(namespaceId, "appId", "programId"), ProgramType.WORKFLOW);
     store.deletePipe(Id.Namespace.from(namespaceId), pipeId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -379,12 +386,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // deploy App
-      String appId = "";
-      Location location = null;
-      deploy(namespaceId, appId, location);
+      // Standalone
+      String appId = "appId";
+      String programId = "programId";
+      deploy(namespaceId, appId, new LocalLocationFactory().create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
+      // Distributed
 
-      // set schedule
-//      setSchedule();
+
+      String scheduleName = String.format("schedule.%s", pipeId);
+      Schedule schedule = new Schedule(scheduleName, "Pipe Description.", "0 4 * * *", Schedule.Action.START);
+      Id.Program scheduledProgramId = Id.Program.from(namespaceId, appId, programId);
+      // TODO: Update application specification
+      scheduler.schedule(scheduledProgramId, ProgramType.WORKFLOW, ImmutableList.of(schedule));
 
       // Write to mds
       store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);
@@ -405,26 +418,20 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("pipeId") String pipeId,
                             @PathParam("action") String action) {
-    if (respondIfPipeNotFound(responder, namespaceId, pipeId)) {
+    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
+    if (pipeMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
       return;
     }
+    String scheduleId = pipeMeta.getSchedule().getName();
     if ("start".equals(action)) {
-      //start
+      scheduler.resumeSchedule(scheduleId);
     } else if ("stop".equals(action)) {
-      //stop
+      scheduler.suspendSchedule(scheduleId);
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("Invalid pipe action: %s. Possible actions are: 'start', 'stop'.", action));
     }
-  }
-
-  private boolean respondIfPipeNotFound(HttpResponder responder, String namespaceId, String pipeId) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
-      return true;
-    }
-    return false;
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,

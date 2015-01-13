@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.schedule.Schedule;
 import com.google.common.base.Objects;
 
 /**
@@ -49,6 +50,10 @@ public final class PipeMeta {
 
   public String getFrequency() {
     throw new UnsupportedOperationException("Frequency is currently not supported");
+  }
+
+  public Schedule getSchedule() {
+    throw new UnsupportedOperationException("schedule is currently not supported");
   }
 
   @Override
