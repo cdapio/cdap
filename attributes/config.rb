@@ -19,8 +19,8 @@
 
 # Default: conf.chef
 default['cdap']['conf_dir'] = 'conf.chef'
-# Default: 2.5.2-1
-default['cdap']['version'] = '2.5.2-1'
+# Default: 2.6.0-1
+default['cdap']['version'] = '2.6.0-1'
 # cdap-site.xml
 default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 # ideally we could put the macro '/${cdap.namespace}' here but this attribute is used elsewhere in the cookbook
