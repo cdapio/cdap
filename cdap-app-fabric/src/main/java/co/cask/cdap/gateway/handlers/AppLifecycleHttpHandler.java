@@ -37,7 +37,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.config.PreferencesWrapper;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -162,7 +162,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
-  private final PreferencesWrapper preferencesWrapper;
+  private final PreferencesStore preferencesStore;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -170,7 +170,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesWrapper preferencesWrapper) {
+                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -183,7 +183,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.preferencesWrapper = preferencesWrapper;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -556,7 +556,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
 
-    //Delete all preferences of the application and all its programs
+    //Delete all preferences of the application and of all its programs
     deletePreferences(appId);
 
     // Delete all streams and queues state of each flow
@@ -694,13 +694,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 
-      preferencesWrapper.deleteProperties(appId.getAccountId(), appId.getId(),
+      preferencesStore.deleteProperties(appId.getAccountId(), appId.getId(),
                                           ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
-      LOG.trace("Deleting Preferences of Program : {}, {}, {}, {}", appId.getAccountId(), appId.getId(),
+      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getAccountId(), appId.getId(),
                 ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
     }
-    preferencesWrapper.deleteProperties(appId.getAccountId(), appId.getId());
-    LOG.trace("Deleting Preferences of Application : {}, {}", appId.getAccountId(), appId.getId());
+    preferencesStore.deleteProperties(appId.getAccountId(), appId.getId());
+    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getAccountId(), appId.getId());
   }
 
   /**

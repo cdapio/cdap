@@ -34,7 +34,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.config.PreferencesWrapper;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -151,7 +151,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Scheduler scheduler;
 
-  private final PreferencesWrapper preferencesWrapper;
+  private final PreferencesStore preferencesStore;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -199,7 +199,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler, PreferencesWrapper preferencesWrapper) {
+                                     Scheduler scheduler, PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -210,7 +210,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
-    this.preferencesWrapper = preferencesWrapper;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -311,7 +311,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
-      Map<String, String> runtimeArgs = preferencesWrapper.getProperties(id.getAccountId(), appId,
+      Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getAccountId(), appId,
                                                                          runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
@@ -345,7 +345,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       Map<String, String> args = decodeArguments(request);
-      preferencesWrapper.setProperties(namespaceId, appId, runnableType, runnableId, args);
+      preferencesStore.setProperties(namespaceId, appId, runnableType, runnableId, args);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Throwable e) {
       LOG.error("Error getting runtime args {}", e.getMessage(), e);
@@ -1387,7 +1387,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Map<String, String> userArgs = preferencesWrapper.getResolvedProperties(id.getAccountId(), id.getApplicationId(),
+      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getAccountId(), id.getApplicationId(),
                                                                               type.getCategoryName(), id.getId());
       if (overrides != null) {
         for (Map.Entry<String, String> entry : overrides.entrySet()) {

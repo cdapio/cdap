@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.config.PreferencesWrapper;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
@@ -49,14 +49,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 
   private final Store store;
-  private final PreferencesWrapper preferencesWrapper;
+  private final PreferencesStore preferencesStore;
 
   @Inject
   public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                              PreferencesWrapper preferencesWrapper) {
+                              PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
-    this.preferencesWrapper = preferencesWrapper;
+    this.preferencesStore = preferencesStore;
   }
 
   @GET
@@ -160,10 +160,11 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
+      // Delete Preferences associated with this namespace
+      preferencesStore.deleteProperties(namespace);
+
       // Store#deleteNamespace already checks for existence
       NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);
-      // Delete Preferences associated with this namespace
-      preferencesWrapper.deleteProperties(namespace);
       if (deletedNamespace == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
       } else {

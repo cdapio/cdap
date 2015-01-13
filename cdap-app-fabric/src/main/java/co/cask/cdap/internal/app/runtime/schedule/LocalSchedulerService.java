@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.StoreFactory;
-import co.cask.cdap.config.PreferencesWrapper;
+import co.cask.cdap.config.PreferencesStore;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
 import org.quartz.Scheduler;
@@ -34,8 +34,8 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
 
   @Inject
   public LocalSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                               ProgramRuntimeService programRuntimeService, PreferencesWrapper preferencesWrapper) {
-    super(schedulerSupplier, storeFactory, programRuntimeService, preferencesWrapper);
+                               ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+    super(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
   }
 
   @Override

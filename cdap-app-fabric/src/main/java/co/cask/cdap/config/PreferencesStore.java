@@ -17,6 +17,7 @@
 package co.cask.cdap.config;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -25,22 +26,25 @@ import java.util.Map;
 /**
  * Wrapper around {@link ConfigStore} specifically for Preferences API.
  */
-public class PreferencesWrapper {
-  private static final String PREFERENCES = "preferences";
-  private static final String INSTANCE_NAME = "global";
-  private static final String NAMESPACE = "default";
+public class PreferencesStore {
+  private static final String PREFERENCES_CONFIG_TYPE = "preferences";
+
+  // Id for Properties config stored at the instance level
+  private static final String INSTANCE_PROPERTIES = "instance";
+  // Namespace where instance level properties are stored
+  private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
 
   private final ConfigStore configStore;
 
   @Inject
-  public PreferencesWrapper(ConfigStore configStore) {
+  public PreferencesStore(ConfigStore configStore) {
     this.configStore = configStore;
   }
 
-  private Map<String, String> getPropertiesHelper(String id) {
+  private Map<String, String> getConfigProperties(String namespace, String id) {
     Map<String, String> value = Maps.newHashMap();
     try {
-      Config config = configStore.get(NAMESPACE, PREFERENCES, id);
+      Config config = configStore.get(namespace, PREFERENCES_CONFIG_TYPE, id);
       value.putAll(config.getProperties());
     } catch (ConfigNotFoundException e) {
       //no-op - return empty map
@@ -48,33 +52,33 @@ public class PreferencesWrapper {
     return value;
   }
 
-  private void setPropertiesHelper(String id, Map<String, String> propertyMap) {
+  private void setConfig(String namespace, String id, Map<String, String> propertyMap) {
     Config config = new Config(id, propertyMap);
-    configStore.createOrUpdate(NAMESPACE, PREFERENCES, config);
+    configStore.createOrUpdate(namespace, PREFERENCES_CONFIG_TYPE, config);
   }
 
-  private void deletePropertiesHelper(String id) {
+  private void deleteConfig(String namespace, String id) {
     try {
-      configStore.delete(NAMESPACE, PREFERENCES, id);
+      configStore.delete(namespace, PREFERENCES_CONFIG_TYPE, id);
     } catch (ConfigNotFoundException e) {
       //no-op
     }
   }
 
   public Map<String, String> getProperties() {
-    return getPropertiesHelper(generateId());
+    return getConfigProperties(DEFAULT_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES));
   }
 
   public Map<String, String> getProperties(String namespace) {
-    return getPropertiesHelper(generateId(namespace));
+    return getConfigProperties(namespace, getMultipartKey(namespace));
   }
 
   public Map<String, String> getProperties(String namespace, String appId) {
-    return getPropertiesHelper(generateId(namespace, appId));
+    return getConfigProperties(namespace, getMultipartKey(namespace, appId));
   }
 
   public Map<String, String> getProperties(String namespace, String appId, String programType, String programId) {
-    return getPropertiesHelper(generateId(namespace, appId, programType, programId));
+    return getConfigProperties(namespace, getMultipartKey(namespace, appId, programType, programId));
   }
 
   public Map<String, String> getResolvedProperties() {
@@ -101,52 +105,36 @@ public class PreferencesWrapper {
   }
 
   public void setProperties(Map<String, String> propMap) {
-    setPropertiesHelper(generateId(), propMap);
+    setConfig(DEFAULT_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES), propMap);
   }
 
   public void setProperties(String namespace, Map<String, String> propMap) {
-    setPropertiesHelper(generateId(namespace), propMap);
+    setConfig(namespace, getMultipartKey(namespace), propMap);
   }
 
   public void setProperties(String namespace, String appId, Map<String, String> propMap) {
-    setPropertiesHelper(generateId(namespace, appId), propMap);
+    setConfig(namespace, getMultipartKey(namespace, appId), propMap);
   }
 
   public void setProperties(String namespace, String appId, String programType, String programId,
                             Map<String, String> propMap) {
-    setPropertiesHelper(generateId(namespace, appId, programType, programId), propMap);
+    setConfig(namespace, getMultipartKey(namespace, appId, programType, programId), propMap);
   }
 
   public void deleteProperties() {
-    deletePropertiesHelper(generateId());
+    deleteConfig(DEFAULT_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES));
   }
 
   public void deleteProperties(String namespace) {
-    deletePropertiesHelper(generateId(namespace));
+    deleteConfig(namespace, getMultipartKey(namespace));
   }
 
   public void deleteProperties(String namespace, String appId) {
-    deletePropertiesHelper(generateId(namespace, appId));
+    deleteConfig(namespace, getMultipartKey(namespace, appId));
   }
 
   public void deleteProperties(String namespace, String appId, String programType, String programId) {
-    deletePropertiesHelper(generateId(namespace, appId, programType, programId));
-  }
-
-  private String generateId() {
-    return getMultipartKey(INSTANCE_NAME);
-  }
-
-  private String generateId(String namespace) {
-    return getMultipartKey(INSTANCE_NAME, namespace);
-  }
-
-  private String generateId(String namespace, String appId) {
-    return getMultipartKey(INSTANCE_NAME, namespace, appId);
-  }
-
-  private String generateId(String namespace, String appId, String programType, String programId) {
-    return getMultipartKey(INSTANCE_NAME, namespace, appId, programType, programId);
+    deleteConfig(namespace, getMultipartKey(namespace, appId, programType, programId));
   }
 
   private String getMultipartKey(String... parts) {

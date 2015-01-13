@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.config.PreferencesWrapper;
+import co.cask.cdap.config.PreferencesStore;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -47,8 +47,8 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
   public DistributedSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
                                      ProgramRuntimeService programRuntimeService,
                                      DiscoveryServiceClient discoveryServiceClient,
-                                     PreferencesWrapper preferencesWrapper) {
-    super(schedulerSupplier, storeFactory, programRuntimeService, preferencesWrapper);
+                                     PreferencesStore preferencesStore) {
+    super(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
     this.discoveryServiceClient = discoveryServiceClient;
   }
 

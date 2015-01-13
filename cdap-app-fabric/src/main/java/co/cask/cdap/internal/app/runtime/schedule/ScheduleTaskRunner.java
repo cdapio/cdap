@@ -22,7 +22,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.config.PreferencesWrapper;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -50,12 +50,12 @@ public final class ScheduleTaskRunner {
 
   private final ProgramRuntimeService runtimeService;
   private final Store store;
-  private final PreferencesWrapper preferencesWrapper;
+  private final PreferencesStore preferencesStore;
 
-  public ScheduleTaskRunner(Store store, ProgramRuntimeService runtimeService, PreferencesWrapper preferencesWrapper) {
+  public ScheduleTaskRunner(Store store, ProgramRuntimeService runtimeService, PreferencesStore preferencesStore) {
     this.runtimeService = runtimeService;
     this.store = store;
-    this.preferencesWrapper = preferencesWrapper;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -77,7 +77,7 @@ public final class ScheduleTaskRunner {
       program =  store.loadProgram(programId, ProgramType.WORKFLOW);
       Preconditions.checkNotNull(program, "Program not found");
 
-      userArgs = preferencesWrapper.getResolvedProperties(programId.getAccountId(), programId.getApplicationId(),
+      userArgs = preferencesStore.getResolvedProperties(programId.getAccountId(), programId.getApplicationId(),
                                                           programType.getCategoryName(), programId.getId());
 
     } catch (Throwable t) {
