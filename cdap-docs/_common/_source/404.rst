@@ -10,7 +10,7 @@
 
 .. _404:
 
-.. image:: http://cask.co/wp-content/themes/cask/assets/img/404.png
+.. image:: _images/cask_404.png
    :width: 8in
    :align: center
 

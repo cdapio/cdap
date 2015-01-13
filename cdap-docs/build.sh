@@ -30,6 +30,7 @@ source _common/common-build.sh
 
 BUILD_TEMP="build-temp"
 COMMON="_common"
+COMMON_IMAGES="$COMMON/_images"
 COMMON_SOURCE="$COMMON/_source"
 COMMON_CONF_PY="$COMMON/common_conf.py"
 COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
@@ -125,6 +126,7 @@ function build_docs_outer_level() {
   # Build outer-level docs
   cd $SCRIPT_PATH
   cp $COMMON_HIGHLEVEL_PY $BUILD/$SOURCE/conf.py
+  cp -R $COMMON_IMAGES    $BUILD/$SOURCE/
   cp $COMMON_SOURCE/*.rst $BUILD/$SOURCE/
   
   if [ "x$1" == "x" ]; then
