@@ -12,6 +12,10 @@
 
 .. _404:
 
+.. image:: http://cask.co/wp-content/themes/cask/assets/img/404.png
+   :width: 8in
+   :align: center
+
 ==================================================
 Page Not Found (404 error message)
 ==================================================
