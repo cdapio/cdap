@@ -16,15 +16,15 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.data.format.SingleStringRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.GatewayTestBase;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.internal.specification.FormatSpecification;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -134,10 +134,10 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                     HOSTNAME, port), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
-    FormatSpecification formatSpecification =
-      new FormatSpecification(SingleStringRecordFormat.class.getCanonicalName(),
-                              schema,
-                              ImmutableMap.of(SingleStringRecordFormat.CHARSET, "utf8"));
+    FormatSpecification formatSpecification;
+    formatSpecification = new FormatSpecification(SingleStringRecordFormat.class.getCanonicalName(),
+                            schema,
+                            ImmutableMap.of(SingleStringRecordFormat.CHARSET, "utf8"));
     StreamProperties streamProperties = new StreamProperties("stream_info", 2, formatSpecification);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());

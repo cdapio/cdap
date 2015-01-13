@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.auth;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Codec;
@@ -25,7 +26,6 @@ import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.DatumWriterFactory;
-import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 

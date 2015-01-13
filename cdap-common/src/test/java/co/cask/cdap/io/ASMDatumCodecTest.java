@@ -16,6 +16,8 @@
 
 package co.cask.cdap.io;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
@@ -25,8 +27,6 @@ import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;

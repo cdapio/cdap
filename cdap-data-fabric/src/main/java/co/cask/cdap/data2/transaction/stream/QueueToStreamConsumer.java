@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.api.data.schema.SchemaHash;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.Decoder;
@@ -24,7 +25,6 @@ import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.api.data.schema.SchemaHash;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;

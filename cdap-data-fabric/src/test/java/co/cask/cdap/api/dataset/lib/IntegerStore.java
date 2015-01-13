@@ -17,10 +17,10 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectStoreDataset;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.TypeRepresentation;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 
 /**
  * A simple data set <i>extending</i> ObjectStore, used by ObjectStoreTest.testSubclass().

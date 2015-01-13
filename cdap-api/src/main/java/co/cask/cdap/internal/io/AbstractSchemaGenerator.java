@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.io;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.SchemaGenerator;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

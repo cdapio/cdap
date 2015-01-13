@@ -16,8 +16,8 @@
 
 package co.cask.cdap.app.queue;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.common.queue.QueueName;
 
 /**
  * This interface defines the specification for associated with either

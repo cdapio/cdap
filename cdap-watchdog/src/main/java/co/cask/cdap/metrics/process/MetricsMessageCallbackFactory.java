@@ -15,12 +15,12 @@
  */
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.SchemaGenerator;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Throwables;

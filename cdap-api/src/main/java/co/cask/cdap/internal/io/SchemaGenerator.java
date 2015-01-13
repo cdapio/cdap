@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.schema;
+package co.cask.cdap.internal.io;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 
@@ -25,7 +24,6 @@ import java.lang.reflect.Type;
 /**
  * Interface for generating data {@link Schema}.
  */
-@Beta
 public interface SchemaGenerator {
 
   /**

@@ -18,9 +18,13 @@ package co.cask.cdap.api.data.stream;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -29,9 +33,12 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
@@ -53,16 +60,20 @@ import java.util.Map;
  *
  */
 public class StreamBatchReadable implements BatchReadable<Long, String> {
-
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
   private static final String START_TIME_KEY = "start";
   private static final String END_TIME_KEY = "end";
   private static final String DECODER_KEY = "decoder";
+  private static final String BODY_FORMAT_KEY = "bodyFormat";
 
   private final URI uri;
   private final String streamName;
   private final long startTime;
   private final long endTime;
   private final String decoderType;
+  private final FormatSpecification bodyFormatSpec;
 
   /**
    * Specifies to use the given stream as input of a MapReduce job. Same as calling
@@ -108,6 +119,22 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   }
 
   /**
+   * Specifies to use the given stream as input of a MapReduce job, using the given {@link FormatSpecification}
+   * describing how to read the body of a stream. Using this method means your mapper must use a
+   * mapreduce LongWritable as the map key and a {@link StructuredRecord} as the map value.
+   *
+   * @param context The context of the MapReduce job
+   * @param streamName Name of the stream
+   * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
+   * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
+   * @param bodyFormatSpec The {@link FormatSpecification} describing how the stream body should be read
+   */
+  public static void useStreamInput(MapReduceContext context, String streamName,
+                                    long startTime, long endTime, FormatSpecification bodyFormatSpec) {
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec).toURI().toString(), null);
+  }
+
+  /**
    * Constructs an {@link URI} that represents the stream input.
    *
    * @param streamName Name of the stream
@@ -138,7 +165,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    *
    * <pre>
    * {@code
-   * stream://<stream_name>[?start=<start_time>[&end=<end_time>[&decoder=<decoderClass>]]]
+   * stream://<stream_name>[?start=<start_time>[&end=<end_time>[&decoder=<decoderClass>[&bodyFormat=<bodyFormat>]]]]
    * }
    * </pre>
    */
@@ -154,10 +181,12 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
       startTime = parameters.containsKey(START_TIME_KEY) ? Long.parseLong(parameters.get(START_TIME_KEY)) : 0L;
       endTime = parameters.containsKey(END_TIME_KEY) ? Long.parseLong(parameters.get(END_TIME_KEY)) : Long.MAX_VALUE;
       decoderType = parameters.get(DECODER_KEY);
+      bodyFormatSpec = decodeFormatSpec(parameters.get(BODY_FORMAT_KEY));
     } else {
       startTime = 0L;
       endTime = Long.MAX_VALUE;
       decoderType = null;
+      bodyFormatSpec = null;
     }
   }
 
@@ -198,6 +227,22 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   }
 
   /**
+   * Constructs an instance with the given properties.
+   *
+   * @param streamName Name of the stream
+   * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
+   * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
+   * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
+   */
+  public StreamBatchReadable(String streamName, long startTime,
+                             long endTime, FormatSpecification bodyFormatSpec) {
+    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(
+      START_TIME_KEY, startTime,
+      END_TIME_KEY, endTime,
+      BODY_FORMAT_KEY, encodeFormatSpec(bodyFormatSpec))));
+  }
+
+  /**
    * Returns the stream name.
    */
   public String getStreamName() {
@@ -226,6 +271,13 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   }
 
   /**
+   * Returns the {@link FormatSpecification} for reading the body of the stream.
+   */
+  public FormatSpecification getBodyFormatSpec() {
+    return bodyFormatSpec;
+  }
+
+  /**
    * Returns an {@link URI} that represents this {@link StreamBatchReadable}.
    */
   public URI toURI() {
@@ -242,5 +294,28 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   public SplitReader<Long, String> createSplitReader(Split split) {
     // Not used.
     return null;
+  }
+
+  private static String encodeFormatSpec(FormatSpecification formatSpecification) {
+    String asJson = GSON.toJson(formatSpecification);
+    try {
+      return URLEncoder.encode(asJson, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // this should never happen
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private static FormatSpecification decodeFormatSpec(String encodedFormatSpecification) {
+    if (encodedFormatSpecification == null) {
+      return null;
+    }
+    try {
+      String decodedFormatSpecification = URLDecoder.decode(encodedFormatSpecification, "UTF-8");
+      return GSON.fromJson(decodedFormatSpecification, FormatSpecification.class);
+    } catch (UnsupportedEncodingException e) {
+      // shouldn't ever happen
+      return null;
+    }
   }
 }

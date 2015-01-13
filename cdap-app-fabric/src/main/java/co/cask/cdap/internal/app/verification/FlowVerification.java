@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.verification;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -24,7 +25,6 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
