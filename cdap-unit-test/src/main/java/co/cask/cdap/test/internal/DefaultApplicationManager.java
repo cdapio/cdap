@@ -105,7 +105,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       this.datasetInstantiator = new DatasetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
-                                                         null, null);
+                                                         null);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

@@ -169,7 +169,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     return discoveryServiceClient;
   }
 
-  protected static Map<String, String> getMetricsContext(Program program, String runId) {
+  public static Map<String, String> getMetricsContext(Program program, String runId) {
     Map<String, String> tags = Maps.newHashMap();
     tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
     tags.put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));

@@ -285,7 +285,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
-
+  
   // given the current config for a stream and requested config for a stream, get the new stream config
   // with defaults in place of missing settings, and validation performed on the requested fields.
   // If a field is missing or invalid, this method will write an appropriate response to the responder and
