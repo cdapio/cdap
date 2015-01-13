@@ -55,7 +55,7 @@ public class FileSetProperties {
   }
 
   /**
-   * A Builder to construct DatasetProperties instances.
+   * A Builder to construct properties for FileSet datasets.
    */
   public static final class Builder {
     private final DatasetProperties.Builder delegate = DatasetProperties.builder();
