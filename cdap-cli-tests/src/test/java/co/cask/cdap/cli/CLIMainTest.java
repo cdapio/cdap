@@ -249,10 +249,6 @@ public class CLIMainTest extends StandaloneTestBase {
     final String defaultFields = PREFIX + "defaultFields";
     String doesNotExist = "doesNotExist";
 
-    //TODO: Remove when default version becomes v3
-    String origVersion = cliConfig.getClientConfig().getApiVersion();
-    cliConfig.getClientConfig().setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
       .setId("default").setDisplayName("default").setDescription("default").build();
@@ -268,7 +264,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // create a namespace
     String command = String.format("create namespace %s %s %s", id, displayName, description);
-    testCommandOutputContains(cli, command, String.format("Namespace %s created successfully.", id));
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", id));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
       .setId(id).setDisplayName(displayName).setDescription(description).build();
@@ -287,7 +283,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // create a namespace with default displayName and description
     command = String.format("create namespace %s", defaultFields);
-    testCommandOutputContains(cli, command, String.format("Namespace %s created successfully.", defaultFields));
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", defaultFields));
 
     NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
       .setId(defaultFields).setDisplayName(defaultFields).setDescription("").build();
@@ -301,10 +297,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // delete namespace and verify
     command = String.format("delete namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Namespace %s deleted successfully.", id));
-
-    //reset API version
-    cliConfig.getClientConfig().setApiVersion(origVersion);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", id));
   }
 
   private static File createAppJarFile(Class<?> cls) {

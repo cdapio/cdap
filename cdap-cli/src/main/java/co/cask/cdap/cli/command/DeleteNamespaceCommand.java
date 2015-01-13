@@ -29,7 +29,7 @@ import java.io.PrintStream;
  * Deletes a namespace.
  */
 public class DeleteNamespaceCommand implements Command {
-  private static final String SUCCESS_MSG = "Namespace %s deleted successfully.";
+  private static final String SUCCESS_MSG = "Namespace '%s' deleted successfully.";
   private final NamespaceClient namespaceClient;
 
   @Inject

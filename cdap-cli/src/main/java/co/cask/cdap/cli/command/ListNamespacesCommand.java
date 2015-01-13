@@ -59,6 +59,6 @@ public class ListNamespacesCommand implements Command {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s." + ElementType.NAMESPACE.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.NAMESPACE.getPluralPrettyName());
   }
 }

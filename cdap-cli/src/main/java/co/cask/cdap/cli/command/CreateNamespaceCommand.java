@@ -30,7 +30,7 @@ import java.io.PrintStream;
  * Creates a CDAP namespace.
  */
 public class CreateNamespaceCommand implements Command {
-  private static final String SUCCESS_MSG = "Namespace %s created successfully.";
+  private static final String SUCCESS_MSG = "Namespace '%s' created successfully.";
 
   private final NamespaceClient namespaceClient;
 

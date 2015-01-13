@@ -61,13 +61,18 @@ public class NamespaceClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<NamespaceMeta> list() throws IOException, UnAuthorizedAccessTokenException {
-    // TODO: remove after default apiVersion becomes v3
-//    String origVersion = config.getApiVersion();
-//    config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("namespaces"),
-                                               config.getAccessToken());
-//    config.setApiVersion(origVersion);
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() { }).getResponseObject();
+    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    String origVersion = config.getApiVersion();
+    try {
+      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+      HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("namespaces"),
+                                                 config.getAccessToken());
+
+      return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() {
+      }).getResponseObject();
+    } finally {
+      config.setApiVersion(origVersion);
+    }
   }
 
   /**
@@ -80,18 +85,23 @@ public class NamespaceClient {
    * @throws NotFoundException if the specified namespace is not found
    */
   public NamespaceMeta get(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
-    // TODO: remove after default apiVersion becomes v3
-//    String origVersion = config.getApiVersion();
-//    config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-    HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveURL(String.format("namespaces/%s", namespaceId)),
-                                               config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    String origVersion = config.getApiVersion();
+    try {
+      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+      HttpResponse response = restClient.execute(HttpMethod.GET,
+                                                 config.resolveURL(String.format("namespaces/%s", namespaceId)),
+                                                 config.getAccessToken(),
+                                                 HttpURLConnection.HTTP_NOT_FOUND);
+      if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+        throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      }
+
+      return ObjectResponse.fromJsonBody(response, new TypeToken<NamespaceMeta>() {
+      }).getResponseObject();
+    } finally {
+      config.setApiVersion(origVersion);
     }
-//    config.setApiVersion(origVersion);
-    return ObjectResponse.fromJsonBody(response, new TypeToken<NamespaceMeta>() { }).getResponseObject();
   }
 
   /**
@@ -105,21 +115,24 @@ public class NamespaceClient {
    */
   public void delete(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException,
     CannotBeDeletedException {
-    // TODO: remove after default apiVersion becomes v3
-    // String origVersion = config.getApiVersion();
-    //config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-    HttpResponse response = restClient.execute(HttpMethod.DELETE,
-                                               config.resolveURL(String.format("namespaces/%s", namespaceId)),
-                                               config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND,
-                                               HttpURLConnection.HTTP_FORBIDDEN);
-    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    String origVersion = config.getApiVersion();
+    try {
+      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+      HttpResponse response = restClient.execute(HttpMethod.DELETE,
+                                                 config.resolveURL(String.format("namespaces/%s", namespaceId)),
+                                                 config.getAccessToken(),
+                                                 HttpURLConnection.HTTP_NOT_FOUND,
+                                                 HttpURLConnection.HTTP_FORBIDDEN);
+      if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+        throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      }
+      if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
+        throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      }
+    } finally {
+      config.setApiVersion(origVersion);
     }
-    if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId);
-    }
-    //config.setApiVersion(origVersion);
   }
 
   /**
@@ -133,30 +146,33 @@ public class NamespaceClient {
    */
   public void create(NamespaceMeta namespaceMeta)
     throws IOException, UnAuthorizedAccessTokenException, AlreadyExistsException, BadRequestException {
-    // TODO: remove after default apiVersion becomes v3
-    // String origVersion = config.getApiVersion();
-    // config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-    URL url = config.resolveURL(String.format("namespaces/%s", namespaceMeta.getId()));
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    String displayName = namespaceMeta.getDisplayName();
-    String description = namespaceMeta.getDescription();
-    if (displayName != null) {
-      builder.setDisplayName(displayName);
+    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    String origVersion = config.getApiVersion();
+    try {
+      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+      URL url = config.resolveURL(String.format("namespaces/%s", namespaceMeta.getId()));
+      NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
+      String displayName = namespaceMeta.getDisplayName();
+      String description = namespaceMeta.getDescription();
+      if (displayName != null) {
+        builder.setDisplayName(displayName);
+      }
+      if (description != null) {
+        builder.setDescription(description);
+      }
+      String body = new Gson().toJson(builder.build());
+      HttpRequest request = HttpRequest.put(url).withBody(body).build();
+      HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
+      String responseBody = response.getResponseBodyAsString();
+      if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+        throw new BadRequestException("Bad request: " + responseBody);
+      }
+      if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
+                                                                    namespaceMeta.getId()))) {
+        throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
+      }
+    } finally {
+      config.setApiVersion(origVersion);
     }
-    if (description != null) {
-      builder.setDescription(description);
-    }
-    String body = new Gson().toJson(builder.build());
-    HttpRequest request = HttpRequest.put(url).withBody(body).build();
-    HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
-    String responseBody = response.getResponseBodyAsString();
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException("Bad request: " + responseBody);
-    }
-    if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
-                                                                  namespaceMeta.getId()))) {
-      throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
-    }
-    // config.setApiVersion(origVersion);
   }
 }
