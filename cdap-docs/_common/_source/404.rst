@@ -8,8 +8,6 @@
 :hide-nav: true
 :orphan:
 
-
-
 .. _404:
 
 .. image:: http://cask.co/wp-content/themes/cask/assets/img/404.png
@@ -96,16 +94,9 @@ Or, you can **search the site using Google:**
 
 Post a message at either the two CDAP groups:
 
-- `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
+- `CDAP Users: cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
 
-- `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
+- `CDAP Developers: cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
 
 We also have a `JIRA for filing issues. <https://issues.cask.co/browse/CDAP>`__
 
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:
