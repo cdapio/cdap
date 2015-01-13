@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,8 @@ public final class Locations {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(fs.open(path));
+        long size = fs.getFileStatus(path).getLen();
+        return SeekableInputStream.create(fs.open(path), size);
       }
     };
   }
@@ -69,7 +70,8 @@ public final class Locations {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(location.getInputStream());
+        long size = location.length();
+        return SeekableInputStream.create(location.getInputStream(), size);
       }
     };
   }
