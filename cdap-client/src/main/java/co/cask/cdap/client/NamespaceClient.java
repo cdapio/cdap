@@ -42,6 +42,7 @@ import javax.inject.Inject;
  */
 public class NamespaceClient {
   private static final String NAMESPACE_ENTITY_TYPE = "namespace";
+  private static final Gson GSON = new Gson();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -130,7 +131,7 @@ public class NamespaceClient {
     if (description != null) {
       builder.setDescription(description);
     }
-    String body = new Gson().toJson(builder.build());
+    String body = GSON.toJson(builder.build());
     HttpRequest request = HttpRequest.put(url).withBody(body).build();
     HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
     String responseBody = response.getResponseBodyAsString();
