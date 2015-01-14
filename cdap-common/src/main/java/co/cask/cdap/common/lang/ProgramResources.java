@@ -54,6 +54,7 @@ final class ProgramResources {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
   private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop");
+  private static final String HBASE_PACKAGE_PREFIX = "org/apache/hadoop/hbase/";
   private static final List<String> SPARK_PACKAGES = ImmutableList.of("org.apache.spark", "scala");
   private static final List<String> CDAP_API_PACKAGES = ImmutableList.of("co.cask.cdap.api", "co.cask.cdap.internal");
   private static final List<String> JAVAX_WS_RS_PACKAGES = ImmutableList.of("javax.ws.rs");
@@ -154,8 +155,16 @@ final class ProgramResources {
     // Gather resources for javax.ws.rs classes. They are not traceable from the api classes.
     getResources(getClassPath(classLoader, Path.class), JAVAX_WS_RS_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
 
-    return ImmutableSet.copyOf(getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                                            HADOOP_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result));
+    // Gather Hadoop classes.
+    getResources(ClassPath.from(classLoader, JAR_ONLY_URI), HADOOP_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
+
+    // Excludes HBase classes
+    return ImmutableSet.copyOf(Sets.filter(result, new Predicate<String>() {
+      @Override
+      public boolean apply(String input) {
+        return !input.startsWith(HBASE_PACKAGE_PREFIX);
+      }
+    }));
   }
 
   /**

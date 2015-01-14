@@ -52,6 +52,9 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     dash = getDashboards("mynamespace");
     Assert.assertTrue(dash.isJsonArray());
     Assert.assertEquals(1, dash.getAsJsonArray().size());
+    String id = dash.getAsJsonArray().get(0).getAsJsonObject().get("id").getAsString();
+    Assert.assertEquals(id, s);
+    Assert.assertEquals(new JsonParser().parse("{}"), dash.getAsJsonArray().get(0).getAsJsonObject().get("config"));
 
     deleteDashboard("mynamespace", s, 200);
     deleteDashboard("mynamespace", s, 404);

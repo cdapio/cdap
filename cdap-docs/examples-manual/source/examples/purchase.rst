@@ -58,7 +58,8 @@ of the Application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
    :language: java
-   :lines: 29-
+   :prepend: public class PurchaseApp extends AbstractApplication {
+   :start-after: public class PurchaseApp extends AbstractApplication {
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 ------------------------------------------------------------------------
@@ -68,7 +69,8 @@ with this method defined in ``PurchaseStore.java``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
-   :lines: 45-60
+   :start-after: @ProcessInput
+   :end-before: /**
 
 This method is what actually puts data into the *purchases* Dataset, by writing to the
 Dataset with each purchase's timestamp and the ``Purchase`` Object.
@@ -264,7 +266,7 @@ reformatted to fit)::
   |                                    |                          firstName:string,        |
   |                                    |                          lastName:string,         |
   |                                    |                          categories:array<string> |
-  |                                    |                          >> optional,
+  |                                    |                          >> optional,             |
   |                                    |                product:string,                    |
   |                                    |                quantity:int,                      |
   |                                    |                price:int,                         |

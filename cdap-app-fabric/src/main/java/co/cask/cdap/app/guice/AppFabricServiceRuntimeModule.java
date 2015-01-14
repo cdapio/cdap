@@ -23,11 +23,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
@@ -95,6 +97,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -127,6 +130,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getStandaloneModules() {
 
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -160,6 +164,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
 
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getDistributedModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -216,6 +221,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(DashboardHttpHandler.class);
+      handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
     }
 
     @Provides

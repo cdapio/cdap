@@ -208,7 +208,10 @@ public final class TimeSeriesTable {
     List<String> metricsScanResults = Lists.newArrayList();
     Row rowResult;
     int contextOffset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
-
+    if (isContextQuery && contextPrefix != null) {
+    // if we have a context prefix to match, in order to match the next level we append a dot.
+      contextPrefix += ".";
+    }
 
     // multiple scans with incrementing the scans startRow row-key to get the next unique part of a context or
     // next unique metric based on the parameter isContextQuery.

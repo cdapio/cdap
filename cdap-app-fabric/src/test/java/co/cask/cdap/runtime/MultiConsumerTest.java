@@ -81,8 +81,7 @@ public class MultiConsumerTest {
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
     DatasetInstantiator datasetInstantiator =
-      new DatasetInstantiator(datasetFramework, CConfiguration.create(),
-                              getClass().getClassLoader(), null, null);
+      new DatasetInstantiator(datasetFramework, CConfiguration.create(), getClass().getClassLoader(), null);
 
     final KeyValueTable accumulated = datasetInstantiator.getDataset("accumulated");
     TransactionExecutorFactory txExecutorFactory =
