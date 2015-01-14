@@ -128,7 +128,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // The service URI is always prefixed for routing purpose
     String pathPrefix = String.format("%s/namespaces/%s/apps/%s/services/%s/methods",
                                       Constants.Gateway.API_VERSION_3,
-                                      programId.getAccountId(),
+                                      programId.getNamespaceId(),
                                       programId.getApplicationId(),
                                       programId.getId());
 
@@ -185,7 +185,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private String getServiceName(Id.Program programId) {
     return String.format("%s.%s.%s.%s",
                          ProgramType.SERVICE.name().toLowerCase(),
-                         programId.getAccountId(), programId.getApplicationId(), programId.getId());
+                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   private TimerTask createHandlerDestroyTask() {

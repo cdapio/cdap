@@ -115,7 +115,7 @@ public class FlowTest {
                                                     getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
-                    DefaultId.ACCOUNT.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
+                    DefaultId.NAMESPACE.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
 
     URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
                                     discoverable.getSocketAddress().getHostName(),
@@ -180,7 +180,7 @@ public class FlowTest {
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered procedureDiscovered = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency"));
+      String.format("procedure.%s.%s.%s", DefaultId.NAMESPACE.getId(), "WordCountApp", "WordFrequency"));
     EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(procedureDiscovered),
                                                                       2L, TimeUnit.SECONDS);
     int trials = 0;
