@@ -77,8 +77,8 @@ public final class ScheduleTaskRunner {
       program =  store.loadProgram(programId, ProgramType.WORKFLOW);
       Preconditions.checkNotNull(program, "Program not found");
 
-      userArgs = preferencesStore.getResolvedProperties(programId.getAccountId(), programId.getApplicationId(),
-                                                          programType.getCategoryName(), programId.getId());
+      userArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(), programId.getApplicationId(),
+                                                        programType.getCategoryName(), programId.getId());
 
     } catch (Throwable t) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
