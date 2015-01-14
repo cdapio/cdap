@@ -19,6 +19,7 @@ package co.cask.cdap.common.kerberos;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginException;
 
 /**
  * Utility functions for Kerberos.
@@ -93,7 +95,6 @@ public final class SecurityUtil {
     properties.put("doNotPrompt", "true");
     properties.put("useKeyTab", "true");
     properties.put("useTicketCache", "false");
-    properties.put("doNotPrompt", "true");
     properties.put("principal", principal);
     properties.put("keyTab", keyTabFile.getAbsolutePath());
 
@@ -135,5 +136,14 @@ public final class SecurityUtil {
   public static boolean isKerberosEnabled(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.KERBEROS_ENABLED,
                             cConf.getBoolean(Constants.Security.ENABLED));
+  }
+
+  public static void loginForMasterService(CConfiguration cConf) throws IOException, LoginException {
+    String principal = SecurityUtil.expandPrincipal(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+    String keytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      UserGroupInformation.loginUserFromKeytab(principal, keytabPath);
+    }
   }
 }
