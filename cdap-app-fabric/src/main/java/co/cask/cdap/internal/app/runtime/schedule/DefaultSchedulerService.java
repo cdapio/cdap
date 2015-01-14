@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultSchedulerService {
 
   /**
-   * Handler that gets called by quartz to schedule a job.
+   * Handler that gets called by quartz to execute a scheduled job.
    */
   static final class ScheduledJob implements Job {
 

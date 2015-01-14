@@ -116,8 +116,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void deleteAssociatedSchedules(Id.Program program, ProgramType programType) {
-    delegate.deleteAssociatedSchedules(program, programType);
+  public void deleteSchedules(Id.Program program, ProgramType programType) {
+    delegate.deleteSchedules(program, programType);
   }
 
   @Override
@@ -263,7 +263,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void deleteAssociatedSchedules(Id.Program program, ProgramType programType) {
+    public void deleteSchedules(Id.Program program, ProgramType programType) {
       checkInitialized();
       try {
         scheduler.deleteJob(getJobKey(program, programType));

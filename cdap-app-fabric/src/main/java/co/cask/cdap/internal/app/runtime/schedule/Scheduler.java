@@ -72,7 +72,7 @@ public interface Scheduler {
   public void resumeSchedule(String scheduleId);
 
   /**
-   * Deletes the schedule. Does not schedule any more jobs.
+   * Deletes the schedule.
    * Deletes the associated Job if no other schedules exist for that job.
    *
    * @param scheduleId schedule id.
@@ -80,12 +80,13 @@ public interface Scheduler {
   public void deleteSchedule(String scheduleId);
 
   /**
-   * Delete the schedules associated with the given Program. Don't schedule any more jobs.
+   * Delete all schedules associated with the given Program.
+   * Also deletes the associated job.
    *
-   * @param programId
-   * @param programType
+   * @param programId Id of program that needs to be run.
+   * @param programType type of program that needs to be run.
    */
-  public void deleteAssociatedSchedules(Id.Program programId, ProgramType programType);
+  public void deleteSchedules(Id.Program programId, ProgramType programType);
 
   /**
    * Get state of a particular schedule.

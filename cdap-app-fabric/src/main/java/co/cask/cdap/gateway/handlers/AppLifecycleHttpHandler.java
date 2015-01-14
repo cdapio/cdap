@@ -400,7 +400,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           stopProgramIfRunning(programId, type);
           break;
         case WORKFLOW:
-          scheduler.deleteAssociatedSchedules(programId, ProgramType.WORKFLOW);
+          scheduler.deleteSchedules(programId, ProgramType.WORKFLOW);
           break;
         case MAPREDUCE:
           //no-op
@@ -419,7 +419,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
       Id.Program programId = Id.Program.from(namespaceId, specification.getName(), entry.getKey());
       //Delete the existing schedules and add new ones.
-      scheduler.deleteAssociatedSchedules(programId, ProgramType.WORKFLOW);
+      scheduler.deleteSchedules(programId, ProgramType.WORKFLOW);
 
       // Add new schedules.
       if (!entry.getValue().getSchedules().isEmpty()) {
@@ -541,7 +541,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
-      scheduler.deleteAssociatedSchedules(workflowProgramId, ProgramType.WORKFLOW);
+      scheduler.deleteSchedules(workflowProgramId, ProgramType.WORKFLOW);
     }
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
