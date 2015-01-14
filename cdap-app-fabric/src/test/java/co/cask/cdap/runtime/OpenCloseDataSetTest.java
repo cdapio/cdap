@@ -140,7 +140,7 @@ public class OpenCloseDataSetTest {
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
+      String.format("procedure.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyProcedure")).iterator().next();
 
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",

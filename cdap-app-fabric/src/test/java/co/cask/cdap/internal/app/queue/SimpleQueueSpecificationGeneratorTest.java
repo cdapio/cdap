@@ -45,7 +45,7 @@ import java.util.Set;
  */
 public class SimpleQueueSpecificationGeneratorTest {
 
-  private static final Id.Account TEST_ACCOUNT_ID = DefaultId.ACCOUNT;
+  private static final Id.Namespace TEST_NAMESPACE_ID = DefaultId.NAMESPACE;
 
   private static Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table
     = HashBasedTable.create();
@@ -76,7 +76,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_NAMESPACE_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
@@ -113,7 +113,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_NAMESPACE_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertEquals(get(FlowletConnection.Type.STREAM, "text", "StreamSource")

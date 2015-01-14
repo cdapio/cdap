@@ -171,7 +171,7 @@ public class TestBase {
       Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),
+        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
                                                                      deployedJar, appSpec);
 
     } catch (Exception e) {

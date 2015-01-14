@@ -62,7 +62,7 @@ public final class InMemoryConfigurator implements Configurator {
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Id.Account id, Location archive) {
+  public InMemoryConfigurator(Id.Namespace id, Location archive) {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
     this.archive = archive;

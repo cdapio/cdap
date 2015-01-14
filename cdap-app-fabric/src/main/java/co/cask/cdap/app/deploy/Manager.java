@@ -37,5 +37,5 @@ public interface Manager<I, O> {
    * @param input the input to the deployment pipeline
    * @return A future of Application with Programs.
    */
-  ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception;
+  ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception;
 }

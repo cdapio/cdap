@@ -32,6 +32,6 @@ public interface ProgramTerminator {
    * @param programId  Program id.
    * @param type       Program Type.
    */
-  void stop (Id.Account id, Id.Program programId, ProgramType type) throws Exception;
+  void stop (Id.Namespace id, Id.Program programId, ProgramType type) throws Exception;
 
 }

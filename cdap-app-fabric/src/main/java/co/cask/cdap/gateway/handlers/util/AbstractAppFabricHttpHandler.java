@@ -173,7 +173,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     try {
       List<ProgramRecord> programRecords;
       if (applicationId == null) {
-        Id.Account accId = Id.Account.from(namespaceId);
+        Id.Namespace accId = Id.Namespace.from(namespaceId);
         programRecords = listPrograms(accId, type, store);
       } else {
         Id.Application appId = Id.Application.from(namespaceId, applicationId);
@@ -195,7 +195,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final List<ProgramRecord> listPrograms(Id.Account accId, ProgramType type, Store store) throws Exception {
+  protected final List<ProgramRecord> listPrograms(Id.Namespace accId, ProgramType type, Store store) throws Exception {
     try {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
       return listPrograms(appSpecs, type);
