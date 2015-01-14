@@ -145,7 +145,7 @@ public class WebappProgramRunner implements ProgramRunner {
 
   public static String getServiceName(ProgramType type, Program program) throws Exception {
     return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                         program.getAccountId(), program.getApplicationId(), type.name().toLowerCase());
+                         program.getNamespaceId(), program.getApplicationId(), type.name().toLowerCase());
   }
 
   private static final String DEFAULT_DIR_NAME_COLON = ServePathGenerator.DEFAULT_DIR_NAME + ":";

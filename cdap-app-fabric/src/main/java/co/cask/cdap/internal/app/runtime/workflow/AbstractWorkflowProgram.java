@@ -53,7 +53,7 @@ public abstract class AbstractWorkflowProgram extends ForwardingProgram {
 
   @Override
   public Id.Program getId() {
-    return Id.Program.from(getAccountId(), getApplicationId(), getName());
+    return Id.Program.from(getNamespaceId(), getApplicationId(), getName());
   }
 
   @Override

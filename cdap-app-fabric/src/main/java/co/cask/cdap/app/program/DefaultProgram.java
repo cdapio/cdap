@@ -123,7 +123,7 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public String getAccountId() {
+  public String getNamespaceId() {
     return id.getNamespaceId();
   }
 

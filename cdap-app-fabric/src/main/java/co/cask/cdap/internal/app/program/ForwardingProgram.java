@@ -58,8 +58,8 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
-  public String getAccountId() {
-    return delegate.getAccountId();
+  public String getNamespaceId() {
+    return delegate.getNamespaceId();
   }
 
   @Override

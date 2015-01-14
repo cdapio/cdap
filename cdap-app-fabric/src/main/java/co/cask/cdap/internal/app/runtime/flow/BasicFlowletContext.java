@@ -69,7 +69,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
           getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM,
                              program, flowletId, runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
-    this.accountId = program.getAccountId();
+    this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
@@ -128,7 +128,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   }
 
   public LoggingContext getLoggingContext() {
-    return new FlowletLoggingContext(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
+    return new FlowletLoggingContext(getNamespaceId(), getApplicationId(), getFlowId(), getFlowletId());
   }
 
   @Override

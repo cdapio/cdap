@@ -72,7 +72,7 @@ public final class FlowUtils {
   public static Multimap<String, QueueName> configureQueue(Program program, FlowSpecification flowSpec,
                                                            StreamAdmin streamAdmin, QueueAdmin queueAdmin) {
     // Generate all queues specifications
-    Id.Application appId = Id.Application.from(program.getAccountId(), program.getApplicationId());
+    Id.Application appId = Id.Application.from(program.getNamespaceId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
       = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 

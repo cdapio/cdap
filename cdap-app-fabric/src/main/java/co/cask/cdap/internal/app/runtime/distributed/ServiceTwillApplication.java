@@ -53,7 +53,7 @@ public class ServiceTwillApplication implements TwillApplication {
   @Override
   public TwillSpecification configure() {
     TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), program.getAccountId(),
+      .setName(String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), program.getNamespaceId(),
                              program.getApplicationId(), spec.getName()))
       .withRunnable();
 
