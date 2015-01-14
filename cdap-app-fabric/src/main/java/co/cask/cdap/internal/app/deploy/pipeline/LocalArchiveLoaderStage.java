@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,13 +42,13 @@ import javax.annotation.Nullable;
 public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   private final CConfiguration cConf;
   private final ApplicationSpecificationAdapter adapter;
-  private final Id.Account id;
+  private final Id.Namespace id;
   private final String appId;
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArchiveLoaderStage(CConfiguration cConf, Id.Account id, @Nullable String appId) {
+  public LocalArchiveLoaderStage(CConfiguration cConf, Id.Namespace id, @Nullable String appId) {
     super(TypeToken.of(Location.class));
     this.cConf = cConf;
     this.id = id;

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -36,9 +37,11 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
+import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
@@ -405,5 +408,69 @@ public abstract class MetricsSuiteTestBase {
     }
     versionedApiBuilder.append(nonVersionedApiPath);
     return versionedApiBuilder.toString();
+  }
+
+  // Convenience methods to create metrics context in tests
+
+  protected static Map<String, String> getFlowletContext(String appName, String flowName, String flowletName) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
+                           Constants.Metrics.Tag.PROGRAM, flowName,
+                           Constants.Metrics.Tag.FLOWLET, flowletName);
+  }
+
+  protected static Map<String, String> getFlowletQueueContext(String appName, String flowName,
+                                                           String flowletName, String queueName) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
+                           Constants.Metrics.Tag.PROGRAM, flowName,
+                           Constants.Metrics.Tag.FLOWLET, flowletName,
+                           Constants.Metrics.Tag.FLOWLET_QUEUE, queueName);
+  }
+
+  protected static Map<String, String> getStreamHandlerContext(String streamName, String instanceId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
+                           Constants.Metrics.Tag.INSTANCE_ID, instanceId,
+                           Constants.Metrics.Tag.STREAM, streamName);
+  }
+
+  protected static Map<String, String> getProcedureContext(String appName, String procedureName) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
+                           Constants.Metrics.Tag.PROGRAM, procedureName);
+  }
+
+  protected static Map<String, String> getUserServiceContext(String appName, String serviceName, String runnableName) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
+                           Constants.Metrics.Tag.PROGRAM, serviceName,
+                           Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
+  }
+
+  protected static Map<String, String> getUserServiceContext(String appName, String serviceName,
+                                                          String runnableName, String runId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
+                           Constants.Metrics.Tag.PROGRAM, serviceName,
+                           Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName,
+                           Constants.Metrics.Tag.RUN_ID, runId);
+  }
+
+  protected static Map<String, String> getMapReduceTaskContext(String appName, String jobName,
+                                                            MapReduceMetrics.TaskType type) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.MAPREDUCE),
+                           Constants.Metrics.Tag.PROGRAM, jobName,
+                           Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
+  }
+
+  protected static Map<String, String> getMapReduceTaskContext(String appName, String jobName,
+                                                            MapReduceMetrics.TaskType type, String runId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.MAPREDUCE),
+                           Constants.Metrics.Tag.PROGRAM, jobName,
+                           Constants.Metrics.Tag.MR_TASK_TYPE, type.getId(),
+                           Constants.Metrics.Tag.RUN_ID, runId);
   }
 }
