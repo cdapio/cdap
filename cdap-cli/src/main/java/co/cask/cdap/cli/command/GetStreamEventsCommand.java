@@ -73,6 +73,8 @@ public class GetStreamEventsCommand extends AbstractCommand {
         }
       }
     ).print(output);
+    output.printf("Fetched %d events from stream %s", events.size(), streamId);
+    output.println();
   }
 
   @Override

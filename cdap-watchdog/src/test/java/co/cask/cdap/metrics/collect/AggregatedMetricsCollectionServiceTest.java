@@ -16,18 +16,15 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import co.cask.cdap.metrics.transport.TagMetric;
+import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.test.SlowTests;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -37,14 +34,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class AggregatedMetricsCollectionServiceTest {
 
+  private static final HashMap<String, String> EMPTY_TAGS = new HashMap<String, String>();
+
   @Category(SlowTests.class)
   @Test
   public void testPublish() throws InterruptedException {
-    final BlockingQueue<MetricsRecord> published = new LinkedBlockingQueue<MetricsRecord>();
+    final BlockingQueue<MetricValue> published = new LinkedBlockingQueue<MetricValue>();
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) {
+      protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) {
         Iterators.addAll(published, metrics);
       }
 
@@ -57,12 +56,12 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", Integer.MAX_VALUE);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 2);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", Integer.MAX_VALUE);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 2);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 3);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 4);
 
-      MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
+      MetricValue record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
       Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, record.getValue());
 
@@ -70,31 +69,24 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 1);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
-      // Publish metrics with tags
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3, "tag1", "tag2");
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4, "tag2", "tag3");
+      // Publish metrics for child context
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS)
+        .childCollector("tag1", "1").childCollector("tag2", "2").increment("metric", 4);
 
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(7, record.getValue());
-
-      // Verify tags are aggregated individually.
-      Map<String, Long> tagMetrics = Maps.newHashMap();
-      for (TagMetric tagMetric : record.getTags()) {
-        tagMetrics.put(tagMetric.getTag(), tagMetric.getValue());
-      }
-      Assert.assertEquals(ImmutableMap.of("tag1", 3L, "tag2", 7L, "tag3", 4L), tagMetrics);
+      Assert.assertEquals(4, record.getValue());
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       //update the metrics multiple times with gauge.
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").gauge("metric", 1);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").gauge("metric", 2);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").gauge("metric", 3);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).gauge("metric", 1);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).gauge("metric", 2);
+      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).gauge("metric", 3);
 
       // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);

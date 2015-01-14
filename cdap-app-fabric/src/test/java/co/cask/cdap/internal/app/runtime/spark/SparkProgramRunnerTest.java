@@ -112,7 +112,7 @@ public class SparkProgramRunnerTest {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetInstantiator =
       new DatasetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
-                              SparkProgramRunnerTest.class.getClassLoader(), null, null);
+                              SparkProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
   }
