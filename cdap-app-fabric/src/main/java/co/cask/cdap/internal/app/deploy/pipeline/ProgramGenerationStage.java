@@ -72,7 +72,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
 
     // Make sure we have a directory to store the original artifact.
     Location outputDir = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR));
-    final Location newOutputDir = outputDir.append(input.getId().getAccountId());
+    final Location newOutputDir = outputDir.append(input.getId().getNamespaceId());
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!newOutputDir.exists() && !newOutputDir.mkdirs() && !newOutputDir.exists()) {

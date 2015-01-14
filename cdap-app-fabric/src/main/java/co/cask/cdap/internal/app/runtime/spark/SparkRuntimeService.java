@@ -334,7 +334,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     Location jobJarLocation = locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
                                                                    ProgramType.SPARK.name().toLowerCase(),
-                                                                   programId.getAccountId(),
+                                                                   programId.getNamespaceId(),
                                                                    programId.getApplicationId(), programId.getId(),
                                                                    context.getRunId().getId()));
 
@@ -363,7 +363,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Id.Program programId = context.getProgram().getId();
     Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
                                                                    ProgramType.SPARK.name().toLowerCase(),
-                                                                   programId.getAccountId(),
+                                                                   programId.getNamespaceId(),
                                                                    programId.getApplicationId(), programId.getId(),
                                                                    context.getRunId().getId()));
 

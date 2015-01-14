@@ -9,7 +9,7 @@
 {%- if   pagename == 'release-notes' %}{% set doc5 = '<b>' %}{% set doc5b = '</b>' %}
 {%- elif pagename == 'glossary'      %}{% set doc6 = '<b>' %}{% set doc6b = '</b>' %}
 {%- elif pagename == 'faq'           %}{% set doc7 = '<b>' %}{% set doc7b = '</b>' %}
-{%- elif html_short_title_toc == titles[0] %}{% set doc0 = '<b>' %}{% set doc0b = '</b>' %}
+{%- elif html_short_title_toc == titles[0] and pagename == 'index' %}{% set doc0 = '<b>' %}{% set doc0b = '</b>' %}
 {%- elif html_short_title_toc == titles[1] %}{% set doc1 = '<b>' %}{% set doc1b = '</b>' %}
 {%- elif html_short_title_toc == titles[2] %}{% set doc2 = '<b>' %}{% set doc2b = '</b>' %}
 {%- elif html_short_title_toc == titles[3] %}{% set doc3 = '<b>' %}{% set doc3b = '</b>' %}

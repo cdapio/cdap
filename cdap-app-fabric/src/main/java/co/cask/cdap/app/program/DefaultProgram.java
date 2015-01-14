@@ -124,7 +124,7 @@ public final class DefaultProgram implements Program {
 
   @Override
   public String getAccountId() {
-    return id.getAccountId();
+    return id.getNamespaceId();
   }
 
   @Override

@@ -297,7 +297,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                      program.getAccountId(), program.getApplicationId(), program.getId());
+                                      program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
     JsonObject json = new JsonObject();
     // this will return an empty Json if there is no live instance

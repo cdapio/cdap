@@ -578,7 +578,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location jobJar =
       locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
                                            ProgramType.MAPREDUCE.name().toLowerCase(),
-                                           programId.getAccountId(), programId.getApplicationId(),
+                                           programId.getNamespaceId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
     LOG.debug("Creating Job jar: {}", jobJar.toURI());
@@ -744,7 +744,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location programJarCopy = locationFactory.create(
       String.format("%s.%s.%s.%s.%s.program.jar",
                     ProgramType.MAPREDUCE.name().toLowerCase(),
-                    programId.getAccountId(), programId.getApplicationId(),
+                    programId.getNamespaceId(), programId.getApplicationId(),
                     programId.getId(), context.getRunId().getId()));
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
