@@ -26,14 +26,14 @@ public class GenericLoggingContext extends ApplicationLoggingContext {
 
   /**
    * Constructs the GenericLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
    * @param entityId flow entity id
    */
-  public GenericLoggingContext(final String accountId,
+  public GenericLoggingContext(final String namespaceId,
                                  final String applicationId,
                                  final String entityId) {
-    super(accountId, applicationId);
+    super(namespaceId, applicationId);
     setSystemTag(TAG_ENTITY_ID, entityId);
   }
 

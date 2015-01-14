@@ -28,12 +28,12 @@ public class SparkLoggingContext extends ApplicationLoggingContext {
   /**
    * Constructs the SparkLoggingContext.
    *
-   * @param accountId     account id
+   * @param namespaceId namespace id
    * @param applicationId application id
-   * @param sparkId       spark job id
+   * @param sparkId spark job id
    */
-  public SparkLoggingContext(final String accountId, final String applicationId, final String sparkId) {
-    super(accountId, applicationId);
+  public SparkLoggingContext(final String namespaceId, final String applicationId, final String sparkId) {
+    super(namespaceId, applicationId);
     setSystemTag(TAG_SPARK_JOB_ID, sparkId);
   }
 

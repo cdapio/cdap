@@ -21,11 +21,11 @@ import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.AccountLoggingContext;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
@@ -215,8 +215,8 @@ public class LogSaverTest extends KafkaTestBase {
           allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ServiceLoggingContext.TAG_SERVICE_ID));
       } else {
         Assert.assertEquals(
-          loggingContext.getSystemTagsMap().get(AccountLoggingContext.TAG_ACCOUNT_ID).getValue(),
-          allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(AccountLoggingContext.TAG_ACCOUNT_ID));
+          loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue(),
+          allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID));
         Assert.assertEquals(
           loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue(),
           allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID));

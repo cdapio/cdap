@@ -19,16 +19,16 @@ package co.cask.cdap.common.logging;
 /**
  * Application logging context.
  */
-public abstract class ApplicationLoggingContext extends AccountLoggingContext {
+public abstract class ApplicationLoggingContext extends NamespaceLoggingContext {
   public static final String TAG_APPLICATION_ID = ".applicationId";
 
   /**
    * Constructs ApplicationLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
    */
-  public ApplicationLoggingContext(final String accountId, final String applicationId) {
-    super(accountId);
+  public ApplicationLoggingContext(final String namespaceId, final String applicationId) {
+    super(namespaceId);
     setSystemTag(TAG_APPLICATION_ID, applicationId);
   }
 

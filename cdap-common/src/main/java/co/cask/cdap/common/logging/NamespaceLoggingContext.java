@@ -17,26 +17,26 @@
 package co.cask.cdap.common.logging;
 
 /**
- * Account logging context.
+ * Namespace logging context.
  */
-public abstract class AccountLoggingContext extends AbstractLoggingContext {
-  public static final String TAG_ACCOUNT_ID = ".accountId";
+public abstract class NamespaceLoggingContext extends AbstractLoggingContext {
+  public static final String TAG_NAMESPACE_ID = ".namespaceId";
 
   /**
    * Constructs AccountLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    */
-  public AccountLoggingContext(final String accountId) {
-    setSystemTag(TAG_ACCOUNT_ID, accountId);
+  public NamespaceLoggingContext(final String namespaceId) {
+    setSystemTag(TAG_NAMESPACE_ID, namespaceId);
   }
 
   @Override
   public String getLogPartition() {
-    return String.format("%s", getSystemTag(TAG_ACCOUNT_ID));
+    return String.format("%s", getSystemTag(TAG_NAMESPACE_ID));
   }
 
   @Override
   public String getLogPathFragment() {
-    return String.format("%s", getSystemTag(TAG_ACCOUNT_ID));
+    return String.format("%s", getSystemTag(TAG_NAMESPACE_ID));
   }
 }

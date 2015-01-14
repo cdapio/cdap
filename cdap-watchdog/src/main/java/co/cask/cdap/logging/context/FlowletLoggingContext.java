@@ -28,16 +28,16 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
 
   /**
    * Constructs the FlowletLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
    * @param flowId flow id
    * @param flowletId flowlet id
    */
-  public FlowletLoggingContext(final String accountId,
+  public FlowletLoggingContext(final String namespaceId,
                                final String applicationId,
                                final String flowId,
                                final String flowletId) {
-    super(accountId, applicationId);
+    super(namespaceId, applicationId);
     setSystemTag(TAG_FLOW_ID, flowId);
     setSystemTag(TAG_FLOWLET_ID, flowletId);
   }

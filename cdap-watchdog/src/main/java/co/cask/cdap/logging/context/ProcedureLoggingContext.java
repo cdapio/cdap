@@ -27,14 +27,14 @@ public class ProcedureLoggingContext extends ApplicationLoggingContext {
 
   /**
    * Constructs the ProcedureLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
    * @param procedureId flow id
    */
-  public ProcedureLoggingContext(final String accountId,
-                               final String applicationId,
-                               final String procedureId) {
-    super(accountId, applicationId);
+  public ProcedureLoggingContext(final String namespaceId,
+                                 final String applicationId,
+                                 final String procedureId) {
+    super(namespaceId, applicationId);
     setSystemTag(TAG_PROCEDURE_ID, procedureId);
   }
 

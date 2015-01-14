@@ -26,11 +26,11 @@ public class UserServiceLoggingContext extends ApplicationLoggingContext {
   public static final String TAG_USERSERVICE_ID = ".userserviceid";
   public static final String TAG_RUNNABLE_ID = ".userrunnableid";
 
-  public UserServiceLoggingContext(final String accountId,
+  public UserServiceLoggingContext(final String namespaceId,
                                    final String applicationId,
                                    final String serviceId,
                                    final String runnableId) {
-    super(accountId, applicationId);
+    super(namespaceId, applicationId);
     setSystemTag(TAG_USERSERVICE_ID, serviceId);
     setSystemTag(TAG_RUNNABLE_ID, runnableId);
   }
