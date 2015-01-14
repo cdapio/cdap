@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -55,8 +56,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private final WrappedScheduler delegate;
 
   public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                                  ProgramRuntimeService programRuntimeService) {
-    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService);
+                                  ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
   }
 
   /**
@@ -130,13 +131,15 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     private final StoreFactory storeFactory;
     private final Supplier<Scheduler> schedulerSupplier;
     private final ProgramRuntimeService programRuntimeService;
+    private final PreferencesStore preferencesStore;
 
     WrappedScheduler(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                     ProgramRuntimeService programRuntimeService) {
+                     ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
       this.schedulerSupplier = schedulerSupplier;
       this.storeFactory = storeFactory;
       this.programRuntimeService = programRuntimeService;
       this.scheduler = null;
+      this.preferencesStore = preferencesStore;
     }
 
     void start() throws SchedulerException {
@@ -313,7 +316,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
           Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
           if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService);
+            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore);
           } else {
             try {
               return jobClass.newInstance();

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
@@ -46,8 +47,8 @@ public class DefaultSchedulerService {
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskRunner taskRunner;
 
-    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService) {
-      taskRunner = new ScheduleTaskRunner(store, programRuntimeService);
+    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+      taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
     }
 
     @Override
