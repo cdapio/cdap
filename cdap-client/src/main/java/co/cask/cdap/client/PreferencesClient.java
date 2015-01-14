@@ -49,6 +49,7 @@ public class PreferencesClient {
 
   /**
    * Returns the Preferences stored at the Instance Level.
+   *
    * @return map of key-value pairs
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
@@ -61,6 +62,7 @@ public class PreferencesClient {
 
   /**
    * Sets Preferences at the Instance Level.
+   *
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
@@ -74,6 +76,7 @@ public class PreferencesClient {
 
   /**
    * Deletes Preferences at the Instance Level.
+   *
    * @throws IOException
    * @throws UnAuthorizedAccessTokenException
    */
@@ -84,6 +87,7 @@ public class PreferencesClient {
 
   /**
    * Returns the Preferences stored at the Namespace Level.
+   *
    * @param namespace Namespace Id
    * @param resolved Set to True if collapsed/resolved properties are desired
    * @return map of key-value pairs
@@ -100,6 +104,7 @@ public class PreferencesClient {
 
   /**
    * Sets Preferences at the Namespace Level.
+   *
    * @param namespace Namespace Id
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
@@ -113,6 +118,7 @@ public class PreferencesClient {
 
   /**
    * Deletes Preferences at the Namespace Level.
+   *
    * @param namespace Namespace Id
    * @throws IOException
    * @throws UnAuthorizedAccessTokenException
@@ -124,6 +130,7 @@ public class PreferencesClient {
 
   /**
    * Returns the Preferences stored at the Application Level.
+   *
    * @param namespace Namespace Id
    * @param application Application Id
    * @param resolved Set to True if collapsed/resolved properties are desired
@@ -142,6 +149,7 @@ public class PreferencesClient {
 
   /**
    * Sets Preferences at the Application Level.
+   *
    * @param namespace Namespace Id
    * @param application Application Id
    * @param preferences map of key-value pairs
@@ -157,6 +165,7 @@ public class PreferencesClient {
 
   /**
    * Deletes Preferences at the Application Level.
+   * 
    * @param namespace Namespace Id
    * @param application Application Id
    * @throws IOException
@@ -171,6 +180,7 @@ public class PreferencesClient {
 
   /**
    * Returns the Preferences stored at the Program Level.
+   *
    * @param namespace Namespace Id
    * @param application Application Id
    * @param programType Program Type
@@ -192,6 +202,7 @@ public class PreferencesClient {
 
   /**
    * Sets Preferences at the Program Level.
+   *
    * @param namespace Namespace Id
    * @param application Application Id
    * @param programType Program Type
@@ -210,6 +221,7 @@ public class PreferencesClient {
 
   /**
    * Deletes Preferences at the Program Level.
+   *
    * @param namespace Namespace Id
    * @param application Application Id
    * @param programType Program Type
