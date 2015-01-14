@@ -694,13 +694,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 
-      preferencesStore.deleteProperties(appId.getAccountId(), appId.getId(),
-                                          ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
-      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getAccountId(), appId.getId(),
+      preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId(),
+                                        ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
+      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespaceId(), appId.getId(),
                 ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
     }
-    preferencesStore.deleteProperties(appId.getAccountId(), appId.getId());
-    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getAccountId(), appId.getId());
+    preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId());
+    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
   }
 
   /**

@@ -311,7 +311,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
-      Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getAccountId(), appId,
+      Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
                                                                          runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
@@ -1387,8 +1387,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getAccountId(), id.getApplicationId(),
-                                                                              type.getCategoryName(), id.getId());
+      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
+                                                                            type.getCategoryName(), id.getId());
       if (overrides != null) {
         for (Map.Entry<String, String> entry : overrides.entrySet()) {
           userArgs.put(entry.getKey(), entry.getValue());
