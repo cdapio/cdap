@@ -169,7 +169,19 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
             if (heartbeat.getType().equals(StreamWriterHeartbeat.Type.INIT)) {
               // Init heartbeats don't describe "new" data, hence we consider
               // their data as part of the base count
-              aggregator.getStreamBaseCount().addAndGet(heartbeat.getAbsoluteDataSize());
+              // TODO think more about this! If a writer is killed, a new one comes back up and
+              // sends an init heartbeat. The leader should check if it already has a heartbeat from
+              // this writer and only add the difference with the last heartbeat.
+              // TODO UNIT TEST THAT!!
+              StreamWriterHeartbeat lastHeartbeat = aggregator.getHeartbeats().get(heartbeat.getWriterID());
+              long toAdd;
+              if (lastHeartbeat == null) {
+                toAdd = heartbeat.getAbsoluteDataSize();
+              } else {
+                // Recalibrate the leader's base count according to that particular writer's base count
+                toAdd = heartbeat.getAbsoluteDataSize() - lastHeartbeat.getAbsoluteDataSize();
+              }
+              aggregator.getStreamBaseCount().addAndGet(toAdd);
             }
             aggregator.getHeartbeats().put(heartbeat.getWriterID(), heartbeat);
           }
