@@ -355,7 +355,6 @@ function run_command() {
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           display_version; exit 1;;
-#     zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
   esac
 }
