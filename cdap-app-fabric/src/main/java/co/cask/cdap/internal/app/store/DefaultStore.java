@@ -48,9 +48,9 @@ import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -729,11 +729,11 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public void createPipe(final Id.Namespace id, final PipeMeta pipeMetaData) {
+  public void createAdapter(final Id.Namespace id, final AdapterMeta adapterMetaData) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds input) throws Exception {
-        input.apps.createPipe(id, pipeMetaData);
+        input.apps.createAdapter(id, adapterMetaData);
         return null;
       }
     });
@@ -741,24 +741,24 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public PipeMeta getPipe(final Id.Namespace id, final String pipeId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, PipeMeta>() {
+  public AdapterMeta getAdapter(final Id.Namespace id, final String adapterId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterMeta>() {
       @Override
-      public PipeMeta apply(AppMds input) throws Exception {
-        return input.apps.getPipe(id, pipeId);
+      public AdapterMeta apply(AppMds input) throws Exception {
+        return input.apps.getAdapter(id, adapterId);
       }
     });
   }
 
   @Nullable
   @Override
-  public void deletePipe(final Id.Namespace id, final String pipeId) {
+  public void deleteAdapter(final Id.Namespace id, final String adapterId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds input) throws Exception {
-        PipeMeta existing = input.apps.getPipe(id, pipeId);
+        AdapterMeta existing = input.apps.getAdapter(id, adapterId);
         if (existing != null) {
-          input.apps.deletePipe(id, pipeId);
+          input.apps.deleteAdapter(id, adapterId);
         }
         return null;
       }
@@ -766,11 +766,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<PipeMeta> listPipes(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<PipeMeta>>() {
+  public List<AdapterMeta> listAdapters(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<AdapterMeta>>() {
       @Override
-      public List<PipeMeta> apply(AppMds input) throws Exception {
-        return input.apps.listPipes(id);
+      public List<AdapterMeta> apply(AppMds input) throws Exception {
+        return input.apps.listAdapters(id);
       }
     });
   }

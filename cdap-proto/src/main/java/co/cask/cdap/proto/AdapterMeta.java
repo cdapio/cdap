@@ -20,16 +20,20 @@ import co.cask.cdap.api.schedule.Schedule;
 import com.google.common.base.Objects;
 
 /**
- * Represents metadata for Pipes
+ * Represents metadata for Adapters
  */
-public final class PipeMeta {
-  //TODO: make interface (For generic pipe types)
+public final class AdapterMeta {
+  //TODO: make interface (For generic adapter types)
   private final String id;
   private final String streamName;
   private final String datasetName;
   private final String frequency;
+  // TODO: non-hardcode the following 3
+  private static final String appId = "TODO: replace this";
+  private static final String programId = "TODO: replace this";
+  private static final ProgramType programType = ProgramType.WORKFLOW;
 
-  public PipeMeta(String id, String streamName, String datasetName, String frequency) {
+  public AdapterMeta(String id, String streamName, String datasetName, String frequency) {
     this.id = id;
     this.streamName = streamName;
     this.datasetName = datasetName;
@@ -56,6 +60,18 @@ public final class PipeMeta {
     throw new UnsupportedOperationException("schedule is currently not supported");
   }
 
+  public String getAppId() {
+    return appId;
+  }
+
+  public String getProgramId() {
+    return programId;
+  }
+
+  public ProgramType getProgramType() {
+    return programType;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -75,7 +91,7 @@ public final class PipeMeta {
       return false;
     }
 
-    PipeMeta that = (PipeMeta) o;
+    AdapterMeta that = (AdapterMeta) o;
 
     return Objects.equal(this.id, that.id) &&
       Objects.equal(this.streamName, that.streamName) &&

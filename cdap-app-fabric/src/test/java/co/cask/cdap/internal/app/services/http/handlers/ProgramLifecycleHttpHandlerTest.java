@@ -26,9 +26,9 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
@@ -65,7 +65,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type PIPE_META_LIST_TYPE = new TypeToken<List<PipeMeta>>() { }.getType();
+  private static final Type ADAPTER_META_LIST_TYPE = new TypeToken<List<AdapterMeta>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
@@ -760,86 +760,91 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testPipeLifeCycle() throws Exception {
+  public void testAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
-    String pipeId = "pipeId";
-    PipeMeta pipeToPut = new PipeMeta(pipeId, "someStream", "someDataset", "someFrequency");
+    String adapterId = "adapterId";
+    AdapterMeta adapterToPut = new AdapterMeta(adapterId, "someStream", "someDataset", "someFrequency");
 
-    HttpResponse response = listPipes(namespaceId);
+    HttpResponse response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<PipeMeta> list = readResponse(response, PIPE_META_LIST_TYPE);
+    List<AdapterMeta> list = readResponse(response, ADAPTER_META_LIST_TYPE);
     Assert.assertTrue(list.isEmpty());
 
-    response = createPipe(namespaceId, pipeToPut);
+    response = createAdapter(namespaceId, adapterToPut);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = listPipes(namespaceId);
+    response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    list = readResponse(response, PIPE_META_LIST_TYPE);
+    list = readResponse(response, ADAPTER_META_LIST_TYPE);
     Assert.assertEquals(1, list.size());
-    Assert.assertEquals(pipeToPut, list.get(0));
+    Assert.assertEquals(adapterToPut, list.get(0));
 
-    response = getPipe(namespaceId, pipeId);
+    response = getAdapter(namespaceId, adapterId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    PipeMeta receivedPipeMeta = readResponse(response, PipeMeta.class);
-    Assert.assertEquals(pipeToPut, receivedPipeMeta);
+    AdapterMeta receivedAdapterMeta = readResponse(response, AdapterMeta.class);
+    Assert.assertEquals(adapterToPut, receivedAdapterMeta);
 
-    response = deletePipe(namespaceId, pipeId);
+    response = deleteAdapter(namespaceId, adapterId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = getPipe(namespaceId, pipeId);
+    response = getAdapter(namespaceId, adapterId);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = listPipes(namespaceId);
+    response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    list = readResponse(response, PIPE_META_LIST_TYPE);
+    list = readResponse(response, ADAPTER_META_LIST_TYPE);
     Assert.assertTrue(list.isEmpty());
   }
 
   @Test
-  public void testNonexistentPipe() throws Exception {
-    String nonexistentPipeId = "nonexistentPipeId";
-    HttpResponse response = getPipe(Constants.DEFAULT_NAMESPACE, nonexistentPipeId);
+  public void testNonexistentAdapter() throws Exception {
+    String nonexistentAdapterId = "nonexistentAdapterId";
+    HttpResponse response = getAdapter(Constants.DEFAULT_NAMESPACE, nonexistentAdapterId);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = deletePipe(Constants.DEFAULT_NAMESPACE, nonexistentPipeId);
+    response = deleteAdapter(Constants.DEFAULT_NAMESPACE, nonexistentAdapterId);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
   @Test
-  public void testMultiplePipes() throws Exception {
-    List<PipeMeta> pipesToPut = ImmutableList.of(new PipeMeta("pipeId", "someStream", "someDataset", "someFrequency"));
-    for (PipeMeta pipeMeta : pipesToPut) {
-      HttpResponse response = createPipe(Constants.DEFAULT_NAMESPACE, pipeMeta);
+  public void testMultipleAdapters() throws Exception {
+    List<AdapterMeta> adaptersToPut =
+      ImmutableList.of(new AdapterMeta("adapterId", "someStream", "someDataset", "someFrequency"));
+    for (AdapterMeta adapterMeta : adaptersToPut) {
+      HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, adapterMeta);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
-    HttpResponse response = listPipes(Constants.DEFAULT_NAMESPACE);
+    HttpResponse response = listAdapters(Constants.DEFAULT_NAMESPACE);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<PipeMeta> retrievedPipes = readResponse(response, PIPE_META_LIST_TYPE);
-    Assert.assertEquals(pipesToPut.size(), retrievedPipes.size());
-    Assert.assertEquals(Sets.newHashSet(pipesToPut), Sets.newHashSet(retrievedPipes));
+    List<AdapterMeta> retrievedPipes = readResponse(response, ADAPTER_META_LIST_TYPE);
+    Assert.assertEquals(adaptersToPut.size(), retrievedPipes.size());
+    Assert.assertEquals(Sets.newHashSet(adaptersToPut), Sets.newHashSet(retrievedPipes));
   }
 
-  private HttpResponse createPipe(String namespaceId, PipeMeta pipeMeta) throws Exception {
-    return createPipe(namespaceId, GSON.toJson(pipeMeta));
+  private HttpResponse createAdapter(String namespaceId, AdapterMeta adapterMeta) throws Exception {
+    return createAdapter(namespaceId, GSON.toJson(adapterMeta));
   }
 
-  private HttpResponse createPipe(String namespaceId, String metadata) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/pipes", Constants.Gateway.API_VERSION_3, namespaceId), metadata);
+  private HttpResponse createAdapter(String namespaceId, String metadata) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/adapters",
+                               Constants.Gateway.API_VERSION_3, namespaceId), metadata);
   }
 
-  private HttpResponse listPipes(String namespaceId) throws Exception {
-    return doGet(String.format("%s/namespaces/%s/pipes", Constants.Gateway.API_VERSION_3, namespaceId));
+  private HttpResponse listAdapters(String namespaceId) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/adapters",
+                               Constants.Gateway.API_VERSION_3, namespaceId));
   }
 
-  private HttpResponse getPipe(String namespaceId, String pipeId) throws Exception {
-//    Preconditions.checkArgument(pipeId != null, "pipeId cannot be null");
-    return doGet(String.format("%s/namespaces/%s/pipes/%s", Constants.Gateway.API_VERSION_3, namespaceId, pipeId));
+  private HttpResponse getAdapter(String namespaceId, String adapterId) throws Exception {
+//    Preconditions.checkArgument(adapterId != null, "adapterId cannot be null");
+    return doGet(String.format("%s/namespaces/%s/adapters/%s",
+                               Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
   }
 
-  private HttpResponse deletePipe(String namespaceId, String pipeId) throws Exception {
-    return doDelete(String.format("%s/namespaces/%s/pipes/%s", Constants.Gateway.API_VERSION_3, namespaceId, pipeId));
+  private HttpResponse deleteAdapter(String namespaceId, String adapterId) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/adapters/%s",
+                                  Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
   }
 
   @After

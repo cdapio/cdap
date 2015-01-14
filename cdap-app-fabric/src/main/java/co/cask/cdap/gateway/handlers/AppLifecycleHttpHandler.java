@@ -47,7 +47,9 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -56,9 +58,9 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
@@ -175,6 +177,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final DatasetFramework datasetFramework;
 
+  private final StreamAdmin streamAdmin;
+  private final ExploreFacade exploreFacade;
+  private final boolean exploreEnabled;
+
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -183,7 +189,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 DatasetFramework datasetFramework) {
+                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin,
+                                 ExploreFacade exploreFacade) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -199,6 +206,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.preferencesStore = preferencesStore;
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.streamAdmin = streamAdmin;
+    this.exploreFacade = exploreFacade;
+    this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
   }
 
   /**
@@ -303,134 +313,148 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   //TODO: improved docs
   /**
-   * Retrieves a list of pipes
+   * Retrieves a list of adapters
    */
   @GET
-  @Path("/pipes")
-  public void listPipes(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, store.listPipes(Id.Namespace.from(namespaceId)));
+  @Path("/adapters")
+  public void listAdapters(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) {
+    responder.sendJson(HttpResponseStatus.OK, store.listAdapters(Id.Namespace.from(namespaceId)));
   }
 
   /**
-   * Retrieves a pipe
+   * Retrieves an adapter
    */
   @GET
-  @Path("/pipes/{pipeId}")
-  public void getPipe(HttpRequest request, HttpResponder responder,
-                      @PathParam("namespace-id") String namespaceId,
-                      @PathParam("pipeId") String pipeId) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+  @Path("/adapters/{adapterId}")
+  public void getAdapter(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("adapterId") String adapterId) {
+    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+    if (adapterMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, pipeMeta);
+    responder.sendJson(HttpResponseStatus.OK, adapterMeta);
   }
 
   /**
-   * Deletes a pipe
+   * Deletes an adapter
    */
   @DELETE
-  @Path("/pipes/{pipeId}")
-  public void deletePipe(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("pipeId") String pipeId) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+  @Path("/adapters/{adapterId}")
+  public void deleteAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapterId") String adapterId) {
+    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+    if (adapterMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
     // TODO: Update application specification
-    scheduler.deleteAssociatedSchedules(Id.Program.from(namespaceId, "appId", "programId"), ProgramType.WORKFLOW);
-    store.deletePipe(Id.Namespace.from(namespaceId), pipeId);
+    scheduler.deleteSchedules(Id.Program.from(namespaceId, "appId", "programId"), ProgramType.WORKFLOW);
+    store.deleteAdapter(Id.Namespace.from(namespaceId), adapterId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
-   * Creates a pipe
+   * Creates an adapter
    */
   @PUT
-  @Path("/pipes")
-  public void createPipe(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) {
+  @Path("/adapters")
+  public void createAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
     try {
       if (!namespaceExists(store, namespaceId)) {
-        String errorMessage = String.format("Create pipe failed - namespace '%s' does not exist.", namespaceId);
+        String errorMessage = String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId);
         LOG.warn(errorMessage);
         responder.sendString(HttpResponseStatus.NOT_FOUND, errorMessage);
         return;
       }
 
-      PipeMeta pipeMeta = parseBody(request, PipeMeta.class);
-      Preconditions.checkNotNull(pipeMeta, "Pipemeta is null");
-      Preconditions.checkNotNull(pipeMeta.getDatasetName(), "Pipemeta's datasetName is null");
-      Preconditions.checkNotNull(pipeMeta.getId(), "Pipemeta's id is null");
-      Preconditions.checkNotNull(pipeMeta.getStreamName(), "Pipemeta's streamName is null");
+      AdapterMeta adapterMeta = parseBody(request, AdapterMeta.class);
+      Preconditions.checkNotNull(adapterMeta, "Adaptermeta is null");
+      Preconditions.checkNotNull(adapterMeta.getDatasetName(), "Adaptermeta's datasetName is null");
+      Preconditions.checkNotNull(adapterMeta.getId(), "Adaptermeta's id is null");
+      Preconditions.checkNotNull(adapterMeta.getStreamName(), "Adaptermeta's streamName is null");
 
-      String pipeId = pipeMeta.getId();
-      PipeMeta existingPipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-      if (existingPipeMeta != null) {
-        String debugMessage = String.format("Existing pipe found while create: %s.%s", namespaceId, existingPipeMeta);
+      String adapterId = adapterMeta.getId();
+      AdapterMeta existingAdapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+      if (existingAdapterMeta != null) {
+        String debugMessage = String.format("Existing adapter found while create: %s.%s",
+                                            namespaceId, existingAdapterMeta);
         LOG.debug(debugMessage);
         responder.sendString(HttpResponseStatus.OK, debugMessage);
         return;
       }
 
       // create datasets
-      String datasetName = pipeMeta.getDatasetName();
+      String datasetName = adapterMeta.getDatasetName();
       if (!datasetFramework.hasInstance(datasetName)) {
         datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
       } else {
-        LOG.debug("Dataset instance {} already existed during create of pipe: {}", datasetName, pipeMeta);
+        LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, adapterMeta);
+      }
+
+      // create streams
+      String streamName = adapterMeta.getStreamName();
+      if (!streamAdmin.exists(streamName)) {
+        streamAdmin.create(streamName);
+        if (exploreEnabled) {
+          exploreFacade.enableExploreStream(streamName);
+        }
+      } else {
+        LOG.debug("stream instance {} already existed during create of adapter: {}", streamName, adapterMeta);
       }
 
       // deploy App
       // Standalone
-      String appId = "appId";
-      String programId = "programId";
-      deploy(namespaceId, appId, new LocalLocationFactory().create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
+      deploy(namespaceId, adapterMeta.getAppId(), new LocalLocationFactory()
+        .create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
       // Distributed
 
 
-      String scheduleName = String.format("schedule.%s", pipeId);
-      Schedule schedule = new Schedule(scheduleName, "Pipe Description.", "0 4 * * *", Schedule.Action.START);
-      Id.Program scheduledProgramId = Id.Program.from(namespaceId, appId, programId);
+      String scheduleName = String.format("schedule.%s", adapterId);
+      Schedule schedule = new Schedule(scheduleName, "Adapter Description.", "0 4 * * *", Schedule.Action.START);
+      Id.Program scheduledProgramId = Id.Program.from(namespaceId, adapterMeta.getAppId(), adapterMeta.getProgramId());
       // TODO: Update application specification
-      scheduler.schedule(scheduledProgramId, ProgramType.WORKFLOW, ImmutableList.of(schedule));
+      scheduler.schedule(scheduledProgramId, adapterMeta.getProgramType(), ImmutableList.of(schedule));
 
       // Write to mds
-      store.createPipe(Id.Namespace.from(namespaceId), pipeMeta);
+      store.createAdapter(Id.Namespace.from(namespaceId), adapterMeta);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Invalid Pipe Json object provided in request body. %s", e.getMessage()));
+                           String.format("Invalid Adapter Json object provided in request body. %s", e.getMessage()));
     } catch (Throwable throwable) {
-      String errorMessage = String.format("Create pipe failed: %s.", throwable);
+      String errorMessage = String.format("Create adapter failed: %s.", throwable);
       LOG.error(errorMessage);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, errorMessage);
     }
   }
 
   @POST
-  @Path("/pipes/{pipeId}/{action}")
-  public void startStopPipe(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("pipeId") String pipeId,
-                            @PathParam("action") String action) {
-    PipeMeta pipeMeta = store.getPipe(Id.Namespace.from(namespaceId), pipeId);
-    if (pipeMeta == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Pipe not found: %s.%s", namespaceId, pipeId));
+  @Path("/adapters/{adapterId}/{action}")
+  public void startStopAdapter(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapterId") String adapterId,
+                               @PathParam("action") String action) {
+    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+    if (adapterMeta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
-    String scheduleId = pipeMeta.getSchedule().getName();
+    String scheduleId = adapterMeta.getSchedule().getName();
     if ("start".equals(action)) {
       scheduler.resumeSchedule(scheduleId);
     } else if ("stop".equals(action)) {
       scheduler.suspendSchedule(scheduleId);
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Invalid pipe action: %s. Possible actions are: 'start', 'stop'.", action));
+                           String.format("Invalid adapter action: %s. Possible actions are: 'start', 'stop'.", action));
     }
   }
 

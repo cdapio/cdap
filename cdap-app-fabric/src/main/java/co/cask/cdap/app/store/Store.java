@@ -23,9 +23,9 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -338,35 +338,35 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Creates a new namespace.
+   * Creates a new adapter.
    *
-   * @param id {@link Id.Namespace} of the requested pipe
-   * @param pipeMetaData {@link PipeMeta} representing the pipe metadata
+   * @param id {@link Id.Namespace} of the requested adapter
+   * @param adapterMetaData {@link AdapterMeta} representing the adapter metadata
    */
-  void createPipe(Id.Namespace id, PipeMeta pipeMetaData);
+  void createAdapter(Id.Namespace id, AdapterMeta adapterMetaData);
 
   /**
-   * Retrieves a {@link PipeMeta} by id.
+   * Retrieves a {@link AdapterMeta} by id.
    *
-   * @param id {@link Id.Namespace} of the requested pipe
-   * @param pipeId id of the requested pipe
-   * @return {@link PipeMeta} of the requested pipe
+   * @param id {@link Id.Namespace} of the requested adapter
+   * @param adapterId id of the requested adapter
+   * @return {@link AdapterMeta} of the requested adapter
    */
   @Nullable
-  PipeMeta getPipe(Id.Namespace id, String pipeId);
+  AdapterMeta getAdapter(Id.Namespace id, String adapterId);
 
   /**
-   * Deletes a {@link PipeMeta} by id.
+   * Deletes a {@link AdapterMeta} by id.
    *
-   * @param id {@link Id.Namespace} of the pipe to delete
-   * @param pipeId of the pipe to delete
+   * @param id {@link Id.Namespace} of the adapter to delete
+   * @param adapterId of the adapter to delete
    */
-  void deletePipe(Id.Namespace id, String pipeId);
+  void deleteAdapter(Id.Namespace id, String adapterId);
 
   /**
-   * Lists all existing pipes.
+   * Lists all existing adapters.
    *
-   * @return a list of all existing pipes
+   * @return a list of all existing adapters
    */
-  List<PipeMeta> listPipes(Id.Namespace id);
+  List<AdapterMeta> listAdapters(Id.Namespace id);
 }

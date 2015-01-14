@@ -24,9 +24,9 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.PipeMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
@@ -61,7 +61,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final String TYPE_PIPE = "pipeMeta";
+  private static final String TYPE_ADAPTER = "adapterMeta";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -276,19 +276,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return builder.build();
   }
 
-  public void createPipe(Id.Namespace namespace, PipeMeta metadata) {
-    write(new Key.Builder().add(TYPE_PIPE, namespace.getId(), metadata.getId()).build(), metadata);
+  public void createAdapter(Id.Namespace namespace, AdapterMeta metadata) {
+    write(new Key.Builder().add(TYPE_ADAPTER, namespace.getId(), metadata.getId()).build(), metadata);
   }
 
-  public PipeMeta getPipe(Id.Namespace namespace, String pipeId) {
-    return get(new Key.Builder().add(TYPE_PIPE, namespace.getId(), pipeId).build(), PipeMeta.class);
+  public AdapterMeta getAdapter(Id.Namespace namespace, String adapterId) {
+    return get(new Key.Builder().add(TYPE_ADAPTER, namespace.getId(), adapterId).build(), AdapterMeta.class);
   }
 
-  public void deletePipe(Id.Namespace namespace, String pipeId) {
-    deleteAll(new Key.Builder().add(TYPE_PIPE, namespace.getId(), pipeId).build());
+  public void deleteAdapter(Id.Namespace namespace, String adapterId) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, namespace.getId(), adapterId).build());
   }
 
-  public List<PipeMeta> listPipes(Id.Namespace namespace) {
-    return list(new Key.Builder().add(TYPE_PIPE, namespace.getId()).build(), PipeMeta.class);
+  public List<AdapterMeta> listAdapters(Id.Namespace namespace) {
+    return list(new Key.Builder().add(TYPE_ADAPTER, namespace.getId()).build(), AdapterMeta.class);
   }
 }
