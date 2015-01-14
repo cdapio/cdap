@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
@@ -26,14 +27,12 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.io.IOException;
 import javax.ws.rs.DELETE;
@@ -50,11 +49,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 
   private final Store store;
+  private final PreferencesStore preferencesStore;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory) {
+  public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
+                              PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
+    this.preferencesStore = preferencesStore;
   }
 
   @GET
@@ -158,6 +160,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
+      // Delete Preferences associated with this namespace
+      preferencesStore.deleteProperties(namespace);
+
       // Store#deleteNamespace already checks for existence
       NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);
       if (deletedNamespace == null) {

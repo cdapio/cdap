@@ -23,7 +23,7 @@ import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.collect.KafkaMetricsCollectionService;
-import co.cask.cdap.metrics.transport.MetricsRecord;
+import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;
@@ -51,10 +51,10 @@ public final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
-  public DatumWriter<MetricsRecord> providesDatumWriter(SchemaGenerator schemaGenerator,
+  public DatumWriter<MetricValue> providesDatumWriter(SchemaGenerator schemaGenerator,
                                                         DatumWriterFactory datumWriterFactory) {
     try {
-      TypeToken<MetricsRecord> metricRecordType = TypeToken.of(MetricsRecord.class);
+      TypeToken<MetricValue> metricRecordType = TypeToken.of(MetricValue.class);
       return datumWriterFactory.create(metricRecordType, schemaGenerator.generate(metricRecordType.getType()));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);

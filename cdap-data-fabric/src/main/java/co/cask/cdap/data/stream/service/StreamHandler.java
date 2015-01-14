@@ -112,7 +112,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
   }
@@ -280,6 +280,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  private Map<String, String> getMetricsContext() {
+    return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
+                           Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
+  }
+  
   // given the current config for a stream and requested config for a stream, get the new stream config
   // with defaults in place of missing settings, and validation performed on the requested fields.
   // If a field is missing or invalid, this method will write an appropriate response to the responder and
@@ -343,10 +349,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
                             newTTL, currConfig.getLocation(), newFormatSpec);
-  }
-
-  private String getMetricsContext() {
-    return Constants.Gateway.METRICS_CONTEXT + "." + cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {

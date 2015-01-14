@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,12 +44,14 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamPropertyListener;
@@ -218,7 +220,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
-        new SimpleQueueSpecificationGenerator(Id.Application.from(program.getAccountId(), program.getApplicationId()))
+        new SimpleQueueSpecificationGenerator(Id.Application.from(program.getNamespaceId(), program.getApplicationId()))
           .create(flowSpec);
 
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
@@ -457,12 +459,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
 
-              final String queueMetricsName = "process.events.out";
-              final String queueMetricsTag = queueSpec.getQueueName().getSimpleName();
+              final MetricsCollector metrics = flowletContext.getProgramMetrics().childCollector(
+                Constants.Metrics.Tag.FLOWLET_QUEUE, queueSpec.getQueueName().getSimpleName());
               QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
-                  flowletContext.getProgramMetrics().increment(queueMetricsName, count, queueMetricsTag);
+                  metrics.increment("process.events.out", count);
                 }
 
                 @Override
@@ -588,12 +590,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                  final QueueName queueName,
                                                  final Function<S, T> inputDecoder) {
     final String eventsMetricsName = "process.events.in";
-    final String eventsMetricsTag = queueName.getSimpleName();
+    final String queue = queueName.getSimpleName();
     return new Function<S, T>() {
       @Override
       public T apply(S source) {
-        context.getProgramMetrics().increment(eventsMetricsName, 1, eventsMetricsTag);
-        context.getProgramMetrics().increment("process.tuples.read", 1, eventsMetricsTag);
+        context.getQueueMetrics(queue).increment(eventsMetricsName, 1);
+        context.getQueueMetrics(queue).increment("process.tuples.read", 1);
         return inputDecoder.apply(source);
       }
     };
