@@ -18,7 +18,7 @@ package co.cask.cdap.metrics.store.timeseries;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
@@ -38,8 +38,8 @@ public class FactTableTest {
 
   @Test
   public void testBasics() throws Exception {
-    InMemoryOrderedTableService.create("EntityTable");
-    InMemoryOrderedTableService.create("DataTable");
+    InMemoryTableService.create("EntityTable");
+    InMemoryTableService.create("DataTable");
     int resolution = 10;
     int rollTimebaseInterval = 2;
 
@@ -182,8 +182,8 @@ public class FactTableTest {
 
   @Test
   public void testQuery() throws Exception {
-    InMemoryOrderedTableService.create("QueryEntityTable");
-    InMemoryOrderedTableService.create("QueryDataTable");
+    InMemoryTableService.create("QueryEntityTable");
+    InMemoryTableService.create("QueryDataTable");
     int resolution = 10;
     int rollTimebaseInterval = 2;
 

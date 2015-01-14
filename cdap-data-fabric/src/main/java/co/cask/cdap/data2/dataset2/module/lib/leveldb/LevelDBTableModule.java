@@ -14,21 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.inmemory;
+package co.cask.cdap.data2.dataset2.module.lib.leveldb;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefinition;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
 
 /**
- * Registers in-memory implementations of the basic datasets
+ * Registers LevelDB-based implementations of the basic datasets
  */
-public class InMemoryOrderedTableModule implements DatasetModule {
+public class LevelDBTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new InMemoryOrderedTableDefinition("orderedTable"));
+    // TODO: remove OrderedTable registration when OrderedTable is removed
+    registry.add(new LevelDBTableDefinition("orderedTable"));
     // so that it can be resolved via @Dataset
-    registry.add(new InMemoryOrderedTableDefinition(OrderedTable.class.getName()));
+    registry.add(new LevelDBTableDefinition(OrderedTable.class.getName()));
+
+    registry.add(new LevelDBTableDefinition("table"));
+    registry.add(new LevelDBTableDefinition(Table.class.getName()));
   }
 }

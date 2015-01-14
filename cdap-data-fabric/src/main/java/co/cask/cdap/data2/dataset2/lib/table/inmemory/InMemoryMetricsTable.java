@@ -45,7 +45,7 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public byte[] get(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryOrderedTableService.get(tableName, row, null);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryTableService.get(tableName, row, null);
     if (rowMap != null) {
       NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
       if (valueMap != null && !valueMap.isEmpty()) {
@@ -61,17 +61,17 @@ public class InMemoryMetricsTable implements MetricsTable {
     for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
       convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_PUTS));
     }
-    InMemoryOrderedTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
+    InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
   }
 
   @Override
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
-    return InMemoryOrderedTableService.swap(tableName, row, column, oldValue, newValue);
+    return InMemoryTableService.swap(tableName, row, column, oldValue, newValue);
   }
 
   @Override
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    InMemoryOrderedTableService.increment(tableName, row, increments);
+    InMemoryTableService.increment(tableName, row, increments);
   }
 
   @Override
@@ -83,12 +83,12 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
-    return InMemoryOrderedTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
+    return InMemoryTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
   }
 
   @Override
   public void deleteAll(byte[] prefix) throws Exception {
-    InMemoryOrderedTableService.delete(tableName, prefix);
+    InMemoryTableService.delete(tableName, prefix);
   }
 
   @Override
@@ -100,7 +100,7 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public void delete(Collection<byte[]> rows) throws Exception {
-    InMemoryOrderedTableService.delete(tableName, rows);
+    InMemoryTableService.delete(tableName, rows);
   }
 
   @Override
@@ -113,7 +113,7 @@ public class InMemoryMetricsTable implements MetricsTable {
       while ((rowValues = scanner.next()) != null) {
         byte[] row = rowValues.getRow();
         for (byte[] column : rowValues.getColumns().keySet()) {
-          InMemoryOrderedTableService.deleteColumns(tableName, row, column);
+          InMemoryTableService.deleteColumns(tableName, row, column);
         }
       }
     } finally {
@@ -127,7 +127,7 @@ public class InMemoryMetricsTable implements MetricsTable {
 
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOrderedTableService.getRowRange(tableName, start, stop, null);
+      InMemoryTableService.getRowRange(tableName, start, stop, null);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = getLatest(rowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator(), filter, columns);

@@ -36,9 +36,9 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTableAdmin;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -214,7 +214,7 @@ public class Main {
                                      new DefaultDatasetNamespace(cConf));
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "orderedTable"),
-                               new HBaseOrderedTableModule());
+                               new HBaseTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
                                new HBaseMetricsTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
@@ -225,7 +225,7 @@ public class Main {
 
   private static void upgradeUserTables(final Injector injector) throws Exception  {
     // We assume that all tables in USER namespace belong to OrderedTable type datasets. So we loop thru them
-    // and upgrading with the help of HBaseOrderedTableAdmin
+    // and upgrading with the help of HBaseTableAdmin
     final CConfiguration cConf = injector.getInstance(CConfiguration.class);
     DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
 
@@ -246,10 +246,10 @@ public class Main {
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {
-            return HBaseOrderedTableAdmin.createCoprocessorJarInternal(cConf,
-                                                                       injector.getInstance(LocationFactory.class),
-                                                                       hBaseTableUtil,
-                                                                       supportsIncrement);
+            return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
+                injector.getInstance(LocationFactory.class),
+                hBaseTableUtil,
+                supportsIncrement);
           }
 
           @Override

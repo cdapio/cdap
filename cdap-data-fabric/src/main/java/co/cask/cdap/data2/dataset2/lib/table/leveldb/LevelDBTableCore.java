@@ -47,9 +47,9 @@ import javax.annotation.Nullable;
 /**
  * Provides common operations for levelDB tables and queues.
  */
-public class LevelDBOrderedTableCore {
+public class LevelDBTableCore {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LevelDBOrderedTableCore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableCore.class);
 
   private static final Scanner EMPTY_SCANNER = createEmptyScanner();
 
@@ -76,9 +76,9 @@ public class LevelDBOrderedTableCore {
     ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
   private final String tableName;
-  private final LevelDBOrderedTableService service;
+  private final LevelDBTableService service;
 
-  public LevelDBOrderedTableCore(String tableName, LevelDBOrderedTableService service) throws IOException {
+  public LevelDBTableCore(String tableName, LevelDBTableService service) throws IOException {
     this.tableName = tableName;
     this.service = service;
   }

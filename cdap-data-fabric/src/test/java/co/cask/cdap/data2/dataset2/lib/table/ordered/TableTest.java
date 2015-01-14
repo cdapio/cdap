@@ -44,7 +44,7 @@ import java.util.Map;
  * Base test for OrderedTable.
  * @param <T> table type
  */
-public abstract class OrderedTableTest<T extends OrderedTable> {
+public abstract class TableTest<T extends Table> {
   static final byte[] R1 = Bytes.toBytes("r1");
   static final byte[] R2 = Bytes.toBytes("r2");
   static final byte[] R3 = Bytes.toBytes("r3");
@@ -112,20 +112,20 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
       // verify can see changes inside tx
-      verify(a(C1, V1), myTable1.get(R1, a(C1, C2)));
+      verify(a(C1, V1), myTable1.get(R1, a(C1, C2)).getColumns());
       verify(V1, myTable1.get(R1, C1));
       verify(null, myTable1.get(R1, C2));
       verify(null, myTable1.get(R2, C1));
-      verify(a(C1, V1), myTable1.get(R1));
+      verify(a(C1, V1), myTable1.get(R1).getColumns());
 
       // start new tx (doesn't see changes of the tx1)
       Transaction tx2 = txClient.startShort();
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify doesn't see changes of tx1
@@ -154,7 +154,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // start tx3 and verify that changes of tx1 are not visible yet (even though they are flushed)
       Transaction tx3 = txClient.startShort();
-      OrderedTable myTable3 = getTable("myTable");
+      Table myTable3 = getTable("myTable");
       ((TransactionAware) myTable3).startTx(tx3);
       verify(a(), myTable3.get(R1, a(C1, C2)));
       verify(null, myTable3.get(R1, C1));
@@ -233,7 +233,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -263,14 +263,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1 by trying to compareAndSwap
       // assuming current value is null
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       Assert.assertTrue(myTable2.compareAndSwap(R1, C1, null, V3));
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
-      OrderedTable myTable3 = getTable("myTable");
+      Table myTable3 = getTable("myTable");
       ((TransactionAware) myTable3).startTx(tx3);
       Assert.assertTrue(myTable3.compareAndSwap(R1, C1, null, V2));
 
@@ -284,7 +284,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // start tx4 and verify that changes of tx1 are now visible
       Transaction tx4 = txClient.startShort();
-      OrderedTable myTable4 = getTable("myTable");
+      Table myTable4 = getTable("myTable");
       ((TransactionAware) myTable4).startTx(tx4);
       verify(a(C1, V1, C2, V2), myTable4.get(R1, a(C1, C2)));
       verify(V1, myTable4.get(R1, C1));
@@ -333,14 +333,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   public void testBasicIncrementWithTx() throws Exception {
     DatasetAdmin admin = getTableAdmin("myTable");
     admin.create();
-    OrderedTable myTable1, myTable2, myTable3, myTable4;
+    Table myTable1, myTable2, myTable3, myTable4;
     try {
       Transaction tx1 = txClient.startShort();
       myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
-      verify(a(C1), la(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
-      verify(a(C2), la(2L), myTable1.incrementAndGet(R1, a(C2), la(2L)));
+      verify(a(C1), lb(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
+      verify(a(C2), lb(2L), myTable1.incrementAndGet(R1, a(C2), la(2L)));
       // verify increment result visible inside tx before commit
       verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
       verify(L1, myTable1.get(R1, C1));
@@ -378,7 +378,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable2.get(R1, C2));
       verify(null, myTable2.get(R1, C5));
       verify(a(), myTable2.get(R1));
-      verify(a(C1), la(55L), myTable2.incrementAndGet(R1, a(C1), la(55L)));
+      verify(a(C1), lb(55L), myTable2.incrementAndGet(R1, a(C1), la(55L)));
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
@@ -389,7 +389,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable3.get(R1, C2));
       verify(null, myTable3.get(R1, C5));
       verify(a(), myTable3.get(R1));
-      verify(a(C1), la(4L), myTable3.incrementAndGet(R1, a(C1), la(4L)));
+      verify(a(C1), lb(4L), myTable3.incrementAndGet(R1, a(C1), la(4L)));
 
       // * second, make tx visible
       Assert.assertTrue(txClient.commit(tx1));
@@ -424,9 +424,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       txClient.abort(tx3);
 
       // verify we can do some ops with tx4 based on data written with tx1
-      verify(a(C1, C2, C3), la(3L, 3L, 5L), myTable4.incrementAndGet(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
+      verify(a(C1, C2, C3), lb(3L, 3L, 5L), myTable4.incrementAndGet(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
       myTable4.delete(R1, a(C2));
-      verify(a(C4), la(3L), myTable4.incrementAndGet(R1, a(C4), la(3L)));
+      verify(a(C4), lb(3L), myTable4.incrementAndGet(R1, a(C4), la(3L)));
       myTable4.delete(R1, a(C1));
 
       // committing tx4
@@ -461,7 +461,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       Table.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
     DatasetAdmin admin = getTableAdmin("myTable", props);
     admin.create();
-    OrderedTable myTable = getTable("myTable");
+    Table myTable = getTable("myTable");
 
     // start 1st tx
     Transaction tx = txClient.startShort();
@@ -503,7 +503,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       Table.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
     DatasetAdmin admin = getTableAdmin("myTable", props);
     admin.create();
-    OrderedTable myTable1, myTable2, myTable3, myTable4;
+    Table myTable1, myTable2, myTable3, myTable4;
     try {
       Transaction tx1 = txClient.startShort();
       myTable1 = getTable("myTable");
@@ -636,7 +636,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     try {
       // write smth and commit
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1, C2), a(V1, V2));
       myTable1.put(R2, a(C1, C2), a(V2, V3));
@@ -649,7 +649,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       // Now, we will test delete ops
       // start new tx2
       Transaction tx2 = txClient.startShort();
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify tx2 sees changes of tx1
@@ -806,7 +806,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     try {
       // write r1...r5 and commit
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(V1));
       myTable1.put(R2, a(C2), a(V2));
@@ -820,7 +820,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       // Now, we will test scans
       // currently not testing races/conflicts/etc as this logic is not there for scans yet; so using one same tx
       Transaction tx2 = txClient.startShort();
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // bounded scan
@@ -885,7 +885,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     try {
       //
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
 
       myTable1.put(Bytes.toBytes("1_09a"), a(C1), a(V1));
@@ -950,7 +950,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     try {
       // write test data and commit
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1, C2, C3, C4, C5), a(V1, V2, V3, V4, V5));
       myTable1.put(R2, a(C1), a(V2));
@@ -960,7 +960,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // Now, we will test column range get
       Transaction tx2 = txClient.startShort();
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // bounded range
@@ -1033,11 +1033,11 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       Transaction tx3 = txClient.startShort();
 
       // Write data in tx1 and commit
-      OrderedTable table11 = getTable("table1");
+      Table table11 = getTable("table1");
       ((TransactionAware) table11).startTx(tx1);
       // write r1->c1,v1 but not commit
       table11.put(R1, a(C1), a(V1));
-      OrderedTable table21 = getTable("table2");
+      Table table21 = getTable("table2");
       ((TransactionAware) table21).startTx(tx1);
       // write r1->c1,v2 but not commit
       table21.put(R1, a(C1), a(V2));
@@ -1053,11 +1053,11 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       Assert.assertTrue(txClient.commit(tx1));
 
       // Write data in tx2 and check that cannot commit because of conflicts
-      OrderedTable table22 = getTable("table2");
+      Table table22 = getTable("table2");
       ((TransactionAware) table22).startTx(tx2);
       // write r1->c1,v1 but not commit
       table22.put(R1, a(C1), a(V2));
-      OrderedTable table32 = getTable("table3");
+      Table table32 = getTable("table3");
       ((TransactionAware) table32).startTx(tx2);
       // write r1->c1,v2 but not commit
       table32.put(R1, a(C1), a(V3));
@@ -1073,11 +1073,11 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       txClient.abort(tx2);
 
       // Write data in tx3 and check that can commit (no conflicts)
-      OrderedTable table33 = getTable("table3");
+      Table table33 = getTable("table3");
       ((TransactionAware) table33).startTx(tx3);
       // write r1->c1,v1 but not commit
       table33.put(R1, a(C1), a(V3));
-      OrderedTable table43 = getTable("table4");
+      Table table43 = getTable("table4");
       ((TransactionAware) table43).startTx(tx3);
       // write r1->c1,v2 but not commit
       table43.put(R1, a(C1), a(V4));
@@ -1123,14 +1123,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       // 1) Test conflicts when using different tables
 
       Transaction tx1 = txClient.startShort();
-      OrderedTable table11 = getTable("table1", level);
+      Table table11 = getTable("table1", level);
       ((TransactionAware) table11).startTx(tx1);
       // write r1->c1,v1 but not commit
       table11.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      OrderedTable table22 = getTable("table2", level);
+      Table table22 = getTable("table2", level);
       ((TransactionAware) table22).startTx(tx2);
 
       // change in tx2 same data but in different table
@@ -1138,7 +1138,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // start new tx
       Transaction tx3 = txClient.startShort();
-      OrderedTable table13 = getTable("table1", level);
+      Table table13 = getTable("table1", level);
       ((TransactionAware) table13).startTx(tx3);
 
       // change in tx3 same data in same table as tx1
@@ -1163,14 +1163,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // 2) Test conflicts when using different rows
       Transaction tx4 = txClient.startShort();
-      OrderedTable table14 = getTable("table1", level);
+      Table table14 = getTable("table1", level);
       ((TransactionAware) table14).startTx(tx4);
       // write r1->c1,v1 but not commit
       table14.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx5 = txClient.startShort();
-      OrderedTable table15 = getTable("table1", level);
+      Table table15 = getTable("table1", level);
       ((TransactionAware) table15).startTx(tx5);
 
       // change in tx5 same data but in different row
@@ -1178,7 +1178,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // start new tx
       Transaction tx6 = txClient.startShort();
-      OrderedTable table16 = getTable("table1", level);
+      Table table16 = getTable("table1", level);
       ((TransactionAware) table16).startTx(tx6);
 
       // change in tx6 in same row as tx1
@@ -1203,14 +1203,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // 3) Test conflicts when using different columns
       Transaction tx7 = txClient.startShort();
-      OrderedTable table17 = getTable("table1", level);
+      Table table17 = getTable("table1", level);
       ((TransactionAware) table17).startTx(tx7);
       // write r1->c1,v1 but not commit
       table17.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx8 = txClient.startShort();
-      OrderedTable table18 = getTable("table1", level);
+      Table table18 = getTable("table1", level);
       ((TransactionAware) table18).startTx(tx8);
 
       // change in tx8 same data but in different column
@@ -1218,7 +1218,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // start new tx
       Transaction tx9 = txClient.startShort();
-      OrderedTable table19 = getTable("table1", level);
+      Table table19 = getTable("table1", level);
       ((TransactionAware) table19).startTx(tx9);
 
       // change in tx9 same column in same column as tx1
@@ -1262,7 +1262,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     try {
       // write and commit one row/column
       Transaction tx0 = txClient.startShort();
-      OrderedTable myTable0 = getTable("myTable");
+      Table myTable0 = getTable("myTable");
       ((TransactionAware) myTable0).startTx(tx0);
       myTable0.put(R2, a(C2), a(V2));
       Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) myTable0).getTxChanges()));
@@ -1271,7 +1271,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       ((TransactionAware) myTable0).postTxCommit();
 
       Transaction tx1 = txClient.startShort();
-      OrderedTable myTable1 = getTable("myTable");
+      Table myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -1292,7 +1292,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
@@ -1311,7 +1311,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     final String tableName = "survive";
     DatasetAdmin admin = getTableAdmin(tableName);
     admin.create();
-    OrderedTable table = getTable(tableName);
+    Table table = getTable(tableName);
 
     // write some values
     Transaction tx0 = txClient.startShort();
@@ -1336,7 +1336,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     txClient.abort(tx1); // only did read, safe to abort
 
     // create a new client and write another value
-    OrderedTable table2 = getTable(tableName);
+    Table table2 = getTable(tableName);
     Transaction tx2 = txClient.startShort();
     ((TransactionAware) table2).startTx(tx2);
     table2.put(R1, a(C2), a(V2));
@@ -1376,6 +1376,10 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     admin.drop();
   }
 
+  void verify(byte[][] expected, Row row) {
+    verify(expected, row.getColumns());
+  }
+
   void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
     Assert.assertEquals(expected.length / 2, rowMap.size());
     for (int i = 0; i < expected.length; i += 2) {
@@ -1385,10 +1389,11 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     }
   }
 
-  void verify(byte[][] expectedColumns, long[] expectedValues, Map<byte[], Long> actual) {
+  void verify(byte[][] expectedColumns, byte[][] expectedValues, Row row) {
+    Map<byte[], byte[]> actual = row.getColumns();
     Assert.assertEquals(expectedColumns.length, actual.size());
     for (int i = 0; i < expectedColumns.length; i++) {
-      Assert.assertEquals(expectedValues[i], (long) actual.get(expectedColumns[i]));
+      Assert.assertArrayEquals(expectedValues[i], actual.get(expectedColumns[i]));
     }
   }
 
@@ -1410,6 +1415,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
   static long[] la(long... elems) {
     return elems;
+  }
+
+  static byte[][] lb(long... elems) {
+    byte[][] elemBytes = new byte[elems.length][];
+    for (int i = 0; i < elems.length; i++) {
+      elemBytes[i] = Bytes.toBytes(elems[i]);
+    }
+    return elemBytes;
   }
 
   // to array

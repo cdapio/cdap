@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 
 import java.io.IOException;
 import java.util.Map;
@@ -28,10 +28,10 @@ import java.util.Map;
 /**
  *
  */
-public class InMemoryOrderedTableDefinition
-  extends AbstractDatasetDefinition<OrderedTable, InMemoryOrderedTableAdmin> {
+public class InMemoryTableDefinition
+  extends AbstractDatasetDefinition<Table, InMemoryTableAdmin> {
 
-  public InMemoryOrderedTableDefinition(String name) {
+  public InMemoryTableDefinition(String name) {
     super(name);
   }
 
@@ -43,16 +43,16 @@ public class InMemoryOrderedTableDefinition
   }
 
   @Override
-  public OrderedTable getDataset(DatasetSpecification spec,
+  public Table getDataset(DatasetSpecification spec,
                                  Map<String, String> arguments, ClassLoader classLoader) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    return new InMemoryOrderedTable(spec.getName(), conflictDetection);
+    return new InMemoryTable(spec.getName(), conflictDetection);
   }
 
   @Override
-  public InMemoryOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public InMemoryTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     // todo: or pass the full spec?
-    return new InMemoryOrderedTableAdmin(spec.getName());
+    return new InMemoryTableAdmin(spec.getName());
   }
 }

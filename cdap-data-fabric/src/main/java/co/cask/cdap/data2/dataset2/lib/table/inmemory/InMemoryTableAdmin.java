@@ -17,21 +17,46 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
+
+import java.io.IOException;
 
 /**
  *
  */
-public class InMemoryOrderedTableTest extends BufferingOrderedTableTest<InMemoryOrderedTable> {
-  @Override
-  protected InMemoryOrderedTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
-    return new InMemoryOrderedTable(name, ConflictDetection.valueOf(conflictLevel.name()));
+public class InMemoryTableAdmin implements DatasetAdmin {
+  private final String name;
+
+  public InMemoryTableAdmin(String name) {
+    this.name = name;
   }
 
   @Override
-  protected DatasetAdmin getTableAdmin(String name, DatasetProperties ignored) throws Exception {
-    return new InMemoryOrderedTableAdmin(name);
+  public boolean exists() {
+    return InMemoryTableService.exists(name);
+  }
+
+  @Override
+  public void create() {
+    InMemoryTableService.create(name);
+  }
+
+  @Override
+  public void truncate() {
+    InMemoryTableService.truncate(name);
+  }
+
+  @Override
+  public void drop() {
+    InMemoryTableService.drop(name);
+  }
+
+  @Override
+  public void upgrade() {
+    // no-op
+  }
+
+  @Override
+  public void close() throws IOException {
+    // NOTHING to do
   }
 }

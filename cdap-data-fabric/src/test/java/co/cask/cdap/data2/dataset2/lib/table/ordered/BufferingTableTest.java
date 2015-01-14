@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
@@ -34,8 +35,8 @@ import java.util.NavigableMap;
  * unit-test
  * @param <T> table type
  */
-public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
-  extends OrderedTableConcurrentTest<T> {
+public abstract class BufferingTableTest<T extends BufferingTable>
+  extends TableConcurrentTest<T> {
 
   @Test
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {
@@ -43,8 +44,8 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
-      BufferingOrderedTable myTable1 =
-        new BufferingOrderedTableWithPersistingFailure(getTable("myTable"));
+      BufferingTable myTable1 =
+        new BufferingTableWithPersistingFailure(getTable("myTable"));
       myTable1.startTx(tx1);
       // write some data but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -71,7 +72,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      OrderedTable myTable2 = getTable("myTable");
+      Table myTable2 = getTable("myTable");
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
@@ -93,7 +94,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
     try {
       //
       Transaction tx1 = txClient.startShort();
-      OrderedTable table1 = getTable("testScanWithBuffering");
+      Table table1 = getTable("testScanWithBuffering");
       ((TransactionAware) table1).startTx(tx1);
 
       table1.put(Bytes.toBytes("1_01"), a(C1), a(V1));
@@ -103,7 +104,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       // written values should not yet be persisted
       verify(new byte[0][],
              new byte[0][][],
-             ((BufferingOrderedTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+             ((BufferingTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       // buffered values should be visible in a scan
       verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
@@ -143,7 +144,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
              aa(a(C1, V1),
                 a(C1, V1),
                 a(C1, V1)),
-             ((BufferingOrderedTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+             ((BufferingTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       // all values should be visible in buffered scan
       verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
@@ -191,7 +192,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
     try {
       // writing some data: we'll need it to test delete later
       Transaction tx = txClient.startShort();
-      BufferingOrderedTable table = getTable("myTable");
+      BufferingTable table = getTable("myTable");
       table.startTx(tx);
 
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});
@@ -219,7 +220,8 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       verify123(table);
 
       // try get row and change returned values in place, which should not affect the data stored
-      Map<byte[], byte[]> getRowResult = table.get(new byte[] {1});
+      Row getRow = table.get(new byte[] {1});
+      Map<byte[], byte[]> getRowResult = getRow.getColumns();
       Assert.assertEquals(1, getRowResult.size());
       byte[] colFromGetRow = getRowResult.keySet().iterator().next();
       byte[] valFromGetRow = getRowResult.get(colFromGetRow);
@@ -234,7 +236,8 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       verify123(table);
 
       // try get set of columns in a row and change returned values in place, which should not affect the data stored
-      Map<byte[], byte[]> getColumnSetResult = table.get(new byte[] {1});
+      Row getColumnSetRow = table.get(new byte[] {1});
+      Map<byte[], byte[]> getColumnSetResult = getColumnSetRow.getColumns();
       Assert.assertEquals(1, getColumnSetResult.size());
       byte[] colFromGetColumnSet = getColumnSetResult.keySet().iterator().next();
       byte[] valFromGetColumnSet = getColumnSetResult.values().iterator().next();
@@ -323,12 +326,13 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       rowIncParam = new byte[] {1};
       colIncParam = new byte[] {2};
       table.increment(rowIncParam, colIncParam, -1);
-      Map<byte[], Long> counters = table.incrementAndGet(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+      Row countersRow = table.incrementAndGet(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+      Map<byte[], byte[]> counters = countersRow.getColumns();
 
       Assert.assertEquals(1, counters.size());
       byte[] colFromInc = counters.keySet().iterator().next();
       Assert.assertArrayEquals(new byte[] {2}, colFromInc);
-      Assert.assertEquals(3, (long) counters.get(colFromInc));
+      Assert.assertEquals(3, (long) Bytes.toLong(counters.get(colFromInc)));
       counters.remove(new byte[] {2});
       colFromInc[0]++;
 
@@ -368,7 +372,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
     }
   }
 
-  private void verify123(BufferingOrderedTable table) throws Exception {
+  private void verify123(BufferingTable table) throws Exception {
     byte[] row = new byte[] {1};
     byte[] col = new byte[] {2};
     byte[] val = Bytes.toBytes((long) 3);
@@ -382,17 +386,19 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
     Assert.assertArrayEquals(new byte[] {8}, table.get(new byte[] {0}, new byte[] {9}));
   }
 
-  private void verify(BufferingOrderedTable table, byte[] row, byte[] col, byte[] val) throws Exception {
+  private void verify(BufferingTable table, byte[] row, byte[] col, byte[] val) throws Exception {
     // get column
     Assert.assertArrayEquals(val, table.get(row, col));
 
     // get set of columns
-    Map<byte[], byte[]> getColSetResult = table.get(row, new byte[][] {col});
+    Row getColSetRow = table.get(row, new byte[][] {col});
+    Map<byte[], byte[]> getColSetResult = getColSetRow.getColumns();
     Assert.assertEquals(1, getColSetResult.size());
     Assert.assertArrayEquals(val, getColSetResult.get(col));
 
     // get row
-    Map<byte[], byte[]> getRowResult = table.get(row);
+    Row getRow = table.get(row);
+    Map<byte[], byte[]> getRowResult = getRow.getColumns();
     Assert.assertEquals(1, getRowResult.size());
     Assert.assertArrayEquals(val, getRowResult.get(col));
 
@@ -406,13 +412,13 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
   }
 
   // This class looks weird, this is what we have to do to override persist method to make it throw exception in the
-  // middle. NOTE: We want to test how every implementation of BufferingOrderedTable handles undoing changes in this
-  // case, otherwise we would just test the method of BufferingOrderedTable directly.
+  // middle. NOTE: We want to test how every implementation of BufferingTable handles undoing changes in this
+  // case, otherwise we would just test the method of BufferingTable directly.
 
-  public static class BufferingOrderedTableWithPersistingFailure extends BufferingOrderedTable {
-    private BufferingOrderedTable delegate;
+  public static class BufferingTableWithPersistingFailure extends BufferingTable {
+    private BufferingTable delegate;
 
-    public BufferingOrderedTableWithPersistingFailure(BufferingOrderedTable delegate) {
+    public BufferingTableWithPersistingFailure(BufferingTable delegate) {
       super(delegate.getTableName());
       this.delegate = delegate;
     }

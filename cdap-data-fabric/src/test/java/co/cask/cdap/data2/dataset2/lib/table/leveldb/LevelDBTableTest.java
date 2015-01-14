@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTableTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -39,12 +39,12 @@ import java.io.IOException;
 /**
  * test for LevelDB tables.
  */
-public class LevelDBOrderedTableTest extends BufferingOrderedTableTest<LevelDBOrderedTable> {
+public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  static LevelDBOrderedTableService service;
+  static LevelDBTableService service;
   static Injector injector = null;
 
   @BeforeClass
@@ -56,21 +56,21 @@ public class LevelDBOrderedTableTest extends BufferingOrderedTableTest<LevelDBOr
       new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
-    service = injector.getInstance(LevelDBOrderedTableService.class);
+    service = injector.getInstance(LevelDBTableService.class);
   }
 
   @Override
-  protected LevelDBOrderedTable getTable(String name, ConflictDetection level) throws IOException {
-    return new LevelDBOrderedTable(name,
+  protected LevelDBTable getTable(String name, ConflictDetection level) throws IOException {
+    return new LevelDBTable(name,
                                    ConflictDetection.valueOf(level.name()),
                                    service);
   }
 
   @Override
-  protected LevelDBOrderedTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
+  protected LevelDBTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
     DatasetSpecification spec =
-      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
-    return new LevelDBOrderedTableAdmin(spec, service);
+      new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
+    return new LevelDBTableAdmin(spec, service);
   }
 
   @Test
@@ -81,7 +81,7 @@ public class LevelDBOrderedTableTest extends BufferingOrderedTableTest<LevelDBOr
 
     // create a table and verify it is in the list of tables
     for (String tableName : tableNames) {
-      LevelDBOrderedTableAdmin admin = getTableAdmin(tableName, DatasetProperties.EMPTY);
+      LevelDBTableAdmin admin = getTableAdmin(tableName, DatasetProperties.EMPTY);
       admin.create();
       Assert.assertTrue(admin.exists());
     }

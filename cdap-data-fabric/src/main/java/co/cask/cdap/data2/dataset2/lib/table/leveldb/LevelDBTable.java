@@ -19,7 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
@@ -34,16 +34,16 @@ import javax.annotation.Nullable;
 /**
  * A table client based on LevelDB.
  */
-public class LevelDBOrderedTable extends BufferingOrderedTable {
+public class LevelDBTable extends BufferingTable {
 
-  private final LevelDBOrderedTableCore core;
+  private final LevelDBTableCore core;
   private Transaction tx;
   private long persistedVersion;
 
-  public LevelDBOrderedTable(String tableName, ConflictDetection level, LevelDBOrderedTableService service)
+  public LevelDBTable(String tableName, ConflictDetection level, LevelDBTableService service)
     throws IOException {
     super(tableName, level);
-    this.core = new LevelDBOrderedTableCore(tableName, service);
+    this.core = new LevelDBTableCore(tableName, service);
   }
 
   // TODO this is the same for all OcTableClient implementations -> promote to base class
@@ -54,7 +54,7 @@ public class LevelDBOrderedTable extends BufferingOrderedTable {
   }
 
   @Override
-  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // for local operation with leveldb, we don't worry about the cost of reads
     incrementAndGet(row, columns, amounts);
   }

@@ -38,7 +38,7 @@ import java.io.IOException;
 /**
  *
  */
-public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
+public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
   public static final String PROPERTY_SPLITS = "hbase.splits";
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
   private static final Gson GSON = new Gson();
@@ -49,11 +49,11 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   private final LocationFactory locationFactory;
 
-  public HBaseOrderedTableAdmin(DatasetSpecification spec,
-                                Configuration hConf,
-                                HBaseTableUtil tableUtil,
-                                CConfiguration conf,
-                                LocationFactory locationFactory) throws IOException {
+  public HBaseTableAdmin(DatasetSpecification spec,
+                         Configuration hConf,
+                         HBaseTableUtil tableUtil,
+                         CConfiguration conf,
+                         LocationFactory locationFactory) throws IOException {
     super(spec.getName(), hConf, tableUtil);
     this.spec = spec;
     this.conf = conf;

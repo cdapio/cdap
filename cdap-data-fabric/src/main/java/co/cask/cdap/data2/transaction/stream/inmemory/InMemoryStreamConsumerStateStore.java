@@ -17,7 +17,8 @@
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import com.google.common.collect.ImmutableSortedMap;
@@ -32,9 +33,9 @@ import java.util.Set;
  */
 public final class InMemoryStreamConsumerStateStore extends StreamConsumerStateStore {
 
-  private final InMemoryOrderedTable table;
+  private final InMemoryTable table;
 
-  protected InMemoryStreamConsumerStateStore(StreamConfig streamConfig, InMemoryOrderedTable table) {
+  protected InMemoryStreamConsumerStateStore(StreamConfig streamConfig, InMemoryTable table) {
     super(streamConfig);
     this.table = table;
   }
@@ -51,7 +52,10 @@ public final class InMemoryStreamConsumerStateStore extends StreamConsumerStateS
   @Override
   protected void fetchAll(byte[] row, Map<byte[], byte[]> result) throws IOException {
     try {
-      result.putAll(table.get(row));
+      Row fetched = table.get(row);
+      if (!fetched.isEmpty()) {
+        result.putAll(fetched.getColumns());
+      }
     } catch (Exception e) {
       throw new IOException(e);
     }

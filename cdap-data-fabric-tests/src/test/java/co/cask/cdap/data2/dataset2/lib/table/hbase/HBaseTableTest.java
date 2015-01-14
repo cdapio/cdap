@@ -25,8 +25,8 @@ import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTable;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTableTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -70,8 +70,8 @@ import static org.junit.Assert.fail;
  *
  */
 @Category(SlowTests.class)
-public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOrderedTable> {
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseOrderedTableTest.class);
+public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseTableTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -91,16 +91,16 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
   }
 
   @Override
-  protected BufferingOrderedTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
+  protected BufferingTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
     return
-      new HBaseOrderedTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(), true);
+      new HBaseTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(), true);
   }
 
   @Override
-  protected HBaseOrderedTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
-    DatasetSpecification spec = new HBaseOrderedTableDefinition("foo").configure(name, props);
-    return new HBaseOrderedTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
+  protected HBaseTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
+    DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
+    return new HBaseTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
                                       CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
   }
 
@@ -111,7 +111,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
     int ttl = 1000;
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
     getTableAdmin("ttl", props).create();
-    HBaseOrderedTable table = new HBaseOrderedTable("ttl", ConflictDetection.ROW, testHBase.getConfiguration(), false);
+    HBaseTable table = new HBaseTable("ttl", ConflictDetection.ROW, testHBase.getConfiguration(), false);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -140,7 +140,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
     DatasetProperties props2 = DatasetProperties.builder()
       .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
     getTableAdmin("nottl", props2).create();
-    HBaseOrderedTable table2 = new HBaseOrderedTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration(),
+    HBaseTable table2 = new HBaseTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration(),
                                                      false);
 
     tx = txSystemClient.startShort();
@@ -186,12 +186,12 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
     // setup a table with increments disabled and with it enabled
     String disableTableName = "incr-disable";
     String enabledTableName = "incr-enable";
-    HBaseOrderedTableAdmin disabledAdmin = getTableAdmin(disableTableName, DatasetProperties.EMPTY);
+    HBaseTableAdmin disabledAdmin = getTableAdmin(disableTableName, DatasetProperties.EMPTY);
     disabledAdmin.create();
 
     DatasetProperties props =
       DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
-    HBaseOrderedTableAdmin enabledAdmin = getTableAdmin(enabledTableName, props);
+    HBaseTableAdmin enabledAdmin = getTableAdmin(enabledTableName, props);
     enabledAdmin.create();
 
     try {
@@ -208,7 +208,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
         admin.close();
       }
 
-      BufferingOrderedTable table = getTable(enabledTableName, ConflictDetection.COLUMN);
+      BufferingTable table = getTable(enabledTableName, ConflictDetection.COLUMN);
       byte[] row = Bytes.toBytes("row1");
       byte[] col = Bytes.toBytes("col1");
       DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();

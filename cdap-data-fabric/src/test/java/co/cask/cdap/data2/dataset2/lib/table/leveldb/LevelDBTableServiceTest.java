@@ -40,11 +40,11 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class LevelDBOrderedTableServiceTest {
+public class LevelDBTableServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  static LevelDBOrderedTableService service;
+  static LevelDBTableService service;
   static Injector injector = null;
 
   @BeforeClass
@@ -58,7 +58,7 @@ public class LevelDBOrderedTableServiceTest {
       new DataSetsModules().getLocalModule(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
-    service = injector.getInstance(LevelDBOrderedTableService.class);
+    service = injector.getInstance(LevelDBTableService.class);
   }
 
   @Test
@@ -102,7 +102,7 @@ public class LevelDBOrderedTableServiceTest {
   }
 
   private void writeSome(String tableName) throws IOException {
-    LevelDBOrderedTableCore table = new LevelDBOrderedTableCore(tableName, service);
+    LevelDBTableCore table = new LevelDBTableCore(tableName, service);
     Random r = new Random();
     byte[] key = new byte[100];
     byte[] value = new byte[1024 * 1024];

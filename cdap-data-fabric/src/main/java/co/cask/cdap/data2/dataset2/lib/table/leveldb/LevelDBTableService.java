@@ -48,9 +48,9 @@ import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
  * Service maintaining all LevelDB tables.
  */
 @Singleton
-public class LevelDBOrderedTableService {
+public class LevelDBTableService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LevelDBOrderedTableService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableService.class);
 
   private int blockSize;
   private long cacheSize;
@@ -59,9 +59,9 @@ public class LevelDBOrderedTableService {
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
-  private static final LevelDBOrderedTableService SINGLETON = new LevelDBOrderedTableService();
+  private static final LevelDBTableService SINGLETON = new LevelDBTableService();
 
-  public static LevelDBOrderedTableService getInstance() {
+  public static LevelDBTableService getInstance() {
     return SINGLETON;
   }
 
@@ -69,7 +69,7 @@ public class LevelDBOrderedTableService {
    * Protect the constructor as this class needs to be singleton, but keep it package visible for testing.
    */
   @VisibleForTesting
-  public LevelDBOrderedTableService() {
+  public LevelDBTableService() {
   }
 
   /**

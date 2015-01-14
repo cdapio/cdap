@@ -19,7 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
@@ -32,16 +32,16 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public class InMemoryOrderedTable extends BufferingOrderedTable {
+public class InMemoryTable extends BufferingTable {
   private static final long NO_TX_VERSION = 0L;
 
   private Transaction tx;
 
-  public InMemoryOrderedTable(String name) {
+  public InMemoryTable(String name) {
     this(name, ConflictDetection.ROW);
   }
 
-  public InMemoryOrderedTable(String name, ConflictDetection level) {
+  public InMemoryTable(String name, ConflictDetection level) {
     super(name, level);
   }
 
@@ -52,7 +52,7 @@ public class InMemoryOrderedTable extends BufferingOrderedTable {
   }
 
   @Override
-  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // for in-memory use, no need to do fancy read-less increments
     incrementAndGet(row, columns, amounts);
   }
@@ -60,13 +60,13 @@ public class InMemoryOrderedTable extends BufferingOrderedTable {
   @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) {
     // split up the increments and puts
-    InMemoryOrderedTableService.merge(getTableName(), buff, tx.getWritePointer());
+    InMemoryTableService.merge(getTableName(), buff, tx.getWritePointer());
   }
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) {
     // NOTE: we could just use merge and pass the changes with all values = null, but separate method is more efficient
-    InMemoryOrderedTableService.undo(getTableName(), persisted, tx.getWritePointer());
+    InMemoryTableService.undo(getTableName(), persisted, tx.getWritePointer());
   }
 
   @Override
@@ -89,8 +89,8 @@ public class InMemoryOrderedTable extends BufferingOrderedTable {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOrderedTableService.getRowRange(getTableName(), startRow, stopRow,
-                                              tx == null ? null : tx.getReadPointer());
+      InMemoryTableService.getRowRange(getTableName(), startRow, stopRow,
+          tx == null ? null : tx.getReadPointer());
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
@@ -101,13 +101,13 @@ public class InMemoryOrderedTable extends BufferingOrderedTable {
     // no tx logic needed
     if (tx == null) {
       NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-        InMemoryOrderedTableService.get(getTableName(), row, NO_TX_VERSION);
+        InMemoryTableService.get(getTableName(), row, NO_TX_VERSION);
 
       return unwrapDeletes(filterByColumns(getLatest(rowMap), columns));
     }
 
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-      InMemoryOrderedTableService.get(getTableName(), row, tx.getReadPointer());
+      InMemoryTableService.get(getTableName(), row, tx.getReadPointer());
 
     if (rowMap == null) {
       return EMPTY_ROW_MAP;

@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionConflictException;
@@ -39,10 +40,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This test emulates usage table by multiple concurrent clients.
  * @param <T> table type
  */
-public abstract class OrderedTableConcurrentTest<T extends OrderedTable>
-  extends OrderedTableTest<T> {
+public abstract class TableConcurrentTest<T extends Table>
+  extends TableTest<T> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(OrderedTableConcurrentTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TableConcurrentTest.class);
 
   private static final byte[] ROW_TO_INCREMENT = Bytes.toBytes("row_to_increment");
   private static final byte[] COLUMN_TO_INCREMENT = Bytes.toBytes("column_to_increment");
@@ -114,7 +115,7 @@ public abstract class OrderedTableConcurrentTest<T extends OrderedTable>
 
         private void verifyAppends() throws Exception {
           for (byte[] row : ROWS_TO_APPEND_TO) {
-            Map<byte[], byte[]> cols = table.get(row);
+            Map<byte[], byte[]> cols = table.get(row).getColumns();
             Assert.assertFalse(cols.isEmpty());
 
             // +1 because there was one extra column that we incremented
@@ -128,8 +129,7 @@ public abstract class OrderedTableConcurrentTest<T extends OrderedTable>
         }
 
         private void verifyIncrements() throws Exception {
-          Map<byte[], byte[]> result = table.get(ROW_TO_INCREMENT,
-                                                                  new byte[][]{COLUMN_TO_INCREMENT});
+          Map<byte[], byte[]> result = table.get(ROW_TO_INCREMENT, new byte[][]{COLUMN_TO_INCREMENT}).getColumns();
           Assert.assertFalse(result.isEmpty());
           byte[] val = result.get(COLUMN_TO_INCREMENT);
           long sum1to100 = ((1 + 99) * 99 / 2);
@@ -208,7 +208,7 @@ public abstract class OrderedTableConcurrentTest<T extends OrderedTable>
                 }
 
                 private void appendColumn(byte[] row) throws Exception {
-                  Map<byte[], byte[]> columns = table.get(row);
+                  Map<byte[], byte[]> columns = table.get(row).getColumns();
                   int columnsCount;
                   if (columns.isEmpty()) {
                     columnsCount = 0;

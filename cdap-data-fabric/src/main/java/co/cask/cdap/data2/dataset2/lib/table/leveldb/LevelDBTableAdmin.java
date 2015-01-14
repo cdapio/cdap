@@ -24,12 +24,12 @@ import java.io.IOException;
 /**
  *
  */
-public class LevelDBOrderedTableAdmin implements DatasetAdmin {
+public class LevelDBTableAdmin implements DatasetAdmin {
 
-  private final LevelDBOrderedTableService service;
+  private final LevelDBTableService service;
   private final String name;
 
-  public LevelDBOrderedTableAdmin(DatasetSpecification spec, LevelDBOrderedTableService service) throws IOException {
+  public LevelDBTableAdmin(DatasetSpecification spec, LevelDBTableService service) throws IOException {
     this.service = service;
     this.name = spec.getName();
   }

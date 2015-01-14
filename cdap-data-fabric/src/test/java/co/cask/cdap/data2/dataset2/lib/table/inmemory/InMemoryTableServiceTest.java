@@ -28,13 +28,13 @@ import java.util.NavigableMap;
 /**
  *
  */
-public class InMemoryOrderedTableServiceTest {
+public class InMemoryTableServiceTest {
   @Test
   public void testInternalsNotLeaking() {
-    // Test that there's no way to break the state of InMemoryOrderedTableService by changing parameters of update
+    // Test that there's no way to break the state of InMemoryTableService by changing parameters of update
     // methods (after method invocation) or by changing returned values "in-place"
 
-    InMemoryOrderedTableService.create("table");
+    InMemoryTableService.create("table");
 
     // verify writing thru merge is guarded
     NavigableMap<byte[], NavigableMap<byte[], Update>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -45,7 +45,7 @@ public class InMemoryOrderedTableServiceTest {
     rowUpdate.put(columnParam, new PutValue(valParam));
     updates.put(rowParam, rowUpdate);
 
-    InMemoryOrderedTableService.merge("table", updates, 1L);
+    InMemoryTableService.merge("table", updates, 1L);
 
     verify123();
 
@@ -59,7 +59,7 @@ public class InMemoryOrderedTableServiceTest {
 
     // verify changing returned data from get doesn't affect the stored data
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowFromGet =
-      InMemoryOrderedTableService.get("table", new byte[] {1}, 1L);
+      InMemoryTableService.get("table", new byte[]{1}, 1L);
     Assert.assertEquals(1, rowFromGet.size());
     byte[] columnFromGet = rowFromGet.firstEntry().getKey();
     Assert.assertArrayEquals(new byte[] {2}, columnFromGet);
@@ -75,7 +75,7 @@ public class InMemoryOrderedTableServiceTest {
 
     // verify changing returned data doesn't affect the stored data
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> fromGetRange = 
-      InMemoryOrderedTableService.getRowRange("table", null, null, 1L);
+      InMemoryTableService.getRowRange("table", null, null, 1L);
     Assert.assertEquals(1, fromGetRange.size());
     byte[] keyFromGetRange = fromGetRange.firstEntry().getKey();
     Assert.assertArrayEquals(new byte[] {1}, keyFromGetRange);
@@ -98,7 +98,7 @@ public class InMemoryOrderedTableServiceTest {
 
   private void verify123() {
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowFromGet =
-      InMemoryOrderedTableService.get("table", new byte[] {1}, 1L);
+      InMemoryTableService.get("table", new byte[]{1}, 1L);
     Assert.assertEquals(1, rowFromGet.size());
     Assert.assertArrayEquals(new byte[] {2}, rowFromGet.firstEntry().getKey());
     Assert.assertArrayEquals(new byte[] {3}, rowFromGet.firstEntry().getValue().get(1L));

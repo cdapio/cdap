@@ -95,7 +95,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
     AbstractHBaseDataSetAdmin.CoprocessorJar cpJar =
-      HBaseOrderedTableAdmin.createCoprocessorJarInternal(conf, locationFactory, hBaseTableUtil, true);
+      HBaseTableAdmin.createCoprocessorJarInternal(conf, locationFactory, hBaseTableUtil, true);
     tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName(),
                                    new Path(cpJar.getJarLocation().toURI()), Coprocessor.PRIORITY_USER, null);
     return tableDescriptor;

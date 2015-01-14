@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Result;
@@ -68,9 +69,9 @@ import javax.annotation.Nullable;
  *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
  */
 // todo: copying passed params to write methods may be done more efficiently: no need to copy when no changes are made
-public abstract class BufferingOrderedTable extends AbstractOrderedTable implements TransactionAware, MeteredDataset {
+public abstract class BufferingTable extends AbstractTable implements MeteredDataset {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BufferingOrderedTable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BufferingTable.class);
 
   protected static final byte[] DELETE_MARKER = new byte[0];
 
@@ -94,26 +95,26 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   private MetricsCollector metricsCollector;
 
   /**
-   * Creates an instance of {@link BufferingOrderedTable}.
+   * Creates an instance of {@link BufferingTable}.
    * @param name table name
    */
-  public BufferingOrderedTable(String name) {
+  public BufferingTable(String name) {
     this(name, ConflictDetection.ROW);
   }
 
   /**
-   * Creates an instance of {@link BufferingOrderedTable}.
+   * Creates an instance of {@link BufferingTable}.
    * @param name table name
    */
-  public BufferingOrderedTable(String name, ConflictDetection level) {
+  public BufferingTable(String name, ConflictDetection level) {
     this(name, level, false);
   }
 
   /**
-   * Creates an instance of {@link BufferingOrderedTable}.
+   * Creates an instance of {@link BufferingTable}.
    * @param name table name
    */
-  public BufferingOrderedTable(String name, ConflictDetection level, boolean enableReadlessIncrements) {
+  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements) {
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
@@ -306,47 +307,61 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    *       persistent store
    */
   @Override
-  public Map<byte[], byte[]> get(byte[] row) throws Exception {
+  public Row get(byte[] row) {
     reportRead(1);
-    return getRowMap(row);
+    try {
+      return new Result(row, getRowMap(row));
+    } catch (Exception e) {
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("get failed", e);
+    }
   }
 
   @Override
-  public Map<byte[], byte[]> get(byte[] row, byte[][] columns) throws Exception {
+  public Row get(byte[] row, byte[][] columns) {
     reportRead(1);
-    return getRowMap(row, columns);
+    try {
+      return new Result(row, getRowMap(row, columns));
+    } catch (Exception e) {
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("get failed", e);
+    }
   }
 
   @Override
-  public Map<byte[], byte[]> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
-    throws Exception {
+  public Row get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit) {
     reportRead(1);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], Update> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     // ANDREAS: can this ever happen?
     if (rowDeleted) {
-      return Collections.emptyMap();
+      return new Result(row, Collections.<byte[], byte[]>emptyMap());
     }
 
     // NOTE: since we cannot tell the exact column set, we always have to go to persisted store.
     //       potential improvement: do not fetch columns available in in-mem buffer (we know them at this point)
-    Map<byte[], byte[]> persistedCols = getPersisted(row, startColumn, stopColumn, limit);
+    try {
+      Map<byte[], byte[]> persistedCols = getPersisted(row, startColumn, stopColumn, limit);
 
-    // adding server cols, and then overriding with buffered values
-    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    if (persistedCols != null) {
-      result.putAll(persistedCols);
+      // adding server cols, and then overriding with buffered values
+      NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      if (persistedCols != null) {
+        result.putAll(persistedCols);
+      }
+
+      if (buffCols != null) {
+        buffCols = getRange(buffCols, startColumn, stopColumn, limit);
+        // null valued columns in in-memory buffer are deletes, so we need to delete them from the result list
+        mergeToPersisted(result, buffCols, null);
+      }
+
+      // applying limit
+      return new Result(row, head(result, limit));
+    } catch (Exception e) {
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("get failed", e);
     }
-
-    if (buffCols != null) {
-      buffCols = getRange(buffCols, startColumn, stopColumn, limit);
-      // null valued columns in in-memory buffer are deletes, so we need to delete them from the result list
-      mergeToPersisted(result, buffCols, null);
-    }
-
-    // applying limit
-    return head(result, limit);
   }
 
   /**
@@ -355,7 +370,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    * Also see {@link co.cask.cdap.api.dataset.table.OrderedTable#put(byte[], byte[][], byte[][])}.
    */
   @Override
-  public void put(byte[] row, byte[][] columns, byte[][] values) throws Exception {
+  public void put(byte[] row, byte[][] columns, byte[][] values) {
     reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
     NavigableMap<byte[], Update> colVals = buff.get(row);
     if (colVals == null) {
@@ -376,16 +391,21 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    *       persistent store
    */
   @Override
-  public void delete(byte[] row) throws Exception {
+  public void delete(byte[] row) {
     // "0" because we don't know what gets deleted
     reportWrite(1, 0);
     // this is going to be expensive, but the only we can do as delete implementation act on per-column level
-    Map<byte[], byte[]> rowMap = getRowMap(row);
-    delete(row, rowMap.keySet().toArray(new byte[rowMap.keySet().size()][]));
+    try {
+      Map<byte[], byte[]> rowMap = getRowMap(row);
+      delete(row, rowMap.keySet().toArray(new byte[rowMap.keySet().size()][]));
+    } catch (Exception e) {
+      LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("delete failed", e);
+    }
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns) throws Exception {
+  public void delete(byte[] row, byte[][] columns) {
     if (columns == null) {
       delete(row);
       return;
@@ -404,7 +424,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public Map<byte[], Long> incrementAndGet(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     // Logic:
@@ -413,10 +433,18 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     // * updating in-memory store
     // * returning updated values as result
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
-    Map<byte[], byte[]> rowMap = getRowMap(row, columns);
+    Map<byte[], byte[]> rowMap;
+    try {
+      rowMap = getRowMap(row, columns);
+    } catch (Exception e) {
+      LOG.debug("incrementAndGet failed for table: " + getTransactionAwareName() +
+          ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("incrementAndGet failed", e);
+    }
+
     byte[][] updatedValues = new byte[columns.length][];
 
-    NavigableMap<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < columns.length; i++) {
       byte[] column = columns[i];
       byte[] val = rowMap.get(column);
@@ -434,16 +462,16 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
       }
       longVal += amounts[i];
       updatedValues[i] = Bytes.toBytes(longVal);
-      result.put(column, longVal);
+      result.put(column, updatedValues[i]);
     }
 
     put(row, columns, updatedValues);
 
-    return result;
+    return new Result(row, result);
   }
 
   @Override
-  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) {
     if (enableReadlessIncrements) {
       reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
       NavigableMap<byte[], Update> colVals = buff.get(row);
@@ -460,15 +488,21 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) throws Exception {
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
     byte[][] columns = new byte[][]{column};
-    byte[] currentValue = getRowMap(row, columns).get(column);
-    if (Arrays.equals(expectedValue, currentValue)) {
-      put(row, columns, new byte[][]{newValue});
-      return true;
+    try {
+      byte[] currentValue = getRowMap(row, columns).get(column);
+      if (Arrays.equals(expectedValue, currentValue)) {
+        put(row, columns, new byte[][]{newValue});
+        return true;
+      }
+    } catch (Exception e) {
+      LOG.debug("compareAndSwap failed for table: " + getTransactionAwareName() +
+          ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("compareAndSwap failed", e);
     }
 
     return false;
@@ -476,7 +510,13 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
   /**
    * Fallback implementation of getSplits, {@link SplitsUtil#primitiveGetSplits(int, byte[], byte[])}.
-   * Ideally should be overridden by subclasses
+   * Ideally should be overridden by subclasses.
+   *
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+   *                  If less or equal to zero, any number of splits can be returned.
+   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
+   * @param stop If non-null, the returned splits will only cover keys that are less.
+   * @return list of {@link Split}
    */
   @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
@@ -492,7 +532,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow) throws Exception {
+  public Scanner scan(byte[] startRow, byte[] stopRow) {
     NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap;
     if (startRow == null && stopRow == null) {
       bufferMap = buff;
@@ -503,7 +543,14 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     } else {
       bufferMap = buff.subMap(startRow, true, stopRow, false);
     }
-    return new BufferingScanner(bufferMap, scanPersisted(startRow, stopRow));
+    try {
+      return new BufferingScanner(bufferMap, scanPersisted(startRow, stopRow));
+    } catch (Exception e) {
+      LOG.debug("scan failed for table: " + getTransactionAwareName() +
+          ", start row: " + (startRow != null ? Bytes.toStringBinary(startRow) : "NULL") +
+          ", stop row: "  + (stopRow != null ? Bytes.toStringBinary(stopRow) : "NULL"), e);
+      throw new DataSetException("compareAndSwap failed", e);
+    }
   }
 
   private Map<byte[], byte[]> getRowMap(byte[] row) throws Exception {

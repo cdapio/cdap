@@ -32,9 +32,9 @@ import java.util.Map;
  */
 public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdmin> {
 
-  private final DatasetDefinition<? extends OrderedTable, ?> tableDef;
+  private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public TableDefinition(String name, DatasetDefinition<? extends OrderedTable, ?> orderedTableDefinition) {
+  public TableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
     super(name);
     this.tableDef = orderedTableDefinition;
   }
@@ -55,7 +55,6 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
   @Override
   public Table getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
-    OrderedTable table = tableDef.getDataset(spec.getSpecification(""), arguments, classLoader);
-    return new TableDataset(spec.getName(), table);
+    return tableDef.getDataset(spec.getSpecification(""), arguments, classLoader);
   }
 }

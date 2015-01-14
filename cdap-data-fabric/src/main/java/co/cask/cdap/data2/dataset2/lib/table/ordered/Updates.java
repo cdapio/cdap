@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.base.Function;
 
 import java.util.Map;
@@ -54,7 +54,7 @@ public final class Updates {
       for (Map.Entry<Long, Update> cellEntry : entry.getValue().entrySet()) {
         NavigableMap<Long, byte[]> currentCell = returnMap.get(entry.getKey());
         if (currentCell == null) {
-          currentCell = new TreeMap<Long, byte[]>(InMemoryOrderedTableService.VERSIONED_VALUE_MAP_COMPARATOR);
+          currentCell = new TreeMap<Long, byte[]>(InMemoryTableService.VERSIONED_VALUE_MAP_COMPARATOR);
           returnMap.put(entry.getKey(), currentCell);
         }
         byte[] bytes = null;

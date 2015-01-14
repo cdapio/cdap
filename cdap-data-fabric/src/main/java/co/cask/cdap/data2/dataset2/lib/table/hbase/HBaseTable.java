@@ -19,7 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
@@ -52,8 +52,8 @@ import javax.annotation.Nullable;
 // todo: do periodic flush when certain threshold is reached
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
-public class HBaseOrderedTable extends BufferingOrderedTable {
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseOrderedTable.class);
+public class HBaseTable extends BufferingTable {
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseTable.class);
 
   public static final String DELTA_WRITE = "d";
   private final HTable hTable;
@@ -63,7 +63,7 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
   private final TransactionCodec txCodec;
 
-  public HBaseOrderedTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
+  public HBaseTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
     throws IOException {
     super(name, level, enableReadlessIncrements);
 
@@ -103,20 +103,20 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
             incrementPut = getIncrementalPut(incrementPut, row.getKey());
-            incrementPut.add(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
+            incrementPut.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
-            put.add(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
+            put.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
                     wrapDeleteIfNeeded(((PutValue) val).getValue()));
           }
         } else {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
             incrementPut = getIncrementalPut(incrementPut, row.getKey());
-            incrementPut.add(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column.getKey(),
+            incrementPut.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
-            put.add(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), ((PutValue) val).getValue());
+            put.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), ((PutValue) val).getValue());
           }
         }
       }
@@ -154,9 +154,9 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          delete.deleteColumn(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer());
+          delete.deleteColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer());
         } else {
-          delete.deleteColumn(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column.getKey());
+          delete.deleteColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey());
         }
       }
       deletes.add(delete);
@@ -181,7 +181,7 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
     Scan scan = new Scan();
-    scan.addFamily(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY);
+    scan.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
     // todo: should be configurable
     // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
     scan.setCacheBlocks(false);
@@ -204,10 +204,10 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
     Get get = new Get(row);
     // todo: uncomment when doing caching fetching data in-memory
     // get.setCacheBlocks(false);
-    get.addFamily(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY);
+    get.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
     if (columns != null) {
       for (byte[] column : columns) {
-        get.addColumn(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column);
+        get.addColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column);
       }
     }
 
@@ -215,7 +215,7 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
     if (tx == null) {
       get.setMaxVersions(1);
       Result result = hTable.get(get);
-      return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY);
+      return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(HBaseTableAdmin.DATA_COLUMN_FAMILY);
     }
 
     txCodec.addToOperation(get, tx);
@@ -231,7 +231,7 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
     // note: server-side filters all everything apart latest visible for us, so we can flatten it here
     NavigableMap<byte[], NavigableMap<Long, byte[]>> versioned =
-      result.getMap().get(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY);
+      result.getMap().get(HBaseTableAdmin.DATA_COLUMN_FAMILY);
 
     NavigableMap<byte[], byte[]> rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : versioned.entrySet()) {

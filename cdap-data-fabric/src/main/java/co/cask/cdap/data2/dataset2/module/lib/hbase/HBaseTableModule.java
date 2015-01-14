@@ -14,21 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.leveldb;
+package co.cask.cdap.data2.dataset2.module.lib.hbase;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableDefinition;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
 
 /**
- * Registers LevelDB-based implementations of the basic datasets
+ * Registers HBase-backed implementations of the basic datasets
  */
-public class LevelDBOrderedTableModule implements DatasetModule {
+public class HBaseTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new LevelDBOrderedTableDefinition("orderedTable"));
+    // TODO: remove OrderedTable registration when OrderedTable is removed
+    registry.add(new HBaseTableDefinition("orderedTable"));
     // so that it can be resolved via @Dataset
-    registry.add(new LevelDBOrderedTableDefinition(OrderedTable.class.getName()));
+    registry.add(new HBaseTableDefinition(OrderedTable.class.getName()));
+
+    registry.add(new HBaseTableDefinition("table"));
+    registry.add(new HBaseTableDefinition(Table.class.getName()));
   }
 }

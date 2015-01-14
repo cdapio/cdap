@@ -14,21 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.hbase;
+package co.cask.cdap.data2.dataset2.module.lib.inmemory;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTableDefinition;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
 /**
- * Registers HBase-backed implementations of the basic datasets
+ * Registers in-memory implementations of the basic datasets
  */
-public class HBaseOrderedTableModule implements DatasetModule {
+public class InMemoryTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new HBaseOrderedTableDefinition("orderedTable"));
+    // TODO: remove OrderedTable registration when OrderedTable is removed
+    registry.add(new InMemoryTableDefinition("orderedTable"));
     // so that it can be resolved via @Dataset
-    registry.add(new HBaseOrderedTableDefinition(OrderedTable.class.getName()));
+    registry.add(new InMemoryTableDefinition(OrderedTable.class.getName()));
+
+    registry.add(new InMemoryTableDefinition("table"));
+    registry.add(new InMemoryTableDefinition(Table.class.getName()));
   }
 }
