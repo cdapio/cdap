@@ -37,7 +37,8 @@ public class SchedulerServiceTest {
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.class.getSimpleName());
   private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.class.getSimpleName());
   private static final ProgramType programType = ProgramType.WORKFLOW;
-  private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?", Schedule.Action.START);
+  private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?",
+                                                         Schedule.Action.START);
   private static final Schedule schedule2 = new Schedule("Schedule2", "Every Hour", "0 * * * ?", Schedule.Action.START);
 
   @BeforeClass
