@@ -817,9 +817,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     HttpResponse response = listAdapters(Constants.DEFAULT_NAMESPACE);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterMeta> retrievedPipes = readResponse(response, ADAPTER_META_LIST_TYPE);
-    Assert.assertEquals(adaptersToPut.size(), retrievedPipes.size());
-    Assert.assertEquals(Sets.newHashSet(adaptersToPut), Sets.newHashSet(retrievedPipes));
+    List<AdapterMeta> retrievedAdapters = readResponse(response, ADAPTER_META_LIST_TYPE);
+    Assert.assertEquals(adaptersToPut.size(), retrievedAdapters.size());
+    Assert.assertEquals(Sets.newHashSet(adaptersToPut), Sets.newHashSet(retrievedAdapters));
   }
 
   private HttpResponse createAdapter(String namespaceId, AdapterMeta adapterMeta) throws Exception {
