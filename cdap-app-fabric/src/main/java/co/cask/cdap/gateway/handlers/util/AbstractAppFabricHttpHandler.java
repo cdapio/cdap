@@ -266,15 +266,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
                                                               String flowId, ProgramType typeId,
                                                               ProgramRuntimeService runtimeService) {
     ProgramType type = ProgramType.valueOf(typeId.name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               accountId, flowId);
+                               namespaceId, flowId);
 
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+    Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {

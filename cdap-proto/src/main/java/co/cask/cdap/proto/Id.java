@@ -25,7 +25,7 @@ import com.google.common.base.Preconditions;
 public final class Id  {
 
   /**
-   * Represents ID of an namespace.
+   * Represents ID of a namespace.
    */
   public static final class Namespace {
     private final String id;
