@@ -79,6 +79,9 @@ public class SchedulerServiceTest {
 
     schedulerService.deleteSchedules(program, programType);
     Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
+
+    // Check the state of the old scheduleIds
+    // (which should be deleted by the call to SchedulerService#delete(Program, ProgramType)
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
   }
 
