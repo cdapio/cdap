@@ -75,7 +75,8 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
     hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    columnDescriptor.setMaxVersions(1);
+    // to support read-less increments
+    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {

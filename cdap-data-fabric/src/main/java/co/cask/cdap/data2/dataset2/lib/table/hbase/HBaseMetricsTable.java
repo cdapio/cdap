@@ -271,7 +271,8 @@ public class HBaseMetricsTable implements MetricsTable {
                                   @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
-    scan.setMaxVersions(1);
+    // to support read-less increments
+    scan.setMaxVersions();
 
     if (startRow != null) {
       scan.setStartRow(startRow);

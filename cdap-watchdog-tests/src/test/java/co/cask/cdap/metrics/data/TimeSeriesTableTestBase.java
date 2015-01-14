@@ -182,6 +182,7 @@ public abstract class TimeSeriesTableTestBase {
     });
 
   }
+
   @Test
   public void testTimeSeriesMinuteResolution() throws OperationException {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("minutes", 60);
