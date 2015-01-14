@@ -68,31 +68,14 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
    * @param notificationJson notification as a json object
    */
   protected void notificationReceived(NotificationFeed feed, JsonElement notificationJson) {
-    for (NotificationCaller caller : getCallers(feed)) {
-      Object notification = GSON.fromJson(notificationJson, caller.getNotificationFeedType());
-      caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
-    }
-  }
-
-  /**
-   * Called when a notification is received on a feed, to push it to all the handlers that subscribed to the feed.
-   *
-   * @param feed {@link NotificationFeed} of the notification
-   * @param notification notification object
-   * @param <N> type of the notification
-   */
-  protected <N> void notificationReceived(NotificationFeed feed, N notification) {
-    for (NotificationCaller caller : getCallers(feed)) {
-      caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
-    }
-  }
-
-  private Collection<NotificationCaller<?>> getCallers(NotificationFeed feed) {
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
     synchronized (subscribers) {
       callers = ImmutableList.copyOf(callers);
     }
-    return callers;
+    for (NotificationCaller caller : callers) {
+      Object notification = GSON.fromJson(notificationJson, caller.getNotificationFeedType());
+      caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
+    }
   }
 
   @Override
@@ -113,7 +96,7 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
-    final NotificationCaller<N> caller = new NotificationCaller<N>(feed, handler, executor);
+    NotificationCaller<N> caller = new NotificationCaller<N>(feed, handler, executor);
     subscribers.put(feed, caller);
     return caller;
   }

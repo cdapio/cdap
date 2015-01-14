@@ -1,18 +1,18 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright © 2014-2015 Cask Data, Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 
 package co.cask.cdap.notifications.service.kafka;
 
@@ -46,12 +46,11 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Kafka implementation of the {@link NotificationService}.
@@ -64,7 +63,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
   private final NotificationFeedManager feedManager;
   private final KafkaPublisher.Ack ack;
 
-  private final ConcurrentMap<TopicPartition, KafkaNotificationsCallback> kafkaCallbacks;
+  private final Map<TopicPartition, KafkaNotificationsCallback> kafkaCallbacks;
   private KafkaPublisher kafkaPublisher;
 
   // Executor to publish notifications to Kafka
@@ -79,7 +78,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
     this.feedManager = feedManager;
     this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
 
-    this.kafkaCallbacks = Maps.newConcurrentMap();
+    this.kafkaCallbacks = Maps.newHashMap();
   }
 
   @Override
@@ -124,36 +123,21 @@ public class KafkaNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler,
+  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler,
                                    Executor executor) throws NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
     final TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);
 
-
-    if (kafkaCallbacks.get(topicPartition) == null) {
-      KafkaNotificationsCallback kafkaNotificationsCallback = new KafkaNotificationsCallback(topicPartition);
-      if (kafkaCallbacks.putIfAbsent(topicPartition, kafkaNotificationsCallback) == null) {
-        // Only one thread will reach this statement, even if several threads try to create a callback
-        // for the same topic partition
-        kafkaNotificationsCallback.start();
+    synchronized (this) {
+      KafkaNotificationsCallback kafkaCallback = kafkaCallbacks.get(topicPartition);
+      if (kafkaCallback == null) {
+        kafkaCallback = new KafkaNotificationsCallback(topicPartition);
+        kafkaCallbacks.put(topicPartition, kafkaCallback);
       }
+      return kafkaCallback.subscribe(feed, handler, executor);
     }
-
-    final KafkaNotificationsCallback kafkaCallback = kafkaCallbacks.get(topicPartition);
-    final Cancellable kafkaCallbackSubscription = kafkaCallback.addSubscription();
-    final Cancellable inMemorySubscription = super.subscribe(feed, handler, executor);
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        inMemorySubscription.cancel();
-        kafkaCallbackSubscription.cancel();
-        if (!kafkaCallback.isRunning()) {
-          kafkaCallbacks.remove(topicPartition, kafkaCallback);
-        }
-      }
-    };
   }
 
   /**
@@ -164,29 +148,45 @@ public class KafkaNotificationService extends AbstractNotificationService {
    * One callback is created per TopicPartition. It is created by the first subscription to a feed
    * which maps to the TopicPartition.
    */
-  private final class KafkaNotificationsCallback implements KafkaConsumer.MessageCallback, Cancellable {
+  private final class KafkaNotificationsCallback implements KafkaConsumer.MessageCallback {
 
     private final TopicPartition topicPartition;
-    private final AtomicInteger subscriptions;
+    private int subscriptions;
 
     private Cancellable kafkaSubscription;
-    private boolean isRunning;
 
     private KafkaNotificationsCallback(TopicPartition topicPartition) {
       this.topicPartition = topicPartition;
-      this.subscriptions = new AtomicInteger(0);
-      this.isRunning = false;
     }
 
-    public void start() {
-      KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
+    public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler,
+                                     Executor executor) throws NotificationFeedException {
+      final Cancellable cancellable = KafkaNotificationService.super.subscribe(feed, handler, executor);
+      synchronized (KafkaNotificationService.this) {
+        if (subscriptions == 0) {
+          KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
-      // TODO there is a bug in twill, that when the topic doesn't exist, add latest will not make subscription
-      // start from offset 0 - but that will be fixed soon
-      preparer.addLatest(topicPartition.getTopic(), topicPartition.getPartition());
-      kafkaSubscription = preparer.consume(this);
+          // TODO there is a bug in twill, that when the topic doesn't exist, add latest will not make subscription
+          // start from offset 0 - but that will be fixed soon
+          preparer.addLatest(topicPartition.getTopic(), topicPartition.getPartition());
+          kafkaSubscription = preparer.consume(this);
+        }
+        subscriptions++;
+      }
+      return new Cancellable() {
 
-      isRunning = true;
+        @Override
+        public void cancel() {
+          cancellable.cancel();
+          synchronized (KafkaNotificationService.this) {
+            subscriptions--;
+            if (subscriptions == 0) {
+              kafkaSubscription.cancel();
+              kafkaCallbacks.remove(topicPartition);
+            }
+          }
+        }
+      };
     }
 
     @Override
@@ -212,39 +212,9 @@ public class KafkaNotificationService extends AbstractNotificationService {
       LOG.debug("Handled {} messages from kafka", count);
     }
 
-    /**
-     * Add one more subscription to this {@link KafkaNotificationsCallback}.
-     *
-     * @return a {@link Cancellable} to cancel the subscription
-     */
-    public Cancellable addSubscription() {
-      subscriptions.incrementAndGet();
-      final KafkaNotificationsCallback that = this;
-      return new Cancellable() {
-        @Override
-        public void cancel() {
-          int i = subscriptions.decrementAndGet();
-          if (i == 0) {
-            that.cancel();
-            isRunning = false;
-          }
-        }
-      };
-    }
-
     @Override
     public void finished() {
       LOG.info("Subscription to topic partition {} finished.", topicPartition);
-    }
-
-    @Override
-    public void cancel() {
-      kafkaSubscription.cancel();
-      kafkaCallbacks.remove(topicPartition, this);
-    }
-
-    public boolean isRunning() {
-      return isRunning;
     }
   }
 }

@@ -25,6 +25,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 
@@ -36,7 +37,7 @@ import java.util.concurrent.Executors;
  * In-memory Notification service that pushes notifications to subscribers.
  */
 public class InMemoryNotificationService extends AbstractNotificationService {
-
+  private static final Gson GSON = new Gson();
   private ListeningExecutorService executorService;
 
   @Inject
@@ -57,12 +58,12 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, Type notificationType)
+  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, final Type notificationType)
     throws NotificationException {
     return executorService.submit(new Callable<N>() {
       @Override
       public N call() throws Exception {
-        notificationReceived(feed, notification);
+        notificationReceived(feed, GSON.toJsonTree(notification, notificationType));
         return notification;
       }
     });
