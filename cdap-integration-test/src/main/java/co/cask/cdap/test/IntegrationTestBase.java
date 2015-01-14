@@ -146,8 +146,8 @@ public class IntegrationTestBase {
       builder.setAccessToken(new AccessToken(ACCESS_TOKEN, 0L, null));
     }
 
-    builder.setDefaultConnectTimeoutMs(60000);
-    builder.setDefaultReadTimeoutMs(60000);
+    builder.setDefaultConnectTimeoutMs(120000);
+    builder.setDefaultReadTimeoutMs(120000);
     builder.setUploadConnectTimeoutMs(0);
     builder.setUploadConnectTimeoutMs(0);
 
