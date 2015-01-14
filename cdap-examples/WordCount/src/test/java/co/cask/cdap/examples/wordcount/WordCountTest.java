@@ -30,6 +30,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.AssertionError;
+import java.lang.IllegalArgumentException;
+import java.lang.String;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -72,7 +75,8 @@ public class WordCountTest extends TestBase {
     serviceStatusCheck(serviceManager, true);
 
     // First verify global statistics
-    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "stats"));
+    URL url = getServiceUrlWithRetry(serviceManager);
+    String response = requestService(new URL(url, "stats"));
     Map<String, String> map = new Gson().fromJson(response, stringMapType);
     Assert.assertEquals("9", map.get("totalWords"));
     Assert.assertEquals("6", map.get("uniqueWords"));
@@ -115,4 +119,17 @@ public class WordCountTest extends TestBase {
     }
     throw new IllegalStateException("Service state not executed. Expected " + running);
   }
+
+  private URL getServiceUrlWithRetry(ServiceManager serviceManager) throws InterruptedException {
+    int trial = 0;
+    while(trial++ < 5) {
+      URL url = serviceManager.getServiceUrl(15, TimeUnit.SECONDS);
+      if (url != null) {
+        return url;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    throw new IllegalArgumentException("Could not get serviceURL");
+  }
+
 }

@@ -32,6 +32,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.String;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -113,7 +115,8 @@ public class PurchaseAppTest extends TestBase {
     serviceStatusCheck(purchaseHistoryServiceManager, true);
 
     // Test service to retrieve a customer's purchase history
-    URL url = new URL(purchaseHistoryServiceManager.getServiceURL(15, TimeUnit.SECONDS), "history/joe");
+    URL serviceUrl = getServiceUrlWithRetry(purchaseHistoryServiceManager(15, TimeUnit.SECONDS));
+    URL url = new URL(serviceUrl, "history/joe");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
     String historyJson;
@@ -140,6 +143,18 @@ public class PurchaseAppTest extends TestBase {
     // Wait for service startup
     serviceStatusCheck(userProfileServiceManager, true);
     return userProfileServiceManager;
+  }
+
+  private String getServiceUrlWithRetry(ServiceManager serviceManager) {
+    int trial = 0;
+    while (trial++ < 5) {
+      URL url = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      if (url != null) {
+        return url;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    throw new IllegalArgumentException("Could not get serviceURL");
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
