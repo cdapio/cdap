@@ -22,7 +22,7 @@ import org.apache.twill.kafka.client.TopicPartition;
 /**
  * Util methods for using Notifications with Kafka.
  */
-public class KafkaNotificationUtils {
+public final class KafkaNotificationUtils {
 
   /**
    * Map a {@link NotificationFeed} to a Kafka topic partition.
@@ -56,5 +56,8 @@ public class KafkaNotificationUtils {
    */
   public static NotificationFeed getMessageFeed(String messageKey) {
     return NotificationFeed.fromId(messageKey);
+  }
+
+  private KafkaNotificationUtils() {
   }
 }

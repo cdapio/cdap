@@ -29,7 +29,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 
 /**
  * Guice modules to use the {@link NotificationService}.
@@ -52,10 +51,6 @@ public class NotificationServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(KafkaNotificationService.class).in(Scopes.SINGLETON);
-        bind(InMemoryNotificationService.class)
-          .annotatedWith(Names.named(Constants.Notification.KAFKA_DELEGATE_NOTIFICATION_SERVICE))
-          .to(InMemoryNotificationService.class)
-          .in(Scopes.SINGLETON);
         expose(NotificationService.class);
       }
 

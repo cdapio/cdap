@@ -159,7 +159,7 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
     try {
       return GSON.fromJson(reader, type);
     } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
+      LOG.debug("Failed to parse body on {} as {}", request.getUri(), type, e);
       throw e;
     } finally {
       reader.close();

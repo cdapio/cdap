@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 /**
  * Encoder/decoder of Notifications to Kafka messages.
  */
-public class KafkaMessageCodec {
+public final class KafkaMessageCodec {
   private static final Gson GSON = new Gson();
 
   public static ByteBuffer encode(KafkaMessage message) throws IOException {
@@ -40,5 +40,8 @@ public class KafkaMessageCodec {
     } catch (JsonSyntaxException e) {
       throw new IOException(e);
     }
+  }
+
+  private KafkaMessageCodec() {
   }
 }

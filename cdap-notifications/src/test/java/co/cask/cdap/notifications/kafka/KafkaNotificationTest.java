@@ -82,7 +82,6 @@ public class KafkaNotificationTest extends NotificationTest {
         }
       }
     );
-    startServices(injector);
 
     zkServer = injector.getInstance(InMemoryZKServer.class);
 
@@ -91,6 +90,8 @@ public class KafkaNotificationTest extends NotificationTest {
 
     kafkaClient = injector.getInstance(KafkaClientService.class);
     kafkaClient.startAndWait();
+
+    startServices(injector);
 
     Properties kafkaConfig = generateKafkaConfig(zkServer, tmpFolder.newFolder("kafka-notifications-test"));
 

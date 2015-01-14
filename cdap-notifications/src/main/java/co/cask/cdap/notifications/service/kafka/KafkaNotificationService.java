@@ -16,28 +16,21 @@
 
 package co.cask.cdap.notifications.service.kafka;
 
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.HashMultimap;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.kafka.client.Compression;
@@ -58,62 +51,40 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Kafka implementation of the {@link NotificationService}.
  */
-public class KafkaNotificationService extends AbstractIdleService implements NotificationService {
+public class KafkaNotificationService extends AbstractNotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationService.class);
   private static final Gson GSON = new Gson();
-
-  private static final int KAFKA_PUBLISHERS_CACHE_TIMEOUT = 3600;
 
   private final KafkaClient kafkaClient;
   private final NotificationFeedManager feedManager;
   private final KafkaPublisher.Ack ack;
-  private final InMemoryNotificationService delegate;
 
-  // Cached instances of KafkaPublisher.Preparer to use to publish on different topics
-  private final LoadingCache<String, KafkaPublisher.Preparer> kafkaPublishersCache;
   private final ConcurrentMap<TopicPartition, KafkaNotificationsCallback> kafkaCallbacks;
+  private KafkaPublisher kafkaPublisher;
 
   // Executor to publish notifications to Kafka
   private ListeningExecutorService publishingExecutor;
 
-  private KafkaPublisher kafkaPublisher;
-
   @Inject
-  public KafkaNotificationService(KafkaClient kafkaClient, NotificationFeedManager feedManager,
-                                  @Named(Constants.Notification.KAFKA_DELEGATE_NOTIFICATION_SERVICE)
-                                  InMemoryNotificationService delegate) {
+  public KafkaNotificationService(KafkaClient kafkaClient, DatasetFramework dsFramework,
+                                  TransactionSystemClient transactionSystemClient,
+                                  NotificationFeedManager feedManager) {
+    super(dsFramework, transactionSystemClient, feedManager);
     this.kafkaClient = kafkaClient;
     this.feedManager = feedManager;
-    this.delegate = delegate;
     this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
 
-    // Publisher fields
-    this.kafkaPublishersCache =
-      CacheBuilder.newBuilder()
-        .expireAfterWrite(KAFKA_PUBLISHERS_CACHE_TIMEOUT, TimeUnit.SECONDS)
-        .build(new CacheLoader<String, KafkaPublisher.Preparer>() {
-          @Override
-          public KafkaPublisher.Preparer load(String topic) throws Exception {
-            KafkaPublisher publisher = getKafkaPublisher();
-            if (kafkaPublisher == null) {
-              throw new NotificationFeedException("Unable to get kafka publisher, " +
-                                                    "will not be able to publish Notification.");
-            }
-            return publisher.prepare(topic);
-          }
-        });
-
-    // Subscriber fields
     this.kafkaCallbacks = Maps.newConcurrentMap();
   }
 
   @Override
   protected void startUp() throws Exception {
+    kafkaPublisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
     publishingExecutor = MoreExecutors.listeningDecorator(
       Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-publisher-%d")));
   }
@@ -121,12 +92,6 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
   @Override
   protected void shutDown() throws Exception {
     publishingExecutor.shutdownNow();
-  }
-
-  @Override
-  public <N> ListenableFuture<N> publish(NotificationFeed feed, N notification)
-    throws NotificationException {
-    return publish(feed, notification, notification.getClass());
   }
 
   @Override
@@ -142,7 +107,7 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
           ByteBuffer bb = KafkaMessageCodec.encode(message);
 
           TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);
-          KafkaPublisher.Preparer preparer = kafkaPublishersCache.get(topicPartition.getTopic());
+          KafkaPublisher.Preparer preparer = kafkaPublisher.prepare(topicPartition.getTopic());
           preparer.add(bb, message.getMessageKey());
 
           try {
@@ -158,26 +123,6 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
     });
   }
 
-  private KafkaPublisher getKafkaPublisher() {
-    if (kafkaPublisher != null) {
-      return kafkaPublisher;
-    }
-    try {
-      kafkaPublisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
-    } catch (IllegalStateException e) {
-      // can happen if there are no kafka brokers because the kafka server is down.
-      kafkaPublisher = null;
-    }
-    return kafkaPublisher;
-  }
-
-
-  @Override
-  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler)
-    throws NotificationFeedException {
-    return subscribe(feed, handler, Threads.SAME_THREAD_EXECUTOR);
-  }
-
   @Override
   public <N> Cancellable subscribe(final NotificationFeed feed, final NotificationHandler<N> handler,
                                    Executor executor) throws NotificationFeedException {
@@ -186,22 +131,26 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
 
     final TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);
 
-    KafkaNotificationsCallback kafkaNotificationsCallback;
-    synchronized (kafkaCallbacks) {
-      kafkaNotificationsCallback = kafkaCallbacks.get(topicPartition);
-      if (kafkaNotificationsCallback == null) {
-        kafkaNotificationsCallback = new KafkaNotificationsCallback(topicPartition);
-        kafkaCallbacks.putIfAbsent(topicPartition, kafkaNotificationsCallback);
+
+    if (kafkaCallbacks.get(topicPartition) == null) {
+      KafkaNotificationsCallback kafkaNotificationsCallback = new KafkaNotificationsCallback(topicPartition);
+      if (kafkaCallbacks.putIfAbsent(topicPartition, kafkaNotificationsCallback) == null) {
+        // Only one thread will reach this statement, even if several threads try to create a callback
+        // for the same topic partition
+        kafkaNotificationsCallback.start();
       }
     }
-    final KafkaNotificationsCallback kafkaCallback = kafkaNotificationsCallback;
-    final Cancellable cancellable = kafkaNotificationsCallback.addSubscription(feed, handler, executor);
+
+    final KafkaNotificationsCallback kafkaCallback = kafkaCallbacks.get(topicPartition);
+    final Cancellable kafkaCallbackSubscription = kafkaCallback.addSubscription();
+    final Cancellable inMemorySubscription = super.subscribe(feed, handler, executor);
     return new Cancellable() {
       @Override
       public void cancel() {
-        cancellable.cancel();
-        if (kafkaCallback.isEmpty()) {
-          kafkaCallback.cancel();
+        inMemorySubscription.cancel();
+        kafkaCallbackSubscription.cancel();
+        if (!kafkaCallback.isRunning()) {
+          kafkaCallbacks.remove(topicPartition, kafkaCallback);
         }
       }
     };
@@ -217,20 +166,27 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
    */
   private final class KafkaNotificationsCallback implements KafkaConsumer.MessageCallback, Cancellable {
 
-    private final Multimap<NotificationFeed, Cancellable> subscribers;
-    private final Cancellable kafkSubscription;
     private final TopicPartition topicPartition;
+    private final AtomicInteger subscriptions;
+
+    private Cancellable kafkaSubscription;
+    private boolean isRunning;
 
     private KafkaNotificationsCallback(TopicPartition topicPartition) {
       this.topicPartition = topicPartition;
-      this.subscribers = Multimaps.synchronizedMultimap(HashMultimap.<NotificationFeed, Cancellable>create());
+      this.subscriptions = new AtomicInteger(0);
+      this.isRunning = false;
+    }
 
+    public void start() {
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
       // TODO there is a bug in twill, that when the topic doesn't exist, add latest will not make subscription
       // start from offset 0 - but that will be fixed soon
       preparer.addLatest(topicPartition.getTopic(), topicPartition.getPartition());
-      kafkSubscription = preparer.consume(this);
+      kafkaSubscription = preparer.consume(this);
+
+      isRunning = true;
     }
 
     @Override
@@ -244,8 +200,8 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
         try {
           KafkaMessage decodedMessage = KafkaMessageCodec.decode(payload);
           try {
-            delegate.publish(KafkaNotificationUtils.getMessageFeed(decodedMessage.getMessageKey()),
-                             decodedMessage.getNotificationJson());
+            notificationReceived(KafkaNotificationUtils.getMessageFeed(decodedMessage.getMessageKey()),
+                                 decodedMessage.getNotificationJson());
           } catch (Throwable t) {
             LOG.warn("Error while processing notification {} with handler {}", decodedMessage.getNotificationJson(), t);
           }
@@ -257,25 +213,21 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
     }
 
     /**
-     * Subscribe to a {@code feed} with a {@code handler}, using the delegate {@link InMemoryNotificationService}.
+     * Add one more subscription to this {@link KafkaNotificationsCallback}.
      *
-     * @param feed {@link NotificationFeed} to subscribe to
-     * @param handler {@link NotificationHandler} to use to process received notifications
-     * @param executor {@link Executor} used to push notifications to the handler
-     * @param <N> Type of the notifications to handle
      * @return a {@link Cancellable} to cancel the subscription
-     * @throws NotificationFeedException if the subscription throught the {@link InMemoryNotificationService} could
-     * not be made
      */
-    public <N> Cancellable addSubscription(final NotificationFeed feed, NotificationHandler<N> handler,
-                                           Executor executor) throws NotificationFeedException {
-      final Cancellable cancellable = delegate.subscribe(feed, handler, executor);
-      subscribers.put(feed, cancellable);
+    public Cancellable addSubscription() {
+      subscriptions.incrementAndGet();
+      final KafkaNotificationsCallback that = this;
       return new Cancellable() {
         @Override
         public void cancel() {
-          cancellable.cancel();
-          subscribers.remove(feed, cancellable);
+          int i = subscriptions.decrementAndGet();
+          if (i == 0) {
+            that.cancel();
+            isRunning = false;
+          }
         }
       };
     }
@@ -287,16 +239,12 @@ public class KafkaNotificationService extends AbstractIdleService implements Not
 
     @Override
     public void cancel() {
-      kafkSubscription.cancel();
+      kafkaSubscription.cancel();
       kafkaCallbacks.remove(topicPartition, this);
     }
 
-    /**
-     * @return {@code true} if this Kafka message callback is not used to listen to any {@link NotificationFeed}
-     * anymore, or {@false} otherwise.
-     */
-    public boolean isEmpty() {
-      return subscribers.isEmpty();
+    public boolean isRunning() {
+      return isRunning;
     }
   }
 }
