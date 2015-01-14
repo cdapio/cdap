@@ -94,7 +94,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appSpec.getId(), spec.getName());
-      programTerminator.stop(Id.Account.from(appSpec.getId().getAccountId()),
+      programTerminator.stop(Id.Namespace.from(appSpec.getId().getNamespaceId()),
                                    programId, type);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
@@ -121,7 +121,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       }
     }
     if (!deletedFlows.isEmpty()) {
-      deleteMetrics(appSpec.getId().getAccountId(), appSpec.getId().getId(), deletedFlows);
+      deleteMetrics(appSpec.getId().getNamespaceId(), appSpec.getId().getId(), deletedFlows);
     }
 
     emit(appSpec);

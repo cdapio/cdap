@@ -29,6 +29,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -45,7 +46,6 @@ import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -297,7 +297,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                      program.getAccountId(), program.getApplicationId(), program.getId());
+                                      program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
     JsonObject json = new JsonObject();
     // this will return an empty Json if there is no live instance
@@ -340,7 +340,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
    */
   private class ClusterResourceReporter extends AbstractResourceReporter {
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
-    private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
     private final Path hbasePath;
     private final Path namedspacedPath;
     private final PathFilter namespacedFilter;
@@ -350,7 +349,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
-      super(metricsCollectionService);
+      super(metricsCollectionService.getCollector(MetricsScope.SYSTEM,
+                                                  ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {
@@ -420,7 +420,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     @Override
     public void reportResources() {
       for (TwillRunner.LiveInfo info : twillRunner.lookupLive()) {
-        String metricContext = getMetricContext(info);
+        Map<String, String> metricContext = getMetricContext(info);
         if (metricContext == null) {
           continue;
         }
@@ -433,7 +433,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           }
           int memory = report.getAppMasterResources().getMemoryMB();
           int vcores = report.getAppMasterResources().getVirtualCores();
-          sendMetrics(metricContext, 1, memory, vcores, controller.getRunId().getId());
+
+          Map<String, String> runContext = ImmutableMap.<String, String>builder()
+            .putAll(metricContext)
+            .put(Constants.Metrics.Tag.RUN_ID, controller.getRunId().getId()).build();
+
+          sendMetrics(runContext, 1, memory, vcores);
         }
       }
       reportClusterStorage();
@@ -474,7 +479,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
           long totalMemory = clusterMetrics.get("totalMB").getAsLong();
           long availableMemory = clusterMetrics.get("availableMB").getAsLong();
-          MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
+          MetricsCollector collector = getCollector();
           LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
           collector.gauge("resources.total.memory", totalMemory);
           collector.gauge("resources.available.memory", availableMemory);
@@ -517,7 +522,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         long storageCapacity = hdfsStatus.getCapacity();
         long storageAvailable = hdfsStatus.getRemaining();
 
-        MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
+        MetricsCollector collector = getCollector();
         LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
         collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
         collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));
@@ -536,7 +541,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
 
-    private String getMetricContext(TwillRunner.LiveInfo info) {
+    private Map<String, String> getMetricContext(TwillRunner.LiveInfo info) {
       Matcher matcher = APP_NAME_PATTERN.matcher(info.getApplicationName());
       if (!matcher.matches()) {
         return null;
@@ -546,11 +551,16 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (type == null) {
         return null;
       }
+
       Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
-      return Joiner.on(".").join(programId.getApplicationId(),
-                                 TypeId.getMetricContextId(type),
-                                 programId.getId());
+      return getMetricsContext(type, programId);
     }
+  }
+
+  private static Map<String, String> getMetricsContext(ProgramType type, Id.Program programId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.APP, programId.getApplicationId(),
+                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(type),
+                           Constants.Metrics.Tag.PROGRAM, programId.getId());
   }
 
   @Override

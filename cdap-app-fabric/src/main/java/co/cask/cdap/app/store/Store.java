@@ -22,9 +22,7 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -94,7 +92,7 @@ public interface Store {
    * @param stream the stream to create
    * @throws OperationException
    */
-  void addStream(Id.Account id, StreamSpecification stream) throws OperationException;
+  void addStream(Id.Namespace id, StreamSpecification stream) throws OperationException;
 
   /**
    * Get the spec of a named stream.
@@ -102,7 +100,7 @@ public interface Store {
    * @param name the name of the stream
    * @throws OperationException
    */
-  StreamSpecification getStream(Id.Account id, String name) throws OperationException;
+  StreamSpecification getStream(Id.Namespace id, String name) throws OperationException;
 
   /**
    * Get the specs of all streams for an account.
@@ -111,7 +109,7 @@ public interface Store {
    * @throws OperationException
    */
 
-  Collection<StreamSpecification> getAllStreams(Id.Account id) throws OperationException;
+  Collection<StreamSpecification> getAllStreams(Id.Namespace id) throws OperationException;
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
@@ -151,7 +149,7 @@ public interface Store {
   /**
    * Returns a collection of all application specs.
    */
-  Collection<ApplicationSpecification> getAllApplications(Id.Account id) throws OperationException;
+  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id) throws OperationException;
 
   /**
    * Returns location of the application archive.
@@ -254,14 +252,14 @@ public interface Store {
    *
    * @param id account id whose applications to remove
    */
-  void removeAllApplications(Id.Account id) throws OperationException;
+  void removeAllApplications(Id.Namespace id) throws OperationException;
 
   /**
    * Remove all metadata associated with account.
    *
    * @param id account id whose items to remove
    */
-  void removeAll(Id.Account id) throws OperationException;
+  void removeAll(Id.Namespace id) throws OperationException;
 
   /**
    * Store the user arguments needed in the run-time.

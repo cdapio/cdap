@@ -51,6 +51,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
 public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
+  private static final JsonParser JSON_PARSER = new JsonParser();
   private static final String CONFIG_TYPE = "dashboard";
   private static final String CONFIG_PROPERTY = "config";
   private static final String ID = "id";
@@ -65,8 +66,8 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/")
   @POST
-  public void create(final HttpRequest request, final HttpResponder responder,
-                                  @PathParam("namespace-id") String namespace) throws Exception {
+  public void create(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespace) throws Exception {
     String data = request.getContent().toString(Charsets.UTF_8);
     // Initialize with empty config if no data is sent during creation of the dashboard
     if (data.equals("")) {
@@ -94,14 +95,14 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/")
   @GET
-  public void list(final HttpRequest request, final HttpResponder responder,
-                                @PathParam("namespace-id") String namespace) throws Exception {
+  public void list(HttpRequest request, HttpResponder responder,
+                   @PathParam("namespace-id") String namespace) throws Exception {
     JsonArray jsonArray = new JsonArray();
     List<Config> configList = configStore.list(namespace, CONFIG_TYPE);
     for (Config config : configList) {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty(ID, config.getId());
-      jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(config.getProperties().get(CONFIG_PROPERTY)));
+      jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(config.getProperties().get(CONFIG_PROPERTY)));
       jsonArray.add(jsonObject);
     }
     responder.sendJson(HttpResponseStatus.OK, jsonArray);
@@ -109,9 +110,9 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/{dashboard-id}")
   @DELETE
-  public void delete(final HttpRequest request, final HttpResponder responder,
-                                  @PathParam("namespace-id") String namespace,
-                                  @PathParam("dashboard-id") String id) throws Exception {
+  public void delete(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespace,
+                     @PathParam("dashboard-id") String id) throws Exception {
     try {
       configStore.delete(namespace, CONFIG_TYPE, id);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -122,9 +123,9 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/{dashboard-id}")
   @GET
-  public void get(final HttpRequest request, final HttpResponder responder,
-                               @PathParam("namespace-id") String namespace,
-                               @PathParam("dashboard-id") String id) throws Exception {
+  public void get(HttpRequest request, HttpResponder responder,
+                  @PathParam("namespace-id") String namespace,
+                  @PathParam("dashboard-id") String id) throws Exception {
     try {
       Config dashConfig = configStore.get(namespace, CONFIG_TYPE, id);
       JsonObject jsonObject = new JsonObject();
@@ -132,7 +133,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
       //Dashboard Config is stored in ConfigStore as serialized JSON string with CONFIG_PROPERTY key.
       //When we send the data back, we send it as JSON object instead of sending the serialized string.
-      jsonObject.add(CONFIG_PROPERTY, new JsonParser().parse(dashConfig.getProperties().get(CONFIG_PROPERTY)));
+      jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(dashConfig.getProperties().get(CONFIG_PROPERTY)));
       responder.sendJson(HttpResponseStatus.OK, jsonObject);
     } catch (ConfigNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
@@ -141,9 +142,9 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/{dashboard-id}")
   @PUT
-  public void set(final HttpRequest request, final HttpResponder responder,
-                               @PathParam("namespace-id") String namespace,
-                               @PathParam("dashboard-id") String id) throws Exception {
+  public void set(HttpRequest request, HttpResponder responder,
+                  @PathParam("namespace-id") String namespace,
+                  @PathParam("dashboard-id") String id) throws Exception {
     try {
       String data = request.getContent().toString(Charsets.UTF_8);
       if (!isValidJSON(data)) {
@@ -161,7 +162,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
 
   private boolean isValidJSON(String json) {
     try {
-      new JsonParser().parse(json);
+      JSON_PARSER.parse(json);
     } catch (JsonSyntaxException ex) {
       return false;
     }

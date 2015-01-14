@@ -98,7 +98,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   }
 
   @Override
-  public ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception {
+  public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
     pipeline.addLast(new VerificationStage(datasetFramework));

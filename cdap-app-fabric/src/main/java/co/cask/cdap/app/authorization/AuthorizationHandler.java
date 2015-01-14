@@ -22,5 +22,5 @@ import co.cask.cdap.proto.Id;
  *
  */
 public interface AuthorizationHandler {
-  boolean authroize(Id.Account account);
+  boolean authroize(Id.Namespace namespace);
 }

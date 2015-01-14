@@ -70,7 +70,7 @@ public final class Programs {
                                          throws IOException {
     Location allAppsLocation = factory.create(filePath);
 
-    Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
+    Location accountAppsLocation = allAppsLocation.append(id.getNamespaceId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
     Location applicationProgramsLocation = accountAppsLocation.append(name);
     if (!applicationProgramsLocation.exists()) {

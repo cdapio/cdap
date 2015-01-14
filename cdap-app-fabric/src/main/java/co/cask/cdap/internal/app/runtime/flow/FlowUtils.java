@@ -58,7 +58,7 @@ public final class FlowUtils {
    */
   public static long generateConsumerGroupId(Id.Program program, String flowletId) {
     return Hashing.md5().newHasher()
-                  .putString(program.getAccountId())
+                  .putString(program.getNamespaceId())
                   .putString(program.getApplicationId())
                   .putString(program.getId())
                   .putString(flowletId).hash().asLong();

@@ -116,7 +116,7 @@ public final class ScheduleTaskRunner {
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                       ProgramController.State.STOPPED);
         LOG.debug("Program {} {} {} completed successfully.",
-                  programId.getAccountId(), programId.getApplicationId(), programId.getId());
+                  programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
       }
 
@@ -126,7 +126,7 @@ public final class ScheduleTaskRunner {
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                       ProgramController.State.STOPPED);
         LOG.debug("Program {} {} {} execution failed.",
-                  programId.getAccountId(), programId.getApplicationId(), programId.getId(),
+                  programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
 
         latch.countDown();
