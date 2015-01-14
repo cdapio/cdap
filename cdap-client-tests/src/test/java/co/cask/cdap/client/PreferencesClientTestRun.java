@@ -84,22 +84,22 @@ public class PreferencesClientTestRun extends ClientTestBase {
                                                               FakeApp.FLOWS.get(0), false));
     client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows", FakeApp.FLOWS.get(0));
     propMap.put("k1", "application");
-    Assert.assertEquals(0, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), false).size());
+    Assert.assertTrue(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
+                                                   FakeApp.FLOWS.get(0), false).isEmpty());
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), true));
 
     client.deleteApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME);
 
     propMap.put("k1", "namespace");
-    Assert.assertEquals(0, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false).size());
+    Assert.assertTrue(client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false).isEmpty());
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), true));
 
     client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE);
     propMap.put("k1", "instance");
-    Assert.assertEquals(0, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false).size());
+    Assert.assertTrue(client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false).isEmpty());
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
