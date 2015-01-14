@@ -143,7 +143,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // All handlers of a Service run in the same Twill runnable and each Netty thread gets its own
     // instance of a handler (and handlerContext). Creating the logging context here ensures that the logs
     // during startup/shutdown and in each thread created are published.
-    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getAccountId(),
+    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getNamespaceId(),
                                                                            program.getApplicationId(),
                                                                            program.getId().getId(),
                                                                            program.getId().getId()));
