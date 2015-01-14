@@ -190,7 +190,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     Executor workerExecutor = Executors.newCachedThreadPool(
         new ThreadFactoryBuilder()
         .setDaemon(true)
-        .setNameFormat("procedure-worker-" + program.getAccountId() + "-%d")
+        .setNameFormat("procedure-worker-" + program.getNamespaceId() + "-%d")
         .build());
 
     ServerBootstrap bootstrap = new ServerBootstrap(
@@ -227,7 +227,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private String getServiceName(Program program) {
     return String.format("procedure.%s.%s.%s",
-                         program.getAccountId(), program.getApplicationId(), program.getName());
+                         program.getNamespaceId(), program.getApplicationId(), program.getName());
   }
 
   private final class ProcedureProgramController extends AbstractProgramController {

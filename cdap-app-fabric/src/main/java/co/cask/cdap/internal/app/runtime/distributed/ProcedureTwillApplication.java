@@ -59,7 +59,7 @@ public final class ProcedureTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
                              ProgramType.PROCEDURE.name().toLowerCase(),
-                             program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             program.getNamespaceId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),
              new ProcedureTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),

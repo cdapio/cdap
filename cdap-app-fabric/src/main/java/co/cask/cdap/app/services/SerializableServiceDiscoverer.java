@@ -50,13 +50,13 @@ public class SerializableServiceDiscoverer extends AbstractServiceDiscoverer imp
 
   @Override
   public void writeExternal(ObjectOutput objectOutput) throws IOException {
-    objectOutput.writeObject(accountId);
+    objectOutput.writeObject(namespaceId);
     objectOutput.writeObject(applicationId);
   }
 
   @Override
   public void readExternal(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-    accountId = (String) objectInput.readObject();
+    namespaceId = (String) objectInput.readObject();
     applicationId = (String) objectInput.readObject();
   }
 

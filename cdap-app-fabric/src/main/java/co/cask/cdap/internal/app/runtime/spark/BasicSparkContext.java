@@ -104,7 +104,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
         scope, getMetricCollector(metricsCollectionService, scope, program, runId.getId()));
     }
     this.userMetrics = new ProgramUserMetrics(metricsCollectors.get(MetricsScope.USER));
-    this.loggingContext = new SparkLoggingContext(getAccountId(), getApplicationId(), getProgramName());
+    this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
   }
 

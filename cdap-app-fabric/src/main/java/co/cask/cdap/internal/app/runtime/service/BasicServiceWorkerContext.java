@@ -128,7 +128,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   }
 
   public LoggingContext getLoggingContext() {
-    return new UserServiceLoggingContext(program.getAccountId(), program.getApplicationId(),
+    return new UserServiceLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                          program.getId().getId(), specification.getName());
   }
 

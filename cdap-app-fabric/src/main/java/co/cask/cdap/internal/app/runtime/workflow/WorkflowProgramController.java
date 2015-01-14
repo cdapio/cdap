@@ -99,6 +99,6 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   private String getServiceName(Program program) {
     return String.format("workflow.%s.%s.%s",
-                         program.getAccountId(), program.getApplicationId(), program.getName());
+                         program.getNamespaceId(), program.getApplicationId(), program.getName());
   }
 }

@@ -52,9 +52,9 @@ public interface Program {
   String getName();
 
   /**
-   * Returns the account ID that this program belongs to.
+   * Returns the ID of the namespace that this program belongs to.
    */
-  String getAccountId();
+  String getNamespaceId();
 
   /**
    * Returns the application ID that this program belongs to.
