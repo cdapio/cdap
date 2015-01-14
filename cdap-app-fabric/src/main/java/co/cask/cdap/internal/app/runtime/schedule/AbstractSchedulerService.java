@@ -101,13 +101,13 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void suspendSchedule(String scheduleId) {
-    delegate.suspendSchedule(scheduleId);
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+    delegate.suspendSchedule(program, programType, scheduleName);
   }
 
   @Override
-  public void resumeSchedule(String scheduleId) {
-    delegate.resumeSchedule(scheduleId);
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+    delegate.resumeSchedule(program, programType, scheduleName);
   }
 
   @Override
@@ -117,8 +117,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public ScheduleState scheduleState (String scheduleId) {
-    return delegate.scheduleState(scheduleId);
+  public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName) {
+    return delegate.scheduleState(program, programType, scheduleName);
   }
 
   /**
@@ -166,13 +166,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
-      int idx = 0;
+
       for (Schedule schedule : schedules) {
         String scheduleName = schedule.getName();
         String cronEntry = schedule.getCronEntry();
-        String triggerKey = String.format("%s:%s:%s:%s:%d:%s",
-                                          programType.name(), programId.getAccountId(),
-                                          programId.getApplicationId(), programId.getId(), idx, schedule.getName());
+        String triggerKey = getScheduleId(programId, programType, scheduleName);
 
         LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
@@ -226,20 +224,20 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
 
     @Override
-    public void suspendSchedule(String scheduleId) {
+    public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
-        scheduler.pauseTrigger(new TriggerKey(scheduleId));
+        scheduler.pauseTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
     }
 
     @Override
-    public void resumeSchedule(String scheduleId) {
+    public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
-        scheduler.resumeTrigger(new TriggerKey(scheduleId));
+        scheduler.resumeTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
@@ -260,10 +258,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public ScheduleState scheduleState(String scheduleId) {
+    public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
-        Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(scheduleId));
+        Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(getScheduleId(program, programType,
+                                                                                            scheduleName)));
         // Map trigger state to schedule state.
         // This method is only interested in returning if the scheduler is
         // Paused, Scheduled or NotFound.
@@ -284,6 +283,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
                            program.getApplicationId(), program.getId());
     }
+
+    private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      return String.format("%s:%s", getJobKey(program, programType), scheduleName);
+    }
+
 
     //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
     //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month

@@ -31,7 +31,6 @@ import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleConfigurer;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -68,7 +67,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
-  private final Map<String, ScheduleConfigurer> schedules = Maps.newHashMap();
+  private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
@@ -196,36 +195,25 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addSchedule(Schedule schedule) {
+  public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
+                          Map<String, String> properties) {
     Preconditions.checkNotNull(schedule, "Schedule cannot be null.");
     Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
-    ScheduleConfigurer configurer = schedules.get(schedule.getName());
+    Preconditions.checkNotNull(programName, "Program name cannot be null.");
+    Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
+    Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name " +
+      schedule.getName()  + " already exists.");
 
-    if (configurer == null) {
-      configurer = new ScheduleConfigurer(schedule);
-      schedules.put(schedule.getName(), configurer);
-    }
-  }
+    ScheduleSpecification spec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName),
+                                                           properties);
 
-  @Override
-  public void addSchedule(String scheduleName, String programName, SchedulableProgramType programType) {
-    ScheduleConfigurer configurer = schedules.get(scheduleName);
-    Preconditions.checkNotNull(configurer, "Schedule is not configured with the Application.");
-    configurer.addProgram(new ScheduleProgramInfo(programName, programType));
-  }
-
-  private Map<String, ScheduleSpecification> createScheduleSpecification() {
-    Map<String, ScheduleSpecification> scheduleSpecs = Maps.newHashMap();
-    for (Map.Entry<String, ScheduleConfigurer> entry : schedules.entrySet()) {
-      scheduleSpecs.put(entry.getKey(), entry.getValue().createSpecification());
-    }
-    return scheduleSpecs;
+    schedules.put(schedule.getName(), spec);
   }
 
   public ApplicationSpecification createSpecification() {
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, sparks, workflows, services,
-                                               createScheduleSpecification());
+                                               schedules);
   }
 }

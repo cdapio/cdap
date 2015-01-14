@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,13 +27,10 @@ public class Schedule {
 
   private final String cronEntry;
 
-  private final Action action;
-
-  public Schedule(String name, String description, String cronEntry, Action action) {
+  public Schedule(String name, String description, String cronEntry) {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
-    this.action = action;
   }
 
   /**
@@ -56,16 +53,4 @@ public class Schedule {
   public String getCronEntry() {
     return cronEntry;
   }
-
-  /**
-   * @return Action for the schedule.
-   */
-  public Action getAction() {
-    return action;
-  }
-
-  /**
-   * Defines the ScheduleAction.
-   */
-  public enum Action { START, STOP };
 }

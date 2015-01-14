@@ -92,7 +92,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -423,12 +422,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void deleteSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
     // Delete the existing schedules.
     for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      for (ScheduleProgramInfo programInfo : entry.getValue().getPrograms()) {
-        Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
-        List<String> existingSchedules = scheduler.getScheduleIds(programId, programInfo.getProgramType());
-        if (!existingSchedules.isEmpty()) {
-          scheduler.deleteSchedules(programId, programInfo.getProgramType(), existingSchedules);
-        }
+      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
+      Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
+      List<String> existingSchedules = scheduler.getScheduleIds(programId, programInfo.getProgramType());
+      if (!existingSchedules.isEmpty()) {
+        scheduler.deleteSchedules(programId, programInfo.getProgramType(), existingSchedules);
       }
     }
   }
@@ -439,14 +437,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     // Add new schedules.
     for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      Set<ScheduleProgramInfo> programs = entry.getValue().getPrograms();
-      for (ScheduleProgramInfo programInfo : programs) {
-        Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
-                                               programInfo.getProgramName());
-        List<Schedule> scheduleList = Lists.newArrayList();
-        scheduleList.add(entry.getValue().getSchedule());
-        scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
-      }
+      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
+      Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
+                                             programInfo.getProgramName());
+      List<Schedule> scheduleList = Lists.newArrayList();
+      scheduleList.add(entry.getValue().getSchedule());
+      scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
     }
   }
 

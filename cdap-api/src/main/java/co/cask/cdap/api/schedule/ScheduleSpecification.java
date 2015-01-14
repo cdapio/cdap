@@ -19,26 +19,29 @@ package co.cask.cdap.api.schedule;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Specification for {@link Schedule}.
  */
 public final class ScheduleSpecification {
   private final Schedule schedule;
-  private final Set<ScheduleProgramInfo> programs;
+  private final ScheduleProgramInfo program;
+  private final Map<String, String> properties;
 
-  public ScheduleSpecification(Schedule schedule, Set<ScheduleProgramInfo> programs) {
+  public ScheduleSpecification(Schedule schedule, ScheduleProgramInfo program, Map<String, String> properties) {
     this.schedule = schedule;
-    this.programs = Collections.unmodifiableSet(new HashSet<ScheduleProgramInfo>(programs));
+    this.program = program;
+    this.properties = properties == null ? new HashMap<String, String>() :
+      Collections.unmodifiableMap(new HashMap<String, String>(properties));
   }
 
   /**
-   * @return the {@link Set} of programs associated with {@link ScheduleSpecification}
+   * @return the program associated with {@link ScheduleSpecification}
    */
-  public Set<ScheduleProgramInfo> getPrograms() {
-    return programs;
+  public ScheduleProgramInfo getProgram() {
+    return program;
   }
 
   /**
@@ -46,5 +49,12 @@ public final class ScheduleSpecification {
    */
   public Schedule getSchedule() {
     return schedule;
+  }
+
+  /**
+   * @return the properties associated with the schedule
+   */
+  public Map<String, String> getRuntimeArgs() {
+    return properties;
   }
 }

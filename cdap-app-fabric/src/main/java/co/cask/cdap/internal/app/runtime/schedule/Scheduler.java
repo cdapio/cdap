@@ -56,19 +56,22 @@ public interface Scheduler {
   public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType);
 
   /**
-   * Suspends a schedule with the given ScheduleId. Sub-sequent schedules will not be for the job.
-   *
-   * @param scheduleId schedule id.
+   * Suspends a schedule. Sub-sequent schedules will not trigger for the job.
+   * @param program the program for which schedule needs to be suspended
+   * @param programType the type of the program
+   * @param scheduleName the name of the schedule
    */
-  public void suspendSchedule(String scheduleId);
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Resume given schedule. The scheduled job will trigger from the next possible runtime.
    * The schedules between pause and resume calls will not be re-run.
    *
-   * @param scheduleId schedule id.
+   * @param program the program for which schedule needs to be resumed
+   * @param programType the type of the program
+   * @param scheduleName the name of the schedule
    */
-  public void resumeSchedule(String scheduleId);
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Delete the schedule. Don't schedule any more jobs.
@@ -81,10 +84,12 @@ public interface Scheduler {
   /**
    * Get state of a particular schedule.
    *
-   * @param scheduleId ScheduleId for getting the state.
+   * @param program the program for which the state of the schedule is queried
+   * @param programType the type of the program
+   * @param scheduleName the name of the schedule
    * @return State of the schedule.
    */
-  public ScheduleState scheduleState (String scheduleId);
+  public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Schedule state.

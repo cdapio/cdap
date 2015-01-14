@@ -30,6 +30,8 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
 
+import java.util.Map;
+
 /**
  * Configures a CDAP Application.
  */
@@ -154,18 +156,13 @@ public interface ApplicationConfigurer {
   void addService(Service service);
 
   /**
-   * Adds a {@link Schedule} to the Application.
-   *
-   * @param schedule the schedule to include in the Application
-   */
-  void addSchedule(Schedule schedule);
-
-  /**
    * Adds a {@link Schedule} to the specified program in the Application
    *
-   * @param scheduleName the name of the schedule to be included for the program
-   * @param programName the name of the program
+   * @param schedule the schedule to be included for the program
    * @param programType the type of the program
+   * @param programName the name of the program
+   * @param properties the properties for the schedule
    */
-  void addSchedule(String scheduleName, String programName, SchedulableProgramType programType);
+  void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
+                   Map<String, String> properties);
 }

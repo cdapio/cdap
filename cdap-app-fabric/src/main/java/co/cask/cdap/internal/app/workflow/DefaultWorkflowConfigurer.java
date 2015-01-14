@@ -69,13 +69,13 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   @Override
   public void addMapReduce(String mapReduce) {
     actions.add(new ScheduleProgramInfo
-                  (mapReduce, SchedulableProgramType.MAPREDUCE));
+                  (SchedulableProgramType.MAPREDUCE, mapReduce));
   }
 
   @Override
   public void addSpark(String spark) {
     actions.add(new ScheduleProgramInfo
-                  (spark, SchedulableProgramType.SPARK));
+                  (SchedulableProgramType.SPARK, spark));
   }
 
   @Override
@@ -83,7 +83,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
     customActionMap.put(spec.getName(), spec);
-    actions.add(new ScheduleProgramInfo(spec.getName(), SchedulableProgramType.CUSTOM_ACTION));
+    actions.add(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, spec.getName()));
   }
 
   public WorkflowSpecification createSpecification() {

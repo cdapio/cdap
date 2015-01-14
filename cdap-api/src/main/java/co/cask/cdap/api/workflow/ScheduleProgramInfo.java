@@ -25,9 +25,9 @@ public final class ScheduleProgramInfo {
   private final String programName;
   private final SchedulableProgramType programType;
 
-  public ScheduleProgramInfo(String programName, SchedulableProgramType programType) {
-    this.programName = programName;
+  public ScheduleProgramInfo(SchedulableProgramType programType, String programName) {
     this.programType = programType;
+    this.programName = programName;
   }
 
   /**

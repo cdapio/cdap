@@ -644,10 +644,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
                                 @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.workflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.getWorkflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                   appId, workflowId);
   }
 
@@ -774,16 +774,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-  @Path("/apps/{app-id}/schedules/{program-type}/{program-id}")
-  public void getProgramSchedules(HttpRequest request, HttpResponder responder,
-                               @PathParam("app-id") String appId,
-                               @PathParam("program-type") String programType,
-                               @PathParam("program-id") String programId) {
-    programLifecycleHttpHandler.getProgramSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                 appId, programType, programId);
-
+  @Path("/apps/{app-id}/schedules/{schedule-name}")
+  public void getScheduleSpecification(HttpRequest request, HttpResponder responder,
+                                       @PathParam("app-id") String appId,
+                                       @PathParam("schedule-name") String scheduleName) {
+    programLifecycleHttpHandler.getScheduleSpecification(rewriteRequest(request), responder,
+                                                         Constants.DEFAULT_NAMESPACE, appId, scheduleName);
   }
-
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}")

@@ -112,11 +112,11 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void suspendSchedule(String scheduleId) {
+      public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       }
 
       @Override
-      public void resumeSchedule(String scheduleId) {
+      public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       }
 
       @Override
@@ -124,7 +124,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public ScheduleState scheduleState(String scheduleId) {
+      public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
         return ScheduleState.NOT_FOUND;
       }
     };

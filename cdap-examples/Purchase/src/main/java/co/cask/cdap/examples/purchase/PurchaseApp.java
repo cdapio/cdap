@@ -63,11 +63,8 @@ public class PurchaseApp extends AbstractApplication {
     // Provide a Service to Application components
     addService(new CatalogLookupService());
 
-    // Add Schedule to the Application
-    addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
-                             Schedule.Action.START));
-    // Schedule a Workflow
-    scheduleWorkflow("DailySchedule", "PurchaseHistoryWorkflow");
+    // Schedule the workflow
+    scheduleWorkflow("DailySchedule", "0 4 * * *", "PurchaseHistoryWorkflow");
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
