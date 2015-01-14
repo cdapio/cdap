@@ -280,7 +280,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     private String getJobKey(Id.Program program, SchedulableProgramType programType) {
-      return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
+      return String.format("%s:%s:%s:%s", programType.name(), program.getNamespaceId(),
                            program.getApplicationId(), program.getId());
     }
 

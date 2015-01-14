@@ -685,7 +685,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      StreamSpecification stream = store.getStream(Id.Account.from(namespaceId), streamId);
+      StreamSpecification stream = store.getStream(Id.Namespace.from(namespaceId), streamId);
       if (stream == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
         return;
@@ -1040,7 +1040,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           store.setServiceWorkerInstances(programId, runnableName, instances);
         }
 
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
                                                                         ProgramType.SERVICE, runtimeService);
@@ -1183,7 +1183,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // MapReduce is part of a workflow. Query the status of the workflow instead
       final SettableFuture<StatusMap> statusFuture = SettableFuture.create();
-      workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
+      workflowClient.getWorkflowStatus(id.getNamespaceId(), id.getApplicationId(),
                                        workflowName, new WorkflowClient.Callback() {
           @Override
           public void handle(WorkflowClient.Status status) {
@@ -1284,7 +1284,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, ProgramType type) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getAccountId(), identifier.getApplicationId());
+                               identifier.getNamespaceId(), identifier.getApplicationId());
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (identifier.equals(info.getProgramId())) {
         return info;

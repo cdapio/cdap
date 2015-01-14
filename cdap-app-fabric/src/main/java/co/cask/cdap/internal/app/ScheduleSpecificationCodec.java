@@ -38,7 +38,7 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
 
     jsonObj.add("schedule", context.serialize(src.getSchedule(), Schedule.class));
     jsonObj.add("program", context.serialize(src.getProgram(), ScheduleProgramInfo.class));
-    jsonObj.add("properties", serializeMap(src.getRuntimeArgs(), context, String.class));
+    jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     return jsonObj;
   }
 

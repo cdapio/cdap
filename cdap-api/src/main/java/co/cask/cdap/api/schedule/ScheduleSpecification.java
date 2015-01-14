@@ -54,7 +54,7 @@ public final class ScheduleSpecification {
   /**
    * @return the properties associated with the schedule
    */
-  public Map<String, String> getRuntimeArgs() {
+  public Map<String, String> getProperties() {
     return properties;
   }
 }

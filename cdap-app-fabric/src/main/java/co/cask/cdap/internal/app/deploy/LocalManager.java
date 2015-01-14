@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,7 +98,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   }
 
   @Override
-  public ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception {
+  public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
     pipeline.addLast(new VerificationStage(datasetFramework));

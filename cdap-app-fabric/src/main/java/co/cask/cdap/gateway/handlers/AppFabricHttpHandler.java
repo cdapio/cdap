@@ -1074,7 +1074,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private String getDataEntity(Id.Program programId, Data type, String name) throws Exception {
     try {
-      Id.Account account = new Id.Account(programId.getAccountId());
+      Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
       if (type == Data.DATASET) {
         DatasetSpecification dsSpec = getDatasetSpec(name);
         String typeName = null;
@@ -1083,7 +1083,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
         return GSON.toJson(makeDataSetRecord(name, typeName));
       } else if (type == Data.STREAM) {
-        StreamSpecification spec = store.getStream(account, name);
+        StreamSpecification spec = store.getStream(namespace, name);
         return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
       }
       return "";
@@ -1103,7 +1103,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
-        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
+        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
         List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (StreamSpecification spec : specs) {
           result.add(makeStreamRecord(spec.getName(), null));
@@ -1119,9 +1119,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private String listDataEntitiesByApp(Id.Program programId, Data type) throws Exception {
     try {
-      Id.Account account = new Id.Account(programId.getAccountId());
+      Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
       ApplicationSpecification appSpec = store.getApplication(new Id.Application(
-        account, programId.getApplicationId()));
+        namespace, programId.getApplicationId()));
       if (type == Data.DATASET) {
         Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
         List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
@@ -1250,7 +1250,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       List<ProgramRecord> result = Lists.newArrayList();
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
-        new Id.Account(programId.getAccountId()));
+        new Id.Namespace(programId.getNamespaceId()));
       if (appSpecs != null) {
         for (ApplicationSpecification appSpec : appSpecs) {
           if (type == ProgramType.FLOW) {
@@ -1325,13 +1325,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       String account = getAuthenticatedAccountId(request);
-      final Id.Account accountId = Id.Account.from(account);
+      final Id.Namespace namespaceId = Id.Namespace.from(account);
 
       // Check if any program is still running
       boolean appRunning = appLifecycleHttpHandler.checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
-          return programId.getAccountId().equals(accountId.getId());
+          return programId.getNamespaceId().equals(namespaceId.getId());
         }
       }, ProgramType.values());
 
@@ -1347,7 +1347,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);
       // delete all meta data
-      store.removeAll(accountId);
+      store.removeAll(namespaceId);
       // todo: delete only for specified account
       // delete queues and streams data
       queueAdmin.dropAll();
@@ -1378,13 +1378,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       String account = getAuthenticatedAccountId(request);
-      final Id.Account accountId = Id.Account.from(account);
+      final Id.Namespace namespaceId = Id.Namespace.from(account);
 
       // Check if any program is still running
       boolean appRunning = appLifecycleHttpHandler.checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
-          return programId.getAccountId().equals(accountId.getId());
+          return programId.getNamespaceId().equals(namespaceId.getId());
         }
       }, ProgramType.values());
 
