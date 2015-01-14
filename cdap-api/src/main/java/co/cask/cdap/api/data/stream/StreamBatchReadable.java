@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.api.data.stream;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
@@ -234,6 +235,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
    */
+  @Beta
   public StreamBatchReadable(String streamName, long startTime,
                              long endTime, FormatSpecification bodyFormatSpec) {
     this(createStreamURI(streamName, ImmutableMap.<String, Object>of(
@@ -273,7 +275,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   /**
    * Returns the {@link FormatSpecification} for reading the body of the stream.
    */
-  public FormatSpecification getBodyFormatSpec() {
+  public FormatSpecification getFormatSpecification() {
     return bodyFormatSpec;
   }
 
@@ -314,8 +316,8 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
       String decodedFormatSpecification = URLDecoder.decode(encodedFormatSpecification, "UTF-8");
       return GSON.fromJson(decodedFormatSpecification, FormatSpecification.class);
     } catch (UnsupportedEncodingException e) {
-      // shouldn't ever happen
-      return null;
+      // this should never happen
+      throw Throwables.propagate(e);
     }
   }
 }

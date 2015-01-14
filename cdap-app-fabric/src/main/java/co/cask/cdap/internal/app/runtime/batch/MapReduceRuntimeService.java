@@ -34,7 +34,6 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data.stream.decoder.FormatStreamEventDecoder;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -506,9 +505,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     StreamInputFormat.setStreamPath(job, streamPath.toURI());
     StreamInputFormat.setTimeRange(job, stream.getStartTime(), stream.getEndTime());
 
-    FormatSpecification formatSpecification = stream.getBodyFormatSpec();
+    FormatSpecification formatSpecification = stream.getFormatSpecification();
     if (formatSpecification != null) {
       // this will set the decoder to the correct type. so no need to set it.
+      // TODO: allow type projection if the mapper type is compatible (CDAP-1149)
       StreamInputFormat.setBodyFormatSpecification(job, formatSpecification);
     } else {
       String decoderType = stream.getDecoderType();
