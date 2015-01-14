@@ -33,7 +33,7 @@ import java.util.List;
 public class SchedulerServiceTest {
   public static SchedulerService schedulerService;
 
-  private static final Id.Account account = new Id.Account(Constants.DEFAULT_NAMESPACE);
+  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.class.getSimpleName());
   private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.class.getSimpleName());
   private static final ProgramType programType = ProgramType.WORKFLOW;
@@ -57,7 +57,7 @@ public class SchedulerServiceTest {
     schedulerService.schedule(program, programType, ImmutableList.of(schedule1));
 
     Id.Program programInOtherNamespace =
-      Id.Program.from(new Id.Application(new Id.Account("otherNamespace"), appId.getId()), program.getId());
+      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()), program.getId());
 
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
