@@ -36,7 +36,7 @@ public class NoopHeartbeatPublisher extends AbstractIdleService implements Heart
   }
 
   @Override
-  public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) {
+  public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(String streamName, StreamWriterHeartbeat heartbeat) {
     return Futures.immediateFuture(heartbeat);
   }
 }

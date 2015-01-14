@@ -27,9 +27,10 @@ public interface HeartbeatPublisher extends Service {
   /**
    * Publish one heartbeat.
    *
+   * @param streamName Stream name on behalf of which to publish a heartbeat
    * @param heartbeat heartbeat to publish
    * @return a {@link ListenableFuture} describing the state of publishing. The {@link ListenableFuture#get} method
    * will return the published heartbeat.
    */
-  ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat);
+  ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(String streamName, StreamWriterHeartbeat heartbeat);
 }

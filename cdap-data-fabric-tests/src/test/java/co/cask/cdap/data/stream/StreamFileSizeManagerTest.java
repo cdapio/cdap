@@ -120,7 +120,8 @@ public class StreamFileSizeManagerTest {
         protected void configure() {
           bind(MetricsCollectionService.class).to(MockMetricsCollectionService.class);
 
-          bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+          bind(StreamConsumerStateStoreFactory.class)
+            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
           bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
@@ -204,8 +205,8 @@ public class StreamFileSizeManagerTest {
     }
 
     @Override
-    public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) {
-      LOG.info("Received heartbeat {}", heartbeat);
+    public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(String streamName, StreamWriterHeartbeat heartbeat) {
+      LOG.info("Received heartbeat {} for Stream {}", heartbeat, streamName);
       this.heartbeat = heartbeat;
       return Futures.immediateFuture(heartbeat);
     }

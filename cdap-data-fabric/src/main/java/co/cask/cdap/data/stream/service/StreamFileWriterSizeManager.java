@@ -81,8 +81,8 @@ public class StreamFileWriterSizeManager extends AbstractStreamWriterSizeManager
 
         LOG.debug("Sending initial heartbeat for Stream handler {} with base size {}B", getInstanceId(), size);
         return getHeartbeatPublisher().sendHeartbeat(
-          new StreamWriterHeartbeat(System.currentTimeMillis(), size, getInstanceId(),
-                                    StreamWriterHeartbeat.Type.INIT))
+          config.getName(), new StreamWriterHeartbeat(System.currentTimeMillis(), size, getInstanceId(),
+                                                      StreamWriterHeartbeat.Type.INIT))
           .get();
       }
     });

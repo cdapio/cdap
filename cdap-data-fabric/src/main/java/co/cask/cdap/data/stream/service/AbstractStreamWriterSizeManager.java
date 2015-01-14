@@ -25,7 +25,10 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  * for all streams in memory.
  */
 public abstract class AbstractStreamWriterSizeManager extends AbstractIdleService implements StreamWriterSizeManager {
+  private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriter.class);
   private static final int EXECUTOR_POOL_SIZE = 10;
 
   private final HeartbeatPublisher heartbeatPublisher;
@@ -64,8 +68,22 @@ public abstract class AbstractStreamWriterSizeManager extends AbstractIdleServic
 
   @Override
   protected void shutDown() throws Exception {
-    heartbeatPublisher.stopAndWait();
     scheduledExecutor.shutdownNow();
+
+    // Send a last heartbeat before the Stream writer dies
+    for (Map.Entry<String, Long> entry : absoluteSizes.entrySet()) {
+      try {
+        heartbeatPublisher.sendHeartbeat(entry.getKey(),
+                                         new StreamWriterHeartbeat(System.currentTimeMillis(), entry.getValue(),
+                                                                   instanceId, StreamWriterHeartbeat.Type.REGULAR))
+          .get();
+      } catch (Throwable t) {
+        LOG.error("Could not publish final heartbeat for stream {} on writer instance {}",
+                  entry.getKey(), instanceId, t);
+      }
+    }
+
+    heartbeatPublisher.stopAndWait();
   }
 
   @Override
@@ -120,9 +138,12 @@ public abstract class AbstractStreamWriterSizeManager extends AbstractIdleServic
 
         // We don't want to block this executor, or make it fail if the get method on the future fails,
         // hence we don't call the get method
-        heartbeatPublisher.sendHeartbeat(
-          new StreamWriterHeartbeat(System.currentTimeMillis(), size, instanceId, StreamWriterHeartbeat.Type.REGULAR));
+        heartbeatPublisher.sendHeartbeat(streamName,
+                                         new StreamWriterHeartbeat(System.currentTimeMillis(), size, instanceId,
+                                                                   StreamWriterHeartbeat.Type.REGULAR));
       }
     }, Constants.Stream.HEARTBEAT_DELAY, Constants.Stream.HEARTBEAT_DELAY, TimeUnit.SECONDS);
   }
+
+
 }
