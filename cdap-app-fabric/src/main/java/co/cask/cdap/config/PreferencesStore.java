@@ -17,7 +17,6 @@
 package co.cask.cdap.config;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.Constants;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -32,7 +31,7 @@ public class PreferencesStore {
   // Id for Properties config stored at the instance level
   private static final String INSTANCE_PROPERTIES = "instance";
   // Namespace where instance level properties are stored
-  private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
+  private static final String EMPTY_NAMESPACE = "";
 
   private final ConfigStore configStore;
 
@@ -66,7 +65,7 @@ public class PreferencesStore {
   }
 
   public Map<String, String> getProperties() {
-    return getConfigProperties(DEFAULT_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES));
+    return getConfigProperties(EMPTY_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES));
   }
 
   public Map<String, String> getProperties(String namespace) {
@@ -105,7 +104,7 @@ public class PreferencesStore {
   }
 
   public void setProperties(Map<String, String> propMap) {
-    setConfig(DEFAULT_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES), propMap);
+    setConfig(EMPTY_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES), propMap);
   }
 
   public void setProperties(String namespace, Map<String, String> propMap) {
@@ -122,7 +121,7 @@ public class PreferencesStore {
   }
 
   public void deleteProperties() {
-    deleteConfig(DEFAULT_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES));
+    deleteConfig(EMPTY_NAMESPACE, getMultipartKey(INSTANCE_PROPERTIES));
   }
 
   public void deleteProperties(String namespace) {
