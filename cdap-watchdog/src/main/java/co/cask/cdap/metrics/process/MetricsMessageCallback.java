@@ -71,7 +71,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
         try {
           return recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         } catch (IOException e) {
-          LOG.warn("Failed to decode message to MetricsRecord. Skipped. {}", e.getMessage(), e);
+          LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
           return null;
         }
       }
