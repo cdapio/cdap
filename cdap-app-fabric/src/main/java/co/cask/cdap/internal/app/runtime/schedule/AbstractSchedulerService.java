@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -171,7 +171,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         String scheduleName = schedule.getName();
         String cronEntry = schedule.getCronEntry();
         String triggerKey = String.format("%s:%s:%s:%s:%d:%s",
-                                          programType.name(), programId.getAccountId(),
+                                          programType.name(), programId.getNamespaceId(),
                                           programId.getApplicationId(), programId.getId(), idx, schedule.getName());
 
         LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
@@ -281,7 +281,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     private String getJobKey(Id.Program program, ProgramType programType) {
-      return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
+      return String.format("%s:%s:%s:%s", programType.name(), program.getNamespaceId(),
                            program.getApplicationId(), program.getId());
     }
 

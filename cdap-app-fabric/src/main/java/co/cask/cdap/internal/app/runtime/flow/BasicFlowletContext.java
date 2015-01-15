@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
           getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM,
                              program, flowletId, runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
-    this.accountId = program.getAccountId();
+    this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
@@ -128,7 +128,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   }
 
   public LoggingContext getLoggingContext() {
-    return new FlowletLoggingContext(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
+    return new FlowletLoggingContext(getNamespaceId(), getApplicationId(), getFlowId(), getFlowletId());
   }
 
   @Override

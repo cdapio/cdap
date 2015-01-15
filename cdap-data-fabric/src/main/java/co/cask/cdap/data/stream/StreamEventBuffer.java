@@ -63,9 +63,13 @@ final class StreamEventBuffer {
 
     try {
       basePosition = input.getPos();
-      int bytesRead = input.read(buffer.array(), 0, size);
-      if (bytesRead != size) {
-        throw new EOFException("Expected to read " + size + ", but only " + bytesRead + " was read");
+      int bytesRead = 0;
+      while (bytesRead != size) {
+        int len = input.read(buffer.array(), bytesRead, size - bytesRead);
+        if (len < 0) {
+          throw new EOFException("Expected to read " + size + ", but only " + bytesRead + " was read");
+        }
+        bytesRead += len;
       }
       buffer.limit(size);
       bufferInput.reset(buffer);

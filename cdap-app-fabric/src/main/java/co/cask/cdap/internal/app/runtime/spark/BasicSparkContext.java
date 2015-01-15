@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -104,7 +104,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
         scope, getMetricCollector(metricsCollectionService, scope, program, runId.getId()));
     }
     this.userMetrics = new ProgramUserMetrics(metricsCollectors.get(MetricsScope.USER));
-    this.loggingContext = new SparkLoggingContext(getAccountId(), getApplicationId(), getProgramName());
+    this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
   }
 
