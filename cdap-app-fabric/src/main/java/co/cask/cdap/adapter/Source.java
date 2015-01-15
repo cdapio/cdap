@@ -33,7 +33,7 @@ public final class Source {
     /**
      * Defines the source type to be Stream.
      */
-    STREAM,
+    STREAM
   }
 
   private final String name;
@@ -76,16 +76,22 @@ public final class Source {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     Source source = (Source) o;
 
-    if (!name.equals(source.name)) return false;
-    if (!properties.equals(source.properties)) return false;
-    if (type != source.type) return false;
-
-    return true;
+    if (name.equals(source.name) && properties.equals(source.properties) &&
+        type == source.type) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override

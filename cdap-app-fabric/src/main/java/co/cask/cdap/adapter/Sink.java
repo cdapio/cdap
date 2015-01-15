@@ -33,7 +33,7 @@ public final class Sink {
     /**
      * Defines the sink type to be Dataset
      */
-    DATASET,
+    DATASET
   }
 
   private final String name;
@@ -81,11 +81,12 @@ public final class Sink {
 
     Sink sink = (Sink) o;
 
-    if (!name.equals(sink.name)) return false;
-    if (!properties.equals(sink.properties)) return false;
-    if (type != sink.type) return false;
-
-    return true;
+    if (name.equals(sink.name) && properties.equals(sink.properties) &&
+        type == sink.type) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override
