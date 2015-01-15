@@ -53,7 +53,7 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * Overrides the input configuration of this MapReduce job to use
    * the specified dataset by its name.
    *
-   * @param datasetName Name of the input dataset.
+   * @param datasetName the name of the input dataset.
    */
   void setInput(String datasetName);
 
@@ -61,39 +61,42 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * Overrides the input configuration of this MapReduce job to use
    * the specified dataset by its name and data selection splits.
    *
-   * @param datasetName Name of the input dataset.
-   * @param splits Data selection splits.
+   * @param datasetName the name of the input dataset
+   * @param splits the data selection splits
    */
   void setInput(String datasetName, List<Split> splits);
 
   /**
    * Overrides the input configuration of this MapReduce job to write to the specified dataset instance.
-   * Currently, the dataset passed in must either be an {@link InputFormatProvider} or a {@link BatchReadable}.
-   * You may want to use this instead of {@link #setInput(String, List)} if your input dataset uses runtime
-   * arguments set in your own program logic. Input splits are determined from the dataset instance if it is
-   * a {@link BatchReadable}, or from the corresponding mapreduce InputFormat if the dataset instance is a
-   * {@link InputFormatProvider}.
    *
-   * @param datasetName Name of the input dataset.
-   * @param dataset Input dataset.
+   * <p>
+   * Currently, the dataset passed in must either be an {@link InputFormatProvider} or a {@link BatchReadable}.
+   * You may want to use this method instead of {@link #setInput(String, List)} if your input dataset uses runtime
+   * arguments set in your own program logic. Input splits are determined either from the dataset instance if it is
+   * a {@link BatchReadable} or from the corresponding MapReduce InputFormat if the dataset instance is a
+   * {@link InputFormatProvider}.
+   * </p>
+   *
+   * @param datasetName the name of the input dataset
+   * @param dataset the input dataset
    */
   void setInput(String datasetName, Dataset dataset);
 
   /**
    * Overrides the output configuration of this MapReduce job to write to the specified dataset by its name.
    *
-   * @param datasetName Name of the output dataset.
+   * @param datasetName the name of the output dataset
    */
   void setOutput(String datasetName);
 
   /**
    * Overrides the output configuration of this MapReduce job to write to the specified dataset instance.
    * Currently, the dataset passed in must either be an {@link OutputFormatProvider}.
-   * You may want to use this instead of {@link #setOutput(String)} if your output dataset uses runtime
+   * You may want to use this method instead of {@link #setOutput(String)} if your output dataset uses runtime
    * arguments set in your own program logic.
    *
-   * @param datasetName Name of the output dataset.
-   * @param dataset Output dataset.
+   * @param datasetName the name of the output dataset
+   * @param dataset the output dataset
    */
   void setOutput(String datasetName, Dataset dataset);
 }

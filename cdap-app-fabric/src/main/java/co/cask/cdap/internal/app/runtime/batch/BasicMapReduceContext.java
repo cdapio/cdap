@@ -190,11 +190,16 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   /**
-   * Get the output dataset for the job. If the dataset instance was set at runtime, that instance is returned.
-   * If the dataset name was set at runtime, an instance for that name is returned. If nothing was set at runtime, the
-   * output dataset from the program spec is used. If no output dataset was specified anywhere, a null is returned.
+   * Retrieves the output dataset for this MapReduce job. If the dataset instance was set at runtime,
+   * that instance is returned.
    *
-   * @return Input dataset for the MapReduce job.
+   * <p>
+   * If the dataset name was set at runtime, an instance with that name is returned.
+   * If nothing was set at runtime, the output dataset from the program specification is used.
+   * If an output dataset was never specified, {@code null} is returned.
+   * </p>
+   *
+   * @return the output dataset for the MapReduce job.
    */
   public Dataset getOutputDataset() {
     // use the dataset instance if it is set.

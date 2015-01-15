@@ -26,6 +26,7 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -45,6 +46,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
@@ -362,40 +364,40 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Calls the {@link MapReduce#beforeSubmit(co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void beforeSubmit() throws TransactionFailureException, InterruptedException {
-    // add datasets given in the application specification to the transaction context
-    TransactionContext txContext =
-      new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
-    BasicMapReduceContextWithTX mapReduceContextWithTX = null;
-    try {
-      txContext.start();
-      // this context allows the onFinish in user code to get datasets not mentioned in the application spec
-      mapReduceContextWithTX = new BasicMapReduceContextWithTX(context, datasetFramework, txContext, cConf);
-      mapReduce.beforeSubmit(mapReduceContextWithTX);
-      txContext.finish();
-    } catch (TransactionFailureException e) {
-      abortTransaction(e, "Failed to commit after running beforeSubmit(). Aborting transaction.", txContext);
-    } catch (Throwable t) {
-      abortTransaction(t, "Exception occurred running beforeSubmit(). Aborting transaction.", txContext);
-    } finally {
-      if (mapReduceContextWithTX != null) {
-        mapReduceContextWithTX.close();
+    runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
+      @Override
+      public void apply(MapReduceContext context) throws Exception {
+        mapReduce.beforeSubmit(context);
       }
-    }
+    });
   }
 
   /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
+    runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
+      @Override
+      public void apply(MapReduceContext context) throws Exception {
+        mapReduce.onFinish(succeeded, context);
+      }
+    });
+  }
+
+  // since the user code may create new TransactionAwares, we need to do this ourselves instead
+  // of going through tephra's TransactionExecutor, since the executor requires that you know all the txAwares
+  // before executing.
+  private void runUserCodeInTx(TransactionExecutor.Procedure<MapReduceContext> userCode) {
     // add datasets given in the application specification to the transaction context
     TransactionContext txContext =
       new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
-    BasicMapReduceContextWithTX mapReduceContextWithTX = null;
+    DynamicBasicMapReduceContext mapReduceContextWithTX = null;
     try {
       txContext.start();
       // this context allows the onFinish in user code to get datasets not mentioned in the application spec
-      mapReduceContextWithTX = new BasicMapReduceContextWithTX(context, datasetFramework, txContext, cConf);
-      mapReduce.onFinish(succeeded, mapReduceContextWithTX);
+      // it will make sure any txAwares created through the user code will get added to the txContext.
+      mapReduceContextWithTX = new DynamicBasicMapReduceContext(context, datasetFramework, txContext, cConf);
+      userCode.apply(mapReduceContextWithTX);
       txContext.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit after running onFinish(). Aborting transaction.", txContext);

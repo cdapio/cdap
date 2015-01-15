@@ -132,7 +132,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public static void useStreamInput(MapReduceContext context, String streamName,
                                     long startTime, long endTime, FormatSpecification bodyFormatSpec) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec).toURI().toString(), null);
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec).toURI().toString());
   }
 
   /**

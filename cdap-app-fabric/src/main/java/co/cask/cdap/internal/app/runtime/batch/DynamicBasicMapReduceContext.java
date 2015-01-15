@@ -17,7 +17,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -43,31 +42,33 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * Mapreduce job runtime context for use in the {@link AbstractMapReduce#beforeSubmit(MapReduceContext)} and
- * {@link AbstractMapReduce#onFinish(boolean, MapReduceContext)} methods, which allow getting datasets
- * that were not specified in the application specification. This allows users to get datasets at runtime
- * that they didn't know about at compile time.
+ * The MapReduce program runtime context for use in the {@link AbstractMapReduce#beforeSubmit(MapReduceContext)} and
+ * {@link AbstractMapReduce#onFinish(boolean, MapReduceContext)} methods.
+ *
+ * <p>
+ * The runtime context allows the retrieval of datasets that were not specified in the application specification,
+ * letting users access datasets at runtime that aren't known about at compile time.
+ * </p>
  */
-public class BasicMapReduceContextWithTX implements MapReduceContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BasicMapReduceContextWithTX.class);
+public class DynamicBasicMapReduceContext extends DynamicDatasetContext implements MapReduceContext {
+  private static final Logger LOG = LoggerFactory.getLogger(DynamicBasicMapReduceContext.class);
   private final BasicMapReduceContext mapReduceContext;
-  // this is used for datasets that we can't get through the BasicMapReduceContext
-  private final DynamicDatasetContext dynamicDatasetContext;
   private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
 
-  public BasicMapReduceContextWithTX(BasicMapReduceContext mapReduceContext,
-                                     DatasetFramework datasetFramework,
-                                     TransactionContext transactionContext,
-                                     CConfiguration cConf) {
+  public DynamicBasicMapReduceContext(BasicMapReduceContext mapReduceContext,
+                                      DatasetFramework datasetFramework,
+                                      TransactionContext transactionContext,
+                                      CConfiguration cConf) {
+    super(transactionContext,
+          new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf, Namespace.USER)),
+          mapReduceContext.getProgram().getClassLoader(),
+          null,
+          mapReduceContext.getRuntimeArguments());
     this.mapReduceContext = mapReduceContext;
-    // TODO: this should already be namespaced when passed in.
-    DatasetFramework namespacedDatasetFramework = new NamespacedDatasetFramework(
-      datasetFramework, new DefaultDatasetNamespace(cConf, Namespace.USER));
-    // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
-    // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<String, Dataset>>() {
         @Override
@@ -91,16 +92,6 @@ public class BasicMapReduceContextWithTX implements MapReduceContext {
           return Maps.newHashMap();
         }
       });
-    this.dynamicDatasetContext = new DynamicDatasetContext(
-      transactionContext,
-      namespacedDatasetFramework,
-      mapReduceContext.getProgram().getClassLoader(),
-      null) {
-      @Override
-      protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
-        return null;
-      }
-    };
   }
 
   @Override
@@ -143,23 +134,10 @@ public class BasicMapReduceContextWithTX implements MapReduceContext {
     mapReduceContext.setOutput(datasetName, dataset);
   }
 
+  @Nullable
   @Override
-  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    try {
-      return mapReduceContext.getDataset(name);
-    } catch (DatasetInstantiationException e) {
-      return dynamicDatasetContext.getDataset(name);
-    }
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
-    try {
-      return mapReduceContext.getDataset(name, arguments);
-    } catch (DatasetInstantiationException e) {
-      return dynamicDatasetContext.getDataset(name, arguments);
-    }
+  protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+    return datasetsCache;
   }
 
   @Override
