@@ -47,7 +47,7 @@ Glossary
       Spark is a fast and general processing engine, compatible with Hadoop data, used for
       in-memory cluster computing. It lets you load large sets of data into memory and
       query them repeatedly, making it suitable for both iterative and interactive
-      programs. Similar to MapReduce, Spark can access Datasets as both input and output.
+      programs. Similar to :term:`MapReduce Program`, Spark can access Datasets as both input and output.
       Spark programs in CDAP can be written in either Java or Scala.
 
    Service
@@ -93,7 +93,7 @@ Glossary
       query and manage the Cask Data Application Platform instance.
 
    Apache Spark
-      See :term:`Spark Job`.
+      See :term:`Spark Program`.
 
    Apache Hadoop
       See :term:`Hadoop`.
