@@ -16,13 +16,13 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
@@ -87,6 +87,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
   private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
   private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
+  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleWorkflows";
+  private static final String APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW = "SomeWorkflow";
+  private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
 
@@ -645,8 +648,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 //    Assert.assertEquals(200, getWorkflowCurrentStatus(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
 //                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME));
 
-    // get schedule name
-    String scheduleName = getScheduleName(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
+
+    // get schedules
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                                         APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    Assert.assertEquals(1, schedules.size());
+    String scheduleName = schedules.get(0).getSchedule().getName();
+    Assert.assertNotNull(scheduleName);
+    Assert.assertFalse(scheduleName.isEmpty());
+
     long current = System.currentTimeMillis();
     Long nextRunTime = getNextScheduledRunTime(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
                                                APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleName);
@@ -696,6 +706,31 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleStatusCheck(5, statusUrl, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+  }
+
+  @Test
+  public void testMultipleWorkflowSchedules() throws Exception {
+    // Deploy the app
+    HttpResponse response = deploy(AppWithMultipleWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    List<ScheduleSpecification> someSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                         APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    Assert.assertEquals(2, someSchedules.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(1).getProgram().getProgramName());
+
+
+    List<ScheduleSpecification> anotherSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                         APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
+    Assert.assertEquals(3, anotherSchedules.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules.get(1).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules.get(2).getProgram().getProgramName());
   }
 
   @Test
@@ -852,28 +887,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
-  private List<Schedule> getProgramSchedules(String namespace, String appName, String programType, String programName)
+  private List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
     throws Exception {
-    String programScheduleUrl = String.format("apps/%s/schedules/%s/%s", appName, programType, programName);
-    String versionedUrl = getVersionedAPIPath(programScheduleUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    HttpResponse response = doGet(versionedUrl);
-    String json = EntityUtils.toString(response.getEntity());
-    List<Schedule> schedules = new Gson().fromJson(json, new TypeToken<List<Schedule>>() { }.getType());
-    return schedules;
-  }
-
-  private String getScheduleName(String namespace, String appName, String workflowName) throws Exception {
-    String scheduleIdsUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
-    String versionedUrl = getVersionedAPIPath(scheduleIdsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
     List<ScheduleSpecification> schedules = new Gson().fromJson(json,
                                                    new TypeToken<List<ScheduleSpecification>>() { }.getType());
-    Assert.assertEquals(1, schedules.size());
-    String scheduleName = schedules.get(0).getSchedule().getName();
-    Assert.assertNotNull(scheduleName);
-    Assert.assertFalse(scheduleName.isEmpty());
-    return scheduleName;
+    return schedules;
   }
 
   private int deleteQueues(String namespace, String appId, String flow) throws Exception {

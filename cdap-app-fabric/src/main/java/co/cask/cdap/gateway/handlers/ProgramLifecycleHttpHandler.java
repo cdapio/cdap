@@ -726,30 +726,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                 runtimeService);
   }
 
-  @GET
-  @Path("/apps/{app-id}/schedules/{schedule-name}")
-  public void getScheduleSpecification(HttpRequest request, HttpResponder responder,
-                                       @PathParam("namespace-id") String namespaceId,
-                                       @PathParam("app-id") String appId,
-                                       @PathParam("schedule-name") String scheduleName) {
-    try {
-      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
-      if (appSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
-        return;
-      }
-      ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-      if (scheduleSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Schedule: " + scheduleName + " not found");
-        return;
-      }
-      responder.sendJson(HttpResponseStatus.OK, scheduleSpec);
-    } catch (OperationException ex) {
-      LOG.warn("Error while getting specifications for the schedule {}: {}", scheduleName, ex.getMessage());
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   /**
    * Deletes queues.
    */
