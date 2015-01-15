@@ -246,15 +246,9 @@ function bell() {
 }
 
 function test() {
-#   echo "Test..."
-#   echo "Version..."
-#   display_version
-#   echo "Build all docs..."
-#   build
-#   echo "Build SDK..."
-#   build_sdk
-#   build_json
-  bell "Test completed."
+  echo "Test..."
+  build_json
+  echo "Test completed."
 }
 
 set_project_path
