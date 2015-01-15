@@ -30,6 +30,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
@@ -137,6 +138,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final PreferencesStore preferencesStore;
 
+  private final ConsoleSettingsStore consoleSettingsStore;
+
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -147,7 +150,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                              PreferencesStore preferencesStore) {
+                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -161,6 +164,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.preferencesStore = preferencesStore;
+    this.consoleSettingsStore = consoleSettingsStore;
   }
 
   /**
@@ -1339,6 +1343,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // remove preferences stored at instance level
       preferencesStore.deleteProperties();
+
+      // remove all data in consolesettings
+      consoleSettingsStore.delete();
 
       dsFramework.deleteAllInstances();
       dsFramework.deleteAllModules();
