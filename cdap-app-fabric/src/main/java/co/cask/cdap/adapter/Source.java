@@ -17,6 +17,7 @@
 package co.cask.cdap.adapter;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public final class Source {
   public Source(String name, Type type, Map<String, String> properties) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   /**

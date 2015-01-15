@@ -17,6 +17,8 @@
 package co.cask.cdap.adapter;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.List;
 import java.util.Map;
@@ -46,9 +48,9 @@ public final class AdapterSpecification {
                               Set<Sink> sinks) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
-    this.sources = sources;
-    this.sinks = sinks;
+    this.properties = ImmutableMap.copyOf(properties);
+    this.sources = ImmutableSet.copyOf(sources);
+    this.sinks = ImmutableSet.copyOf(sinks);
   }
 
   /**
