@@ -34,9 +34,9 @@
     function will automatically search for all of the words. Pages
     containing fewer words won't appear in the result list.{% endtrans %}
   </p>
-  <form action="" method="get">
+  <form name="searchQ" action="" method="get">
     <input maxlength="256" size="40" type="text" name="q" value="" />
-    <input type="submit" value="{{ _('search') }} using Quick Search" />
+    <input type="submit" value="{{ _('search') }}" />
     <span id="search-progress" style="padding-left: 10px"></span>
   </form>
   
@@ -48,9 +48,9 @@
     <input type="hidden" name="hl" value="en" /> 
     <input type="hidden" name="ie" value="ISO-8859-1" /> 
     <input type="hidden" name="sitesearch" value="docs.cask.co/cdap/{{ version }} OR docs.cask.co/cdap/{{ release }}" /> 
-    <input maxlength="256" size="40" name="q" value="" /> 
+    <input type="hidden" name="q" value="" /> 
     <input type="submit" value="Search this release using Google" name="btnG" 
-      style="font-size:75%;" /> 
+      style="font-size:75%;" onclick="javascript: form.q.value=document.searchQ.q.value;"/> 
   </form>
   </p>
   <p>
@@ -58,9 +58,9 @@
     <input type="hidden" name="hl" value="en" /> 
     <input type="hidden" name="ie" value="ISO-8859-1" /> 
     <input type="hidden" name="sitesearch" value="docs.cask.co/cdap" /> 
-    <input maxlength="256" size="40" name="q" value="" /> 
+    <input type="hidden" name="q" value="" /> 
     <input type="submit" value="Search all releases using Google" name="btnG" 
-      style="font-size:75%;" /> 
+      style="font-size:75%;" onclick="javascript: form.q.value=document.searchQ.q.value;"/> 
   </form>
   </p>
 
