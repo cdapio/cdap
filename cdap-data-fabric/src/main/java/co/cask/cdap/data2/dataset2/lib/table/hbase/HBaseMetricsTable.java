@@ -103,18 +103,9 @@ public class HBaseMetricsTable implements MetricsTable {
     }
   }
 
-  // we need different value for each readless increment, all we care about:
-  // * it grows
-  // * it does not overlap with transaction ids (as of now readless inc filter uses tx snapshot for some logic)
-  // Since tx ids are = epoch * 1000 - at minimum a huge number, we will never reach it, so we are safe here.
-  private long counter = 1;
-
   @Override
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    Put increment = getIncrementalPut(row);
-    for (Map.Entry<byte[], Long> column : increments.entrySet()) {
-      increment.add(DATA_COLUMN_FAMILY, column.getKey(), System.currentTimeMillis(), Bytes.toBytes(column.getValue()));
-    }
+    Put increment = getIncrementalPut(row, increments);
     try {
       hTable.put(increment);
     } catch (IOException e) {
@@ -128,6 +119,17 @@ public class HBaseMetricsTable implements MetricsTable {
     hTable.flushCommits();
   }
 
+  private Put getIncrementalPut(byte[] row, Map<byte[], Long> increments) {
+    Put increment = getIncrementalPut(row);
+    for (Map.Entry<byte[], Long> column : increments.entrySet()) {
+      // note: we use default timestamp (current), which is fine because we know we collect metrics no more
+      //       frequent than each second. We also rely on same metric value to be processed by same metric processor
+      //       instance, so no conflicts are possible.
+      increment.add(DATA_COLUMN_FAMILY, column.getKey(), Bytes.toBytes(column.getValue()));
+    }
+    return increment;
+  }
+
   private Put getIncrementalPut(byte[] row) {
     Put put = new Put(row);
     put.setAttribute(HBaseOrderedTable.DELTA_WRITE, Bytes.toBytes(true));
@@ -138,11 +140,7 @@ public class HBaseMetricsTable implements MetricsTable {
   public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
     List<Put> puts = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> update : updates.entrySet()) {
-      Put increment = getIncrementalPut(update.getKey());
-      for (Map.Entry<byte[], Long> column : update.getValue().entrySet()) {
-        increment.add(DATA_COLUMN_FAMILY, column.getKey(), System.currentTimeMillis(),
-                      Bytes.toBytes(column.getValue()));
-      }
+      Put increment = getIncrementalPut(update.getKey(), update.getValue());
       puts.add(increment);
     }
 
@@ -271,8 +269,6 @@ public class HBaseMetricsTable implements MetricsTable {
                                   @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
-    // to support read-less increments
-    scan.setMaxVersions();
 
     if (startRow != null) {
       scan.setStartRow(startRow);

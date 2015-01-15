@@ -146,7 +146,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testReadLessIncrements() throws OperationException, InterruptedException {
+  public void testIncrements() throws OperationException, InterruptedException {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("seconds", 1);
 
     // 2012-10-01T12:00:00

@@ -75,8 +75,11 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
     hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    // to support read-less increments
+    // to support read-less increments, we need to allow storing many versions: each increment is a put to the same cell
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+    // to make sure delta-increments get compacted on flush and major/minor compaction and redundant versions are
+    // cleaned up. See IncrementHandler.CompactionBound.
+    columnDescriptor.setValue("increment.readless.compaction.bound", "UNLIMITED");
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
