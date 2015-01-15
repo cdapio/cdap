@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -161,13 +162,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
+  private final PreferencesStore preferencesStore;
+
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient) {
+                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -180,6 +183,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -400,8 +404,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           stopProgramIfRunning(programId, type);
           break;
         case WORKFLOW:
-          List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
-          scheduler.deleteSchedules(programId, ProgramType.WORKFLOW, scheduleIds);
+          scheduler.deleteSchedules(programId, ProgramType.WORKFLOW);
           break;
         case MAPREDUCE:
           //no-op
@@ -419,11 +422,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
       Id.Program programId = Id.Program.from(namespaceId, specification.getName(), entry.getKey());
-      List<String> existingSchedules = scheduler.getScheduleIds(programId, ProgramType.WORKFLOW);
       //Delete the existing schedules and add new ones.
-      if (!existingSchedules.isEmpty()) {
-        scheduler.deleteSchedules(programId, ProgramType.WORKFLOW, existingSchedules);
-      }
+      scheduler.deleteSchedules(programId, ProgramType.WORKFLOW);
+
       // Add new schedules.
       if (!entry.getValue().getSchedules().isEmpty()) {
         scheduler.schedule(programId, ProgramType.WORKFLOW, entry.getValue().getSchedules());
@@ -544,13 +545,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
-      List<String> schedules = scheduler.getScheduleIds(workflowProgramId, ProgramType.WORKFLOW);
-      if (!schedules.isEmpty()) {
-        scheduler.deleteSchedules(workflowProgramId, ProgramType.WORKFLOW, schedules);
-      }
+      scheduler.deleteSchedules(workflowProgramId, ProgramType.WORKFLOW);
     }
 
     deleteMetrics(identifier.getNamespaceId(), identifier.getApplicationId());
+
+    //Delete all preferences of the application and of all its programs
+    deletePreferences(appId);
 
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
@@ -639,6 +640,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) throws OperationException {
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
+                                                                   appSpec.getMapReduce().values(),
+                                                                   appSpec.getProcedures().values(),
+                                                                   appSpec.getWorkflows().values());
+    return programSpecs;
+  }
+
   /**
    * Delete the jar location of the program.
    *
@@ -646,13 +656,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @throws IOException if there are errors with location IO
    */
   private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
-    ApplicationSpecification specification = store.getApplication(appId);
-
-    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
-                                                                   specification.getMapReduce().values(),
-                                                                   specification.getProcedures().values(),
-                                                                   specification.getWorkflows().values());
-
+    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());
@@ -674,6 +678,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.
     }
+  }
+
+  /**
+   * Delete stored Preferences of the application and all its programs.
+   * @param appId applicationId
+   */
+  private void deletePreferences(Id.Application appId) throws OperationException {
+    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
+    for (ProgramSpecification spec : programSpecs) {
+
+      preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId(),
+                                        ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
+      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespaceId(), appId.getId(),
+                ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
+    }
+    preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId());
+    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
   }
 
   /**

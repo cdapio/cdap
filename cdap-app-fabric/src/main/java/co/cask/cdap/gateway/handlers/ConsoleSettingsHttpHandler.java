@@ -46,7 +46,7 @@ import javax.ws.rs.Path;
 public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
-  private static final String NAMESPACE = Constants.DEFAULT_NAMESPACE;
+  private static final String NAMESPACE = "";
   private static final String CONFIG_TYPE = "usersettings";
   private static final String CONFIG_PROPERTY = "property";
   private static final String ID = "id";
@@ -103,7 +103,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
     //Configuration Layout for UserSettings:
     //Config ID : userId
     //Config Properties : Map (Key = CONFIG_PROPERTY, Value = Serialized JSON string of properties)
-    //User Settings configurations are stored under default NAMESPACE.
+    //User Settings configurations are stored under empty NAMESPACE.
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
     String userId = getAuthenticatedAccountId(request);
     Config userConfig = new Config(userId, propMap);

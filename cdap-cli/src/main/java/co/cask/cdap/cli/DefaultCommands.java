@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,15 +20,18 @@ import co.cask.cdap.cli.command.CallProcedureCommand;
 import co.cask.cdap.cli.command.CallServiceCommand;
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.CreateDatasetInstanceCommand;
+import co.cask.cdap.cli.command.CreateNamespaceCommand;
 import co.cask.cdap.cli.command.CreateStreamCommand;
 import co.cask.cdap.cli.command.DeleteAppCommand;
 import co.cask.cdap.cli.command.DeleteDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DeleteDatasetModuleCommand;
+import co.cask.cdap.cli.command.DeleteNamespaceCommand;
 import co.cask.cdap.cli.command.DeployAppCommand;
 import co.cask.cdap.cli.command.DeployDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeAppCommand;
 import co.cask.cdap.cli.command.DescribeDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeDatasetTypeCommand;
+import co.cask.cdap.cli.command.DescribeNamespaceCommand;
 import co.cask.cdap.cli.command.DescribeStreamCommand;
 import co.cask.cdap.cli.command.ExecuteQueryCommand;
 import co.cask.cdap.cli.command.ExitCommand;
@@ -45,6 +48,7 @@ import co.cask.cdap.cli.command.ListAppsCommand;
 import co.cask.cdap.cli.command.ListDatasetInstancesCommand;
 import co.cask.cdap.cli.command.ListDatasetModulesCommand;
 import co.cask.cdap.cli.command.ListDatasetTypesCommand;
+import co.cask.cdap.cli.command.ListNamespacesCommand;
 import co.cask.cdap.cli.command.ListProgramsCommandSet;
 import co.cask.cdap.cli.command.ListStreamsCommand;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
@@ -114,6 +118,10 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .add(injector.getInstance(TruncateStreamCommand.class))
       .add(injector.getInstance(CallServiceCommand.class))
       .add(injector.getInstance(GetServiceEndpointsCommand.class))
+      .add(injector.getInstance(CreateNamespaceCommand.class))
+      .add(injector.getInstance(ListNamespacesCommand.class))
+      .add(injector.getInstance(DescribeNamespaceCommand.class))
+      .add(injector.getInstance(DeleteNamespaceCommand.class))
       .build();
   }
 
