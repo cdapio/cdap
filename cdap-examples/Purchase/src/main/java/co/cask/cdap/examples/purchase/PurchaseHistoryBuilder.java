@@ -46,7 +46,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
   @Override
   public void configure() {
-    setDescription("Purchase History Builder MapReduce");
+    setDescription("Purchase History Builder");
     useDatasets("frequentCustomers");
     setInputDataset("purchases");
     setOutputDataset("history");

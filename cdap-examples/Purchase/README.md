@@ -5,8 +5,8 @@ and makes it available via ad-hoc querying and the RESTful interface of a Servic
 
 Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, and MapReduce.
 
-- Uses a scheduled MapReduce program and Workflow to read from one ObjectStore Dataset
-  and write to another and demonstrates using ad-hoc SQL queries.
+- Uses a scheduled Workflow to start a MapReduce that reads from one ObjectStore Dataset and
+  writes to another. The application also demonstrates using ad-hoc SQL queries.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a

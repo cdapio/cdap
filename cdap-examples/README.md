@@ -43,8 +43,8 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## Purchase
 
-- An app that uses scheduled MapReduce program and Workflow to read from one ObjectStore Dataset
-  and write to another and demonstrates using ad-hoc SQL queries.
+- An app that uses scheduled Workflow to start a MapReduce that reads from one ObjectStore Dataset
+  and writes to another. The app also demonstrates using ad-hoc SQL queries.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a
