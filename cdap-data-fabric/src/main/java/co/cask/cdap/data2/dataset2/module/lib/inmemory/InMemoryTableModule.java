@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.module.lib.inmemory;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
@@ -28,11 +27,6 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 public class InMemoryTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    // TODO: remove OrderedTable registration when OrderedTable is removed
-    registry.add(new InMemoryTableDefinition("orderedTable"));
-    // so that it can be resolved via @Dataset
-    registry.add(new InMemoryTableDefinition(OrderedTable.class.getName()));
-
     registry.add(new InMemoryTableDefinition("table"));
     registry.add(new InMemoryTableDefinition(Table.class.getName()));
   }

@@ -24,8 +24,9 @@ import java.util.Map;
 
 /**
  * Provides generic table dataset interface.
+ * @deprecated since 2.7.0.  Use {@link Table} instead.
  */
-// todo: we may want to remove Exception from method signatures to make it nicer for devs as soon as we expose this API
+@Deprecated
 public interface OrderedTable extends Dataset {
 
   /**

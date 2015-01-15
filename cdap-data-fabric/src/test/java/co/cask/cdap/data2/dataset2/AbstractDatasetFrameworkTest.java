@@ -69,7 +69,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
     // system namespace has a module orderedTable-inMemory
-    Assert.assertTrue(framework.hasSystemType("orderedTable"));
+    Assert.assertTrue(framework.hasSystemType("table"));
     // myspace namespace has no modules
     Assert.assertFalse(framework.hasType(inMemoryType));
     Assert.assertFalse(framework.hasType(simpleKvType));

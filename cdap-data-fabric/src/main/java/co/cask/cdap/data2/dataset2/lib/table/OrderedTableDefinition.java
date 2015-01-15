@@ -30,11 +30,12 @@ import java.util.Map;
 /**
  * Defines Table data set
  */
-public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdmin> {
+@Deprecated
+public class OrderedTableDefinition extends AbstractDatasetDefinition<Table, DatasetAdmin> {
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public TableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
+  public OrderedTableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
     super(name);
     this.tableDef = orderedTableDefinition;
   }

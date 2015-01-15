@@ -47,6 +47,11 @@ public class CoreDatasetsModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
 
+    // TODO: remove OrderedTable registration when OrderedTable is removed
+    DatasetDefinition<Table, DatasetAdmin> orderedTableDef = new OrderedTableDefinition("orderedTable", tableDef);
+    registry.add(orderedTableDef);
+    registry.add(new OrderedTableDefinition(OrderedTable.class.getName(), tableDef));
+
     DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition("keyValueTable", tableDef);
     registry.add(kvTableDef);
     registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), tableDef));
@@ -69,7 +74,7 @@ public class CoreDatasetsModule implements DatasetModule {
 
     // in-memory table
     InMemoryTableDefinition inMemoryOrderedTable = new InMemoryTableDefinition("inMemoryOrderedTable");
-    registry.add(new TableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
-    registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
+    registry.add(new OrderedTableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
+    registry.add(new OrderedTableDefinition("memoryTable", inMemoryOrderedTable));
   }
 }
