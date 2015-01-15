@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -85,7 +84,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
-  private final StreamLeaderManager streamLeaderManager;
+  private final StreamCoordinator streamCoordinator;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -99,14 +98,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade, StreamLeaderManager streamLeaderManager) {
+                       ExploreFacade exploreFacade) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-    this.streamLeaderManager = streamLeaderManager;
+    this.streamCoordinator = streamCoordinator;
 
     this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
@@ -182,7 +181,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
-    streamLeaderManager.affectLeader(stream);
+    streamCoordinator.affectLeader(stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);

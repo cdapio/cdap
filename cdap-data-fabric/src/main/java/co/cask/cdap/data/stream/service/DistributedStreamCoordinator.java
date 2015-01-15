@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.PropertyStore;
+import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
@@ -25,13 +26,15 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
+import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -46,19 +49,18 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Distributed implementation of the {@link StreamLeaderManager} that uses a {@link ResourceCoordinator} to
- * allocate Streams equally amongst Stream handlers. One Stream handler will be the leader of a collection of streams.
- * This ensures that no one stream handler gets overloaded with this task.
+ * A {@link StreamCoordinator} uses ZooKeeper to implementation coordination needed for stream. It also uses a
+ * {@link ResourceCoordinator} to elect each handler as the leader of a set of streams.
  */
-public class DistributedStreamLeaderManager extends AbstractIdleService implements StreamLeaderManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamLeaderManager.class);
+@Singleton
+public final class DistributedStreamCoordinator extends AbstractStreamCoordinator {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamCoordinator.class);
 
   public static final String STREAMS_COORDINATOR = "streams.coordinator";
-
   private static final String STREAMS_RESOURCE = "streams";
 
-  private final CConfiguration cConf;
-  private final ZKClient zkClient;
+  private ZKClient zkClient;
+
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient streamsResourceCoordinatorClient;
@@ -69,10 +71,10 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
   private Cancellable handlerSubscription;
 
   @Inject
-  public DistributedStreamLeaderManager(CConfiguration cConf, ZKClient zkClient,
-                                        DiscoveryServiceClient discoveryServiceClient,
-                                        StreamMetaStore streamMetaStore) {
-    this.cConf = cConf;
+  public DistributedStreamCoordinator(StreamAdmin streamAdmin, ZKClient zkClient,
+                                      DiscoveryServiceClient discoveryServiceClient,
+                                      StreamMetaStore streamMetaStore) {
+    super(streamAdmin);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
@@ -124,8 +126,8 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
   }
 
   @Override
-  protected void shutDown() throws Exception {
-    // revoke subscription to coordinator
+  protected void doShutDown() throws Exception {
+    // revoke subscription to resource coordinator
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
@@ -140,8 +142,8 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
   }
 
   @Override
-  public void setHandlerDiscoverable(Discoverable discoverable) {
-    handlerDiscoverable = discoverable;
+  protected <T> PropertyStore<T> createPropertyStore(Codec<T> codec) {
+    return ZKPropertyStore.create(zkClient, "/" + Constants.Service.STREAMS + "/properties", codec);
   }
 
   @Override
@@ -168,6 +170,12 @@ public class DistributedStreamLeaderManager extends AbstractIdleService implemen
       });
     return Futures.transform(future, Functions.<Void>constant(null));
   }
+
+  @Override
+  public void setHandlerDiscoverable(Discoverable discoverable) {
+    handlerDiscoverable = discoverable;
+  }
+
 
   /**
    * Class that defines the behavior of a leader of a collection of Streams.

@@ -17,9 +17,11 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.stream.DistributedStreamCoordinator;
-import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.DistributedStreamCoordinator;
+import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamCoordinator;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -69,6 +71,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // Stream bindings
     bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Singleton.class);
+    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
 
     bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
     bind(StreamAdmin.class).to(HBaseStreamFileAdmin.class).in(Singleton.class);

@@ -22,7 +22,6 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -48,7 +47,6 @@ public final class StreamHttpService extends AbstractIdleService {
   private final NettyHttpService httpService;
   private final StreamCoordinator streamCoordinator;
   private final StreamFileJanitorService janitorService;
-  private final StreamLeaderManager streamLeaderManager;
   private Cancellable cancellable;
 
   @Inject
@@ -56,12 +54,10 @@ public final class StreamHttpService extends AbstractIdleService {
                            StreamCoordinator streamCoordinator,
                            StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
-                           @Nullable MetricsCollectionService metricsCollectionService,
-                           StreamLeaderManager streamLeaderManager) {
+                           @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
     this.janitorService = janitorService;
-    this.streamLeaderManager = streamLeaderManager;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -98,13 +94,12 @@ public final class StreamHttpService extends AbstractIdleService {
     cancellable = discoveryService.register(discoverable);
 
     janitorService.startAndWait();
-    streamLeaderManager.setHandlerDiscoverable(discoverable);
-    streamLeaderManager.startAndWait();
+    streamCoordinator.setHandlerDiscoverable(discoverable);
+    streamCoordinator.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    streamLeaderManager.stopAndWait();
     janitorService.stopAndWait();
 
     try {
@@ -113,7 +108,7 @@ public final class StreamHttpService extends AbstractIdleService {
       }
     } finally {
       httpService.stopAndWait();
-      streamCoordinator.close();
+      streamCoordinator.stopAndWait();
     }
   }
 

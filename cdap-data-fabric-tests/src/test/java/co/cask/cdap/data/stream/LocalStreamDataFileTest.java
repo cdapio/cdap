@@ -18,12 +18,18 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
@@ -46,8 +52,15 @@ public class LocalStreamDataFileTest extends StreamDataFileTestBase {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule()
-    );
+      new TransactionMetricsModule(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getLocalModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
+        }
+      });
 
     locationFactory = injector.getInstance(LocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);

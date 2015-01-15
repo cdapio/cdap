@@ -24,8 +24,14 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.DistributedStreamCoordinator;
+import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamCoordinator;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -57,7 +63,13 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new TransactionMetricsModule(),
-      new LocationRuntimeModule().getDistributedModules()
+      new LocationRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
+        }
+      }
     );
 
     zkClient = injector.getInstance(ZKClientService.class);
