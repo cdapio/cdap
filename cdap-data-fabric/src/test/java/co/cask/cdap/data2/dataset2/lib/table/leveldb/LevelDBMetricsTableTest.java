@@ -24,6 +24,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -35,7 +37,6 @@ import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -66,16 +67,11 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
                     .implement(DatasetDefinitionRegistry.class,
                                DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
-        }
-
-        @Provides
-        @SuppressWarnings("unused")
-        protected DatasetFramework provideDSFramework(DatasetDefinitionRegistryFactory factory) {
-          return new InMemoryDatasetFramework(factory);
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       });
 
-    dsFramework = injector.getInstance(DatasetFramework.class);
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
     dsFramework.addModule("metrics-leveldb", new LevelDBMetricsTableModule());
   }
 

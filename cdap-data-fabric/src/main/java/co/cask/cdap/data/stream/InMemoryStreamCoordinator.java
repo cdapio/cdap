@@ -13,12 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.data.stream.service.AbstractStreamCoordinator;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -63,7 +65,7 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
   }
 
   @Override
-  public ListenableFuture<Void> affectLeader(String streamName) {
+  public ListenableFuture<Void> streamCreated(String streamName) {
     // TODO implement the aggregation logic of the one stream handler process here
     return Futures.immediateFuture(null);
   }

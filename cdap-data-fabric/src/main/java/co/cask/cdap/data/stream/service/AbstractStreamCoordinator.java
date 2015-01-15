@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
@@ -159,16 +160,20 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName,
-                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected final void shutDown() throws Exception {
     propertyStore.get().close();
     doShutDown();
   }
 
+  /**
+   * Stop the service.
+   *
+   * @throws Exception when stopping the service could not be performed
+   */
   protected abstract void doShutDown() throws Exception;
 
   /**

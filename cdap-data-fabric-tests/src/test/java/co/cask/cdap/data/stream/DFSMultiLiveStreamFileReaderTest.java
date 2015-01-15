@@ -19,16 +19,14 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -65,13 +63,12 @@ public class DFSMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderT
         @Override
         protected void configure() {
           bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
-          bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       },
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule()
+      new DataFabricDistributedModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

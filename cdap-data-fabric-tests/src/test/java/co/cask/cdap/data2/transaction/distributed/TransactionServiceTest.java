@@ -28,6 +28,8 @@ import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -91,7 +93,13 @@ public class TransactionServiceTest {
         new DiscoveryRuntimeModule().getDistributedModules(),
         new TransactionMetricsModule(),
         new DataFabricModules().getDistributedModules(),
-        new DataSetsModules().getDistributedModule()
+        new DataSetsModules().getDistributedModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        }
       );
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);

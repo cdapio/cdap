@@ -26,6 +26,8 @@ import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -36,6 +38,7 @@ import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -65,10 +68,14 @@ public class LocalQueueTest extends QueueTest {
       new ConfigModule(conf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
-      new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
-      new DataFabricLocalModule());
+      new DataFabricLocalModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+        }
+      });
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();

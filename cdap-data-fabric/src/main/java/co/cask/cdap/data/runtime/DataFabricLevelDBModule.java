@@ -15,11 +15,9 @@
  */
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.InMemoryStreamCoordinator;
-import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
@@ -52,7 +50,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     // Stream bindings.
     bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Singleton.class);
-    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
 
     bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
     bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);

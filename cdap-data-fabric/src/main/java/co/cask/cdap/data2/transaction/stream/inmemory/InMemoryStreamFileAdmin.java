@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;

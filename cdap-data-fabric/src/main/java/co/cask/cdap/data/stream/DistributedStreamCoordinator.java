@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.Constants;
@@ -27,12 +27,16 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
+import co.cask.cdap.data.stream.service.AbstractStreamCoordinator;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.api.ElectionHandler;
@@ -46,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -56,17 +61,16 @@ import javax.annotation.Nullable;
 public final class DistributedStreamCoordinator extends AbstractStreamCoordinator {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamCoordinator.class);
 
-  public static final String STREAMS_COORDINATOR = "streams.coordinator";
-  private static final String STREAMS_RESOURCE = "streams";
+  private static final String STREAMS_COORDINATOR = "streams.coordinator";
 
   private ZKClient zkClient;
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamMetaStore streamMetaStore;
-  private final ResourceCoordinatorClient streamsResourceCoordinatorClient;
+  private final ResourceCoordinatorClient resourceCoordinatorClient;
 
   private LeaderElection leaderElection;
-  private ResourceCoordinator streamsResourceCoordinator;
+  private ResourceCoordinator resourceCoordinator;
   private Discoverable handlerDiscoverable;
   private Cancellable handlerSubscription;
 
@@ -78,14 +82,16 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
-    this.streamsResourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
+    this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.handlerDiscoverable = null;
   }
 
   @Override
   protected void startUp() throws Exception {
     Preconditions.checkNotNull(handlerDiscoverable, "Stream Handler discoverable has not been set");
-    streamsResourceCoordinatorClient.startAndWait();
+    resourceCoordinatorClient.startAndWait();
+    handlerSubscription = resourceCoordinatorClient.subscribe(handlerDiscoverable.getName(),
+                                                              new StreamsLeaderHandler());
 
     // Start the resource coordinator that will map Streams to Stream handlers
     leaderElection = new LeaderElection(
@@ -93,19 +99,19 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
       @Override
       public void leader() {
         LOG.info("Became Stream handler leader. Starting resource coordinator.");
-        streamsResourceCoordinator = new ResourceCoordinator(zkClient, discoveryServiceClient,
+        resourceCoordinator = new ResourceCoordinator(zkClient, discoveryServiceClient,
                                                              new BalancedAssignmentStrategy());
-        streamsResourceCoordinator.startAndWait();
+        resourceCoordinator.startAndWait();
 
         try {
           // Create one requirement for the resource coordinator for all the streams.
           // One stream is identified by one partition
-          ResourceRequirement.Builder builder = ResourceRequirement.builder(STREAMS_RESOURCE);
+          ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
           for (StreamSpecification spec : streamMetaStore.listStreams()) {
             LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.", spec.getName());
             builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
           }
-          streamsResourceCoordinatorClient.submitRequirement(builder.build()).get();
+          resourceCoordinatorClient.submitRequirement(builder.build()).get();
         } catch (Throwable e) {
           LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
           Throwables.propagate(e);
@@ -115,29 +121,26 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
       @Override
       public void follower() {
         LOG.info("Became Stream handler follower.");
-        if (streamsResourceCoordinator != null) {
-          streamsResourceCoordinator.stopAndWait();
+        if (resourceCoordinator != null) {
+          resourceCoordinator.stopAndWait();
         }
       }
     });
-
-    handlerSubscription = streamsResourceCoordinatorClient.subscribe(handlerDiscoverable.getName(),
-                                                                     new StreamsLeaderHandler());
   }
 
   @Override
   protected void doShutDown() throws Exception {
     // revoke subscription to resource coordinator
     if (leaderElection != null) {
-      leaderElection.stopAndWait();
+      Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
     }
 
     if (handlerSubscription != null) {
       handlerSubscription.cancel();
     }
 
-    if (streamsResourceCoordinatorClient != null) {
-      streamsResourceCoordinatorClient.stopAndWait();
+    if (resourceCoordinatorClient != null) {
+      resourceCoordinatorClient.stopAndWait();
     }
   }
 
@@ -147,21 +150,27 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
   }
 
   @Override
-  public ListenableFuture<Void> affectLeader(final String streamName) {
+  public ListenableFuture<Void> streamCreated(final String streamName) {
     // modify the requirement to add the new stream as a new partition of the existing requirement
-    ListenableFuture<ResourceRequirement> future = streamsResourceCoordinatorClient.modifyRequirement(
-      STREAMS_RESOURCE, new ResourceModifier() {
+    ListenableFuture<ResourceRequirement> future = resourceCoordinatorClient.modifyRequirement(
+      Constants.Service.STREAMS, new ResourceModifier() {
         @Nullable
         @Override
         public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
-          Set<ResourceRequirement.Partition> partitions = existingRequirement.getPartitions();
-          ResourceRequirement.Partition newParition = new ResourceRequirement.Partition(streamName, 1);
-          if (partitions.contains(newParition)) {
+          Set<ResourceRequirement.Partition> partitions;
+          if (existingRequirement != null) {
+            partitions = existingRequirement.getPartitions();
+          } else {
+            partitions = ImmutableSet.of();
+          }
+
+          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName, 1);
+          if (partitions.contains(newPartition)) {
             return null;
           }
 
-          ResourceRequirement.Builder builder = ResourceRequirement.builder(existingRequirement.getName());
-          builder.addPartition(newParition);
+          ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
+          builder.addPartition(newPartition);
           for (ResourceRequirement.Partition partition : partitions) {
             builder.addPartition(partition);
           }

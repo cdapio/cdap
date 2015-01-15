@@ -20,9 +20,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.OSDetector;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
@@ -272,6 +272,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
     saveConfig(config);
+
+    streamCoordinator.streamCreated(name);
   }
 
   @Override

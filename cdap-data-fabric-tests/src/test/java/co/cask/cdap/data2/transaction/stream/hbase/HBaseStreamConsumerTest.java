@@ -25,6 +25,8 @@ import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -87,6 +89,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
         protected void configure() {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
           bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       })
     );

@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Throwables;
 import org.apache.twill.discovery.Discoverable;

@@ -15,11 +15,9 @@
  */
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.InMemoryStreamCoordinator;
-import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -51,7 +49,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(StreamAdmin.class).to(InMemoryStreamFileAdmin.class).in(Singleton.class);
 
     bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Singleton.class);
-    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
     bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
     bind(StreamConsumerStateStoreFactory.class).to(InMemoryStreamConsumerStateStoreFactory.class).in(Singleton.class);
     bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);

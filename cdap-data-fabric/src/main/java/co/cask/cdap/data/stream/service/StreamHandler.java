@@ -21,6 +21,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.format.RecordFormats;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -90,7 +91,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
-  private final StreamCoordinator streamCoordinator;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -111,7 +111,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-    this.streamCoordinator = streamCoordinator;
 
     this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
@@ -187,8 +186,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         LOG.error(msg, e);
       }
     }
-
-    streamCoordinator.affectLeader(stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);

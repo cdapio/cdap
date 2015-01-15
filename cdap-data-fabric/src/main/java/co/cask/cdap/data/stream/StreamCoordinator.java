@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.data.stream;
 
-import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -57,12 +56,19 @@ public interface StreamCoordinator extends Service {
   Cancellable addListener(String streamName, StreamPropertyListener listener);
 
   /**
+   * Called whenever a new stream is created.
    * Affect a Stream handler leader to a stream.
    *
    * @param streamName name of the stream.
    * @return A {@link ListenableFuture} describing the progress of the operation.
    */
-  ListenableFuture<Void> affectLeader(String streamName);
+  ListenableFuture<Void> streamCreated(String streamName);
 
+  /**
+   * Set the {@link Discoverable} that defines the Stream handler in which this {@link StreamCoordinator} runs.
+   * This method has to be called before this service is started.
+   *
+   * @param discoverable discoverable that defines the Stream handler in which this object runs.
+   */
   void setHandlerDiscoverable(Discoverable discoverable);
 }
