@@ -17,12 +17,12 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.data.TimeSeriesTables;
+import co.cask.cdap.metrics.process.MetricRecordsWrapper;
 import co.cask.cdap.metrics.process.MetricsProcessor;
-import co.cask.cdap.metrics.transport.MetricsRecord;
+import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -49,6 +49,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   private final CConfiguration cConf;
   private final Set<MetricsProcessor> processors;
   private final MetricsTableFactory tableFactory;
+  private final TimeSeriesTables timeSeriesTables;
   private ScheduledExecutorService scheduler;
 
   @Inject
@@ -57,13 +58,14 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     this.cConf = cConf;
     this.processors = processors;
     this.tableFactory = tableFactory;
+    this.timeSeriesTables = new TimeSeriesTables(tableFactory);
   }
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
-    List<MetricsRecord> records = ImmutableList.copyOf(metrics);
+  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
+    List<MetricValue> records = ImmutableList.copyOf(metrics);
     for (MetricsProcessor processor : processors) {
-      processor.process(scope, records.iterator());
+      processor.process(scope, new MetricRecordsWrapper(records.iterator()));
     }
   }
 
@@ -111,14 +113,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
         long deleteBefore = currentTime - retention;
 
         for (MetricsScope scope : MetricsScope.values()) {
-          TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(scope.name(), 1);
-          try {
-            timeSeriesTable.deleteBefore(deleteBefore);
-          } catch (OperationException e) {
-            LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
-          }
+          timeSeriesTables.deleteBefore(scope, deleteBefore);
         }
-
         scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };

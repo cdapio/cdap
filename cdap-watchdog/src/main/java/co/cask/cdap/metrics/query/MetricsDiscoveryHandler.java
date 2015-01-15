@@ -35,7 +35,6 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +45,14 @@ import java.util.List;
 import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 
 /**
  * Class for handling requests for aggregate application metrics of the
  * {@link co.cask.cdap.common.metrics.MetricsScope#USER} scope.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
+//todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
 public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
@@ -62,7 +63,6 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   // currently you query differently depending on the metric, and some metrics you can query for in the
   // BatchMetricsHandler are computed in the handler and are not stored in the table.
   private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
-
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
     PROCEDURES("p"),
@@ -134,7 +134,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
         Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
-        for (final MetricsScope scope : MetricsScope.values()) {
+        for (MetricsScope scope : MetricsScope.values()) {
           map.put(scope, metricsTableFactory.createAggregates(scope.name()));
         }
         return map;
@@ -155,47 +155,52 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   @GET
-  public void handleOverview(HttpRequest request, HttpResponder responder) throws IOException {
-    getMetrics(request, responder);
+  public void handleOverview(HttpRequest request, HttpResponder responder,
+                             @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    getMetrics(request, responder, metricPrefix);
   }
 
   // ex: /apps/appX
   @GET
   @Path("/apps/{app-id}")
-  public void handleApp(HttpRequest request, HttpResponder responder) throws IOException {
-    getMetrics(request, responder);
+  public void handleApp(HttpRequest request, HttpResponder responder,
+                        @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    getMetrics(request, responder, metricPrefix);
   }
 
   // ex: /apps/appX/flows
   @GET
   @Path("/apps/{app-id}/{program-type}")
-  public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException {
-    getMetrics(request, responder);
+  public void handleProgramType(HttpRequest request, HttpResponder responder,
+                                @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    getMetrics(request, responder, metricPrefix);
   }
 
   // ex: /apps/appX/flows/flowY
   @GET
   @Path("/apps/{app-id}/{program-type}/{program-id}")
-  public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException {
-    getMetrics(request, responder);
+  public void handleProgram(HttpRequest request, HttpResponder responder,
+                            @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    getMetrics(request, responder, metricPrefix);
   }
 
   // ex: /apps/appX/mapreduce/mapredY/mappers
   @GET
   @Path("/apps/{app-id}/{program-type}/{program-id}/{component-type}")
-  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
-    getMetrics(request, responder);
+  public void handleComponentType(HttpRequest request, HttpResponder responder,
+                                  @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    getMetrics(request, responder, metricPrefix);
   }
 
   // ex: /apps/appX/flows/flowY/flowlets/flowletZ
   @GET
   @Path("/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
-  public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
-    getMetrics(request, responder);
+  public void handleComponent(HttpRequest request, HttpResponder responder,
+                              @QueryParam("prefixEntity") String metricPrefix) throws IOException {
+    getMetrics(request, responder, metricPrefix);
   }
 
-  private void getMetrics(HttpRequest request, HttpResponder responder) {
-
+  private void getMetrics(HttpRequest request, HttpResponder responder, String metricPrefix) {
     String contextPrefix = null;
     try {
       String path = request.getUri();
@@ -215,12 +220,6 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
       return;
     }
-
-    // TODO(albert): add ability to pass in maxAge through query params
-    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-    List<String> prefixEntity = queryParams.get("prefixEntity");
-    // shouldn't be in params more than once, but if it is, just take any one
-    String metricPrefix = (prefixEntity == null || prefixEntity.isEmpty()) ? null : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     for (AggregatesTable table : aggregatesTables.get().values()) {
@@ -255,24 +254,24 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
    * Eventually we need to return the tree of contexts each metric belongs to, but we're not going to get
    * all the contexts for a metric in order.  This is to add a node to the context tree, where the tree
    * will end up looking something like:
-   *
-   *  "contexts":[
-   *   {
-   *     "type":"app",
-   *     "id":"WordCount",
-   *     "children":[
-   *       {
-   *         "type":"flow",
-   *         "id":"WordCounter",
-   *         "children":[
-   *           {
-   *             "type":"flowlet",
-   *             "id":"Associator"
-   *           },...
-   *         ]
-   *       },...
-   *     ]
-   *   },...
+   * <p/>
+   * "contexts":[
+   * {
+   * "type":"app",
+   * "id":"WordCount",
+   * "children":[
+   * {
+   * "type":"flow",
+   * "id":"WordCounter",
+   * "children":[
+   * {
+   * "type":"flowlet",
+   * "id":"Associator"
+   * },...
+   * ]
+   * },...
+   * ]
+   * },...
    * ]
    */
   private void addContext(String context, String metric, Map<String, ContextNode> metricContextsMap) {
@@ -295,7 +294,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
     // different program types will have different depths in the context tree.  For example,
     // procedures have no children, whereas flows will have flowlets as children.
     ProgramType type = ProgramType.fromId(contextParts.next());
-    switch(type) {
+    switch (type) {
       case FLOWS:
         metricContexts.deepAdd(contextParts, ContextNodeType.FLOW, ContextNodeType.FLOWLET);
         break;

@@ -15,19 +15,15 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricType;
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import co.cask.cdap.metrics.transport.TagMetric;
+import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 /**
  * A {@link co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService} that publish
@@ -35,8 +31,6 @@ import java.util.regex.Pattern;
  */
 @Singleton
 public final class MapReduceCounterCollectionService extends AggregatedMetricsCollectionService {
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceCounterCollectionService.class);
-  private static final Pattern splitPattern = Pattern.compile("\\.");
   private final TaskAttemptContext taskContext;
 
   @Inject
@@ -51,50 +45,24 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
+  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
     while (metrics.hasNext()) {
-      MetricsRecord record = metrics.next();
-      String context = record.getContext();
-      boolean increment = false;
+      MetricValue record = metrics.next();
 
-      // Context is expected to look like appId.b.programId.[m|r].[taskId]
-      String counterGroup;
-      String contextParts[] = splitPattern.split(context);
-      //TODO: Refactor to support any context
-      if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
-        counterGroup = "cdap.dataset";
-      } else if ("m".equals(contextParts[3])) {
-        counterGroup = "cdap.mapper";
-      } else if ("r".equals(contextParts[3])) {
-        counterGroup = "cdap.reducer";
-      } else {
-        LOG.error("could not determine if the metric is a map or reduce metric from context {}, skipping...", context);
-        continue;
-      }
+      StringBuilder counterGroup = new StringBuilder("cdap.")
+        .append(scope).append(".")
+        .append(record.getType());
 
-      counterGroup += "." + record.getType().toString();
-      counterGroup += "." + scope.name();
-
-      if (record.getType() == MetricType.COUNTER) {
-        increment = true;
+      // flatten tags
+      for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
+        counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
       }
 
       String counterName = getCounterName(record.getName());
-      if (increment) {
-        taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
+      if (record.getType() == MetricType.COUNTER) {
+        taskContext.getCounter(counterGroup.toString(), counterName).increment(record.getValue());
       } else {
-        taskContext.getCounter(counterGroup, counterName).setValue(record.getValue());
-      }
-
-      for (TagMetric tag : record.getTags()) {
-        counterName = getCounterName(record.getName(), tag.getTag());
-        if (counterName != null) {
-          if (increment) {
-            taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
-          } else {
-            taskContext.getCounter(counterGroup, counterName).setValue(tag.getValue());
-          }
-        }
+        taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
       }
     }
   }

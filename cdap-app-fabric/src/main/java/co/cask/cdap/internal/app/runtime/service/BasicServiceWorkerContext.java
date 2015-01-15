@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,21 +21,22 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -68,7 +69,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
-  private final ServiceRunnableMetrics serviceRunnableMetrics;
+  private final Metrics userMetrics;
   private final int instanceId;
   private final int instanceCount;
   private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
@@ -76,12 +77,13 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
                                    int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
-                                   MetricsCollectionService metricsCollectionService,
+                                   MetricsCollectionService metricsSerice,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient transactionSystemClient,
                                    DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, runtimeArgs, spec.getDatasets(), getMetricContext(program, spec.getName(), instanceId),
-          metricsCollectionService, datasetFramework, cConf, discoveryServiceClient);
+    super(program, runId, runtimeArgs, spec.getDatasets(),
+          getMetricCollector(metricsSerice, MetricsScope.SYSTEM, program, spec.getName(), runId.getId(), instanceId),
+          datasetFramework, cConf, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
     this.datasets = ImmutableSet.copyOf(spec.getDatasets());
@@ -90,9 +92,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
-    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
-                                                             getMetricContext(program, spec.getName(), instanceId),
-                                                             runId.getId());
+    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsSerice, MetricsScope.USER, program,
+                                                                 spec.getName(), runId.getId(), instanceId));
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
@@ -123,17 +124,24 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
   @Override
   public Metrics getMetrics() {
-    return serviceRunnableMetrics;
+    return userMetrics;
   }
 
   public LoggingContext getLoggingContext() {
-    return new UserServiceLoggingContext(program.getAccountId(), program.getApplicationId(),
+    return new UserServiceLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                          program.getId().getId(), specification.getName());
   }
 
-  private static String getMetricContext(Program program, String runnableName, int instanceId) {
-    return String.format("%s.%s.%s.%s.%d", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
-                         program.getName(), runnableName, instanceId);
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
+                                                     MetricsScope scope, Program program, String runnableName,
+                                                     String runId, int instanceId) {
+    if (service == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
+    tags.put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
+    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
+    return service.getCollector(scope, tags);
   }
 
   @Override

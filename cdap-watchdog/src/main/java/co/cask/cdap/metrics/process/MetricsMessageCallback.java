@@ -19,6 +19,7 @@ import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
@@ -44,14 +45,14 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   private static final Logger LOG = LoggerFactory.getLogger(MetricsMessageCallback.class);
 
   private final MetricsScope scope;
-  private final DatumReader<MetricsRecord> recordReader;
+  private final DatumReader<MetricValue> recordReader;
   private final Schema recordSchema;
   private final Set<MetricsProcessor> processors;
   private long recordProcessed;
 
   public MetricsMessageCallback(MetricsScope scope,
                                 Set<MetricsProcessor> processors,
-                                DatumReader<MetricsRecord> recordReader,
+                                DatumReader<MetricValue> recordReader,
                                 Schema recordSchema) {
     this.scope = scope;
     this.processors = processors;
@@ -63,10 +64,10 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   public void onReceived(Iterator<FetchedMessage> messages) {
     // Decode the metrics records.
     final ByteBufferInputStream is = new ByteBufferInputStream(null);
-    List<MetricsRecord> records = ImmutableList.copyOf(
-      Iterators.filter(Iterators.transform(messages, new Function<FetchedMessage, MetricsRecord>() {
+    List<MetricValue> records = ImmutableList.copyOf(
+      Iterators.filter(Iterators.transform(messages, new Function<FetchedMessage, MetricValue>() {
       @Override
-      public MetricsRecord apply(FetchedMessage input) {
+      public MetricValue apply(FetchedMessage input) {
         try {
           return recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         } catch (IOException e) {
@@ -82,7 +83,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
     }
     // Invoke processors one by one.
     for (MetricsProcessor processor : processors) {
-      processor.process(scope, records.iterator());
+      processor.process(scope, new MetricRecordsWrapper(records.iterator()));
     }
 
     recordProcessed += records.size();

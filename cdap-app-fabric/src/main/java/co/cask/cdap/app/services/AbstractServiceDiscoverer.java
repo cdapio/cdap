@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,21 +45,21 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
 
-  protected String accountId;
+  protected String namespaceId;
   protected String applicationId;
 
   protected AbstractServiceDiscoverer() {
   }
 
   public AbstractServiceDiscoverer(Program program) {
-    this.accountId = program.getAccountId();
+    this.namespaceId = program.getNamespaceId();
     this.applicationId = program.getApplicationId();
   }
 
   @Override
   public URL getServiceURL(final String applicationId, final String serviceId) {
     ServiceDiscovered serviceDiscovered = getDiscoveryServiceClient().discover(String.format("service.%s.%s.%s",
-                                                                                             accountId,
+                                                                                             namespaceId,
                                                                                              applicationId,
                                                                                              serviceId));
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
@@ -106,8 +106,8 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
     }
     String hostName = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.API_VERSION_2, applicationId, serviceId);
+    String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/", hostName, port,
+                                Constants.Gateway.API_VERSION_3, namespaceId, applicationId, serviceId);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

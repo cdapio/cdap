@@ -589,7 +589,7 @@
     -->
     <property>
         <name>router.bind.address</name>
-        <value>0.0.0.0</value>
+        <value>127.0.0.1</value>
         <description>Specifies the address for router server to bind to</description>
     </property>
 
@@ -657,6 +657,30 @@
         <name>metrics.data.table.retention.resolution.1.seconds</name>
         <value>7200</value>
         <description>Retention resolution 1 sec table in seconds</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.60.seconds</name>
+        <value>2592000</value>
+        <description>Retention resolution for 1 minute table (in seconds). Default retention period is 30 days</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.3600.seconds</name>
+        <value>2592000</value>
+        <description>Retention resolution 1 hour table (in seconds). Default retention period is 30 days</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.ts.rollTime.60</name>
+        <value>60</value>
+        <description>Number of columns in a 1 minute time series table</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.ts.rollTime.3600</name>
+        <value>24</value>
+        <description>Number of columns in 1 hour time series table</description>
     </property>
 
     <property>
@@ -935,6 +959,15 @@
         <name>explore.cleanup.job.schedule.secs</name>
         <value>60</value>
         <description>Time in secs to schedule clean up job to timeout operations</description>
+    </property>
+
+    <!--
+        Notification System Settings
+    -->
+    <property>
+        <name>notification.transport.system</name>
+        <value>kafka</value>
+        <description>Transport system used by the Notification system - can be kafka/stream</description>
     </property>
 
     <!--

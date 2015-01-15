@@ -775,7 +775,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.routerBindAddress,
       port: self.routerBindPort,
-      path: '/' + self.API_VERSION + '/deploy/status',
+      path: '/' + self.API_VERSION + '/ping',
       method: 'GET',
       headers: headerOpts
     };

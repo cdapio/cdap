@@ -15,8 +15,7 @@
  */
 package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.RuntimeContext;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -26,9 +25,6 @@ import java.util.concurrent.Callable;
  */
 public interface WorkflowContext {
 
-  /**
-   * 
-   */
   WorkflowSpecification getWorkflowSpecification();
 
   WorkflowActionSpecification getSpecification();
@@ -36,16 +32,16 @@ public interface WorkflowContext {
   long getLogicalStartTime();
 
   /**
-   * Returns a {@link Callable} that launches the {@link MapReduce} job
-   * of the specified name when the {@link Callable#call()} method is called. When the MapReduce job completes, 
-   * the {@link Callable} returns the {@link MapReduceContext} of the job or {@code null} if
+   * Returns a {@link Callable} that launches the associated program
+   * with the specified name when the {@link Callable#call() call} method is invoked. When the program completes,
+   * the {@link Callable} returns the {@link RuntimeContext} of the program or {@code null} if
    * no such context exists.
+   * <p/>
+   * <p> An Exception is thrown from the {@link Callable#call()} method if the program fails </p>
    *
-   * An Exception is thrown from the {@link Callable#call()} method if the MapReduce job fails.
-   *
-   * @throws IllegalArgumentException if no MapReduce job with the specified name is defined in the workflow.
+   * @throws IllegalArgumentException if no program with the specified name is defined in the workflow
    */
-  Callable<MapReduceContext> getMapReduceRunner(String name);
+  Callable<RuntimeContext> getProgramRunner(String name);
 
   /**
    * @return A map of the argument's key and value.

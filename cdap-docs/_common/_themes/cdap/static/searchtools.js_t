@@ -11,7 +11,7 @@
  
 var manuals = {
 {% for manual in theme_manuals -%}
-    "{{ manual }}":"{{ theme_manualtitles[loop.index0] }}",
+    "{{ manual }}":"{{ theme_manual_titles[loop.index0] }}",
 {%- endfor %} };
 
 {{ search_language_stemming_code|safe }}
