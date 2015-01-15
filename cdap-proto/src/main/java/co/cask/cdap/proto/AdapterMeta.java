@@ -53,11 +53,11 @@ public final class AdapterMeta {
   }
 
   public String getFrequency() {
-    throw new UnsupportedOperationException("Frequency is currently not supported");
+    return frequency;
   }
 
   public Schedule getSchedule() {
-    throw new UnsupportedOperationException("schedule is currently not supported");
+    return new Schedule(String.format("schedule.%s", id), "Generic Adapter Description", frequency, Schedule.Action.START);
   }
 
   public String getAppId() {

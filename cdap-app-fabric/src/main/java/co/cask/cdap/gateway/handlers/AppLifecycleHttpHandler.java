@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -379,6 +378,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Preconditions.checkNotNull(adapterMeta.getDatasetName(), "Adaptermeta's datasetName is null");
       Preconditions.checkNotNull(adapterMeta.getId(), "Adaptermeta's id is null");
       Preconditions.checkNotNull(adapterMeta.getStreamName(), "Adaptermeta's streamName is null");
+      // validate specified frequency
+      String frequency = adapterMeta.getFrequency();
+      Preconditions.checkNotNull(frequency, "Adaptermeta's frequency is null");
+
+      adapterMeta.getSchedule();
 
       String adapterId = adapterMeta.getId();
       AdapterMeta existingAdapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
@@ -390,23 +394,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
+      // ensure stream exists
+      String streamName = adapterMeta.getStreamName();
+      if (!streamAdmin.exists(streamName)) {
+        LOG.debug("stream instance {} does not exist during create of adapter: {}", streamName, adapterMeta);
+      }
+
       // create datasets
       String datasetName = adapterMeta.getDatasetName();
       if (!datasetFramework.hasInstance(datasetName)) {
         datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
       } else {
         LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, adapterMeta);
-      }
-
-      // create streams
-      String streamName = adapterMeta.getStreamName();
-      if (!streamAdmin.exists(streamName)) {
-        streamAdmin.create(streamName);
-        if (exploreEnabled) {
-          exploreFacade.enableExploreStream(streamName);
-        }
-      } else {
-        LOG.debug("stream instance {} already existed during create of adapter: {}", streamName, adapterMeta);
       }
 
       // deploy App
@@ -416,11 +415,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // Distributed
 
 
-      String scheduleName = String.format("schedule.%s", adapterId);
-      Schedule schedule = new Schedule(scheduleName, "Adapter Description.", "0 4 * * *", Schedule.Action.START);
       Id.Program scheduledProgramId = Id.Program.from(namespaceId, adapterMeta.getAppId(), adapterMeta.getProgramId());
       // TODO: Update application specification
-      scheduler.schedule(scheduledProgramId, adapterMeta.getProgramType(), ImmutableList.of(schedule));
+      scheduler.schedule(scheduledProgramId, adapterMeta.getProgramType(), ImmutableList.of(adapterMeta.getSchedule()));
 
       // Write to mds
       store.createAdapter(Id.Namespace.from(namespaceId), adapterMeta);

@@ -37,6 +37,9 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.internal.TempFolder;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
+import com.clearspring.analytics.util.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -58,6 +61,7 @@ import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
 
 import java.util.List;
+import java.util.Set;
 
 /**
 *
@@ -211,6 +215,26 @@ public class SchedulerTest {
     Assert.assertEquals(1, triggers.size());
 
     schedulerTearDown();
+  }
+
+  @Test
+  public void testCronConversion() {
+    toCronExpr("1m");
+  }
+
+  private String toCronExpr(String frequency) {
+    // TODO: better error messages
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(frequency));
+    // remove all whitespace
+    frequency = frequency.replaceAll("\\s+","");
+    Preconditions.checkArgument(frequency.length() >= 0);
+
+    Set<Character> allowedCharacters = ImmutableSet.of('m', 'h', 'd');
+    char lastChar = frequency.charAt(frequency.length() - 1);
+    Preconditions.checkArgument(allowedCharacters.contains(lastChar));
+
+    String value = frequency.substring(frequency.length() - 1);
+    return null;
   }
 
   @AfterClass
