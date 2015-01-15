@@ -33,7 +33,6 @@ import java.util.List;
  * the value is the stream event body formatted by some {@link RecordFormat}.
  */
 public final class FormatStreamEventDecoder implements StreamEventDecoder<LongWritable, StructuredRecord> {
-  private static final String TIMESTAMP_FIELD = "ts";
   private static final String HEADERS_FIELD = "headers";
   private final LongWritable key = new LongWritable();
   private final RecordFormat<ByteBuffer, StructuredRecord> bodyFormat;
@@ -49,7 +48,6 @@ public final class FormatStreamEventDecoder implements StreamEventDecoder<LongWr
     this.bodyFormat = bodyFormat;
     this.bodySchema = bodyFormat.getSchema();
     List<Schema.Field> fields = Lists.newArrayList(
-      Schema.Field.of(TIMESTAMP_FIELD, Schema.of(Schema.Type.LONG)),
       Schema.Field.of(HEADERS_FIELD, Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))
     );
     fields.addAll(bodySchema.getFields());
@@ -61,7 +59,6 @@ public final class FormatStreamEventDecoder implements StreamEventDecoder<LongWr
                                                              DecodeResult<LongWritable, StructuredRecord> result) {
     key.set(event.getTimestamp());
     StructuredRecord.Builder builder = StructuredRecord.builder(eventSchema)
-      .set(TIMESTAMP_FIELD, event.getTimestamp())
       .set(HEADERS_FIELD, event.getHeaders());
     StructuredRecord body = bodyFormat.read(event.getBody());
     for (Schema.Field field : bodySchema.getFields()) {
