@@ -113,6 +113,10 @@ public class RouterServiceLookup {
       // Otherwise the destination service will be other cdap services.
       // Path lookup can be skipped for requests to webapp.
       String destService = routerPathLookup.getRoutingService(service, path, httpRequest);
+      if (destService == null) {
+        return null;
+      }
+
       CacheKey cacheKey = new CacheKey(destService, host, path);
       LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
 

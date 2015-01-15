@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetTypeNameCompleter;
 import co.cask.cdap.cli.completer.element.EndpointCompleter;
+import co.cask.cdap.cli.completer.element.NamespaceIdCompleter;
 import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
 import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
@@ -52,6 +53,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
+        .put(ArgumentName.NAMESPACE_ID.getName(), injector.getInstance(NamespaceIdCompleter.class))
         .putAll(generateProgramIdCompleters(injector))
         .build();
   }

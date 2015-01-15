@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ public class DefaultId {
   private static final String DEFAULT_APPLICATION_ID = "myapp";
   private static final String DEFAULT_PROGRAM_ID = "pgm";
 
-  public static final Id.Account ACCOUNT = new Id.Account(Constants.DEFAULT_NAMESPACE);
-  public static final Id.Application APPLICATION = new Id.Application(ACCOUNT, DEFAULT_APPLICATION_ID);
+  public static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
+  public static final Id.Application APPLICATION = new Id.Application(NAMESPACE, DEFAULT_APPLICATION_ID);
   public static final Id.Program PROGRAM = new Id.Program(APPLICATION, DEFAULT_PROGRAM_ID);
 }

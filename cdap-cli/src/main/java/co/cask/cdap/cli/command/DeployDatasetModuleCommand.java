@@ -17,11 +17,12 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -31,19 +32,21 @@ import java.io.PrintStream;
 /**
  * Deploys a dataset module.
  */
-public class DeployDatasetModuleCommand implements Command {
+public class DeployDatasetModuleCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient datasetModuleClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public DeployDatasetModuleCommand(DatasetModuleClient datasetModuleClient, FilePathResolver resolver) {
+  public DeployDatasetModuleCommand(DatasetModuleClient datasetModuleClient, FilePathResolver resolver,
+                                    CLIConfig cliConfig) {
+    super(cliConfig);
     this.datasetModuleClient = datasetModuleClient;
     this.resolver = resolver;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     File moduleJarFile = resolver.resolvePathToFile(arguments.get(ArgumentName.DATASET_MODULE_JAR_FILE.toString()));
     Preconditions.checkArgument(moduleJarFile.exists(),
                                 "Module jar file '" + moduleJarFile.getAbsolutePath() + "' does not exist");

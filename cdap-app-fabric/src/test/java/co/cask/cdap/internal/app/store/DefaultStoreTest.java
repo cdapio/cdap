@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -87,7 +87,7 @@ public class DefaultStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     AppFabricTestHelper.deployApplication(ToyApp.class);
-    Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"),
+    Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp", "ToyFlow"),
                                         ProgramType.FLOW);
     Assert.assertNotNull(program);
   }
@@ -167,7 +167,7 @@ public class DefaultStoreTest {
   @Test
   public void testAddApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
+    Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
 
     ApplicationSpecification stored = store.getApplication(id);
@@ -179,7 +179,7 @@ public class DefaultStoreTest {
   @Test
   public void testUpdateSameApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
+    Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
     // update
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1_modified.jar"));
@@ -192,7 +192,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testUpdateChangedApplication() throws Exception {
-    Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
+    Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
 
     store.addApplication(id, Specifications.from(new FooApp()), new LocalLocationFactory().create("/foo"));
     // update
@@ -332,7 +332,7 @@ public class DefaultStoreTest {
     AbstractApplication app = new AppWithServices();
 
     ApplicationSpecification appSpec = Specifications.from(app);
-    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
+    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservicestestdelete"));
 
     AbstractApplication newApp = new AppWithNoServices();
@@ -353,7 +353,7 @@ public class DefaultStoreTest {
     app.configure(appConfigurer, new ApplicationContext());
 
     ApplicationSpecification appSpec = appConfigurer.createSpecification();
-    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
+    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
 
     // Test setting of service instances
@@ -379,7 +379,7 @@ public class DefaultStoreTest {
 
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
-    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
+    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Id.Program programId = new Id.Program(appId, "WordCountFlow");
@@ -403,7 +403,7 @@ public class DefaultStoreTest {
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
-    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
+    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
     Id.Program programId = new Id.Program(appId, "NoOpProcedure");
 
     int instancesFromSpec = spec.getProcedures().get("NoOpProcedure").getInstances();
@@ -419,62 +419,62 @@ public class DefaultStoreTest {
   @Test
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Account accountId = new Id.Account("account1");
-    Id.Application appId = new Id.Application(accountId, spec.getName());
+    Id.Namespace namespaceId = new Id.Namespace("account1");
+    Id.Application appId = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing flow
-    store.removeAllApplications(accountId);
+    store.removeAllApplications(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
   public void testRemoveAll() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Account accountId = new Id.Account("account1");
-    Id.Application appId = new Id.Application(accountId, "application1");
+    Id.Namespace namespaceId = new Id.Namespace("account1");
+    Id.Application appId = new Id.Application(namespaceId, "application1");
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing flow
-    store.removeAll(accountId);
+    store.removeAll(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should not survive deletion
-    Assert.assertEquals(0, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(0, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
   public void testRemoveApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Account accountId = new Id.Account("account1");
-    Id.Application appId = new Id.Application(accountId, spec.getName());
+    Id.Namespace namespaceId = new Id.Namespace("account1");
+    Id.Application appId = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing application
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
   public void testRuntimeArgsDeletion() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
-    Id.Account accountId = new Id.Account("testDeleteRuntimeArgs");
-    Id.Application appId = new Id.Application(accountId, spec.getName());
+    Id.Namespace namespaceId = new Id.Namespace("testDeleteRuntimeArgs");
+    Id.Application appId = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
@@ -530,12 +530,12 @@ public class DefaultStoreTest {
     // Remove application using accountId, AppId and verify
     // Remove all from accountId and verify
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
-    Id.Account accountId = new Id.Account("testDeleteAll");
-    Id.Application appId1 = new Id.Application(accountId, spec.getName());
+    Id.Namespace namespaceId = new Id.Namespace("testDeleteAll");
+    Id.Application appId1 = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId1, spec, new LocalLocationFactory().create("/allPrograms"));
 
     spec = Specifications.from(new WordCountApp());
-    Id.Application appId2 = new Id.Application(accountId, spec.getName());
+    Id.Application appId2 = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId2, spec, new LocalLocationFactory().create("/wordCount"));
 
     Id.Program flowProgramId1 = new Id.Program(appId1, "NoOpFlow");
@@ -586,7 +586,7 @@ public class DefaultStoreTest {
     verifyRunHistory(flowProgramId2, 1);
 
     // remove all
-    store.removeAll(accountId);
+    store.removeAll(namespaceId);
 
     verifyRunHistory(flowProgramId2, 0);
   }
@@ -612,7 +612,7 @@ public class DefaultStoreTest {
     //Verify if there are 4 program specs in AllProgramsApp
     Assert.assertEquals(4, specsToBeVerified.size());
 
-    Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
+    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
     // Check the diff with the same app - re-deployement scenario where programs are not removed.
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId,  spec);
     Assert.assertEquals(0, deletedSpecs.size());
@@ -645,7 +645,7 @@ public class DefaultStoreTest {
 
     Assert.assertEquals(2, specsToBeDeleted.size());
 
-    Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
+    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
 
     //Get the spec for app that contains only flow and mapreduce - removing procedures and workflows.
     spec = Specifications.from(new FlowMapReduceApp());

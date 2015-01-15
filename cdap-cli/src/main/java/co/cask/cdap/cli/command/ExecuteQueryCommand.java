@@ -17,7 +17,9 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.QueryClient;
@@ -27,7 +29,6 @@ import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,18 +45,19 @@ import java.util.concurrent.TimeoutException;
 /**
  * Executes a dataset query.
  */
-public class ExecuteQueryCommand implements Command {
+public class ExecuteQueryCommand extends AbstractAuthCommand {
 
   private static final long TIMEOUT_MS = 30000;
   private final QueryClient queryClient;
 
   @Inject
-  public ExecuteQueryCommand(QueryClient queryClient) {
+  public ExecuteQueryCommand(QueryClient queryClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.queryClient = queryClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String query = arguments.get(ArgumentName.QUERY.toString());
 
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);

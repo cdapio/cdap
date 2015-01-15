@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,16 +28,16 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
 
   /**
    * Constructs the FlowletLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
    * @param flowId flow id
    * @param flowletId flowlet id
    */
-  public FlowletLoggingContext(final String accountId,
+  public FlowletLoggingContext(final String namespaceId,
                                final String applicationId,
                                final String flowId,
                                final String flowletId) {
-    super(accountId, applicationId);
+    super(namespaceId, applicationId);
     setSystemTag(TAG_FLOW_ID, flowId);
     setSystemTag(TAG_FLOWLET_ID, flowletId);
   }

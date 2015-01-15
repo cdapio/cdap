@@ -17,29 +17,31 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 
 import java.io.PrintStream;
 
 /**
  * Gets the logs of a program.
  */
-public class GetProgramLogsCommand implements Command {
+public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramLogsCommand(ElementType elementType, ProgramClient programClient) {
+  protected GetProgramLogsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
     long start = arguments.getLong(ArgumentName.START_TIME.toString(), 0);

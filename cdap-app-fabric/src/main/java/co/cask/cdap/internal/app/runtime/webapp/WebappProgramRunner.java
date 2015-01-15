@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -145,7 +145,7 @@ public class WebappProgramRunner implements ProgramRunner {
 
   public static String getServiceName(ProgramType type, Program program) throws Exception {
     return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                         program.getAccountId(), program.getApplicationId(), type.name().toLowerCase());
+                         program.getNamespaceId(), program.getApplicationId(), type.name().toLowerCase());
   }
 
   private static final String DEFAULT_DIR_NAME_COLON = ServePathGenerator.DEFAULT_DIR_NAME + ":";

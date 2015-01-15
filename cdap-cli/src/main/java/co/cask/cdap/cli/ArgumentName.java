@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask, Inc.
+ * Copyright © 2012-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,11 @@ public enum ArgumentName {
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
-  HTTP_BODY("body");
+  HTTP_BODY("body"),
+
+  NAMESPACE_ID("namespace-id"),
+  NAMESPACE_DISPLAY_NAME("namespace-display-name"),
+  NAMESPACE_DESCRIPTION("namespace-description");
 
   private final String name;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package co.cask.cdap.logging.context;
 
-import co.cask.cdap.common.logging.AccountLoggingContext;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.logging.filter.AndFilter;
@@ -43,14 +43,14 @@ public final class LoggingContextHelper {
       throw new IllegalArgumentException("Tags are empty, cannot determine logging context");
     }
 
-    String accountId = tags.get(AccountLoggingContext.TAG_ACCOUNT_ID);
+    String namespaceId = tags.get(NamespaceLoggingContext.TAG_NAMESPACE_ID);
     String applicationId = tags.get(ApplicationLoggingContext.TAG_APPLICATION_ID);
 
     String systemId = tags.get(SystemLoggingContext.TAG_SYSTEM_ID);
     String componentId = tags.get(ComponentLoggingContext.TAG_COMPONENT_ID);
 
     // No account id or application id present.
-    if (accountId == null || applicationId == null) {
+    if (namespaceId == null || applicationId == null) {
       if (systemId == null || componentId == null) {
         throw new IllegalArgumentException("No account/application or system/component id present");
       }
@@ -60,21 +60,21 @@ public final class LoggingContextHelper {
       if (!tags.containsKey(FlowletLoggingContext.TAG_FLOWLET_ID)) {
         return null;
       }
-      return new FlowletLoggingContext(accountId, applicationId, tags.get(FlowletLoggingContext.TAG_FLOW_ID),
+      return new FlowletLoggingContext(namespaceId, applicationId, tags.get(FlowletLoggingContext.TAG_FLOW_ID),
                                        tags.get(FlowletLoggingContext.TAG_FLOWLET_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
-      return new MapReduceLoggingContext(accountId, applicationId,
+      return new MapReduceLoggingContext(namespaceId, applicationId,
                                          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID));
     } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
-        return new SparkLoggingContext(accountId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID));
+        return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID));
     } else if (tags.containsKey(ProcedureLoggingContext.TAG_PROCEDURE_ID)) {
-      return new ProcedureLoggingContext(accountId, applicationId,
+      return new ProcedureLoggingContext(namespaceId, applicationId,
                                          tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID));
     } else if (tags.containsKey(UserServiceLoggingContext.TAG_USERSERVICE_ID)) {
       if (!tags.containsKey(UserServiceLoggingContext.TAG_RUNNABLE_ID)) {
         return null;
       }
-      return new UserServiceLoggingContext(accountId, applicationId,
+      return new UserServiceLoggingContext(namespaceId, applicationId,
                                            tags.get(UserServiceLoggingContext.TAG_USERSERVICE_ID),
                                            tags.get(UserServiceLoggingContext.TAG_RUNNABLE_ID));
     } else if (tags.containsKey(ServiceLoggingContext.TAG_SERVICE_ID)) {
@@ -89,19 +89,19 @@ public final class LoggingContextHelper {
     return new ServiceLoggingContext(systemId, componentId, serviceId);
   }
 
-  public static LoggingContext getLoggingContext(String accountId, String applicationId, String entityId,
+  public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
                                                  ProgramType programType) {
     switch (programType) {
       case FLOW:
-        return new FlowletLoggingContext(accountId, applicationId, entityId, "");
+        return new FlowletLoggingContext(namespaceId, applicationId, entityId, "");
       case PROCEDURE:
-        return new ProcedureLoggingContext(accountId, applicationId, entityId);
+        return new ProcedureLoggingContext(namespaceId, applicationId, entityId);
       case MAPREDUCE:
-        return new MapReduceLoggingContext(accountId, applicationId, entityId);
+        return new MapReduceLoggingContext(namespaceId, applicationId, entityId);
       case SPARK:
-        return new SparkLoggingContext(accountId, applicationId, entityId);
+        return new SparkLoggingContext(namespaceId, applicationId, entityId);
       case SERVICE:
-        return new UserServiceLoggingContext(accountId, applicationId, entityId, "");
+        return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "");
       default:
         throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
     }
@@ -118,7 +118,7 @@ public final class LoggingContextHelper {
                          new MdcExpression(ServiceLoggingContext.TAG_COMPONENT_ID, componentId),
                          new MdcExpression(tagName, entityId)));
     } else {
-      String accountId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_ACCOUNT_ID).getValue();
+      String namespaceId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_NAMESPACE_ID).getValue();
       String applId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
 
       String tagName;
@@ -140,13 +140,13 @@ public final class LoggingContextHelper {
         entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
       } else if (loggingContext instanceof GenericLoggingContext) {
         entityId = loggingContext.getSystemTagsMap().get(GenericLoggingContext.TAG_ENTITY_ID).getValue();
-        return createGenericFilter(accountId, applId, entityId);
+        return createGenericFilter(namespaceId, applId, entityId);
       } else {
         throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
       }
 
       return new AndFilter(
-        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_ACCOUNT_ID, accountId),
+        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
                          new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
                          new MdcExpression(tagName, entityId)
         )
@@ -154,12 +154,12 @@ public final class LoggingContextHelper {
     }
   }
 
-  private static Filter createGenericFilter(String accountId, String applicationId, String entityId) {
-    FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(accountId, applicationId, entityId, "");
-    ProcedureLoggingContext procedureLoggingContext = new ProcedureLoggingContext(accountId, applicationId, entityId);
-    MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(accountId, applicationId, entityId);
-    SparkLoggingContext sparkLoggingContext = new SparkLoggingContext(accountId, applicationId, entityId);
-    UserServiceLoggingContext userServiceLoggingContext = new UserServiceLoggingContext(accountId, applicationId,
+  private static Filter createGenericFilter(String namespaceId, String applicationId, String entityId) {
+    FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(namespaceId, applicationId, entityId, "");
+    ProcedureLoggingContext procedureLoggingContext = new ProcedureLoggingContext(namespaceId, applicationId, entityId);
+    MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(namespaceId, applicationId, entityId);
+    SparkLoggingContext sparkLoggingContext = new SparkLoggingContext(namespaceId, applicationId, entityId);
+    UserServiceLoggingContext userServiceLoggingContext = new UserServiceLoggingContext(namespaceId, applicationId,
                                                                                         entityId, "");
 
 
