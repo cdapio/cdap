@@ -348,4 +348,11 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 
+  @Test
+  public void testRouterFeedsLookup() {
+    final String namespacePath = "/v3//feeds/test";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), namespacePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, namespacePath, httpRequest);
+    Assert.assertEquals(null, result);
+  }
 }

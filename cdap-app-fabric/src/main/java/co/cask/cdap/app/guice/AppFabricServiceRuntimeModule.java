@@ -33,6 +33,7 @@ import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
+import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -219,9 +220,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
+      handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
-      handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(DashboardHttpHandler.class);
+      handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
     }

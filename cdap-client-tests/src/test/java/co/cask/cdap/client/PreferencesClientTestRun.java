@@ -19,7 +19,10 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.exception.NotFoundException;
+import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -35,7 +38,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -53,6 +55,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private ServiceClient serviceClient;
   private ProgramClient programClient;
+  private NamespaceClient namespaceClient;
 
   @Before
   public void setUp() throws Throwable {
@@ -61,6 +64,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     serviceClient = new ServiceClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
+    namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Test
@@ -116,7 +120,10 @@ public class PreferencesClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testInstancePreferences() throws Exception {
+  public void testPreferences() throws Exception {
+    String invalidNamespace = "invalid";
+    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace).build());
+
     Map<String, String> propMap = client.getInstancePreferences();
     Assert.assertEquals(ImmutableMap.<String, String>of(), propMap);
     propMap.put("k1", "instance");
@@ -130,6 +137,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
     client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE, propMap);
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false));
+    Assert.assertTrue(client.getNamespacePreferences(invalidNamespace, false).isEmpty());
+    Assert.assertEquals("instance", client.getNamespacePreferences(invalidNamespace, true).get("k1"));
 
     client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE);
     propMap.put("k1", "instance");
@@ -181,15 +190,9 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), true));
-    appClient.delete(FakeApp.NAME);
-  }
 
-  @Test
-  public void testDeletingApp() throws Exception {
-    Map<String, String> propMap = Maps.newHashMap();
-    File jarFile = createAppJarFile(FakeApp.class);
-    appClient.deploy(jarFile);
 
+    //Test Deleting Application
     propMap.put("k1", "application");
     client.setApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, propMap);
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
@@ -208,15 +211,41 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), false));
+
+    appClient.delete(FakeApp.NAME);
+    namespaceClient.delete(invalidNamespace);
   }
 
-  @Test(expected = IOException.class)
+  @Test
+  public void testDeletingNamespace() throws Exception {
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("k1", "namespace");
+    namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
+
+    client.setNamespacePreferences("myspace", propMap);
+    Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", false));
+    Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", true));
+
+    namespaceClient.delete("myspace");
+    namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
+    Assert.assertTrue(client.getNamespacePreferences("myspace", false).isEmpty());
+    Assert.assertTrue(client.getNamespacePreferences("myspace", true).isEmpty());
+
+    namespaceClient.delete("myspace");
+  }
+
+  @Test(expected = NotFoundException.class)
   public void testInvalidNamespace() throws Exception {
     client.setNamespacePreferences("somespace", ImmutableMap.of("k1", "v1"));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = NotFoundException.class)
   public void testInvalidApplication() throws Exception {
     client.getApplicationPreferences("somespace", "someapp", true);
+  }
+
+  @Test(expected = ProgramNotFoundException.class)
+  public void testInvalidProgram() throws Exception {
+    client.deleteProgramPreferences("somespace", "someapp", "flows", "myflow");
   }
 }
