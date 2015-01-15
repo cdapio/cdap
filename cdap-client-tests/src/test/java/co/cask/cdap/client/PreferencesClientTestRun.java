@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -39,16 +40,21 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   private PreferencesClient client;
   private ApplicationClient appClient;
+  private NamespaceClient namespaceClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
     client = new PreferencesClient(clientConfig);
     appClient = new ApplicationClient(clientConfig);
+    namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Test
-  public void testInstancePreferences() throws Exception {
+  public void testPreferences() throws Exception {
+    String invalidNamespace = "invalid";
+    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace).build());
+
     Map<String, String> propMap = client.getInstancePreferences();
     Assert.assertEquals(ImmutableMap.<String, String>of(), propMap);
     propMap.put("k1", "instance");
@@ -62,6 +68,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
     client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE, propMap);
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false));
+    Assert.assertTrue(client.getNamespacePreferences(invalidNamespace, false).isEmpty());
+    Assert.assertEquals("instance", client.getNamespacePreferences(invalidNamespace, true).get("k1"));
 
     client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE);
     propMap.put("k1", "instance");
