@@ -28,13 +28,9 @@ import java.util.Set;
 public final class AdapterSpecification {
 
   private final String name;
-
   private final AdapterType type;
-
   private final Map<String, String> properties;
-
   private final Set<Source> sources;
-
   private final Set<Sink> sinks;
 
   /**

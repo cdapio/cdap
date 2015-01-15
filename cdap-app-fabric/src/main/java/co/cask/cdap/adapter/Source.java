@@ -26,9 +26,7 @@ import java.util.Map;
 public final class Source {
 
   private final String name;
-
   private final DataType type;
-
   private final Map<String, String> properties;
 
   /**
