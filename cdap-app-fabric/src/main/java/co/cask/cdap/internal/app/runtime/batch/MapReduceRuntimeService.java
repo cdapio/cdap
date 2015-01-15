@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -504,13 +505,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     StreamInputFormat.setStreamPath(job, streamPath.toURI());
     StreamInputFormat.setTimeRange(job, stream.getStartTime(), stream.getEndTime());
 
-    String decoderType = stream.getDecoderType();
-    if (decoderType == null) {
-      // If the user don't specify the decoder, detect the type from Mapper/Reducer
-      setStreamEventDecoder(job);
+    FormatSpecification formatSpecification = stream.getFormatSpecification();
+    if (formatSpecification != null) {
+      // this will set the decoder to the correct type. so no need to set it.
+      // TODO: allow type projection if the mapper type is compatible (CDAP-1149)
+      StreamInputFormat.setBodyFormatSpecification(job, formatSpecification);
     } else {
-      StreamInputFormat.setDecoderClassName(job, decoderType);
+      String decoderType = stream.getDecoderType();
+      if (decoderType == null) {
+        // If the user don't specify the decoder, detect the type from Mapper/Reducer
+        setStreamEventDecoder(job);
+      } else {
+        StreamInputFormat.setDecoderClassName(job, decoderType);
+      }
     }
+
     job.setInputFormatClass(StreamInputFormat.class);
 
     LOG.info("Using Stream as input from {}", streamPath.toURI());
