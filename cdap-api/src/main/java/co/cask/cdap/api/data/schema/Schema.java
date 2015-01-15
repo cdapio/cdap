@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package co.cask.cdap.api.data.schema;
 
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
@@ -38,6 +39,7 @@ import java.util.Set;
 /**
  * This class represents schema of data types.
  */
+@Beta
 public final class Schema {
 
   /**
