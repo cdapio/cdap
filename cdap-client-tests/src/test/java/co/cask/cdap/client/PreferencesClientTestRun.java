@@ -122,6 +122,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), true));
     appClient.delete(FakeApp.NAME);
+    namespaceClient.delete(invalidNamespace);
   }
 
   @Test
