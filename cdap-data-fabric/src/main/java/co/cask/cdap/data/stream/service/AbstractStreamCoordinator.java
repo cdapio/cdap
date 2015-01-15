@@ -160,7 +160,8 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin,
+                                                                                              streamName, listener));
   }
 
   @Override
