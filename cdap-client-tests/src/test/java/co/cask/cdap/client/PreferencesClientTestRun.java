@@ -122,16 +122,9 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), true));
-    appClient.delete(FakeApp.NAME);
-    namespaceClient.delete(invalidNamespace);
-  }
 
-  @Test
-  public void testDeletingApp() throws Exception {
-    Map<String, String> propMap = Maps.newHashMap();
-    File jarFile = createAppJarFile(FakeApp.class);
-    appClient.deploy(jarFile);
 
+    //Test Deleting Application
     propMap.put("k1", "application");
     client.setApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, propMap);
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
@@ -150,6 +143,27 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
     Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
                                                               FakeApp.FLOWS.get(0), false));
+
+    appClient.delete(FakeApp.NAME);
+    namespaceClient.delete(invalidNamespace);
+  }
+
+  @Test
+  public void testDeletingNamespace() throws Exception {
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("k1", "namespace");
+    namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
+
+    client.setNamespacePreferences("myspace", propMap);
+    Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", false));
+    Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", true));
+
+    namespaceClient.delete("myspace");
+    namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
+    Assert.assertTrue(client.getNamespacePreferences("myspace", false).isEmpty());
+    Assert.assertTrue(client.getNamespacePreferences("myspace", true).isEmpty());
+
+    namespaceClient.delete("myspace");
   }
 
   @Test(expected = NotFoundException.class)
