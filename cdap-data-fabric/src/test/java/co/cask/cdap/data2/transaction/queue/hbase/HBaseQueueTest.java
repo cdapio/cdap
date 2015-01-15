@@ -26,6 +26,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -128,6 +129,7 @@ public abstract class HBaseQueueTest extends QueueTest {
                                                    new ConfigModule(cConf, hConf),
                                                    new ZKClientModule(),
                                                    new DiscoveryRuntimeModule().getDistributedModules(),
+                                                   new DataSetsModules().getDistributedModule(),
                                                    new TransactionMetricsModule(),
                                                    new AbstractModule() {
 

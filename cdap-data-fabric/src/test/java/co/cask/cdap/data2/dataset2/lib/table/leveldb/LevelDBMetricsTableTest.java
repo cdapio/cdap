@@ -35,6 +35,7 @@ import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -66,9 +67,15 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
                                DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
         }
+
+        @Provides
+        @SuppressWarnings("unused")
+        protected DatasetFramework provideDSFramework(DatasetDefinitionRegistryFactory factory) {
+          return new InMemoryDatasetFramework(factory);
+        }
       });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework = injector.getInstance(DatasetFramework.class);
     dsFramework.addModule("metrics-leveldb", new LevelDBMetricsTableModule());
   }
 

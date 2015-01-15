@@ -65,6 +65,8 @@ public class LocalQueueTest extends QueueTest {
       new ConfigModule(conf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
+      new DataSetsModules().getLocalModule(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
