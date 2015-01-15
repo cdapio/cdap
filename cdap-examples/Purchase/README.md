@@ -5,17 +5,17 @@ and makes it available via ad-hoc querying and the RESTful interface of a Servic
 
 Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, and MapReduce.
 
-- Uses scheduled MapReduce Workflows to read from one ObjectStore Dataset
+- Uses a scheduled MapReduce program and Workflow to read from one ObjectStore Dataset
   and write to another and demonstrates using ad-hoc SQL queries.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a
     Purchase object and stores the object in the purchases Dataset.
   - When scheduled by the PurchaseHistoryWorkFlow, the PurchaseHistoryBuilder MapReduce
-    job reads the purchases Dataset, creates a purchase history, and stores the purchase
+    program reads the purchases Dataset, creates a purchase history, and stores the purchase
     history in the history Dataset every morning at 4:00 A.M. You can manually (on the
     Process page in the CDAP Console) or programmatically execute the
-    PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the
+    PurchaseHistoryBuilder MapReduce to store customers' purchase history in the
     history Dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - You can use SQL to formulate ad-hoc queries over the history Dataset. This is done by

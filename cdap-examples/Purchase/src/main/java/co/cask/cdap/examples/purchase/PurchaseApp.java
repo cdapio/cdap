@@ -47,7 +47,7 @@ public class PurchaseApp extends AbstractApplication {
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
-    // Run a MapReduce job on the acquired data using a Workflow
+    // Run a MapReduce on the acquired data using a Workflow
     addWorkflow(new PurchaseHistoryWorkflow());
 
     // Retrieve the processed data using a Service

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-lifecycle:
 
@@ -10,7 +10,7 @@ Lifecycle HTTP RESTful API
 ===========================================================
 
 Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
-Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
+Flows, Procedures, MapReduce programs, Workflows, and Custom Services.
 
 .. highlight:: console
 
@@ -29,7 +29,7 @@ and its content as the body of the request::
   <JAR binary content>
 
 Invoke the same command to update an Application to a newer version.
-However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the Application.
+However, be sure to stop all of its Flows, Procedures and MapReduce programs before updating the Application.
 
 
 Deployed Applications
@@ -74,7 +74,7 @@ HTTP Responses
 
 Delete an Application
 ---------------------
-To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
+To delete an Application together with all of its Flows, Procedures and MapReduce programs, submit an HTTP DELETE::
 
   DELETE <base-url>/apps/<application-name>
 
@@ -97,7 +97,7 @@ because they belong to your account, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
-jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
+programs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/apps/<app-id>/<program-type>/<program-id>/<operation>
   GET <base-url>/apps/<app-id>/<program-type>/<program-id>/status
@@ -464,7 +464,7 @@ Example
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected program (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
+To see all the runs of a selected program (Flows, Procedures, MapReduce programs, Spark programs, Workflows, and
 Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::

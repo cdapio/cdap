@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _quick-start:
 
@@ -284,23 +284,23 @@ Bounces are difficult to detect with a Flow. This is because processing in a Flo
 triggered by incoming events; a bounce, however, is indicated by the absence of an event:
 the same user’s next page view. 
 
-It is much easier to detect bounces with a MapReduce Job. The Wise application includes a
+It is much easier to detect bounces with a MapReduce. The Wise application includes a
 MapReduce that computes the total number of bounces for each URL. It is part of a workflow
 that is scheduled to run every 10 minutes; we can also start the job immediately using the
 CLI::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh start mapreduce Wise.WiseWorkflow_BounceCountsMapReduce
-  Successfully started MapReduce job 'WiseWorkflow_BounceCountsMapReduce' of application 'Wise'
+  Successfully started MapReduce 'WiseWorkflow_BounceCountsMapReduce' of application 'Wise'
   
 or using a REST call::
 
   $ curl -X POST localhost:10000/v2/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
 
-Note that this MapReduce job processes the exact same data that is consumed by the
+Note that this MapReduce program processes the exact same data that is consumed by the
 WiseFlow, namely, the log event stream, and both programs can run at the same time without
 getting in each other’s way. 
 
-We can inquire as to the status of the MapReduce job::
+We can inquire as to the status of the MapReduce::
 
   $ curl -w '\n' localhost:10000/v2/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/status
   {"status":"RUNNING"}
@@ -357,7 +357,7 @@ fixed columns::
   +====================================================+
 
 We can even join two datasets: the one produced by the realtime flow; and the other one
-produced by the MapReduce Job. The query below returns, for each of the three URLs with the
+produced by the MapReduce. The query below returns, for each of the three URLs with the
 highest bounce ratio, the IP addresses that have made more than three requests for that
 URL. In other words: who are the users who are most interested in the least interesting
 pages?

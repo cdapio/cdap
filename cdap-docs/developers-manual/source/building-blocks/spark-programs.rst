@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _spark:
 
@@ -41,7 +41,7 @@ implementation of three methods:
     }
 
 The configure method is similar to the one found in Flows and
-MapReduce jobs. It defines the name, description, and the class containing the main method of a Spark program.
+MapReduce programs. It defines the name, description, and the class containing the main method of a Spark program.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 Spark program is executed. Because many Spark programs do not

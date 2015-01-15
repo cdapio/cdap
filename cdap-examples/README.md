@@ -43,17 +43,17 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## Purchase
 
-- An app that uses scheduled MapReduce Workflows to read from one ObjectStore Dataset
+- An app that uses scheduled MapReduce program and Workflow to read from one ObjectStore Dataset
   and write to another and demonstrates using ad-hoc SQL queries.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a
     Purchase object and stores the object in the purchases Dataset.
   - When scheduled by the PurchaseHistoryWorkFlow, the PurchaseHistoryBuilder MapReduce
-    job reads the purchases Dataset, creates a purchase history, and stores the purchase
+    program reads the purchases Dataset, creates a purchase history, and stores the purchase
     history in the history Dataset every morning at 4:00 A.M. You can manually (in the
     Process screen in the CDAP Console) or programmatically execute the 
-    PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the
+    PurchaseHistoryBuilder MapReduce to store customers' purchase history in the
     history Dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - You can use SQL to formulate ad-hoc queries over the history Dataset. This is done by

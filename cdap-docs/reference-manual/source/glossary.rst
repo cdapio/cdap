@@ -1,5 +1,5 @@
 .. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -34,16 +34,16 @@ Glossary
       data objects from their inputs and execute custom logic on each data object, able to
       perform data operations as well as emit data objects to the Flowlet’s outputs.
       
-   MapReduce Job
-      MapReduce is a processing model used to process data in batch. MapReduce jobs can be
+   MapReduce Program
+      MapReduce is a processing model used to process data in batch. MapReduce programs can be
       written as in a conventional Apache Hadoop system. CDAP Datasets can be accessed
-      from MapReduce jobs as both input and output.
+      from MapReduce programs as both input and output.
       
    Workflow
-      A Workflow is used to execute a series of MapReduce Jobs, with an optional schedule
+      A Workflow is used to execute a series of MapReduce programs, with an optional schedule
       to run itself periodically.
       
-   Spark Job
+   Spark Program
       Spark is a fast and general processing engine, compatible with Hadoop data, used for
       in-memory cluster computing. It lets you load large sets of data into memory and
       query them repeatedly, making it suitable for both iterative and interactive

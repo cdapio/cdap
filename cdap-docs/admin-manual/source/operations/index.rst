@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -36,7 +36,7 @@ Operations
 .. |runtime-arguments| replace:: **Runtime Arguments:**
 .. _runtime-arguments: runtime-arguments.html
 
-- |runtime-arguments|_ Flows, Procedures, MapReduce Jobs, and Workflows can receive **runtime arguments:** 
+- |runtime-arguments|_ Flows, Procedures, MapReduce programs, and Workflows can receive **runtime arguments:** 
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**

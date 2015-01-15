@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ============================================
 Core Virtualizations
@@ -32,7 +32,7 @@ seamlessly deploy it in a different environment—such as your distributed stagi
 .. rubric:: Data and Applications Combined
 
 With your data virtualized in CDAP as *Streams* and *Datasets*, you are able to process
-that data in realtime or in batch using Programs (*Flows, MapReduce Job, Spark Job,
+that data in realtime or in batch using Programs (*Flows, MapReduce program, Spark program,
 Workflow*) and you can serve data to external clients using *Services* and *Procedures*.
 
 This diagram how the CDAP components relate in an Apache Hadoop installation: 

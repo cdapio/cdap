@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _transaction-system:
 
@@ -108,7 +108,7 @@ performance offsets the increased risk of inaccurate data.
 
 Transactions in MapReduce
 -------------------------
-When you run a MapReduce job that interacts with Datasets, the system creates a
+When you run a MapReduce that interacts with Datasets, the system creates a
 long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are
 some rules to follow:
 

@@ -39,14 +39,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * MapReduce job that reads purchases from the purchases DataSet and creates a purchase history for every user
+ * MapReduce that reads purchases from the purchases DataSet and creates a purchase history for every user
  */
 public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
 
   @Override
   public void configure() {
-    setDescription("Purchase History Builder MapReduce job");
+    setDescription("Purchase History Builder MapReduce");
     useDatasets("frequentCustomers");
     setInputDataset("purchases");
     setOutputDataset("history");

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _workflows:
 
@@ -8,7 +8,7 @@
 Workflows
 ============================================
 
-**Workflows** are used to execute a series of :ref:`MapReduce Jobs. <mapreduce>`
+**Workflows** are used to execute a series of :ref:`MapReduce programs. <mapreduce>`
 
 A Workflow is given a sequence of jobs that follow each other, with an optional schedule
 to run the Workflow periodically. Upon successful execution of a job, the control is
@@ -16,7 +16,7 @@ transferred to the next job in sequence until the last job in the sequence is ex
 failure, the execution is stopped at the failed job and no subsequent jobs in the sequence
 are executed.
 
-To process one or more MapReduce jobs in sequence, specify
+To process one or more MapReduce programs in sequence, specify
 ``addWorkflow()`` in your application::
 
   public void configure() {
@@ -42,7 +42,7 @@ You'll then implement the ``Workflow`` interface, which requires the
     }
   }
 
-If there is only one MapReduce job to be run as a part of a WorkFlow,
+If there is only one MapReduce to be run as a part of a WorkFlow,
 use the ``onlyWith()`` method after ``setDescription()`` when building
 the Workflow::
 
