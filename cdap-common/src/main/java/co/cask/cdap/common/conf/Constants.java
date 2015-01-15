@@ -381,6 +381,7 @@ public final class Constants {
       public static final String FLOWLET = "flt";
       public static final String FLOWLET_QUEUE = "flq";
       public static final String CLUSTER_METRICS = "cls";
+      public static final String NAMESPACE = "ns";
     }
   }
 
