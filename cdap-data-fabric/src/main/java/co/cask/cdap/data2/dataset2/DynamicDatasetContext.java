@@ -49,7 +49,11 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader,
                                @Nullable Set<String> datasets) {
     this.context = context;
-    this.allowedDatasets = ImmutableSet.copyOf(datasets);
+    if (datasets != null) {
+      this.allowedDatasets = ImmutableSet.copyOf(datasets);
+    } else {
+      this.allowedDatasets = null;
+    }
     this.datasetFramework = datasetFramework;
     this.classLoader = classLoader;
   }
