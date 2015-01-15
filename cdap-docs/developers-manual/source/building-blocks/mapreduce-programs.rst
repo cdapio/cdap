@@ -8,7 +8,7 @@
 MapReduce Programs
 ============================================
 
-A **MapReduce program** is used to process data in batch. MapReduce can be
+A **MapReduce** program is used to process data in batch. MapReduce can be
 written as in a conventional Hadoop system. Additionally, CDAP
 **Datasets** can be accessed from MapReduce as both input and
 output.
@@ -49,7 +49,7 @@ implementation of three methods:
 
 The configure method is similar to the one found in Flows and
 Applications. It defines the name and description of the MapReduce.
-You can also specify Datasets to be used as input or output for the program, and
+You can also specify Datasets to be used as input or output and
 resources (memory and virtual cores) used by the Mappers and Reducers.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
