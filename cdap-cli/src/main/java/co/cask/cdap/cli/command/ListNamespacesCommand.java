@@ -28,7 +28,7 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 
 /**
- * Lists namespaces.
+ * {@link Command} to list namespaces.
  */
 public class ListNamespacesCommand implements Command {
   private final NamespaceClient namespaceClient;

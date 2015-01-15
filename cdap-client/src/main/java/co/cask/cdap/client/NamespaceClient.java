@@ -62,7 +62,7 @@ public class NamespaceClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<NamespaceMeta> list() throws IOException, UnAuthorizedAccessTokenException {
-    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
     String origVersion = config.getApiVersion();
     try {
       config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
@@ -86,7 +86,7 @@ public class NamespaceClient {
    * @throws NotFoundException if the specified namespace is not found
    */
   public NamespaceMeta get(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
-    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
     String origVersion = config.getApiVersion();
     try {
       config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
@@ -116,7 +116,7 @@ public class NamespaceClient {
    */
   public void delete(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException,
     CannotBeDeletedException {
-    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
     String origVersion = config.getApiVersion();
     try {
       config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
@@ -147,7 +147,7 @@ public class NamespaceClient {
    */
   public void create(NamespaceMeta namespaceMeta)
     throws IOException, UnAuthorizedAccessTokenException, AlreadyExistsException, BadRequestException {
-    // TODO: remove the following apiVersion set/reset logic all APIs are migrated to v3
+    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
     String origVersion = config.getApiVersion();
     try {
       config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);

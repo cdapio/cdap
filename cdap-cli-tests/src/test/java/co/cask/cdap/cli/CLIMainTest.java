@@ -247,7 +247,7 @@ public class CLIMainTest extends StandaloneTestBase {
     final String displayName = "testDisplayName";
     final String description = "testDescription";
     final String defaultFields = PREFIX + "defaultFields";
-    String doesNotExist = "doesNotExist";
+    final String doesNotExist = "doesNotExist";
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
@@ -293,7 +293,6 @@ public class CLIMainTest extends StandaloneTestBase {
     // describe namespace with default fields
     expectedNamespaces = Lists.newArrayList(namespaceDefaultFields);
     testNamespacesOutput(cli, String.format("describe namespace %s", defaultFields), expectedNamespaces);
-
 
     // delete namespace and verify
     command = String.format("delete namespace %s", id);

@@ -27,7 +27,7 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 
 /**
- * Creates a CDAP namespace.
+ * {@link Command} to create a namespace.
  */
 public class CreateNamespaceCommand implements Command {
   private static final String SUCCESS_MSG = "Namespace '%s' created successfully.";
