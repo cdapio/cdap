@@ -140,8 +140,13 @@ function build_docs_outer_level() {
   copy_html developers-manual
   copy_html reference-manual
   copy_html examples-manual
-}
 
+  # Rewrite 404 file
+  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$PROJECT_VERSION/en/_static"
+  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$PROJECT_VERSION/en/_images"
+  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$PROJECT_VERSION/en/|g"
+  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$PROJECT_VERSION/en/search.html"
+}
 
 ################################################## current
 

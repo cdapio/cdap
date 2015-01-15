@@ -324,18 +324,41 @@ function display_version() {
 }
 
 function rewrite() {
-  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
+  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4
+  # or if $4=="", substitutes text in-place in file $1, replacing text $2 with text $3
+  # or if $3 & $4=="", substitutes text in-place in file $1, using sed command $2
   cd $SCRIPT_PATH
   local rewrite_source=$1
-  local rewrite_target=$2
-  local sub_string=$3
-  local new_sub_string=$4  
   echo "Re-writing"
   echo "    $rewrite_source"
-  echo "  to"
-  echo "    $rewrite_target"
-  echo "  $sub_string -> $new_sub_string "
-  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
+  if [ "x$3" == "x" ]; then
+    local sub_string=$2
+    echo "  $sub_string"
+    if [ "$(uname)" == "Darwin" ]; then
+      sed -i '.bak' "$sub_string" $rewrite_source
+      rm $rewrite_source.bak
+    else
+      sed -i "$sub_string" $rewrite_source
+    fi
+  elif [ "x$4" == "x" ]; then
+    local sub_string=$2
+    local new_sub_string=$3
+    echo "  $sub_string -> $new_sub_string "
+    if [ "$(uname)" == "Darwin" ]; then
+      sed -i '.bak' "s|$sub_string|$new_sub_string|g" $rewrite_source
+      rm $rewrite_source.bak
+    else
+      sed -i "s|$sub_string|$new_sub_string|g" $rewrite_source
+    fi
+  else
+    local rewrite_target=$2
+    local sub_string=$3
+    local new_sub_string=$4
+    echo "  to"
+    echo "    $rewrite_target"
+    echo "  $sub_string -> $new_sub_string "
+    sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
+  fi
 }
 
 function run_command() {
