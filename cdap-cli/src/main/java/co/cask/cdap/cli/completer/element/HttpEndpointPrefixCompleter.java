@@ -17,6 +17,8 @@
 package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.cli.ProgramIdArgument;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
@@ -25,18 +27,18 @@ import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 /**
  * Prefix completer for Http endpoints.
  */
 public class HttpEndpointPrefixCompleter extends PrefixCompleter {
 
-  private static final String PROGRAM_ID_REGEX = "^call service ('.+?'|\".+?\"|\\S+) ";
-  private static final String METHOD_REGEX = "^('.+?'|\".+?\"|\\S+) ";
-  private static final int PROGRAM_ID_START = 13;
+  private static final String PROGRAM_ID = "programId";
+  private static final String METHOD = "method";
+  private static final String PATTERN = String.format("call service <%s> <%s>", PROGRAM_ID, METHOD);
 
   private final ServiceClient serviceClient;
   private final EndpointCompleter completer;
@@ -49,21 +51,13 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
 
   @Override
   public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-    if (buffer != null) {
-      Pattern programIdPattern = Pattern.compile(PROGRAM_ID_REGEX);
-      Matcher programIdMatcher = programIdPattern.matcher(buffer);
-      if (programIdMatcher.find()) {
-        int programIdEnd = programIdMatcher.end() - 1;
-        String programId = buffer.substring(PROGRAM_ID_START, programIdEnd);
-        String[] appAndServiceIds = programId.split("\\.");
-
-        Pattern methodPattern = Pattern.compile(METHOD_REGEX);
-        Matcher methodMatcher = methodPattern.matcher(buffer.substring(programIdMatcher.group().length()));
-        if (methodMatcher.find()) {
-          String method = methodMatcher.group().trim();
-          completer.setEndpoints(getEndpoints(appAndServiceIds[0], appAndServiceIds[1], method));
-        }
-      }
+    Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
+    ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
+    if (programIdArgument != null) {
+      completer.setEndpoints(getEndpoints(programIdArgument.getAppId(), programIdArgument.getProgramId(),
+                                          arguments.get(METHOD)));
+    } else {
+      completer.setEndpoints(Collections.<String>emptyList());
     }
     return super.complete(buffer, cursor, candidates);
   }

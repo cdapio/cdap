@@ -16,13 +16,14 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -30,17 +31,18 @@ import java.io.PrintStream;
 /**
  * Lists streams.
  */
-public class ListStreamsCommand implements Command {
+public class ListStreamsCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
 
   @Inject
-  public ListStreamsCommand(StreamClient streamClient) {
+  public ListStreamsCommand(StreamClient streamClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.streamClient = streamClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     new AsciiTable<StreamRecord>(
       new String[] { "name" },
       streamClient.list(),

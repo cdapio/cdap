@@ -17,6 +17,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -191,7 +192,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         cancellables.add(streamCoordinator.addListener(streamName, writerSupplierFactory));
       }
 
-      eventQueue = new EventQueue(streamName, writerSupplierFactory.create(streamName));
+      eventQueue = new EventQueue(streamName, writerSupplierFactory.create(streamName), metricsCollector);
       eventQueues.put(streamName, eventQueue);
 
       return eventQueue;
@@ -282,17 +283,19 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final class EventQueue implements Closeable {
 
     private final String streamName;
+    private final MetricsCollector metricsCollector;
     private final Supplier<FileWriter<StreamEvent>> writerSupplier;
     private final Queue<HandlerStreamEventData> queue;
     private final AtomicBoolean writerFlag;
     private final SettableStreamEvent streamEvent;
 
-    EventQueue(String streamName, Supplier<FileWriter<StreamEvent>> writerSupplier) {
+    EventQueue(String streamName, Supplier<FileWriter<StreamEvent>> writerSupplier, MetricsCollector metricsCollector) {
       this.streamName = streamName;
       this.writerSupplier = Suppliers.memoize(writerSupplier);
       this.queue = new ConcurrentLinkedQueue<HandlerStreamEventData>();
       this.writerFlag = new AtomicBoolean(false);
       this.streamEvent = new SettableStreamEvent();
+      this.metricsCollector = metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
     }
 
     HandlerStreamEventData add(Map<String, String> headers, ByteBuffer body) {
@@ -346,8 +349,8 @@ public final class ConcurrentStreamWriter implements Closeable {
       }
 
       if (eventsWritten > 0) {
-        metricsCollector.increment("collect.events", eventsWritten, streamName);
-        metricsCollector.increment("collect.bytes", bytesWritten, streamName);
+        metricsCollector.increment("collect.events", eventsWritten);
+        metricsCollector.increment("collect.bytes", bytesWritten);
       }
 
       return true;

@@ -18,16 +18,19 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -42,7 +45,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   private final HttpServiceHandlerSpecification spec;
   private final Map<String, String> runtimeArgs;
   private final TransactionContext txContext;
-  private final ServiceRunnableMetrics serviceRunnableMetrics;
+  private final Metrics userMetrics;
 
   /**
    * Instantiates the context with a spec and a array of runtime arguments.
@@ -54,13 +57,16 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
                                  CConfiguration conf, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient) {
-    super(program, runId, runtimeArgs, spec.getDatasets(), getMetricsContext(program, instanceId),
-          metricsCollectionService, dsFramework, conf, discoveryServiceClient);
+    super(program, runId, runtimeArgs, spec.getDatasets(),
+          getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program,
+                             spec.getName(), runId.getId(), instanceId),
+          dsFramework, conf, discoveryServiceClient);
     this.spec = spec;
     this.runtimeArgs = runtimeArgs.asMap();
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
-    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
-                                                             getMetricsContext(program, instanceId), runId.getId());
+    this.userMetrics =
+      new ProgramUserMetrics(getMetricCollector(metricsCollectionService, MetricsScope.USER, program,
+                                                         spec.getName(), runId.getId(), instanceId));
   }
 
   /**
@@ -73,7 +79,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
 
   @Override
   public Metrics getMetrics() {
-    return serviceRunnableMetrics;
+    return userMetrics;
   }
 
   @Override
@@ -81,9 +87,15 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     return txContext;
   }
 
-  private static String getMetricsContext(Program program, int instanceId) {
-    return String.format("%s.%s.%s.%s.%d",
-                         program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
-                         program.getName(), program.getName(), instanceId);
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
+                                                     MetricsScope scope, Program program, String runnableName,
+                                                     String runId, int instanceId) {
+    if (service == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
+    tags.put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
+    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
+    return service.getCollector(scope, tags);
   }
 }

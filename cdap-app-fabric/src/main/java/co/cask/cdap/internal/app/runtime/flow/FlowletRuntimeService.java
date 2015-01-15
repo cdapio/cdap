@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
@@ -59,6 +60,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(flowletContext.getLoggingContext());
     flowletContext.getProgramMetrics().increment("process.instance", 1);
     flowletProcessDriver = new FlowletProcessDriver(flowletContext, dataFabricFacade, txCallback, processSpecs);
 

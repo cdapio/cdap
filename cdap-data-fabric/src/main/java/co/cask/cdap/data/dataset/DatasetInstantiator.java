@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -57,8 +58,7 @@ public class DatasetInstantiator implements DatasetContext {
   // in this collection we have only datasets initialized with getDataset() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
-  private final MetricsCollector dsMetricsCollector;
-  private final MetricsCollector programMetricsCollector;
+  private final MetricsCollector metricsCollector;
 
   /**
    * Constructor from data fabric.
@@ -69,12 +69,9 @@ public class DatasetInstantiator implements DatasetContext {
                              CConfiguration configuration,
                              ClassLoader classLoader,
                              @Nullable
-                             MetricsCollector dsMetricsCollector,
-                             @Nullable
-                             MetricsCollector programMetricsCollector) {
+                             MetricsCollector metricsCollector) {
     this.classLoader = classLoader;
-    this.dsMetricsCollector = dsMetricsCollector;
-    this.programMetricsCollector = programMetricsCollector;
+    this.metricsCollector = metricsCollector;
     // todo: should be passed in already namespaced. Refactor
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
@@ -113,9 +110,7 @@ public class DatasetInstantiator implements DatasetContext {
     }
 
     if (dataset instanceof MeteredDataset) {
-      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(name,
-                                                                              dsMetricsCollector,
-                                                                              programMetricsCollector));
+      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(name, metricsCollector));
     }
 
     return dataset;
@@ -138,47 +133,36 @@ public class DatasetInstantiator implements DatasetContext {
   }
 
   private static final class MetricsCollectorImpl implements MeteredDataset.MetricsCollector {
-    private final String datasetName;
-    private final MetricsCollector dataSetMetrics;
-    private final MetricsCollector programContextMetrics;
+    private final MetricsCollector metricsCollector;
 
     private MetricsCollectorImpl(String datasetName,
                                  @Nullable
-                                 MetricsCollector dataSetMetrics,
-                                 @Nullable
-                                 MetricsCollector programContextMetrics) {
-      this.datasetName = datasetName;
-      this.dataSetMetrics = dataSetMetrics;
-      this.programContextMetrics = programContextMetrics;
+                                 MetricsCollector metricsCollector) {
+      this.metricsCollector = metricsCollector == null ? null :
+        metricsCollector.childCollector(Constants.Metrics.Tag.DATASET, datasetName);
     }
 
     @Override
     public void recordRead(int opsCount, int dataSize) {
-      if (programContextMetrics != null) {
-        programContextMetrics.increment("store.reads", 1, datasetName);
-        programContextMetrics.increment("store.ops", 1, datasetName);
-      }
-      // these metrics are outside the context of any application and will stay unless explicitly
-      // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
-      if (dataSetMetrics != null) {
-        dataSetMetrics.increment("dataset.store.reads", 1, datasetName);
-        dataSetMetrics.increment("dataset.store.ops", 1, datasetName);
+      if (metricsCollector != null) {
+        // todo: here we report duplicate metrics - need to change UI/docs and report once
+        metricsCollector.increment("store.reads", 1);
+        metricsCollector.increment("store.ops", 1);
+        metricsCollector.increment("dataset.store.reads", 1);
+        metricsCollector.increment("dataset.store.ops", 1);
       }
     }
 
     @Override
     public void recordWrite(int opsCount, int dataSize) {
-      if (programContextMetrics != null) {
-        programContextMetrics.increment("store.writes", 1, datasetName);
-        programContextMetrics.increment("store.bytes", dataSize, datasetName);
-        programContextMetrics.increment("store.ops", 1, datasetName);
-      }
-      // these metrics are outside the context of any application and will stay unless explicitly
-      // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
-      if (dataSetMetrics != null) {
-        dataSetMetrics.increment("dataset.store.writes", 1, datasetName);
-        dataSetMetrics.increment("dataset.store.bytes", dataSize, datasetName);
-        dataSetMetrics.increment("dataset.store.ops", 1, datasetName);
+      // todo: here we report duplicate metrics - need to change UI/docs and report once
+      if (metricsCollector != null) {
+        metricsCollector.increment("store.writes", 1);
+        metricsCollector.increment("store.bytes", dataSize);
+        metricsCollector.increment("store.ops", 1);
+        metricsCollector.increment("dataset.store.writes", 1);
+        metricsCollector.increment("dataset.store.bytes", dataSize);
+        metricsCollector.increment("dataset.store.ops", 1);
       }
     }
   }

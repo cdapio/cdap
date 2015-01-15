@@ -25,6 +25,7 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -103,16 +104,17 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
 
   private void report(Map<String, HBaseTableUtil.TableStats> datasetStat) {
     // we use "0" as runId: it is required by metrics system to provide something at this point
-    MetricsCollector collector =
-      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
     for (Map.Entry<String, HBaseTableUtil.TableStats> statEntry : datasetStat.entrySet()) {
       String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetName == null) {
         // not a user dataset
         continue;
       }
+      MetricsCollector collector =
+        metricsService.getCollector(MetricsScope.SYSTEM,
+                                    ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      collector.increment("dataset.size.mb", statEntry.getValue().getTotalSizeMB(), datasetName);
+      collector.increment("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
     }
   }
 }

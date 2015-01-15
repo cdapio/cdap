@@ -589,7 +589,7 @@
     -->
     <property>
         <name>router.bind.address</name>
-        <value>0.0.0.0</value>
+        <value>127.0.0.1</value>
         <description>Specifies the address for router server to bind to</description>
     </property>
 
@@ -959,6 +959,15 @@
         <name>explore.cleanup.job.schedule.secs</name>
         <value>60</value>
         <description>Time in secs to schedule clean up job to timeout operations</description>
+    </property>
+
+    <!--
+        Notification System Settings
+    -->
+    <property>
+        <name>notification.transport.system</name>
+        <value>kafka</value>
+        <description>Transport system used by the Notification system - can be kafka/stream</description>
     </property>
 
     <!--

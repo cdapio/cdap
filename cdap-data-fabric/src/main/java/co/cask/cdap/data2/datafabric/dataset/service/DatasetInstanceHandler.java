@@ -124,7 +124,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (existing != null) {
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
-      LOG.warn(message);
+      LOG.info(message);
       responder.sendError(HttpResponseStatus.CONFLICT, message);
       return;
     }

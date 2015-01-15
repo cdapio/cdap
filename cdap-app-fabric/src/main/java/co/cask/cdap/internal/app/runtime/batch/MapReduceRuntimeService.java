@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -431,7 +431,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (inputFormatClass == null) {
       throw new DataSetException("Input dataset '" + inputDatasetName + "' provided null as the input format");
     }
-    job.setInputFormatClass(inputFormatClass);
+    // wrap the input format so that the program's classloader is used to create record readers, etc.
+    // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
+    // some library CDAP depends on (Avro for example).
+    job.setInputFormatClass(InputFormatWrapper.class);
+    InputFormatWrapper.setInputFormatClass(job, inputFormatClass.getName());
+
     Map<String, String> inputConfig = inputDataset.getInputFormatConfiguration();
     if (inputConfig != null) {
       for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
@@ -470,7 +475,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (outputFormatClass == null) {
       throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
     }
-    job.setOutputFormatClass(outputFormatClass);
+    // wrap the output format so that the program's classloader is used to create record writers, etc.
+    // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
+    // some library CDAP depends on (Avro for example).
+    job.setOutputFormatClass(OutputFormatWrapper.class);
+    OutputFormatWrapper.setOutputFormatClass(job, outputFormatClass.getName());
+
     Map<String, String> outputConfig = outputDataset.getOutputFormatConfiguration();
     if (outputConfig != null) {
       for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
@@ -568,7 +578,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location jobJar =
       locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
                                            ProgramType.MAPREDUCE.name().toLowerCase(),
-                                           programId.getAccountId(), programId.getApplicationId(),
+                                           programId.getNamespaceId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
     LOG.debug("Creating Job jar: {}", jobJar.toURI());
@@ -734,7 +744,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location programJarCopy = locationFactory.create(
       String.format("%s.%s.%s.%s.%s.program.jar",
                     ProgramType.MAPREDUCE.name().toLowerCase(),
-                    programId.getAccountId(), programId.getApplicationId(),
+                    programId.getNamespaceId(), programId.getApplicationId(),
                     programId.getId(), context.getRunId().getId()));
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));

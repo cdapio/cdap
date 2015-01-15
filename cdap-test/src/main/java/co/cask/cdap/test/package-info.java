@@ -14,21 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.metrics;
-
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.proto.ProgramType;
-
 /**
- * Metrics Collector for Service.
+ * This package contains the public classes for unit tests.
  */
-public class ServiceRunnableMetrics extends AbstractProgramMetrics {
-
-  public ServiceRunnableMetrics(MetricsCollectionService collectionService, String metricsContext, String runId) {
-    super(collectionService.getCollector(
-      MetricsScope.USER, metricsContext, runId
-    ));
-  }
-}
+package co.cask.cdap.test;

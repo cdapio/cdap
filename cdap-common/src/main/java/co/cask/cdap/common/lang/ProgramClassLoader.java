@@ -20,13 +20,17 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -57,8 +61,21 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    */
   public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader,
                                           @Nullable ProgramType programType) throws IOException {
-    Predicate<String> predicate = Predicates.in(ProgramResources.getVisibleResources(programType));
-    ClassLoader filteredParent = new FilterClassLoader(predicate, parentClassLoader);
+    Set<String> visibleResources = ProgramResources.getVisibleResources(programType);
+    ImmutableSet.Builder<String> visiblePackages = ImmutableSet.builder();
+    for (String resource : visibleResources) {
+      if (resource.endsWith(".class")) {
+        int idx = resource.lastIndexOf('/');
+        // Ignore empty package
+        if (idx > 0) {
+          visiblePackages.add(resource.substring(0, idx));
+        }
+      }
+    }
+
+    ClassLoader filteredParent = new FilterClassLoader(Predicates.in(visibleResources),
+                                                       Predicates.in(visiblePackages.build()),
+                                                       parentClassLoader);
     return new ProgramClassLoader(unpackedJarDir, filteredParent);
   }
 
@@ -72,15 +89,18 @@ public class ProgramClassLoader extends DirectoryClassLoader {
   private static final class FilterClassLoader extends ClassLoader {
 
     private final Predicate<String> resourceAcceptor;
+    private final Predicate<String> packageAcceptor;
     private final ClassLoader bootstrapClassLoader;
 
     /**
      * @param resourceAcceptor Filter for accepting resources
      * @param parentClassLoader Parent classloader
      */
-    FilterClassLoader(Predicate<String> resourceAcceptor, ClassLoader parentClassLoader) {
+    FilterClassLoader(Predicate<String> resourceAcceptor,
+                      Predicate<String> packageAcceptor, ClassLoader parentClassLoader) {
       super(parentClassLoader);
       this.resourceAcceptor = resourceAcceptor;
+      this.packageAcceptor = packageAcceptor;
       this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
     }
 
@@ -113,6 +133,27 @@ public class ProgramClassLoader extends DirectoryClassLoader {
       }
 
       return Iterators.asEnumeration(ImmutableList.<URL>of().iterator());
+    }
+
+    @Override
+    protected Package[] getPackages() {
+      List<Package> packages = Lists.newArrayList();
+      for (Package pkg : super.getPackages()) {
+        if (packageAcceptor.apply(pkg.getName())) {
+          packages.add(pkg);
+        }
+      }
+      return packages.toArray(new Package[packages.size()]);
+    }
+
+    @Override
+    protected Package getPackage(String name) {
+      return (packageAcceptor.apply(name)) ? super.getPackage(name) : null;
+    }
+
+    @Override
+    public URL getResource(String name) {
+      return super.getResource(name);
     }
 
     private String classNameToResourceName(String className) {

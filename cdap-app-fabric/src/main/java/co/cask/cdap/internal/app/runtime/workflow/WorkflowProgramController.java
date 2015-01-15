@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,6 +99,6 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   private String getServiceName(Program program) {
     return String.format("workflow.%s.%s.%s",
-                         program.getAccountId(), program.getApplicationId(), program.getName());
+                         program.getNamespaceId(), program.getApplicationId(), program.getName());
   }
 }

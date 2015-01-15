@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,6 +72,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -171,7 +172,7 @@ public class TestBase {
       Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),
+        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
                                                                      deployedJar, appSpec);
 
     } catch (Exception e) {
@@ -253,6 +254,7 @@ public class TestBase {
       new LoggingModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
