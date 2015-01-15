@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.format;
+package co.cask.cdap.api.data.format;
 
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 /**
  * Instance of a record structured by a {@link Schema}. Fields are accessible by name.
  */
+@Beta
 public class StructuredRecord {
   private final Schema schema;
   private final Map<String, Object> fields;
