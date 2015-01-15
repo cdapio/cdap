@@ -88,7 +88,7 @@ public enum ElementType {
            ArgumentName.RUNNABLE,
            Capability.SCALE, Capability.RUNS, Capability.LOGS),
 
-  MAPREDUCE("MapReduce Job", "MapReduce Jobs", "mapreduce", "mapreduce",
+  MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
