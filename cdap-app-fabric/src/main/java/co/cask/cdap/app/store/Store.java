@@ -354,7 +354,7 @@ public interface Store {
    * @return an instance of {@link AdapterSpecification}.
    * @throws OperationException on errors.
    */
-  AdapterSpecification getAdapter (Id.Namespace id, String name) throws OperationException;
+  AdapterSpecification getAdapter(Id.Namespace id, String name) throws OperationException;
 
   /**
    * Fetch all the adapters in a given namespace.
