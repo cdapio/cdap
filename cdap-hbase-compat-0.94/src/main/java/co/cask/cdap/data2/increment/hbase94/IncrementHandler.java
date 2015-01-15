@@ -22,9 +22,13 @@ import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.hbase94.Filters;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -64,6 +68,13 @@ import java.util.TreeMap;
  * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
+  /**
+   * Property set for {@link org.apache.hadoop.hbase.HColumnDescriptor} to configure how compaction bound is
+   * defined. Possible values are defined by {@link co.cask.cdap.data2.increment.hbase94.IncrementHandler.CompactionBound} with
+   * {@link co.cask.cdap.data2.increment.hbase94.IncrementHandler.CompactionBound#TX_UPPER_VISIBILITY_BOUND} being default.
+   */
+  public static final String PROPERTY_COMPACTION_BOUND = "increment.readless.compaction.bound";
+
   // prefix bytes used to mark values that are deltas vs. full sums
   public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
   // expected length for values storing deltas (prefix + increment value)
@@ -72,16 +83,47 @@ public class IncrementHandler extends BaseRegionObserver {
 
   private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
+  private static final CompactionBound COMPACTION_BOUND_DEFAULT = CompactionBound.TX_UPPER_VISIBILITY_BOUND;
+
   private HRegion region;
   private TransactionStateCache cache;
+
+  protected Map<byte[], CompactionBound> compactionBoundByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+  public static enum CompactionBound {
+    TX_UPPER_VISIBILITY_BOUND,
+    UNLIMITED
+  }
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
-      this.cache = cacheSupplier.get();
+      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      boolean txIsUsed = false;
+      for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
+        String propValue = columnDesc.getValue(PROPERTY_COMPACTION_BOUND);
+        try {
+          CompactionBound bound =
+            propValue == null ? COMPACTION_BOUND_DEFAULT : CompactionBound.valueOf(propValue);
+          LOG.info("Family " + columnDesc.getNameAsString() + " compaction bound of " + bound);
+          compactionBoundByFamily.put(columnDesc.getName(), bound);
+
+          if (CompactionBound.TX_UPPER_VISIBILITY_BOUND == bound) {
+            txIsUsed = true;
+          }
+
+        } catch (IllegalArgumentException th) {
+          LOG.warn("Invalid compact bound value configured for column family " + columnDesc.getNameAsString() +
+                     ", value = " + propValue);
+        }
+      }
+
+      if (txIsUsed) {
+        Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
+        this.cache = cacheSupplier.get();
+      }
     }
   }
 
@@ -153,10 +195,8 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                   InternalScanner scanner) throws IOException {
-    TransactionSnapshot snapshot = cache.getLatestState();
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
-        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+                                       ScanType.MINOR_COMPACT, getCompactionBound(store));
   }
 
   public static boolean isIncrement(KeyValue kv) {
@@ -168,21 +208,32 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner) throws IOException {
-    TransactionSnapshot snapshot = cache.getLatestState();
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
-        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+                                       ScanType.MINOR_COMPACT, getCompactionBound(store));
   }
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, CompactionRequest request)
     throws IOException {
-    TransactionSnapshot snapshot = cache.getLatestState();
     return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
-        request.isMajor() ? ScanType.MAJOR_COMPACT : ScanType.MINOR_COMPACT,
-        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
+                                       request.isMajor() ? ScanType.MAJOR_COMPACT : ScanType.MINOR_COMPACT,
+                                       getCompactionBound(store));
   }
 
+  private long getCompactionBound(Store store) {
+    long compationBound;
+    CompactionBound bound = compactionBoundByFamily.get(store.getFamily().getName());
+    if (CompactionBound.UNLIMITED == bound) {
+      compationBound = HConstants.LATEST_TIMESTAMP;
+    } else if (CompactionBound.TX_UPPER_VISIBILITY_BOUND == bound) {
+      TransactionSnapshot snapshot = cache.getLatestState();
+      // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
+      compationBound = snapshot != null ? snapshot.getVisibilityUpperBound() : 0;
+    } else {
+      // do not compact anything, if it is not clear what to do (safest approach)
+      compationBound = 0;
+    }
+    return compationBound;
+  }
 }

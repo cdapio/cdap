@@ -18,6 +18,7 @@ package co.cask.cdap.data2.increment.hbase96;
 
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import co.cask.cdap.test.SlowTests;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -30,11 +31,16 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -232,6 +238,46 @@ public class IncrementHandlerTest {
     }
   }
 
+  @Test
+  public void testIncrementsCompactionUnlimBound() throws Exception {
+    // In this test we verify that having compaction bound unlim merges increments and leaves single version of a cell.
+    // It is important because in cases where we don't use tx nobody else will cleanup redundant (merged) keyvalues.
+    TableName tableName = TableName.valueOf("incrementCompactUnlimBoundTest");
+    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
+    columnDesc.setValue(IncrementHandler.PROPERTY_COMPACTION_BOUND, IncrementHandler.CompactionBound.UNLIMITED.name());
+    HRegion region = IncrementSummingScannerTest.createRegion(conf, tableName, columnDesc);
+
+    try {
+      region.initialize();
+
+      byte[] colA = Bytes.toBytes("a");
+      byte[] row1 = Bytes.toBytes("row1");
+
+      // do some increments
+      region.put(newIncrement(row1, colA, 1));
+      region.put(newIncrement(row1, colA, 1));
+      region.put(newIncrement(row1, colA, 1));
+
+      region.flushcache();
+
+      // verify increments merged after flush
+      assertSingleVersionColumn(region, row1, colA, 3);
+
+      // do some more increments
+      region.put(newIncrement(row1, colA, 1));
+      region.put(newIncrement(row1, colA, 1));
+      region.put(newIncrement(row1, colA, 1));
+
+      region.flushcache();
+      region.compactStores(true);
+
+      // verify increments merged well into hstores
+      assertSingleVersionColumn(region, row1, colA, 6);
+    } finally {
+      region.close();
+    }
+  }
+
   private void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
     Result res = table.get(new Get(row));
     Cell resA = res.getColumnLatestCell(FAMILY, col);
@@ -248,6 +294,21 @@ public class IncrementHandlerTest {
     Cell scanResA = scanRes.getColumnLatestCell(FAMILY, col);
     assertArrayEquals(row, scanResA.getRow());
     assertEquals(expected, Bytes.toLong(scanResA.getValue()));
+  }
+
+  private void assertSingleVersionColumn(HRegion region, byte[] row, byte[] col, long expected) throws Exception {
+    Scan scan = new Scan(row);
+    scan.addColumn(FAMILY, col);
+    scan.setMaxVersions();
+    RegionScanner scanner = region.getScanner(scan);
+    List<Cell> results = Lists.newArrayList();
+    Assert.assertFalse(scanner.nextRaw(results));
+    Assert.assertEquals(1, results.size());
+    byte[] value = results.get(0).getValue();
+    // note: it may be stored as increment delta even after merge on flush/compact
+    long longValue =
+      Bytes.toLong(value, value.length > Bytes.SIZEOF_LONG ? IncrementHandler.DELTA_MAGIC_PREFIX.length : 0);
+    Assert.assertEquals(expected, longValue);
   }
 
   private void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception {
