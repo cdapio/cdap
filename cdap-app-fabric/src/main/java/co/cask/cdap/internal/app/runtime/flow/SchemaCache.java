@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.SchemaHash;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaHash;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
