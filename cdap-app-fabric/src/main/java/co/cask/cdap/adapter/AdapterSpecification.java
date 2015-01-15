@@ -16,8 +16,11 @@
 
 package co.cask.cdap.adapter;
 
+import com.google.common.base.Objects;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Specification that is used to configure an adapter.
@@ -30,9 +33,9 @@ public final class AdapterSpecification {
 
   private final Map<String, String> properties;
 
-  private final List<Source> sources;
+  private final Set<Source> sources;
 
-  private final List<Sink> sinks;
+  private final Set<Sink> sinks;
 
   /**
    * Construct Adapter specification with the given parameters.
@@ -43,8 +46,8 @@ public final class AdapterSpecification {
    * @param sources {@link List} of {@Source}s used by the adapter.
    * @param sinks {@link List} of {Sink}s used by the adapter.
    */
-  public AdapterSpecification(String name, AdapterType type, Map<String, String> properties, List<Source> sources,
-                              List<Sink> sinks) {
+  public AdapterSpecification(String name, AdapterType type, Map<String, String> properties, Set<Source> sources,
+                              Set<Sink> sinks) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -53,16 +56,16 @@ public final class AdapterSpecification {
   }
 
   /**
-   * @return An immutable {@link List} of {@link Source}s configured for an Adapter.
+   * @return {@link Set} of {@link Source}s configured for an Adapter.
    */
-  public List<Source> getSources() {
+  public Set<Source> getSources() {
     return sources;
   }
 
   /**
-   * @return An immutable {@link List} of {@link Sink}s configured for an Adapter.
+   * @return {@link Set} of {@link Sink}s configured for an Adapter.
    */
-  public List<Sink> getSinks() {
+  public Set<Sink> getSinks() {
     return sinks;
   }
 
@@ -85,5 +88,26 @@ public final class AdapterSpecification {
    */
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AdapterSpecification that = (AdapterSpecification) o;
+
+    if (!name.equals(that.name)) return false;
+    if (!properties.equals(that.properties)) return false;
+    if (!sinks.equals(that.sinks)) return false;
+    if (!sources.equals(that.sources)) return false;
+    if (type != that.type) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(this.name, this.type, this.properties, this.sources, this.sinks);
   }
 }

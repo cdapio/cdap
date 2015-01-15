@@ -16,6 +16,8 @@
 
 package co.cask.cdap.adapter;
 
+import com.google.common.base.Objects;
+
 import java.util.Map;
 
 /**
@@ -61,5 +63,24 @@ public final class Sink {
    */
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Sink sink = (Sink) o;
+
+    if (!name.equals(sink.name)) return false;
+    if (!properties.equals(sink.properties)) return false;
+    if (type != sink.type) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(this.name, this.type, this.properties);
   }
 }

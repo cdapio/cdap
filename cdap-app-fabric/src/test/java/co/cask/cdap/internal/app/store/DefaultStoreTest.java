@@ -60,7 +60,6 @@ import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -674,20 +673,20 @@ public class DefaultStoreTest {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
     Map<String, String> properties = ImmutableMap.of("frequency", "10m");
-    List<Source> sources = Lists.newArrayList(new Source("eventStream", DataType.STREAM,
+    Set<Source> sources = Sets.newHashSet(new Source("eventStream", DataType.STREAM,
                                                          ImmutableMap.of("prop1", "val1")));
 
-    List<Sink> sinks = Lists.newArrayList(new Sink("myAvroFiles", DataType.DATASET,
+    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", DataType.DATASET,
                                                    ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
 
-    AdapterSpecification specStreamToAvro = new AdapterSpecification("streamToAvro1", AdapterType.BATCH_STREAM_TO_AVRO,
+    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", AdapterType.BATCH_STREAM_TO_AVRO,
                                                                      properties, sources, sinks);
 
-    AdapterSpecification specStreamToParquet = new AdapterSpecification("streamToAvro2", AdapterType.BATCH_STREAM_TO_AVRO,
+    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", AdapterType.BATCH_STREAM_TO_AVRO,
                                                                      properties, sources, sinks);
 
-    store.addAdapter(namespaceId, specStreamToAvro);
-    store.addAdapter(namespaceId, specStreamToParquet);
+    store.addAdapter(namespaceId, specStreamToAvro1);
+    store.addAdapter(namespaceId, specStreamToAvro2);
 
     // Get non existing spec
     AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "nonExistingAdapter");
@@ -696,27 +695,7 @@ public class DefaultStoreTest {
     //Retrieve specs
     retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
     // Check Adapter properties
-    Assert.assertEquals("streamToAvro1", retrievedSpec.getName());
-    Assert.assertEquals("BATCH_STREAM_TO_AVRO", retrievedSpec.getType().name());
-    Assert.assertEquals(1, retrievedSpec.getProperties().size());
-    Assert.assertEquals("10m", retrievedSpec.getProperties().get("frequency"));
-
-    // Validate sources
-    Assert.assertEquals(1, retrievedSpec.getSources().size());
-    Assert.assertEquals("eventStream", retrievedSpec.getSources().get(0).getName());
-    Assert.assertEquals("STREAM", retrievedSpec.getSources().get(0).getType().name());
-    Assert.assertEquals(1, retrievedSpec.getSources().get(0).getProperties().size());
-    Assert.assertEquals("val1", retrievedSpec.getSources().get(0).getProperties().get("prop1"));
-
-    // Validate sinks
-    Assert.assertEquals(1, retrievedSpec.getSinks().size());
-    Assert.assertEquals("myAvroFiles", retrievedSpec.getSinks().get(0).getName());
-    Assert.assertEquals("DATASET", retrievedSpec.getSinks().get(0).getType().name());
-    Assert.assertEquals(1, retrievedSpec.getSinks().get(0).getProperties().size());
-    Assert.assertEquals("co.cask.cdap.data.dataset.Fileset",
-                        retrievedSpec.getSinks().get(0).getProperties().get("type"));
-
-
+    Assert.assertEquals(specStreamToAvro1, retrievedSpec);
     // Remove spec
     store.removeAdapter(namespaceId, "streamToAvro1");
 
@@ -726,7 +705,7 @@ public class DefaultStoreTest {
 
     // verify the other adapter still exists
     retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
-    Assert.assertNotNull(retrievedSpec);
+    Assert.assertEquals(specStreamToAvro2, retrievedSpec);
 
     // remove all
     store.removeAllAdapters(namespaceId);
