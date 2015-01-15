@@ -90,18 +90,24 @@ public final class AdapterSpecification {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     AdapterSpecification that = (AdapterSpecification) o;
 
-    if (!name.equals(that.name)) return false;
-    if (!properties.equals(that.properties)) return false;
-    if (!sinks.equals(that.sinks)) return false;
-    if (!sources.equals(that.sources)) return false;
-    if (!type.equals(that.type)) return false;
-
-    return true;
+    if (name.equals(that.name) &&
+        properties.equals(that.properties) &&
+        sinks.equals(that.sinks) &&
+        sources.equals(that.sources) &&
+        type.equals(that.type)) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override
