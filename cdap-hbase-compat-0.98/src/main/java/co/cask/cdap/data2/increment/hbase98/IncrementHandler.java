@@ -92,6 +92,9 @@ public class IncrementHandler extends BaseRegionObserver {
 
   protected Map<byte[], CompactionBound> compactionBoundByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
+  /**
+   * Defines compaction boundary for merging delta increments
+   */
   public static enum CompactionBound {
     TX_UPPER_VISIBILITY_BOUND,
     UNLIMITED

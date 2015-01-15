@@ -70,8 +70,8 @@ import java.util.TreeMap;
 public class IncrementHandler extends BaseRegionObserver {
   /**
    * Property set for {@link org.apache.hadoop.hbase.HColumnDescriptor} to configure how compaction bound is
-   * defined. Possible values are defined by {@link co.cask.cdap.data2.increment.hbase94.IncrementHandler.CompactionBound} with
-   * {@link co.cask.cdap.data2.increment.hbase94.IncrementHandler.CompactionBound#TX_UPPER_VISIBILITY_BOUND} being default.
+   * defined. Possible values are defined by {@link CompactionBound} with
+   * {@link CompactionBound#TX_UPPER_VISIBILITY_BOUND} being default.
    */
   public static final String PROPERTY_COMPACTION_BOUND = "increment.readless.compaction.bound";
 
@@ -90,6 +90,9 @@ public class IncrementHandler extends BaseRegionObserver {
 
   protected Map<byte[], CompactionBound> compactionBoundByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
+  /**
+   * Defines compaction boundary for merging delta increments
+   */
   public static enum CompactionBound {
     TX_UPPER_VISIBILITY_BOUND,
     UNLIMITED
