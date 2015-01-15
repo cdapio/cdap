@@ -57,7 +57,8 @@ public final class AdapterMeta {
   }
 
   public Schedule getSchedule() {
-    return new Schedule(String.format("schedule.%s", id), "Generic Adapter Description", frequency, Schedule.Action.START);
+    return new Schedule(String.format("schedule.%s", id),
+                        "Generic Adapter Description", frequency, Schedule.Action.START);
   }
 
   public String getAppId() {

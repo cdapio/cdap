@@ -64,9 +64,11 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -80,6 +82,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.commons.lang.StringUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -89,6 +92,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.quartz.DateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -417,6 +421,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       Id.Program scheduledProgramId = Id.Program.from(namespaceId, adapterMeta.getAppId(), adapterMeta.getProgramId());
       // TODO: Update application specification
+
       scheduler.schedule(scheduledProgramId, adapterMeta.getProgramType(), ImmutableList.of(adapterMeta.getSchedule()));
 
       // Write to mds
@@ -430,6 +435,46 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error(errorMessage);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, errorMessage);
     }
+  }
+
+  //TODO: move this method elsewhere!
+  /**
+   * Converts a frequency expression into cronExpression that is usable by quartz.
+   * Supports frequency expressions with the following resolutions: minutes, hours, days.
+   * Example conversions:
+   *     '10m' -> '*{@literal /}10 * * * ?'
+   *     '3d' -> '0 0 *{@literal /}3 * ?'
+   *
+   * @return a chron expression
+   **/
+  @VisibleForTesting
+  public static String toCronExpr(String frequency) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(frequency));
+    // remove all whitespace
+    frequency = frequency.replaceAll("\\s+", "");
+    Preconditions.checkArgument(frequency.length() >= 0);
+
+    frequency = frequency.toLowerCase();
+
+    String value = frequency.substring(0, frequency.length() - 1);
+    Preconditions.checkArgument(StringUtils.isNumeric(value));
+    Integer parsedValue = Integer.valueOf(value);
+    Preconditions.checkArgument(parsedValue > 0);
+
+    String everyN = String.format("*/%s", value);
+    char lastChar = frequency.charAt(frequency.length() - 1);
+    switch (lastChar) {
+      case 'm':
+        DateBuilder.validateMinute(parsedValue);
+        return String.format("%s * * * ?", everyN);
+      case 'h':
+        DateBuilder.validateHour(parsedValue);
+        return String.format("0 %s * * ?", everyN);
+      case 'd':
+        DateBuilder.validateDayOfMonth(parsedValue);
+        return String.format("0 0 %s * ?", everyN);
+    }
+    throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
   }
 
   @POST
