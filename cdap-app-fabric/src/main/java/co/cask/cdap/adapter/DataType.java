@@ -17,12 +17,18 @@
 package co.cask.cdap.adapter;
 
 /**
- * TODO: NOt sure if we should create a new type?
+ * Defines the type of data used in source and sink
  */
 public enum DataType {
 
+  /**
+   * Defines the source or sink datatype to be Stream
+   */
   STREAM,
 
+  /**
+   * Defines the source or sink datatype to be Dataset
+   */
   DATASET,
 
 }

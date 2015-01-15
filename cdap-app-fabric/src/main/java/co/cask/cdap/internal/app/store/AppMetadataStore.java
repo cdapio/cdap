@@ -280,12 +280,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterSpecification.class);
   }
 
-  public void deleteAllAdapters(Id.Namespace id) {
-    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build());
+  public void deleteAdapter(Id.Namespace id, String name) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
   }
 
-  public void deleteAdapter(Id.Namespace id, String name) {
-    deleteAll(new Key.Builder().add(TYPE_ADAPTER, name, name).build());
+  public void deleteAllAdapters(Id.Namespace id) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build());
   }
 
   private Key getNamespaceKey(@Nullable String name) {
