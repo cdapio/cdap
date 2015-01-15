@@ -166,7 +166,7 @@ The time range of a metric query can be specified in various ways:
        with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
 
 **Note:**
-``resolution=auto`` will auto determine time resolution based on the time difference calculated from start and end time.
+``resolution=auto`` will automatically determine the resolution based on a time difference calculated between the start and end times. If ``(endTime - startTime) >= 3610``, resolution will be in hours; else if ``(endTime - startTime) >= 610``, resolution will be in minutes; otherwise, resolution will be in seconds.
 
 Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
