@@ -24,7 +24,6 @@ import co.cask.cdap.NoProgramsApp;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.adapter.AdapterType;
 import co.cask.cdap.adapter.Sink;
 import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.ProgramSpecification;
@@ -678,10 +677,10 @@ public class DefaultStoreTest {
     Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
                                                    ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
 
-    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", AdapterType.BATCH_STREAM_TO_AVRO,
+    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", "batchStreamToAvro",
                                                                      properties, sources, sinks);
 
-    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", AdapterType.BATCH_STREAM_TO_AVRO,
+    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
                                                                      properties, sources, sinks);
 
     store.addAdapter(namespaceId, specStreamToAvro1);
@@ -693,7 +692,6 @@ public class DefaultStoreTest {
 
     //Retrieve specs
     retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
-    // Check Adapter properties
     Assert.assertEquals(specStreamToAvro1, retrievedSpec);
     // Remove spec
     store.removeAdapter(namespaceId, "streamToAvro1");

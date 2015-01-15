@@ -30,7 +30,7 @@ import java.util.Set;
 public final class AdapterSpecification {
 
   private final String name;
-  private final AdapterType type;
+  private final String type;
   private final Map<String, String> properties;
   private final Set<Source> sources;
   private final Set<Sink> sinks;
@@ -44,7 +44,7 @@ public final class AdapterSpecification {
    * @param sources {@link List} of {@Source}s used by the adapter.
    * @param sinks {@link List} of {Sink}s used by the adapter.
    */
-  public AdapterSpecification(String name, AdapterType type, Map<String, String> properties, Set<Source> sources,
+  public AdapterSpecification(String name, String type, Map<String, String> properties, Set<Source> sources,
                               Set<Sink> sinks) {
     this.name = name;
     this.type = type;
@@ -70,7 +70,7 @@ public final class AdapterSpecification {
   /**
    * @return type of Adapter.
    */
-   public AdapterType getType() {
+   public String getType() {
     return type;
    }
 
@@ -99,7 +99,7 @@ public final class AdapterSpecification {
     if (!properties.equals(that.properties)) return false;
     if (!sinks.equals(that.sinks)) return false;
     if (!sources.equals(that.sources)) return false;
-    if (type != that.type) return false;
+    if (!type.equals(that.type)) return false;
 
     return true;
   }
