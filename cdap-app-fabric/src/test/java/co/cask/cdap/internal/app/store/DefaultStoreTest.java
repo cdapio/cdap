@@ -674,7 +674,7 @@ public class DefaultStoreTest {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
     Map<String, String> properties = ImmutableMap.of("frequency", "10m");
-    List<Source> sources = Lists.newArrayList(new Source("eventStream", co.cask.cdap.adapter.DataType.STREAM,
+    List<Source> sources = Lists.newArrayList(new Source("eventStream", DataType.STREAM,
                                                          ImmutableMap.of("prop1", "val1")));
 
     List<Sink> sinks = Lists.newArrayList(new Sink("myAvroFiles", DataType.DATASET,
