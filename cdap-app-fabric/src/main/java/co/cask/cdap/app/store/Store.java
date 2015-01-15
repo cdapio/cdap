@@ -338,7 +338,7 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Creates an adapter if it does not exist.
+   * Adds adapter spec to the store. Will overwrite the existing spec.
    *
    * @param id Namespace id
    * @param adapterSpecification specification of the adapter
