@@ -16,12 +16,19 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,22 +36,83 @@ import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test for {@link PreferencesClient}
  */
 @Category(XSlowTests.class)
 public class PreferencesClientTestRun extends ClientTestBase {
+  private static final Gson GSON = new Gson();
 
   private PreferencesClient client;
   private ApplicationClient appClient;
+  private ServiceClient serviceClient;
+  private ProgramClient programClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
     client = new PreferencesClient(clientConfig);
     appClient = new ApplicationClient(clientConfig);
+    serviceClient = new ServiceClient(clientConfig);
+    programClient = new ProgramClient(clientConfig);
+  }
+
+  @Test
+  public void testProgramAPI() throws Exception {
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("key", "instance");
+    File jarFile = createAppJarFile(AppReturnsArgs.class);
+    appClient.deploy(jarFile);
+    try {
+      client.setInstancePreferences(propMap);
+      Map<String, String> setMap = Maps.newHashMap();
+      setMap.put("saved", "args");
+      programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, setMap);
+      assertEquals(setMap, programClient.getRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE,
+                                                        AppReturnsArgs.SERVICE));
+      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE,
+                          ImmutableMap.of("run", "value"));
+      propMap.put("run", "value");
+      propMap.putAll(setMap);
+      URL serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
+                               AppReturnsArgs.ENDPOINT);
+      HttpRequest request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
+      HttpResponse response = HttpRequests.execute(request);
+      assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+
+      client.deleteInstancePreferences();
+      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      propMap.remove("key");
+      propMap.remove("run");
+      serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
+                           AppReturnsArgs.ENDPOINT);
+      request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
+      response = HttpRequests.execute(request);
+      assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+
+      propMap.clear();
+      programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, propMap);
+      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
+                           AppReturnsArgs.ENDPOINT);
+      request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
+      response = HttpRequests.execute(request);
+      assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+    } finally {
+      programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      appClient.delete(AppReturnsArgs.NAME);
+    }
   }
 
   @Test
