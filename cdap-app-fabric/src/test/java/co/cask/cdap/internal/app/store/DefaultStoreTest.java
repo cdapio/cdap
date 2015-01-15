@@ -680,10 +680,10 @@ public class DefaultStoreTest {
     List<Sink> sinks = Lists.newArrayList(new Sink("myAvroFiles", DataType.DATASET,
                                                    ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
 
-    AdapterSpecification specStreamToAvro = new AdapterSpecification("streamToAvro", AdapterType.BATCH,
+    AdapterSpecification specStreamToAvro = new AdapterSpecification("streamToAvro1", AdapterType.BATCH_STREAM_TO_AVRO,
                                                                      properties, sources, sinks);
 
-    AdapterSpecification specStreamToParquet = new AdapterSpecification("streamToParquet", AdapterType.BATCH,
+    AdapterSpecification specStreamToParquet = new AdapterSpecification("streamToAvro2", AdapterType.BATCH_STREAM_TO_AVRO,
                                                                      properties, sources, sinks);
 
     store.addAdapter(namespaceId, specStreamToAvro);
@@ -694,10 +694,10 @@ public class DefaultStoreTest {
     Assert.assertNull(retrievedSpec);
 
     //Retrieve specs
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
     // Check Adapter properties
-    Assert.assertEquals("streamToAvro", retrievedSpec.getName());
-    Assert.assertEquals("BATCH", retrievedSpec.getType().name());
+    Assert.assertEquals("streamToAvro1", retrievedSpec.getName());
+    Assert.assertEquals("BATCH_STREAM_TO_AVRO", retrievedSpec.getType().name());
     Assert.assertEquals(1, retrievedSpec.getProperties().size());
     Assert.assertEquals("10m", retrievedSpec.getProperties().get("frequency"));
 
@@ -718,21 +718,21 @@ public class DefaultStoreTest {
 
 
     // Remove spec
-    store.removeAdapter(namespaceId, "streamToAvro");
+    store.removeAdapter(namespaceId, "streamToAvro1");
 
     // verify the deleted spec is gone.
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
     Assert.assertNull(retrievedSpec);
 
     // verify the other adapter still exists
-    retrievedSpec = store.getAdapter(namespaceId, "streamToParquet");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
     Assert.assertNotNull(retrievedSpec);
 
     // remove all
     store.removeAllAdapters(namespaceId);
 
     // verify all adapters are gone
-    retrievedSpec = store.getAdapter(namespaceId, "streamToParquet");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
     Assert.assertNull(retrievedSpec);
   }
 }

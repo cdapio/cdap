@@ -22,8 +22,8 @@ package co.cask.cdap.adapter;
 public enum AdapterType {
 
   /**
-   * The adapter will be executed via batch jobs.
+   * The adapter will be executed via batch jobs and convert data in stream to Avro.
    */
-  BATCH,
+  BATCH_STREAM_TO_AVRO,
 
 }
