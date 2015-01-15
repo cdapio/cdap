@@ -34,7 +34,7 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-common</artifactId>
+      <artifactId>cdap-notifications-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -62,10 +62,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.twill</groupId>
-      <artifactId>twill-common</artifactId>
     </dependency>
   </dependencies>
 
