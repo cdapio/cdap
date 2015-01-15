@@ -48,7 +48,6 @@ import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -723,54 +722,6 @@ public class DefaultStore implements Store {
       @Override
       public List<NamespaceMeta> apply(AppMds input) throws Exception {
         return input.apps.listNamespaces();
-      }
-    });
-  }
-
-  @Nullable
-  @Override
-  public void createAdapter(final Id.Namespace id, final AdapterMeta adapterMetaData) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds input) throws Exception {
-        input.apps.createAdapter(id, adapterMetaData);
-        return null;
-      }
-    });
-  }
-
-  @Nullable
-  @Override
-  public AdapterMeta getAdapter(final Id.Namespace id, final String adapterId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterMeta>() {
-      @Override
-      public AdapterMeta apply(AppMds input) throws Exception {
-        return input.apps.getAdapter(id, adapterId);
-      }
-    });
-  }
-
-  @Nullable
-  @Override
-  public void deleteAdapter(final Id.Namespace id, final String adapterId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds input) throws Exception {
-        AdapterMeta existing = input.apps.getAdapter(id, adapterId);
-        if (existing != null) {
-          input.apps.deleteAdapter(id, adapterId);
-        }
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public List<AdapterMeta> listAdapters(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<AdapterMeta>>() {
-      @Override
-      public List<AdapterMeta> apply(AppMds input) throws Exception {
-        return input.apps.listAdapters(id);
       }
     });
   }

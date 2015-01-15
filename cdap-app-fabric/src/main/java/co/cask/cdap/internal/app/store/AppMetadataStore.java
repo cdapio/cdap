@@ -24,7 +24,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -61,7 +60,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final String TYPE_ADAPTER = "adapterMeta";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -274,21 +272,5 @@ public class AppMetadataStore extends MetadataStoreDataset {
       builder.add(name);
     }
     return builder.build();
-  }
-
-  public void createAdapter(Id.Namespace namespace, AdapterMeta metadata) {
-    write(new Key.Builder().add(TYPE_ADAPTER, namespace.getId(), metadata.getId()).build(), metadata);
-  }
-
-  public AdapterMeta getAdapter(Id.Namespace namespace, String adapterId) {
-    return get(new Key.Builder().add(TYPE_ADAPTER, namespace.getId(), adapterId).build(), AdapterMeta.class);
-  }
-
-  public void deleteAdapter(Id.Namespace namespace, String adapterId) {
-    deleteAll(new Key.Builder().add(TYPE_ADAPTER, namespace.getId(), adapterId).build());
-  }
-
-  public List<AdapterMeta> listAdapters(Id.Namespace namespace) {
-    return list(new Key.Builder().add(TYPE_ADAPTER, namespace.getId()).build(), AdapterMeta.class);
   }
 }

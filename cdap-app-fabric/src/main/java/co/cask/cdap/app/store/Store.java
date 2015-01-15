@@ -23,7 +23,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -336,37 +335,4 @@ public interface Store {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> listNamespaces();
-
-  /**
-   * Creates a new adapter.
-   *
-   * @param id {@link Id.Namespace} of the requested adapter
-   * @param adapterMetaData {@link AdapterMeta} representing the adapter metadata
-   */
-  void createAdapter(Id.Namespace id, AdapterMeta adapterMetaData);
-
-  /**
-   * Retrieves a {@link AdapterMeta} by id.
-   *
-   * @param id {@link Id.Namespace} of the requested adapter
-   * @param adapterId id of the requested adapter
-   * @return {@link AdapterMeta} of the requested adapter
-   */
-  @Nullable
-  AdapterMeta getAdapter(Id.Namespace id, String adapterId);
-
-  /**
-   * Deletes a {@link AdapterMeta} by id.
-   *
-   * @param id {@link Id.Namespace} of the adapter to delete
-   * @param adapterId of the adapter to delete
-   */
-  void deleteAdapter(Id.Namespace id, String adapterId);
-
-  /**
-   * Lists all existing adapters.
-   *
-   * @return a list of all existing adapters
-   */
-  List<AdapterMeta> listAdapters(Id.Namespace id);
 }
