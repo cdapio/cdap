@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.store;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
@@ -335,4 +336,50 @@ public interface Store {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> listNamespaces();
+
+  /**
+   * Creates an adapter if it does not exist.
+   *
+   * @param id Namespace id
+   * @param adapterSpecification specification of the adapter
+   * @throws OperationException on errors.
+   */
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification) throws OperationException;
+
+  /**
+   * Fetch the adapter identified by the name in a give namespace.
+   *
+   * @param id  Namespace id.
+   * @param name Adapter name
+   * @return an instance of {@link AdapterSpecification}.
+   * @throws OperationException on errors.
+   */
+  AdapterSpecification getAdapter (Id.Namespace id, String name) throws OperationException;
+
+  /**
+   * Fetch all the adapters in a given namespace.
+   *
+   * @param id Namespace id.
+   * @return {@link Collection} of Adapter Specification.
+   * @throws OperationException on errors.
+   */
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id) throws OperationException;
+
+  /**
+   * Remove the adapter specified by the name in a given namespace.
+   *
+   * @param id Namespace id.
+   * @param name Adapter name.
+   * @throws OperationException on errors.
+   */
+  void removeAdapter(Id.Namespace id, String name) throws OperationException;
+
+  /**
+   * Remove all the adapters in a given namespace.
+   *
+   * @param id Namespace id.
+   * @throws OperationException on errors.
+   */
+  void removeAllAdapters(Id.Namespace id) throws OperationException;
+
 }
