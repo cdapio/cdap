@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.scheduler;
 
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -31,7 +32,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.internal.TempFolder;

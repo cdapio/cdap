@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,8 @@ import co.cask.cdap.api.annotation.HashPartition;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.RoundRobin;
 import co.cask.cdap.api.annotation.Tick;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -73,9 +75,7 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;

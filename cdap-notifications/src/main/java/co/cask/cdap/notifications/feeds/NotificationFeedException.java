@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.format;
+package co.cask.cdap.notifications.feeds;
+
+import co.cask.cdap.notifications.service.NotificationException;
 
 /**
- * Exception to indicate data is of an unexpected format.
+ * Exceptions about notification feed.
  */
-public class UnexpectedFormatException extends Exception {
-  public UnexpectedFormatException(String message) {
-    super(message);
+public class NotificationFeedException extends NotificationException {
+  public NotificationFeedException(String s) {
+    super(s);
   }
 
-  public UnexpectedFormatException(String message, Throwable cause) {
-    super(message, cause);
+  public NotificationFeedException(Throwable throwable) {
+    super(throwable);
   }
 
-  public UnexpectedFormatException(Throwable cause) {
-    super(cause);
+  public NotificationFeedException(String s, Throwable throwable) {
+    super(s, throwable);
   }
 }

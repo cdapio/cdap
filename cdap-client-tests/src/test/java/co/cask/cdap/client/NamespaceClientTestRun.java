@@ -48,7 +48,6 @@ public class NamespaceClientTestRun extends ClientTestBase {
   @Before
   public void setup() {
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
     builder.setHostname(HOSTNAME).setPort(PORT);
     namespaceClient = new NamespaceClient(builder.build());
   }
