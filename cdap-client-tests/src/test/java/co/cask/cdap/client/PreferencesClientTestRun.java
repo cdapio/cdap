@@ -18,6 +18,8 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.exception.NotFoundException;
+import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.XSlowTests;
@@ -29,7 +31,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -151,13 +152,18 @@ public class PreferencesClientTestRun extends ClientTestBase {
                                                               FakeApp.FLOWS.get(0), false));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = NotFoundException.class)
   public void testInvalidNamespace() throws Exception {
     client.setNamespacePreferences("somespace", ImmutableMap.of("k1", "v1"));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = NotFoundException.class)
   public void testInvalidApplication() throws Exception {
     client.getApplicationPreferences("somespace", "someapp", true);
+  }
+
+  @Test(expected = ProgramNotFoundException.class)
+  public void testInvalidProgram() throws Exception {
+    client.deleteProgramPreferences("somespace", "someapp", "flows", "myflow");
   }
 }
