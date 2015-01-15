@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.io.Encoder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

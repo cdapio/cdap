@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
-
 /**
- * Exception to indicate a given type is not supported.
+ * Defines data formats for use in programs and data exploration.
+ * APIs are experimental and are subject to change in future releases.
  */
-public class UnsupportedTypeException extends Exception {
-  public UnsupportedTypeException(String message) {
-    super(message);
-  }
-
-  public UnsupportedTypeException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public UnsupportedTypeException(Throwable cause) {
-    super(cause);
-  }
-}
+package co.cask.cdap.api.data.format;

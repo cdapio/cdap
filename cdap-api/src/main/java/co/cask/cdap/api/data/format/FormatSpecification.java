@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.specification;
+package co.cask.cdap.api.data.format;
 
-import co.cask.cdap.internal.format.RecordFormat;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Objects;
 
 import java.util.Collections;
@@ -26,7 +26,8 @@ import java.util.Map;
 /**
  * Specification for a {@link RecordFormat}, including the class, schema, and settings to use for the format.
  */
-public class FormatSpecification {
+@Beta
+public final class FormatSpecification {
   private final String name;
   private final Schema schema;
   private final Map<String, String> settings;
