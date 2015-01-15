@@ -30,6 +30,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -134,6 +135,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
 
+  private final PreferencesStore preferencesStore;
+
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -143,7 +146,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
-                              ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
+                              ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                              PreferencesStore preferencesStore) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -156,6 +160,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -1340,6 +1345,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       LOG.info("Deleting all data for account '" + account + "'.");
+
+      // remove preferences stored at instance level
+      preferencesStore.deleteProperties();
 
       dsFramework.deleteAllInstances();
       dsFramework.deleteAllModules();

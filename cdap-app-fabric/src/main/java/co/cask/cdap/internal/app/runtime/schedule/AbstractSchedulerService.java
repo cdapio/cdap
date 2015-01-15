@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -55,8 +56,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private final WrappedScheduler delegate;
 
   public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                                  ProgramRuntimeService programRuntimeService) {
-    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService);
+                                  ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
   }
 
   /**
@@ -111,9 +112,13 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void deleteSchedules(Id.Program program, SchedulableProgramType programType,
-                              List<String> scheduleIds) {
-    delegate.deleteSchedules(program, programType, scheduleIds);
+  public void deleteSchedule(String scheduleId) {
+    delegate.deleteSchedule(scheduleId);
+  }
+
+  @Override
+  public void deleteSchedules(Id.Program program, SchedulableProgramType programType) {
+    delegate.deleteSchedules(program, programType);
   }
 
   @Override
@@ -130,13 +135,15 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     private final StoreFactory storeFactory;
     private final Supplier<Scheduler> schedulerSupplier;
     private final ProgramRuntimeService programRuntimeService;
+    private final PreferencesStore preferencesStore;
 
     WrappedScheduler(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                     ProgramRuntimeService programRuntimeService) {
+                     ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
       this.schedulerSupplier = schedulerSupplier;
       this.storeFactory = storeFactory;
       this.programRuntimeService = programRuntimeService;
       this.scheduler = null;
+      this.preferencesStore = preferencesStore;
     }
 
     void start() throws SchedulerException {
@@ -153,12 +160,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+      checkInitialized();
       Preconditions.checkNotNull(schedules);
 
-      String key = getJobKey(programId, programType);
+      String jobKey = getJobKey(programId, programType).getName();
       JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
-        .withIdentity(key)
+        .withIdentity(jobKey)
         .storeDurably(true)
         .build();
       try {
@@ -166,7 +173,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
-
       for (Schedule schedule : schedules) {
         String scheduleName = schedule.getName();
         String cronEntry = schedule.getCronEntry();
@@ -190,12 +196,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+      checkInitialized();
 
       List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
-      String key = getJobKey(program, programType);
       try {
-        for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
+        for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
           ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
                                                           trigger.getNextFireTime().getTime());
           scheduledRuntimes.add(runtime);
@@ -208,12 +213,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+      checkInitialized();
 
       List<String> scheduleIds = Lists.newArrayList();
-      String key = getJobKey(program, programType);
       try {
-        for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
+        for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
           scheduleIds.add(trigger.getKey().getName());
         }
       }   catch (SchedulerException e) {
@@ -225,7 +229,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+      checkInitialized();
       try {
         scheduler.pauseTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
       } catch (SchedulerException e) {
@@ -235,7 +239,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+      checkInitialized();
       try {
         scheduler.resumeTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
       } catch (SchedulerException e) {
@@ -244,14 +248,28 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void deleteSchedules(Id.Program program, SchedulableProgramType programType, List<String> scheduleIds) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+    public void deleteSchedule(String scheduleId) {
+      checkInitialized();
       try {
-        for (String scheduleId : scheduleIds) {
-          scheduler.pauseTrigger(new TriggerKey(scheduleId));
+        Trigger trigger = scheduler.getTrigger(new TriggerKey(scheduleId));
+        Preconditions.checkNotNull(trigger);
+
+        scheduler.unscheduleJob(trigger.getKey());
+
+        JobKey jobKey = trigger.getJobKey();
+        if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
+          scheduler.deleteJob(jobKey);
         }
-        String key = getJobKey(program, programType);
-        scheduler.deleteJob(new JobKey(key));
+      } catch (SchedulerException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void deleteSchedules(Id.Program program, SchedulableProgramType programType) {
+      checkInitialized();
+      try {
+        scheduler.deleteJob(getJobKey(program, programType));
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
@@ -259,7 +277,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+      checkInitialized();
       try {
         Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(getScheduleId(program, programType,
                                                                                             scheduleName)));
@@ -279,15 +297,19 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
 
-    private String getJobKey(Id.Program program, SchedulableProgramType programType) {
-      return String.format("%s:%s:%s:%s", programType.name(), program.getNamespaceId(),
-                           program.getApplicationId(), program.getId());
+    private void checkInitialized() {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
     }
 
     private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      return String.format("%s:%s", getJobKey(program, programType), scheduleName);
+      return String.format("%s:%s", getJobKey(program, programType).getName(), scheduleName);
     }
 
+
+    private JobKey getJobKey(Id.Program program, SchedulableProgramType programType) {
+      return new JobKey(String.format("%s:%s:%s:%s", programType.name(), program.getNamespaceId(),
+                                      program.getApplicationId(), program.getId()));
+    }
 
     //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
     //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
@@ -317,7 +339,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
           Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
           if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService);
+            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore);
           } else {
             try {
               return jobClass.newInstance();

@@ -29,6 +29,7 @@ public interface Scheduler {
 
   /**
    * Schedule a program to be run in a defined schedule.
+   *
    * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedules Schedule with which the program runs.
@@ -74,12 +75,21 @@ public interface Scheduler {
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
-   * Delete the schedule. Don't schedule any more jobs.
-   * @param programId
-   * @param programType
-   * @param scheduleIds
+   * Deletes the schedule.
+   * Deletes the associated Job if no other schedules exist for that job.
+   *
+   * @param scheduleId schedule id.
    */
-  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType, List<String> scheduleIds);
+  public void deleteSchedule(String scheduleId);
+
+  /**
+   * Delete all schedules associated with the given Program.
+   * Also deletes the associated job.
+   *
+   * @param programId Id of program that needs to be run.
+   * @param programType type of program that needs to be run.
+   */
+  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType);
 
   /**
    * Get state of a particular schedule.
