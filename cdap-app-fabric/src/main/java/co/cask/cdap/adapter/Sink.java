@@ -25,8 +25,18 @@ import java.util.Map;
  */
 public final class Sink {
 
+  /**
+   * Defines the Sink Type.
+   */
+  public enum Type {
+    /**
+     * Defines the sink type to be Dataset
+     */
+    DATASET,
+  }
+
   private final String name;
-  private final DataType type;
+  private final Type type;
   private final Map<String, String> properties;
 
   /**
@@ -36,7 +46,7 @@ public final class Sink {
    * @param type  Name of the Sink.
    * @param properties {@Map} of properties associated with the Sink.
    */
-  public Sink(String name, DataType type, Map<String, String> properties) {
+  public Sink(String name, Type type, Map<String, String> properties) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -52,7 +62,7 @@ public final class Sink {
   /**
    * @return type of the Sink.
    */
-  public DataType getType() {
+  public Type getType() {
     return type;
   }
 

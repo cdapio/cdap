@@ -25,8 +25,18 @@ import java.util.Map;
  */
 public final class Source {
 
+  /**
+   * Defines the source type.
+   */
+  public enum Type {
+    /**
+     * Defines the source type to be Stream.
+     */
+    STREAM,
+  }
+
   private final String name;
-  private final DataType type;
+  private final Type type;
   private final Map<String, String> properties;
 
   /**
@@ -36,7 +46,7 @@ public final class Source {
    * @param type  Name of the Source.
    * @param properties {@Map} of properties associated with the Source.
    */
-  public Source(String name, DataType type, Map<String, String> properties) {
+  public Source(String name, Type type, Map<String, String> properties) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -52,7 +62,7 @@ public final class Source {
   /**
    * @return type of the Source.
    */
-  public DataType getType() {
+  public Type getType() {
     return type;
   }
 

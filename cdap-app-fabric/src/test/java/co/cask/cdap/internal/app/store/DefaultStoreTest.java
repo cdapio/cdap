@@ -25,7 +25,6 @@ import co.cask.cdap.ToyApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.adapter.AdapterType;
-import co.cask.cdap.adapter.DataType;
 import co.cask.cdap.adapter.Sink;
 import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.ProgramSpecification;
@@ -673,10 +672,10 @@ public class DefaultStoreTest {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
     Map<String, String> properties = ImmutableMap.of("frequency", "10m");
-    Set<Source> sources = Sets.newHashSet(new Source("eventStream", DataType.STREAM,
+    Set<Source> sources = Sets.newHashSet(new Source("eventStream", Source.Type.STREAM,
                                                          ImmutableMap.of("prop1", "val1")));
 
-    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", DataType.DATASET,
+    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
                                                    ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
 
     AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", AdapterType.BATCH_STREAM_TO_AVRO,

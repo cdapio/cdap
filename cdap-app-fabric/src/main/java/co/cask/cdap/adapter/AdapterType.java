@@ -25,5 +25,4 @@ public enum AdapterType {
    * The adapter will be executed via batch jobs and convert data in stream to Avro.
    */
   BATCH_STREAM_TO_AVRO,
-
 }
