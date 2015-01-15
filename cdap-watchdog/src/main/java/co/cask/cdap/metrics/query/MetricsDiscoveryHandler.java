@@ -52,6 +52,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.cdap.common.metrics.MetricsScope#USER} scope.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
+//todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
 public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
@@ -62,7 +63,6 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   // currently you query differently depending on the metric, and some metrics you can query for in the
   // BatchMetricsHandler are computed in the handler and are not stored in the table.
   private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
-
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
     PROCEDURES("p"),
@@ -134,7 +134,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
         Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
-        for (final MetricsScope scope : MetricsScope.values()) {
+        for (MetricsScope scope : MetricsScope.values()) {
           map.put(scope, metricsTableFactory.createAggregates(scope.name()));
         }
         return map;
@@ -201,7 +201,6 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   private void getMetrics(HttpRequest request, HttpResponder responder, String metricPrefix) {
-
     String contextPrefix = null;
     try {
       String path = request.getUri();

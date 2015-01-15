@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,7 +94,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appSpec.getId(), spec.getName());
-      programTerminator.stop(Id.Account.from(appSpec.getId().getAccountId()),
+      programTerminator.stop(Id.Namespace.from(appSpec.getId().getNamespaceId()),
                                    programId, type);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
@@ -121,7 +121,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       }
     }
     if (!deletedFlows.isEmpty()) {
-      deleteMetrics(appSpec.getId().getAccountId(), appSpec.getId().getId(), deletedFlows);
+      deleteMetrics(appSpec.getId().getNamespaceId(), appSpec.getId().getId(), deletedFlows);
     }
 
     emit(appSpec);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,11 +31,11 @@ public class NotificationFeed {
   private final String description;
 
   /**
-   * Create a {@link NotificationFeed} object from an id. An id is of the form "namespace.category.name".
+   * {@link NotificationFeed} object from an id in the form of "namespace.category.name".
    *
-   * @param id id of the notification feed to build.
-   * @return a {@link NotificationFeed} object which id is the same as {@code id}.
-   * @throws IllegalArgumentException when the id doesn't match a valid feed id.
+   * @param id id of the notification feed to build
+   * @return a {@link NotificationFeed} object which id is the same as {@code id}
+   * @throws IllegalArgumentException when the id doesn't match a valid feed id
    */
   public static NotificationFeed fromId(String id) {
     String[] idParts = id.split("\\.");

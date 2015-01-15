@@ -57,8 +57,7 @@ public class AppWithSchedule extends AbstractApplication {
       return WorkflowSpecification.Builder.with()
         .setName("SampleWorkflow")
         .setDescription("SampleWorkflow description")
-        .startWith(new DummyAction())
-        .last(new DummyAction())
+        .onlyWith(new DummyAction())
         .addSchedule(new Schedule("Schedule", "Run every second", "0/1 * * * * ?",
                                   Schedule.Action.START))
         .build();

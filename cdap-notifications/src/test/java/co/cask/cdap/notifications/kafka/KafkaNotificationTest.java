@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,7 +82,6 @@ public class KafkaNotificationTest extends NotificationTest {
         }
       }
     );
-    startServices(injector);
 
     zkServer = injector.getInstance(InMemoryZKServer.class);
 
@@ -91,6 +90,8 @@ public class KafkaNotificationTest extends NotificationTest {
 
     kafkaClient = injector.getInstance(KafkaClientService.class);
     kafkaClient.startAndWait();
+
+    startServices(injector);
 
     Properties kafkaConfig = generateKafkaConfig(zkServer, tmpFolder.newFolder("kafka-notifications-test"));
 

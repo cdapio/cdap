@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 /**
  * Encoder/decoder of Notifications to Kafka messages.
  */
-public class KafkaMessageCodec {
+public final class KafkaMessageCodec {
   private static final Gson GSON = new Gson();
 
   public static ByteBuffer encode(KafkaMessage message) throws IOException {
@@ -40,5 +40,8 @@ public class KafkaMessageCodec {
     } catch (JsonSyntaxException e) {
       throw new IOException(e);
     }
+  }
+
+  private KafkaMessageCodec() {
   }
 }

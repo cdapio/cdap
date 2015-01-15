@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,12 @@
 
 package co.cask.cdap.notifications.feeds;
 
+import co.cask.cdap.notifications.service.NotificationException;
+
 /**
  * Exceptions about notification feed.
  */
-public class NotificationFeedException extends Exception {
+public class NotificationFeedException extends NotificationException {
   public NotificationFeedException(String s) {
     super(s);
   }

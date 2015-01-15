@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     try {
-      AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, deployedJar).get();
     } finally {
       deployedJar.delete(true);
     }
@@ -68,7 +68,7 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, AppFabricClient.getManifestWithMainClass(ToyApp.class))
     );
 
-    ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT,
+    ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE,
                                                                                  null, deployedJar).get();
 
     Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
