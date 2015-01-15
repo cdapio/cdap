@@ -33,6 +33,7 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -41,9 +42,8 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
@@ -106,6 +106,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
+  private final DatasetFramework datasetFramework;
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
@@ -114,7 +115,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   MapReduceRuntimeService(CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification, BasicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
+                          DatasetFramework datasetFramework) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -124,6 +126,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
+    this.datasetFramework = datasetFramework;
   }
 
   @Override
@@ -358,62 +361,81 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Calls the {@link MapReduce#beforeSubmit(co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void beforeSubmit() throws TransactionFailureException, InterruptedException {
-    createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(mapReduce.getClass().getClassLoader());
-        try {
-          mapReduce.beforeSubmit(context);
-        } finally {
-          Thread.currentThread().setContextClassLoader(oldClassLoader);
-        }
+    // add datasets given in the application specification to the transaction context
+    TransactionContext txContext =
+      new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
+    BasicMapReduceContextWithTX mapReduceContextWithTX = null;
+    try {
+      txContext.start();
+      // this context allows the onFinish in user code to get datasets not mentioned in the application spec
+      mapReduceContextWithTX = new BasicMapReduceContextWithTX(context, datasetFramework, txContext, cConf);
+      mapReduce.beforeSubmit(mapReduceContextWithTX);
+      txContext.finish();
+    } catch (TransactionFailureException e) {
+      abortTransaction(e, "Failed to commit after running beforeSubmit(). Aborting transaction.", txContext);
+    } catch (Throwable t) {
+      abortTransaction(t, "Exception occurred running beforeSubmit(). Aborting transaction.", txContext);
+    } finally {
+      if (mapReduceContextWithTX != null) {
+        mapReduceContextWithTX.close();
       }
-    });
+    }
   }
 
   /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
-    createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        mapReduce.onFinish(succeeded, context);
+    // add datasets given in the application specification to the transaction context
+    TransactionContext txContext =
+      new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
+    BasicMapReduceContextWithTX mapReduceContextWithTX = null;
+    try {
+      txContext.start();
+      // this context allows the onFinish in user code to get datasets not mentioned in the application spec
+      mapReduceContextWithTX = new BasicMapReduceContextWithTX(context, datasetFramework, txContext, cConf);
+      mapReduce.onFinish(succeeded, mapReduceContextWithTX);
+      txContext.finish();
+    } catch (TransactionFailureException e) {
+      abortTransaction(e, "Failed to commit after running onFinish(). Aborting transaction.", txContext);
+    } catch (Throwable t) {
+      abortTransaction(t, "Exception occurred running onFinish(). Aborting transaction.", txContext);
+    } finally {
+      if (mapReduceContextWithTX != null) {
+        mapReduceContextWithTX.close();
       }
-    });
+    }
   }
 
-  /**
-   * Creates a {@link TransactionExecutor} with all the {@link co.cask.tephra.TransactionAware} in the context.
-   */
-  private TransactionExecutor createTransactionExecutor() {
-    return new DefaultTransactionExecutor(txClient, context.getDatasetInstantiator().getTransactionAware());
+  private void abortTransaction(Throwable t, String message, TransactionContext context) {
+    try {
+      LOG.error(message, t);
+      context.abort();
+      Throwables.propagate(t);
+    } catch (TransactionFailureException e) {
+      LOG.error("Failed to abort transaction.", e);
+      Throwables.propagate(e);
+    }
   }
 
   @SuppressWarnings("unchecked")
   private void setInputDatasetIfNeeded(Job job) throws IOException {
     String inputDatasetName = context.getInputDatasetName();
-    if (inputDatasetName == null) {
-      // trying to init input dataset from spec
-      inputDatasetName = context.getSpecification().getInputDataSet();
-    }
-    if (inputDatasetName == null) {
-      // not using a dataset as input
-      return;
-    }
 
     // TODO: It's a hack for stream
-    if (inputDatasetName.startsWith("stream://")) {
+    if (inputDatasetName != null && inputDatasetName.startsWith("stream://")) {
       StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
       configureStreamInput(job, stream);
       return;
     }
 
-    LOG.debug("Using Dataset {} as input for MapReduce Job", inputDatasetName);
+    Dataset dataset = context.getInputDataset();
+    if (dataset == null) {
+      return;
+    }
 
+    LOG.debug("Using Dataset {} as input for MapReduce Job", inputDatasetName);
     // We checked on validation phase that it implements BatchReadable or InputFormatProvider
-    Dataset dataset = context.getDataset(inputDatasetName);
     if (dataset instanceof BatchReadable) {
       BatchReadable inputDataset = (BatchReadable) dataset;
       List<Split> inputSplits = context.getInputDataSelection();
@@ -450,20 +472,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private void setOutputDatasetIfNeeded(Job job) {
     String outputDatasetName = context.getOutputDatasetName();
-    // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
-    if (outputDatasetName == null) {
-      // trying to init output dataset from spec
-      outputDatasetName = context.getSpecification().getOutputDataSet();
-    }
-    if (outputDatasetName == null) {
-      // not using a dataset as input
+    Dataset dataset = context.getOutputDataset();
+    if (dataset == null) {
       return;
     }
 
     LOG.debug("Using Dataset {} as output for MapReduce Job", outputDatasetName);
-
     // We checked on validation phase that it implements BatchWritable or OutputFormatProvider
-    Dataset dataset = context.getDataset(outputDatasetName);
     if (dataset instanceof BatchWritable) {
       DataSetOutputFormat.setOutput(job, outputDatasetName);
       return;

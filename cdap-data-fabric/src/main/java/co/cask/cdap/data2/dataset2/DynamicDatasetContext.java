@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,11 +49,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader,
                                @Nullable Set<String> datasets) {
     this.context = context;
-    if (datasets != null) {
-      this.allowedDatasets = ImmutableSet.copyOf(datasets);
-    } else {
-      this.allowedDatasets = null;
-    }
+    this.allowedDatasets = datasets == null ? null : ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
     this.classLoader = classLoader;
   }

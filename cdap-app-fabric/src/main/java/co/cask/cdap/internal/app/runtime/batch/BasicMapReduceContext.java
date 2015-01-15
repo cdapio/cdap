@@ -16,7 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -64,6 +69,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   private String outputDatasetName;
   private Job job;
+  private Dataset outputDataset;
+  private Dataset inputDataset;
 
   public BasicMapReduceContext(Program program,
                                MapReduceMetrics.TaskType type,
@@ -107,6 +114,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
     this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.spec = spec;
+    // initialize input/output to what the spec says. These can be overwritten at runtime.
+    this.inputDatasetName = spec.getInputDataSet();
+    this.outputDatasetName = spec.getOutputDataSet();
   }
 
   @Override
@@ -143,6 +153,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Override
+  public void setInput(String datasetName) {
+    this.inputDatasetName = datasetName;
+  }
+
+  @Override
   public void setInput(String datasetName, List<Split> splits) {
     this.inputDatasetName = datasetName;
     this.inputDataSelection = splits;
@@ -151,6 +166,71 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public void setOutput(String datasetName) {
     this.outputDatasetName = datasetName;
+  }
+
+  @Override
+  public void setInput(String inputDatasetName, Dataset dataset) {
+    if (!(dataset instanceof BatchReadable) && !(dataset instanceof InputFormatProvider)) {
+      throw new IllegalArgumentException("Input dataset must be a BatchReadable or InputFormatProvider.");
+    }
+    // splits will be set by the MapReduceRuntimeService if they are not directly set by the program.
+    this.inputDatasetName = inputDatasetName;
+    this.inputDataset = dataset;
+  }
+
+  //TODO: update this to allow a BatchWritable once the DatasetOutputFormat can support taking an instance
+  //      and not just the name
+  @Override
+  public void setOutput(String outputDatasetName, Dataset dataset) {
+    if (!(dataset instanceof OutputFormatProvider)) {
+      throw new IllegalArgumentException("Output dataset must be an OutputFormatProvider.");
+    }
+    this.outputDatasetName = outputDatasetName;
+    this.outputDataset = dataset;
+  }
+
+  /**
+   * Get the output dataset for the job. If the dataset instance was set at runtime, that instance is returned.
+   * If the dataset name was set at runtime, an instance for that name is returned. If nothing was set at runtime, the
+   * output dataset from the program spec is used. If no output dataset was specified anywhere, a null is returned.
+   *
+   * @return Input dataset for the MapReduce job.
+   */
+  public Dataset getOutputDataset() {
+    // use the dataset instance if it is set.
+    if (outputDataset != null) {
+      return outputDataset;
+    }
+
+    // otherwise, use the output dataset name to create one.
+    if (outputDatasetName != null) {
+      return getDataset(outputDatasetName);
+    }
+
+    // if we got here, a dataset is not the output.
+    return null;
+  }
+
+  /**
+   * Get the input dataset for the job. If the dataset instance was set at runtime, that instance is returned.
+   * If the dataset name was set at runtime, an instance for that name is returned. If nothing was set at runtime, the
+   * input dataset from the program spec is used. If no input dataset was specified anywhere, a null is returned.
+   *
+   * @return Input dataset for the MapReduce job.
+   */
+  public Dataset getInputDataset() {
+    // use the dataset instance if it is set.
+    if (inputDataset != null) {
+      return inputDataset;
+    }
+
+    // otherwise, use the input dataset name to create one.
+    if (inputDatasetName != null) {
+      return getDataset(inputDatasetName);
+    }
+
+    // if we got here, a dataset is not the input.
+    return null;
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, MetricsScope scope,
