@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.format;
+package co.cask.cdap.api.data.format;
 
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
-import co.cask.cdap.internal.specification.FormatSpecification;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -30,6 +30,7 @@ import java.util.Map;
  * @param <FROM> the raw data to read from.
  * @param <TO> object to format the data into.
  */
+@Beta
 public abstract class RecordFormat<FROM, TO> {
   protected Schema schema;
 

@@ -17,11 +17,10 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 
 /**
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
