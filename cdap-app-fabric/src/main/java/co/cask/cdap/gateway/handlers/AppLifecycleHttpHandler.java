@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -220,6 +221,55 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
   }
+
+  /**
+   * Create an adapter.
+   */
+  @PUT
+  @Path("/adapters/{adapter-type}/{adapter-name}")
+  public void createAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String nameSpaceId,
+                            @PathParam("adapter-name") String adapterName) {
+
+    try {
+      AdapterSpecification spec = decodeAdapterSpecification(request);
+      if (spec == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
+        return;
+      }
+
+      // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
+      String adapterType = spec.getType();
+
+      //TODO: Check if Adapter exists. If exists, remove schedule once the API is merged
+      store.addAdapter(Id.Namespace.from(nameSpaceId), spec);
+
+      //TODO: Schedule new programs once the API is available.
+
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
+    }
+  }
+
+  /**
+   * Get a specific adapter.
+   */
+
+  @PUT
+  @Path("/adapters/{adapter-type}/{adapter-name}")
+  public void getAdapter(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String nameSpaceId,
+                         @PathParam("adapter-name") String adapterName) {
+
+    AdapterSpecification adapter = store.getAdapter(Id.Namespace.from(nameSpaceId), adapterName);
+    if (adapter == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter %s not found", adapterName));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, adapter);
+    }
+  }
+
+
 
   /**
    * Returns a list of applications associated with a namespace.

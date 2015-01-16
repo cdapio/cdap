@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -253,8 +254,8 @@ public class AppFabricClient {
     return deployedJar;
   }
 
-  public static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, File...bundleEmbeddedJars)
-    throws IOException {
+  public static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Attributes mainAttribute,
+                                         File...bundleEmbeddedJars) throws IOException {
 
     ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
                                                                          "org.apache.hadoop",
@@ -268,8 +269,7 @@ public class AppFabricClient {
 
     // Creates Manifest
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, clz.getName());
+    manifest.getMainAttributes().putAll(mainAttribute);
 
     // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
     // by the ApplicationBundler inside Twill.
@@ -320,4 +320,13 @@ public class AppFabricClient {
     return new File(deployJar.toURI());
   }
 
-}
+  public static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, File...bundleEmbeddedJars)
+    throws IOException {
+
+    Attributes attributes = new Attributes();
+    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
+    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
+
+    return createDeploymentJar(locationFactory, clz, attributes, bundleEmbeddedJars);
+  }
+ }
