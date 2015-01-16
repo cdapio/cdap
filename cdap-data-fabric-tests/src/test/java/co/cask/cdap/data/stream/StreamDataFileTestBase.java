@@ -18,8 +18,10 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
+import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -34,8 +36,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.hadoop.hbase.util.Strings;
 import org.apache.twill.filesystem.Location;
@@ -857,6 +861,65 @@ public abstract class StreamDataFileTestBase {
     } finally {
       reader.close();
     }
+  }
+
+  /**
+   * This unit test is to test the v2 file format that supports
+   * defaulting values in stream event (timestamp and headers).
+   */
+  @Test
+  public void testEventTemplate() throws IOException, InterruptedException {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Creates a stream file with the uni timestamp property and a default header (key=value)
+    StreamDataFileWriter writer = new StreamDataFileWriter(
+      Locations.newOutputSupplier(eventFile), Locations.newOutputSupplier(indexFile), 10000L,
+      ImmutableMap.of(
+        StreamDataFileConstants.Property.Key.UNI_TIMESTAMP, StreamDataFileConstants.Property.Value.CLOSE_TIMESTAMP,
+        StreamDataFileConstants.Property.Key.EVENT_HEADER_PREFIX + "key", "value"
+      ));
+
+    // Write 1000 events with different timestamp
+    for (int i = 0; i < 1000; i++) {
+      writer.append(StreamFileTestUtils.createEvent(i, "Message " + i));
+    }
+    writer.close();
+
+    // Get the close timestamp from the file for assertion below
+    SeekableInputStream input = Locations.newInputSupplier(eventFile).getInput();
+    input.seek(input.size() - 8);
+    long timestamp = Math.abs(Longs.fromByteArray(ByteStreams.toByteArray(input)));
+    input.close();
+
+    // Create a reader to read all events. All events should have the same timestamp
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    List<StreamEvent> events = Lists.newArrayList();
+    Assert.assertEquals(1000, reader.read(events, 1000, 0, TimeUnit.SECONDS));
+
+    // All events should have the same timestamp and contains a default header
+    for (StreamEvent event : events) {
+      Assert.assertEquals(timestamp, event.getTimestamp());
+      Assert.assertEquals("value", event.getHeaders().get("key"));
+    }
+
+    // No more events
+    Assert.assertEquals(-1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+    reader.close();
+
+    // Open another read that reads with a filter that skips all events by timestamp
+    reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    int res = reader.read(events, 1, 0, TimeUnit.SECONDS, new ReadFilter() {
+      @Override
+      public boolean acceptTimestamp(long timestamp) {
+        return false;
+      }
+    });
+
+    Assert.assertEquals(-1, res);
+
+    reader.close();
   }
 
   private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
