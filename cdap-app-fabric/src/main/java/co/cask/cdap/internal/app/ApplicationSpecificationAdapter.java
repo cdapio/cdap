@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.SchemaTypeAdapter;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -32,6 +31,7 @@ import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;

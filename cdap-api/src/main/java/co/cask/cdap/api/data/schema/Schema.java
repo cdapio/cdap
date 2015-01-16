@@ -17,6 +17,7 @@
 package co.cask.cdap.api.data.schema;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
