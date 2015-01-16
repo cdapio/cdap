@@ -27,7 +27,6 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
-import co.cask.cdap.data.stream.service.AbstractStreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Functions;
