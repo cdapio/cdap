@@ -176,7 +176,8 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(namespaceId, typeId, pathType, requestType, requestId, componentId, tagType, tag, runId);
+      return new MetricsRequestContext(namespaceId, typeId, pathType, requestType, requestId, componentId, tagType, tag,
+                                       runId);
     }
   }
 }
