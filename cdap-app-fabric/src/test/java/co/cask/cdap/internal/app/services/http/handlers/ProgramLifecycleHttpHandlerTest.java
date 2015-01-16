@@ -22,11 +22,13 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.adapter.AdapterSpecification;
+import co.cask.cdap.adapter.Sink;
+import co.cask.cdap.adapter.Source;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -36,6 +38,8 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -65,7 +69,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type ADAPTER_META_LIST_TYPE = new TypeToken<List<AdapterMeta>>() { }.getType();
+  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
@@ -763,11 +767,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterId = "adapterId";
-    AdapterMeta adapterToPut = new AdapterMeta(adapterId, "someStream", "someDataset", "someFrequency");
+    AdapterSpecification adapterToPut = new AdapterSpecification(adapterId, "batchStreamToAvro", ImmutableMap.<String, String>of(), ImmutableSet.<Source>of(), ImmutableSet.<Sink>of());
 
     HttpResponse response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterMeta> list = readResponse(response, ADAPTER_META_LIST_TYPE);
+    List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertTrue(list.isEmpty());
 
     response = createAdapter(namespaceId, adapterToPut);
@@ -775,14 +779,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    list = readResponse(response, ADAPTER_META_LIST_TYPE);
+    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(adapterToPut, list.get(0));
 
     response = getAdapter(namespaceId, adapterId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    AdapterMeta receivedAdapterMeta = readResponse(response, AdapterMeta.class);
-    Assert.assertEquals(adapterToPut, receivedAdapterMeta);
+    AdapterSpecification receivedAdapterSpecification = readResponse(response, AdapterSpecification.class);
+    Assert.assertEquals(adapterToPut, receivedAdapterSpecification);
 
     response = deleteAdapter(namespaceId, adapterId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -792,7 +796,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    list = readResponse(response, ADAPTER_META_LIST_TYPE);
+    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertTrue(list.isEmpty());
   }
 
@@ -808,27 +812,28 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testMultipleAdapters() throws Exception {
-    List<AdapterMeta> adaptersToPut =
-      ImmutableList.of(new AdapterMeta("adapterId", "someStream", "someDataset", "someFrequency"));
-    for (AdapterMeta adapterMeta : adaptersToPut) {
-      HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, adapterMeta);
+    List<AdapterSpecification> adaptersToPut =
+      ImmutableList.of(new AdapterSpecification("adapterId", "batchStreamToAvro", ImmutableMap.<String, String>of(),
+                                              ImmutableSet.<Source>of(), ImmutableSet.<Sink>of()));
+    for (AdapterSpecification adapterSpec : adaptersToPut) {
+      HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, adapterSpec);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
     HttpResponse response = listAdapters(Constants.DEFAULT_NAMESPACE);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterMeta> retrievedAdapters = readResponse(response, ADAPTER_META_LIST_TYPE);
+    List<AdapterSpecification> retrievedAdapters = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertEquals(adaptersToPut.size(), retrievedAdapters.size());
     Assert.assertEquals(Sets.newHashSet(adaptersToPut), Sets.newHashSet(retrievedAdapters));
   }
 
-  private HttpResponse createAdapter(String namespaceId, AdapterMeta adapterMeta) throws Exception {
-    return createAdapter(namespaceId, GSON.toJson(adapterMeta));
+  private HttpResponse createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws Exception {
+    return createAdapter(namespaceId, GSON.toJson(adapterSpec));
   }
 
-  private HttpResponse createAdapter(String namespaceId, String metadata) throws Exception {
+  private HttpResponse createAdapter(String namespaceId, String adapterSpecJson) throws Exception {
     return doPut(String.format("%s/namespaces/%s/adapters",
-                               Constants.Gateway.API_VERSION_3, namespaceId), metadata);
+                               Constants.Gateway.API_VERSION_3, namespaceId), adapterSpecJson);
   }
 
   private HttpResponse listAdapters(String namespaceId) throws Exception {

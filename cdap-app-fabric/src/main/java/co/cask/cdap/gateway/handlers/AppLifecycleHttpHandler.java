@@ -16,11 +16,13 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -57,7 +59,6 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.proto.AdapterMeta;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -322,7 +323,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, store.listAdapters(Id.Namespace.from(namespaceId)));
+    responder.sendJson(HttpResponseStatus.OK, store.getAllAdapters(Id.Namespace.from(namespaceId)));
   }
 
   /**
@@ -333,13 +334,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapterId") String adapterId) {
-    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
-    if (adapterMeta == null) {
+    AdapterSpecification adapterSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+    if (adapterSpec == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, adapterMeta);
+    responder.sendJson(HttpResponseStatus.OK, adapterSpec);
   }
 
   /**
@@ -350,15 +351,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapterId") String adapterId) {
-    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
-    if (adapterMeta == null) {
+    AdapterSpecification adapterSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+    if (adapterSpec == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
     // TODO: Update application specification
     scheduler.deleteSchedules(Id.Program.from(namespaceId, "appId", "programId"), ProgramType.WORKFLOW);
-    store.deleteAdapter(Id.Namespace.from(namespaceId), adapterId);
+    store.removeAdapter(Id.Namespace.from(namespaceId), adapterId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -377,55 +378,60 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      AdapterMeta adapterMeta = parseBody(request, AdapterMeta.class);
-      Preconditions.checkNotNull(adapterMeta, "Adaptermeta is null");
-      Preconditions.checkNotNull(adapterMeta.getDatasetName(), "Adaptermeta's datasetName is null");
-      Preconditions.checkNotNull(adapterMeta.getId(), "Adaptermeta's id is null");
-      Preconditions.checkNotNull(adapterMeta.getStreamName(), "Adaptermeta's streamName is null");
+      AdapterSpecification adapterSpec = parseBody(request, AdapterSpecification.class);
+      Preconditions.checkNotNull(adapterSpec, "AdapterSpec is null");
+      String adapterName = adapterSpec.getName();
+      Preconditions.checkNotNull(adapterName, "AdapterSpec's name is null");
+      String datasetName = adapterSpec.getSinks().iterator().next().getName();
+      String streamName = adapterSpec.getSources().iterator().next().getName();
+      Preconditions.checkNotNull(datasetName, "AdapterSpec's datasetName is null");
+      Preconditions.checkNotNull(streamName, "AdapterSpec's streamName is null");
       // validate specified frequency
-      String frequency = adapterMeta.getFrequency();
-      Preconditions.checkNotNull(frequency, "Adaptermeta's frequency is null");
+      String frequency = adapterSpec.getProperties().get("frequency");
+      Preconditions.checkNotNull(frequency, "AdapterSpec's frequency is null");
 
-      adapterMeta.getSchedule();
-
-      String adapterId = adapterMeta.getId();
-      AdapterMeta existingAdapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
-      if (existingAdapterMeta != null) {
+      String adapterId = adapterSpec.getName();
+      AdapterSpecification existingAdapterSpecification = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+      if (existingAdapterSpecification != null) {
         String debugMessage = String.format("Existing adapter found while create: %s.%s",
-                                            namespaceId, existingAdapterMeta);
+                                            namespaceId, existingAdapterSpecification);
         LOG.debug(debugMessage);
         responder.sendString(HttpResponseStatus.OK, debugMessage);
         return;
       }
 
       // ensure stream exists
-      String streamName = adapterMeta.getStreamName();
       if (!streamAdmin.exists(streamName)) {
-        LOG.debug("stream instance {} does not exist during create of adapter: {}", streamName, adapterMeta);
+        LOG.debug("stream instance {} does not exist during create of adapter: {}", streamName, adapterSpec);
       }
 
       // create datasets
-      String datasetName = adapterMeta.getDatasetName();
       if (!datasetFramework.hasInstance(datasetName)) {
         datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
       } else {
-        LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, adapterMeta);
+        LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, adapterSpec);
       }
 
+      String appId = "appId";
+      String programId = "programId";
+      ProgramType programType = ProgramType.WORKFLOW;
       // deploy App
       // Standalone
-      deploy(namespaceId, adapterMeta.getAppId(), new LocalLocationFactory()
+      deploy(namespaceId, appId, new LocalLocationFactory()
         .create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
       // Distributed
 
 
-      Id.Program scheduledProgramId = Id.Program.from(namespaceId, adapterMeta.getAppId(), adapterMeta.getProgramId());
+      Id.Program scheduledProgramId = Id.Program.from(namespaceId, appId, programId);
       // TODO: Update application specification
 
-      scheduler.schedule(scheduledProgramId, adapterMeta.getProgramType(), ImmutableList.of(adapterMeta.getSchedule()));
+      scheduler.schedule(scheduledProgramId, programType, ImmutableList.of(new Schedule(String.format("schedule.%s", adapterName),
+                                                                                        "Arbitrary Description",
+                                                                                        toCronExpr(adapterSpec.getProperties().get("frequency")),
+                                                                                        Schedule.Action.START)));
 
       // Write to mds
-      store.createAdapter(Id.Namespace.from(namespaceId), adapterMeta);
+      store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
@@ -483,13 +489,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapterId") String adapterId,
                                @PathParam("action") String action) {
-    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
-    if (adapterMeta == null) {
+    AdapterSpecification adapterSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
+    if (adapterSpec == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
-    String scheduleId = adapterMeta.getSchedule().getName();
+    String scheduleId = String.format("schedule.%s", adapterSpec.getName());
     if ("start".equals(action)) {
       scheduler.resumeSchedule(scheduleId);
     } else if ("stop".equals(action)) {

@@ -35,11 +35,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -156,7 +152,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Scheduler scheduler;
 
   private final PreferencesStore preferencesStore;
-  private final DatasetFramework datasetFramework;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -204,8 +199,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler, PreferencesStore preferencesStore,
-                                     DatasetFramework datasetFramework) {
+                                     Scheduler scheduler, PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -217,8 +211,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.datasetFramework =
-      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**
@@ -1032,6 +1024,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
 
   /**
    * Populates requested and provisioned instances for a program type.

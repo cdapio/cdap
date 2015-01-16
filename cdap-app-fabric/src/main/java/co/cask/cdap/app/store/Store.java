@@ -344,7 +344,7 @@ public interface Store {
    * @param adapterSpecification specification of the adapter
    * @throws OperationException on errors.
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification) throws OperationException;
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
@@ -354,7 +354,7 @@ public interface Store {
    * @return an instance of {@link AdapterSpecification}.
    * @throws OperationException on errors.
    */
-  AdapterSpecification getAdapter(Id.Namespace id, String name) throws OperationException;
+  AdapterSpecification getAdapter(Id.Namespace id, String name);
 
   /**
    * Fetch all the adapters in a given namespace.
@@ -363,7 +363,7 @@ public interface Store {
    * @return {@link Collection} of Adapter Specification.
    * @throws OperationException on errors.
    */
-  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id) throws OperationException;
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.
@@ -372,7 +372,7 @@ public interface Store {
    * @param name Adapter name.
    * @throws OperationException on errors.
    */
-  void removeAdapter(Id.Namespace id, String name) throws OperationException;
+  void removeAdapter(Id.Namespace id, String name);
 
   /**
    * Remove all the adapters in a given namespace.
@@ -380,6 +380,6 @@ public interface Store {
    * @param id Namespace id.
    * @throws OperationException on errors.
    */
-  void removeAllAdapters(Id.Namespace id) throws OperationException;
+  void removeAllAdapters(Id.Namespace id);
 
 }
