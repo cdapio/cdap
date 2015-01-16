@@ -86,11 +86,13 @@ public final class LocationRuntimeModule extends RuntimeModule {
 
       try {
         if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
-          if (hdfsUser != null && LOG.isDebugEnabled()) {
+          if (hdfsUser != null) {
             LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
           }
+          LOG.debug("Getting filesystem for current user");
           fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
         } else {
+          LOG.debug("Getting filesystem for user {}", hdfsUser);
           fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
         }
         return new HDFSLocationFactory(fileSystem, namespace);

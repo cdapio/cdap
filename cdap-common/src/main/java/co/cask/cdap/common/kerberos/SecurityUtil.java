@@ -143,6 +143,7 @@ public final class SecurityUtil {
     String keytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
 
     if (UserGroupInformation.isSecurityEnabled()) {
+      LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
       UserGroupInformation.loginUserFromKeytab(principal, keytabPath);
     }
   }

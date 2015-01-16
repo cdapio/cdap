@@ -143,6 +143,13 @@ public class MasterServiceMain extends DaemonMain {
     serviceName = Constants.Service.MASTER_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
+    try {
+      SecurityUtil.loginForMasterService(cConf);
+    } catch (Exception e) {
+      LOG.error("Failed to login as CDAP user", e);
+      throw Throwables.propagate(e);
+    }
+
     baseInjector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -171,13 +178,6 @@ public class MasterServiceMain extends DaemonMain {
     exploreClient = baseInjector.getInstance(ExploreClient.class);
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
-
-    try {
-      SecurityUtil.loginForMasterService(cConf);
-    } catch (Exception e) {
-      LOG.error("Failed to login as CDAP user", e);
-      throw Throwables.propagate(e);
-    }
 
     checkTransactionRequirements();
     checkExploreRequirements();
