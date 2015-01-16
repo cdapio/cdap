@@ -109,7 +109,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.DATASET), Constants.Metrics.Tag.DATASET));
 
     // service, handler, method
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.SERVICE,
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.SERVICE,
                                         Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD)));
 
     Collections.reverse(rules);
