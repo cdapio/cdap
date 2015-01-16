@@ -22,9 +22,6 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.adapter.Sink;
-import co.cask.cdap.adapter.Source;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -37,11 +34,7 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -69,7 +62,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
@@ -761,95 +753,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     code = getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
                                 APP_WITH_SERVICES_SERVICE_NAME, "stop");
     Assert.assertEquals(200, code);
-  }
-
-  @Test
-  public void testAdapterLifeCycle() throws Exception {
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-    String adapterId = "adapterId";
-    AdapterSpecification adapterToPut = new AdapterSpecification(adapterId, "batchStreamToAvro", ImmutableMap.<String, String>of(), ImmutableSet.<Source>of(), ImmutableSet.<Sink>of());
-
-    HttpResponse response = listAdapters(namespaceId);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
-    Assert.assertTrue(list.isEmpty());
-
-    response = createAdapter(namespaceId, adapterToPut);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = listAdapters(namespaceId);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
-    Assert.assertEquals(1, list.size());
-    Assert.assertEquals(adapterToPut, list.get(0));
-
-    response = getAdapter(namespaceId, adapterId);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    AdapterSpecification receivedAdapterSpecification = readResponse(response, AdapterSpecification.class);
-    Assert.assertEquals(adapterToPut, receivedAdapterSpecification);
-
-    response = deleteAdapter(namespaceId, adapterId);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = getAdapter(namespaceId, adapterId);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-    response = listAdapters(namespaceId);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
-    Assert.assertTrue(list.isEmpty());
-  }
-
-  @Test
-  public void testNonexistentAdapter() throws Exception {
-    String nonexistentAdapterId = "nonexistentAdapterId";
-    HttpResponse response = getAdapter(Constants.DEFAULT_NAMESPACE, nonexistentAdapterId);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-    response = deleteAdapter(Constants.DEFAULT_NAMESPACE, nonexistentAdapterId);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-  }
-
-  @Test
-  public void testMultipleAdapters() throws Exception {
-    List<AdapterSpecification> adaptersToPut =
-      ImmutableList.of(new AdapterSpecification("adapterId", "batchStreamToAvro", ImmutableMap.<String, String>of(),
-                                              ImmutableSet.<Source>of(), ImmutableSet.<Sink>of()));
-    for (AdapterSpecification adapterSpec : adaptersToPut) {
-      HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, adapterSpec);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    }
-
-    HttpResponse response = listAdapters(Constants.DEFAULT_NAMESPACE);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterSpecification> retrievedAdapters = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
-    Assert.assertEquals(adaptersToPut.size(), retrievedAdapters.size());
-    Assert.assertEquals(Sets.newHashSet(adaptersToPut), Sets.newHashSet(retrievedAdapters));
-  }
-
-  private HttpResponse createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws Exception {
-    return createAdapter(namespaceId, GSON.toJson(adapterSpec));
-  }
-
-  private HttpResponse createAdapter(String namespaceId, String adapterSpecJson) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/adapters",
-                               Constants.Gateway.API_VERSION_3, namespaceId), adapterSpecJson);
-  }
-
-  private HttpResponse listAdapters(String namespaceId) throws Exception {
-    return doGet(String.format("%s/namespaces/%s/adapters",
-                               Constants.Gateway.API_VERSION_3, namespaceId));
-  }
-
-  private HttpResponse getAdapter(String namespaceId, String adapterId) throws Exception {
-//    Preconditions.checkArgument(adapterId != null, "adapterId cannot be null");
-    return doGet(String.format("%s/namespaces/%s/adapters/%s",
-                               Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
-  }
-
-  private HttpResponse deleteAdapter(String namespaceId, String adapterId) throws Exception {
-    return doDelete(String.format("%s/namespaces/%s/adapters/%s",
-                                  Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
   }
 
   @After
