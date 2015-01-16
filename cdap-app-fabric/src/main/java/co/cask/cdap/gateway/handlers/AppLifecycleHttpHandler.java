@@ -323,7 +323,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
       String adapterType = spec.getType();
 
-      if (!isValidAdapater(adapterType)) {
+      if (!adapterService.isValidAdapater(adapterType)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Adapter type not found");
         return;
       }
@@ -373,7 +373,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // Copy jar content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         // TODO: Get the jar location.
-        Files.copy(getAdapterLocation(adapterType), Locations.newOutputSupplier(tmpLocation));
+        Files.copy(adapterService.getAdapterLocation(adapterType), Locations.newOutputSupplier(tmpLocation));
         // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
         try {
           // Finally, move archive to final location
@@ -460,21 +460,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return String.format("0 0 %s * ?", everyN);
     }
     throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
-  }
-
-  private boolean isValidAdapater(String adapterType) {
-    if (adapterService.getAdapters().containsKey(adapterType)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private File getAdapterLocation(String adapterType) {
-    if (adapterService.getAdapters().containsKey(adapterType)) {
-      return adapterService.getAdapters().get(adapterType);
-    }
-    throw new RuntimeException(String.format("Jar for adapterType %s not found", adapterType));
   }
 
 

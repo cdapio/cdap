@@ -49,15 +49,32 @@ public class AdapterService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.info("Starting AdapterService");
     adapters = registerAdapters();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Shutting down AdapterService");
   }
 
   public Map<String, File> getAdapters() {
     return adapters;
+  }
+
+  public boolean isValidAdapater(String adapterType) {
+    if (adapters.containsKey(adapterType)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public File getAdapterLocation(String adapterType) {
+    if (adapters.containsKey(adapterType)) {
+      return adapters.get(adapterType);
+    }
+    throw new RuntimeException(String.format("Jar for adapterType %s not found", adapterType));
   }
 
   private Map<String, File> registerAdapters() {
