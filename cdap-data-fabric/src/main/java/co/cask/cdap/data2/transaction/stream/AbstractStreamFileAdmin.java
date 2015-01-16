@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaTypeAdapter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -24,7 +25,6 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package co.cask.cdap.api.data.schema;
 
-import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.gson.TypeAdapter;
@@ -44,6 +44,7 @@ import java.util.Set;
  *  </pre>
  * </p>
  */
+@Beta
 public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   @Override

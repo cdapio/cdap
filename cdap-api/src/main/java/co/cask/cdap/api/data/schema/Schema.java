@@ -32,6 +32,7 @@ import com.google.common.io.CharStreams;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,7 @@ import java.util.Set;
  */
 @Beta
 public final class Schema {
+  private static final SchemaTypeAdapter schemaTypeAdapter = new SchemaTypeAdapter();
 
   /**
    * Types known to Schema.
@@ -112,6 +114,28 @@ public final class Schema {
     public Schema getSchema() {
       return schema;
     }
+  }
+
+  /**
+   * Parse the given json representation into a schema object.
+   *
+   * @param schemaJson the json representation of the schema
+   * @return the json representation parsed into a schema object
+   * @throws IOException if there was an exception parsing the schema
+   */
+  public static Schema parse(String schemaJson) throws IOException {
+    return schemaTypeAdapter.fromJson(schemaJson);
+  }
+
+  /**
+   * Parse the given json representation of a schema object contained in a reader into a schema object.
+   *
+   * @param reader the reader for reading the json representation of a schema
+   * @return the parsed schema object
+   * @throws IOException if there was an exception parsing the schema
+   */
+  public static Schema parse(Reader reader) throws IOException {
+    return schemaTypeAdapter.fromJson(reader);
   }
 
   /**
@@ -662,7 +686,7 @@ public final class Schema {
     StringBuilder builder = new StringBuilder();
     JsonWriter writer = new JsonWriter(CharStreams.asWriter(builder));
     try {
-      new co.cask.cdap.internal.io.SchemaTypeAdapter().write(writer, this);
+      schemaTypeAdapter.write(writer, this);
       writer.close();
       return builder.toString();
     } catch (IOException e) {
