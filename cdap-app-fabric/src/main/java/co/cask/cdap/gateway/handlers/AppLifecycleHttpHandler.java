@@ -228,7 +228,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/adapters/{adapter-name}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String nameSpaceId,
+                            @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-name") String adapterName) {
 
     try {
@@ -241,28 +241,56 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
       String adapterType = spec.getType();
 
-      // TODO: Check to see if the App is already deployed
+      // Check to see if the App is already deployed
+      ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterName));
+      if (applicationSpec == null ) {
+        // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
+        Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespaceId);
+        Locations.mkdirsIfNotExists(archiveDirectory);
+        Location archive = archiveDirectory.append(adapterName);
 
-      // TODO: Deploy adapter
+        // Copy jar content to a temporary location
+        Location tmpLocation = archive.getTempFile(".tmp");
+        // TODO: Get the jar location.
+       // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
+       try {
+          // Finally, move archive to final location
+          if (tmpLocation.renameTo(archive) == null) {
+            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                tmpLocation.toURI(), archive.toURI()));
+          }
+        } catch (IOException e) {
+          // In case copy to temporary file failed, or rename failed
+          tmpLocation.delete();
+          throw e;
+        }
+        deploy(namespaceId, adapterName, archive);
+      }
 
-      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(nameSpaceId), adapterName);
+      // If the adapter already exists, remove existing schedule to replace with the new one.
+      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
       if (existingSpec != null) {
         // TODO: Remove the schedule.
       }
 
-      store.addAdapter(Id.Namespace.from(nameSpaceId), spec);
+      store.addAdapter(Id.Namespace.from(namespaceId), spec);
 
       //TODO: Schedule new programs once the API is available.
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
+    } catch (OperationException e) {
+      // TODO: Remove operation Exception from Store. CDAP-1165
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Exception e) {
+      LOG.error("Failed to deploy adapter", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
 
   /**
    * Get a specific adapter.
    */
-
   @PUT
   @Path("/adapters/{adapter-name}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
