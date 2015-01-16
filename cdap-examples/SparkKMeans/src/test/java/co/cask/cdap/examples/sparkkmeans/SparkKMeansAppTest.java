@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sparkkmeans;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeMetrics;
@@ -55,7 +56,8 @@ public class SparkKMeansAppTest extends TestBase {
       streamWriter.send("10.7 518 109.2");
 
       //  Wait for the events to be processed, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("SparkKMeans", "PointsFlow", "reader");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "SparkKMeans", "PointsFlow",
+                                                              "reader");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
       // Start a Spark Program
