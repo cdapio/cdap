@@ -21,6 +21,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -31,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateTestBase;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -58,12 +60,13 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      }
+      Modules.override(new StreamAdminModules().getStandaloneModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        })
     );
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);

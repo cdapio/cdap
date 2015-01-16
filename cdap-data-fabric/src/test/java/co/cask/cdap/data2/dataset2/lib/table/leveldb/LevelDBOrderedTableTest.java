@@ -25,10 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -58,13 +55,7 @@ public class LevelDBOrderedTableTest extends BufferingOrderedTableTest<LevelDBOr
       new ConfigModule(conf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      });
+      new TransactionMetricsModule());
     service = injector.getInstance(LevelDBOrderedTableService.class);
   }
 

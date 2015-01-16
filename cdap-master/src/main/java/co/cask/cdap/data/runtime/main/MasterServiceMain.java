@@ -35,8 +35,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.security.HBaseSecureStoreUpdater;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -58,7 +57,6 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -165,12 +163,7 @@ public class MasterServiceMain extends DaemonMain {
       new ServiceStoreModules().getDistributedModule(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      }
+      new StreamAdminModules().getDistributedModules()
     );
 
     // Initialize ZK client

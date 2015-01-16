@@ -25,7 +25,7 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.junit.BeforeClass;
 
 /**
@@ -43,13 +43,13 @@ public class InMemoryStreamCoordinatorTest extends StreamCoordinatorTestBase {
       new DataFabricModules().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      }
+      Modules.override(new StreamAdminModules().getInMemoryModules())
+        .with(new AbstractModule() {
+                @Override
+                protected void configure() {
+                  bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+                }
+              })
     );
   }
 

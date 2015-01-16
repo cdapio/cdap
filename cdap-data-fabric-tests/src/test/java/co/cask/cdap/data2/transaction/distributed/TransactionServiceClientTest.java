@@ -25,8 +25,6 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TransactionSystemTest;
@@ -35,7 +33,6 @@ import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.persist.TransactionStateStorage;
 import co.cask.tephra.snapshot.SnapshotCodecProvider;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -104,13 +101,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      });
+      new DataSetsModules().getDistributedModule());
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();

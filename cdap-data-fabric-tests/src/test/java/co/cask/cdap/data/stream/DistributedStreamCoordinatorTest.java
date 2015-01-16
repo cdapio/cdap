@@ -29,6 +29,7 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -61,12 +62,13 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
       new DataSetsModules().getDistributedModule(),
       new TransactionMetricsModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      }
+      Modules.override(new StreamAdminModules().getDistributedModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        })
     );
 
     zkClient = injector.getInstance(ZKClientService.class);

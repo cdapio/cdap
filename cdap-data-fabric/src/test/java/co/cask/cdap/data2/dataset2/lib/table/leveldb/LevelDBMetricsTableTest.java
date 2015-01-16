@@ -24,8 +24,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -67,7 +65,6 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
                     .implement(DatasetDefinitionRegistry.class,
                                DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       });
 

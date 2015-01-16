@@ -71,18 +71,19 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         @Override
         protected void configure() {
           bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       },
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+      new DataFabricModules().getDistributedModules(),
+      Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
 
         @Override
         protected void configure() {
           // Tests are running in same process, hence no need to have ZK to coordinate
           bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       }),
       new DataSetsModules().getDistributedModule()

@@ -20,6 +20,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -32,6 +33,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.BeforeClass;
 
 /**
@@ -50,12 +52,13 @@ public class InMemoryQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      });
+      Modules.override(new StreamAdminModules().getInMemoryModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        }));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();

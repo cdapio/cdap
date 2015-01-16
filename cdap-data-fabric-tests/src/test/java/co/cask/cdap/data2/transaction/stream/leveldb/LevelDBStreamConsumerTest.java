@@ -21,6 +21,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -33,6 +34,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -64,12 +66,13 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      }
+      Modules.override(new StreamAdminModules().getStandaloneModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        })
     );
 
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);

@@ -57,7 +57,8 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
+      new DataFabricLevelDBModule(),
+      Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);

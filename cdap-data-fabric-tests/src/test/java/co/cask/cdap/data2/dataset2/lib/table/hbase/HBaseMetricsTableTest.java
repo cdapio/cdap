@@ -28,8 +28,6 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -75,7 +73,6 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                                            .implement(DatasetDefinitionRegistry.class,
                                                                       DefaultDatasetDefinitionRegistry.class)
                                                            .build(DatasetDefinitionRegistryFactory.class));
-                                                 bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
                                                }
                                              });
 

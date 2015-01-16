@@ -42,6 +42,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
@@ -299,7 +300,7 @@ public class TestBase {
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
-    return Modules.override(new DataFabricModules().getInMemoryModules())
+    return Modules.override(new DataFabricModules().getInMemoryModules(), new StreamAdminModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override

@@ -27,6 +27,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
@@ -50,12 +51,14 @@ public class LocalStreamDataFileTest extends StreamDataFileTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-        }
-      });
+      Modules.override(new StreamAdminModules().getStandaloneModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        })
+    );
 
     locationFactory = injector.getInstance(LocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
