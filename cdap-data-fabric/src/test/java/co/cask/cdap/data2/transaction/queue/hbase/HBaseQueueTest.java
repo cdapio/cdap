@@ -27,6 +27,9 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -124,22 +127,30 @@ public abstract class HBaseQueueTest extends QueueTest {
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
-    final Injector injector = Guice.createInjector(dataFabricModule,
-                                                   new ConfigModule(cConf, hConf),
-                                                   new ZKClientModule(),
-                                                   new DiscoveryRuntimeModule().getDistributedModules(),
-                                                   new TransactionMetricsModule(),
-                                                   new AbstractModule() {
-
-      @Override
-      protected void configure() {
-        try {
-          bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
+    final Injector injector = Guice.createInjector(
+      dataFabricModule,
+      new ConfigModule(cConf, hConf),
+      new ZKClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new TransactionMetricsModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          try {
+            bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
         }
-      }
-    });
+      },
+      Modules.override(new StreamAdminModules().getDistributedModules())
+      .with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+        }
+      })
+    );
 
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();

@@ -26,8 +26,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.service.StreamServiceModule;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
@@ -86,6 +85,7 @@ public class ContextManager {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
+      new StreamAdminModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -36,7 +36,6 @@ public class StreamServiceModule extends PrivateModule {
     handlerBinder.addBinding().to(StreamFetchHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
 
-    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);
   }
