@@ -62,6 +62,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -71,6 +72,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -92,6 +94,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -165,6 +170,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final PreferencesStore preferencesStore;
 
+  //TODO: Move this
+  private final Map<String, File> adapters;
+
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
@@ -185,6 +193,37 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
+    adapters = registerAdapters();
+  }
+
+  //TODO: remove
+  private Map<String, File> registerAdapters() {
+    ImmutableMap.Builder<String, File> builder = ImmutableMap.builder();
+    Collection<File> files = Collections.EMPTY_LIST;
+    try {
+      File baseDir  = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
+      files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
+
+    } catch (Exception e) {
+      LOG.warn("Unable to read the plugins directory ");
+    }
+
+    for (File file : files) {
+      try {
+        Manifest manifest = new JarFile(file.getAbsolutePath()).getManifest();
+        if (manifest != null) {
+          Attributes mainAttributes = manifest.getMainAttributes();
+          String adapterType = mainAttributes.getValue("CDAP-Adapter-Type");
+          if (adapterType != null) {
+            builder.put(adapterType, file);
+          }
+        }
+      } catch (IOException e) {
+        LOG.warn(String.format("Unable to read plugin jar %s", file.getAbsolutePath()));
+      }
+
+    }
+    return builder.build();
   }
 
   /**
@@ -232,7 +271,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("adapter-name") String adapterName) {
 
     try {
-      AdapterSpecification spec = decodeAdapterSpecification(request);
+      AdapterSpecification spec = parseBody(request, AdapterSpecification.class);
       if (spec == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
         return;
@@ -241,9 +280,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
       String adapterType = spec.getType();
 
+      if (!isValidAdapater(adapterType)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Adapter type not found");
+        return;
+      }
+
+      // TODO: Check if sources exists
+
       // Check to see if the App is already deployed
       ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterName));
-      if (applicationSpec == null ) {
+      if (applicationSpec == null) {
         // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
         Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespaceId);
         Locations.mkdirsIfNotExists(archiveDirectory);
@@ -252,6 +298,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // Copy jar content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         // TODO: Get the jar location.
+        Files.copy(getAdapterLocation(adapterType), Locations.newOutputSupplier(tmpLocation));
        // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
        try {
           // Finally, move archive to final location
@@ -288,10 +335,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  private boolean isValidAdapater(String adapterType) {
+    if (adapters.containsKey(adapterType)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private File getAdapterLocation(String adapterType) {
+    if (adapters.containsKey(adapterType)) {
+      return adapters.get(adapterType);
+    }
+    throw new RuntimeException(String.format("Jar for adapterType %s not found", adapterType));
+  }
+
   /**
    * Get a specific adapter.
    */
-  @PUT
+  @GET
   @Path("/adapters/{adapter-name}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String nameSpaceId,

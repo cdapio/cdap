@@ -740,7 +740,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) throws OperationException {
+  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
       @Override
       public AdapterSpecification apply(AppMds mds) throws Exception {
@@ -750,7 +750,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) throws OperationException {
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
       @Override
       public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
@@ -760,7 +760,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAdapter(final Id.Namespace id, final String name) throws OperationException {
+  public void removeAdapter(final Id.Namespace id, final String name) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -771,7 +771,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAllAdapters(final Id.Namespace id) throws OperationException {
+  public void removeAllAdapters(final Id.Namespace id) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {

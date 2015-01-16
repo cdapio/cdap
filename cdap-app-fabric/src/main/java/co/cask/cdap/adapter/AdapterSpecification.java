@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Specification that is used to configure an adapter.
  */
-public final class AdapterSpecification {
+public final class  AdapterSpecification {
 
   private final String name;
   private final String type;
