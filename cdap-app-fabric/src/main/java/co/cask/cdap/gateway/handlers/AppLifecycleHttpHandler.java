@@ -57,6 +57,7 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.AdapterService;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -73,7 +74,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -83,7 +83,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
@@ -107,9 +106,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -186,9 +182,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamAdmin streamAdmin;
 
-
-  //TODO: Move this
-  private final Map<String, File> adapters;
+  private final AdapterService adapterService;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -197,7 +191,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
+                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin,
+                                 AdapterService adapterService) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -214,37 +209,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.streamAdmin = streamAdmin;
-    adapters = registerAdapters();
-  }
-
-  //TODO: remove
-  private Map<String, File> registerAdapters() {
-    ImmutableMap.Builder<String, File> builder = ImmutableMap.builder();
-    Collection<File> files = Collections.EMPTY_LIST;
-    try {
-      File baseDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
-      files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
-
-    } catch (Exception e) {
-      LOG.warn("Unable to read the plugins directory ");
-    }
-
-    for (File file : files) {
-      try {
-        Manifest manifest = new JarFile(file.getAbsolutePath()).getManifest();
-        if (manifest != null) {
-          Attributes mainAttributes = manifest.getMainAttributes();
-          String adapterType = mainAttributes.getValue("CDAP-Adapter-Type");
-          if (adapterType != null) {
-            builder.put(adapterType, file);
-          }
-        }
-      } catch (IOException e) {
-        LOG.warn(String.format("Unable to read plugin jar %s", file.getAbsolutePath()));
-      }
-
-    }
-    return builder.build();
+    this.adapterService = adapterService;
   }
 
   /**
@@ -358,7 +323,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
       String adapterType = spec.getType();
 
-      if (!isValidAdapater(adapterType)) {
+      if (!adapterService.isValidAdapater(adapterType)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Adapter type not found");
         return;
       }
@@ -405,7 +370,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // Copy jar content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         // TODO: Get the jar location.
-        Files.copy(getAdapterLocation(adapterType), Locations.newOutputSupplier(tmpLocation));
+        Files.copy(adapterService.getAdapterLocation(adapterType), Locations.newOutputSupplier(tmpLocation));
         // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
         try {
           // Finally, move archive to final location
@@ -492,21 +457,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return String.format("0 0 %s * ?", everyN);
     }
     throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
-  }
-
-  private boolean isValidAdapater(String adapterType) {
-    if (adapters.containsKey(adapterType)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private File getAdapterLocation(String adapterType) {
-    if (adapters.containsKey(adapterType)) {
-      return adapters.get(adapterType);
-    }
-    throw new RuntimeException(String.format("Jar for adapterType %s not found", adapterType));
   }
 
 
