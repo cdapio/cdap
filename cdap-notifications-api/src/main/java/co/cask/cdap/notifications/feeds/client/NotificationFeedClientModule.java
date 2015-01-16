@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.feeds.guice;
+package co.cask.cdap.notifications.feeds.client;
 
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.client.RemoteNotificationFeedManager;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 
