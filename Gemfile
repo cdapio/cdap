@@ -6,6 +6,8 @@ gem 'foodcritic', '~> 3.0'
 gem 'chefspec', '~> 4.0'
 gem 'rspec', '~> 3.0'
 
+gem 'chef', '< 12.0'
+
 gem 'rubocop'
 gem 'rubocop-checkstyle_formatter', require: false
 gem 'rainbow', '<= 1.99.1'
