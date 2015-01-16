@@ -567,12 +567,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
       // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      String namespace = String.format("%s.%s.%s",
+                                       flowProgramId.getNamespaceId(),
+                                       flowProgramId.getApplicationId(),
+                                       flowProgramId.getId());
       for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
         streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
       }
 
-      queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
+      queueAdmin.dropAllForFlow(identifier.getNamespaceId(),
+                                identifier.getApplicationId(),
+                                flowSpecification.getName());
     }
     deleteProgramLocations(appId);
 

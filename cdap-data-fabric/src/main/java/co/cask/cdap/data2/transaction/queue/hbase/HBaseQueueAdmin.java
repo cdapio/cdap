@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -137,15 +138,21 @@ public class HBaseQueueAdmin implements QueueAdmin {
    */
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
-      // <cdap namespace>.system.queue.<account>.<flow>
-      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
+      // <cdap namespace>.system.queue.<namespace>.<app>.<flow>
+      return getTableNameForFlow(queueName.getFirstComponent(),
+                                 queueName.getSecondComponent(),
+                                 queueName.getThirdComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
   }
 
-  private String getTableNameForFlow(String app, String flow) {
-    return tableNamePrefix + "." + app + "." + flow;
+  private String getTableNameForFlow(String namespaceId, String app, String flow) {
+    StringBuilder tableName = new StringBuilder(tableNamePrefix).append(".");
+    if (!Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
+      tableName.append(namespaceId).append(".");
+    }
+    return tableName.append(app).append(".").append(flow).toString();
   }
 
   /**
@@ -182,10 +189,28 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   /**
    * @param queueTableName actual queue table name
+   * @return namespace id that this queue belongs to
+   */
+  public static String getNamespaceId(String queueTableName) {
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
+    String[] parts = queueTableName.split("\\.");
+    String namespaceId;
+    if (parts.length == 5) {
+      // cdap.system.queue.<app>.<flow>
+      namespaceId = Constants.DEFAULT_NAMESPACE;
+    } else {
+      // cdap.system.queue.<namespace>.<app>.<flow>
+      namespaceId = parts[parts.length - 3];
+    }
+    return namespaceId;
+  }
+
+  /**
+   * @param queueTableName actual queue table name
    * @return app name this queue belongs to
    */
   public static String getApplicationName(String queueTableName) {
-    // last two parts are appName and flow
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
     String[] parts = queueTableName.split("\\.");
     return parts[parts.length - 2];
   }
@@ -195,7 +220,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
    * @return flow name this queue belongs to
    */
   public static String getFlowName(String queueTableName) {
-    // last two parts are appName and flow
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
     String[] parts = queueTableName.split("\\.");
     return parts[parts.length - 1];
   }
@@ -245,21 +270,21 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String app, String flow) throws Exception {
+  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    String tableName = getTableNameForFlow(app, flow);
+    String tableName = getTableNameForFlow(namespaceId, app, flow);
     truncate(Bytes.toBytes(tableName));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(app, flow);
+    deleteConsumerConfigurations(namespaceId, app, flow);
   }
 
   @Override
-  public void dropAllForFlow(String app, String flow) throws Exception {
+  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    String tableName = getTableNameForFlow(app, flow);
+    String tableName = getTableNameForFlow(namespaceId, app, flow);
     drop(Bytes.toBytes(tableName));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(app, flow);
+    deleteConsumerConfigurations(namespaceId, app, flow);
   }
 
   @Override
@@ -305,14 +330,14 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void deleteConsumerConfigurations(String app, String flow) throws IOException {
+  private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(configTableName)) {
       // we need to delete the row for this queue name from the config table
       HTable hTable = new HTable(admin.getConfiguration(), configTableName);
       try {
-        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(namespaceId, app, flow));
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
         stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
 

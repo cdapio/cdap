@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -166,7 +166,8 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("application1", "flow1", "flowlet1", "output1");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
+                                                "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
@@ -174,7 +175,8 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet("app", "flow", "flowlet", "out"));
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app",
+                                                                              "flow", "flowlet", "out"));
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
@@ -190,7 +192,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "out");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
     String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
 
     // Set a group info

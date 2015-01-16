@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,7 +75,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
         builder.add(createSpec(QueueName.fromStream(outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
-        builder.add(createSpec(QueueName.fromFlowlet(app.getId(), flow,
+        builder.add(createSpec(QueueName.fromFlowlet(app.getNamespaceId(), app.getId(), flow,
                                                      connection.getSourceName(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       }

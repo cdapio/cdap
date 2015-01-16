@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,15 +70,15 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(String app, String flow, String flowlet, String output) {
-    URI uri = URI.create(String.format("queue:///%s/%s/%s/%s", app, flow, flowlet, output));
+  public static QueueName fromFlowlet(String namespace, String app, String flow, String flowlet, String output) {
+    URI uri = URI.create(String.format("queue:///%s/%s/%s/%s/%s", namespace, app, flow, flowlet, output));
     return new QueueName(uri);
   }
 
-  public static String prefixForFlow(String app, String flow) {
-    // queue:///app/flow/
+  public static String prefixForFlow(String namespace, String app, String flow) {
+    // queue:///namespace/app/flow/
     // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
-    return String.format("queue:///%s/%s/", app, flow);
+    return String.format("queue:///%s/%s/%s/", namespace, app, flow);
   }
 
   /**
@@ -123,25 +123,31 @@ public final class QueueName {
   }
 
   /**
-   * @return the first component of the URI (the app for a queue, the account for a stream).
+   * @return the first component of the of the URI (the namespace)
    */
   public String getFirstComponent() {
     return getNthComponent(0);
   }
 
   /**
-   * @return the second component of the URI (the flow for a queue, the stream name for a stream).
+   * @return the second component of the URI (the app for a queue, the stream name for a stream).
    */
   public String getSecondComponent() {
     return getNthComponent(1);
-
   }
 
   /**
-   * @return the third component of the URI (the flowlet for a queue, null for a stream).
+   * @return the third component of the URI (the flow for a queue, null for a stream).
    */
   public String getThirdComponent() {
     return getNthComponent(2);
+  }
+
+  /**
+   * @return the fourth component of the URI (the flowlet for a queue, null for a stream).
+   */
+  public String getFourthComponent() {
+    return getNthComponent(3);
   }
 
   /**

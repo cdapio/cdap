@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -67,14 +68,21 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
       // <cdap namespace>.system.queue.<account>.<flow>
-      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
+      return getTableNameForFlow(queueName.getFirstComponent(),
+                                 queueName.getSecondComponent(),
+                                 queueName.getThirdComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
   }
 
-  private String getTableNameForFlow(String app, String flow) {
-    return tableNamePrefix + "." + app + "." + flow;
+  private String getTableNameForFlow(String namespaceId, String app, String flow) {
+    StringBuilder tableName = new StringBuilder(tableNamePrefix).append(".");
+    if (!Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
+      tableName.append(namespaceId).append(".");
+    }
+    return tableName.append(app).append(".").append(flow).toString();
+    //return tableNamePrefix + "." + app + "." + flow;
   }
 
   /**
@@ -135,15 +143,15 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String app, String flow) throws Exception {
-    String tableName = getTableNameForFlow(app, flow);
+  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
+    String tableName = getTableNameForFlow(namespaceId, app, flow);
     service.dropTable(tableName);
     service.ensureTableExists(tableName);
   }
 
   @Override
-  public void dropAllForFlow(String app, String flow) throws Exception {
-    String tableName = getTableNameForFlow(app, flow);
+  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
+    String tableName = getTableNameForFlow(namespaceId, app, flow);
     service.dropTable(tableName);
   }
 

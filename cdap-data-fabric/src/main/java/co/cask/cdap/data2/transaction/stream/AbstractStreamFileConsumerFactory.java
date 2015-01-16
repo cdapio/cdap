@@ -34,6 +34,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -163,14 +165,23 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       streamAdmin.configureGroups(streamName, groupInfo);
 
       if (oldStreamAdmin instanceof QueueAdmin && !oldStreamAdmin.exists(streamName.toURI().toString())) {
-        // A bit hacky to assume namespace is formed by appId.flowId. See AbstractDataFabricFacade
-        // String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
+        // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
+        // String namespace = String.format("%s.%s.%s",
+        //                                  programId.getNamespaceId(),
+        //                                  programId.getApplicationId(),
+        //                                  programId.getId());
 
-        int idx = namespace.indexOf('.');
-        String appId = namespace.substring(0, idx);
-        String flowId = namespace.substring(idx + 1);
+        String invalidNamespaceError = String.format("Namespace string %s must be of the form <namespace>.<app>.<flow>",
+                                                     namespace);
+        Iterator<String> namespaceParts = Splitter.on('.').split(namespace).iterator();
+        Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
+        String namespaceId = namespaceParts.next();
+        Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
+        String appId = namespaceParts.next();
+        Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
+        String flowId = namespaceParts.next();
 
-        ((QueueAdmin) oldStreamAdmin).dropAllForFlow(appId, flowId);
+        ((QueueAdmin) oldStreamAdmin).dropAllForFlow(namespaceId, appId, flowId);
       }
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);

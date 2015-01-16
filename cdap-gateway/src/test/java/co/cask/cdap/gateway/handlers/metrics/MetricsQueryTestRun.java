@@ -46,7 +46,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testQueueLength() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("WordCount", "WordCounter", "counter", "queue");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter", "counter",
+                                                "queue");
 
     // Insert queue metrics
     MetricsCollector enqueueCollector =

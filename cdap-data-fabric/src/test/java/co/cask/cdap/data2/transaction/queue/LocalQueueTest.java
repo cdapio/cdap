@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,7 +90,8 @@ public class LocalQueueTest extends QueueTest {
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueueProducer);
-    producer = factory.createProducer(QueueName.fromFlowlet("app", "my", "flowlet", "output"));
+    producer = factory.createProducer(QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet",
+                                                            "output"));
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ public class QueueEntryRow {
       // NOTE: stream is uniquely identified by table name
       return Bytes.EMPTY_BYTE_ARRAY;
     }
-    String flowlet = queueName.getThirdComponent();
+    String flowlet = queueName.getFourthComponent();
     String output = queueName.getSimpleName();
     byte[] idWithinFlow = (flowlet + "/" + output).getBytes(Charsets.US_ASCII);
 
@@ -105,14 +105,15 @@ public class QueueEntryRow {
   /**
    * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
    */
-  public static QueueName getQueueName(String appName, String flowName, KeyValue keyValue) {
-    return getQueueName(appName, flowName, keyValue.getBuffer(), keyValue.getRowOffset(), keyValue.getRowLength());
+  public static QueueName getQueueName(String namespaceId, String appName, String flowName, KeyValue keyValue) {
+    return getQueueName(namespaceId, appName, flowName, keyValue.getBuffer(), keyValue.getRowOffset(),
+                        keyValue.getRowLength());
   }
 
   /**
    * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
    */
-  public static QueueName getQueueName(String appName, String flowName,
+  public static QueueName getQueueName(String namespaceId, String appName, String flowName,
                                        byte[] rowBuffer, int rowOffset, int rowLength) {
     // Entry key is always (salt bytes + 1 MD5 byte + queueName + longWritePointer + intCounter)
     int queueNameEnd = rowOffset + rowLength - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT;
@@ -125,7 +126,7 @@ public class QueueEntryRow {
     // <flowlet><source>
     String[] parts = idWithinFlowAsString.split("/");
 
-    return QueueName.fromFlowlet(appName, flowName, parts[0], parts[1]);
+    return QueueName.fromFlowlet(namespaceId, appName, flowName, parts[0], parts[1]);
   }
 
   /**
