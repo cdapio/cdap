@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -47,18 +47,7 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   protected void startUp() throws Exception {
-    Set<String> streamNames = Sets.newHashSet();
-    for (StreamSpecification spec : streamMetaStore.listStreams()) {
-      streamNames.add(spec.getName());
-    }
-
-    Set<StreamLeaderCallback> callbacks;
-    synchronized (getLeaderCallbacks()) {
-      callbacks = ImmutableSet.copyOf(getLeaderCallbacks());
-    }
-    for (StreamLeaderCallback callback : callbacks) {
-      callback.becameLeader(streamNames);
-    }
+    callLeaderCallbacks();
   }
 
   @Override
@@ -78,13 +67,19 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   public ListenableFuture<Void> streamCreated(String streamName) {
-    Set<StreamLeaderCallback> callbacks;
-    synchronized (getLeaderCallbacks()) {
-      callbacks = ImmutableSet.copyOf(getLeaderCallbacks());
-    }
-    for (StreamLeaderCallback callback : callbacks) {
-      callback.becameLeader(streamName);
+    try {
+      callLeaderCallbacks();
+    } catch (Exception e) {
+      Throwables.propagate(e);
     }
     return Futures.immediateFuture(null);
+  }
+
+  private void callLeaderCallbacks() throws Exception {
+    Set<String> streamNames = Sets.newHashSet();
+    for (StreamSpecification spec : streamMetaStore.listStreams()) {
+      streamNames.add(spec.getName());
+    }
+    callLeaderCallbacks(streamNames);
   }
 }

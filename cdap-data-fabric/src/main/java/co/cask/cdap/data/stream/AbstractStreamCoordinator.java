@@ -32,6 +32,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -162,19 +163,19 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin,
-                                                                                              streamName, listener));
+    return propertyStore.get().addChangeListener(streamName,
+                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
   @Override
   public Cancellable addLeaderCallback(final StreamLeaderCallback callback) {
-    synchronized (leaderCallbacks) {
+    synchronized (this) {
       leaderCallbacks.add(callback);
     }
     return new Cancellable() {
       @Override
       public void cancel() {
-        synchronized (leaderCallbacks) {
+        synchronized (AbstractStreamCoordinator.this) {
           leaderCallbacks.remove(callback);
         }
       }
@@ -187,8 +188,19 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
     doShutDown();
   }
 
-  public Set<StreamLeaderCallback> getLeaderCallbacks() {
-    return leaderCallbacks;
+  /**
+   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
+   *
+   * @param streamNames set of Streams that this coordinator is the leader of
+   */
+  protected void callLeaderCallbacks(Set<String> streamNames) {
+    Set<StreamLeaderCallback> callbacks;
+    synchronized (this) {
+      callbacks = ImmutableSet.copyOf(leaderCallbacks);
+    }
+    for (StreamLeaderCallback callback : callbacks) {
+      callback.leaderOf(streamNames);
+    }
   }
 
   /**

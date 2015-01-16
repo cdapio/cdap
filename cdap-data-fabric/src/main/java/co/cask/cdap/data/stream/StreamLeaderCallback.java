@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * Defines a behavior that is triggered when a Stream handler becomes leader of a Stream, or a collection of streams.
@@ -24,17 +24,10 @@ import java.util.Collection;
 public interface StreamLeaderCallback {
 
   /**
-   * This method is called when the Stream handler it is called from becomes leader of the {@code streamName}.
-   *
-   * @param streamName stream name of which the current Stream handler became leader
-   */
-  void becameLeader(String streamName);
-
-  /**
-   * This method is called when the Stream handler it is called from becomes leader of the {@code streamNames},
-   * and no other Streams.
+   * This method is called to specify that the Stream handler it is called from
+   * is the leader of all {@code streamNames}.
    *
    * @param streamNames stream names of which the current Stream handler became leader
    */
-  void becameLeader(Collection<String> streamNames);
+  void leaderOf(Set<String> streamNames);
 }
