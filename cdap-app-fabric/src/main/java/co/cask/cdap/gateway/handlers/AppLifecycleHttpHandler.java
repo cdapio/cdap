@@ -226,7 +226,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Create an adapter.
    */
   @PUT
-  @Path("/adapters/{adapter-type}/{adapter-name}")
+  @Path("/adapters/{adapter-name}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String nameSpaceId,
                             @PathParam("adapter-name") String adapterName) {
@@ -264,7 +264,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
 
   @PUT
-  @Path("/adapters/{adapter-type}/{adapter-name}")
+  @Path("/adapters/{adapter-name}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String nameSpaceId,
                          @PathParam("adapter-name") String adapterName) {
