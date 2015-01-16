@@ -167,20 +167,13 @@ public class SparkProgramWrapper {
    * Stops the Spark program by calling {@link org.apache.spark.SparkContext#stop()}
    */
   public static void stopSparkProgram() {
-    if (getSparkContext() != null) {
+    if (sparkContext != null) {
       if (isScalaProgram()) {
-        ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
+        ((org.apache.spark.SparkContext) sparkContext.getOriginalSparkContext()).stop();
       } else {
-        ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
+        ((org.apache.spark.api.java.JavaSparkContext) sparkContext.getOriginalSparkContext()).stop();
       }
     }
-  }
-
-  /**
-   * @return {@link SparkContext}
-   */
-  private static SparkContext getSparkContext() {
-    return sparkContext;
   }
 
   /**

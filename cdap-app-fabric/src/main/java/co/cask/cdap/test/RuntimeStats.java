@@ -166,11 +166,11 @@ public final class RuntimeStats {
   }
 
   /**
-   * Return the metrics key which which has the given starting and ending. If no such key is found returns an empty
-   * string.
+   * Returns the metrics key having the given starting and ending parts. If no such key is found, returns an 
+   * empty string.
    *
    * @param starting the starting part of the key
-   * @param ending   the ending part of the key
+   * @param ending the ending part of the key
    * @return the complete key if found else an empyty string
    */
   public static String getMetricsKey(String starting, String ending) {
