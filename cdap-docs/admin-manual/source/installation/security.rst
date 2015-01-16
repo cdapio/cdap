@@ -159,14 +159,16 @@ Configuring SSL for the CDAP Console
 ....................................
 To enable SSL for the CDAP Console, add these properties to ``cdap-security.xml``:
 
-================================================= ===========================================================================
-   Property                                          Default Value
-================================================= ===========================================================================
-``dashboard.ssl.cert``                            SSL cert file location, either absolute or relative; 
-                                                  the file should be owned and readable only by the CDAP user
-``dashboard.ssl.key``                             SSL key file location, either absolute or relative; 
-                                                  the file should be owned and readable only by the CDAP user
-================================================= ===========================================================================
+================================================= ==================== ======================================================
+   Property                                          Default Value         Description
+================================================= ==================== ======================================================
+``dashboard.ssl.cert``                               *None*             SSL cert file location, either absolute
+                                                                        or relative; the file should be owned and
+                                                                        readable only by the CDAP user
+``dashboard.ssl.key``                                *None*             SSL key file location, either absolute
+                                                                        or relative; the file should be owned and
+                                                                        readable only by the CDAP user
+================================================= ===================== =====================================================
 
 **Note:** To allow self-signed certificates, set the ``dashboard.ssl.disable.cert.check``
 property to ``true`` in ``cdap-site.xml``.
