@@ -18,14 +18,13 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -35,11 +34,12 @@ import java.io.IOException;
 @Singleton
 public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LevelDBStreamAdmin.class);
+  private final StreamCoordinator coordinator;
 
   @Inject
-  public LevelDBStreamAdmin(CConfiguration conf, LevelDBOrderedTableService service) {
+  public LevelDBStreamAdmin(CConfiguration conf, LevelDBOrderedTableService service, StreamCoordinator coordinator) {
     super(conf, service, QueueConstants.QueueType.STREAM);
+    this.coordinator = coordinator;
   }
 
   @Override
@@ -74,4 +74,9 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
     throw new UnsupportedOperationException("Not yet supported");
   }
 
+  @Override
+  public void create(String name) throws Exception {
+    super.create(name);
+    coordinator.streamCreated(name);
+  }
 }
