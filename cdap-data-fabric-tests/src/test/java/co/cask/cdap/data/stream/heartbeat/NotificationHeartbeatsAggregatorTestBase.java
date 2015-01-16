@@ -24,6 +24,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamLeaderCallback;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatsAggregator;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
@@ -59,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -102,17 +104,26 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
   }
 
   public static void startServices(Injector injector) throws Exception {
+    aggregator = injector.getInstance(StreamsHeartbeatsAggregator.class);
+    aggregator.startAndWait();
+
     streamCoordinator = injector.getInstance(StreamCoordinator.class);
+    streamCoordinator.addLeaderCallback(new StreamLeaderCallback() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        aggregator.listenToStreams(streamNames);
+      }
+    });
     streamCoordinator.startAndWait();
 
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
 
     feedManager = injector.getInstance(NotificationFeedManager.class);
-    aggregator = injector.getInstance(StreamsHeartbeatsAggregator.class);
   }
 
   public static void stopServices() throws Exception {
+    aggregator.stopAndWait();
     notificationService.stopAndWait();
     streamCoordinator.stopAndWait();
   }

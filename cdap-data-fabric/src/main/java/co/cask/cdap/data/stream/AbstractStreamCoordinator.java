@@ -32,6 +32,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -46,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
@@ -63,6 +66,7 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
   private final Executor updateExecutor;
   private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
+  private final Set<StreamLeaderCallback> leaderCallbacks;
 
   protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
@@ -76,6 +80,8 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
     // Update action should be infrequent, hence just use an executor that create a new thread everytime.
     updateExecutor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("stream-coordinator-update-%d"));
+
+    leaderCallbacks = Sets.newHashSet();
   }
 
   /**
@@ -157,14 +163,44 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin,
-                                                                                              streamName, listener));
+    return propertyStore.get().addChangeListener(streamName,
+                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+  }
+
+  @Override
+  public Cancellable addLeaderCallback(final StreamLeaderCallback callback) {
+    synchronized (this) {
+      leaderCallbacks.add(callback);
+    }
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        synchronized (AbstractStreamCoordinator.this) {
+          leaderCallbacks.remove(callback);
+        }
+      }
+    };
   }
 
   @Override
   protected final void shutDown() throws Exception {
     propertyStore.get().close();
     doShutDown();
+  }
+
+  /**
+   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
+   *
+   * @param streamNames set of Streams that this coordinator is the leader of
+   */
+  protected void callLeaderCallbacks(Set<String> streamNames) {
+    Set<StreamLeaderCallback> callbacks;
+    synchronized (this) {
+      callbacks = ImmutableSet.copyOf(leaderCallbacks);
+    }
+    for (StreamLeaderCallback callback : callbacks) {
+      callback.leaderOf(streamNames);
+    }
   }
 
   /**

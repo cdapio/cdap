@@ -23,7 +23,7 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinator;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
@@ -72,7 +72,7 @@ public class DFSNotificationHeartbeatsAggregatorTest extends NotificationHeartbe
           protected void configure() {
             // Tests are running in same process, hence no need to have ZK to coordinate
             bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
-            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class).in(Scopes.SINGLETON);
           }
         }));
 

@@ -22,9 +22,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -63,7 +62,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
         @Override
         protected void configure() {
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
         }
       })
     );

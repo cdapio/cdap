@@ -22,7 +22,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -64,7 +64,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
         .with(new AbstractModule() {
           @Override
           protected void configure() {
-            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
           }
         })
     );

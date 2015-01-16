@@ -22,8 +22,7 @@ import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -32,7 +31,7 @@ import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 
-import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
@@ -57,21 +56,10 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   protected void startUp() throws Exception {
-    streamsHeartbeatsAggregator.startAndWait();
-
-    // Perform aggregation on all existing streams
-    Collection<String> streamNames =
-      Collections2.transform(streamMetaStore.listStreams(), new Function<StreamSpecification, String>() {
-        @Nullable
-        @Override
-        public String apply(@Nullable StreamSpecification input) {
-          return input != null ? input.getName() : null;
-        }
-      });
-    streamsHeartbeatsAggregator.listenToStreams(streamNames);
-
     executor = MoreExecutors.listeningDecorator(
       Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("stream-leader-manager")));
+
+    callLeaderCallbacks((String) null);
   }
 
   @Override
@@ -96,9 +84,20 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
     return executor.submit(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        streamsHeartbeatsAggregator.listenToStream(streamName);
+        callLeaderCallbacks(streamName);
         return null;
       }
     });
+  }
+
+  private void callLeaderCallbacks(@Nullable String createdStream) throws Exception {
+    Set<String> streamNames = Sets.newHashSet();
+    for (StreamSpecification spec : streamMetaStore.listStreams()) {
+      streamNames.add(spec.getName());
+    }
+    if (createdStream != null) {
+      streamNames.add(createdStream);
+    }
+    callLeaderCallbacks(streamNames);
   }
 }

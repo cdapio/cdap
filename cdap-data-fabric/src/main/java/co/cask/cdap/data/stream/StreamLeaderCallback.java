@@ -14,22 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service.heartbeat;
+package co.cask.cdap.data.stream;
 
-import com.google.common.util.concurrent.Service;
-
-import java.util.Collection;
+import java.util.Set;
 
 /**
- * Aggregator of heartbeats sent by Stream writers.
+ * Defines a behavior that is triggered when a Stream handler becomes leader of a Stream, or a collection of streams.
  */
-public interface StreamsHeartbeatsAggregator extends Service {
+public interface StreamLeaderCallback {
 
   /**
-   * Perform aggregation on the Streams described by the {@code streamNames}, and no other Streams.
-   * If aggregation was previously done on other Streams, those must be cancelled.
+   * This method is called to specify that the Stream handler it is called from
+   * is the leader of all {@code streamNames}.
    *
-   * @param streamNames names of the streams to perform data sizes aggregation on
+   * @param streamNames stream names of which the current Stream handler became leader
    */
-  void listenToStreams(Collection<String> streamNames);
+  void leaderOf(Set<String> streamNames);
 }

@@ -215,15 +215,16 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      Collection<String> streamNames = Collections2.transform(partitionReplicas,
-                                                              new Function<PartitionReplica, String>() {
-        @Nullable
-        @Override
-        public String apply(@Nullable PartitionReplica input) {
-          return input != null ? input.getName() : null;
-        }
-      });
-      streamsHeartbeatsAggregator.listenToStreams(streamNames);
+      Collection<String> streamNames = Collections2.transform(
+        partitionReplicas,
+        new Function<PartitionReplica, String>() {
+          @Nullable
+          @Override
+          public String apply(@Nullable PartitionReplica input) {
+            return input != null ? input.getName() : null;
+          }
+        });
+      callLeaderCallbacks(ImmutableSet.copyOf(streamNames));
     }
 
     @Override
