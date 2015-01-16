@@ -361,6 +361,7 @@ public interface Store {
    * @return {@link Collection} of Adapter Specification.
    */
   Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
+
   /**
    * Remove the adapter specified by the name in a given namespace.
    *
