@@ -17,26 +17,38 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Collection;
-import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents a dataset that is split into partitioned that can be uniquely addressed
  * by meta data. Each partition is a dataset, with arguments to specify input selection
  * and other configuration, and with a value for each of the meta data fields.
  */
-public interface Partitioned extends Dataset, InputFormatProvider {
+public interface TimePartitionedFileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**
-   * Specifies the type of a meta data field. As of now, only a few primitive types are supported.
+   * Add a partition for a given time, stored at a given path (relative to the file set's base path).
    */
-  public enum FieldType { STRING, LONG, DATE };
+  public void addPartition(long time, String path);
 
-  public Map<String, FieldType> getMetaFields();
+  /**
+   * Remove a partition for a given time.
+   */
+  public void removePartition(long time);
 
-  public Collection<Partition> getPartitions(Map<String, Object> metadata);
+  /**
+   * @return the relative path of the partition for a specific time.
+   */
+  @Nullable
+  public String getPartition(long time);
 
-  public void addPartition(Partition partition);
+  /**
+   * @return the relative paths of all partitions with a time that is between startTime (inclusive)
+   *         and endTime (exclusive).
+   */
+  public Collection<String> getPartitions(long startTime, long endTime);
 }
