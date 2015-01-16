@@ -203,7 +203,9 @@ public class MetricsRequestExecutor {
       if (queueName.isStream()) {
         streamNames.add(queueName.getSimpleName());
       } else if (queueName.isQueue()) {
-        String context = String.format("%s.f.%s.%s",
+        // TODO: After CDAP-1167 is fixed, namespace should be the first component of the queueName.
+        String context = String.format("%s.%s.f.%s.%s",
+                                       Constants.DEFAULT_NAMESPACE,
                                        queueName.getFirstComponent(), // the app
                                        queueName.getSecondComponent(), // the flow
                                        queueName.getThirdComponent()); // the flowlet

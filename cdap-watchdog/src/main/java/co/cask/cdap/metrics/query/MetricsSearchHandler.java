@@ -83,6 +83,7 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
   @GET
   @Path("/{scope}")
   public void listFirstContexts(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
                                 @PathParam("scope") final String scope,
                                 @QueryParam("search") String search) throws IOException {
     try {
@@ -92,7 +93,7 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
         return;
       }
       MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      responder.sendJson(HttpResponseStatus.OK, getNextContext(metricsScope, null));
+      responder.sendJson(HttpResponseStatus.OK, getNextContext(metricsScope, namespaceId));
     } catch (IllegalArgumentException exception) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
         MetricsScope.USER);
@@ -108,6 +109,7 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
   @GET
   @Path("/{scope}/{context}")
   public void listContextsByPrefix(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
                                    @PathParam("scope") final String scope,
                                    @PathParam("context") final String context,
                                    @QueryParam("search") String search) throws IOException {
@@ -118,7 +120,8 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
         return;
       }
       MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      responder.sendJson(HttpResponseStatus.OK, getNextContext(metricsScope, context));
+      responder.sendJson(HttpResponseStatus.OK,
+                         getNextContext(metricsScope, String.format("%s.%s", namespaceId, context)));
     } catch (IllegalArgumentException exception) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
         MetricsScope.USER);
@@ -134,11 +137,13 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
   @GET
   @Path("/{scope}/{context}/metrics")
   public void listContextMetrics(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
                                  @PathParam("scope") final String scope,
                                  @PathParam("context") final String context) throws IOException {
     try {
       MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      responder.sendJson(HttpResponseStatus.OK, getAvailableMetricNames(metricsScope, context));
+      responder.sendJson(HttpResponseStatus.OK,
+                         getAvailableMetricNames(metricsScope, String.format("%s.%s", namespaceId, context)));
     } catch (IllegalArgumentException exception) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
         MetricsScope.USER);
