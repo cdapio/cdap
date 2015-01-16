@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class RuntimeStats {
 
+  private static final String EMPTY_STRING = "";
+
   private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
 
   public static void resetAll() {
@@ -73,9 +75,10 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static long getSparkMetrics(String applicationId, String procedureId, String key) {
-    String inputName = String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
-                                     procedureId, key);
+  public static long getSparkMetrics(String applicationId, String procedureId, String keyEnding) {
+    String keyStarting = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
+                                       procedureId);
+    String inputName = getMetricsKey(keyStarting, keyEnding);
     AtomicLong input = counters.get(inputName);
     return input == null ? 0 : input.get();
   }
@@ -160,5 +163,22 @@ public final class RuntimeStats {
   }
 
   private RuntimeStats() {
+  }
+
+  /**
+   * Returns the metrics key having the given starting and ending parts. If no such key is found, returns an 
+   * empty string.
+   *
+   * @param starting the starting part of the key
+   * @param ending the ending part of the key
+   * @return the complete key if found else an empyty string
+   */
+  public static String getMetricsKey(String starting, String ending) {
+    for (String key : counters.keySet()) {
+      if (key.startsWith(starting) && key.endsWith(ending)) {
+        return key;
+      }
+    }
+    return EMPTY_STRING;
   }
 }
