@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -61,7 +62,7 @@ public final class StreamEventDataCodec {
 
 
   /**
-   * Encodes the given {@link co.cask.cdap.api.stream.StreamEventData} using the {@link Encoder}.
+   * Encodes the given {@link StreamEventData} using the {@link Encoder}.
    *
    * @param data The data to encode
    * @param encoder The encoder
@@ -88,28 +89,49 @@ public final class StreamEventDataCodec {
 
 
   /**
-   * Decodes from the given {@link Decoder} to reconstruct a {@link co.cask.cdap.api.stream.StreamEventData}.
+   * Decodes from the given {@link Decoder} to reconstruct a {@link StreamEventData}.
    *
-   * @param decoder Decoder to read data from.
+   * @param decoder the decoder to read data from
    * @return A new instance of {@link co.cask.cdap.api.stream.StreamEventData}.
    * @throws IOException If there is any IO error during decoding.
    */
   public static StreamEventData decode(Decoder decoder) throws IOException {
+    return decode(decoder, ImmutableMap.<String, String>of());
+  }
+
+  /**
+   * Decodes from the given {@link Decoder} to reconstruct a {@link StreamEventData}.
+   * The set of headers provided is used as the default set of headers.
+   *
+   * @param decoder the decoder to read data from
+   * @param defaultHeaders A map of headers available by default.
+   * @return A new instance of {@link co.cask.cdap.api.stream.StreamEventData}.
+   * @throws IOException If there is any IO error during decoding.
+   */
+  public static StreamEventData decode(Decoder decoder, Map<String, String> defaultHeaders) throws IOException {
     // Reads the body
     ByteBuffer body = decoder.readBytes();
 
     // Reads the headers
-    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
     int len = decoder.readInt();
-    while (len != 0) {
+
+    // A special optimization for the case where there is no event header.
+    if (len == 0) {
+      return new StreamEventData(defaultHeaders, body);
+    }
+
+    Map<String, String> headers = defaultHeaders.isEmpty() ? Maps.<String, String>newHashMap()
+                                                           : Maps.newHashMap(defaultHeaders);
+    do {
       for (int i = 0; i < len; i++) {
         String key = decoder.readString();
         String value = decoder.readInt() == 0 ? decoder.readString() : (String) decoder.readNull();
         headers.put(key, value);
       }
       len = decoder.readInt();
-    }
-    return new StreamEventData(headers.build(), body);
+    } while (len != 0);
+    return new StreamEventData(headers, body);
+
   }
 
   /**

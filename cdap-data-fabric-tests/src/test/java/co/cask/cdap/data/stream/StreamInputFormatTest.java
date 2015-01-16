@@ -362,7 +362,6 @@ public class StreamInputFormatTest {
     // should only have read 1 record
     Assert.assertEquals(1, recordsRead.size());
     StructuredRecord record = recordsRead.get(0);
-    Assert.assertEquals(streamEvent.getTimestamp(), record.get("ts"));
     Assert.assertEquals(streamEvent.getHeaders(), record.get("headers"));
     Assert.assertEquals("hello world", record.get("body"));
   }
