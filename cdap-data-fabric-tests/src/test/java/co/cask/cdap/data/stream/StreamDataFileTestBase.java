@@ -16,14 +16,10 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
@@ -36,10 +32,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
-import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.hadoop.hbase.util.Strings;
 import org.apache.twill.filesystem.Location;
@@ -58,7 +52,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -72,11 +65,9 @@ public abstract class StreamDataFileTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(StreamDataFileTestBase.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   protected abstract LocationFactory getLocationFactory();
-
-  protected abstract StreamAdmin getStreamAdmin();
 
   @Test
   public void testEmptyFile() throws Exception {
@@ -606,14 +597,11 @@ public abstract class StreamDataFileTestBase {
   public void testLiveStream() throws Exception {
     String streamName = "live";
     final String filePrefix = "prefix";
-    StreamAdmin streamAdmin = getStreamAdmin();
     long partitionDuration = 5000;    // 5 seconds
+    Location location = getLocationFactory().create(streamName);
+    location.mkdirs();
 
-    // Create a stream with 5 seconds partition.
-    Properties properties = new Properties();
-    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(partitionDuration));
-    streamAdmin.create(streamName, properties);
-    final StreamConfig config = streamAdmin.getConfig(streamName);
+    final StreamConfig config = new StreamConfig(streamName, partitionDuration, 10000, Long.MAX_VALUE, location, null);
 
     // Create a thread that will write 10 event per second
     final AtomicInteger eventsWritten = new AtomicInteger();
