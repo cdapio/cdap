@@ -169,7 +169,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 
   @Override

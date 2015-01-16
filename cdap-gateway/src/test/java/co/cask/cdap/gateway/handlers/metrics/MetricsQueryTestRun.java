@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -50,16 +49,14 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
     // Insert queue metrics
     MetricsCollector enqueueCollector =
-      collectionService.getCollector(MetricsScope.SYSTEM,
-                                     getFlowletQueueContext("WordCount", "WordCounter",
+      collectionService.getCollector(getFlowletQueueContext("WordCount", "WordCounter",
                                                             "counter", queueName.getSimpleName()));
 
     enqueueCollector.increment("process.events.out", 10);
 
     // Insert ack metrics
     MetricsCollector uniqueFlowletMetrics =
-      collectionService.getCollector(MetricsScope.SYSTEM,
-                                     getFlowletContext("WordCount", "WordCounter", "unique"));
+      collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "unique"));
 
     uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input." + queueName.toString())
       .increment("process.events.processed", 6);
@@ -69,8 +66,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
       .increment("process.events.processed", 1);
 
     // Insert stream metrics
-    MetricsCollector streamCollector1 =
-      collectionService.getCollector(MetricsScope.SYSTEM, getStreamHandlerContext("streamX", "0"));
+    MetricsCollector streamCollector1 = collectionService.getCollector(getStreamHandlerContext("streamX", "0"));
     streamCollector1.increment("collect.events", 5);
 
     // Wait for collection to happen
@@ -105,8 +101,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingSystemMetrics() throws Exception {
     // Insert system metric
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.SYSTEM,
-                                     ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "appfabric",
+      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "appfabric",
                                                      Constants.Metrics.Tag.HANDLER, "AppFabricHttpHandler",
                                                      Constants.Metrics.Tag.METHOD, "getAllApps"));
     collector.increment("request.received", 1);
@@ -149,8 +144,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   @Test
   public void testingUserServiceMetrics() throws Exception {
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER, getUserServiceContext("WordCount", "CounterService",
-                                                                              "CountRunnable"));
+      collectionService.getCollector(getUserServiceContext("WordCount", "CounterService", "CountRunnable"));
     collector.increment("reads", 1);
 
     // Wait for collection to happen
@@ -172,24 +166,20 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     String runId3 = "id125";
 
     MetricsCollector collector1 =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService", "CountRunnable", runId1));
+      collectionService.getCollector(getUserServiceContext("WordCount", "CounterService", "CountRunnable", runId1));
     collector1.increment("rid_metric", 1);
 
     MetricsCollector collector2 =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService", "CountRunnable", runId2));
+      collectionService.getCollector(getUserServiceContext("WordCount", "CounterService", "CountRunnable", runId2));
     collector2.increment("rid_metric", 2);
 
     MetricsCollector collector3 =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getMapReduceTaskContext("WordCount", "CounterMapRed",
+      collectionService.getCollector(getMapReduceTaskContext("WordCount", "CounterMapRed",
                                                              MapReduceMetrics.TaskType.Mapper, runId3));
     collector3.gauge("entries.out", 10);
 
     MetricsCollector collector4 =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getMapReduceTaskContext("WordCount", "CounterMapRed",
+      collectionService.getCollector(getMapReduceTaskContext("WordCount", "CounterMapRed",
                                                              MapReduceMetrics.TaskType.Reducer, runId3));
     collector4.gauge("entries.out", 10);
 
@@ -231,8 +221,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     String runId2 = "id124";
 
     MetricsCollector collector2 =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService",
+      collectionService.getCollector(getUserServiceContext("WordCount", "CounterService",
                                                            "CountRunnableInvalid", runId2));
     collector2.increment("rid_metric_invalid", 2);
 
@@ -247,8 +236,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   @Test
   public void testingUserServiceGaugeMetrics() throws Exception {
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService", "CountRunnable"));
+      collectionService.getCollector(getUserServiceContext("WordCount", "CounterService", "CountRunnable"));
     collector.increment("gmetric", 1);
     collector.gauge("gmetric", 10);
     collector.increment("gmetric", 1);
@@ -269,8 +257,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   @Test
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "InvalidService", "CountRunnable"));
+      collectionService.getCollector(getUserServiceContext("WordCount", "InvalidService", "CountRunnable"));
 
     collector.increment("reads", 1);
 
@@ -328,8 +315,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingTransactoinMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.SYSTEM,
-                                     ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "transactions"));
+      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "transactions"));
     collector.increment("inprogress", 1);
 
     // Wait for collection to happen
@@ -343,16 +329,13 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testGetMetric() throws Exception {
     // Insert some metric
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.SYSTEM,
-                                     getFlowletQueueContext("WordCount", "WordCounter",
-                                                            "counter", "wordStats"));
+      collectionService.getCollector(getFlowletQueueContext("WordCount", "WordCounter", "counter", "wordStats"));
     collector.increment("reads", 10);
-    collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                               getFlowletQueueContext("WordCount", "WordCounter",
-                                                                      "counter", "wordStream"));
+    collector =
+      collectionService.getCollector(getFlowletQueueContext("WordCount", "WordCounter", "counter", "wordStream"));
     collector.increment("collect.events", 10);
-    collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                               ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+    collector = collectionService.getCollector(
+      ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
     collector.increment("resources.total.storage", 10);
 
     // Wait for collection to happen

@@ -141,7 +141,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 
   @Override

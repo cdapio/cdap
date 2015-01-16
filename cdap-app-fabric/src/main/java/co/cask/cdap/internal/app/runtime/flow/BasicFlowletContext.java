@@ -155,6 +155,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     tags.put(Constants.Metrics.Tag.FLOWLET, flowletName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
 
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 }
