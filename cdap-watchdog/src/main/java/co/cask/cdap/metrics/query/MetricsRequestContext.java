@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
@@ -61,6 +62,8 @@ public class MetricsRequestContext {
     if (typeId == null || typeId.isEmpty()) {
       this.contextPrefix = null;
     } else {
+      // TODO: If this class is used in v3 API parsing as well, then we will have to get namespace from a higher level
+      contextParts.add(Constants.DEFAULT_NAMESPACE);
       contextParts.add(typeId);
       if (requestType != null) {
         if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {

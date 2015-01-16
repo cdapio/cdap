@@ -51,7 +51,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     // Insert queue metrics
     MetricsCollector enqueueCollector =
       collectionService.getCollector(MetricsScope.SYSTEM,
-                                     getFlowletQueueContext("WordCount", "WordCounter",
+                                     getFlowletQueueContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
                                                             "counter", queueName.getSimpleName()));
 
     enqueueCollector.increment("process.events.out", 10);
@@ -349,12 +349,12 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     // Insert some metric
     MetricsCollector collector =
       collectionService.getCollector(MetricsScope.SYSTEM,
-                                     getFlowletQueueContext("WordCount", "WordCounter",
+                                     getFlowletQueueContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
                                                             "counter", "wordStats"));
     collector.increment("reads", 10);
     collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                               getFlowletQueueContext("WordCount", "WordCounter",
-                                                                      "counter", "wordStream"));
+                                               getFlowletQueueContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                                      "WordCounter", "counter", "wordStream"));
     collector.increment("collect.events", 10);
     collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));

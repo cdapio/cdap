@@ -421,13 +421,17 @@ public abstract class MetricsSuiteTestBase {
                            Constants.Metrics.Tag.FLOWLET, flowletName);
   }
 
-  protected static Map<String, String> getFlowletQueueContext(String appName, String flowName,
-                                                           String flowletName, String queueName) {
-    return ImmutableMap.of(Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
-                           Constants.Metrics.Tag.PROGRAM, flowName,
-                           Constants.Metrics.Tag.FLOWLET, flowletName,
-                           Constants.Metrics.Tag.FLOWLET_QUEUE, queueName);
+  protected static Map<String, String> getFlowletQueueContext(String namespaceId, String appName, String flowName,
+                                                              String flowletName, String queueName) {
+    ImmutableMap immutableMap = ImmutableMap.builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW))
+      .put(Constants.Metrics.Tag.PROGRAM, flowName)
+      .put(Constants.Metrics.Tag.FLOWLET, flowletName)
+      .put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName)
+      .build();
+    return ImmutableMap.copyOf(immutableMap);
   }
 
   protected static Map<String, String> getStreamHandlerContext(String streamName, String instanceId) {
