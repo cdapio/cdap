@@ -41,6 +41,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for {@link AppLifecycleHttpHandler}
@@ -55,7 +56,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
   private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
-
+  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -200,7 +201,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterId = "adapterId";
-    AdapterSpecification adapterToPut = new AdapterSpecification(adapterId, "batchStreamToAvro", ImmutableMap.<String, String>of(), ImmutableSet.<Source>of(), ImmutableSet.<Sink>of());
+    AdapterSpecification adapterToPut =
+      new AdapterSpecification(adapterId, "batchStreamToAvro", ImmutableMap.of("frequency", "1m"),
+                               ImmutableSet.of(new Source("someSource", Source.Type.STREAM, EMPTY_MAP)),
+                               ImmutableSet.of(new Sink("someSink", Sink.Type.DATASET, EMPTY_MAP)));
 
     HttpResponse response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -245,9 +249,14 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testMultipleAdapters() throws Exception {
-    List<AdapterSpecification> adaptersToPut =
-      ImmutableList.of(new AdapterSpecification("adapterId", "batchStreamToAvro", ImmutableMap.<String, String>of(),
-                                                ImmutableSet.<Source>of(), ImmutableSet.<Sink>of()));
+    List<AdapterSpecification> adaptersToPut = ImmutableList.of(
+      new AdapterSpecification("adapterId", "batchStreamToAvro", ImmutableMap.of("frequency", "30m"),
+                               ImmutableSet.of(new Source("someSource", Source.Type.STREAM, EMPTY_MAP)),
+                               ImmutableSet.of(new Sink("someSink", Sink.Type.DATASET, EMPTY_MAP))),
+
+      new AdapterSpecification("otherId", "realtimeStreamToAvro", ImmutableMap.of("frequency", "1h"),
+                               ImmutableSet.of(new Source("someSource", Source.Type.STREAM, EMPTY_MAP)),
+                               ImmutableSet.of(new Sink("someSink", Sink.Type.DATASET, EMPTY_MAP))));
     for (AdapterSpecification adapterSpec : adaptersToPut) {
       HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, adapterSpec);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());

@@ -50,7 +50,6 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -88,7 +87,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -183,8 +181,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final DatasetFramework datasetFramework;
 
   private final StreamAdmin streamAdmin;
-  private final ExploreFacade exploreFacade;
-  private final boolean exploreEnabled;
 
 
   @Inject
@@ -194,8 +190,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                                 ExploreFacade exploreFacade) {
+                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -212,8 +207,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.streamAdmin = streamAdmin;
-    this.exploreFacade = exploreFacade;
-    this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
   }
 
   /**
@@ -372,7 +365,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
     try {
-      if (!namespaceExists(store, namespaceId)) {
+      if (!namespaceExists(namespaceId)) {
         String errorMessage = String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId);
         LOG.warn(errorMessage);
         responder.sendString(HttpResponseStatus.NOT_FOUND, errorMessage);
@@ -418,18 +411,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramType programType = ProgramType.WORKFLOW;
       // deploy App
       // Standalone
-      deploy(namespaceId, appId, new LocalLocationFactory()
-        .create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
+//      deploy(namespaceId, appId, new LocalLocationFactory()
+//        .create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
       // Distributed
 
 
       Id.Program scheduledProgramId = Id.Program.from(namespaceId, appId, programId);
-      // TODO: Update application specification
 
-      scheduler.schedule(scheduledProgramId, programType, ImmutableList.of(new Schedule(String.format("schedule.%s", adapterName),
-                                                                                        "Arbitrary Description",
-                                                                                        toCronExpr(adapterSpec.getProperties().get("frequency")),
-                                                                                        Schedule.Action.START)));
+
+      // TODO: Update application specification
+      scheduler.schedule(scheduledProgramId, programType,
+                         ImmutableList.of(new Schedule(String.format("schedule.%s", adapterName), "Some Description",
+                                                       toCronExpr(adapterSpec.getProperties().get("frequency")),
+                                                       Schedule.Action.START)));
 
       // Write to mds
       store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
@@ -510,7 +504,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
-    if (!namespaceExists(store, namespaceId)) {
+    if (!namespaceExists(namespaceId)) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));
@@ -589,7 +583,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  protected boolean namespaceExists(Store store, String namespace) {
+  protected boolean namespaceExists(String namespace) {
     boolean isValid = false;
     if (namespace != null && !namespace.isEmpty()) {
       if (store.getNamespace(Id.Namespace.from(namespace)) != null) {

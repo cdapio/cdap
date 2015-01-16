@@ -342,7 +342,6 @@ public interface Store {
    *
    * @param id Namespace id
    * @param adapterSpecification specification of the adapter
-   * @throws OperationException on errors.
    */
   void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification);
 
@@ -352,7 +351,6 @@ public interface Store {
    * @param id  Namespace id.
    * @param name Adapter name
    * @return an instance of {@link AdapterSpecification}.
-   * @throws OperationException on errors.
    */
   AdapterSpecification getAdapter(Id.Namespace id, String name);
 
@@ -361,7 +359,6 @@ public interface Store {
    *
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specification.
-   * @throws OperationException on errors.
    */
   Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 
@@ -370,7 +367,6 @@ public interface Store {
    *
    * @param id Namespace id.
    * @param name Adapter name.
-   * @throws OperationException on errors.
    */
   void removeAdapter(Id.Namespace id, String name);
 
@@ -378,7 +374,6 @@ public interface Store {
    * Remove all the adapters in a given namespace.
    *
    * @param id Namespace id.
-   * @throws OperationException on errors.
    */
   void removeAllAdapters(Id.Namespace id);
 
