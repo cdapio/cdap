@@ -280,7 +280,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
     } catch (OperationException e) {
-      // TODO: Remove operation Exception from Store. CDAP-1165
+      // TODO: Remove the catch clause after operation Exception is removed from Store. CDAP-1165
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     } catch (Exception e) {
       LOG.error("Failed to deploy adapter", e);
