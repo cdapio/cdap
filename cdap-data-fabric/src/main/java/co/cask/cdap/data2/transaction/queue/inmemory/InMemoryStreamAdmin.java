@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
-import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.inject.Inject;
@@ -30,12 +29,9 @@ import java.io.IOException;
 @Singleton
 public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdmin {
 
-  private final StreamCoordinator coordinator;
-
   @Inject
-  public InMemoryStreamAdmin(InMemoryQueueService queueService, StreamCoordinator coordinator) {
+  public InMemoryStreamAdmin(InMemoryQueueService queueService) {
     super(queueService);
-    this.coordinator = coordinator;
   }
 
   @Override
@@ -52,11 +48,5 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void updateConfig(StreamConfig config) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
-  }
-
-  @Override
-  public void create(String name) throws Exception {
-    super.create(name);
-    coordinator.streamCreated(name);
   }
 }

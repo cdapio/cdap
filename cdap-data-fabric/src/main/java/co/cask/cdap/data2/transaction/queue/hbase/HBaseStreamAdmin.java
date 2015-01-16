@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -39,13 +38,10 @@ import java.util.List;
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
-  private final StreamCoordinator coordinator;
-
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
-                          HBaseTableUtil tableUtil, StreamCoordinator coordinator) throws IOException {
+                          HBaseTableUtil tableUtil) throws IOException {
     super(hConf, cConf, QueueConstants.QueueType.STREAM, locationFactory, tableUtil);
-    this.coordinator = coordinator;
   }
 
   @Override
@@ -84,11 +80,5 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   public void updateConfig(StreamConfig config) throws IOException {
 
-  }
-
-  @Override
-  public void create(String name) throws IOException {
-    super.create(name);
-    coordinator.streamCreated(name);
   }
 }
