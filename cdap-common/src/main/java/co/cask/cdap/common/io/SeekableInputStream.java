@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@ package co.cask.cdap.common.io;
 
 import org.apache.hadoop.fs.Seekable;
 
-import java.io.FileInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,62 +27,12 @@ import java.io.InputStream;
 public abstract class SeekableInputStream extends FilterInputStream implements Seekable {
 
   /**
-   * Creates a {@link SeekableInputStream} from the given {@link InputStream}. Exception will be
-   * thrown if failed to do so.
+   * Returns the current size of the input stream or -1 if the size is unknown.
    *
-   * @throws java.io.IOException If the given input stream is not seekable.
+   * @return size of the input stream in bytes
+   * @throws IOException if failed to determine the size
    */
-  public static SeekableInputStream create(InputStream input) throws IOException {
-    if (input instanceof SeekableInputStream) {
-      return (SeekableInputStream) input;
-    }
-    if (input instanceof FileInputStream) {
-      return create((FileInputStream) input);
-    }
-    if (input instanceof Seekable) {
-      final Seekable seekable = (Seekable) input;
-      return new SeekableInputStream(input) {
-        @Override
-        public void seek(long pos) throws IOException {
-          seekable.seek(pos);
-        }
-
-        @Override
-        public long getPos() throws IOException {
-          return seekable.getPos();
-        }
-
-        @Override
-        public boolean seekToNewSource(long targetPos) throws IOException {
-          return seekable.seekToNewSource(targetPos);
-        }
-      };
-    }
-
-    throw new IOException("Failed to create SeekableInputStream from " + input.getClass());
-  }
-
-  /**
-   * Creates a {@link SeekableInputStream} from the given {@link FileInputStream}.
-   */
-  private static SeekableInputStream create(final FileInputStream input) {
-    return new SeekableInputStream(input) {
-      @Override
-      public void seek(long pos) throws IOException {
-        input.getChannel().position(pos);
-      }
-
-      @Override
-      public long getPos() throws IOException {
-        return input.getChannel().position();
-      }
-
-      @Override
-      public boolean seekToNewSource(long targetPos) throws IOException {
-        return false;
-      }
-    };
-  }
+  public abstract long size() throws IOException;
 
   protected SeekableInputStream(InputStream in) {
     super(in);
