@@ -226,17 +226,7 @@ public abstract class AbstractApplication implements Application {
    * @param workflowName the name of the Workflow
    */
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
-    configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, new HashMap<String, String>());
-  }
-
-  /**
-   * Schedule the specified {@link Workflow}
-   * @param schedule the schedule to be added for the Workflow
-   * @param workflowName the name of the Workflow
-   * @param properties properties to be added for the Schedule
-   */
-  protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
-    configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
+    scheduleWorkflow(schedule, workflowName, new HashMap<String, String>());
   }
 
   /**
@@ -247,8 +237,8 @@ public abstract class AbstractApplication implements Application {
    */
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    configurer.addSchedule(new Schedule(scheduleName, scheduleDescription, cronTab), SchedulableProgramType.WORKFLOW,
-                           workflowName, new HashMap<String, String>());
+    scheduleWorkflow(new Schedule(scheduleName, scheduleDescription, cronTab), workflowName,
+                     new HashMap<String, String>());
   }
 
   /**
@@ -261,7 +251,16 @@ public abstract class AbstractApplication implements Application {
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName,
                                   Map<String, String> properties) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    configurer.addSchedule(new Schedule(scheduleName, scheduleDescription, cronTab), SchedulableProgramType.WORKFLOW,
-                           workflowName, properties);
+    scheduleWorkflow(new Schedule(scheduleName, scheduleDescription, cronTab), workflowName, properties);
+  }
+
+  /**
+   * Schedule the specified {@link Workflow}
+   * @param schedule the schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   * @param properties properties to be added for the Schedule
+   */
+  protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
+    configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
   }
 }
