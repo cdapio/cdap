@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,15 +42,12 @@ import javax.annotation.Nullable;
 public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   private final StreamMetaStore streamMetaStore;
-  private final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator;
   private ListeningExecutorService executor;
 
   @Inject
-  protected InMemoryStreamCoordinator(StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                                      StreamsHeartbeatsAggregator streamsHeartbeatsAggregator) {
+  protected InMemoryStreamCoordinator(StreamAdmin streamAdmin, StreamMetaStore streamMetaStore) {
     super(streamAdmin);
     this.streamMetaStore = streamMetaStore;
-    this.streamsHeartbeatsAggregator = streamsHeartbeatsAggregator;
   }
 
   @Override
@@ -64,7 +60,6 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   protected void doShutDown() throws Exception {
-    streamsHeartbeatsAggregator.stopAndWait();
     executor.shutdownNow();
   }
 

@@ -28,7 +28,6 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -70,7 +69,6 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
-  private final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator;
 
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
@@ -79,13 +77,11 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
   @Inject
   public DistributedStreamCoordinator(StreamAdmin streamAdmin, ZKClient zkClient,
-                                      DiscoveryServiceClient discoveryServiceClient, StreamMetaStore streamMetaStore,
-                                      StreamsHeartbeatsAggregator streamsHeartbeatsAggregator) {
+                                      DiscoveryServiceClient discoveryServiceClient, StreamMetaStore streamMetaStore) {
     super(streamAdmin);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
-    this.streamsHeartbeatsAggregator = streamsHeartbeatsAggregator;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.handlerDiscoverable = null;
   }
@@ -138,8 +134,6 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
         }
       }
     });
-
-    streamsHeartbeatsAggregator.startAndWait();
   }
 
   @Override
@@ -155,10 +149,6 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
     if (resourceCoordinatorClient != null) {
       resourceCoordinatorClient.stopAndWait();
-    }
-
-    if (streamsHeartbeatsAggregator != null) {
-      streamsHeartbeatsAggregator.stopAndWait();
     }
   }
 

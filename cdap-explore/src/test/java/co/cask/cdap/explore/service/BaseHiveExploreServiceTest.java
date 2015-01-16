@@ -41,6 +41,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -49,6 +51,7 @@ import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -263,8 +266,16 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
-      new StreamAdminModules().getInMemoryModules()
+      new StreamAdminModules().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+        }
+      }
     );
+
+
   }
 
   // these are needed if we actually want to query streams, as the stream input format looks at the filesystem
@@ -294,7 +305,13 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new StreamAdminModules().getStandaloneModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+        }
+      }
     );
   }
 }

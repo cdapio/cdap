@@ -33,6 +33,8 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -102,6 +104,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
             bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
             bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         })
     );

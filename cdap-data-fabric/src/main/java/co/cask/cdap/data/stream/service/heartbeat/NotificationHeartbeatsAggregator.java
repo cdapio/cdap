@@ -98,7 +98,7 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
       try {
         listenToStream(streamName);
       } catch (IOException e) {
-        LOG.warn("Unable to listen to heartbeats of Stream {}", streamName);
+        LOG.warn("Unable to listen to heartbeats of Stream {}", streamName, e);
       }
     }
 

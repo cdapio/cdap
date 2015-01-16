@@ -35,6 +35,7 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -72,6 +73,7 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricLocalModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
@@ -99,6 +101,7 @@ public class LocalQueueTest extends QueueTest {
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override

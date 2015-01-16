@@ -29,6 +29,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateTestBase;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -65,6 +67,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
           @Override
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         })
     );

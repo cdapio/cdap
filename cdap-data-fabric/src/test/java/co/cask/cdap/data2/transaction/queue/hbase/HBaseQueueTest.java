@@ -40,6 +40,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
@@ -53,6 +55,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -138,6 +141,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         protected void configure() {
           try {
             bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
           } catch (IOException e) {
             throw Throwables.propagate(e);
           }
