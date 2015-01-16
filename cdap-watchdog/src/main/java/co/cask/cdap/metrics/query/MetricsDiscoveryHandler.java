@@ -208,6 +208,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
         MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();
+        builder.setNamespaceId(Constants.DEFAULT_NAMESPACE);
         MetricsRequestParser.parseSubContext(pathParts, builder);
         MetricsRequestContext metricsRequestContext = builder.build();
         contextPrefix = metricsRequestContext.getContextPrefix();
@@ -276,6 +277,12 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
    */
   private void addContext(String context, String metric, Map<String, ContextNode> metricContextsMap) {
     Iterator<String> contextParts = Splitter.on('.').split(context).iterator();
+    if (!contextParts.hasNext()) {
+      return;
+    }
+    // get namespaceId as the first part, but ignore it since we do not need namespace in v2 APIs.
+    // Adding to output when its not needed may impact UI so ignoring it.
+    contextParts.next();
     if (!contextParts.hasNext()) {
       return;
     }

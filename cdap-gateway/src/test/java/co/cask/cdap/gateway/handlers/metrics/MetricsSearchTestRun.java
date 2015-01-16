@@ -64,7 +64,7 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
                                                                  "counter"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER,
-                                               getProcedureContext("WCount", "RCounts"));
+                                               getProcedureContext(Constants.DEFAULT_NAMESPACE, "WCount", "RCounts"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER,
                                                getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
