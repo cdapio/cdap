@@ -17,14 +17,18 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
@@ -296,6 +300,21 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  // Adds a schedule to the scheduler as well as to the appspec
+  protected void addSchedule(Scheduler scheduler, Store store, Id.Program programId,
+                             ScheduleSpecification scheduleSpecification) throws OperationException {
+    scheduler.schedule(programId, scheduleSpecification.getProgram().getProgramType(),
+                       scheduleSpecification.getSchedule());
+    store.addSchedule(programId, scheduleSpecification);
+  }
+
+  // Deletes schedule from the scheduler as well as from the app spec
+  protected void deleteSchedule(Scheduler scheduler, Store store, Id.Program programId,
+                                SchedulableProgramType programType, String scheduleName) {
+    scheduler.deleteSchedule(programId, programType, scheduleName);
+    store.deleteSchedule(programId, programType, scheduleName);
   }
 
   /**
