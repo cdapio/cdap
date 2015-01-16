@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
@@ -60,6 +61,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_ADAPTER = "adapter";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -266,6 +268,26 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
+  public void writeAdapter(Id.Namespace id, AdapterSpecification spec) {
+    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), spec.getName()).build(), spec);
+  }
+
+  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
+    return get(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterSpecification.class);
+  }
+
+  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
+    return list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterSpecification.class);
+  }
+
+  public void deleteAdapter(Id.Namespace id, String name) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
+  }
+
+  public void deleteAllAdapters(Id.Namespace id) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build());
+  }
+
   private Key getNamespaceKey(@Nullable String name) {
     Key.Builder builder = new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE);
     if (null != name) {
@@ -273,5 +295,4 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
     return builder.build();
   }
-
 }

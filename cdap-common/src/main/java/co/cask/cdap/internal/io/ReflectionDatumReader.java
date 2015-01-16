@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.lang.Instantiator;
 import co.cask.cdap.common.lang.InstantiatorFactory;

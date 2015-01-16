@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,27 @@
  */
 package co.cask.cdap.common.io;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Comparator;
 import javax.annotation.Nullable;
@@ -54,7 +65,14 @@ public final class Locations {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(fs.open(path));
+        FSDataInputStream input = fs.open(path);
+        try {
+          return new DFSSeekableInputStream(input, createDFSStreamSizeProvider(fs, path, input));
+        } catch (Throwable t) {
+          Closeables.closeQuietly(input);
+          Throwables.propagateIfInstanceOf(t, IOException.class);
+          throw new IOException(t);
+        }
       }
     };
   }
@@ -69,7 +87,38 @@ public final class Locations {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(location.getInputStream());
+        InputStream input = location.getInputStream();
+        try {
+          if (input instanceof FileInputStream) {
+            return new FileSeekableInputStream((FileInputStream) input);
+          }
+          if (input instanceof FSDataInputStream) {
+            FSDataInputStream dataInput = (FSDataInputStream) input;
+            LocationFactory locationFactory = location.getLocationFactory();
+
+            // It should be HDFSLocationFactory
+            if (locationFactory instanceof HDFSLocationFactory) {
+              FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+              return new DFSSeekableInputStream(dataInput,
+                                                createDFSStreamSizeProvider(fs, new Path(location.toURI()), dataInput));
+            } else {
+              // This shouldn't happen
+              return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
+                @Override
+                public long size() throws IOException {
+                  // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
+                  return location.length();
+                }
+              });
+            }
+          }
+
+          throw new IOException("Failed to create SeekableInputStream from location " + location.toURI());
+        } catch (Throwable t) {
+          Closeables.closeQuietly(input);
+          Throwables.propagateIfInstanceOf(t, IOException.class);
+          throw new IOException(t);
+        }
       }
     };
   }
@@ -133,6 +182,73 @@ public final class Locations {
     }
   }
 
+  /**
+   * Creates a {@link StreamSizeProvider} for determining the size of the given {@link FSDataInputStream}.
+   */
+  private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs,
+                                                                final Path path, FSDataInputStream input) {
+    // This is the default provider to use. It will try to determine if the file is closed and return the size of it.
+    final StreamSizeProvider defaultSizeProvider = new StreamSizeProvider() {
+      @Override
+      public long size() throws IOException {
+        if (fs instanceof DistributedFileSystem) {
+          if (((DistributedFileSystem) fs).isFileClosed(path)) {
+            return fs.getFileStatus(path).getLen();
+          } else {
+            return -1L;
+          }
+        }
+        // If the the underlying file system is not DistributedFileSystem, just assume the file length tells the size
+        return fs.getFileStatus(path).getLen();
+      }
+    };
+
+    // This supplier is to abstract out the logic for getting the DFSInputStream#getFileLength method using reflection
+    // Reflection is used to avoid ClassLoading error if the DFSInputStream class is moved or method get renamed
+    final InputStream wrappedStream = input.getWrappedStream();
+    final Supplier<Method> getFileLengthMethodSupplier = Suppliers.memoize(new Supplier<Method>() {
+      @Override
+      public Method get() {
+        try {
+          // This is a hack to get to the underlying DFSInputStream
+          // Need to revisit it when need to support different distributed file system
+          Class<? extends InputStream> cls = wrappedStream.getClass();
+          String expectedName = "org.apache.hadoop.hdfs.DFSInputStream";
+          if (!cls.getName().equals(expectedName)) {
+            throw new Exception("Expected wrapper class be " + expectedName + ", but got " + cls.getName());
+          }
+
+          Method getFileLengthMethod = cls.getMethod("getFileLength");
+          if (!getFileLengthMethod.isAccessible()) {
+            getFileLengthMethod.setAccessible(true);
+          }
+          return getFileLengthMethod;
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
+
+    return new StreamSizeProvider() {
+      @Override
+      public long size() throws IOException {
+        // Try to determine the size using default provider
+        long size = defaultSizeProvider.size();
+        if (size >= 0) {
+          return size;
+        }
+        try {
+          // If not able to get length from the default provider, use the DFSInputStream#getFileLength method
+          return (Long) getFileLengthMethodSupplier.get().invoke(wrappedStream);
+        } catch (Throwable t) {
+          LOG.warn("Unable to get actual file length from DFS input.", t);
+          return size;
+        }
+      }
+    };
+  }
+
   private Locations() {
   }
+
 }

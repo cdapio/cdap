@@ -16,7 +16,7 @@
 
 package co.cask.cdap.security.auth;
 
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 

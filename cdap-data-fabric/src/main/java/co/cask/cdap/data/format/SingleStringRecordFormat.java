@@ -17,9 +17,9 @@
 package co.cask.cdap.data.format;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.internal.format.StructuredRecord;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 
 import java.nio.ByteBuffer;

@@ -90,13 +90,14 @@ public class QueryClientTestRun extends ClientTestBase {
     List<QueryResult> results = Lists.newArrayList(executionResult);
     Assert.assertNotNull(results);
     Assert.assertEquals(2, results.size());
-    Assert.assertEquals("bob", Bytes.toString(GSON.fromJson(
+
+    Assert.assertEquals("bob", Bytes.toString(GSON.<byte[]>fromJson(
       results.get(0).getColumns().get(0).toString(), byte[].class)));
-    Assert.assertEquals("123", Bytes.toString(GSON.fromJson(
+    Assert.assertEquals("123", Bytes.toString(GSON.<byte[]>fromJson(
       results.get(0).getColumns().get(1).toString(), byte[].class)));
-    Assert.assertEquals("joe", Bytes.toString(GSON.fromJson(
+    Assert.assertEquals("joe", Bytes.toString(GSON.<byte[]>fromJson(
       results.get(1).getColumns().get(0).toString(), byte[].class)));
-    Assert.assertEquals("321", Bytes.toString(GSON.fromJson(
+    Assert.assertEquals("321", Bytes.toString(GSON.<byte[]>fromJson(
       results.get(1).getColumns().get(1).toString(), byte[].class)));
   }
 }

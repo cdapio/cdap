@@ -21,12 +21,8 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.AggregatesTable;
-import co.cask.cdap.metrics.data.MetricsScanQuery;
-import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
@@ -42,7 +38,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -51,6 +46,7 @@ import javax.ws.rs.QueryParam;
 /**
  * Handlers for clearing metrics.
  */
+// todo: expire metrics where possible instead of explicit delete: CDAP-1124
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics")
 public class DeleteMetricsHandler extends BaseMetricsHandler {
 
@@ -58,14 +54,12 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
 
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
-  private final int tsRetentionSeconds;
-  private final TimeSeriesTables timeSeriesTables;
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
-    this.timeSeriesTables = new TimeSeriesTables(metricsTableFactory);
+    
     this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
       @Override
       public Map<MetricsScope, AggregatesTable> get() {
@@ -76,11 +70,6 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
         return map;
       }
     });
-
-    String retentionStr = cConf.get(MetricsConstants.ConfigKeys.RETENTION_SECONDS);
-    this.tsRetentionSeconds = (retentionStr == null) ?
-      (int) TimeUnit.SECONDS.convert(MetricsConstants.DEFAULT_RETENTION_HOURS, TimeUnit.HOURS) :
-      Integer.parseInt(retentionStr);
   }
 
   @Override
@@ -216,21 +205,10 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     AggregatesTable aggTable = aggregatesTables.get().get(scope);
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
-      timeSeriesTables.clear(scope);
       aggTable.clear();
     } else if (tag == null) {
-      timeSeriesTables.delete(scope, contextPrefix, metricPrefix);
       aggTable.delete(contextPrefix, metricPrefix);
     } else {
-      long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-      MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
-        .setContext(contextPrefix)
-        .setMetric(metricPrefix)
-        .allowEmptyMetric()
-        .setRunId("0")
-        .setTag(tag)
-        .build(now - tsRetentionSeconds, now + 10);
-      timeSeriesTables.delete(scope, scanQuery);
       aggTable.delete(contextPrefix, metricPrefix, "0", tag);
     }
   }

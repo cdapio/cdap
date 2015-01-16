@@ -17,12 +17,12 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +57,7 @@ public class AppWithSchedule extends AbstractApplication {
       return WorkflowSpecification.Builder.with()
         .setName("SampleWorkflow")
         .setDescription("SampleWorkflow description")
-        .startWith(new DummyAction())
-        .last(new DummyAction())
+        .onlyWith(new DummyAction())
         .addSchedule(new Schedule("Schedule", "Run every second", "0/1 * * * * ?",
                                   Schedule.Action.START))
         .build();

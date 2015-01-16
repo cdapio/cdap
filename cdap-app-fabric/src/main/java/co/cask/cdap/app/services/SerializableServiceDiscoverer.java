@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,13 +50,13 @@ public class SerializableServiceDiscoverer extends AbstractServiceDiscoverer imp
 
   @Override
   public void writeExternal(ObjectOutput objectOutput) throws IOException {
-    objectOutput.writeObject(accountId);
+    objectOutput.writeObject(namespaceId);
     objectOutput.writeObject(applicationId);
   }
 
   @Override
   public void readExternal(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-    accountId = (String) objectInput.readObject();
+    namespaceId = (String) objectInput.readObject();
     applicationId = (String) objectInput.readObject();
   }
 

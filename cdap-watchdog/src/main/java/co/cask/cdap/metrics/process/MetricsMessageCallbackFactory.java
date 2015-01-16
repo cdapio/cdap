@@ -15,14 +15,14 @@
  */
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.transport.MetricsRecord;
+import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public final class MetricsMessageCallbackFactory implements MessageCallbackFactory {
 
-  private final DatumReader<MetricsRecord> datumReader;
+  private final DatumReader<MetricValue> datumReader;
   private final Schema recordSchema;
   private final Set<MetricsProcessor> processors;
   private final int persistThreshold;
@@ -48,8 +48,8 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
                                        int persistThreshold) {
     try {
-      this.recordSchema = schemaGenerator.generate(MetricsRecord.class);
-      this.datumReader = readerFactory.create(TypeToken.of(MetricsRecord.class), recordSchema);
+      this.recordSchema = schemaGenerator.generate(MetricValue.class);
+      this.datumReader = readerFactory.create(TypeToken.of(MetricValue.class), recordSchema);
       this.processors = processors;
       this.persistThreshold = persistThreshold;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,9 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -126,7 +128,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // The service URI is always prefixed for routing purpose
     String pathPrefix = String.format("%s/namespaces/%s/apps/%s/services/%s/methods",
                                       Constants.Gateway.API_VERSION_3,
-                                      programId.getAccountId(),
+                                      programId.getNamespaceId(),
                                       programId.getApplicationId(),
                                       programId.getId());
 
@@ -141,7 +143,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // All handlers of a Service run in the same Twill runnable and each Netty thread gets its own
     // instance of a handler (and handlerContext). Creating the logging context here ensures that the logs
     // during startup/shutdown and in each thread created are published.
-    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getAccountId(),
+    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getNamespaceId(),
                                                                            program.getApplicationId(),
                                                                            program.getId().getId(),
                                                                            program.getId().getId()));
@@ -183,7 +185,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private String getServiceName(Id.Program programId) {
     return String.format("%s.%s.%s.%s",
                          ProgramType.SERVICE.name().toLowerCase(),
-                         programId.getAccountId(), programId.getApplicationId(), programId.getId());
+                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   private TimerTask createHandlerDestroyTask() {
@@ -258,8 +260,9 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                   Iterable<HandlerDelegatorContext> delegatorContexts,
                                                   MetricsCollectionService metricsCollectionService) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
-    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, runId.getId(),
-                                                        metricsCollectionService, getMetricsContext());
+    MetricsCollector collector =
+      getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program, runId.getId());
+    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, collector);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (HandlerDelegatorContext context : delegatorContexts) {
@@ -272,10 +275,17 @@ public class ServiceHttpServer extends AbstractIdleService {
       .build();
   }
 
-  private String getMetricsContext() {
-    return String.format("%s.%s.%s.%s", program.getApplicationId(),
-                                        TypeId.getMetricContextId(ProgramType.SERVICE),
-                                        program.getName(), program.getName());
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
+                                                     MetricsScope scope, Program program,
+                                                     String runId) {
+    if (service == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap(AbstractContext.getMetricsContext(program, runId));
+    // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
+    tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
+
+    return service.getCollector(scope, tags);
   }
 
   /**

@@ -17,11 +17,12 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -31,19 +32,20 @@ import java.io.PrintStream;
 /**
  * Deploys an application.
  */
-public class DeployAppCommand implements Command {
+public class DeployAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public DeployAppCommand(ApplicationClient applicationClient, FilePathResolver resolver) {
+  public DeployAppCommand(ApplicationClient applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
+    super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.APP_JAR_FILE.toString()));
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
