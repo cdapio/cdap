@@ -24,9 +24,11 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
+import com.google.common.base.Objects;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 import java.util.Set;
@@ -96,7 +98,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
    */
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return getDataset(name, getRuntimeArguments(name));
+    return getDataset(name, DatasetDefinition.NO_ARGUMENTS);
   }
 
   /**
@@ -123,8 +125,15 @@ public abstract class DynamicDatasetContext implements DatasetContext {
                         "useDataset() in the configure() method", name));
     }
 
-    Map<String, String> dsArguments = getRuntimeArguments(name);
-    dsArguments.putAll(arguments);
+    // apply arguments on top of runtime arguments for the dataset
+    Map<String, String> dsArguments = Maps.newHashMap();
+    Map<String, String> runtimeArgs = getRuntimeArguments(name);
+    if (runtimeArgs != null) {
+      dsArguments.putAll(runtimeArgs);
+    }
+    if (arguments != null) {
+      dsArguments.putAll(arguments);
+    }
 
     try {
       Dataset dataset;
