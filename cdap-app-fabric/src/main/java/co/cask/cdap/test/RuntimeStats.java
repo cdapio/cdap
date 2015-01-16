@@ -46,8 +46,9 @@ public final class RuntimeStats {
     }
   }
 
-  public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    String prefix = String.format("%s.f.%s.%s", applicationId, flowId, flowletId);
+  public static RuntimeMetrics getFlowletMetrics(String namespaceId, String applicationId, String flowId,
+                                                 String flowletId) {
+    String prefix = String.format("%s.%s.f.%s.%s", namespaceId, applicationId, flowId, flowletId);
     String inputName = String.format("%s.process.tuples.read", prefix);
     String processedName = String.format("%s.process.events.processed", prefix);
     String exceptionName = String.format("%s.process.errors", prefix);
@@ -55,8 +56,8 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    String prefix = String.format("%s.p.%s", applicationId, procedureId);
+  public static RuntimeMetrics getProcedureMetrics(String namespaceId, String applicationId, String procedureId) {
+    String prefix = String.format("%s.%s.p.%s", namespaceId, applicationId, procedureId);
     String inputName = String.format("%s.query.requests", prefix);
     String processedName = String.format("%s.query.processed", prefix);
     String exceptionName = String.format("%s.query.failures", prefix);
@@ -64,8 +65,9 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
+  public static RuntimeMetrics getServiceMetrics(String namespaceId, String applicationId, String serviceId) {
+    String prefix = String.format("%s.%s.%s.%s", namespaceId, applicationId,
+                                  TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
     String inputName = String.format("%s.requests.count", prefix);
     String processedName = String.format("%s.response.successful.count", prefix);
     String exceptionName = String.format("%s.response.server.error.count", prefix);
@@ -73,9 +75,9 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static long getSparkMetrics(String applicationId, String procedureId, String key) {
-    String inputName = String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
-                                     procedureId, key);
+  public static long getSparkMetrics(String namespaceId, String applicationId, String procedureId, String key) {
+    String inputName = String.format("%s.%s.%s.%s.%s", namespaceId, applicationId,
+                                     TypeId.getMetricContextId(ProgramType.SPARK), procedureId, key);
     AtomicLong input = counters.get(inputName);
     return input == null ? 0 : input.get();
   }

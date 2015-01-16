@@ -16,6 +16,7 @@
 
 package net.fake.test.app;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ProcedureClient;
@@ -55,7 +56,8 @@ public class TestBundleJarApp extends TestBase {
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("BundleJarApp", "SimpleFlow", "SimpleFlowlet");
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "BundleJarApp",
+                                                                   "SimpleFlow", "SimpleFlowlet");
     Thread.sleep(3000);
 
     // TODO: not working

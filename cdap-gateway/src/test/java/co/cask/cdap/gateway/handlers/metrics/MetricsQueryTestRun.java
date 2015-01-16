@@ -59,7 +59,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     // Insert ack metrics
     MetricsCollector uniqueFlowletMetrics =
       collectionService.getCollector(MetricsScope.SYSTEM,
-                                     getFlowletContext("WordCount", "WordCounter", "unique"));
+                                     getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
+                                                       "unique"));
 
     uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input." + queueName.toString())
       .increment("process.events.processed", 6);
@@ -149,8 +150,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   @Test
   public void testingUserServiceMetrics() throws Exception {
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER, getUserServiceContext("WordCount", "CounterService",
-                                                                              "CountRunnable"));
+      collectionService.getCollector(MetricsScope.USER, getUserServiceContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                                              "CounterService", "CountRunnable"));
     collector.increment("reads", 1);
 
     // Wait for collection to happen
@@ -173,23 +174,25 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
     MetricsCollector collector1 =
       collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService", "CountRunnable", runId1));
+                                     getUserServiceContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterService",
+                                                           "CountRunnable", runId1));
     collector1.increment("rid_metric", 1);
 
     MetricsCollector collector2 =
       collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService", "CountRunnable", runId2));
+                                     getUserServiceContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterService",
+                                                           "CountRunnable", runId2));
     collector2.increment("rid_metric", 2);
 
     MetricsCollector collector3 =
       collectionService.getCollector(MetricsScope.USER,
-                                     getMapReduceTaskContext("WordCount", "CounterMapRed",
+                                     getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterMapRed",
                                                              MapReduceMetrics.TaskType.Mapper, runId3));
     collector3.gauge("entries.out", 10);
 
     MetricsCollector collector4 =
       collectionService.getCollector(MetricsScope.USER,
-                                     getMapReduceTaskContext("WordCount", "CounterMapRed",
+                                     getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterMapRed",
                                                              MapReduceMetrics.TaskType.Reducer, runId3));
     collector4.gauge("entries.out", 10);
 
@@ -232,7 +235,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
     MetricsCollector collector2 =
       collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService",
+                                     getUserServiceContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterService",
                                                            "CountRunnableInvalid", runId2));
     collector2.increment("rid_metric_invalid", 2);
 
@@ -248,7 +251,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingUserServiceGaugeMetrics() throws Exception {
     MetricsCollector collector =
       collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "CounterService", "CountRunnable"));
+                                     getUserServiceContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterService",
+                                                           "CountRunnable"));
     collector.increment("gmetric", 1);
     collector.gauge("gmetric", 10);
     collector.increment("gmetric", 1);
@@ -270,7 +274,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector =
       collectionService.getCollector(MetricsScope.USER,
-                                     getUserServiceContext("WordCount", "InvalidService", "CountRunnable"));
+                                     getUserServiceContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                           "InvalidService", "CountRunnable"));
 
     collector.increment("reads", 1);
 
