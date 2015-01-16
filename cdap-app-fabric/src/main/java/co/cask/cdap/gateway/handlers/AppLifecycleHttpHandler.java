@@ -241,11 +241,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
       String adapterType = spec.getType();
 
-      //TODO: Check if Adapter exists. If exists, remove schedule once the API is merged
+      // TODO: Check to see if the App is already deployed
+
+      // TODO: Deploy adapter
+
+      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(nameSpaceId), adapterName);
+      if (existingSpec != null) {
+        // TODO: Remove the schedule.
+      }
+
       store.addAdapter(Id.Namespace.from(nameSpaceId), spec);
 
       //TODO: Schedule new programs once the API is available.
-
+      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
     }
