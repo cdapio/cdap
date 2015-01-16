@@ -137,23 +137,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Job job = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = job.getConfiguration();
 
-    Resources mapperResources = specification.getMapperResources();
-    Resources reducerResources = specification.getReducerResources();
-
-    // this will determine how much memory and vcores the yarn container will run with
-    if (mapperResources != null) {
-      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
-    }
-    if (reducerResources != null) {
-      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
-    }
-
     // Prefer our job jar in the classpath
     // Set both old and new keys
     mapredConf.setBoolean("mapreduce.user.classpath.first", true);
@@ -181,6 +164,24 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     // Call the user MapReduce for initialization
     beforeSubmit();
+
+    // set resources for the job
+    Resources mapperResources = context.getMapperResources();
+    Resources reducerResources = context.getReducerResources();
+
+    // this will determine how much memory and vcores the yarn container will run with
+    if (mapperResources != null) {
+      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
+      // Also set the Xmx to be smaller than the container memory.
+      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
+      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
+    }
+    if (reducerResources != null) {
+      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
+      // Also set the Xmx to be smaller than the container memory.
+      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
+      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
+    }
 
     // set input/output datasets info
     setInputDatasetIfNeeded(job);
