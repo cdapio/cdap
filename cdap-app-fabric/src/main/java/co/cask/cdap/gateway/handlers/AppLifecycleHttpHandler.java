@@ -329,11 +329,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      // TODO: Check if sources exists
-
-      // Check to see if the App is already deployed
-      ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterName));
-
       // Setup Sources and Sinks prior to application deploy
       // ensure all sources exist
       for (Source source : spec.getSources()) {
@@ -354,6 +349,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (Sink.Type.DATASET.equals(sink.getType())) {
           String datasetName = sink.getName();
           if (!datasetFramework.hasInstance(datasetName)) {
+            //TODO: This should come from a property.
             datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
           } else {
             LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, spec);
@@ -363,7 +359,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
 
-
+      // Check to see if the App is already deployed
+      ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterName));
       if (applicationSpec == null) {
         // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
         Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespaceId);
@@ -475,6 +472,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Adapter not found: %s.%s", namespaceId, adapterId));
       return;
     }
+    // TODO:  Need to revise this. scheduleId should have  more info that name.
     String scheduleId = String.format("schedule.%s", adapterSpec.getName());
     if ("start".equals(action)) {
       scheduler.resumeSchedule(scheduleId);
