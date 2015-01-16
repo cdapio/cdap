@@ -113,7 +113,7 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
   }
 
   @Override
-  public void listenToStream(String streamName) throws IOException {
+  public synchronized void listenToStream(String streamName) throws IOException {
     if (streamHeartbeatsSubscriptions.containsKey(streamName)) {
       return;
     }

@@ -24,9 +24,13 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -59,7 +63,14 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
       new DataSetsModules().getDistributedModule(),
       new TransactionMetricsModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      Modules.override(new StreamAdminModules().getDistributedModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        })
     );
 
     zkClient = injector.getInstance(ZKClientService.class);

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
+package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.async.ExecutorUtils;
@@ -22,6 +22,9 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamPropertyListener;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -33,6 +36,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -51,7 +55,7 @@ import javax.annotation.Nullable;
 /**
  * Base implementation for {@link StreamCoordinator}.
  */
-public abstract class AbstractStreamCoordinator implements StreamCoordinator {
+public abstract class AbstractStreamCoordinator extends AbstractIdleService implements StreamCoordinator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinator.class);
   private static final Gson GSON = new GsonBuilder()
@@ -156,14 +160,22 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName,
-                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin,
+                                                                                              streamName, listener));
   }
 
   @Override
-  public void close() throws IOException {
+  protected final void shutDown() throws Exception {
     propertyStore.get().close();
+    doShutDown();
   }
+
+  /**
+   * Stop the service.
+   *
+   * @throws Exception when stopping the service could not be performed
+   */
+  protected abstract void doShutDown() throws Exception;
 
   /**
    * Overwrites a stream config file.

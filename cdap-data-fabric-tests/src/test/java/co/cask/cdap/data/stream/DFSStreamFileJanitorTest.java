@@ -25,6 +25,8 @@ import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -74,13 +76,15 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       },
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+      new DataFabricModules().getDistributedModules(),
+      Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
 
         @Override
         protected void configure() {
           // Tests are running in same process, hence no need to have ZK to coordinate
           bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }
       }),
       new DataSetsModules().getDistributedModule(),

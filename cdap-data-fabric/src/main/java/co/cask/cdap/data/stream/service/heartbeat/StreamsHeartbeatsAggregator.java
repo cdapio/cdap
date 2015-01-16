@@ -37,7 +37,8 @@ public interface StreamsHeartbeatsAggregator extends Service {
   /**
    * Perform aggregation on the Stream described by the {@code streamName}.
    * This method does not cancel aggregation done on other Streams.
-   * This call does nothing this aggregator already listens to the Stream.
+   * This call does nothing if this aggregator already listens to the Stream.
+   * This method is thread safe, so that the logic deployed to listen to one stream can't be duplicated.
    *
    * @param streamName name of the stream to perform data sizes aggregation on
    * @throws IOException when an error occurred in subscribing to the heartbeats of the stream

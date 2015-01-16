@@ -40,7 +40,6 @@ public class StreamServiceModule extends PrivateModule {
 
     bind(StreamsHeartbeatsAggregator.class).to(NotificationHeartbeatsAggregator.class).in(Scopes.SINGLETON);
 
-    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);
   }

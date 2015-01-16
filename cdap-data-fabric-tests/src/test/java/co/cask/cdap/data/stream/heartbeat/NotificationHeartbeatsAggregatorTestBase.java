@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatsAggregator;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
@@ -37,12 +38,14 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.test.SlowTests;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
@@ -70,6 +73,7 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
 
   protected static NotificationFeedManager feedManager;
 
+  private static StreamCoordinator streamCoordinator;
   private static NotificationService notificationService;
   private static StreamsHeartbeatsAggregator aggregator;
 
@@ -90,24 +94,27 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
                        new AbstractModule() {
                          @Override
                          protected void configure() {
-                           bind(StreamsHeartbeatsAggregator.class).to(NotificationHeartbeatsAggregator.class);
+                           bind(StreamsHeartbeatsAggregator.class)
+                             .to(NotificationHeartbeatsAggregator.class).in(Scopes.SINGLETON);
                          }
                        }),
       Arrays.asList(modules)));
   }
 
   public static void startServices(Injector injector) throws Exception {
+    streamCoordinator = injector.getInstance(StreamCoordinator.class);
+    streamCoordinator.startAndWait();
+
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
 
     feedManager = injector.getInstance(NotificationFeedManager.class);
     aggregator = injector.getInstance(StreamsHeartbeatsAggregator.class);
-    aggregator.startAndWait();
   }
 
   public static void stopServices() throws Exception {
-    aggregator.stopAndWait();
     notificationService.stopAndWait();
+    streamCoordinator.stopAndWait();
   }
 
   @Category(SlowTests.class)
@@ -135,11 +142,9 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
     feedManager.getFeed(heartbeatFeed);
     feedManager.getFeed(streamFeed);
 
-    // Make aggregator listen to our newly created stream
-    aggregator.listenToStreams(ImmutableList.of(streamName));
-
     // Assert than one notification will be sent to notify stream size change
     final AtomicBoolean notificationReceived = new AtomicBoolean(false);
+    final AtomicBoolean assertionOk = new AtomicBoolean(true);
     Cancellable cancellable = notificationService.subscribe(streamFeed, new NotificationHandler<Object>() {
       @Override
       public Type getNotificationFeedType() {
@@ -149,8 +154,13 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
 
       @Override
       public void received(Object notification, NotificationContext notificationContext) {
-        LOG.info("Notification {} received", notification);
-        Assert.assertTrue(notificationReceived.compareAndSet(false, true));
+        try {
+          LOG.info("Notification {} received", notification);
+          Assert.assertTrue(notificationReceived.compareAndSet(false, true));
+        } catch (Throwable t) {
+          assertionOk.set(false);
+          Throwables.propagate(t);
+        }
       }
     });
 
@@ -166,6 +176,7 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
     // Wait for the aggregator to do its logic and for the subscriber to receive the stream notification
     TimeUnit.SECONDS.sleep(Constants.Notification.Stream.AGGREGATION_DELAY + 2);
     cancellable.cancel();
+    Assert.assertTrue(assertionOk.get());
     Assert.assertTrue(notificationReceived.get());
   }
 }
