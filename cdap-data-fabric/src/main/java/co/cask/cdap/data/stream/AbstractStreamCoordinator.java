@@ -32,6 +32,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -46,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
@@ -63,6 +65,7 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
   private final Executor updateExecutor;
   private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
+  private final Set<StreamLeaderCallback> leaderCallbacks;
 
   protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
@@ -76,6 +79,8 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
     // Update action should be infrequent, hence just use an executor that create a new thread everytime.
     updateExecutor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("stream-coordinator-update-%d"));
+
+    leaderCallbacks = Sets.newHashSet();
   }
 
   /**
@@ -162,9 +167,28 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
   }
 
   @Override
+  public Cancellable addLeaderCallback(final StreamLeaderCallback callback) {
+    synchronized (leaderCallbacks) {
+      leaderCallbacks.add(callback);
+    }
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        synchronized (leaderCallbacks) {
+          leaderCallbacks.remove(callback);
+        }
+      }
+    };
+  }
+
+  @Override
   protected final void shutDown() throws Exception {
     propertyStore.get().close();
     doShutDown();
+  }
+
+  public Set<StreamLeaderCallback> getLeaderCallbacks() {
+    return leaderCallbacks;
   }
 
   /**

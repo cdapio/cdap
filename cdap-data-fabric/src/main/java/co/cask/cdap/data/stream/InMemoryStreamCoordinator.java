@@ -21,11 +21,15 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.discovery.Discoverable;
+
+import java.util.Set;
 
 /**
  * In memory implementation for {@link StreamCoordinator}.
@@ -43,8 +47,17 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   protected void startUp() throws Exception {
+    Set<String> streamNames = Sets.newHashSet();
     for (StreamSpecification spec : streamMetaStore.listStreams()) {
-      // TODO register streams to perform aggregation logic on them
+      streamNames.add(spec.getName());
+    }
+
+    Set<StreamLeaderCallback> callbacks;
+    synchronized (getLeaderCallbacks()) {
+      callbacks = ImmutableSet.copyOf(getLeaderCallbacks());
+    }
+    for (StreamLeaderCallback callback : callbacks) {
+      callback.becameLeader(streamNames);
     }
   }
 
@@ -65,7 +78,13 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   public ListenableFuture<Void> streamCreated(String streamName) {
-    // TODO implement the aggregation logic of the one stream handler process here
+    Set<StreamLeaderCallback> callbacks;
+    synchronized (getLeaderCallbacks()) {
+      callbacks = ImmutableSet.copyOf(getLeaderCallbacks());
+    }
+    for (StreamLeaderCallback callback : callbacks) {
+      callback.becameLeader(streamName);
+    }
     return Futures.immediateFuture(null);
   }
 }

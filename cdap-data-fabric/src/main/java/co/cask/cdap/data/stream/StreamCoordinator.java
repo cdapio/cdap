@@ -56,6 +56,16 @@ public interface StreamCoordinator extends Service {
   Cancellable addListener(String streamName, StreamPropertyListener listener);
 
   /**
+   * This method is called every time the Stream handler in which this {@link StreamCoordinator}
+   * runs becomes the leader of a stream, or a set of streams.
+   *
+   * @param callback {@link StreamLeaderCallback} called when this Stream handler becomes leader
+   *                 of a Stream, or a collection of streams
+   * @return A {@link Cancellable} to cancel the watch
+   */
+  Cancellable addLeaderCallback(StreamLeaderCallback callback);
+
+  /**
    * Called whenever a new stream is created.
    * Affect a Stream handler leader to a stream.
    *
