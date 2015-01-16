@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,16 +38,19 @@ public abstract class TxRetryPolicy {
   }
 
   /**
+   * Specify how failure should be handled.
    *
-   * @param failures number of failures so far, including this one.
-   * @param e exception that caused the failure.
-   * @return a {@link Policy} code indicating what action should be done.
+   * @param failures number of failures so far, including this one
+   * @param e exception that caused the failure
+   * @return a {@link Policy} code indicating what action should be done
    */
   public abstract Policy handleFailure(int failures, Throwable e);
 
   /**
-   * @param tries number of tries before dropping a transaction.
-   * @return a {@link TxRetryPolicy} object that will drop after the given amount of {@code tries}.
+   * Create a {@link TxRetryPolicy} object that retries a maximum of {@code tries}.
+   *
+   * @param tries number of tries before dropping a transaction
+   * @return a {@link TxRetryPolicy} object that will drop after the given amount of {@code tries}
    */
   public static TxRetryPolicy maxRetries(final int tries) {
     return new TxRetryPolicy() {

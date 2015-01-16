@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,20 +24,20 @@ import java.lang.reflect.Type;
  * Notification handler passed when subscribing to a {@link NotificationFeed} using
  * {@link co.cask.cdap.notifications.service.NotificationService#subscribe}.
  *
- * @param <N> Type of the Notification to handle.
+ * @param <N> Type of the Notification to handle
  */
 public interface NotificationHandler<N> {
 
   /**
-   * @return Type of the Notification this handler will handle.
+   * @return Type of the Notification this handler will handle
    */
   Type getNotificationFeedType();
 
   /**
    * Method called when a notification is received by this handler.
    *
-   * @param notification notification received.
-   * @param notificationContext {@link NotificationContext} object for the notification.
+   * @param notification notification received
+   * @param notificationContext {@link NotificationContext} object for the notification
    */
   void received(N notification, NotificationContext notificationContext);
 }

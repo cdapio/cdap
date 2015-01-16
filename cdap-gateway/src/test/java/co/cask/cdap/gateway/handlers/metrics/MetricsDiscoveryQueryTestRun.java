@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
@@ -23,6 +24,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   @BeforeClass
-  public static void setup() throws InterruptedException {
+  public static void setup() throws Exception {
     setupMetrics();
   }
 
@@ -116,26 +118,48 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private static void setupMetrics() throws InterruptedException {
+  private static void setupMetrics() throws Exception {
+    HttpResponse response = doDelete("/v2/metrics");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
+      collectionService.getCollector(MetricsScope.USER,
+                                     getFlowletContext("WordCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WordCounter.splitter", "0");
+    collector =
+      collectionService.getCollector(MetricsScope.USER,
+                                     getFlowletContext("WCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.splitter", "0");
+    collector =
+      collectionService.getCollector(MetricsScope.USER,
+                                     getFlowletContext("WCount", "WCounter", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.counter", "0");
+    collector =
+      collectionService.getCollector(MetricsScope.USER,
+                                     getFlowletContext("WCount", "WCounter", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.p.RCounts", "0");
+    collector =
+      collectionService.getCollector(MetricsScope.USER,
+                                     getProcedureContext("WCount", "RCounts"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.m", "0");
+    collector = collectionService.getCollector(MetricsScope.USER,
+                                               getMapReduceTaskContext("WCount", "ClassicWordCount",
+                                                                       MapReduceMetrics.TaskType.Mapper));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.r", "0");
+    collector = collectionService.getCollector(MetricsScope.USER,
+                                               getMapReduceTaskContext("WCount", "ClassicWordCount",
+                                                                       MapReduceMetrics.TaskType.Reducer));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
+    collector = collectionService.getCollector(MetricsScope.USER,
+                                               getFlowletContext("WordCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
+
+    collector = collectionService.getCollector(MetricsScope.USER,
+                                               getFlowletContext("WordCount", "WordCounter", "collector"));
+    collector.increment("aa", 1);
+    collector.increment("zz", 1);
+    collector.increment("ab", 1);
 
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);

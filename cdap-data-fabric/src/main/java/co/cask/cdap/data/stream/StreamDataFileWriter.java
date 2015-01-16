@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,8 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.Map;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -78,6 +80,9 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
   private static final byte[] INDEX_MAGIC_HEADER = {'I', '1'};
   private static final int BUFFER_SIZE = 256 * 1024;    // 256K
 
+  // Stream properties keys, shared between writer and reader classes
+  static final String PROPERTY_SCHEMA = "stream.schema";
+
   private final OutputStream eventOutput;
   private final OutputStream indexOutput;
   private final long indexInterval;
@@ -102,7 +107,12 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
   public StreamDataFileWriter(OutputSupplier<? extends OutputStream> eventOutputSupplier,
                               OutputSupplier<? extends OutputStream> indexOutputSupplier,
                               long indexInterval) throws IOException {
+    this(eventOutputSupplier, indexOutputSupplier, indexInterval, ImmutableMap.<String, String>of());
+  }
 
+  public StreamDataFileWriter(OutputSupplier<? extends OutputStream> eventOutputSupplier,
+                              OutputSupplier<? extends OutputStream> indexOutputSupplier,
+                              long indexInterval, Map<String, String> properties) throws IOException {
     this.eventOutput = eventOutputSupplier.getOutput();
     try {
       this.indexOutput = indexOutputSupplier.getOutput();
@@ -118,7 +128,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     this.lengthEncoder = new BufferedEncoder(5, encoderFactory);
 
     try {
-      init();
+      init(properties);
     } catch (IOException e) {
       Closeables.closeQuietly(eventOutput);
       Closeables.closeQuietly(indexOutput);
@@ -129,37 +139,22 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
 
   @Override
   public void append(StreamEvent event) throws IOException {
-    if (closed) {
-      throw new IOException("Writer already closed.");
-    }
+    doAppend(event, BUFFER_SIZE);
+  }
 
-    synced = false;
-    long eventTimestamp = event.getTimestamp();
-    if (eventTimestamp < currentTimestamp) {
-      throw closeWithException(new IOException("Out of order events written."));
-    }
-
-    try {
-      if (eventTimestamp > currentTimestamp) {
-        flushBlock(false);
-
-        currentTimestamp = eventTimestamp;
-
-        // Write the timestamp directly to output
-        eventOutput.write(Bytes.toBytes(currentTimestamp));
-        position += Bytes.SIZEOF_LONG;
-      }
-
-      // Encodes the event data into buffer.
-      StreamEventDataCodec.encode(event, encoder);
-
-      // Optionally flush if already filled up the buffer.
-      if (encoder.size() >= BUFFER_SIZE) {
-        flushBlock(false);
-      }
-
-    } catch (IOException e) {
-      throw closeWithException(e);
+  /**
+   * Writes multiple events to the stream file. Events provided by the iterator must be sorted by timestamp.
+   * This method guarantees events with the same timestamp are written in the same data block. Note that
+   * events of the same timestamp are all buffered in memory before writing to disk, since the data block length
+   * needs to be known before it can be written to disk.
+   *
+   * @param events an {@link Iterator} that provides events to append
+   * @throws IOException
+   */
+  @Override
+  public void appendAll(Iterator<? extends StreamEvent> events) throws IOException {
+    while (events.hasNext()) {
+      doAppend(events.next(), Integer.MAX_VALUE);
     }
   }
 
@@ -192,12 +187,51 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     }
   }
 
-  private void init() throws IOException {
+  private void doAppend(StreamEvent event, int flushLimit) throws IOException {
+    if (closed) {
+      throw new IOException("Writer already closed.");
+    }
+
+    synced = false;
+    long eventTimestamp = event.getTimestamp();
+    if (eventTimestamp < currentTimestamp) {
+      throw closeWithException(new IOException("Out of order events written."));
+    }
+
+    try {
+      if (eventTimestamp > currentTimestamp) {
+        flushBlock(false);
+
+        currentTimestamp = eventTimestamp;
+
+        // Write the timestamp directly to output
+        eventOutput.write(Bytes.toBytes(currentTimestamp));
+        position += Bytes.SIZEOF_LONG;
+      }
+
+      // Encodes the event data into buffer.
+      StreamEventDataCodec.encode(event, encoder);
+
+      // Optionally flush if already filled up the buffer.
+      if (encoder.size() >= flushLimit) {
+        flushBlock(false);
+      }
+
+    } catch (IOException e) {
+      throw closeWithException(e);
+    }
+  }
+
+  private void init(Map<String, String> properties) throws IOException {
     // Writes the header for event file
     encoder.writeRaw(MAGIC_HEADER);
 
-    StreamUtils.encodeMap(ImmutableMap.of("stream.schema",
-                                          StreamEventDataCodec.STREAM_DATA_SCHEMA.toString()), encoder);
+    Map<String, String> headers = ImmutableMap.<String, String>builder()
+      .putAll(properties)
+      .put(PROPERTY_SCHEMA, StreamEventDataCodec.STREAM_DATA_SCHEMA.toString())
+      .build();
+    StreamUtils.encodeMap(headers, encoder);
+
     long headerSize = encoder.size();
     encoder.writeTo(eventOutput);
     sync(eventOutput);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,14 +27,14 @@ public class ProcedureLoggingContext extends ApplicationLoggingContext {
 
   /**
    * Constructs the ProcedureLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
    * @param procedureId flow id
    */
-  public ProcedureLoggingContext(final String accountId,
-                               final String applicationId,
-                               final String procedureId) {
-    super(accountId, applicationId);
+  public ProcedureLoggingContext(final String namespaceId,
+                                 final String applicationId,
+                                 final String procedureId) {
+    super(namespaceId, applicationId);
     setSystemTag(TAG_PROCEDURE_ID, procedureId);
   }
 

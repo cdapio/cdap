@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -175,7 +175,7 @@ public class TestBase {
       Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),
+        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
                                                                      deployedJar, appSpec);
 
     } catch (Exception e) {

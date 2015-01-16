@@ -16,14 +16,15 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -31,18 +32,19 @@ import java.util.List;
 /**
  * Lists all programs of a certain type.
  */
-public class ListProgramsCommand implements Command {
+public class ListProgramsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
   private final ProgramType programType;
 
-  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient) {
+  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient, CLIConfig cliConfig) {
+    super(cliConfig);
     this.programType = programType;
     this.appClient = appClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<ProgramRecord> programs = appClient.listAllPrograms(programType);
     new AsciiTable<ProgramRecord>(
       new String[] { "app", "id", "description" },

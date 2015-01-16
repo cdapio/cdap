@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -150,6 +151,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Scheduler scheduler;
 
+  private final PreferencesStore preferencesStore;
+
   /**
    * Convenience class for representing the necessary components for retrieving status
    */
@@ -196,7 +199,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler) {
+                                     Scheduler scheduler, PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -207,6 +210,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -307,7 +311,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
-      Map<String, String> runtimeArgs = store.getRunArguments(id);
+      Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
+                                                                         runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
       LOG.error("Error getting runtime args {}", e.getMessage(), e);
@@ -340,7 +345,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       Map<String, String> args = decodeArguments(request);
-      store.storeRunArguments(id, args);
+      preferencesStore.setProperties(namespaceId, appId, runnableType, runnableId, args);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Throwable e) {
       LOG.error("Error getting runtime args {}", e.getMessage(), e);
@@ -682,7 +687,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      StreamSpecification stream = store.getStream(Id.Account.from(namespaceId), streamId);
+      StreamSpecification stream = store.getStream(Id.Namespace.from(namespaceId), streamId);
       if (stream == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
         return;
@@ -997,7 +1002,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           store.setServiceWorkerInstances(programId, runnableName, instances);
         }
 
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
                                                                         ProgramType.SERVICE, runtimeService);
@@ -1140,7 +1145,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // MapReduce is part of a workflow. Query the status of the workflow instead
       final SettableFuture<StatusMap> statusFuture = SettableFuture.create();
-      workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
+      workflowClient.getWorkflowStatus(id.getNamespaceId(), id.getApplicationId(),
                                        workflowName, new WorkflowClient.Callback() {
           @Override
           public void handle(WorkflowClient.Status status) {
@@ -1241,7 +1246,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, ProgramType type) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getAccountId(), identifier.getApplicationId());
+                               identifier.getNamespaceId(), identifier.getApplicationId());
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (identifier.equals(info.getProgramId())) {
         return info;
@@ -1382,7 +1387,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Map<String, String> userArgs = store.getRunArguments(id);
+      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
+                                                                            type.getCategoryName(), id.getId());
       if (overrides != null) {
         for (Map.Entry<String, String> entry : overrides.entrySet()) {
           userArgs.put(entry.getKey(), entry.getValue());

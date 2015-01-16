@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -23,7 +24,6 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -119,7 +119,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void configureInstances(QueueName name, long groupId, int instances) throws Exception {
-    Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
+    Preconditions.checkArgument(name.isStream(), "%s is not a stream.", name);
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
     LOG.info("Configure instances: {} {}", groupId, instances);
@@ -156,7 +156,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void configureGroups(QueueName name, Map<Long, Integer> groupInfo) throws Exception {
-    Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
+    Preconditions.checkArgument(name.isStream(), "%s is not a stream.", name);
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
     LOG.info("Configure groups for {}: {}", name, groupInfo);
@@ -218,22 +218,27 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public StreamConfig getConfig(String streamName) throws IOException {
     Location streamLocation = streamBaseLocation.append(streamName);
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' not exists.", streamName);
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
     return loadConfig(streamLocation);
   }
 
   @Override
   public void updateConfig(StreamConfig config) throws IOException {
     Location streamLocation = config.getLocation();
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", config.getName());
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", config.getName());
 
-    // Check only TTL is changed, as only TTL change is supported.
+    // Check only TTL or format is changed, as only TTL or format changes are supported.
     StreamConfig originalConfig = loadConfig(streamLocation);
     Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
-                                "Configuration update for stream '{}' was not valid (can only update ttl)",
+                                "Configuration update for stream '%s' was not valid (can only update ttl or format)",
                                 config.getName());
 
-    streamCoordinator.changeTTL(originalConfig, config.getTTL());
+    if (originalConfig.getTTL() != config.getTTL()) {
+      streamCoordinator.changeTTL(originalConfig, config.getTTL());
+    }
+    if (!originalConfig.getFormat().equals(config.getFormat())) {
+      saveConfig(config);
+    }
   }
 
   @Override
@@ -271,25 +276,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
                                                      cConf.get(Constants.Stream.TTL)));
 
-    Location tmpConfigLocation = configLocation.getTempFile(null);
     StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
-    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
-      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
+    saveConfig(config);
 
     // Create the notification feeds linked to that stream
     createStreamFeeds(name);
-
-    try {
-      // Windows does not allow renaming if the destination file exists so we must delete the configLocation
-      if (OSDetector.isWindows()) {
-        configLocation.delete();
-      }
-      tmpConfigLocation.renameTo(streamBaseLocation.append(name).append(CONFIG_FILE_NAME));
-    } finally {
-      if (tmpConfigLocation.exists()) {
-        tmpConfigLocation.delete();
-      }
-    }
   }
 
   private void createStreamFeeds(String stream) {
@@ -342,6 +333,25 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     String streamName = QueueName.fromStream(name).toURI().toString();
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);
+    }
+  }
+
+  private void saveConfig(StreamConfig config) throws IOException {
+    Location configLocation = streamBaseLocation.append(config.getName()).append(CONFIG_FILE_NAME);
+    Location tmpConfigLocation = configLocation.getTempFile(null);
+    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
+
+    try {
+      // Windows does not allow renaming if the destination file exists so we must delete the configLocation
+      if (OSDetector.isWindows()) {
+        configLocation.delete();
+      }
+      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getName()).append(CONFIG_FILE_NAME));
+    } finally {
+      if (tmpConfigLocation.exists()) {
+        tmpConfigLocation.delete();
+      }
     }
   }
 
