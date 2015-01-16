@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.format;
 
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.RecordFormat;
 import com.google.common.collect.ImmutableMap;
 
@@ -26,11 +27,12 @@ import java.util.Map;
  * "CSV" or "TSV". If they are not a standard name, they are interpreted as fully qualified class names.
  */
 public final class RecordFormats {
-  public static final String STRING = "string";
   // We may eventually want this mapping to be derived from the config.
   private static final Map<String, Class<? extends RecordFormat>> NAME_MAP =
     ImmutableMap.<String, Class<? extends RecordFormat>>builder()
-      .put(STRING, SingleStringRecordFormat.class)
+      .put(Formats.STRING, SingleStringRecordFormat.class)
+      .put(Formats.CSV, CSVRecordFormat.class)
+      .put(Formats.TSV, TSVRecordFormat.class)
       .build();
 
   /**
@@ -47,7 +49,7 @@ public final class RecordFormats {
    */
   public static <FROM, TO> RecordFormat<FROM, TO> create(String name)
     throws IllegalAccessException, InstantiationException, ClassNotFoundException {
-    Class<? extends RecordFormat> formatClass = NAME_MAP.get(name);
+    Class<? extends RecordFormat> formatClass = NAME_MAP.get(name.toLowerCase());
     return (RecordFormat<FROM, TO>) (formatClass == null ?
       Class.forName(name).newInstance() : formatClass.newInstance());
   }

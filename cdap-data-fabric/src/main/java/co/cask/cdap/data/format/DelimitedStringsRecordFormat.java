@@ -17,10 +17,10 @@
 package co.cask.cdap.data.format;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.internal.format.StructuredRecord;
-import co.cask.cdap.internal.format.UnexpectedFormatException;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.format.UnexpectedFormatException;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -32,12 +32,22 @@ import java.util.Map;
 
 /**
  * Stream record format that interprets the body as string of delimited fields.
+ *
+ * <p>
+ * The delimiter can be explicitly set through the "delimiter" setting, and the character set can also be set through
+ * the "charset" setting. By default, the format will use a schema of one field, where the field is an array of strings.
+ * The schema can be set to a schema of fields, with the i'th field corresponding to the i'th value in the delimited
+ * text. Fields can also be parsed as scalar types - boolean, integer, long, double, float, bytes, and string.
+ * In addition, the very last field can be an array of strings.
+ * </p>
  */
-public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
+public abstract class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   public static final String DELIMITER = "delimiter";
   private Charset charset = Charsets.UTF_8;
-  private String delimiter = ",";
+  private String delimiter;
+
+  protected abstract String getDefaultDelimiter();
 
   @Override
   public StructuredRecord read(ByteBuffer input) throws UnexpectedFormatException {
@@ -100,8 +110,6 @@ public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<Structu
       this.charset = Charset.forName(charsetStr);
     }
     String delimiter = settings.get(DELIMITER);
-    if (delimiter != null) {
-      this.delimiter = delimiter;
-    }
+    this.delimiter = delimiter == null ? getDefaultDelimiter() : delimiter;
   }
 }

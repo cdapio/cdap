@@ -19,6 +19,7 @@ package co.cask.cdap.mapreduce;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
@@ -70,7 +71,7 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
       job.setMapOutputKeyClass(LongWritable.class);
       job.setMapOutputValueClass(StructuredRecord.class);
       FormatSpecification formatSpec = new FormatSpecification(
-        RecordFormats.STRING,
+        Formats.STRING,
         Schema.recordOf("event", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
         Collections.<String, String>emptyMap()
       );
