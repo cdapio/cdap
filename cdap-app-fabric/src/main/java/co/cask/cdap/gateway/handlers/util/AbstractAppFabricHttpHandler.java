@@ -164,24 +164,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected AdapterSpecification decodeAdapterSpecification(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      throw new IOException("AdapterSpecification cannot be read");
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      AdapterSpecification spec = GSON.fromJson(reader, AdapterSpecification.class);
-      return spec;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse AdapterSpecification", request.getUri(), e);
-      throw e;
-    } finally {
-      reader.close();
-    }
-
-  }
-
   protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
                                    @Nullable String applicationId, Store store) {
     if (applicationId != null && applicationId.isEmpty()) {
