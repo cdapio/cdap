@@ -34,10 +34,6 @@ import java.util.Map;
 public abstract class RecordFormat<FROM, TO> {
   protected Schema schema;
 
-  protected RecordFormat() {
-    this.schema = getDefaultSchema();
-  }
-
   /**
    * Read data from the input format to the output type.
    *
@@ -48,35 +44,29 @@ public abstract class RecordFormat<FROM, TO> {
   public abstract TO read(FROM input) throws UnexpectedFormatException;
 
   /**
-   * Get the default schema for the format.
+   * Get the default schema for the format. The default is used if no schema is provided in the call
+   * to {@link #initialize(FormatSpecification)}. Should return null if there is no default schema, meaning
+   * a schema must be provided during initialization of the format.
    *
-   * @return default schema for the format.
+   * @return the default schema for the format, or null if a schema must be provided to the format
    */
   protected abstract Schema getDefaultSchema();
 
   /**
-   * Validate the desired schema, throwing an exception if it is unsupported. It can be assumed that the input schema
+   * Validate the given schema, throwing an exception if it is unsupported. It can be assumed that the input schema
    * is not null and is a record of at least one field.
    *
-   * @param desiredSchema desired schema for the format.
-   * @throws UnsupportedTypeException if the desired schema not supported.
+   * @param schema the schema to validate for the format
+   * @throws UnsupportedTypeException if the schema not supported
    */
-  protected abstract void validateDesiredSchema(Schema desiredSchema) throws UnsupportedTypeException;
-
-  /**
-   * Configure the format with the given properties. Guaranteed to be called once before any call to
-   * {@link #read(Object)} is made.
-   *
-   * @param settings
-   */
-  protected abstract void configure(Map<String, String> settings);
+  protected abstract void validateSchema(Schema schema) throws UnsupportedTypeException;
 
   /**
    * Initialize the format with the given desired schema and properties.
    * Guaranteed to be called once before any other method is called.
    *
-   * @param formatSpecification specification for the format, containing the desired schema and settings.
-   * @throws UnsupportedTypeException if the desired schema and properties are not supported.
+   * @param formatSpecification the specification for the format, containing the desired schema and settings
+   * @throws UnsupportedTypeException if the desired schema and properties are not supported
    */
   public void initialize(FormatSpecification formatSpecification) throws UnsupportedTypeException {
     Schema desiredSchema = null;
@@ -85,18 +75,31 @@ public abstract class RecordFormat<FROM, TO> {
       desiredSchema = formatSpecification.getSchema();
       settings = formatSpecification.getSettings();
     }
-    if (desiredSchema != null) {
-      validateIsRecord(desiredSchema);
-      validateDesiredSchema(desiredSchema);
-      this.schema = desiredSchema;
+    desiredSchema = desiredSchema == null ? getDefaultSchema() : desiredSchema;
+    if (desiredSchema == null) {
+      throw new UnsupportedTypeException("A schema must be provided to this format.");
     }
+    validateIsRecord(desiredSchema);
+    validateSchema(desiredSchema);
+    this.schema = desiredSchema;
     configure(settings);
   }
 
   /**
+   * Configure the format with the given properties. Guaranteed to be called once before any call to
+   * {@link #read(Object)} is made, and after a schema for the format has been set.
+   *
+   * @param settings the settings to configure the format with
+   */
+  protected void configure(Map<String, String> settings) {
+    // do nothing by default
+  }
+
+
+  /**
    * Get the schema of the format.
    *
-   * @return schema of the format.
+   * @return the schema of the format.
    */
   public Schema getSchema() {
     return schema;
