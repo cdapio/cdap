@@ -22,6 +22,7 @@ import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
@@ -57,6 +58,8 @@ import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -141,20 +144,89 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testMapreduceWithFileSet() throws Exception {
     // test reading and writing distinct datasets, reading more than one path
-    testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001");
+    // hack to use different datasets at each invocation of this test
+    System.setProperty("INPUT_DATASET_NAME", "numbers");
+    System.setProperty("OUTPUT_DATASET_NAME", "sums");
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    Map<String, String> inputArgs = Maps.newHashMap();
+    FileSetArguments.setInputPaths(inputArgs, "abc, xyz");
+    Map<String, String> outputArgs = Maps.newHashMap();
+    FileSetArguments.setOutputPath(outputArgs, "a001");
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "numbers", inputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "sums", outputArgs));
+    testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
+                          AppWithMapReduceUsingFileSet.class,
+                          AppWithMapReduceUsingFileSet.ComputeSum.class, new BasicArguments(runtimeArguments));
+
     // test reading and writing same dataset
-    testMapreduceWithFile("boogie", "zzz", "boogie", "f123");
+    // hack to use different datasets at each invocation of this test
+    System.setProperty("INPUT_DATASET_NAME", "boogie");
+    System.setProperty("OUTPUT_DATASET_NAME", "boogie");
+    runtimeArguments = Maps.newHashMap();
+    inputArgs = Maps.newHashMap();
+    FileSetArguments.setInputPaths(inputArgs, "zzz");
+    outputArgs = Maps.newHashMap();
+    FileSetArguments.setOutputPath(outputArgs, "f123");
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", inputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", outputArgs));
+    testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
+                          AppWithMapReduceUsingFileSet.class,
+                          AppWithMapReduceUsingFileSet.ComputeSum.class, new BasicArguments(runtimeArguments));
+  }
+
+  @Test
+  public void testMapreduceWithDynamicFileSet() throws Exception {
+    // create the datasets here because they are not created by the app
+    dsFramework.addInstance("fileSet", "rtInput1", FileSetProperties.builder()
+      .setBasePath("/rtInput1")
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .build());
+    dsFramework.addInstance("fileSet", "rtOutput1", FileSetProperties.builder()
+      .setBasePath("/rtOutput1")
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .build());
+    // build runtime args for app
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_NAME, "rtInput1");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_PATHS, "abc, xyz");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_NAME, "rtOutput1");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_PATH, "a001");
+    // test reading and writing distinct datasets, reading more than one path
+    testMapreduceWithFile("rtInput1", "abc, xyz", "rtOutput1", "a001",
+                          AppWithMapReduceUsingRuntimeFileSet.class,
+                          AppWithMapReduceUsingRuntimeFileSet.ComputeSum.class,
+                          new BasicArguments(runtimeArguments));
+
+    // test reading and writing same dataset
+    dsFramework.addInstance("fileSet", "rtInput2", FileSetProperties.builder()
+      .setBasePath("/rtInput2")
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .build());
+    runtimeArguments = Maps.newHashMap();
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_NAME, "rtInput2");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_PATHS, "zzz");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_NAME, "rtInput2");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_PATH, "f123");
+    testMapreduceWithFile("rtInput2", "zzz", "rtInput2", "f123",
+                          AppWithMapReduceUsingRuntimeFileSet.class,
+                          AppWithMapReduceUsingRuntimeFileSet.ComputeSum.class,
+                          new BasicArguments(runtimeArguments));
   }
 
   private void testMapreduceWithFile(String inputDatasetName, String inputPaths,
-                                     String outputDatasetName, String outputPath) throws Exception {
-
-    // hack to use different datasets at each invocation of this test
-    System.setProperty("INPUT_DATASET_NAME", inputDatasetName);
-    System.setProperty("OUTPUT_DATASET_NAME", outputDatasetName);
+                                     String outputDatasetName, String outputPath,
+                                     Class appClass, Class mrClass,
+                                     Arguments runtimeArgs) throws Exception {
 
     final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFileSet.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
     Map<String, String> inputArgs = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
@@ -176,10 +248,7 @@ public class MapReduceProgramRunnerTest {
       count++;
     }
 
-    Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, inputDatasetName, inputArgs));
-    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, outputDatasetName, outputArgs));
-    runProgram(app, AppWithMapReduceUsingFileSet.ComputeSum.class, new BasicArguments(runtimeArguments));
+    runProgram(app, mrClass, runtimeArgs);
 
     // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums
     // (.<filename>.crc) for these files. Find the actual part file. Its name begins with "part". In this case,
