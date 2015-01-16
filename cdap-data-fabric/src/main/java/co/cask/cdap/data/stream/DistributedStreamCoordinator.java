@@ -100,22 +100,30 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
       public void leader() {
         LOG.info("Became Stream handler leader. Starting resource coordinator.");
         resourceCoordinator = new ResourceCoordinator(zkClient, discoveryServiceClient,
-                                                             new BalancedAssignmentStrategy());
+                                                      new BalancedAssignmentStrategy());
         resourceCoordinator.startAndWait();
 
-        try {
-          // Create one requirement for the resource coordinator for all the streams.
-          // One stream is identified by one partition
-          ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-          for (StreamSpecification spec : streamMetaStore.listStreams()) {
-            LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.", spec.getName());
-            builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
+        resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, new ResourceModifier() {
+          @Nullable
+          @Override
+          public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
+            try {
+              // Create one requirement for the resource coordinator for all the streams.
+              // One stream is identified by one partition
+              ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
+              for (StreamSpecification spec : streamMetaStore.listStreams()) {
+                LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
+                          spec.getName());
+                builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
+              }
+              return builder.build();
+            } catch (Throwable e) {
+              LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
+              Throwables.propagate(e);
+              return null;
+            }
           }
-          resourceCoordinatorClient.submitRequirement(builder.build()).get();
-        } catch (Throwable e) {
-          LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
-          Throwables.propagate(e);
-        }
+        });
       }
 
       @Override
