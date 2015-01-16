@@ -19,7 +19,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.data.stream.service.AbstractStreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;

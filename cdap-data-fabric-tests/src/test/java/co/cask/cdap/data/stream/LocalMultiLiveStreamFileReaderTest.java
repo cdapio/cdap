@@ -15,20 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.util.Modules;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
@@ -40,39 +27,14 @@ import java.io.IOException;
 public class LocalMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderTestBase {
 
   private static LocationFactory locationFactory;
-  private static StreamAdmin streamAdmin;
 
   @BeforeClass
   public static void init() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
-      Modules.override(new StreamAdminModules().getInMemoryModules())
-        .with(new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
-          }
-        })
-    );
-
-    locationFactory = injector.getInstance(LocationFactory.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
+    locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
   }
 
   @Override
   protected LocationFactory getLocationFactory() {
     return locationFactory;
-  }
-
-  @Override
-  protected StreamAdmin getStreamAdmin() {
-    return streamAdmin;
   }
 }

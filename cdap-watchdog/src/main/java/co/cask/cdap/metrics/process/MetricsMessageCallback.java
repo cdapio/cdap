@@ -20,7 +20,6 @@ import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.metrics.transport.MetricValue;
-import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -37,7 +36,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricsRecord} and invoke
+ * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricValue} and invoke
  * set of {@link MetricsProcessor}.
  */
 public final class MetricsMessageCallback implements KafkaConsumer.MessageCallback {

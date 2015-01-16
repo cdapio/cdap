@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.async.ExecutorUtils;
@@ -22,9 +22,6 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data.stream.StreamCoordinator;
-import co.cask.cdap.data.stream.StreamPropertyListener;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;

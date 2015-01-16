@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,28 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
 
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
-import org.junit.BeforeClass;
+package co.cask.cdap.common.io;
 
 import java.io.IOException;
 
 /**
- *
+ * Package local interface to help abstract logic of getting stream size.
  */
-public class LocalStreamDataFileTest extends StreamDataFileTestBase {
+interface StreamSizeProvider {
 
-  private static LocationFactory locationFactory;
-
-  @BeforeClass
-  public static void init() throws IOException {
-    locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-  }
-
-  @Override
-  protected LocationFactory getLocationFactory() {
-    return locationFactory;
-  }
+  /**
+   * Returns size of the stream in bytes or -1 if the size is unknown.
+   */
+  long size() throws IOException;
 }

@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -185,7 +186,8 @@ public class ExploreDisabledTest {
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules(),
-        new ExploreClientModule()
+        new ExploreClientModule(),
+        new StreamAdminModules().getInMemoryModules()
     );
   }
 }
