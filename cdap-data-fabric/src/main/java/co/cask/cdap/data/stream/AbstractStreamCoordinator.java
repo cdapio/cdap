@@ -33,6 +33,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -51,7 +52,7 @@ import javax.annotation.Nullable;
 /**
  * Base implementation for {@link StreamCoordinator}.
  */
-public abstract class AbstractStreamCoordinator implements StreamCoordinator {
+public abstract class AbstractStreamCoordinator extends AbstractIdleService implements StreamCoordinator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinator.class);
   private static final Gson GSON = new GsonBuilder()
@@ -156,14 +157,22 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName,
-                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin,
+                                                                                              streamName, listener));
   }
 
   @Override
-  public void close() throws IOException {
+  protected final void shutDown() throws Exception {
     propertyStore.get().close();
+    doShutDown();
   }
+
+  /**
+   * Stop the service.
+   *
+   * @throws Exception when stopping the service could not be performed
+   */
+  protected abstract void doShutDown() throws Exception;
 
   /**
    * Overwrites a stream config file.

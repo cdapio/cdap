@@ -31,6 +31,7 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -373,7 +374,8 @@ public class StandaloneMain {
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
       new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getStandaloneModules()
+      new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
+      new StreamAdminModules().getStandaloneModules()
     );
   }
 }

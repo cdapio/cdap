@@ -28,6 +28,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -261,7 +262,8 @@ public class BaseHiveExploreServiceTest {
       new AuthModule(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new StreamServiceRuntimeModule().getInMemoryModules()
+      new StreamServiceRuntimeModule().getInMemoryModules(),
+      new StreamAdminModules().getInMemoryModules()
     );
   }
 
@@ -291,7 +293,8 @@ public class BaseHiveExploreServiceTest {
       new AuthModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
-      new StreamServiceRuntimeModule().getStandaloneModules()
+      new StreamServiceRuntimeModule().getStandaloneModules(),
+      new StreamAdminModules().getStandaloneModules()
     );
   }
 }
