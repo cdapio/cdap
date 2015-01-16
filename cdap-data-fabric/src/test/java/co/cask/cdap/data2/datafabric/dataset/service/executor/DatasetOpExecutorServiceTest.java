@@ -36,6 +36,8 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -51,6 +53,7 @@ import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -101,7 +104,8 @@ public class DatasetOpExecutorServiceTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new IOModule(), new ZKClientModule(),
+      new IOModule(),
+      new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -110,7 +114,14 @@ public class DatasetOpExecutorServiceTest {
       new DataSetServiceModules().getInMemoryModule(),
       new AuthModule(),
       new TransactionMetricsModule(),
-      new ExploreClientModule());
+      new ExploreClientModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+        }
+      }
+    );
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();

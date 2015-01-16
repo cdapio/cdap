@@ -95,7 +95,13 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule());
+      new DataSetsModules().getLocalModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+        }
+      });
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueueProducer);
