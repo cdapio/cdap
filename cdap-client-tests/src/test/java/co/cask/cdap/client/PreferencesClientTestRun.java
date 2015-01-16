@@ -69,6 +69,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   @Test
   public void testProgramAPI() throws Exception {
+    // Add Namespace Id when ProgramClient needs it.
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "instance");
     File jarFile = createAppJarFile(AppReturnsArgs.class);

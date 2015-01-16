@@ -32,7 +32,6 @@ import java.io.PrintStream;
  */
 public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
-  private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
 
   private final PreferencesClient client;
   private final ElementType type;
@@ -73,7 +72,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getApplicationPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                          resolved)));
         break;
 
@@ -82,7 +81,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                      type.getPluralName(), programIdParts[1],
                                                                      resolved)));
         break;
@@ -92,7 +91,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                      type.getPluralName(), programIdParts[1],
                                                                      resolved)));
         break;
@@ -102,7 +101,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                      type.getPluralName(), programIdParts[1],
                                                                      resolved)));
         break;
@@ -112,7 +111,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                      type.getPluralName(), programIdParts[1],
                                                                      resolved)));
         break;
@@ -122,7 +121,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                      type.getPluralName(), programIdParts[1],
                                                                      resolved)));
         break;
@@ -132,7 +131,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0],
+        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
                                                                      type.getPluralName(), programIdParts[1],
                                                                      resolved)));
         break;

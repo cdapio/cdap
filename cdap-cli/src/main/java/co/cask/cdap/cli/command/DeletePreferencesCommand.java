@@ -30,7 +30,6 @@ import java.io.PrintStream;
  * Deletes preferences for instance, namespace, application, program.
  */
 public class DeletePreferencesCommand extends AbstractAuthCommand {
-  private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
   private static final String SUCCESS = "Deleted Preferences successfully for the '%s'";
 
   private final PreferencesClient client;
@@ -72,7 +71,7 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        client.deleteApplicationPreferences(DEFAULT_NAMESPACE, programIdParts[0]);
+        client.deleteApplicationPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -81,7 +80,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1]);
+        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                        programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -90,7 +90,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1]);
+        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                        programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -99,7 +100,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1]);
+        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                        programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -108,7 +110,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1]);
+        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                        programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -117,7 +120,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1]);
+        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                        programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -126,7 +130,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1]);
+        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                        programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 

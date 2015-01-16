@@ -34,7 +34,6 @@ import java.util.Map;
  * Sets preferences for instance, namespace, application, program.
  */
 public class SetPreferencesCommand extends AbstractAuthCommand {
-  private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
   private static final String SUCCESS = "Set Preferences successfully for the '%s'";
   private static final String JSON = "json";
   private static final Gson GSON = new Gson();
@@ -87,7 +86,7 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        client.setApplicationPreferences(DEFAULT_NAMESPACE, programIdParts[0], args);
+        client.setApplicationPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -96,8 +95,8 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1],
-                                     args);
+        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                     programIdParts[1], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -106,8 +105,8 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1],
-                                     args);
+        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                     programIdParts[1], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -116,8 +115,8 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1],
-                                     args);
+        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                     programIdParts[1], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -126,8 +125,8 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1],
-                                     args);
+        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                     programIdParts[1], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -136,8 +135,8 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1],
-                                     args);
+        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                     programIdParts[1], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -146,8 +145,8 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(), programIdParts[1],
-                                     args);
+        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+                                     programIdParts[1], args);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 

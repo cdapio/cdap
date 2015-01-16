@@ -251,7 +251,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, String.format("set instance preferences '%s'", GSON.toJson(propMap)),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
-    testPreferencesOutput(cli, "get instance preferencesresolved", propMap);
+    testPreferencesOutput(cli, "get instance resolved preferences", propMap);
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
     propMap.clear();
     testPreferencesOutput(cli, "get instance preferences", propMap);
