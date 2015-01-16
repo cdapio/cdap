@@ -114,4 +114,15 @@ public final class AdapterSpecification {
   public int hashCode() {
     return Objects.hashCode(this.name, this.type, this.properties, this.sources, this.sinks);
   }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("type", type)
+      .add("properties", properties)
+      .add("sources", sources)
+      .add("sinks", sinks)
+      .toString();
+  }
 }

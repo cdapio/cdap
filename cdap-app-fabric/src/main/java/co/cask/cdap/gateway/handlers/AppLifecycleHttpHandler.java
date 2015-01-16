@@ -17,12 +17,13 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.adapter.AdapterSpecification;
+import co.cask.cdap.adapter.Sink;
+import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -72,14 +73,12 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -244,156 +243,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * Create an adapter.
-   */
-  @PUT
-  @Path("/adapters/{adapter-name}")
-  public void createAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
-
-    try {
-      AdapterSpecification spec = decodeAdapterSpecification(request);
-      if (spec == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
-        return;
-      }
-
-      // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
-      String adapterType = spec.getType();
-
-      // Check to see if the App is already deployed
-      ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterName));
-      if (applicationSpec == null ) {
-        // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
-        Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespaceId);
-        Locations.mkdirsIfNotExists(archiveDirectory);
-        Location archive = archiveDirectory.append(adapterName);
-
-        // Copy jar content to a temporary location
-        Location tmpLocation = archive.getTempFile(".tmp");
-        // TODO: Get the jar location.
-       // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
-       try {
-          // Finally, move archive to final location
-          if (tmpLocation.renameTo(archive) == null) {
-            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                tmpLocation.toURI(), archive.toURI()));
-          }
-        } catch (IOException e) {
-          // In case copy to temporary file failed, or rename failed
-          tmpLocation.delete();
-          throw e;
-        }
-        deploy(namespaceId, adapterName, archive);
-      }
-
-      // If the adapter already exists, remove existing schedule to replace with the new one.
-      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
-      if (existingSpec != null) {
-        // TODO: Remove the schedule.
-      }
-
-      store.addAdapter(Id.Namespace.from(namespaceId), spec);
-
-      //TODO: Schedule new programs once the API is available.
-      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
-    } catch (OperationException e) {
-      // TODO: Remove the catch clause after operation Exception is removed from Store. CDAP-1165
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Exception e) {
-      LOG.error("Failed to deploy adapter", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
-  }
-
-  /**
-   * Get a specific adapter.
-   */
-  @PUT
-  @Path("/adapters/{adapter-name}")
-  public void getAdapter(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String nameSpaceId,
-                         @PathParam("adapter-name") String adapterName) {
-
-    AdapterSpecification adapter = store.getAdapter(Id.Namespace.from(nameSpaceId), adapterName);
-    if (adapter == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter %s not found", adapterName));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, adapter);
-    }
-  }
-
-
-
-  /**
-   * Returns a list of applications associated with a namespace.
-   */
-  @GET
-  @Path("/apps")
-  public void getAllApps(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) {
-    getAppDetails(responder, namespaceId, null);
-  }
-
-  /**
-   * Returns the info associated with the application.
-   */
-  @GET
-  @Path("/apps/{app-id}")
-  public void getAppInfo(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("app-id") final String appId) {
-    getAppDetails(responder, namespaceId, appId);
-  }
-
-  /**
-   * Delete an application specified by appId.
-   */
-  @DELETE
-  @Path("/apps/{app-id}")
-  public void deleteApp(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") final String appId) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, "");
-      AppFabricServiceStatus appStatus = removeApplication(id);
-      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
-      responder.sendString(appStatus.getCode(), appStatus.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting app: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Deletes all applications in CDAP.
-   */
-  @DELETE
-  @Path("/apps")
-  public void deleteAllApps(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
-    try {
-      Id.Namespace id = Id.Namespace.from(namespaceId);
-      AppFabricServiceStatus status = removeAll(id);
-      LOG.trace("Delete all call at AppFabricHttpHandler");
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting all apps: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-
   //TODO: improved docs
   /**
    * Retrieves a list of adapters
@@ -442,13 +291,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+
+
   /**
-   * Creates an adapter
+   * Create an adapter.
    */
   @PUT
   @Path("/adapters")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
+
     try {
       if (!namespaceExists(namespaceId)) {
         String errorMessage = String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId);
@@ -457,69 +309,104 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      AdapterSpecification adapterSpec = parseBody(request, AdapterSpecification.class);
-      Preconditions.checkNotNull(adapterSpec, "AdapterSpec is null");
-      String adapterName = adapterSpec.getName();
-      Preconditions.checkNotNull(adapterName, "AdapterSpec's name is null");
-      String datasetName = adapterSpec.getSinks().iterator().next().getName();
-      String streamName = adapterSpec.getSources().iterator().next().getName();
-      Preconditions.checkNotNull(datasetName, "AdapterSpec's datasetName is null");
-      Preconditions.checkNotNull(streamName, "AdapterSpec's streamName is null");
-      // validate specified frequency
-      String frequency = adapterSpec.getProperties().get("frequency");
-      Preconditions.checkNotNull(frequency, "AdapterSpec's frequency is null");
-
-      String adapterId = adapterSpec.getName();
-      AdapterSpecification existingAdapterSpecification = store.getAdapter(Id.Namespace.from(namespaceId), adapterId);
-      if (existingAdapterSpecification != null) {
-        String debugMessage = String.format("Existing adapter found while create: %s.%s",
-                                            namespaceId, existingAdapterSpecification);
-        LOG.debug(debugMessage);
-        responder.sendString(HttpResponseStatus.OK, debugMessage);
+      AdapterSpecification spec = parseBody(request, AdapterSpecification.class);
+      if (spec == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
         return;
       }
+      String adapterName = spec.getName();
 
-      // ensure stream exists
-      if (!streamAdmin.exists(streamName)) {
-        LOG.debug("stream instance {} does not exist during create of adapter: {}", streamName, adapterSpec);
+      // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
+      String adapterType = spec.getType();
+
+      // Check to see if the App is already deployed
+      ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterName));
+
+      // Setup Sources and Sinks prior to application deploy
+      // ensure all sources exist
+      for (Source source : spec.getSources()) {
+        if (Source.Type.STREAM.equals(source.getType())) {
+          if (!streamAdmin.exists(source.getName())) {
+            String errMessage = String.format("stream instance %s does not exist during create of adapter: %s",
+                                              source.getName(), spec);
+            LOG.debug(errMessage);
+            throw new IllegalStateException(errMessage);
+
+          }
+        } else {
+          throw new IllegalArgumentException(String.format("Unknown Source type: %s", source.getType()));
+        }
+      }
+      // create sinks if not exist
+      for (Sink sink : spec.getSinks()) {
+        if (Sink.Type.DATASET.equals(sink.getType())) {
+          String datasetName = sink.getName();
+          if (!datasetFramework.hasInstance(datasetName)) {
+            datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
+          } else {
+            LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, spec);
+          }
+        } else {
+          throw new IllegalArgumentException(String.format("Unknown Sink type: %s", sink.getType()));
+        }
       }
 
-      // create datasets
-      if (!datasetFramework.hasInstance(datasetName)) {
-        datasetFramework.addInstance(FileSet.class.getName(), datasetName, DatasetProperties.EMPTY);
-      } else {
-        LOG.debug("Dataset instance {} already existed during create of adapter: {}", datasetName, adapterSpec);
+
+
+      // TODO: case when it IS null. delete the app and redeploy? (thats what we're doing for the adapter).
+      if (applicationSpec == null ) {
+        // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
+        Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespaceId);
+        Locations.mkdirsIfNotExists(archiveDirectory);
+        Location archive = archiveDirectory.append(adapterName);
+
+        // Copy jar content to a temporary location
+        Location tmpLocation = archive.getTempFile(".tmp");
+        // TODO: Get the jar location.
+        // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
+        try {
+          // Finally, move archive to final location
+          if (tmpLocation.renameTo(archive) == null) {
+            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                tmpLocation.toURI(), archive.toURI()));
+          }
+        } catch (IOException e) {
+          // In case copy to temporary file failed, or rename failed
+          tmpLocation.delete();
+          throw e;
+        }
+        deploy(namespaceId, adapterType, archive);
       }
 
-      String appId = "appId";
-      String programId = "programId";
+
+      // We need this information, in order to know if/what to schedule
+      String appId = adapterType;
+      String programId = "ProgramId";
       ProgramType programType = ProgramType.WORKFLOW;
-      // deploy App
-      // Standalone
-//      deploy(namespaceId, appId, new LocalLocationFactory()
-//        .create("/Users/alianwar/dev/cdap/cdap-examples/HelloWorld/target/HelloWorld-2.6.0-SNAPSHOT.jar"));
-      // Distributed
-
-
       Id.Program scheduledProgramId = Id.Program.from(namespaceId, appId, programId);
 
 
-      // TODO: Update application specification
-      scheduler.schedule(scheduledProgramId, programType,
-                         ImmutableList.of(new Schedule(String.format("schedule.%s", adapterName), "Some Description",
-                                                       toCronExpr(adapterSpec.getProperties().get("frequency")),
-                                                       Schedule.Action.START)));
+      // If the adapter already exists, remove existing schedule to replace with the new one.
+      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+      if (existingSpec != null) {
+        // TODO: Remove the schedule.
+        String debugMessage = String.format("Existing adapter found while create: %s.%s",
+                                            namespaceId, existingSpec);
+        LOG.debug(debugMessage);
+      }
+      //TODO: Schedule new programs once the API is available.
 
-      // Write to mds
-      store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (JsonSyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Invalid Adapter Json object provided in request body. %s", e.getMessage()));
-    } catch (Throwable throwable) {
-      String errorMessage = String.format("Create adapter failed: %s.", throwable);
-      LOG.error(errorMessage);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, errorMessage);
+      store.addAdapter(Id.Namespace.from(namespaceId), spec);
+
+      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "AdapterSpecification could not be parsed");
+    } catch (OperationException e) {
+      // TODO: Remove the catch clause after operation Exception is removed from Store. CDAP-1165
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Exception e) {
+      LOG.error("Failed to deploy adapter", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -583,6 +470,71 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("Invalid adapter action: %s. Possible actions are: 'start', 'stop'.", action));
+    }
+  }
+
+
+  /**
+   * Returns a list of applications associated with a namespace.
+   */
+  @GET
+  @Path("/apps")
+  public void getAllApps(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId) {
+    getAppDetails(responder, namespaceId, null);
+  }
+
+  /**
+   * Returns the info associated with the application.
+   */
+  @GET
+  @Path("/apps/{app-id}")
+  public void getAppInfo(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("app-id") final String appId) {
+    getAppDetails(responder, namespaceId, appId);
+  }
+
+  /**
+   * Delete an application specified by appId.
+   */
+  @DELETE
+  @Path("/apps/{app-id}")
+  public void deleteApp(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") final String appId) {
+    try {
+      Id.Program id = Id.Program.from(namespaceId, appId, "");
+      AppFabricServiceStatus appStatus = removeApplication(id);
+      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
+      responder.sendString(appStatus.getCode(), appStatus.getMessage());
+    } catch (SecurityException e) {
+      LOG.debug("Security Exception while deleting app: ", e);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes all applications in CDAP.
+   */
+  @DELETE
+  @Path("/apps")
+  public void deleteAllApps(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
+    try {
+      Id.Namespace id = Id.Namespace.from(namespaceId);
+      AppFabricServiceStatus status = removeAll(id);
+      LOG.trace("Delete all call at AppFabricHttpHandler");
+      responder.sendString(status.getCode(), status.getMessage());
+    } catch (SecurityException e) {
+      LOG.debug("Security Exception while deleting all apps: ", e);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -668,7 +620,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  protected boolean namespaceExists(String namespace) {
+  private boolean namespaceExists(String namespace) {
     boolean isValid = false;
     if (namespace != null && !namespace.isEmpty()) {
       if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
