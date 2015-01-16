@@ -18,6 +18,7 @@ package co.cask.cdap.examples.webanalytics;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
@@ -62,7 +63,7 @@ public class WebAnalyticsTest extends TestBase {
       }
 
       // Wait for the flow to process all data
-      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WebAnalytics",
+      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "WebAnalytics",
                                                                      "WebAnalyticsFlow", "UniqueVisitor");
       flowletMetrics.waitForProcessed(lines, 10, TimeUnit.SECONDS);
 
