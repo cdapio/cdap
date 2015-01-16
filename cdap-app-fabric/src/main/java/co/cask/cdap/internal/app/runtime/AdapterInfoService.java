@@ -16,8 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.adapter.Sink;
+import co.cask.cdap.adapter.Source;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -35,50 +38,41 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 /**
- * Utility service that provides access to adapters currently registered
+ * Utility service that provides access to adapterInfos currently registered
  */
-public class AdapterService extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
+public class AdapterInfoService extends AbstractIdleService {
+  private static final Logger LOG = LoggerFactory.getLogger(AdapterInfoService.class);
   private final CConfiguration configuration;
-  private Map<String, File> adapters;
+  private Map<String, AdapterInfo> adapterInfos;
 
   @Inject
-  public AdapterService(CConfiguration configuration) {
+  public AdapterInfoService(CConfiguration configuration) {
     this.configuration = configuration;
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting AdapterService");
-    adapters = registerAdapters();
+    LOG.info("Starting AdapterInfoService");
+    adapterInfos = registerAdapters();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down AdapterService");
+    LOG.info("Shutting down AdapterInfoService");
   }
 
-  public Map<String, File> getAdapters() {
-    return adapters;
+  /**
+   * Retrieves information about an Adapter
+   *
+   * @param adapterType the type of the requested AdapterInfo
+   * @return requested AdapterInfo or null if no such AdapterInfo exists
+   */
+  public AdapterInfo getAdapter(String adapterType) {
+    return adapterInfos.get(adapterType);
   }
 
-  public boolean isValidAdapater(String adapterType) {
-    if (adapters.containsKey(adapterType)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  public File getAdapterLocation(String adapterType) {
-    if (adapters.containsKey(adapterType)) {
-      return adapters.get(adapterType);
-    }
-    throw new RuntimeException(String.format("Jar for adapterType %s not found", adapterType));
-  }
-
-  private Map<String, File> registerAdapters() {
-    ImmutableMap.Builder<String, File> builder = ImmutableMap.builder();
+  private Map<String, AdapterInfo> registerAdapters() {
+    ImmutableMap.Builder<String, AdapterInfo> builder = ImmutableMap.builder();
     Collection<File> files = Collections.EMPTY_LIST;
     try {
       File baseDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
@@ -94,8 +88,15 @@ public class AdapterService extends AbstractIdleService {
         if (manifest != null) {
           Attributes mainAttributes = manifest.getMainAttributes();
           String adapterType = mainAttributes.getValue("CDAP-Adapter-Type");
+          Source.Type sourceType = Source.Type.valueOf(mainAttributes.getValue("CDAP-Source-Type"));
+          Sink.Type sinkType = Sink.Type.valueOf(mainAttributes.getValue("CDAP-Sink-Type"));
+          String scheduleProgramId = mainAttributes.getValue("CDAP-Scheduled-Program-Id");
+          ProgramType scheduleProgramType = ProgramType.valueOf(mainAttributes.getValue("CDAP-Scheduled-Program-Type"));
+
+          AdapterInfo adapterInfo = new AdapterInfo(file, adapterType, sourceType, sinkType, scheduleProgramId,
+                                                    scheduleProgramType);
           if (adapterType != null) {
-            builder.put(adapterType, file);
+            builder.put(adapterType, adapterInfo);
           }
         }
       } catch (IOException e) {

@@ -24,7 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.internal.app.runtime.AdapterService;
+import co.cask.cdap.internal.app.runtime.AdapterInfoService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -58,7 +58,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
-  private final AdapterService adapterService;
+  private final AdapterInfoService adapterInfoService;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -74,7 +74,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService, AdapterService adapterService) {
+                         ProgramRuntimeService programRuntimeService, AdapterInfoService adapterInfoService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -82,7 +82,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
-    this.adapterService = adapterService;
+    this.adapterInfoService = adapterInfoService;
   }
 
   /**
@@ -99,7 +99,7 @@ public final class AppFabricServer extends AbstractIdleService {
     FileUtils.deleteDirectory(tmpDir);
 
     schedulerService.start();
-    adapterService.start();
+    adapterInfoService.start();
     programRuntimeService.start();
 
     // Run http service on random port
@@ -169,5 +169,6 @@ public final class AppFabricServer extends AbstractIdleService {
     httpService.stopAndWait();
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
+    adapterInfoService.stopAndWait();
   }
 }

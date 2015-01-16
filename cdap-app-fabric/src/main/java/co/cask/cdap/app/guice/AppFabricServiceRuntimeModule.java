@@ -40,7 +40,7 @@ import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.AdapterService;
+import co.cask.cdap.internal.app.runtime.AdapterInfoService;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
@@ -213,7 +213,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(StoreFactory.class).to(DefaultStoreFactory.class);
-      bind(AdapterService.class).in(Scopes.SINGLETON);
+      bind(AdapterInfoService.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));

@@ -57,7 +57,8 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.AdapterService;
+import co.cask.cdap.internal.app.runtime.AdapterInfo;
+import co.cask.cdap.internal.app.runtime.AdapterInfoService;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -182,7 +183,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamAdmin streamAdmin;
 
-  private final AdapterService adapterService;
+  private final AdapterInfoService adapterInfoService;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -192,7 +193,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
                                  DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                                 AdapterService adapterService) {
+                                 AdapterInfoService adapterInfoService) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -209,7 +210,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.streamAdmin = streamAdmin;
-    this.adapterService = adapterService;
+    this.adapterInfoService = adapterInfoService;
   }
 
   /**
@@ -322,8 +323,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // TODO: Verify if the Adapter is a valid adapter by reading the mapping.
       String adapterType = spec.getType();
-
-      if (!adapterService.isValidAdapater(adapterType)) {
+      AdapterInfo adapterInfo = adapterInfoService.getAdapter(adapterType);
+      if (adapterInfo == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Adapter type not found");
         return;
       }
@@ -363,7 +364,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
 
-      // TODO: case when it IS null. delete the app and redeploy? (thats what we're doing for the adapter).
       if (applicationSpec == null) {
         // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
         Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespaceId);
@@ -373,7 +373,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // Copy jar content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         // TODO: Get the jar location.
-        Files.copy(adapterService.getAdapterLocation(adapterType), Locations.newOutputSupplier(tmpLocation));
+        Files.copy(adapterInfo.getFile(), Locations.newOutputSupplier(tmpLocation));
         // Files.copy(location, Locations.newOutputSupplier(tmpLocation));
         try {
           // Finally, move archive to final location
@@ -392,8 +392,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // We need this information, in order to know if/what to schedule
       String appId = adapterType;
-      String programId = "ProgramId";
-      ProgramType programType = ProgramType.WORKFLOW;
+      String programId = adapterInfo.getScheduleProgramId();
+      ProgramType programType = adapterInfo.getScheduleProgramType();
       Id.Program scheduledProgramId = Id.Program.from(namespaceId, appId, programId);
 
 
