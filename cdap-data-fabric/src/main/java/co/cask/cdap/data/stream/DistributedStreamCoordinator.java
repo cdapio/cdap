@@ -206,13 +206,16 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      Set<String> streamNames = ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, String>() {
-                                                                          @Nullable
-                                                                          @Override
-                                                                          public String apply(@Nullable PartitionReplica input) {
-                                                                            return input != null ? input.getName() : null;
-                                                                          }
-                                                                        }));
+      Set<String> streamNames =
+        ImmutableSet.copyOf(Iterables.transform(
+          partitionReplicas,
+          new Function<PartitionReplica, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable PartitionReplica input) {
+              return input != null ? input.getName() : null;
+            }
+          }));
       invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
     }
 
