@@ -22,7 +22,7 @@ import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.hbase94.Filters;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -69,11 +70,10 @@ import java.util.TreeMap;
  */
 public class IncrementHandler extends BaseRegionObserver {
   /**
-   * Property set for {@link org.apache.hadoop.hbase.HColumnDescriptor} to configure how compaction bound is
-   * defined. Possible values are defined by {@link CompactionBound} with
-   * {@link CompactionBound#TX_UPPER_VISIBILITY_BOUND} being default.
+   * Property set for {@link HColumnDescriptor} to indicate if increment is transactional. Default: "true", i.e.
+   * transactional.
    */
-  public static final String PROPERTY_COMPACTION_BOUND = "increment.readless.compaction.bound";
+  public static final String PROPERTY_TRANSACTIONAL = "dataset.table.readless.increment.transactional";
 
   // prefix bytes used to mark values that are deltas vs. full sums
   public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
@@ -83,20 +83,10 @@ public class IncrementHandler extends BaseRegionObserver {
 
   private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
-  private static final CompactionBound COMPACTION_BOUND_DEFAULT = CompactionBound.TX_UPPER_VISIBILITY_BOUND;
-
   private HRegion region;
   private TransactionStateCache cache;
 
-  protected Map<byte[], CompactionBound> compactionBoundByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-
-  /**
-   * Defines compaction boundary for merging delta increments
-   */
-  public static enum CompactionBound {
-    TX_UPPER_VISIBILITY_BOUND,
-    UNLIMITED
-  }
+  protected Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
@@ -104,26 +94,15 @@ public class IncrementHandler extends BaseRegionObserver {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
-      boolean txIsUsed = false;
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
-        String propValue = columnDesc.getValue(PROPERTY_COMPACTION_BOUND);
-        try {
-          CompactionBound bound =
-            propValue == null ? COMPACTION_BOUND_DEFAULT : CompactionBound.valueOf(propValue);
-          LOG.info("Family " + columnDesc.getNameAsString() + " compaction bound of " + bound);
-          compactionBoundByFamily.put(columnDesc.getName(), bound);
-
-          if (CompactionBound.TX_UPPER_VISIBILITY_BOUND == bound) {
-            txIsUsed = true;
-          }
-
-        } catch (IllegalArgumentException th) {
-          LOG.warn("Invalid compact bound value configured for column family " + columnDesc.getNameAsString() +
-                     ", value = " + propValue);
+        boolean txnl = !"false".equals(columnDesc.getValue(PROPERTY_TRANSACTIONAL));
+        LOG.info("Family " + columnDesc.getNameAsString() + " is transactional: " + txnl);
+        if (txnl) {
+          txnlFamilies.add(columnDesc.getName());
         }
       }
 
-      if (txIsUsed) {
+      if (!txnlFamilies.isEmpty()) {
         Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
         this.cache = cacheSupplier.get();
       }
@@ -225,18 +204,12 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   private long getCompactionBound(Store store) {
-    long compationBound;
-    CompactionBound bound = compactionBoundByFamily.get(store.getFamily().getName());
-    if (CompactionBound.UNLIMITED == bound) {
-      compationBound = HConstants.LATEST_TIMESTAMP;
-    } else if (CompactionBound.TX_UPPER_VISIBILITY_BOUND == bound) {
+    if (txnlFamilies.contains(store.getFamily().getName())) {
       TransactionSnapshot snapshot = cache.getLatestState();
       // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-      compationBound = snapshot != null ? snapshot.getVisibilityUpperBound() : 0;
+      return snapshot != null ? snapshot.getVisibilityUpperBound() : 0;
     } else {
-      // do not compact anything, if it is not clear what to do (safest approach)
-      compationBound = 0;
+      return HConstants.LATEST_TIMESTAMP;
     }
-    return compationBound;
   }
 }
