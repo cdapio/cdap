@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -108,7 +107,8 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
               long currentTTL = (property == null) ? streamConfig.getTTL() : property.getTTL();
               int newGeneration = ((property == null) ? lowerBound : property.getGeneration()) + 1;
               // Create the generation directory
-              Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamConfig.getLocation(), newGeneration));
+              Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamConfig.getLocation(),
+                                                                               newGeneration));
               resultFuture.set(new StreamProperty(newGeneration, currentTTL));
             } catch (IOException e) {
               resultFuture.setException(e);
@@ -160,10 +160,11 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
       }
     });
   }
-  StreamServiceRuntimeModule.java
+
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+    return propertyStore.get().addChangeListener(streamName,
+                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
   @Override
