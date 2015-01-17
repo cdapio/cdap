@@ -95,7 +95,7 @@ public class IncrementHandler extends BaseRegionObserver {
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
-        boolean txnl = Boolean.parseBoolean(columnDesc.getValue(PROPERTY_TRANSACTIONAL));
+        boolean txnl = "true".equals(columnDesc.getValue(PROPERTY_TRANSACTIONAL));
         LOG.info("Family " + columnDesc.getNameAsString() + " is transactional: " + txnl);
         if (txnl) {
           txnlFamilies.add(columnDesc.getName());
