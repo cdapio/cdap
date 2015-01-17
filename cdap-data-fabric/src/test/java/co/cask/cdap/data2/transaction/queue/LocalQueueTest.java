@@ -35,7 +35,8 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -73,12 +74,12 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricLocalModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         }));
     // transaction manager is a "service" and must be started
@@ -101,12 +102,12 @@ public class LocalQueueTest extends QueueTest {
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
