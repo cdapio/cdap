@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * A Mock {@link StreamFileWriterFactory} that actually doesn't write to file, but to in memory queue instead.
  */
-final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
+public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
 
   private static final StreamEventCodec STREAM_EVENT_CODEC = new StreamEventCodec();
 
