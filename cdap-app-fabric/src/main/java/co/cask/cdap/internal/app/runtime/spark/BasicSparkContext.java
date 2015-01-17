@@ -31,7 +31,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -67,7 +66,6 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
 
   private File metricsPropertyFile;
 
-  private final Map<MetricsScope, MetricsCollector> metricsCollectors;
   private final SparkSpecification sparkSpec;
   private final long logicalStartTime;
   private final String workflowBatch;
@@ -90,20 +88,14 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
                            DatasetFramework dsFramework, CConfiguration conf,
                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program, runId.getId()),
+          getMetricCollector(metricsCollectionService, program, runId.getId()),
           dsFramework, conf, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.streamAdmin = streamAdmin;
     SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
     this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
-    this.metricsCollectors = Maps.newHashMap();
-    for (MetricsScope scope : MetricsScope.values()) {
-      // TODO: InstanceId is not supported in Spark jobs, see CDAP-39.
-      this.metricsCollectors.put(
-        scope, getMetricCollector(metricsCollectionService, scope, program, runId.getId()));
-    }
-    this.userMetrics = new ProgramUserMetrics(metricsCollectors.get(MetricsScope.USER));
+    this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
     this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
   }
@@ -160,8 +152,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     throw new IllegalStateException("Reading stream is not supported here");
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     MetricsScope scope, Program program, String runId) {
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program, String runId) {
     if (service == null) {
       return null;
     }
@@ -226,13 +217,5 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     for (TransactionAware txAware : getDatasetInstantiator().getTransactionAware()) {
       txAware.commitTx();
     }
-  }
-
-  /**
-   * @param scope {@link MetricsScope} of the {@link MetricsCollector}
-   * @return the {@link MetricsCollector} for the given {@link MetricsScope}
-   */
-  public MetricsCollector getMetricsCollector(MetricsScope scope) {
-    return metricsCollectors.get(scope);
   }
 }

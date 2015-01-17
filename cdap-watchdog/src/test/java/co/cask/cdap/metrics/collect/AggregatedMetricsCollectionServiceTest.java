@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Iterators;
@@ -43,7 +42,7 @@ public class AggregatedMetricsCollectionServiceTest {
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) {
+      protected void publish(Iterator<MetricValue> metrics) {
         Iterators.addAll(published, metrics);
       }
 

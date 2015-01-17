@@ -17,7 +17,6 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
@@ -47,7 +46,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   private static final long CACHE_EXPIRE_MINUTES = 1;
   private static final long DEFAULT_FREQUENCY_SECONDS = 1;
 
-  private final LoadingCache<CollectorKey, MetricsCollector> collectors;
+   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
 
   public AggregatedMetricsCollectionService() {
@@ -60,7 +59,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       .build(new CacheLoader<EmitterKey, AggregatedMetricsEmitter>() {
         @Override
         public AggregatedMetricsEmitter load(EmitterKey key) throws Exception {
-          return new AggregatedMetricsEmitter(key.getCollectorKey().getTags(),
+          return new AggregatedMetricsEmitter(key.getTags(),
                                               key.getMetric());
         }
       });
@@ -72,29 +71,26 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param scope The scope of metrics to be published.
    * @param metrics collection of {@link co.cask.cdap.metrics.transport.MetricValue} to publish.
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception;
+  protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
 
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
-    for (MetricsScope scope : MetricsScope.values()) {
-      Iterator<MetricValue> metricsItor = getMetrics(scope, timestamp);
+    Iterator<MetricValue> metricsItor = getMetrics(timestamp);
 
-      try {
-        publish(scope, metricsItor);
-      } catch (Throwable t) {
-        LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
-      }
+    try {
+      publish(metricsItor);
+    } catch (Throwable t) {
+      LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
+    }
 
-      // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.
-      while (metricsItor.hasNext()) {
-        metricsItor.next();
-      }
+    // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.
+    while (metricsItor.hasNext()) {
+      metricsItor.next();
     }
     LOG.trace("Completed log collection for timestamp {}", timestamp);
   }
@@ -111,7 +107,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   @Override
   public final MetricsCollector getCollector(final Map<String, String> tags) {
-    return collectors.getUnchecked(new CollectorKey(MetricsScope.SYSTEM, tags));
+    return collectors.getUnchecked(tags);
   }
 
   @Override
@@ -120,17 +116,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     runOneIteration();
   }
 
-  private Iterator<MetricValue> getMetrics(final MetricsScope scope, final long timestamp) {
+  private Iterator<MetricValue> getMetrics(final long timestamp) {
     final Iterator<Map.Entry<EmitterKey, AggregatedMetricsEmitter>> iterator = emitters.asMap().entrySet().iterator();
     return new AbstractIterator<MetricValue>() {
       @Override
       protected MetricValue computeNext() {
         while (iterator.hasNext()) {
           Map.Entry<EmitterKey, AggregatedMetricsEmitter> entry = iterator.next();
-          if (entry.getKey().getCollectorKey().getScope() != scope) {
-            continue;
-          }
-
           MetricValue metricValue = entry.getValue().emit(timestamp);
           if (metricValue.getValue() != 0) {
             LOG.trace("Emit metric {}", metricValue);
@@ -142,10 +134,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     };
   }
 
-  private CacheLoader<CollectorKey, MetricsCollector> createCollectorLoader() {
-    return new CacheLoader<CollectorKey, MetricsCollector>() {
+  private CacheLoader<Map<String, String>, MetricsCollector> createCollectorLoader() {
+    return new CacheLoader<Map<String, String>, MetricsCollector>() {
       @Override
-      public MetricsCollector load(final CollectorKey collectorKey) throws Exception {
+      public MetricsCollector load(final Map<String, String> collectorKey) throws Exception {
         return new MetricsCollectorImpl(collectorKey);
       }
     };
@@ -155,16 +147,16 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     // Cache for minimizing creating new MetricKey object.
     private final LoadingCache<String, EmitterKey> keys;
 
-    private final CollectorKey collectorKey;
+    private final Map<String, String> tags;
 
-    private MetricsCollectorImpl(final CollectorKey collectorKey) {
-      this.collectorKey = collectorKey;
+    private MetricsCollectorImpl(final Map<String, String> tags) {
+      this.tags = tags;
       this.keys = CacheBuilder.newBuilder()
           .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
           .build(new CacheLoader<String, EmitterKey>() {
             @Override
             public EmitterKey load(String metric) throws Exception {
-              return new EmitterKey(collectorKey, metric);
+              return new EmitterKey(tags, metric);
             }
           });
     }
@@ -181,56 +173,16 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     @Override
     public MetricsCollector childCollector(String tagName, String tagValue) {
-      ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
-        .putAll(collectorKey.tags).put(tagName, tagValue).build();
-      return new MetricsCollectorImpl(new CollectorKey(collectorKey.scope, tags));
+      ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
+        .putAll(tags).put(tagName, tagValue).build();
+      return new MetricsCollectorImpl(allTags);
     }
 
     @Override
     public MetricsCollector childCollector(Map<String, String> tags) {
       ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
-        .putAll(collectorKey.tags).putAll(tags).build();
-      return new MetricsCollectorImpl(new CollectorKey(collectorKey.scope, allTags));
-    }
-  }
-
-  /**
-   * Inner class for cache key for looking up {@link MetricsCollector}.
-   */
-  private static final class CollectorKey {
-    private final MetricsScope scope;
-    private final Map<String, String> tags;
-
-    private CollectorKey(MetricsScope scope, Map<String, String> tags) {
-      this.scope = scope;
-      this.tags = tags;
-    }
-
-    public MetricsScope getScope() {
-      return scope;
-    }
-
-    public Map<String, String> getTags() {
-      return tags;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      CollectorKey other = (CollectorKey) o;
-
-      return scope == other.scope && tags.equals(other.tags);
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * scope.hashCode() + tags.hashCode();
+        .putAll(tags).putAll(tags).build();
+      return new MetricsCollectorImpl(allTags);
     }
   }
 
@@ -238,16 +190,17 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * Inner class for the cache key for looking up {@link AggregatedMetricsEmitter}.
    */
   private static final class EmitterKey {
-    private final CollectorKey collectorKey;
+    // tags
+    private final Map<String, String> tags;
     private final String metric;
 
-    private EmitterKey(CollectorKey collectorKey, String metric) {
-      this.collectorKey = collectorKey;
+    private EmitterKey(Map<String, String> tags, String metric) {
+      this.tags = tags;
       this.metric = metric;
     }
 
-    private CollectorKey getCollectorKey() {
-      return collectorKey;
+    private Map<String, String> getTags() {
+      return tags;
     }
 
     private String getMetric() {
@@ -264,13 +217,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       }
 
       EmitterKey other = (EmitterKey) o;
-      return Objects.equal(collectorKey, other.collectorKey)
+      return Objects.equal(tags, other.tags)
         && Objects.equal(metric, other.metric);
     }
 
     @Override
     public int hashCode() {
-      int result = collectorKey.hashCode();
+      int result = tags.hashCode();
       result = 31 * result + metric.hashCode();
       return result;
     }

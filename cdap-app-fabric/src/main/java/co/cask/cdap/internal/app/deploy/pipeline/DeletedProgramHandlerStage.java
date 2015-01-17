@@ -23,7 +23,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -138,28 +137,26 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     }
 
     LOG.debug("Deleting metrics for application {}", application);
-    for (MetricsScope scope : MetricsScope.values()) {
-      for (String flow : flows) {
-        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
-                                   discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.API_VERSION_2,
-                                   scope.name().toLowerCase(),
-                                   application, flow);
+    for (String flow : flows) {
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.API_VERSION_2,
+                                 "ignored",
+                                 application, flow);
 
-        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-          .setUrl(url)
-          .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-          .build();
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+        .build();
 
-        try {
-          client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-          LOG.error("exception making metrics delete call", e);
-          Throwables.propagate(e);
-        } finally {
-          client.close();
-        }
+      try {
+        client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+        LOG.error("exception making metrics delete call", e);
+        Throwables.propagate(e);
+      } finally {
+        client.close();
       }
     }
   }

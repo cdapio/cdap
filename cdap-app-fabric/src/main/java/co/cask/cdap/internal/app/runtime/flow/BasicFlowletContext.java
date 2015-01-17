@@ -27,7 +27,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -66,8 +65,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       DatasetFramework dsFramework,
                       CConfiguration conf) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM,
-                             program, flowletId, runId.getId(), instanceId),
+          getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
     this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
@@ -76,8 +74,8 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.flowletSpec = flowletSpec;
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, MetricsScope.USER,
-                                                                 program, flowletId, runId.getId(), instanceId));
+    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
+                                                                 flowletId, runId.getId(), instanceId));
     this.queueMetrics = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, MetricsCollector>() {
@@ -144,10 +142,8 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return groupId;
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     MetricsScope scope, Program program,
-                                                     String flowletName,
-                                                     String runId, int instanceId) {
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
+                                                     String flowletName, String runId, int instanceId) {
     if (service == null) {
       return null;
     }

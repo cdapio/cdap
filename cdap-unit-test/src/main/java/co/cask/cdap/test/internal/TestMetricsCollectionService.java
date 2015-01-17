@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.process.MetricRecordsWrapper;
 import co.cask.cdap.metrics.transport.MetricValue;
@@ -30,12 +29,7 @@ import java.util.Iterator;
 public final class TestMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
-    // Currently the test framework only supports system metrics.
-    if (scope != MetricsScope.SYSTEM) {
-      return;
-    }
-
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     Iterator<MetricsRecord> records = new MetricRecordsWrapper(metrics);
     while (records.hasNext()) {
       MetricsRecord metricsRecord = records.next();

@@ -38,7 +38,7 @@ public abstract class TimeSeriesTableTestBase {
 
   @Test
   public void testAggregate() throws OperationException {
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("test", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -122,7 +122,7 @@ public abstract class TimeSeriesTableTestBase {
 
   @Test
   public void testTimeSeriesMinuteResolutionAggregation() throws OperationException {
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("minute-agg", 60);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(60);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -145,7 +145,7 @@ public abstract class TimeSeriesTableTestBase {
   }
   @Test
   public void testTimeSeriesMinuteResolution() throws OperationException {
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("minutes", 60);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(60);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -218,7 +218,7 @@ public abstract class TimeSeriesTableTestBase {
 
   @Test
   public void testClear() throws OperationException {
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testDeleteAll", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
 
@@ -249,7 +249,7 @@ public abstract class TimeSeriesTableTestBase {
 
   @Test
   public void testIntOverflow() throws OperationException {
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("intOverflow", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
 
@@ -271,7 +271,7 @@ public abstract class TimeSeriesTableTestBase {
 
   @Test
   public void testGauge() throws OperationException {
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testGauge", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
 
@@ -298,7 +298,7 @@ public abstract class TimeSeriesTableTestBase {
   @Test
   public void testDelete() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testDelete", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -360,7 +360,7 @@ public abstract class TimeSeriesTableTestBase {
   @Test
   public void testDeleteContextAndMetric() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testContextAndMetricDelete", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -447,7 +447,7 @@ public abstract class TimeSeriesTableTestBase {
   @Test
   public void testRangeDelete() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testRangeDelete", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -559,7 +559,7 @@ public abstract class TimeSeriesTableTestBase {
   @Test
   public void testScanAllTags() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testScanAllTags", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     try {
       timeSeriesTable.save(ImmutableList.of(
