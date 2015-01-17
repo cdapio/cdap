@@ -58,6 +58,21 @@ public class RouterPathTest {
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
+
+    String metricsPath = "/v3/namespaces/default/metrics/user?search=childContext";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, metricsPath, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    testMetricsPath("/v3/namespaces/default/metrics/user?search=childContext");
+    testMetricsPath("/v3/namespaces/default/metrics/user/PurchaeHistory.f.PurchaseFlow?search=childContext");
+    testMetricsPath("/v3/namespaces/default/metrics/user/PurchaeHistory.f.PurchaseFlow/metrics");
+  }
+
+  private void testMetricsPath(String path) {
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
   }
 
   @Test
@@ -333,4 +348,11 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 
+  @Test
+  public void testRouterFeedsLookup() {
+    final String namespacePath = "/v3//feeds/test";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), namespacePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, namespacePath, httpRequest);
+    Assert.assertEquals(null, result);
+  }
 }

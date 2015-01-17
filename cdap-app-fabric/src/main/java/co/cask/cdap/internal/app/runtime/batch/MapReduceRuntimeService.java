@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -136,23 +137,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Job job = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = job.getConfiguration();
 
-    Resources mapperResources = specification.getMapperResources();
-    Resources reducerResources = specification.getReducerResources();
-
-    // this will determine how much memory and vcores the yarn container will run with
-    if (mapperResources != null) {
-      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
-    }
-    if (reducerResources != null) {
-      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
-    }
-
     // Prefer our job jar in the classpath
     // Set both old and new keys
     mapredConf.setBoolean("mapreduce.user.classpath.first", true);
@@ -180,6 +164,24 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     // Call the user MapReduce for initialization
     beforeSubmit();
+
+    // set resources for the job
+    Resources mapperResources = context.getMapperResources();
+    Resources reducerResources = context.getReducerResources();
+
+    // this will determine how much memory and vcores the yarn container will run with
+    if (mapperResources != null) {
+      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
+      // Also set the Xmx to be smaller than the container memory.
+      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
+      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
+    }
+    if (reducerResources != null) {
+      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
+      // Also set the Xmx to be smaller than the container memory.
+      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
+      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
+    }
 
     // set input/output datasets info
     setInputDatasetIfNeeded(job);
@@ -431,7 +433,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (inputFormatClass == null) {
       throw new DataSetException("Input dataset '" + inputDatasetName + "' provided null as the input format");
     }
-    job.setInputFormatClass(inputFormatClass);
+    // wrap the input format so that the program's classloader is used to create record readers, etc.
+    // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
+    // some library CDAP depends on (Avro for example).
+    job.setInputFormatClass(InputFormatWrapper.class);
+    InputFormatWrapper.setInputFormatClass(job, inputFormatClass.getName());
+
     Map<String, String> inputConfig = inputDataset.getInputFormatConfiguration();
     if (inputConfig != null) {
       for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
@@ -470,7 +477,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (outputFormatClass == null) {
       throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
     }
-    job.setOutputFormatClass(outputFormatClass);
+    // wrap the output format so that the program's classloader is used to create record writers, etc.
+    // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
+    // some library CDAP depends on (Avro for example).
+    job.setOutputFormatClass(OutputFormatWrapper.class);
+    OutputFormatWrapper.setOutputFormatClass(job, outputFormatClass.getName());
+
     Map<String, String> outputConfig = outputDataset.getOutputFormatConfiguration();
     if (outputConfig != null) {
       for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
@@ -494,13 +506,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     StreamInputFormat.setStreamPath(job, streamPath.toURI());
     StreamInputFormat.setTimeRange(job, stream.getStartTime(), stream.getEndTime());
 
-    String decoderType = stream.getDecoderType();
-    if (decoderType == null) {
-      // If the user don't specify the decoder, detect the type from Mapper/Reducer
-      setStreamEventDecoder(job);
+    FormatSpecification formatSpecification = stream.getFormatSpecification();
+    if (formatSpecification != null) {
+      // this will set the decoder to the correct type. so no need to set it.
+      // TODO: allow type projection if the mapper type is compatible (CDAP-1149)
+      StreamInputFormat.setBodyFormatSpecification(job, formatSpecification);
     } else {
-      StreamInputFormat.setDecoderClassName(job, decoderType);
+      String decoderType = stream.getDecoderType();
+      if (decoderType == null) {
+        // If the user don't specify the decoder, detect the type from Mapper/Reducer
+        setStreamEventDecoder(job);
+      } else {
+        StreamInputFormat.setDecoderClassName(job, decoderType);
+      }
     }
+
     job.setInputFormatClass(StreamInputFormat.class);
 
     LOG.info("Using Stream as input from {}", streamPath.toURI());
@@ -568,7 +588,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location jobJar =
       locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
                                            ProgramType.MAPREDUCE.name().toLowerCase(),
-                                           programId.getAccountId(), programId.getApplicationId(),
+                                           programId.getNamespaceId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
     LOG.debug("Creating Job jar: {}", jobJar.toURI());
@@ -734,7 +754,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location programJarCopy = locationFactory.create(
       String.format("%s.%s.%s.%s.%s.program.jar",
                     ProgramType.MAPREDUCE.name().toLowerCase(),
-                    programId.getAccountId(), programId.getApplicationId(),
+                    programId.getNamespaceId(), programId.getApplicationId(),
                     programId.getId(), context.getRunId().getId()));
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));

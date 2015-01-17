@@ -17,8 +17,8 @@
 package co.cask.cdap.hive.serde;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.internal.format.StructuredRecord;
-import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;

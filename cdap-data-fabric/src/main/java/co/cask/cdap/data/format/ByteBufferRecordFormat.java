@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.format;
 
-import co.cask.cdap.internal.format.RecordFormat;
+import co.cask.cdap.api.data.format.RecordFormat;
 
 import java.nio.ByteBuffer;
 

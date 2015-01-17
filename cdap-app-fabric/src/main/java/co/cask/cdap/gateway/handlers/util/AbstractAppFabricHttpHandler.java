@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -173,7 +173,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     try {
       List<ProgramRecord> programRecords;
       if (applicationId == null) {
-        Id.Account accId = Id.Account.from(namespaceId);
+        Id.Namespace accId = Id.Namespace.from(namespaceId);
         programRecords = listPrograms(accId, type, store);
       } else {
         Id.Application appId = Id.Application.from(namespaceId, applicationId);
@@ -195,7 +195,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final List<ProgramRecord> listPrograms(Id.Account accId, ProgramType type, Store store) throws Exception {
+  protected final List<ProgramRecord> listPrograms(Id.Namespace accId, ProgramType type, Store store) throws Exception {
     try {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
       return listPrograms(appSpecs, type);
@@ -266,15 +266,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
                                                               String flowId, ProgramType typeId,
                                                               ProgramRuntimeService runtimeService) {
     ProgramType type = ProgramType.valueOf(typeId.name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               accountId, flowId);
+                               namespaceId, flowId);
 
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+    Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {

@@ -15,11 +15,16 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.RecordFormat;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -27,14 +32,12 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -50,12 +53,15 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -112,7 +118,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.sizeManager = sizeManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
   }
@@ -151,7 +157,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(stream);
-      StreamProperties streamProperties = new StreamProperties(streamConfig.getName(), streamConfig.getTTL());
+      StreamProperties streamProperties =
+        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -260,49 +267,107 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
 
     if (!streamMetaStore.streamExists(accountId, stream)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
       return;
     }
 
+    StreamConfig currConfig;
     try {
-      StreamConfig config = streamAdmin.getConfig(stream);
-      try {
-        config = getConfigUpdate(request, config);
-        if (config.getTTL() < 0) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive");
-          return;
-        }
-      } catch (Throwable t) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid stream configuration");
-        return;
-      }
-
-      streamAdmin.updateConfig(config);
-      responder.sendStatus(HttpResponseStatus.OK);
-
+      currConfig = streamAdmin.getConfig(stream);
     } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream " + stream + " does not exist.");
+      return;
     }
+
+    StreamConfig requestedConfig = getAndValidateConfig(currConfig, request, responder);
+    // null is returned if the requested config is invalid. An appropriate response will have already been written
+    // to the responder so we just need to return.
+    if (requestedConfig == null) {
+      return;
+    }
+
+    streamAdmin.updateConfig(requestedConfig);
+    // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
+    // a hive change, as they are just properties used by the stream storage handler.
+    Schema currSchema = currConfig.getFormat().getSchema();
+    Schema newSchema = requestedConfig.getFormat().getSchema();
+    if (exploreEnabled && !currSchema.equals(newSchema)) {
+      exploreFacade.disableExploreStream(stream);
+      exploreFacade.enableExploreStream(stream);
+    }
+
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private String getMetricsContext() {
-    return Constants.Gateway.METRICS_CONTEXT + "." + cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
+  private Map<String, String> getMetricsContext() {
+    return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
+                           Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
+  
+  // given the current config for a stream and requested config for a stream, get the new stream config
+  // with defaults in place of missing settings, and validation performed on the requested fields.
+  // If a field is missing or invalid, this method will write an appropriate response to the responder and
+  // return a null config.
+  private StreamConfig getAndValidateConfig(StreamConfig currConfig, HttpRequest request, HttpResponder responder) {
+    // get new config settings from the request. Only TTL and format spec can be changed, which is
+    // why the StreamProperties object is used instead of a StreamConfig object.
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+    StreamProperties properties;
+    try {
+      properties = GSON.fromJson(reader, StreamProperties.class);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid stream configuration. Please check that the " +
+        "configuration is a valid JSON Object with a valid schema.");
+      return null;
+    }
 
+    // if no ttl is given, use the existing ttl.
+    Long newTTL = properties.getTTL();
+    if (newTTL == null) {
+      newTTL = currConfig.getTTL();
+    } else {
+      if (newTTL < 0) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive.");
+        return null;
+      }
+      // TTL in the REST API is in seconds. Convert it to ms for the config.
+      newTTL = TimeUnit.SECONDS.toMillis(newTTL);
+    }
 
-  private StreamConfig getConfigUpdate(HttpRequest request, StreamConfig config) {
-    JsonObject json = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), JsonObject.class);
-
-    // Only pickup changes in TTL
-    if (json.has("ttl")) {
-      JsonElement ttl = json.get("ttl");
-      if (ttl.isJsonPrimitive()) {
-        // TTL in the REST API is in seconds. Convert it to ms for the config.
-        return new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                                TimeUnit.SECONDS.toMillis(ttl.getAsLong()), config.getLocation(), config.getFormat());
+    FormatSpecification newFormatSpec = properties.getFormat();
+    // if no format spec is given, use the existing format spec.
+    if (newFormatSpec == null) {
+      newFormatSpec = currConfig.getFormat();
+    } else {
+      String formatName = newFormatSpec.getName();
+      if (formatName == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "A format name must be specified.");
+        return null;
+      }
+      try {
+        // if a format is given, make sure it is a valid format,
+        // check that we can instantiate the format class
+        RecordFormat format = RecordFormats.create(formatName);
+        // check that this format + schema combination is valid
+        format.initialize(newFormatSpec);
+        // the request may contain a null schema, in which case the default schema of the format should be used.
+        // create a new specification object that is guaranteed to have a non-null schema.
+        newFormatSpec = new FormatSpecification(newFormatSpec.getName(),
+                                                format.getSchema(), newFormatSpec.getSettings());
+      } catch (UnsupportedTypeException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             "Format " + formatName + " does not support the requested schema.");
+        return null;
+      } catch (Exception e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             "Invalid format, unable to instantiate format " + formatName);
+        return null;
       }
     }
-    return config;
+
+    return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
+                            newTTL, currConfig.getLocation(), newFormatSpec);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -348,6 +413,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("name", src.getName());
       json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
+      json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
       return json;
     }
   }

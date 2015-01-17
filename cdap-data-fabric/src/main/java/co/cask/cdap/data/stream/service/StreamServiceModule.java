@@ -42,7 +42,6 @@ public class StreamServiceModule extends PrivateModule {
     bind(HeartbeatPublisher.class).to(NoopHeartbeatPublisher.class).in(Scopes.SINGLETON);
     expose(HeartbeatPublisher.class);
 
-    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);
   }

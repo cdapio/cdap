@@ -19,11 +19,18 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.metrics.process.MetricRecordsWrapper;
+import co.cask.cdap.metrics.transport.MetricType;
+import co.cask.cdap.metrics.transport.MetricValue;
+import co.cask.cdap.metrics.transport.MetricsRecord;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
@@ -33,8 +40,8 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
   private final Table<String, String, Long> metrics = HashBasedTable.create();
 
   @Override
-  public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
-    return new MockMetricsCollector(context);
+  public MetricsCollector getCollector(MetricsScope scope, Map<String, String> tags) {
+    return new MockMetricsCollector(tags);
   }
 
   @Override
@@ -78,25 +85,45 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
   }
 
   private class MockMetricsCollector implements MetricsCollector {
-    private final String context;
+    private final Map<String, String> context;
 
-    private MockMetricsCollector(String context) {
+    private MockMetricsCollector(Map<String, String> context) {
       this.context = context;
     }
 
     @Override
-    public void increment(String metricName, int value, String... tags) {
+    public void increment(String metricName, int value) {
       synchronized (MockMetricsCollectionService.this) {
-        Long v = metrics.get(context, metricName);
-        metrics.put(context, metricName, v == null ? value : v + value);
+        MetricValue mv = new MetricValue(context, metricName, System.currentTimeMillis(), value, MetricType.COUNTER);
+        MetricRecordsWrapper records = new MetricRecordsWrapper(ImmutableList.of(mv).iterator());
+        while (records.hasNext()) {
+          MetricsRecord record = records.next();
+          Long v = metrics.get(record.getContext(), metricName);
+          metrics.put(record.getContext(), metricName, v == null ? value : v + value);
+        }
       }
     }
 
     @Override
-    public void gauge(String metricName, long value, String... tags) {
+    public void gauge(String metricName, long value) {
       synchronized (MockMetricsCollectionService.this) {
-        metrics.put(context, metricName, value);
+        MetricValue mv = new MetricValue(context, metricName, System.currentTimeMillis(), value, MetricType.COUNTER);
+        MetricRecordsWrapper records = new MetricRecordsWrapper(ImmutableList.of(mv).iterator());
+        while (records.hasNext()) {
+          MetricsRecord record = records.next();
+          metrics.put(record.getContext(), metricName, value);
+        }
       }
+    }
+
+    @Override
+    public MetricsCollector childCollector(Map<String, String> tags) {
+      return new MockMetricsCollector(ImmutableMap.<String, String>builder().putAll(context).putAll(tags).build());
+    }
+
+    @Override
+    public MetricsCollector childCollector(String tagName, String tagValue) {
+      return childCollector(ImmutableMap.of(tagName, tagValue));
     }
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricType;
@@ -140,10 +139,6 @@ public class MapReduceMetricsWriter {
         } else if (programPart.equals("reducer")) {
           reportSystemStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
                             previousReduceStats, metricType);
-        } else if (programPart.equals("dataset")) {
-          reportSystemStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
-                              scope, Constants.Metrics.DATASET_CONTEXT, context.getRunId().getId()),
-                            scope, previousDatasetStats, metricType);
         }
       }
     }
@@ -190,15 +185,7 @@ public class MapReduceMetricsWriter {
       // "<metric>" or "<metric>,<tag>" if tag is present
       String[] parts = counter.getName().split(",", 2);
       String metric = parts[0];
-      if (parts.length == 2) {
-        // has tag
-        String tag = parts[1];
-        collector.increment(metric, emitValue, tag);
-        int tagCountSoFar = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
-        metricTagValues.put(metric, tagCountSoFar + emitValue);
-      } else {
-        metricUntaggedValues.put(metric, emitValue);
-      }
+      metricUntaggedValues.put(metric, emitValue);
     }
 
     // emit adjusted counts for the untagged metrics.
@@ -215,13 +202,7 @@ public class MapReduceMetricsWriter {
       // "<metric>" or "<metric>,<tag>" if tag is present
       String[] parts = counter.getName().split(",", 2);
       String metric = parts[0];
-      if (parts.length == 2) {
-        // has tag
-        String tag = parts[1];
-        collector.gauge(metric, counter.getValue(), tag);
-      } else {
-        collector.gauge(metric, counter.getValue());
-      }
+      collector.gauge(metric, counter.getValue());
     }
   }
 

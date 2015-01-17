@@ -22,6 +22,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -35,16 +36,15 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
   private final SplitReader<KEY, VALUE> splitReader;
   private final BasicMapReduceContext context;
-  private final String dataSetName;
   private final MetricsCollector dataSetMetrics;
 
   public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader,
                              BasicMapReduceContext context, String dataSetName) {
     this.splitReader = splitReader;
     this.context = context;
-    this.dataSetName = dataSetName;
     this.dataSetMetrics = context.getMetricsCollectionService().getCollector(
-      MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, context.getRunId().getId());
+      MetricsScope.SYSTEM, ImmutableMap.of(Constants.Metrics.Tag.DATASET, dataSetName,
+                                           Constants.Metrics.Tag.RUN_ID, context.getRunId().getId()));
   }
 
   @Override
@@ -61,10 +61,10 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     boolean hasNext = splitReader.nextKeyValue();
     if (hasNext) {
       // splitreader doesn't increment these metrics, need to do it ourselves.
-      context.getSystemMapperMetrics().increment("store.reads", 1, dataSetName);
-      context.getSystemMapperMetrics().increment("store.ops", 1, dataSetName);
-      dataSetMetrics.increment("dataset.store.reads", 1, dataSetName);
-      dataSetMetrics.increment("dataset.store.ops", 1, dataSetName);
+      context.getSystemMapperMetrics().increment("store.reads", 1);
+      context.getSystemMapperMetrics().increment("store.ops", 1);
+      dataSetMetrics.increment("dataset.store.reads", 1);
+      dataSetMetrics.increment("dataset.store.ops", 1);
     }
     return hasNext;
   }

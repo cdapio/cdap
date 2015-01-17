@@ -20,8 +20,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -52,6 +54,8 @@ public class LevelDBOrderedTableServiceTest {
     injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new DataSetsModules().getLocalModule(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     service = injector.getInstance(LevelDBOrderedTableService.class);

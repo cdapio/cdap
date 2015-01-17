@@ -83,7 +83,7 @@ public final class StreamHttpService extends AbstractIdleService {
                                                                        Constants.Service.STREAMS));
     httpService.startAndWait();
 
-    cancellable = discoveryService.register(new Discoverable() {
+    Discoverable discoverable = new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.STREAMS;
@@ -93,10 +93,13 @@ public final class StreamHttpService extends AbstractIdleService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    };
+    cancellable = discoveryService.register(discoverable);
 
     janitorService.startAndWait();
     sizeManager.startAndWait();
+    streamCoordinator.setHandlerDiscoverable(discoverable);
+    streamCoordinator.startAndWait();
   }
 
   @Override
@@ -110,7 +113,7 @@ public final class StreamHttpService extends AbstractIdleService {
       }
     } finally {
       httpService.stopAndWait();
-      streamCoordinator.close();
+      streamCoordinator.stopAndWait();
     }
   }
 

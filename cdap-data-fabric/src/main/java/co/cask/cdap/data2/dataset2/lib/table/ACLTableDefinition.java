@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -25,7 +26,6 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.security.ACL;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
