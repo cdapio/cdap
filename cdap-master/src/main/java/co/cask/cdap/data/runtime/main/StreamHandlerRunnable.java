@@ -29,10 +29,10 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -85,7 +85,8 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
         new ExploreClientModule(),
-        new StreamServiceRuntimeModule().getDistributedModules()
+        new StreamServiceRuntimeModule().getDistributedModules(),
+        new StreamAdminModules().getDistributedModules()
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
@@ -104,6 +105,5 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
-
   }
 }

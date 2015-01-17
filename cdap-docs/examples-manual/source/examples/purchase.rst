@@ -387,10 +387,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.PurchaseHistoryService``
+      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.CatalogLookupService``
+      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.CatalogLookupService``
     * - On Windows:
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.PurchaseHistoryService``    
+      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.CatalogLookupService``    
+      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.CatalogLookupService``

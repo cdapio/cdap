@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.io.Decoder;
@@ -23,10 +24,12 @@ import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.common.io.ByteBufferInputStream;
+import com.google.common.collect.Maps;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -108,18 +111,20 @@ final class StreamEventBuffer {
    * Decodes a stream event from the buffer.
    *
    * @param timestamp timestamp of the {@link PositionStreamEvent} created
+   * @param defaultHeaders the set of headers that will used as the default for the stream event
    * @param filter filter to apply to decide reading or skipping event
    * @return A {@link PositionStreamEvent} if the filter accept it, or {@code null} if rejected by the filter
    * @throws IOException if fails to decode event from the buffer
    */
-  PositionStreamEvent nextEvent(long timestamp, ReadFilter filter) throws IOException {
+  PositionStreamEvent nextEvent(long timestamp,
+                                Map<String, String> defaultHeaders, ReadFilter filter) throws IOException {
     if (!hasEvent()) {
       throw new IOException("No more event in the buffer");
     }
 
     long eventPos = basePosition + buffer.position();
     if (filter.acceptOffset(eventPos)) {
-      return new PositionStreamEvent(StreamEventDataCodec.decode(decoder), timestamp, eventPos);
+      return new PositionStreamEvent(StreamEventDataCodec.decode(decoder, defaultHeaders), timestamp, eventPos);
     }
     StreamEventDataCodec.skip(decoder);
     return null;

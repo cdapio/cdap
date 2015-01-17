@@ -209,6 +209,10 @@ You can also emit custom user metrics from the worker nodes of your Spark Progra
         }
       }
     });
+    
+Spark in Workflows
+------------------
+Spark programs in CDAP can also be added to a :ref:`Workflow <workflow>`, similar to a :ref:`MapReduce <mapreduce>`.
 
 .. rubric::  Examples of Using Spark Programs
 

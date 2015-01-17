@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -298,8 +299,8 @@ public class DefaultStore implements Store {
   public void setFlowletInstances(final Id.Program id, final String flowletId, final int count) {
     Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
 
-    LOG.trace("Setting flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
-              id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
+    LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
+                "new instances count: {}", id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
@@ -313,7 +314,7 @@ public class DefaultStore implements Store {
       }
     });
 
-    LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
+    LOG.trace("Set flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
   }
 
@@ -369,7 +370,7 @@ public class DefaultStore implements Store {
       }
     });
 
-    LOG.trace("Setting program instances: account: {}, application: {}, procedure: {}, new instances count: {}",
+    LOG.trace("Setting program instances: namespace: {}, application: {}, procedure: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), count);
   }
 
@@ -397,7 +398,7 @@ public class DefaultStore implements Store {
       }
     });
 
-    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, new instances count: {}",
+    LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
@@ -447,7 +448,7 @@ public class DefaultStore implements Store {
       }
     });
 
-    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, new instances count: {}",
+    LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
@@ -466,7 +467,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void removeApplication(final Id.Application id) {
-    LOG.trace("Removing application: account: {}, application: {}", id.getNamespaceId(), id.getId());
+    LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespaceId(), id.getId());
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
@@ -481,7 +482,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void removeAllApplications(final Id.Namespace id) {
-    LOG.trace("Removing all applications of account with id: {}", id.getId());
+    LOG.trace("Removing all applications of namespace with id: {}", id.getId());
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
@@ -496,7 +497,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void removeAll(final Id.Namespace id) {
-    LOG.trace("Removing all applications of account with id: {}", id.getId());
+    LOG.trace("Removing all applications of namespace with id: {}", id.getId());
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
@@ -583,7 +584,7 @@ public class DefaultStore implements Store {
     Preconditions.checkArgument(oldValue != null, "oldValue cannot be null");
     Preconditions.checkArgument(newValue != null, "newValue cannot be null");
 
-    LOG.trace("Changing flowlet stream connection: account: {}, application: {}, flow: {}, flowlet: {}," +
+    LOG.trace("Changing flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
                 " old coonnected stream: {}, new connected stream: {}",
               flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
@@ -611,7 +612,7 @@ public class DefaultStore implements Store {
         if (!adjusted) {
           throw new IllegalArgumentException(
             String.format("Cannot change stream connection to %s, the connection to be changed is not found," +
-                            " account: %s, application: %s, flow: %s, flowlet: %s, source stream: %s",
+                            " namespace: %s, application: %s, flow: %s, flowlet: %s, source stream: %s",
                           newValue, flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue));
         }
 
@@ -628,7 +629,7 @@ public class DefaultStore implements Store {
     });
 
 
-    LOG.trace("Changed flowlet stream connection: account: {}, application: {}, flow: {}, flowlet: {}," +
+    LOG.trace("Changed flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
                 " old coonnected stream: {}, new connected stream: {}",
               flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
@@ -726,6 +727,60 @@ public class DefaultStore implements Store {
     });
   }
 
+
+  @Override
+  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpecification) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.writeAdapter(id, adapterSpecification);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) throws OperationException {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
+      @Override
+      public AdapterSpecification apply(AppMds mds) throws Exception {
+        return mds.apps.getAdapter(id, name);
+      }
+    });
+  }
+
+  @Override
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) throws OperationException {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
+      @Override
+      public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
+        return mds.apps.getAllAdapters(id);
+      }
+    });
+  }
+
+  @Override
+  public void removeAdapter(final Id.Namespace id, final String name) throws OperationException {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.deleteAdapter(id, name);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void removeAllAdapters(final Id.Namespace id) throws OperationException {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.deleteAllAdapters(id);
+        return null;
+      }
+    });
+  }
+
   @VisibleForTesting
   void clear() throws Exception {
     DatasetAdmin admin = dsFramework.getAdmin(APP_META_TABLE, null);
@@ -806,7 +861,7 @@ public class DefaultStore implements Store {
                                                                 String workerName) {
     ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(workerName);
     if (workerSpec == null) {
-      throw new NoSuchElementException("no such worker @ account id: " + id.getNamespaceId() +
+      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
                                          ", app id: " + id.getApplication() +
                                          ", service id: " + id.getId() +
                                          ", worker id: " + workerName);
@@ -818,7 +873,7 @@ public class DefaultStore implements Store {
                                                               String flowletId, Id.Program id) {
     FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletId);
     if (flowletDef == null) {
-      throw new NoSuchElementException("no such flowlet @ account id: " + id.getNamespaceId() +
+      throw new NoSuchElementException("no such flowlet @ namespace id: " + id.getNamespaceId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId() +
                                            ", flowlet id: " + flowletId);
@@ -829,7 +884,7 @@ public class DefaultStore implements Store {
   private static FlowSpecification getFlowSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getId());
     if (flowSpec == null) {
-      throw new NoSuchElementException("no such flow @ account id: " + id.getNamespaceId() +
+      throw new NoSuchElementException("no such flow @ namespace id: " + id.getNamespaceId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId());
     }
@@ -839,7 +894,7 @@ public class DefaultStore implements Store {
   private static ServiceSpecification getServiceSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ServiceSpecification spec = appSpec.getServices().get(id.getId());
     if (spec == null) {
-      throw new NoSuchElementException("no such service @ account id: " + id.getNamespaceId() +
+      throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespaceId() +
                                            ", app id: " + id.getApplication() +
                                            ", service id: " + id.getId());
     }
@@ -849,7 +904,7 @@ public class DefaultStore implements Store {
   private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
     if (procedureSpecification == null) {
-      throw new NoSuchElementException("no such procedure @ account id: " + id.getNamespaceId() +
+      throw new NoSuchElementException("no such procedure @ namespace id: " + id.getNamespaceId() +
                                            ", app id: " + id.getApplication() +
                                            ", procedure id: " + id.getId());
     }
@@ -869,7 +924,7 @@ public class DefaultStore implements Store {
   private ApplicationSpecification getAppSpecOrFail(AppMds mds, Id.Program id) {
     ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
     if (appSpec == null) {
-      throw new NoSuchElementException("no such application @ account id: " + id.getNamespaceId() +
+      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
                                            ", app id: " + id.getApplication().getId());
     }
     return appSpec;

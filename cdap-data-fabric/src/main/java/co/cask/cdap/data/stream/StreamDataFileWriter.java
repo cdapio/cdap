@@ -25,6 +25,7 @@ import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.FileWriter;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
@@ -53,7 +54,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * timestamp = 8 bytes int64 for timestamp in milliseconds
  * length = Avro encoded int32 for size in bytes for all <stream_event>s
  * stream_event = Avro encoded bytes according to the StreamData schema
- * end_marker = 8 bytes int64 with value == -1
+ * end_marker = 8 bytes int64 with value == -(close_timestamp)
  *
  * }
  * </pre>
@@ -76,12 +77,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class StreamDataFileWriter implements Closeable, Flushable, FileWriter<StreamEvent> {
 
-  private static final byte[] MAGIC_HEADER = {'E', '1'};
-  private static final byte[] INDEX_MAGIC_HEADER = {'I', '1'};
   private static final int BUFFER_SIZE = 256 * 1024;    // 256K
-
-  // Stream properties keys, shared between writer and reader classes
-  static final String PROPERTY_SCHEMA = "stream.schema";
 
   private final OutputStream eventOutput;
   private final OutputStream indexOutput;
@@ -95,14 +91,12 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
   private long nextIndexTime;
   private boolean synced;
   private boolean closed;
+  private long closeTimestamp;
 
   /**
-   * Constructs a new instance that writes to given outputs.
-   *
-   * @param eventOutputSupplier Provides {@link OutputStream} for writing events.
-   * @param indexOutputSupplier Provides {@link OutputStream} for writing index.
-   * @param indexInterval Time interval in milliseconds for emitting new index entry.
-   * @throws IOException If there is error in preparing the output streams.
+   * Constructs a new instance that writes to given outputs. Same as calling
+   * {@link StreamDataFileWriter#StreamDataFileWriter(OutputSupplier, OutputSupplier, long, Map)}
+   * with an empty property map.
    */
   public StreamDataFileWriter(OutputSupplier<? extends OutputStream> eventOutputSupplier,
                               OutputSupplier<? extends OutputStream> indexOutputSupplier,
@@ -110,6 +104,15 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     this(eventOutputSupplier, indexOutputSupplier, indexInterval, ImmutableMap.<String, String>of());
   }
 
+  /**
+   * Constructs a new instance that writes to given outputs.
+   *
+   * @param eventOutputSupplier the provider of the {@link OutputStream} for writing events
+   * @param indexOutputSupplier the provider of the {@link OutputStream} for writing the index
+   * @param indexInterval the time interval in milliseconds for emitting a new index entry
+   * @param properties the property set that will be stored as file properties
+   * @throws IOException if there is an error in preparing the output streams
+   */
   public StreamDataFileWriter(OutputSupplier<? extends OutputStream> eventOutputSupplier,
                               OutputSupplier<? extends OutputStream> indexOutputSupplier,
                               long indexInterval, Map<String, String> properties) throws IOException {
@@ -122,6 +125,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     }
     this.indexInterval = indexInterval;
     this.currentTimestamp = -1L;
+    this.closeTimestamp = -1L;
 
     Function<OutputStream, Encoder> encoderFactory = createEncoderFactory();
     this.encoder = new BufferedEncoder(BUFFER_SIZE, encoderFactory);
@@ -166,8 +170,9 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
 
     try {
       flushBlock(false);
-      // Write the tail marker, which is a -1 timestamp.
-      eventOutput.write(Longs.toByteArray(-1L));
+      // Write the tail marker, which is a -(current timestamp).
+      closeTimestamp = System.currentTimeMillis();
+      eventOutput.write(Longs.toByteArray(-closeTimestamp));
     } finally {
       closed = true;
       try {
@@ -185,6 +190,13 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     } catch (IOException e) {
       throw closeWithException(e);
     }
+  }
+
+  /**
+   * Returns the timestamp when this writer was closed or {@code -1} if this writer is not yet closed.
+   */
+  public long getCloseTimestamp() {
+    return closeTimestamp;
   }
 
   private void doAppend(StreamEvent event, int flushLimit) throws IOException {
@@ -224,12 +236,10 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
 
   private void init(Map<String, String> properties) throws IOException {
     // Writes the header for event file
-    encoder.writeRaw(MAGIC_HEADER);
+    encoder.writeRaw(StreamDataFileConstants.MAGIC_HEADER_V2);
 
-    Map<String, String> headers = ImmutableMap.<String, String>builder()
-      .putAll(properties)
-      .put(PROPERTY_SCHEMA, StreamEventDataCodec.STREAM_DATA_SCHEMA.toString())
-      .build();
+    Map<String, String> headers = Maps.newHashMap(properties);
+    headers.put(StreamDataFileConstants.Property.Key.SCHEMA, StreamEventDataCodec.STREAM_DATA_SCHEMA.toString());
     StreamUtils.encodeMap(headers, encoder);
 
     long headerSize = encoder.size();
@@ -238,7 +248,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     position = headerSize;
 
     // Writes the header for index file
-    encoder.writeRaw(INDEX_MAGIC_HEADER);
+    encoder.writeRaw(StreamDataFileConstants.INDEX_MAGIC_HEADER_V1);
 
     // Empty properties map for now. May have properties in future version.
     StreamUtils.encodeMap(ImmutableMap.<String, String>of(), encoder);
