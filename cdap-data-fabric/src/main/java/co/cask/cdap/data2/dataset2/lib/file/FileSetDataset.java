@@ -53,8 +53,9 @@ public final class FileSetDataset implements FileSet {
   private final List<Location> inputLocations;
   private final Location outputLocation;
 
-  private final Class<? extends InputFormat> inputFormatClass;
-  private final Class<? extends OutputFormat> outputFormatClass;
+  private final ClassLoader classLoader;
+  private final String inputFormatClassName;
+  private final String outputFormatClassName;
 
   /**
    * Constructor.
@@ -79,8 +80,9 @@ public final class FileSetDataset implements FileSet {
     this.properties = properties;
     this.baseLocation = locationFactory.create(FileSetProperties.getBasePath(properties));
     this.runtimeArguments = runtimeArguments;
-    this.inputFormatClass = getFormat(FileSetProperties.getInputFormat(properties), InputFormat.class, classLoader);
-    this.outputFormatClass = getFormat(FileSetProperties.getOutputFormat(properties), OutputFormat.class, classLoader);
+    this.classLoader = classLoader;
+    this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
+    this.outputFormatClassName = FileSetProperties.getOutputFormat(properties);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
   }
@@ -161,7 +163,7 @@ public final class FileSetDataset implements FileSet {
   @Override
   @SuppressWarnings("unchecked")
   public <T> Class<? extends T> getInputFormatClass() {
-    return (Class<? extends T>) inputFormatClass;
+    return (Class<? extends T>) getFormat(inputFormatClassName, InputFormat.class, classLoader);
   }
 
   @Override
@@ -182,7 +184,7 @@ public final class FileSetDataset implements FileSet {
   @Override
   @SuppressWarnings("unchecked")
   public <T> Class<? extends T> getOutputFormatClass() {
-    return (Class<? extends T>) outputFormatClass;
+    return (Class<? extends T>) getFormat(outputFormatClassName, OutputFormat.class, classLoader);
   }
 
   @Override
@@ -194,11 +196,12 @@ public final class FileSetDataset implements FileSet {
     return builder.build();
   }
 
-  private String getFileSystemPath(Location loc) {
-    return loc.toURI().getPath();
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return runtimeArguments;
   }
 
-  public String getName() {
-    return name;
+  private String getFileSystemPath(Location loc) {
+    return loc.toURI().getPath();
   }
 }

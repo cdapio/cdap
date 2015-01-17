@@ -364,8 +364,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   public static String generateFileSetCreateStatement(String name, Dataset dataset, Map<String, String> properties)
     throws IllegalArgumentException {
+
     String tableName = getHiveTableName(name);
-    String partitioned = dataset instanceof TimePartitionedFileSet ? "PARTITIONED BY (time BIGINT) " : "";
     String serde = FileSetProperties.getSerdeClassName(properties);
     String inputFormat = FileSetProperties.getExploreInputFormat(properties);
     String outputFormat = FileSetProperties.getExploreOutputFormat(properties);
@@ -373,16 +373,29 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     Preconditions.checkArgument(serde != null && inputFormat != null && outputFormat != null,
                                 "All of SerDe, InputFormat and OutputFormat must be given in dataset properties");
 
+    String partitioned;
+    Location baseLocation;
+    if (dataset instanceof TimePartitionedFileSet) {
+      partitioned = "PARTITIONED BY (time BIGINT)";
+      baseLocation = ((TimePartitionedFileSet) dataset).getUnderlyingFileSet().getBaseLocation();
+    } else {
+      partitioned = "";
+      baseLocation = ((FileSet) dataset).getBaseLocation();
+    }
+
     String tblProperties = "";
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
-    if (!tblProperties.isEmpty()) {
-      tblProperties = Joiner.on(", ").join(Iterables.transform(
+    if (!tableProperties.isEmpty()) {
+      StringBuilder builder = new StringBuilder("TBLPROPERTIES (");
+      Joiner.on(", ").appendTo(builder, Iterables.transform(
         tableProperties.entrySet(), new Function<Map.Entry<String, String>, String>() {
           @Override
           public String apply(Map.Entry<String, String> entry) {
             return String.format("'%s'='%s'", entry.getKey(), entry.getValue().replaceAll("'", "\\'"));
           }
         }));
+      builder.append(")");
+      tblProperties = builder.toString();
     }
 
     // CREATE EXTERNAL TABLE nn
@@ -390,11 +403,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     //   ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
     //   STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
     //             OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+    //   LOCATION '<uri>'
     //   TBLPROPERTIES ('avro.schema.literal'='...');
 
     return String.format(
-      "CREATE EXTERNAL TABLE %s %s ROW FORMAT SERDE '%s' STORED AS INPUTFORMAT '%s' OUTPUTFORMAT '%s' %s",
-      tableName, partitioned, serde, inputFormat, outputFormat, tblProperties);
+      "CREATE EXTERNAL TABLE %s %s ROW FORMAT SERDE '%s' " +
+        "STORED AS INPUTFORMAT '%s' OUTPUTFORMAT '%s' LOCATION '%s' %s",
+      tableName, partitioned, serde, inputFormat, outputFormat, baseLocation.toURI().toString(), tblProperties);
   }
 
   public static String generateDeleteStatement(String name) {

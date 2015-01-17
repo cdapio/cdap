@@ -24,12 +24,14 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class TimePartitionedFileSetDefinition extends AbstractDatasetDefinition<
   private final DatasetDefinition<? extends FileSet, ?> filesetDef;
 
   @Inject
-  private ExploreFacade exploreFacade;
+  private Injector injector;
 
   public TimePartitionedFileSetDefinition(String name,
                                           DatasetDefinition<? extends FileSet, ?> filesetDef,
@@ -81,15 +83,17 @@ public class TimePartitionedFileSetDefinition extends AbstractDatasetDefinition<
     throws IOException {
     // if the arguments do not contain an output location, generate one from the partition time
     if (FileSetArguments.getOutputPath(arguments) == null) {
-      Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(arguments);
+      Long time = TimePartitionedFileSetArguments.
+        getOutputPartitionTime(FileSetProperties.getOutputProperties(arguments));
       if (time != null) {
         String path = "partition." + time;
         arguments = Maps.newHashMap(arguments);
-        FileSetArguments.setInputPath(arguments, path);
+        FileSetArguments.setOutputPath(arguments, path);
       }
     }
     FileSet fileset = filesetDef.getDataset(spec.getSpecification(FILESET_NAME), arguments, classLoader);
     Table table = tableDef.getDataset(spec.getSpecification(PARTITION_TABLE_NAME), arguments, classLoader);
-    return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, exploreFacade);
+    return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, arguments,
+                                             injector.getInstance(ExploreFacade.class));
   }
 }

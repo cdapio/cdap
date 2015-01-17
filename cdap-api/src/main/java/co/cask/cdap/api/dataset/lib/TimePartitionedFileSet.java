@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -51,4 +52,16 @@ public interface TimePartitionedFileSet extends Dataset, InputFormatProvider, Ou
    *         and endTime (exclusive).
    */
   public Collection<String> getPartitions(long startTime, long endTime);
+
+  /**
+   * @return the underlying (embedded) file set.
+   */
+  public FileSet getUnderlyingFileSet();
+
+  /**
+   * Allow direct access to the runtime arguments of this partitioned file set.
+   *
+   * @return the runtime arguments specified for this dataset.
+   */
+  Map<String, String> getRuntimeArguments();
 }

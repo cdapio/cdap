@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -89,7 +90,8 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           bind(LogAppender.class).to(KafkaLogAppender.class);
 
         }
-      }
+      },
+      new ExploreClientModule()
     );
 
     zkClientService = injector.getInstance(ZKClientService.class);

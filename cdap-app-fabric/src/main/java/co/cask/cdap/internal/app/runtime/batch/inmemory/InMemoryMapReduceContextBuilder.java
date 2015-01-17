@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -80,7 +81,8 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getInMemoryModules()
+      new LoggingModules().getInMemoryModules(),
+      new ExploreClientModule()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -98,7 +100,8 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
-      new LoggingModules().getStandaloneModules()
+      new LoggingModules().getStandaloneModules(),
+      new ExploreClientModule()
     );
     return Guice.createInjector(standaloneModules);
   }

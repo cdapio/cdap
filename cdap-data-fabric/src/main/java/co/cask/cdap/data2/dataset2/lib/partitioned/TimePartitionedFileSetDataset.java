@@ -50,14 +50,16 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
 
   private final FileSet files;
   private final Table partitions;
+  private final Map<String, String> runtimeArguments;
   private final ExploreFacade exploreFacade;
 
   public TimePartitionedFileSetDataset(String name, FileSet fileSet, Table partitionTable,
-                                       ExploreFacade exploreFacade) {
+                                       Map<String, String> arguments, ExploreFacade exploreFacade) {
     super(name, partitionTable);
     this.files = fileSet;
     this.partitions = partitionTable;
     this.exploreFacade = exploreFacade;
+    this.runtimeArguments = arguments;
   }
 
   @Override
@@ -176,6 +178,16 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
       throw new DataSetException("Time must be given for the new output partition as a runtime argument.");
     }
     return config;
+  }
+
+  @Override
+  public FileSet getUnderlyingFileSet() {
+    return files;
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return runtimeArguments;
   }
 
 }

@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import org.apache.twill.filesystem.Location;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * This dataset represents a collection of files on the file system. The dataset has a base location, under which
@@ -59,4 +60,11 @@ public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvi
    * @return the full location given by the path, relative to the base path.
    */
   Location getLocation(String relativePath);
+
+  /**
+   * Allow direct access to the runtime arguments of this file set.
+   *
+   * @return the runtime arguments specified for this file set.
+   */
+  Map<String, String> getRuntimeArguments();
 }
