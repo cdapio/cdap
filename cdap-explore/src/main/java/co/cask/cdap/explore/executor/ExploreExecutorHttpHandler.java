@@ -60,6 +60,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.POST;
@@ -376,7 +377,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     String partitioned;
     Location baseLocation;
     if (dataset instanceof TimePartitionedFileSet) {
-      partitioned = "PARTITIONED BY (time BIGINT)";
+      partitioned = "PARTITIONED BY (year INT, month INT, day INT, hour INT, minute INT)";
       baseLocation = ((TimePartitionedFileSet) dataset).getUnderlyingFileSet().getBaseLocation();
     } else {
       partitioned = "";
@@ -417,7 +418,15 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   public static String generateAddPartitionStatement(String name, long time, String path) {
-    return String.format("ALTER TABLE %s ADD PARTITION(time = %d) LOCATION '%s'", getHiveTableName(name), time, path);
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(time);
+    int year = calendar.get(Calendar.YEAR);
+    int month = calendar.get(Calendar.MONTH);
+    int day = calendar.get(Calendar.DAY_OF_MONTH);
+    int hour = calendar.get(Calendar.HOUR_OF_DAY);
+    int minute = calendar.get(Calendar.MINUTE);
+    return String.format("ALTER TABLE %s ADD PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d) LOCATION '%s'",
+                         getHiveTableName(name), year, month, day, hour, minute, path);
   }
 
   /**

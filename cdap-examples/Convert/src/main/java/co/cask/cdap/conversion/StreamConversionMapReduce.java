@@ -88,9 +88,10 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     long runFrequency = TimeUnit.MINUTES.toMillis(5);
     StreamBatchReadable.useStreamInput(context, "events", logicalStartTime - runFrequency, logicalStartTime);
 
+    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted");
+
     // this schema is our schema, which is slightly different than avro's schema in terms of the types it supports.
     // Incompatibilities will surface here and cause the job to fail.
-    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted");
     String schemaStr = partitionedFileSet.getOutputFormatConfiguration().get("schema");
     job.getConfiguration().set(SCHEMA_KEY, schemaStr);
     Schema schema = new Schema.Parser().parse(schemaStr);
