@@ -22,6 +22,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -35,6 +36,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -51,6 +53,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
 
   private static StreamConsumerStateStoreFactory stateStoreFactory;
   private static StreamAdmin streamAdmin;
+  private static StreamCoordinator streamCoordinator;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -73,8 +76,14 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
     );
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
+    streamCoordinator = injector.getInstance(StreamCoordinator.class);
+    streamCoordinator.startAndWait();
   }
 
+  @AfterClass
+  public static void shutdown() throws Exception {
+    streamCoordinator.stopAndWait();
+  }
 
   @Override
   protected StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws IOException {
