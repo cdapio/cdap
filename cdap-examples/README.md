@@ -43,7 +43,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## Purchase
 
-- An app that uses scheduled Workflow to start a MapReduce that reads from one ObjectStore Dataset
+- An app that uses a scheduled Workflow to start a MapReduce that reads from one ObjectStore Dataset
   and writes to another. The app also demonstrates using ad-hoc SQL queries.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
@@ -88,7 +88,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 
-Copyright © 2014 Cask Data, Inc.
+Copyright © 2014-2015 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at

@@ -13,7 +13,7 @@ Logging HTTP RESTful API
 
 Downloading Logs
 ----------------
-Logs emitted by a *Flow*, *Procedure*, *MapReduce*, or *Service* running in CDAP can be
+Logs emitted by a *Flow*, *MapReduce*, *Procedure*, *Service*, or *Spark* program running in CDAP can be
 downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
@@ -27,9 +27,9 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``procedures``, ``services``, or ``spark``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *Procedure*, *MapReduce*, *Service*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Procedure*, *Service*, *Spark*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
