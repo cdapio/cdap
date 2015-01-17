@@ -67,7 +67,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
    */
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
-      // <cdap namespace>.system.queue.<account>.<flow>
+      // <cdap namespace>.system.queue.<namespace>.<app>.<flow>
       return getTableNameForFlow(queueName.getFirstComponent(),
                                  queueName.getSecondComponent(),
                                  queueName.getThirdComponent());
@@ -82,7 +82,6 @@ public class LevelDBQueueAdmin implements QueueAdmin {
       tableName.append(namespaceId).append(".");
     }
     return tableName.append(app).append(".").append(flow).toString();
-    //return tableNamePrefix + "." + app + "." + flow;
   }
 
   /**
