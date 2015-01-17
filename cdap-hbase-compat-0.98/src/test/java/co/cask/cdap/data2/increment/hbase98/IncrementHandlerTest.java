@@ -244,7 +244,7 @@ public class IncrementHandlerTest {
     // It is important because in cases where we don't use tx nobody else will cleanup redundant (merged) keyvalues.
     TableName tableName = TableName.valueOf("incrementCompactUnlimBoundTest");
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
-    columnDesc.setValue(IncrementHandler.PROPERTY_COMPACTION_BOUND, IncrementHandler.CompactionBound.UNLIMITED.name());
+    columnDesc.setValue(IncrementHandler.PROPERTY_TRANSACTIONAL, "false");
     HRegion region = IncrementSummingScannerTest.createRegion(conf, tableName, columnDesc);
 
     try {
