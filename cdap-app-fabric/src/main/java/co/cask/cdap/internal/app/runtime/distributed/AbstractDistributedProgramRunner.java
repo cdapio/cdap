@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -119,7 +120,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           twillPreparer.enableDebugging();
         }
         TwillController twillController = twillPreparer
-          .withDependencies(new HBaseTableUtilFactory().get().getClass())
+          .withDependencies(new HBaseTableUtilFactory().get().getClass(),
+                            ExploreClientModule.class)
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(

@@ -72,6 +72,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
+      new ExploreClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -90,8 +91,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           bind(LogAppender.class).to(KafkaLogAppender.class);
 
         }
-      },
-      new ExploreClientModule()
+      }
     );
 
     zkClientService = injector.getInstance(ZKClientService.class);
