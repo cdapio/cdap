@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _test-cdap:
 
@@ -122,10 +122,10 @@ as a response, and the value types in the top-level map are not uniform::
       Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
       Assert.assertTrue(assocs.containsKey("hello"));
 
-Strategies in Testing MapReduce Jobs
-====================================
+Strategies in Testing MapReduce Programs
+========================================
 In a fashion similar to `Strategies in Testing Flows`_, we can write
-unit testing for MapReduce jobs. Let's write a test case for an
+unit testing for MapReduce programs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
 found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP SDK.
 
@@ -142,7 +142,7 @@ method from the ``TestBase`` class::
       // Deploy an Application
       ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
-The MapReduce job reads from the ``purchases`` Dataset. As a first
+The MapReduce reads from the ``purchases`` Dataset. As a first
 step, the data to the ``purchases`` should be populated by running
 the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 Stream::
@@ -156,13 +156,13 @@ Stream::
           getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
-Start the MapReduce job and wait for a maximum of 60 seconds::
+Start the MapReduce and wait for a maximum of 60 seconds::
 
-      // Start the MapReduce job.
+      // Start the MapReduce
       MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
       mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
-We can start verifying that the MapReduce job was run correctly by
+We can start verifying that the MapReduce was run correctly by
 obtaining a client for the Procedure, and then submitting a query for
 the counts::
 

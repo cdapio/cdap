@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ============================================
 Runtime Arguments
@@ -8,7 +8,7 @@ Runtime Arguments
 
 .. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
 
-Flows, Procedures, MapReduce Jobs, and Workflows can receive runtime arguments:
+Flows, Procedures, MapReduce programs, and Workflows can receive runtime arguments:
 
 - For Flows and Procedures, runtime arguments are available to the ``initialize`` method in the context.
 
