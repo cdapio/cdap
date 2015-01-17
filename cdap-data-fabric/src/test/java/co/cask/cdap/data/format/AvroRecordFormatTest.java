@@ -19,11 +19,8 @@ package co.cask.cdap.data.format;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -36,16 +33,12 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
  *
  */
 public class AvroRecordFormatTest {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
 
   @Test
   public void testFlatRecord() throws Exception {
@@ -150,7 +143,7 @@ public class AvroRecordFormatTest {
   }
 
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
-    return new org.apache.avro.Schema.Parser().parse(GSON.toJson(cdapSchema));
+    return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
   }
 
   // needed since avro uses their own utf8 class for strings
