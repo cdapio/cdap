@@ -35,7 +35,6 @@ import javax.annotation.Nullable;
 /**
  * Provides handy methods to manage objects in {@link Table}.
  */
-// todo: review usage of OrderedTable after adding handy methods to it (operating on objects Get, Put, etc.)
 public abstract class AbstractObjectsStore extends AbstractDataset {
   private static final Gson GSON = new Gson();
 

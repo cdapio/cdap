@@ -24,10 +24,16 @@ import java.util.Map;
 
 /**
  * Provides generic table dataset interface.
- * @deprecated since 2.7.0.  Use {@link Table} instead.
+ * @deprecated since 2.8.0.  Use {@link Table} instead.
  */
 @Deprecated
 public interface OrderedTable extends Dataset {
+
+  /**
+   * @deprecated since 2.8.0. Use {@link Table#PROPERTY_TTL} instead.
+   */
+  @Deprecated
+  String PROPERTY_TTL = Table.PROPERTY_TTL;
 
   /**
    * Reads the values of the specified columns in the specified row.

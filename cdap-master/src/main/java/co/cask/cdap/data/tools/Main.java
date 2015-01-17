@@ -213,7 +213,7 @@ public class Main {
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
                                      new DefaultDatasetNamespace(cConf));
     // TODO: this doesn't sound right. find out why its needed.
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "orderedTable"),
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
                                new HBaseTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
                                new HBaseMetricsTableModule());
@@ -224,7 +224,7 @@ public class Main {
   }
 
   private static void upgradeUserTables(final Injector injector) throws Exception  {
-    // We assume that all tables in USER namespace belong to OrderedTable type datasets. So we loop thru them
+    // We assume that all tables in USER namespace belong to Table type datasets. So we loop thru them
     // and upgrading with the help of HBaseTableAdmin
     final CConfiguration cConf = injector.getInstance(CConfiguration.class);
     DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);

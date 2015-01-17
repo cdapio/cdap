@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;

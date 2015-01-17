@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -41,7 +40,7 @@ import org.junit.Test;
 import java.util.Map;
 
 /**
- * Base test for OrderedTable.
+ * Base test for Table.
  * @param <T> table type
  */
 public abstract class TableTest<T extends Table> {

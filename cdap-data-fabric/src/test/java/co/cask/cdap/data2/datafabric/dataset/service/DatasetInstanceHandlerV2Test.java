@@ -156,7 +156,7 @@ public class DatasetInstanceHandlerV2Test extends DatasetServiceTestBase {
 
   @Test
   public void testCreateDelete() throws Exception {
-    deployModule("default-orderedTable", InMemoryTableModule.class);
+    deployModule("default-table", InMemoryTableModule.class);
     deployModule("default-core", CoreDatasetsModule.class);
 
     // cannot create instance with same name again

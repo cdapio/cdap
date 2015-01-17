@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;

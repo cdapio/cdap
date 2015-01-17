@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
 
 /**
- * An abstract {@link TransactionAware} implementation of {@link co.cask.cdap.api.dataset.table.OrderedTable} which
+ * An abstract {@link TransactionAware} implementation of {@link co.cask.cdap.api.dataset.table.Table} which
  * keeps data in memory buffer until transaction commits.
  * <p>
  * Subclasses should implement methods which deal with persistent store. This implementation merges data from persistent
@@ -367,7 +367,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
-   * Also see {@link co.cask.cdap.api.dataset.table.OrderedTable#put(byte[], byte[][], byte[][])}.
+   * Also see {@link co.cask.cdap.api.dataset.table.Table#put(byte[], byte[][], byte[][])}.
    */
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) {

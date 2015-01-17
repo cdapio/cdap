@@ -39,7 +39,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 /**
  * DatasetModule containing default datasets.
  *
- * Depends on {@link OrderedTable}.
+ * Depends on {@link Table}.
  */
 public class CoreDatasetsModule implements DatasetModule {
 
@@ -73,7 +73,7 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
-    InMemoryTableDefinition inMemoryOrderedTable = new InMemoryTableDefinition("inMemoryOrderedTable");
+    InMemoryTableDefinition inMemoryOrderedTable = new InMemoryTableDefinition("inMemoryTable");
     registry.add(new OrderedTableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
     registry.add(new OrderedTableDefinition("memoryTable", inMemoryOrderedTable));
   }
