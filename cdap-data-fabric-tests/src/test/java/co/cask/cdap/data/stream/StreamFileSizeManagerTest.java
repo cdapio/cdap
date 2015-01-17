@@ -22,8 +22,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -114,11 +113,12 @@ public class StreamFileSizeManagerTest {
         new ConfigModule(conf, new Configuration()),
         new AuthModule(), new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
-        new ExploreClientModule()
+        new ExploreClientModule(),
+        new StreamAdminModules().getInMemoryModules()
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(MetricsCollectionService.class).to(MockMetricsCollectionService.class);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
 
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
@@ -213,35 +213,6 @@ public class StreamFileSizeManagerTest {
 
     public StreamWriterHeartbeat getHeartbeat() {
       return heartbeat;
-    }
-  }
-
-  private static final class MockMetricsCollectionService extends AbstractIdleService
-    implements MetricsCollectionService {
-
-    @Override
-    protected void startUp() throws Exception {
-      // No-op
-    }
-
-    @Override
-    protected void shutDown() throws Exception {
-      // No-op
-    }
-
-    @Override
-    public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
-      return new MetricsCollector() {
-        @Override
-        public void increment(String metricName, int value, String... tags) {
-          // No-op
-        }
-
-        @Override
-        public void gauge(String metricName, long value, String... tags) {
-          // No-op
-        }
-      };
     }
   }
 }
