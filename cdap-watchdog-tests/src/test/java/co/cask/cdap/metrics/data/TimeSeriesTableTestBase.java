@@ -128,11 +128,11 @@ public abstract class TimeSeriesTableTestBase {
     final long time = 1317470400;
 
     // Insert metrics for flow
-    String context = "app.f.flow.flowlet";
+    String context = "app.f.flow2.flowlet";
     String metric = "input";
     insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 7200, 100);
 
-    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow.flowlet")
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow2.flowlet")
       .setMetric("input")
       .build(time, time + 7200);
 
@@ -143,6 +143,7 @@ public abstract class TimeSeriesTableTestBase {
       }
     });
   }
+
   @Test
   public void testTimeSeriesMinuteResolution() throws OperationException {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(60);
@@ -151,7 +152,7 @@ public abstract class TimeSeriesTableTestBase {
     final long time = 1317470400;
 
     // Insert metrics for flow
-    String context = "app.f.flow.flowlet";
+    String context = "app.f.flow3.flowlet";
     String metric = "input";
 
     insertMetricsEachMinute(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 1440,
@@ -159,7 +160,7 @@ public abstract class TimeSeriesTableTestBase {
     insertMetricsEachMinute(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 1440,
                             MetricType.COUNTER);
 
-    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow.flowlet")
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow3.flowlet")
       .setMetric("input")
       .build(time, time + 86400);
 
@@ -563,14 +564,14 @@ public abstract class TimeSeriesTableTestBase {
 
     try {
       timeSeriesTable.save(ImmutableList.of(
-        new MetricsRecord("app.f.flow.flowlet", "0", "store.bytes", ImmutableList.of(
+        new MetricsRecord("app.f.flow4.flowlet", "0", "store.bytes", ImmutableList.of(
           new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6,
                           MetricType.COUNTER)
       ));
 
       Map<String, Long> tagValues = Maps.newHashMap();
       MetricsScanQuery query = new MetricsScanQueryBuilder()
-        .setContext("app.f.flow.flowlet")
+        .setContext("app.f.flow4.flowlet")
         .setMetric("store.bytes")
         .setRunId("0")
         .build(1234567890, 1234567891);
