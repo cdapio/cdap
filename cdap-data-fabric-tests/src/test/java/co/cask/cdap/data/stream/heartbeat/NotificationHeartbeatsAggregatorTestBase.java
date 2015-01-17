@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamCoordinator;
@@ -159,8 +160,7 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
     Cancellable cancellable = notificationService.subscribe(streamFeed, new NotificationHandler<Object>() {
       @Override
       public Type getNotificationFeedType() {
-        // TODO once we know the type of notifications a stream is sending, change that.
-        return Object.class;
+        return StreamSizeNotification.class;
       }
 
       @Override
