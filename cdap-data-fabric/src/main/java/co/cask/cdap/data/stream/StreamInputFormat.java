@@ -17,7 +17,6 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -329,7 +328,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
       // to format the stream body.
       if (decoderClass.isAssignableFrom(FormatStreamEventDecoder.class)) {
         try {
-          RecordFormat<ByteBuffer, StructuredRecord> bodyFormat = getInitializedFormat(conf);
+          RecordFormat<ByteBuffer, V> bodyFormat = getInitializedFormat(conf);
           return (StreamEventDecoder<K, V>) new FormatStreamEventDecoder(bodyFormat);
         } catch (Exception e) {
           throw new IllegalArgumentException("Unable to get the stream body format.");
@@ -342,7 +341,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     }
   }
 
-  private RecordFormat<ByteBuffer, StructuredRecord> getInitializedFormat(Configuration conf)
+  private RecordFormat<ByteBuffer, V> getInitializedFormat(Configuration conf)
     throws UnsupportedTypeException, IllegalAccessException, ClassNotFoundException, InstantiationException {
     String formatSpecStr = conf.get(BODY_FORMAT);
     if (formatSpecStr == null || formatSpecStr.isEmpty()) {
@@ -350,7 +349,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
         BODY_FORMAT + " must be set in the configuration in order to use a format for the stream body.");
     }
     FormatSpecification formatSpec = GSON.fromJson(formatSpecStr, FormatSpecification.class);
-    RecordFormat<ByteBuffer, StructuredRecord> recordFormat = RecordFormats.create(formatSpec.getName());
+    RecordFormat<ByteBuffer, V> recordFormat = RecordFormats.create(formatSpec.getName());
     recordFormat.initialize(formatSpec);
     return recordFormat;
   }
