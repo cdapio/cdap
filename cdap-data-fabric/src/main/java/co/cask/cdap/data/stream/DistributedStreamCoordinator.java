@@ -214,7 +214,7 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
             return input != null ? input.getName() : null;
           }
         });
-      callLeaderCallbacks(ImmutableSet.copyOf(streamNames));
+      invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
     }
 
     @Override

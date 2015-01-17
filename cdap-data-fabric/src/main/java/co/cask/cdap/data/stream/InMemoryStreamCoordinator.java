@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -55,7 +56,7 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
     executor = MoreExecutors.listeningDecorator(
       Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("stream-leader-manager")));
 
-    callLeaderCallbacks((String) null);
+    invokeLeaderListeners((String) null);
   }
 
   @Override
@@ -79,13 +80,13 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
     return executor.submit(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        callLeaderCallbacks(streamName);
+        invokeLeaderListeners(streamName);
         return null;
       }
     });
   }
 
-  private void callLeaderCallbacks(@Nullable String createdStream) throws Exception {
+  private void invokeLeaderListeners(@Nullable String createdStream) throws Exception {
     Set<String> streamNames = Sets.newHashSet();
     for (StreamSpecification spec : streamMetaStore.listStreams()) {
       streamNames.add(spec.getName());
@@ -93,6 +94,6 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
     if (createdStream != null) {
       streamNames.add(createdStream);
     }
-    callLeaderCallbacks(streamNames);
+    invokeLeaderListeners(streamNames);
   }
 }

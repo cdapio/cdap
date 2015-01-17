@@ -23,7 +23,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.stream.StreamCoordinator;
-import co.cask.cdap.data.stream.StreamLeaderCallback;
+import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -78,7 +78,7 @@ public final class StreamHttpService extends AbstractIdleService {
                         HeapChannelBufferFactory.getInstance()) // ChannelBufferFactory that always creates new Buffer
       .build();
 
-    streamCoordinator.addLeaderCallback(new StreamLeaderCallback() {
+    streamCoordinator.addLeaderListener(new StreamLeaderListener() {
       @Override
       public void leaderOf(Set<String> streamNames) {
         streamsHeartbeatsAggregator.listenToStreams(streamNames);

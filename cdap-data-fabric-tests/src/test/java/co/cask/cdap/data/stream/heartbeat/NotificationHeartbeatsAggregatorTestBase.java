@@ -24,7 +24,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamCoordinator;
-import co.cask.cdap.data.stream.StreamLeaderCallback;
+import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatsAggregator;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
@@ -108,7 +108,7 @@ public abstract class NotificationHeartbeatsAggregatorTestBase {
     aggregator.startAndWait();
 
     streamCoordinator = injector.getInstance(StreamCoordinator.class);
-    streamCoordinator.addLeaderCallback(new StreamLeaderCallback() {
+    streamCoordinator.addLeaderListener(new StreamLeaderListener() {
       @Override
       public void leaderOf(Set<String> streamNames) {
         aggregator.listenToStreams(streamNames);
