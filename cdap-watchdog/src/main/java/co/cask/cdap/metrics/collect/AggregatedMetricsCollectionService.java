@@ -46,7 +46,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   private static final long CACHE_EXPIRE_MINUTES = 1;
   private static final long DEFAULT_FREQUENCY_SECONDS = 1;
 
-   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
+  private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
 
   public AggregatedMetricsCollectionService() {
