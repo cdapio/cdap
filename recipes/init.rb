@@ -22,7 +22,7 @@ include_recipe 'cdap::default'
 # We also need the configuration, so we can run HDFS commands
 execute 'initaction-create-hdfs-cdap-dir' do
   not_if  "hdfs dfs -test -d #{node['cdap']['cdap_site']['hdfs.namespace']}", :user => 'hdfs'
-  command "hdfs dfs -mkdir -p #{node['cdap']['cdap_site']['hdfs.namespace']} && hdfs dfs -chown yarn #{node['cdap']['cdap_site']['hdfs.namespace']}"
+  command "hdfs dfs -mkdir -p #{node['cdap']['cdap_site']['hdfs.namespace']} && hdfs dfs -chown #{node['cdap']['cdap_site']['hdfs.user']} #{node['cdap']['cdap_site']['hdfs.namespace']}"
   timeout 300
   user 'hdfs'
   group 'hdfs'
