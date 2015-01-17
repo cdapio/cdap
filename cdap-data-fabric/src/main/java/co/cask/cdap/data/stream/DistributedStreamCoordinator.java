@@ -29,10 +29,12 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -204,9 +206,17 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      // TODO Use the names of the ParitionReplicas to retrieve the streams names and do something on them.
-      // TODO Here, we are in the master for all the streams represented by the partitions replicas. We need to do
-      // aggregation, etc.
+      Set<String> streamNames =
+        ImmutableSet.copyOf(Iterables.transform(
+          partitionReplicas,
+          new Function<PartitionReplica, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable PartitionReplica input) {
+              return input != null ? input.getName() : null;
+            }
+          }));
+      invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
     }
 
     @Override

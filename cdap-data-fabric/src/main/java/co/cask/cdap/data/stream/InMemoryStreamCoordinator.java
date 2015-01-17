@@ -21,11 +21,15 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.discovery.Discoverable;
+
+import java.util.Set;
 
 /**
  * In memory implementation for {@link StreamCoordinator}.
@@ -43,9 +47,7 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   protected void startUp() throws Exception {
-    for (StreamSpecification spec : streamMetaStore.listStreams()) {
-      // TODO register streams to perform aggregation logic on them
-    }
+    invokeLeaderListeners();
   }
 
   @Override
@@ -65,7 +67,19 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   public ListenableFuture<Void> streamCreated(String streamName) {
-    // TODO implement the aggregation logic of the one stream handler process here
+    try {
+      invokeLeaderListeners();
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
     return Futures.immediateFuture(null);
+  }
+
+  private void invokeLeaderListeners() throws Exception {
+    Set<String> streamNames = Sets.newHashSet();
+    for (StreamSpecification spec : streamMetaStore.listStreams()) {
+      streamNames.add(spec.getName());
+    }
+    invokeLeaderListeners(streamNames);
   }
 }

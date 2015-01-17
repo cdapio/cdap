@@ -91,6 +91,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
   private long nextIndexTime;
   private boolean synced;
   private boolean closed;
+  private long closeTimestamp;
 
   /**
    * Constructs a new instance that writes to given outputs. Same as calling
@@ -124,6 +125,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     }
     this.indexInterval = indexInterval;
     this.currentTimestamp = -1L;
+    this.closeTimestamp = -1L;
 
     Function<OutputStream, Encoder> encoderFactory = createEncoderFactory();
     this.encoder = new BufferedEncoder(BUFFER_SIZE, encoderFactory);
@@ -169,7 +171,8 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     try {
       flushBlock(false);
       // Write the tail marker, which is a -(current timestamp).
-      eventOutput.write(Longs.toByteArray(-System.currentTimeMillis()));
+      closeTimestamp = System.currentTimeMillis();
+      eventOutput.write(Longs.toByteArray(-closeTimestamp));
     } finally {
       closed = true;
       try {
@@ -187,6 +190,13 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     } catch (IOException e) {
       throw closeWithException(e);
     }
+  }
+
+  /**
+   * Returns the timestamp when this writer was closed or {@code -1} if this writer is not yet closed.
+   */
+  public long getCloseTimestamp() {
+    return closeTimestamp;
   }
 
   private void doAppend(StreamEvent event, int flushLimit) throws IOException {

@@ -34,8 +34,7 @@ import java.util.concurrent.TimeUnit;
 @Category(XSlowTests.class)
 public class TestSparkMetricsIntegration extends TestBase {
 
-  public static final String METRICS_KEY =
-    TestSparkMetricsIntegrationApp.APP_SPARK_NAME + ".BlockManager.memory.remainingMem_MB";
+  public static final String METRICS_KEY = ".BlockManager.memory.remainingMem_MB";
 
   @Test
   public void testSparkMetrics() throws Exception {
