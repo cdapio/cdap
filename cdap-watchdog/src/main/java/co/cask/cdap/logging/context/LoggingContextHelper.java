@@ -49,10 +49,10 @@ public final class LoggingContextHelper {
     String systemId = tags.get(SystemLoggingContext.TAG_SYSTEM_ID);
     String componentId = tags.get(ComponentLoggingContext.TAG_COMPONENT_ID);
 
-    // No account id or application id present.
+    // No namespace id or application id present.
     if (namespaceId == null || applicationId == null) {
       if (systemId == null || componentId == null) {
-        throw new IllegalArgumentException("No account/application or system/component id present");
+        throw new IllegalArgumentException("No namespace/application or system/component id present");
       }
     }
 

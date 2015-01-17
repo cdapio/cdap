@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -64,6 +65,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   private String outputDatasetName;
   private Job job;
+  private Resources mapperResources;
+  private Resources reducerResources;
 
   public BasicMapReduceContext(Program program,
                                MapReduceMetrics.TaskType type,
@@ -107,6 +110,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
     this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.spec = spec;
+    this.mapperResources = spec.getMapperResources();
+    this.reducerResources = spec.getReducerResources();
   }
 
   @Override
@@ -151,6 +156,16 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public void setOutput(String datasetName) {
     this.outputDatasetName = datasetName;
+  }
+
+  @Override
+  public void setMapperResources(Resources resources) {
+    this.mapperResources = resources;
+  }
+
+  @Override
+  public void setReducerResources(Resources resources) {
+    this.reducerResources = resources;
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
@@ -206,6 +221,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Nullable
   public String getOutputDatasetName() {
     return outputDatasetName;
+  }
+
+  public Resources getMapperResources() {
+    return mapperResources;
+  }
+
+  public Resources getReducerResources() {
+    return reducerResources;
   }
 
   public void flushOperations() throws Exception {

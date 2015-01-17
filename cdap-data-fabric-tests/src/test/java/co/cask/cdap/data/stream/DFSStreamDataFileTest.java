@@ -15,15 +15,6 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -40,34 +31,17 @@ import java.io.IOException;
 public class DFSStreamDataFileTest extends StreamDataFileTestBase {
 
   private static LocationFactory locationFactory;
-  private static StreamAdmin streamAdmin;
   private static MiniDFSCluster dfsCluster;
 
 
   @BeforeClass
   public static void init() throws IOException {
     Configuration hConf = new Configuration();
-    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
+    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TMP_FOLDER.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     final FileSystem fileSystem = dfsCluster.getFileSystem();
 
-    CConfiguration cConf = CConfiguration.create();
-
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
-        }
-      },
-      new TransactionMetricsModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule()
-    );
-
-    locationFactory = injector.getInstance(LocationFactory.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
+    locationFactory = new HDFSLocationFactory(fileSystem);
   }
 
   @AfterClass
@@ -78,10 +52,5 @@ public class DFSStreamDataFileTest extends StreamDataFileTestBase {
   @Override
   protected LocationFactory getLocationFactory() {
     return locationFactory;
-  }
-
-  @Override
-  protected StreamAdmin getStreamAdmin() {
-    return streamAdmin;
   }
 }

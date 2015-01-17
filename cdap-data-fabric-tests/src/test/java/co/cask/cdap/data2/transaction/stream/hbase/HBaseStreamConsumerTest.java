@@ -20,11 +20,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -41,6 +45,8 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -65,8 +71,14 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
 
+  private static InMemoryZKServer zkServer;
+  private static ZKClientService zkClientService;
+
   @BeforeClass
   public static void init() throws Exception {
+    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
+    zkServer.startAndWait();
+
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
 
@@ -75,21 +87,27 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     cConf = CConfiguration.create();
     cConf.setInt(Constants.Stream.CONTAINER_INSTANCES, 1);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      new ZKClientModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      Modules.override(new DataFabricDistributedModule()).with(new AbstractModule() {
-
-        @Override
-        protected void configure() {
-          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
-          bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
-        }
-      })
+      Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
+            bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          }
+        })
     );
+    zkClientService = injector.getInstance(ZKClientService.class);
+    zkClientService.startAndWait();
+
     streamAdmin = injector.getInstance(StreamAdmin.class);
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     txClient = injector.getInstance(TransactionSystemClient.class);

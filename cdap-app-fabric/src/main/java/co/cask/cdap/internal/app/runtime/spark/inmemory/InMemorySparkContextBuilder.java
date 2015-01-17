@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.spark.AbstractSparkContextBuilder;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
@@ -77,7 +78,8 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getInMemoryModules()
+      new LoggingModules().getInMemoryModules(),
+      new StreamAdminModules().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -95,7 +97,8 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
-      new LoggingModules().getStandaloneModules()
+      new LoggingModules().getStandaloneModules(),
+      new StreamAdminModules().getStandaloneModules()
     );
     return Guice.createInjector(standaloneModules);
   }
