@@ -58,6 +58,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
       .build();
   }
 
+
   @Override
   public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
@@ -69,12 +70,16 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
   }
 
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) {
+  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) throws IOException {
     final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
     hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    columnDescriptor.setMaxVersions(1);
+    // to support read-less increments, we need to allow storing many versions: each increment is a put to the same cell
+    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+    // to make sure delta-increments get compacted on flush and major/minor compaction and redundant versions are
+    // cleaned up. See IncrementHandler.CompactionBound.
+    columnDescriptor.setValue("increment.readless.compaction.bound", "UNLIMITED");
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
@@ -83,6 +88,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
+    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName());
     return tableDescriptor;
   }
 }
