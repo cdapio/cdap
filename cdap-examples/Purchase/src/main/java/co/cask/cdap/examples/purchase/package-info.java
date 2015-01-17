@@ -16,7 +16,9 @@
 
 /**
  *
- * An app that uses a scheduled Workflow to start a MapReduce that reads from one ObjectStore DataSet and writes to another.
+ * An app that uses a scheduled Workflow to start a MapReduce that reads from one 
+ * ObjectStore DataSet and writes to another.
+ * 
  * <ul>
  *   <li>
  *     Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
