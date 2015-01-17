@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -40,15 +41,20 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.tephra.TransactionManager;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -63,8 +69,10 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +83,9 @@ import javax.ws.rs.HttpMethod;
  * Base class for tests that need explore service to be running.
  */
 public class BaseHiveExploreServiceTest {
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
   public static boolean runAfter = true;
@@ -220,6 +231,22 @@ public class BaseHiveExploreServiceTest {
     urlConn.setRequestMethod(HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
+  }
+
+  protected static void setStreamProperties(String streamName, StreamProperties properties) throws IOException {
+    int port = streamHttpService.getBindAddress().getPort();
+    URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s/config",
+                                    port, Constants.Gateway.API_VERSION_2, streamName));
+    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    urlConn.setRequestMethod(HttpMethod.PUT);
+    urlConn.setDoOutput(true);
+    urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+  }
+
+  protected static void sendStreamEvent(String streamName, byte[] body) throws IOException {
+    sendStreamEvent(streamName, Collections.<String, String>emptyMap(), body);
   }
 
   protected static void sendStreamEvent(String streamName, Map<String, String> headers, byte[] body)
