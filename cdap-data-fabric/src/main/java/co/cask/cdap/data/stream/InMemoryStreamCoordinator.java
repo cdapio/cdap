@@ -80,6 +80,6 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
     for (StreamSpecification spec : streamMetaStore.listStreams()) {
       streamNames.add(spec.getName());
     }
-    callLeaderCallbacks(streamNames);
+    invokeLeaderCallbacks(streamNames);
   }
 }

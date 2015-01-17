@@ -33,8 +33,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -206,7 +206,7 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      Collection<String> streamNames = Collections2.transform(
+      Set<String> streamNames = ImmutableSet.copyOf(Iterables.transform(
         partitionReplicas,
         new Function<PartitionReplica, String>() {
           @Nullable
@@ -214,8 +214,8 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
           public String apply(@Nullable PartitionReplica input) {
             return input != null ? input.getName() : null;
           }
-        });
-      callLeaderCallbacks(ImmutableSet.copyOf(streamNames));
+        }));
+      invokeLeaderCallbacks(ImmutableSet.copyOf(streamNames));
     }
 
     @Override

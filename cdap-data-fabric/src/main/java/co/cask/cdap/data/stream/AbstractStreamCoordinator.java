@@ -66,7 +66,7 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
   private final Executor updateExecutor;
   private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
-  private final Set<StreamLeaderCallback> leaderCallbacks;
+  private final Set<StreamLeaderListener> leaderCallbacks;
 
   protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
@@ -163,20 +163,28 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName,
-                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
   @Override
-  public Cancellable addLeaderCallback(final StreamLeaderCallback callback) {
+  public Cancellable addLeaderCallback(final StreamLeaderListener listener) {
+    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
+    // is not overridden by user's code implementation of the equal method
+    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        listener.leaderOf(streamNames);
+      }
+    };
+
     synchronized (this) {
-      leaderCallbacks.add(callback);
+      leaderCallbacks.add(wrappedListener);
     }
     return new Cancellable() {
       @Override
       public void cancel() {
         synchronized (AbstractStreamCoordinator.this) {
-          leaderCallbacks.remove(callback);
+          leaderCallbacks.remove(wrappedListener);
         }
       }
     };
@@ -193,12 +201,12 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
-  protected void callLeaderCallbacks(Set<String> streamNames) {
-    Set<StreamLeaderCallback> callbacks;
+  protected void invokeLeaderCallbacks(Set<String> streamNames) {
+    Set<StreamLeaderListener> callbacks;
     synchronized (this) {
       callbacks = ImmutableSet.copyOf(leaderCallbacks);
     }
-    for (StreamLeaderCallback callback : callbacks) {
+    for (StreamLeaderListener callback : callbacks) {
       callback.leaderOf(streamNames);
     }
   }

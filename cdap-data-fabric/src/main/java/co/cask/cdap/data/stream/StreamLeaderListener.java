@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * Defines a behavior that is triggered when a Stream handler becomes leader of a Stream, or a collection of streams.
  */
-public interface StreamLeaderCallback {
+public interface StreamLeaderListener {
 
   /**
    * This method is called to specify that the Stream handler it is called from
