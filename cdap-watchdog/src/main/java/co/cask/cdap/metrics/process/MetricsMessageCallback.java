@@ -20,7 +20,6 @@ import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.metrics.transport.MetricValue;
-import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -37,7 +36,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricsRecord} and invoke
+ * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricValue} and invoke
  * set of {@link MetricsProcessor}.
  */
 public final class MetricsMessageCallback implements KafkaConsumer.MessageCallback {
@@ -71,7 +70,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
         try {
           return recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         } catch (IOException e) {
-          LOG.warn("Failed to decode message to MetricsRecord. Skipped. {}", e.getMessage(), e);
+          LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
           return null;
         }
       }

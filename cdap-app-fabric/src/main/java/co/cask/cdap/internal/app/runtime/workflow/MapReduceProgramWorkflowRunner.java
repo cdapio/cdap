@@ -52,7 +52,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
    */
   @Override
   public Callable<RuntimeContext> create(String name) {
-    ApplicationSpecification spec = workflowProgram.getSpecification();
+    ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());

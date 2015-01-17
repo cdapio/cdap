@@ -16,9 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -33,7 +31,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,23 +39,18 @@ import java.util.concurrent.TimeUnit;
 public abstract class MultiLiveStreamFileReaderTestBase {
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   protected abstract LocationFactory getLocationFactory();
-
-  protected abstract StreamAdmin getStreamAdmin();
 
   @Test
   public void testMultiFileReader() throws Exception {
     String streamName = "multiReader";
-    StreamAdmin streamAdmin = getStreamAdmin();
+    Location location = getLocationFactory().create(streamName);
+    location.mkdirs();
 
     // Create a stream with 1 partition.
-    Properties properties = new Properties();
-    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(Long.MAX_VALUE));
-    streamAdmin.create(streamName, properties);
-
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     List<FileWriter<StreamEvent>> writers = Lists.newArrayList();
@@ -134,14 +126,11 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testOffsets() throws Exception {
     String streamName = "offsets";
-    StreamAdmin streamAdmin = getStreamAdmin();
+    Location location = getLocationFactory().create(streamName);
+    location.mkdirs();
 
     // Create a stream with 1 partition.
-    Properties properties = new Properties();
-    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(Long.MAX_VALUE));
-    streamAdmin.create(streamName, properties);
-
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     for (int i = 0; i < 5; i++) {

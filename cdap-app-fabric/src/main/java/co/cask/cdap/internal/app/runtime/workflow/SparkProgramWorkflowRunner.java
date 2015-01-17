@@ -54,7 +54,7 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
    */
   @Override
   public Callable<RuntimeContext> create(String name) {
-    ApplicationSpecification spec = workflowProgram.getSpecification();
+    ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final SparkSpecification sparkSpec = spec.getSpark().get(name);
     Preconditions.checkArgument(sparkSpec != null,
                                 "No Spark with name %s found in Workflow %s", name, workflowSpec.getName());

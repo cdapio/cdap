@@ -59,7 +59,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = properties == null ? Collections.unmodifiableMap(new HashMap<String, String>()) :
+    this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<String, String>(properties));
     this.actions = Collections.unmodifiableList(new ArrayList<ScheduleProgramInfo>(actions));
     this.customActionMap = Collections.unmodifiableMap(new HashMap(customActionMap));

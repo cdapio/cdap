@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.store;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
@@ -88,7 +89,7 @@ public interface Store {
 
   /**
    * Creates a new stream if it does not exist.
-   * @param id the account id
+   * @param id the namespace id
    * @param stream the stream to create
    * @throws OperationException
    */
@@ -96,16 +97,16 @@ public interface Store {
 
   /**
    * Get the spec of a named stream.
-   * @param id the account id
+   * @param id the namespace id
    * @param name the name of the stream
    * @throws OperationException
    */
   StreamSpecification getStream(Id.Namespace id, String name) throws OperationException;
 
   /**
-   * Get the specs of all streams for an account.
+   * Get the specs of all streams for a namespace.
    *
-   * @param id the account id
+   * @param id the namespace id
    * @throws OperationException
    */
 
@@ -248,16 +249,16 @@ public interface Store {
   void removeApplication(Id.Application id) throws OperationException;
 
   /**
-   * Removes all applications (with programs) of the given account.
+   * Removes all applications (with programs) associated with the given namespace.
    *
-   * @param id account id whose applications to remove
+   * @param id namespace id whose applications to remove
    */
   void removeAllApplications(Id.Namespace id) throws OperationException;
 
   /**
-   * Remove all metadata associated with account.
+   * Remove all metadata associated with the given namespace.
    *
-   * @param id account id whose items to remove
+   * @param id namespace id whose items to remove
    */
   void removeAll(Id.Namespace id) throws OperationException;
 
@@ -335,4 +336,50 @@ public interface Store {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> listNamespaces();
+
+  /**
+   * Adds adapter spec to the store. Will overwrite the existing spec.
+   *
+   * @param id Namespace id
+   * @param adapterSpecification specification of the adapter
+   * @throws OperationException on errors.
+   */
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification) throws OperationException;
+
+  /**
+   * Fetch the adapter identified by the name in a give namespace.
+   *
+   * @param id  Namespace id.
+   * @param name Adapter name
+   * @return an instance of {@link AdapterSpecification}.
+   * @throws OperationException on errors.
+   */
+  AdapterSpecification getAdapter(Id.Namespace id, String name) throws OperationException;
+
+  /**
+   * Fetch all the adapters in a given namespace.
+   *
+   * @param id Namespace id.
+   * @return {@link Collection} of Adapter Specification.
+   * @throws OperationException on errors.
+   */
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id) throws OperationException;
+
+  /**
+   * Remove the adapter specified by the name in a given namespace.
+   *
+   * @param id Namespace id.
+   * @param name Adapter name.
+   * @throws OperationException on errors.
+   */
+  void removeAdapter(Id.Namespace id, String name) throws OperationException;
+
+  /**
+   * Remove all the adapters in a given namespace.
+   *
+   * @param id Namespace id.
+   * @throws OperationException on errors.
+   */
+  void removeAllAdapters(Id.Namespace id) throws OperationException;
+
 }

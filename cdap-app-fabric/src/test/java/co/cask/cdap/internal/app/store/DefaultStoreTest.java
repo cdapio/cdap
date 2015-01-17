@@ -23,6 +23,9 @@ import co.cask.cdap.FlowMapReduceApp;
 import co.cask.cdap.NoProgramsApp;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.adapter.AdapterSpecification;
+import co.cask.cdap.adapter.Sink;
+import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.Output;
@@ -393,7 +396,7 @@ public class DefaultStoreTest {
     // checking that program spec in program jar was adjsuted
     Program program = store.loadProgram(programId, ProgramType.FLOW);
     Assert.assertEquals(initialInstances + 5,
-                        program.getSpecification().
+                        program.getApplicationSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
   }
 
@@ -663,4 +666,49 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
+  @Test
+  public void testAdapterMDSOperations() throws Exception {
+    Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
+
+    Map<String, String> properties = ImmutableMap.of("frequency", "10m");
+    Set<Source> sources = Sets.newHashSet(new Source("eventStream", Source.Type.STREAM,
+                                                         ImmutableMap.of("prop1", "val1")));
+
+    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
+                                                   ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
+
+    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", "batchStreamToAvro",
+                                                                     properties, sources, sinks);
+
+    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
+                                                                     properties, sources, sinks);
+
+    store.addAdapter(namespaceId, specStreamToAvro1);
+    store.addAdapter(namespaceId, specStreamToAvro2);
+
+    // Get non existing spec
+    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "nonExistingAdapter");
+    Assert.assertNull(retrievedSpec);
+
+    //Retrieve specs
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
+    Assert.assertEquals(specStreamToAvro1, retrievedSpec);
+    // Remove spec
+    store.removeAdapter(namespaceId, "streamToAvro1");
+
+    // verify the deleted spec is gone.
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
+    Assert.assertNull(retrievedSpec);
+
+    // verify the other adapter still exists
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
+    Assert.assertEquals(specStreamToAvro2, retrievedSpec);
+
+    // remove all
+    store.removeAllAdapters(namespaceId);
+
+    // verify all adapters are gone
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
+    Assert.assertNull(retrievedSpec);
+  }
 }

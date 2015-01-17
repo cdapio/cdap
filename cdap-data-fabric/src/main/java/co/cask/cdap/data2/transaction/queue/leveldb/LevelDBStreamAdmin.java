@@ -24,8 +24,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -34,8 +32,6 @@ import java.io.IOException;
  */
 @Singleton
 public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin {
-
-  private static final Logger LOG = LoggerFactory.getLogger(LevelDBStreamAdmin.class);
 
   @Inject
   public LevelDBStreamAdmin(CConfiguration conf, LevelDBOrderedTableService service) {
@@ -73,5 +69,4 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   public void updateConfig(StreamConfig config) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
-
 }

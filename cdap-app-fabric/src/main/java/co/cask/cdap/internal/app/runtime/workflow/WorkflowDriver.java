@@ -112,7 +112,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
 
-    ApplicationSpecification appSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
 
     Iterator<ScheduleProgramInfo> iterator = workflowSpec.getActions().iterator();
     int step = 0;

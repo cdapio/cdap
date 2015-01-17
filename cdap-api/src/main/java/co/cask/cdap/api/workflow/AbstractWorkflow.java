@@ -34,9 +34,7 @@ public abstract class AbstractWorkflow implements Workflow {
   /**
    * Override this method to configure this {@link Workflow}.
    */
-  protected void configure() {
-    // Default no-op
-  }
+  protected abstract void configure();
 
   /**
    * Returns the {@link WorkflowConfigurer}, only available at configuration time.

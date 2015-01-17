@@ -32,7 +32,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -226,7 +226,7 @@ public abstract class AbstractApplication implements Application {
    * @param workflowName the name of the Workflow
    */
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
-    scheduleWorkflow(schedule, workflowName, new HashMap<String, String>());
+    scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
   }
 
   /**
@@ -238,7 +238,7 @@ public abstract class AbstractApplication implements Application {
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
     scheduleWorkflow(new Schedule(scheduleName, scheduleDescription, cronTab), workflowName,
-                     new HashMap<String, String>());
+                     Collections.<String, String>emptyMap());
   }
 
   /**

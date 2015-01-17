@@ -133,7 +133,7 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public synchronized ApplicationSpecification getSpecification() {
+  public synchronized ApplicationSpecification getApplicationSpecification() {
     if (specification == null) {
       expandIfNeeded();
       try {

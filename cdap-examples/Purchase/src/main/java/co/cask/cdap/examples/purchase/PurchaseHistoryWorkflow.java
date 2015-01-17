@@ -19,7 +19,7 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
  * Implements a simple Workflow with one Workflow action to run the PurchaseHistoryBuilder 
- * MapReduce job with a schedule that runs every day at 4:00 A.M.
+ * MapReduce with a schedule that runs every day at 4:00 A.M.
  */
 public class PurchaseHistoryWorkflow extends AbstractWorkflow {
 

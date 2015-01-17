@@ -307,8 +307,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
 
     private JobKey getJobKey(Id.Program program, SchedulableProgramType programType) {
-      return new JobKey(String.format("%s:%s:%s:%s", programType.name(), program.getNamespaceId(),
-                                      program.getApplicationId(), program.getId()));
+      return new JobKey(String.format("%s:%s:%s:%s", program.getNamespaceId(), program.getApplicationId(),
+                                      programType.name(), program.getId()));
     }
 
     //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
