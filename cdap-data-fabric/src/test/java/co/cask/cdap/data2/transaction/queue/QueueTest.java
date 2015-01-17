@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * tests for queues. Extend this class to run the tests against an implementation of the queues.
+ * Tests for queues. Extend this class to run the tests against an implementation of the queues.
  */
 public abstract class QueueTest {
 
@@ -412,6 +412,40 @@ public abstract class QueueTest {
   @Test
   public void testDropAllForFlow() throws Exception {
     testClearOrDropAllForFlow(true);
+  }
+
+  @Test
+  public void testDropAllForNamespace() throws Exception {
+    // create 4 queues
+    String queueInMySpace1 = QueueName.fromFlowlet("myspace", "myapp1", "myflow1", "myflowlet1", "myout1").toString();
+    String queueInMySpace2 = QueueName.fromFlowlet("myspace", "myapp2", "myflow2", "myflowlet2", "myout2").toString();
+    String queueInYourSpace1 = QueueName.fromFlowlet("yourspace", "yourapp1", "yourflow1", "yourflowlet1",
+                                                     "yourout1").toString();
+    String queueInYourSpace2 = QueueName.fromFlowlet("yourspace", "yourapp2", "yourflow2", "yourflowlet2",
+                                                     "yourout2").toString();
+    queueAdmin.create(queueInMySpace1);
+    queueAdmin.create(queueInMySpace2);
+    queueAdmin.create(queueInYourSpace1);
+    queueAdmin.create(queueInYourSpace2);
+
+    // verify that queues got created
+    Assert.assertTrue(queueAdmin.exists(queueInMySpace1) && queueAdmin.exists(queueInMySpace2) &&
+                        queueAdmin.exists(queueInYourSpace1) && queueAdmin.exists(queueInYourSpace2));
+
+    // drop queues in namespace 'myspace'
+    queueAdmin.dropAllInNamespace("myspace");
+
+    // verify queues in 'myspace' are dropped
+    Assert.assertFalse(queueAdmin.exists(queueInMySpace1) || queueAdmin.exists(queueInMySpace2));
+
+    // but the ones in 'yourspace' still exist
+    Assert.assertTrue(queueAdmin.exists(queueInYourSpace1) && queueAdmin.exists(queueInYourSpace2));
+
+    // drop queues in 'yourspace'
+    queueAdmin.dropAllInNamespace("yourspace");
+
+    // verify queues in 'yourspace' are dropped
+    Assert.assertFalse(queueAdmin.exists(queueInYourSpace1) || queueAdmin.exists(queueInYourSpace2));
   }
 
   @Test

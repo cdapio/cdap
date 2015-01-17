@@ -212,11 +212,12 @@ public class LevelDBQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    for (String tableName : service.list()) {
-      if (tableName.startsWith(tableNamePrefix)) {
-        service.dropTable(tableName);
-      }
-    }
+    dropAllTablesWithPrefix(tableNamePrefix);
+  }
+
+  @Override
+  public void dropAllInNamespace(String namespaceId) throws Exception {
+    dropAllTablesWithPrefix(tableNamePrefix + "." + namespaceId);
   }
 
   @Override
@@ -238,5 +239,13 @@ public class LevelDBQueueAdmin implements QueueAdmin {
 
   protected String getTableNamePrefix() {
     return tableNamePrefix;
+  }
+
+  private void dropAllTablesWithPrefix(String tableNamePrefix) throws Exception {
+    for (String tableName : service.list()) {
+      if (tableName.startsWith(tableNamePrefix)) {
+        service.dropTable(tableName);
+      }
+    }
   }
 }

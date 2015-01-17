@@ -821,41 +821,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/queues")
   public void clearQueues(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ToClear.QUEUES);
+    programLifecycleHttpHandler.clearQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   @DELETE
   @Path("/streams")
   public void clearStreams(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ToClear.STREAMS);
-  }
-
-  private static enum ToClear {
-    QUEUES, STREAMS
-  }
-
-  private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
-    try {
-      getAuthenticatedAccountId(request);
-      try {
-        if (toClear == ToClear.QUEUES) {
-          queueAdmin.dropAll();
-        } else if (toClear == ToClear.STREAMS) {
-          streamAdmin.dropAll();
-        }
-        responder.sendStatus(HttpResponseStatus.OK);
-      } catch (Exception e) {
-        LOG.error("Exception clearing data fabric: ", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }  catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programLifecycleHttpHandler.clear(request, responder, Constants.DEFAULT_NAMESPACE,
+                                      ProgramLifecycleHttpHandler.ToClear.STREAMS);
   }
 
   @GET

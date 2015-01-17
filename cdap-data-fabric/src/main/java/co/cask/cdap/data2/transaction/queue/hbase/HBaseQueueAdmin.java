@@ -406,15 +406,14 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
-      String tableName = Bytes.toString(desc.getName());
-      // It's important to keep config table enabled while disabling queue tables.
-      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
-        drop(desc.getName());
-      }
-    }
+    dropTablesWithPrefix(tableNamePrefix);
     // drop config table last
     drop(Bytes.toBytes(configTableName));
+  }
+
+  @Override
+  public void dropAllInNamespace(String namespaceId) throws Exception {
+    dropTablesWithPrefix(tableNamePrefix + "." + namespaceId);
   }
 
   @Override
@@ -537,6 +536,16 @@ public class HBaseQueueAdmin implements QueueAdmin {
         LOG.info(String.format("Upgrading queue hbase table: %s", tableName));
         upgrade(tableName, properties);
         LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
+      }
+    }
+  }
+
+  private void dropTablesWithPrefix(String tableNamePrefix) throws IOException {
+    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
+      String tableName = Bytes.toString(desc.getName());
+      // It's important to keep config table enabled while disabling queue tables.
+      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+        drop(desc.getName());
       }
     }
   }

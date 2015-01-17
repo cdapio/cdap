@@ -32,6 +32,12 @@ public interface QueueAdmin extends EntityAdmin {
   void dropAll() throws Exception;
 
   /**
+   * Deletes all queues in a namespace
+   * @param namespaceId the namespace to delete flows in
+   */
+  void dropAllInNamespace(String namespaceId) throws Exception;
+
+  /**
    * Deletes all queues for a flow, for example if the flow is deleted.
    * todo: make this independent of the concept of a flow
    */

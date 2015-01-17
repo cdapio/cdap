@@ -37,6 +37,7 @@ import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -149,6 +150,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final QueueAdmin queueAdmin;
 
+  private final StreamAdmin streamAdmin;
+
   private final Scheduler scheduler;
 
   private final PreferencesStore preferencesStore;
@@ -199,7 +202,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler, PreferencesStore preferencesStore) {
+                                     StreamAdmin streamAdmin, Scheduler scheduler, PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -209,6 +212,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
   }
@@ -312,7 +316,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
-                                                                         runnableType, runnableId);
+                                                                       runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
       LOG.error("Error getting runtime args {}", e.getMessage(), e);
@@ -1023,6 +1027,47 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception : ", throwable);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /*************************** Queues APIs **************************************/
+  @DELETE
+  @Path("/queues")
+  public void clearQueues(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) {
+    clear(request, responder, namespaceId, ToClear.QUEUES);
+  }
+
+  /**
+   * Protected until /v3 APIs for streams are added
+   */
+  protected static enum ToClear {
+    QUEUES, STREAMS
+  }
+
+  protected void clear(HttpRequest request, HttpResponder responder, @Nullable String namespaceId, ToClear toClear) {
+      try {
+        if (toClear == ToClear.QUEUES) {
+          if (namespaceId == null) {
+            queueAdmin.dropAll();
+          } else {
+            queueAdmin.dropAllInNamespace(namespaceId);
+          }
+        } else if (toClear == ToClear.STREAMS) {
+          // TODO: Drops everything for now. In CDAP-773 Add API for deleting streams in a namespace.
+          streamAdmin.dropAll();
+        }
+        responder.sendStatus(HttpResponseStatus.OK);
+      } catch (SecurityException e) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      } catch (Exception e) {
+        LOG.error("Exception clearing data fabric: ", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      } catch (Throwable e) {
+        LOG.error("Caught exception", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
   }
 
 

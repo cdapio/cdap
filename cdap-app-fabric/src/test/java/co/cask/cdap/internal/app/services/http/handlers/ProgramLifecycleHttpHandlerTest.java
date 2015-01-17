@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,13 @@ import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.DequeueStrategy;
+import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.queue.QueueConsumer;
+import co.cask.cdap.data2.queue.QueueEntry;
+import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Instances;
@@ -34,6 +41,11 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -52,6 +64,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -755,6 +768,29 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, code);
   }
 
+  @Test
+  public void testDeleteQueues() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
+                                                WORDCOUNT_FLOWLET_NAME, "out");
+
+    // enqueue some data
+    enqueue(queueName, new QueueEntry("x".getBytes(Charsets.UTF_8)));
+
+    // verify it exists
+    Assert.assertTrue(dequeueOne(queueName));
+
+    // clear queue in wrong namespace
+    Assert.assertEquals(200, doDelete("/v3/namespaces/" + TEST_NAMESPACE2 + "/queues").getStatusLine().getStatusCode());
+    // verify queue is still here
+    Assert.assertTrue(dequeueOne(queueName));
+
+    // clear queue in the right namespace
+    Assert.assertEquals(200, doDelete("/v3/namespaces/" + TEST_NAMESPACE1 + "/queues").getStatusLine().getStatusCode());
+
+    // verify queue is gone
+    Assert.assertFalse(dequeueOne(queueName));
+  }
+
   @After
   public void cleanup() throws Exception {
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -765,6 +801,48 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public static void tearDown() throws Exception {
     doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1));
     doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
+  }
+
+  private  void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
+    QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
+    final QueueProducer producer = queueClientFactory.createProducer(queueName);
+    // doing inside tx
+    TransactionExecutorFactory txExecutorFactory =
+      AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
+    txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // write more than one so that we can dequeue multiple times for multiple checks
+          // we only dequeue twice, but ensure that the drop queues call drops the rest of the entries as well
+//          producer.enqueue(queueEntry);
+//          producer.enqueue(queueEntry);
+//          producer.enqueue(queueEntry);
+          int numEntries = 0;
+          while (numEntries++ < 5) {
+            producer.enqueue(queueEntry);
+          }
+        }
+      });
+  }
+
+  private boolean dequeueOne(QueueName queueName) throws Exception {
+    QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
+    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
+                                                                     new ConsumerConfig(1L, 0, 1,
+                                                                                        DequeueStrategy.ROUND_ROBIN,
+                                                                                        null),
+                                                                     1);
+    // doing inside tx
+    TransactionExecutorFactory txExecutorFactory =
+      AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
+    return txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) consumer))
+      .execute(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return !consumer.dequeue(1).isEmpty();
+        }
+      });
   }
 
   private ServiceInstances getServiceInstances(String namespace, String app, String service) throws Exception {
