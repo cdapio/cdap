@@ -47,7 +47,7 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
 
   @Override
   protected void startUp() throws Exception {
-    callLeaderCallbacks();
+    invokeLeaderListeners();
   }
 
   @Override
@@ -68,18 +68,18 @@ public final class InMemoryStreamCoordinator extends AbstractStreamCoordinator {
   @Override
   public ListenableFuture<Void> streamCreated(String streamName) {
     try {
-      callLeaderCallbacks();
+      invokeLeaderListeners();
     } catch (Exception e) {
       Throwables.propagate(e);
     }
     return Futures.immediateFuture(null);
   }
 
-  private void callLeaderCallbacks() throws Exception {
+  private void invokeLeaderListeners() throws Exception {
     Set<String> streamNames = Sets.newHashSet();
     for (StreamSpecification spec : streamMetaStore.listStreams()) {
       streamNames.add(spec.getName());
     }
-    invokeLeaderCallbacks(streamNames);
+    invokeLeaderListeners(streamNames);
   }
 }

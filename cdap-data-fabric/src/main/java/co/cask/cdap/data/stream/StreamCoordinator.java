@@ -64,7 +64,7 @@ public interface StreamCoordinator extends Service {
    *                 of a collection of streams
    * @return A {@link Cancellable} to cancel the watch
    */
-  Cancellable addLeaderCallback(StreamLeaderListener callback);
+  Cancellable addLeaderListener(StreamLeaderListener callback);
 
   /**
    * Called whenever a new stream is created.
