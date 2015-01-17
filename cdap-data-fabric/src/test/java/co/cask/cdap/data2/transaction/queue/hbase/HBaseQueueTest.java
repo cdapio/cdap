@@ -175,11 +175,21 @@ public abstract class HBaseQueueTest extends QueueTest {
     tableUtil = new HBaseTableUtilFactory().get();
   }
 
+  // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
+    Assert.assertEquals("test.system.queue.application1.flow1", tableName);
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
+    Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
+    Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
+
+    queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
+    tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
+    Assert.assertEquals("test.system.queue.testNamespace.application1.flow1", tableName);
+    Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
   }

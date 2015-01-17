@@ -187,6 +187,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return column;
   }
 
+  // TODO: CDAP-1177 Move these functions to an abstract base class to share with LevelDBQueueAdmin
   /**
    * @param queueTableName actual queue table name
    * @return namespace id that this queue belongs to

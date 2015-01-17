@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,45 @@ public class LevelDBQueueAdmin implements QueueAdmin {
     String unqualifiedTableNamePrefix =
       type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
     this.tableNamePrefix = new DefaultDatasetNamespace(conf, Namespace.SYSTEM).namespace(unqualifiedTableNamePrefix);
+  }
+
+  // TODO: CDAP-1177 Move these functions to an abstract base class to share with HBaseQueueAdmin
+  /**
+   * @param queueTableName actual queue table name
+   * @return namespace id that this queue belongs to
+   */
+  public static String getNamespaceId(String queueTableName) {
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
+    String[] parts = queueTableName.split("\\.");
+    String namespaceId;
+    if (parts.length == 5) {
+      // cdap.system.queue.<app>.<flow>
+      namespaceId = Constants.DEFAULT_NAMESPACE;
+    } else {
+      // cdap.system.queue.<namespace>.<app>.<flow>
+      namespaceId = parts[parts.length - 3];
+    }
+    return namespaceId;
+  }
+
+  /**
+   * @param queueTableName actual queue table name
+   * @return app name this queue belongs to
+   */
+  public static String getApplicationName(String queueTableName) {
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
+    String[] parts = queueTableName.split("\\.");
+    return parts[parts.length - 2];
+  }
+
+  /**
+   * @param queueTableName actual queue table name
+   * @return flow name this queue belongs to
+   */
+  public static String getFlowName(String queueTableName) {
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
+    String[] parts = queueTableName.split("\\.");
+    return parts[parts.length - 1];
   }
 
   /**
