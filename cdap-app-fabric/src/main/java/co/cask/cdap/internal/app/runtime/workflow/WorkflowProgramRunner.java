@@ -24,6 +24,8 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -45,11 +47,24 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
+  public WorkflowProgramRunner(final MapReduceProgramRunner mapReduceProgramRunner,
+                               final SparkProgramRunner sparkProgramRunner,
                                ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService) {
-    this.programRunnerFactory = programRunnerFactory;
+    this.programRunnerFactory = new ProgramRunnerFactory() {
+      @Override
+      public ProgramRunner create(Type programType) {
+        switch (programType) {
+          case MAPREDUCE:
+            return mapReduceProgramRunner;
+          case SPARK:
+            return sparkProgramRunner;
+          default:
+            return null;
+        }
+      }
+    };
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
