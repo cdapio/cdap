@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -37,13 +38,22 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.test.SlowTests;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * metrics table test for levelDB.
@@ -83,6 +93,36 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   @AfterClass
   public static void tearDown() throws Exception {
     testHBase.stopHBase();
+  }
+
+  @Override
+  @Test
+  public void testConcurrentIncrement() throws Exception {
+    final MetricsTable table = getTable("testConcurrentIncrement");
+    final int rounds = 500;
+    Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);
+    Map<byte[], Long> inc2 = ImmutableMap.of(Y, 1L, Z, 2L);
+    // HTable used by HBaseMetricsTable is not thread safe, so each thread must use a separate instance
+    // HBaseMetricsTable does not support mixed increment and incrementAndGet so the
+    // updates and assertions here are different from MetricsTableTest.testConcurrentIncrement()
+    Collection<? extends Thread> threads =
+        ImmutableList.of(new IncThread(getTable("testConcurrentIncrement"), A, inc1, rounds),
+            new IncThread(getTable("testConcurrentIncrement"), A, inc2, rounds),
+            new IncAndGetThread(getTable("testConcurrentIncrement"), A, R, 5, rounds),
+            new IncAndGetThread(getTable("testConcurrentIncrement"), A, R, 2, rounds));
+    for (Thread t : threads) {
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+      if (t instanceof Closeable) {
+        ((Closeable) t).close();
+      }
+    }
+    assertEquals(rounds, Bytes.toLong(table.get(A, X)));
+    assertEquals(3 * rounds, Bytes.toLong(table.get(A, Y)));
+    assertEquals(2 * rounds, Bytes.toLong(table.get(A, Z)));
+    assertEquals(7 * rounds, Bytes.toLong(table.get(A, R)));
   }
 
   @Override
