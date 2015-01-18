@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
@@ -99,4 +100,18 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @param dataset the output dataset
    */
   void setOutput(String datasetName, Dataset dataset);
+
+  /**
+   * Overrides the resources, such as memory and virtual cores, to use for each mapper of this MapReduce job.
+   *
+   * @param resources Resources that each mapper should use.
+   */
+  void setMapperResources(Resources resources);
+
+  /**
+   * Override the resources, such as memory and virtual cores, to use for each reducer of this MapReduce job.
+   *
+   * @param resources Resources that each reducer should use.
+   */
+  void setReducerResources(Resources resources);
 }

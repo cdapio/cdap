@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-metrics:
 
@@ -166,7 +166,7 @@ aggregate of a metric over time. The following request will return the total num
 
 If the metric is a gauge type, the aggregate will return the latest value set for the metric.
 
-This request will retrieve the completion percentage for the map-stage of the MapReduce Job ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
+This request will retrieve the completion percentage for the map-stage of the MapReduce ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
 
   GET <base-ur>/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
 

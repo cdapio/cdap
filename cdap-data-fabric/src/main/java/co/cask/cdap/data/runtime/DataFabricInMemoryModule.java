@@ -15,21 +15,11 @@
  */
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
-import co.cask.cdap.data.stream.StreamCoordinator;
-import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
-import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamFileAdmin;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
@@ -47,12 +37,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
-    bind(StreamAdmin.class).to(InMemoryStreamFileAdmin.class).in(Singleton.class);
-
-    bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Singleton.class);
-    bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
-    bind(StreamConsumerStateStoreFactory.class).to(InMemoryStreamConsumerStateStoreFactory.class).in(Singleton.class);
-    bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);
 
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);

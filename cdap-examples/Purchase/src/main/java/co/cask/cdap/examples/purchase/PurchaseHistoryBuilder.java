@@ -18,6 +18,7 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -37,16 +38,18 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 
 /**
- * MapReduce job that reads purchases from the purchases DataSet and creates a purchase history for every user
+ * MapReduce that reads purchases from the purchases DataSet and creates a purchase history for every user
  */
 public class PurchaseHistoryBuilder extends AbstractMapReduce {
-
+  public static final String MAPPER_MEMORY_MB = "mapper.memory.mb";
+  public static final String REDUCER_MEMORY_MB = "reducer.memory.mb";
 
   @Override
   public void configure() {
-    setDescription("Purchase History Builder MapReduce job");
+    setDescription("Purchase History Builder");
     useDatasets("frequentCustomers");
     setInputDataset("purchases");
     setOutputDataset("history");
@@ -59,6 +62,17 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
     job.setReducerClass(PerUserReducer.class);
+
+    // override default memory usage if the corresponding runtime arguments are set.
+    Map<String, String> runtimeArgs = context.getRuntimeArguments();
+    String mapperMemoryMBStr = runtimeArgs.get(MAPPER_MEMORY_MB);
+    if (mapperMemoryMBStr != null) {
+      context.setMapperResources(new Resources(Integer.parseInt(mapperMemoryMBStr)));
+    }
+    String reducerMemoryMBStr = runtimeArgs.get(REDUCER_MEMORY_MB);
+    if (reducerMemoryMBStr != null) {
+      context.setReducerResources(new Resources(Integer.parseInt(reducerMemoryMBStr)));
+    }
   }
 
   /**

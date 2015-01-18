@@ -420,15 +420,17 @@ public class IncrementSummingScannerTest {
   }
 
   private HRegion createRegion(TableName tableName, byte[] family) throws Exception {
+    return createRegion(conf, tableName, new HColumnDescriptor(family));
+  }
+
+  static HRegion createRegion(Configuration hConf, TableName tableName, HColumnDescriptor cfd) throws Exception {
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    HColumnDescriptor cfd = new HColumnDescriptor(family);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
     Path tablePath = new Path("/tmp/" + tableName.getNameAsString());
     Path hlogPath = new Path("/tmp/hlog-" + tableName.getNameAsString());
-    Configuration hConf = conf;
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
     HLog hLog = HLogFactory.createHLog(fs, hlogPath, tableName.getNameAsString(), hConf);

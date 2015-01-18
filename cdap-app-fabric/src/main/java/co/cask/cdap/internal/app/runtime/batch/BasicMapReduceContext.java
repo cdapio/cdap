@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
@@ -71,6 +71,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private Job job;
   private Dataset outputDataset;
   private Dataset inputDataset;
+  private Resources mapperResources;
+  private Resources reducerResources;
 
   public BasicMapReduceContext(Program program,
                                MapReduceMetrics.TaskType type,
@@ -114,6 +116,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
     this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.spec = spec;
+    this.mapperResources = spec.getMapperResources();
+    this.reducerResources = spec.getReducerResources();
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
     this.outputDatasetName = spec.getOutputDataSet();
@@ -238,6 +242,16 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return null;
   }
 
+  @Override
+  public void setMapperResources(Resources resources) {
+    this.mapperResources = resources;
+  }
+
+  @Override
+  public void setReducerResources(Resources resources) {
+    this.reducerResources = resources;
+  }
+
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, MetricsScope scope,
                                                      Program program, MapReduceMetrics.TaskType type, String runId) {
     if (service == null) {
@@ -291,6 +305,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Nullable
   public String getOutputDatasetName() {
     return outputDatasetName;
+  }
+
+  public Resources getMapperResources() {
+    return mapperResources;
+  }
+
+  public Resources getReducerResources() {
+    return reducerResources;
   }
 
   public void flushOperations() throws Exception {

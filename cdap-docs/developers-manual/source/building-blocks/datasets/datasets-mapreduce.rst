@@ -1,22 +1,22 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _datasets-map-reduce-jobs:
+.. _datasets-mapreduce-programs:
 
 ============================================
-Datasets and MapReduce Jobs
+Datasets and MapReduce Programs
 ============================================
 
 .. highlight:: java
 
-A MapReduce job can interact with a Dataset by using it as an input or an output.
+A MapReduce program can interact with a Dataset by using it as an input or an output.
 The Dataset needs to implement specific interfaces to support this.
 
 
-.. rubric:: A Dataset as the Input Source of a MapReduce Job
+.. rubric:: A Dataset as the Input Source of a MapReduce Program
 
-When you run a MapReduce job, you can configure it to read its input from a Dataset. The
+When you run a MapReduce program, you can configure it to read its input from a Dataset. The
 source Dataset must implement the ``BatchReadable`` interface, which requires two methods::
 
   public interface BatchReadable<KEY, VALUE> {
@@ -25,7 +25,7 @@ source Dataset must implement the ``BatchReadable`` interface, which requires tw
   }
 
 These two methods complement each other: ``getSplits()`` must return all splits of the Dataset
-that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to
+that the MapReduce program will read; ``createSplitReader()`` is then called in every Mapper to
 read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader
 must match the input key and value type parameters of the Mapper.
 
@@ -55,10 +55,10 @@ To read a range of keys and give a hint that you want 16 splits, write::
   }
 
 
-.. rubric:: A Dataset as the Output Destination of a MapReduce Job
+.. rubric:: A Dataset as the Output Destination of a MapReduce Program
 
 Just as you have the option to read input from a Dataset, you have the option to write to a Dataset as
-the output destination of a MapReduce job if that Dataset implements the ``BatchWritable``
+the output destination of a MapReduce program if that Dataset implements the ``BatchWritable``
 interface::
 
   public interface BatchWritable<KEY, VALUE> {

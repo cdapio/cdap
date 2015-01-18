@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-logging:
 
@@ -13,9 +13,8 @@ Logging HTTP RESTful API
 
 Downloading Logs
 ----------------
-Logs emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs, or
-*Services* running in CDAP can be downloaded with the Logging HTTP API. To do
-that, send an HTTP GET request::
+Logs emitted by a *Flow*, *MapReduce*, *Procedure*, *Service*, or *Spark* program running in CDAP can be
+downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
 
@@ -28,9 +27,9 @@ that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``procedures``, ``services``, or ``spark``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *Procedure*, *MapReduce* job, *Service*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Procedure*, *Service*, *Spark*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 

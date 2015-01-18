@@ -15,6 +15,10 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
+
+import java.util.List;
+
 /**
  * A temporary place for hosting MDS access logic for streams.
  */
@@ -36,4 +40,9 @@ public interface StreamMetaStore {
    * Checks if a stream exists in the meta store.
    */
   boolean streamExists(String accountId, String streamName) throws Exception;
+
+  /**
+   * List all stream specifications.
+   */
+  List<StreamSpecification> listStreams() throws Exception;
 }

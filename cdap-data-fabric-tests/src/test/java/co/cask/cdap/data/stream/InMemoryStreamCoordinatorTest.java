@@ -19,12 +19,13 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.junit.BeforeClass;
 
 /**
@@ -42,12 +43,13 @@ public class InMemoryStreamCoordinatorTest extends StreamCoordinatorTestBase {
       new DataFabricModules().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
-        }
-      }
+      Modules.override(new StreamAdminModules().getInMemoryModules())
+        .with(new AbstractModule() {
+                @Override
+                protected void configure() {
+                  bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+                }
+              })
     );
   }
 

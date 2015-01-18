@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _datasets-fileset:
 
@@ -21,7 +21,7 @@ A FileSet represents a set of files on the file system that share certain proper
   base path, which is created when the FileSet is created. Deleting the
   FileSet will also delete this directory and all the files it contains.
 - The Hadoop input and output format. They are given as dataset properties by their
-  class names.  When a FileSet is used as the input or output of a MapReduce Job,
+  class names.  When a FileSet is used as the input or output of a MapReduce program,
   these classes are injected into the Hadoop configuration by the CDAP runtime
   system.
 - Additional properties of the specified input and output format. Each format has its own 
@@ -34,7 +34,7 @@ These properties are configured at the time the FileSet is created. They apply t
 files in the Dataset. Every time you use a FileSet in your application code, you can
 address either the entire Dataset or, by specifying its relative path as a runtime argument,
 an individual file in the Dataset. Specifying an individual file is only supported for
-MapReduce Jobs.
+MapReduce programs.
 
 Support for FileSet datasets is experimental in CDAP 2.6.0.
 
@@ -68,13 +68,13 @@ specifications.
 
 If you do not specify a base path, the dataset framework will generate a path
 based on the dataset name. If you do not specify an input format, you will not be able
-to use this as the input for a MapReduce Job; similarly, for the output format.
+to use this as the input for a MapReduce program; similarly, for the output format.
 
 
 Using a FileSet in MapReduce
 ============================
 
-Using a FileSet as input or output of a MapReduce Job is the same as for any other Dataset::
+Using a FileSet as input or output of a MapReduce program is the same as for any other Dataset::
 
   public class WordCount extends AbstractMapReduce {
 
@@ -89,7 +89,7 @@ The MapReduce program only needs to specify the names of the input and output da
 Whether they are FileSets or another type of Dataset is handled by the CDAP runtime system.
 
 However, you do need to tell CDAP the relative paths of the input and output files. Currently,
-this is only possible by specifying them as runtime arguments when the MapReduce Job is started::
+this is only possible by specifying them as runtime arguments when the MapReduce program is started::
 
   curl -v <base-url>/apps/FileSetExample/mapreduce/WordCount/start -d '{ \
       "dataset.lines.input.paths":  "monday/my.txt", \
@@ -99,7 +99,7 @@ Note that for the input you can specify multiple paths separated by commas::
 
       "dataset.lines.input.paths":  "monday/lines.txt,tuesday/lines.txt"
 
-If you do not specify both the input and output paths, your MapReduce Job will fail with an error.
+If you do not specify both the input and output paths, your MapReduce program will fail with an error.
 
 Using a FileSet Programmatically
 ================================
