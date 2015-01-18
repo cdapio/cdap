@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
@@ -150,13 +151,14 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
-  public List<String> getSchedules(String appId, String wflowId) {
+  public List<ScheduleSpecification> getSchedules(String appId, String wflowId) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowSchedules(request, responder, appId, wflowId);
+    httpHandler.getWorkflowSchedules(request, responder, appId, wflowId);
 
-    List<String> schedules = responder.decodeResponseContent(new TypeToken<List<String>>() { });
+    List<ScheduleSpecification> schedules = responder.decodeResponseContent(
+      new TypeToken<List<ScheduleSpecification>>() { });
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
   }

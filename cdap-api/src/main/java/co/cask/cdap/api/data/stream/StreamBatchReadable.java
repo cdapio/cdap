@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
@@ -122,7 +123,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   /**
    * Specifies to use the given stream as input of a MapReduce job, using the given {@link FormatSpecification}
    * describing how to read the body of a stream. Using this method means your mapper must use a
-   * mapreduce LongWritable as the map key and a {@link StructuredRecord} as the map value.
+   * mapreduce LongWritable as the map key and {@link GenericStreamEventData} as the map value.
    *
    * @param context The context of the MapReduce job
    * @param streamName Name of the stream

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,39 +18,29 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 
 /**
  *
  */
-public class OneActionWorkflowApp extends AbstractApplication {
+public class MissingSparkWorkflowApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("OneActionWorkflowApp");
-    setDescription("Workflow with a single action");
-    addWorkflow(new OneActionWorkflow());
+    setName("MissingSparkWorkflowApp");
+    setDescription("Application without any Spark program");
+    addWorkflow(new MissingSparkWorkflow());
   }
 
   /**
    *
    */
-  private static class OneActionWorkflow extends AbstractWorkflow {
+  private static class MissingSparkWorkflow extends AbstractWorkflow {
 
     @Override
     public void configure() {
-        setName("OneActionWorkflow");
-        setDescription("One action workflow");
-        addAction(new EmptyAction());
-    }
-  }
-
-  /**
-   *
-   */
-  private static class EmptyAction extends AbstractWorkflowAction {
-    @Override
-    public void run() {
+      setName("MissingSparkWorkflow");
+      setDescription("Workflow configured with non-existent Spark program");
+      addSpark("SomeSparkProgram");
     }
   }
 }

@@ -179,7 +179,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(runIdOption, "Missing runId");
       RunId runId = RunIds.fromString(runIdOption);
 
-      ApplicationSpecification appSpec = program.getSpecification();
+      ApplicationSpecification appSpec = program.getApplicationSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
       ProgramType processorType = program.getType();
@@ -605,7 +605,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private SchemaCache createSchemaCache(Program program) throws Exception {
     ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
 
-    for (FlowSpecification flowSpec : program.getSpecification().getFlows().values()) {
+    for (FlowSpecification flowSpec : program.getApplicationSpecification().getFlows().values()) {
       for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
         schemas.addAll(Iterables.concat(flowletDef.getInputs().values()));
         schemas.addAll(Iterables.concat(flowletDef.getOutputs().values()));

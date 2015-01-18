@@ -27,6 +27,7 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -71,12 +72,13 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
   }
 
   // reads input from the stream and records the last timestamp that the body was seen
-  public static class StreamMapper extends Mapper<LongWritable, StructuredRecord, byte[], byte[]> {
+  public static class StreamMapper extends
+    Mapper<LongWritable, GenericStreamEventData<StructuredRecord>, byte[], byte[]> {
 
     @Override
-    public void map(LongWritable key, StructuredRecord streamEvent, Context context)
+    public void map(LongWritable key, GenericStreamEventData<StructuredRecord> eventData, Context context)
       throws IOException, InterruptedException {
-      context.write(Bytes.toBytes((String) streamEvent.get("body")), Bytes.toBytes(key.get()));
+      context.write(Bytes.toBytes((String) eventData.getBody().get("body")), Bytes.toBytes(key.get()));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -25,6 +30,8 @@ import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -104,10 +111,35 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ClassLoader classLoader = program.getClassLoader();
 
     // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
-    Iterator<WorkflowActionSpecification> iterator = workflowSpec.getActions().iterator();
+
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
+
+    Iterator<ScheduleProgramInfo> iterator = workflowSpec.getActions().iterator();
     int step = 0;
     while (running && iterator.hasNext()) {
-      WorkflowActionSpecification actionSpec = iterator.next();
+      WorkflowActionSpecification actionSpec;
+      ScheduleProgramInfo actionInfo = iterator.next();
+      switch (actionInfo.getProgramType()) {
+        case MAPREDUCE:
+          MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
+          actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(mapReduceSpec.getName(),
+                                                                                        mapReduceSpec.getName(),
+                                                 SchedulableProgramType.MAPREDUCE));
+          break;
+        case SPARK:
+          SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
+          actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(sparkSpec.getName(),
+                                                                                        sparkSpec.getName(),
+                                                 SchedulableProgramType.SPARK));
+          break;
+        case CUSTOM_ACTION:
+          actionSpec = workflowSpec.getCustomActionMap().get(actionInfo.getProgramName());
+          break;
+        default:
+          LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
+                    actionInfo.getProgramName());
+          throw new IllegalStateException("Workflow stopped without executing all tasks");
+      }
       workflowStatus = new WorkflowStatus(state(), actionSpec, step++);
 
       WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
