@@ -18,6 +18,8 @@ package co.cask.cdap.data.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
+import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
@@ -147,6 +149,30 @@ public class DelimitedStringsRecordFormatTest {
     StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
     String[] actual = output.get("body");
     String[] expected = body.split(" ");
+    Assert.assertArrayEquals(expected, actual);
+  }
+
+  @Test
+  public void testCSV() throws Exception {
+    FormatSpecification spec = new FormatSpecification(Formats.CSV, null, Collections.<String, String>emptyMap());
+    RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
+
+    String body = "userX,actionY,itemZ";
+    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    String[] actual = output.get("body");
+    String[] expected = body.split(",");
+    Assert.assertArrayEquals(expected, actual);
+  }
+
+  @Test
+  public void testTSV() throws Exception {
+    FormatSpecification spec = new FormatSpecification(Formats.TSV, null, Collections.<String, String>emptyMap());
+    RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
+
+    String body = "userX\tactionY\titemZ";
+    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    String[] actual = output.get("body");
+    String[] expected = body.split("\t");
     Assert.assertArrayEquals(expected, actual);
   }
 

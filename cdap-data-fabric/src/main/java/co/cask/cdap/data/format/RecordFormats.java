@@ -77,6 +77,7 @@ public final class RecordFormats {
         mergedSettings.putAll(spec.getSettings());
       }
       FormatSpecification mergedSpec = new FormatSpecification(name, spec.getSchema(), mergedSettings);
+      format.initialize(mergedSpec);
     } else {
       format.initialize(spec);
     }
