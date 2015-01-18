@@ -64,7 +64,7 @@ public interface Program {
   /**
    * Returns the complete application specification that contains this program.
    */
-  ApplicationSpecification getSpecification();
+  ApplicationSpecification getApplicationSpecification();
 
   /**
    * Returns the location of the jar file of this program.

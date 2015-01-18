@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
@@ -38,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -107,6 +110,32 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
       result = getVerifier(programSpec.getClass()).verify(appId, programSpec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
+      }
+    }
+
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
+      List<ScheduleProgramInfo> programs = entry.getValue().getActions();
+      for (ScheduleProgramInfo program : programs) {
+        switch (program.getProgramType()) {
+          case MAPREDUCE:
+            if (!specification.getMapReduce().containsKey(program.getProgramName())) {
+              throw new RuntimeException(String.format("MapReduce program '%s' is not configured with the Application.",
+                                                       program.getProgramName()));
+            }
+            break;
+          case SPARK:
+            if (!specification.getSpark().containsKey(program.getProgramName())) {
+              throw new RuntimeException(String.format("Spark program '%s' is not configured with the Application.",
+                                                       program.getProgramName()));
+            }
+            break;
+          case CUSTOM_ACTION:
+            // no-op
+            break;
+          default:
+            throw new RuntimeException(String.format("Unknown Program '%s', Program Type '%s' in the Workflow.",
+                                                     program.getProgramName()));
+        }
       }
     }
 

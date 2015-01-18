@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,10 @@ public class PurchaseApp extends AbstractApplication {
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
-    // Run a MapReduce job on the acquired data using a Workflow
+    // Specify a MapReduce to run on the acquired data
+    addMapReduce(new PurchaseHistoryBuilder());
+
+    // Run a Workflow that uses the MapReduce to run on the acquired data
     addWorkflow(new PurchaseHistoryWorkflow());
 
     // Retrieve the processed data using a Service
@@ -58,6 +61,9 @@ public class PurchaseApp extends AbstractApplication {
 
     // Provide a Service to Application components
     addService(new CatalogLookupService());
+
+    // Schedule the workflow
+    scheduleWorkflow("DailySchedule", "0 4 * * *", "PurchaseHistoryWorkflow");
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());

@@ -644,15 +644,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                                    appId, workflowId);
   }
 
+  //TODO [SAGAR]: CDAP-1155: Implement API to get ScheduleSpecification given schedule name
   /**
    * Returns the schedule ids for a given workflow.
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
                                 @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.workflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.getWorkflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                   appId, workflowId);
   }
 

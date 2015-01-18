@@ -102,7 +102,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
@@ -134,7 +134,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
-                                program.getSpecification().getDatasets().keySet(), spec,
+                                program.getApplicationSpecification().getDatasets().keySet(), spec,
                                 logicalStartTime,
                                 workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, cConf);

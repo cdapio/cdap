@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
@@ -121,21 +122,21 @@ public class TestFrameworkTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
     try {
       WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
-      List<String> schedules = wfmanager.getSchedules();
+      List<ScheduleSpecification> schedules = wfmanager.getSchedules();
       Assert.assertEquals(1, schedules.size());
-      String scheduleId = schedules.get(0);
-      Assert.assertNotNull(scheduleId);
-      Assert.assertFalse(scheduleId.isEmpty());
+      String scheduleName = schedules.get(0).getSchedule().getName();
+      Assert.assertNotNull(scheduleName);
+      Assert.assertFalse(scheduleName.isEmpty());
 
       List<RunRecord> history;
       int workflowRuns = 0;
       workFlowHistoryCheck(5, wfmanager, 0);
 
-      String status = wfmanager.getSchedule(scheduleId).status();
+      String status = wfmanager.getSchedule(scheduleName).status();
       Assert.assertEquals("SCHEDULED", status);
 
-      wfmanager.getSchedule(scheduleId).suspend();
-      workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
+      wfmanager.getSchedule(scheduleName).suspend();
+      workFlowStatusCheck(5, scheduleName, wfmanager, "SUSPENDED");
 
       TimeUnit.SECONDS.sleep(3);
       history = wfmanager.getHistory();
@@ -146,24 +147,24 @@ public class TestFrameworkTest extends TestBase {
       int workflowRunsAfterSuspend = wfmanager.getHistory().size();
       Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-      wfmanager.getSchedule(scheduleId).resume();
+      wfmanager.getSchedule(scheduleName).resume();
 
       //Check that after resume it goes to "SCHEDULED" state
-      workFlowStatusCheck(5, scheduleId, wfmanager, "SCHEDULED");
+      workFlowStatusCheck(5, scheduleName, wfmanager, "SCHEDULED");
 
       workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
 
       //check scheduled state
-      Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
+      Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status());
 
       //check status of non-existent schedule
       Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status());
 
       //suspend the schedule
-      wfmanager.getSchedule(scheduleId).suspend();
+      wfmanager.getSchedule(scheduleName).suspend();
 
       //Check that after suspend it goes to "SUSPENDED" state
-      workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
+      workFlowStatusCheck(5, scheduleName, wfmanager, "SUSPENDED");
 
     } finally {
       applicationManager.stopAll();

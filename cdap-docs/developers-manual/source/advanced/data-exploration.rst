@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _data-exploration:
 
@@ -264,7 +264,7 @@ Writing Records
 ...............
 
 To enable inserting SQL query results, a Dataset needs to provide a means of writing a record into itself.
-This is similar to how the ``BatchWritable`` interface makes Datasets writable from MapReduce jobs by providing
+This is similar to how the ``BatchWritable`` interface makes Datasets writable from MapReduce programs by providing
 a way to write pairs of key and value. You need to implement the ``RecordWritable`` method::
 
   void write(RECORD record) throws IOException;

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _cli:
 
@@ -111,10 +111,10 @@ These are the available commands:
    ``get flow runtimeargs <app-id.flow-id>``,"Gets the runtime arguments of a Flow"
    ``get flow status <app-id.flow-id>``,"Gets the status of a Flow"
    ``get flowlet instances <app-id.flow-id.flowlet-id>``,"Gets the instances of a Flowlet"
-   ``get mapreduce logs <app-id.mapreduce-id> [<start-time>] [<end-time>]``,"Gets the logs of a MapReduce Job"
-   ``get mapreduce runs <app-id.mapreduce-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a MapReduce Job"
-   ``get mapreduce runtimeargs <app-id.mapreduce-id>``,"Gets the runtime arguments of a MapReduce Job"
-   ``get mapreduce status <app-id.mapreduce-id>``,"Gets the status of a MapReduce Job"
+   ``get mapreduce logs <app-id.mapreduce-id> [<start-time>] [<end-time>]``,"Gets the logs of a MapReduce program"
+   ``get mapreduce runs <app-id.mapreduce-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a MapReduce program"
+   ``get mapreduce runtimeargs <app-id.mapreduce-id>``,"Gets the runtime arguments of a MapReduce program"
+   ``get mapreduce status <app-id.mapreduce-id>``,"Gets the status of a MapReduce program"
    ``get procedure instances <app-id.procedure-id>``,"Gets the instances of a Procedure"
    ``get procedure live <app-id.procedure-id>``,"Gets the live info of a Procedure"
    ``get procedure logs <app-id.procedure-id> [<start-time>] [<end-time>]``,"Gets the logs of a Procedure"
@@ -140,7 +140,7 @@ These are the available commands:
    ``list dataset modules``,"Lists Dataset modules"
    ``list dataset types``,"Lists Dataset types"
    ``list flows``,"Lists Flows"
-   ``list mapreduce``,"Lists MapReduce Jobs"
+   ``list mapreduce``,"Lists MapReduce programs"
    ``list procedures``,"Lists Procedures"
    ``list programs``,"Lists all programs"
    ``list services``,"Lists Services"
@@ -152,7 +152,7 @@ These are the available commands:
    **Setting**
    ``set flow runtimeargs <app-id.flow-id> <runtime-args>``,"Sets the runtime arguments of a Flow. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``set flowlet instances <app-id.flow-id.flowlet-id> <num-instances>``,"Sets the instances of a Flowlet"
-   ``set mapreduce runtimeargs <app-id.mapreduce-id> <runtime-args>``,"Sets the runtime arguments of a MapReduce Job. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``set mapreduce runtimeargs <app-id.mapreduce-id> <runtime-args>``,"Sets the runtime arguments of a MapReduce program. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``set procedure instances <app-id.procedure-id> <num-instances>``,"Sets the instances of a Procedure"
    ``set procedure runtimeargs <app-id.procedure-id> <runtime-args>``,"Sets the runtime arguments of a Procedure. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``set runnable instances <app-id.service-id.runnable-id> <num-instances>``,"Sets the instances of a Runnable"
@@ -162,17 +162,17 @@ These are the available commands:
    ``set workflow runtimeargs <app-id.workflow-id> <runtime-args>``,"Sets the runtime arguments of a Workflow. <runtime-args> is specified in the format ""key1=a key2=b"""
    **Starting**
    ``start flow <app-id.flow-id> [<runtime-args>]``,"Starts a Flow. <runtime-args> is specified in the format ""key1=a key2=b"""
-   ``start mapreduce <app-id.mapreduce-id> [<runtime-args>]``,"Starts a MapReduce Job. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start mapreduce <app-id.mapreduce-id> [<runtime-args>]``,"Starts a MapReduce program. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``start procedure <app-id.procedure-id> [<runtime-args>]``,"Starts a Procedure. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``start service <app-id.service-id> [<runtime-args>]``,"Starts a Service. <runtime-args> is specified in the format ""key1=a key2=b"""
-   ``start spark <app-id.spark-id> [<runtime-args>]``,"Starts a Spark Program. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start spark <app-id.spark-id> [<runtime-args>]``,"Starts a Spark program. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``start workflow <app-id.workflow-id> [<runtime-args>]``,"Starts a Workflow. <runtime-args> is specified in the format ""key1=a key2=b"""
    **Stopping**
    ``stop flow <app-id.flow-id>``,"Stops a Flow"
-   ``stop mapreduce <app-id.mapreduce-id>``,"Stops a MapReduce Job"
+   ``stop mapreduce <app-id.mapreduce-id>``,"Stops a MapReduce program"
    ``stop procedure <app-id.procedure-id>``,"Stops a Procedure"
    ``stop service <app-id.service-id>``,"Stops a Service"
-   ``stop spark <app-id.spark-id>``,"Stops a Spark Program"
+   ``stop spark <app-id.spark-id>``,"Stops a Spark program"
    ``stop workflow <app-id.workflow-id>``,"Stops a Workflow"
    **Truncating**
    ``truncate dataset instance <dataset-name>``,"Truncates a Dataset"

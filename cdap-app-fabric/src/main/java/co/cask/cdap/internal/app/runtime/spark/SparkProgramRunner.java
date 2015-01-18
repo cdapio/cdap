@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -80,7 +80,7 @@ public class SparkProgramRunner implements ProgramRunner {
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     // Extract and verify parameters
-    final ApplicationSpecification appSpec = program.getSpecification();
+    final ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
@@ -109,7 +109,7 @@ public class SparkProgramRunner implements ProgramRunner {
     }
 
     final BasicSparkContext context = new BasicSparkContext(program, runId, options.getUserArguments(),
-                                                            program.getSpecification().getDatasets().keySet(), spec,
+                                                            appSpec.getDatasets().keySet(), spec,
                                                             logicalStartTime, workflowBatch,
                                                             metricsCollectionService, datasetFramework, cConf,
                                                             discoveryServiceClient, streamAdmin);
