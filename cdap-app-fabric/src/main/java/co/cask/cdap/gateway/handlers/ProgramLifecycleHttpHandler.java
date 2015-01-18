@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -64,6 +66,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -803,7 +806,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, ProgramType.WORKFLOW);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
 
       JsonArray array = new JsonArray();
       for (ScheduledRuntime runtime : runtimes) {
@@ -822,20 +825,32 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the schedule ids for a given workflow.
+   * Get Workflow schedules
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void workflowSchedules(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("workflow-id") String workflowId) {
     try {
-      Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, ProgramType.WORKFLOW));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+      if (appSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
+        return;
+      }
+
+      List<ScheduleSpecification> specList = Lists.newArrayList();
+      for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
+        ScheduleSpecification spec = entry.getValue();
+        if (spec.getProgram().getProgramName().equals(workflowId) &&
+          spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
+          specList.add(entry.getValue());
+        }
+      }
+      responder.sendJson(HttpResponseStatus.OK, specList);
+    } catch (OperationException ex) {
+      LOG.warn("Error while getting schedule specifications for the workflow {}: {}", workflowId, ex.getMessage());
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -844,14 +859,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Get schedule state.
    */
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/status")
   public void getScheduleState(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                               @PathParam("workflow-id") String workflowId,
-                              @PathParam("schedule-id") String scheduleId) {
+                              @PathParam("schedule-name") String scheduleName) {
     try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
       JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
+      json.addProperty("status", scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW,
+                                                         scheduleName).toString());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -865,19 +882,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Suspend a workflow schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                       @PathParam("workflow-id") String workflowId,
-                                      @PathParam("schedule-id") String scheduleId) {
+                                      @PathParam("schedule-name") String scheduleName) {
     try {
-      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
+      Scheduler.ScheduleState state = scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW, scheduleName);
       switch (state) {
         case NOT_FOUND:
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
           break;
         case SCHEDULED:
-          scheduler.suspendSchedule(scheduleId);
+          scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW, scheduleName);
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
         case SUSPENDED:
@@ -896,13 +914,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Resume a workflow schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                      @PathParam("workflow-id") String workflowId,
-                                     @PathParam("schedule-id") String scheduleId) {
+                                     @PathParam("schedule-name") String scheduleName) {
     try {
-      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
+      Scheduler.ScheduleState state = scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW, scheduleName);
       switch (state) {
         case NOT_FOUND:
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -911,7 +930,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
           break;
         case SUSPENDED:
-          scheduler.resumeSchedule(scheduleId);
+          scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW, scheduleName);
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
       }

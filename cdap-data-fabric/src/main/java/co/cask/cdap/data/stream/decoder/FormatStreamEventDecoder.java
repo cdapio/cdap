@@ -18,54 +18,43 @@ package co.cask.cdap.data.stream.decoder;
 
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import com.google.common.collect.Lists;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.LongWritable;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link StreamEventDecoder} that decodes {@link StreamEvent} into {@link LongWritable} as key
- * and {@link StructuredRecord} as value for Mapper input. The key carries the event timestamp, while
- * the value is the stream event body formatted by some {@link RecordFormat}.
+ * and {@link GenericStreamEventData} as value for Mapper input. The key carries the event timestamp, while
+ * the value is a {@link GenericStreamEventData>}, which contains the event headers and the event body
+ * formatted by some {@link RecordFormat}.
+ *
+ * @param <T> Type of the stream body.
  */
-public final class FormatStreamEventDecoder implements StreamEventDecoder<LongWritable, StructuredRecord> {
-  private static final String HEADERS_FIELD = "headers";
+public final class FormatStreamEventDecoder<T> implements StreamEventDecoder<LongWritable, GenericStreamEventData<T>> {
   private final LongWritable key = new LongWritable();
-  private final RecordFormat<ByteBuffer, StructuredRecord> bodyFormat;
-  private final Schema eventSchema;
-  private final Schema bodySchema;
+  private final RecordFormat<ByteBuffer, T> bodyFormat;
 
   /**
    * Create a decoder for stream events that decodes the body of the stream using the given initialized format.
    *
    * @param bodyFormat Initialized format.
    */
-  public FormatStreamEventDecoder(RecordFormat<ByteBuffer, StructuredRecord> bodyFormat) {
+  public FormatStreamEventDecoder(RecordFormat<ByteBuffer, T> bodyFormat) {
     this.bodyFormat = bodyFormat;
-    this.bodySchema = bodyFormat.getSchema();
-    List<Schema.Field> fields = Lists.newArrayList(
-      Schema.Field.of(HEADERS_FIELD, Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))
-    );
-    fields.addAll(bodySchema.getFields());
-    this.eventSchema = Schema.recordOf("streamEvent", fields);
   }
 
   @Override
-  public DecodeResult<LongWritable, StructuredRecord> decode(StreamEvent event,
-                                                             DecodeResult<LongWritable, StructuredRecord> result) {
+  public DecodeResult<LongWritable, GenericStreamEventData<T>> decode(
+    StreamEvent event, DecodeResult<LongWritable, GenericStreamEventData<T>> result) {
     key.set(event.getTimestamp());
-    StructuredRecord.Builder builder = StructuredRecord.builder(eventSchema)
-      .set(HEADERS_FIELD, event.getHeaders());
-    StructuredRecord body = bodyFormat.read(event.getBody());
-    for (Schema.Field field : bodySchema.getFields()) {
-      String fieldName = field.getName();
-      builder.set(fieldName, body.get(fieldName));
-    }
-    StructuredRecord value = builder.build();
-    return result.setKey(key).setValue(value);
+    T body = bodyFormat.read(event.getBody());
+    Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
+    return result.setKey(key).setValue(new GenericStreamEventData<T>(headers, body));
   }
 }

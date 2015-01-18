@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.data.format.SingleStringRecordFormat;
@@ -349,10 +350,11 @@ public class StreamInputFormatTest {
     StreamInputFormat format = new StreamInputFormat();
 
     // read all splits and store the results in the list
-    List<StructuredRecord> recordsRead = Lists.newArrayList();
+    List<GenericStreamEventData<StructuredRecord>> recordsRead = Lists.newArrayList();
     List<InputSplit> inputSplits = format.getSplits(context);
     for (InputSplit split : inputSplits) {
-      RecordReader<LongWritable, StructuredRecord> recordReader = format.createRecordReader(split, context);
+      RecordReader<LongWritable, GenericStreamEventData<StructuredRecord>> recordReader =
+        format.createRecordReader(split, context);
       recordReader.initialize(split, context);
       while (recordReader.nextKeyValue()) {
         recordsRead.add(recordReader.getCurrentValue());
@@ -361,9 +363,9 @@ public class StreamInputFormatTest {
 
     // should only have read 1 record
     Assert.assertEquals(1, recordsRead.size());
-    StructuredRecord record = recordsRead.get(0);
-    Assert.assertEquals(streamEvent.getHeaders(), record.get("headers"));
-    Assert.assertEquals("hello world", record.get("body"));
+    GenericStreamEventData<StructuredRecord> eventData = recordsRead.get(0);
+    Assert.assertEquals(streamEvent.getHeaders(), eventData.getHeaders());
+    Assert.assertEquals("hello world", eventData.getBody().get("body"));
   }
 
   private void generateEvents(File inputDir, int numEvents, long startTime, long timeIncrement,

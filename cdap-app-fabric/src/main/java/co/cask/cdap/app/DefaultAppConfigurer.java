@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,14 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -40,16 +44,16 @@ import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
+import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
 
 /**
- * Default implementation of {@link ApplicationConfigurer}
+ * Default implementation of {@link ApplicationConfigurer}.
  */
 public class DefaultAppConfigurer implements ApplicationConfigurer {
   private String name;
@@ -63,6 +67,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
+  private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
@@ -174,13 +179,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addWorkflow(Workflow workflow) {
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
-    WorkflowSpecification spec = new DefaultWorkflowSpecification(workflow.getClass().getName(),
-                                                                  workflow.configure());
+    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow);
+    workflow.configure(configurer);
+    WorkflowSpecification spec = configurer.createSpecification();
     workflows.put(spec.getName(), spec);
-
-    // Add MapReduces and sparks from workflow into application
-    mapReduces.putAll(spec.getMapReduce());
-    sparks.putAll(spec.getSparks());
   }
 
   public void addService(Service service) {
@@ -192,9 +194,26 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     services.put(spec.getName(), spec);
   }
 
+  @Override
+  public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
+                          Map<String, String> properties) {
+    Preconditions.checkNotNull(schedule, "Schedule cannot be null.");
+    Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
+    Preconditions.checkNotNull(programName, "Program name cannot be null.");
+    Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
+    Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name " +
+      schedule.getName()  + " already exists.");
+
+    ScheduleSpecification spec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName),
+                                                           properties);
+
+    schedules.put(schedule.getName(), spec);
+  }
+
   public ApplicationSpecification createSpecification() {
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
-                                               flows, procedures, mapReduces, sparks, workflows, services);
+                                               flows, procedures, mapReduces, sparks, workflows, services,
+                                               schedules);
   }
 }

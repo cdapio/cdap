@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _admin-index:
 
@@ -65,7 +65,7 @@ introduces the CDAP Console.**
 .. |runtime-arguments| replace:: **Runtime Arguments:**
 .. _runtime-arguments: operations/runtime-arguments.html
 
-- |runtime-arguments|_ Flows, Procedures, MapReduce Jobs, and Workflows can receive **runtime arguments:** 
+- |runtime-arguments|_ Flows, Procedures, MapReduce programs, and Workflows can receive **runtime arguments:** 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html

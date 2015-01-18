@@ -417,8 +417,11 @@ public class IncrementSummingScannerTest {
   }
 
   private HRegion createRegion(String tableName, byte[] family) throws Exception {
+    return createRegion(conf, tableName, new HColumnDescriptor(family));
+  }
+
+  static HRegion createRegion(Configuration hConf, String tableName, HColumnDescriptor cfd) throws Exception {
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    HColumnDescriptor cfd = new HColumnDescriptor(family);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
@@ -426,7 +429,6 @@ public class IncrementSummingScannerTest {
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog-" + tableName);
     Path oldPath = new Path("/tmp/.oldLogs-" + tableName);
-    Configuration hConf = conf;
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
     HLog hlog = new HLog(fs, hlogPath, oldPath, hConf);
@@ -437,7 +439,7 @@ public class IncrementSummingScannerTest {
   /**
    * Work around a bug in HRegion.internalPut(), where RegionObserver.prePut() modifications are not applied.
    */
-  private void doPut(HRegion region, Put p) throws Exception {
+  static void doPut(HRegion region, Put p) throws Exception {
     region.batchMutate(new Pair[]{ new Pair<Mutation, Integer>(p, null) });
   }
 }

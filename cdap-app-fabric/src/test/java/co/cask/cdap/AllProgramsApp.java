@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,9 +28,8 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 
 import java.io.IOException;
 
@@ -101,14 +100,12 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  private static class NoOpWorkflow implements Workflow {
+  private static class NoOpWorkflow extends AbstractWorkflow {
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("NoOpWorkflow")
-        .setDescription("NoOp workflow description")
-        .onlyWith(new NoOpAction())
-        .build();
+    public void configure() {
+        setName("NoOpWorkflow");
+        setDescription("NoOp Workflow description");
+        addAction(new NoOpAction());
     }
   }
 

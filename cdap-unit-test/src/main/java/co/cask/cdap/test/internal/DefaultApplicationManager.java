@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -280,7 +281,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
     return new WorkflowManager() {
       @Override
-      public List<String> getSchedules() {
+      public List<ScheduleSpecification> getSchedules() {
         return appFabricClient.getSchedules(applicationId, workflowName);
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
@@ -33,7 +34,7 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import java.util.Map;
 
 /**
- * Application Specification used in core code
+ * Application Specification used in core code.
  */
 public interface ApplicationSpecification {
 
@@ -104,4 +105,9 @@ public interface ApplicationSpecification {
    *         for services configured for the Application.
    */
   Map<String, ServiceSpecification> getServices();
+
+  /**
+   * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
+   */
+  Map<String, ScheduleSpecification> getSchedules();
 }
