@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
@@ -39,15 +40,15 @@ import org.slf4j.LoggerFactory;
 public class DefaultSchedulerService {
 
   /**
-   * Handler that gets called by quartz to schedule a job.
+   * Handler that gets called by quartz to execute a scheduled job.
    */
   static final class ScheduledJob implements Job {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskRunner taskRunner;
 
-    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService) {
-      taskRunner = new ScheduleTaskRunner(store, programRuntimeService);
+    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+      taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
     }
 
     @Override
@@ -59,9 +60,9 @@ public class DefaultSchedulerService {
       String[] parts = key.split(":");
       Preconditions.checkArgument(parts.length == 4);
 
-      ProgramType programType = ProgramType.valueOf(parts[0]);
-      String accountId = parts[1];
-      String applicationId = parts[2];
+      String accountId = parts[0];
+      String applicationId = parts[1];
+      ProgramType programType = ProgramType.valueOf(parts[2]);
       String programId = parts[3];
 
       LOG.debug("Schedule execute {}", key);

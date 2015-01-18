@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implementation of {@link StreamMetaStore} that access MDS directly.
@@ -112,6 +113,17 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
       @Override
       public Boolean apply(StreamMds mds) throws Exception {
         return mds.streams.get(getKey(accountId, streamName), StreamSpecification.class) != null;
+      }
+    });
+  }
+
+  @Override
+  public List<StreamSpecification> listStreams() throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, List<StreamSpecification>>() {
+      @Override
+      public List<StreamSpecification> apply(StreamMds mds) throws Exception {
+        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+                                StreamSpecification.class);
       }
     });
   }

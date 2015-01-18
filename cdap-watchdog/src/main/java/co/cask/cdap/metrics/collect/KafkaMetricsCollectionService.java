@@ -21,7 +21,6 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricValue;
-import co.cask.cdap.metrics.transport.MetricsRecord;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -36,7 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 /**
- * A {@link AggregatedMetricsCollectionService} that publish {@link MetricsRecord} to kafka. The partition
+ * A {@link AggregatedMetricsCollectionService} that publish {@link MetricValue} to kafka. The partition
  * is determined by the metric context.
  */
 @Singleton

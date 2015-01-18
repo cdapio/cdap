@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Purchase Application
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _examples-purchase:
 
@@ -15,9 +15,9 @@ Overview
 ========
 
 This example demonstrates use of many of the CDAP components—Streams, Flows, Flowlets,
-Datasets, Queries, MapReduce Jobs, Workflows, and Services—all in a single Application.
+Datasets, Queries, MapReduce programs, Workflows, and Services—all in a single Application.
 
-The application uses a scheduled MapReduce Job and Workflow to read from one ObjectStore Dataset
+The application uses a scheduled MapReduce and Workflow to read from one ObjectStore Dataset
 and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
@@ -34,11 +34,11 @@ and write to another.
     for a given user id from the *userProfiles* Dataset. The host and port of the ``UserProfileService`` is
     discovered using the Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    job reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
+    reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
     *history* Dataset every morning at 4:00 A.M.
   - You can either manually (in the Process screen of the CDAP Console) or 
-    programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
+    programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the *history* Dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
@@ -76,7 +76,7 @@ This method is what actually puts data into the *purchases* Dataset, by writing 
 Dataset with each purchase's timestamp and the ``Purchase`` Object.
 
 The purchase history for each customer is compiled by the ``PurchaseHistoryWorkflow``, which uses a
-MapReduce Job—``PurchaseHistoryBuilder``—to aggregate all purchases into a per-customer purchase
+MapReduce—``PurchaseHistoryBuilder``—to aggregate all purchases into a per-customer purchase
 history. It writes to the *history* Dataset, a custom Dataset that embeds an ``ObjectStore`` and 
 implements the ``RecordScannable`` interface to allow SQL queries over the Dataset.
 
@@ -387,10 +387,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.PurchaseHistoryService``
+      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.CatalogLookupService``
+      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.CatalogLookupService``
     * - On Windows:
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.PurchaseHistoryService``    
+      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.CatalogLookupService``    
+      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.CatalogLookupService``

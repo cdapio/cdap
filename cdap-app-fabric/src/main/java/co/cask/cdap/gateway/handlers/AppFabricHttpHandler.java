@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -134,6 +135,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
 
+  private final PreferencesStore preferencesStore;
+
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -143,7 +146,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
-                              ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
+                              ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                              PreferencesStore preferencesStore) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -156,6 +160,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
+    this.preferencesStore = preferencesStore;
   }
 
   /**
@@ -639,15 +644,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                                    appId, workflowId);
   }
 
+  //TODO [SAGAR]: CDAP-1155: Implement API to get ScheduleSpecification given schedule name
   /**
    * Returns the schedule ids for a given workflow.
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
                                 @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.workflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.getWorkflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                   appId, workflowId);
   }
 
@@ -1065,7 +1071,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private String getDataEntity(Id.Program programId, Data type, String name) throws Exception {
     try {
-      Id.Account account = new Id.Account(programId.getAccountId());
+      Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
       if (type == Data.DATASET) {
         DatasetSpecification dsSpec = getDatasetSpec(name);
         String typeName = null;
@@ -1074,7 +1080,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
         return GSON.toJson(makeDataSetRecord(name, typeName));
       } else if (type == Data.STREAM) {
-        StreamSpecification spec = store.getStream(account, name);
+        StreamSpecification spec = store.getStream(namespace, name);
         return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
       }
       return "";
@@ -1094,7 +1100,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
-        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
+        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
         List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (StreamSpecification spec : specs) {
           result.add(makeStreamRecord(spec.getName(), null));
@@ -1110,9 +1116,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private String listDataEntitiesByApp(Id.Program programId, Data type) throws Exception {
     try {
-      Id.Account account = new Id.Account(programId.getAccountId());
+      Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
       ApplicationSpecification appSpec = store.getApplication(new Id.Application(
-        account, programId.getApplicationId()));
+        namespace, programId.getApplicationId()));
       if (type == Data.DATASET) {
         Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
         List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
@@ -1241,7 +1247,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       List<ProgramRecord> result = Lists.newArrayList();
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
-        new Id.Account(programId.getAccountId()));
+        new Id.Namespace(programId.getNamespaceId()));
       if (appSpecs != null) {
         for (ApplicationSpecification appSpec : appSpecs) {
           if (type == ProgramType.FLOW) {
@@ -1316,13 +1322,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       String account = getAuthenticatedAccountId(request);
-      final Id.Account accountId = Id.Account.from(account);
+      final Id.Namespace namespaceId = Id.Namespace.from(account);
 
       // Check if any program is still running
       boolean appRunning = appLifecycleHttpHandler.checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
-          return programId.getAccountId().equals(accountId.getId());
+          return programId.getNamespaceId().equals(namespaceId.getId());
         }
       }, ProgramType.values());
 
@@ -1332,13 +1338,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       LOG.info("Deleting all data for account '" + account + "'.");
 
+      // remove preferences stored at instance level
+      preferencesStore.deleteProperties();
+
       dsFramework.deleteAllInstances();
       dsFramework.deleteAllModules();
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);
       // delete all meta data
-      store.removeAll(accountId);
+      store.removeAll(namespaceId);
       // todo: delete only for specified account
       // delete queues and streams data
       queueAdmin.dropAll();
@@ -1369,13 +1378,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       String account = getAuthenticatedAccountId(request);
-      final Id.Account accountId = Id.Account.from(account);
+      final Id.Namespace namespaceId = Id.Namespace.from(account);
 
       // Check if any program is still running
       boolean appRunning = appLifecycleHttpHandler.checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
-          return programId.getAccountId().equals(accountId.getId());
+          return programId.getNamespaceId().equals(namespaceId.getId());
         }
       }, ProgramType.values());
 

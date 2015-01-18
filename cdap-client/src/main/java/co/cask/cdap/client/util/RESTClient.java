@@ -86,6 +86,13 @@ public class RESTClient {
                      .build(), allowedErrorCodes);
   }
 
+  public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
+                              AccessToken accessToken, int... allowedErrorCodes)
+    throws IOException, UnAuthorizedAccessTokenException {
+    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
+                     .withBody(body).build(), allowedErrorCodes);
+  }
+
   private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
     UnAuthorizedAccessTokenException {
     int currentTry = 0;

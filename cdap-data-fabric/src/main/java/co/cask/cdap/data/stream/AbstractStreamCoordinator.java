@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.PropertyChangeListener;
 import co.cask.cdap.common.conf.PropertyStore;
@@ -24,7 +25,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -32,7 +32,10 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -45,13 +48,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
 /**
  * Base implementation for {@link StreamCoordinator}.
  */
-public abstract class AbstractStreamCoordinator implements StreamCoordinator {
+public abstract class AbstractStreamCoordinator extends AbstractIdleService implements StreamCoordinator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinator.class);
   private static final Gson GSON = new GsonBuilder()
@@ -62,6 +66,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
   private final Executor updateExecutor;
   private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
+  private final Set<StreamLeaderListener> leaderListeners;
 
   protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
@@ -75,6 +80,8 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
     // Update action should be infrequent, hence just use an executor that create a new thread everytime.
     updateExecutor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("stream-coordinator-update-%d"));
+
+    leaderListeners = Sets.newHashSet();
   }
 
   /**
@@ -161,9 +168,56 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
   }
 
   @Override
-  public void close() throws IOException {
-    propertyStore.get().close();
+  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
+    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
+    // is not overridden by user's code implementation of the equal method
+    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        listener.leaderOf(streamNames);
+      }
+    };
+
+    synchronized (this) {
+      leaderListeners.add(wrappedListener);
+    }
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        synchronized (AbstractStreamCoordinator.this) {
+          leaderListeners.remove(wrappedListener);
+        }
+      }
+    };
   }
+
+  @Override
+  protected final void shutDown() throws Exception {
+    propertyStore.get().close();
+    doShutDown();
+  }
+
+  /**
+   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
+   *
+   * @param streamNames set of Streams that this coordinator is the leader of
+   */
+  protected void invokeLeaderListeners(Set<String> streamNames) {
+    Set<StreamLeaderListener> callbacks;
+    synchronized (this) {
+      callbacks = ImmutableSet.copyOf(leaderListeners);
+    }
+    for (StreamLeaderListener callback : callbacks) {
+      callback.leaderOf(streamNames);
+    }
+  }
+
+  /**
+   * Stop the service.
+   *
+   * @throws Exception when stopping the service could not be performed
+   */
+  protected abstract void doShutDown() throws Exception;
 
   /**
    * Overwrites a stream config file.

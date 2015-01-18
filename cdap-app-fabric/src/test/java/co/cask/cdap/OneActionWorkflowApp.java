@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,8 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 
 /**
  *
@@ -36,15 +35,13 @@ public class OneActionWorkflowApp extends AbstractApplication {
   /**
    *
    */
-  private static class OneActionWorkflow implements Workflow {
+  private static class OneActionWorkflow extends AbstractWorkflow {
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("OneActionWorkflow")
-        .setDescription("One action workflow")
-        .onlyWith(new EmptyAction())
-        .build();
+    public void configure() {
+        setName("OneActionWorkflow");
+        setDescription("One action workflow");
+        addAction(new EmptyAction());
     }
   }
 

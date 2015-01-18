@@ -49,5 +49,4 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void updateConfig(StreamConfig config) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
-
 }

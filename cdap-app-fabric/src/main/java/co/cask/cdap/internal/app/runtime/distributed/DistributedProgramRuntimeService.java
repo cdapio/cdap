@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -233,7 +233,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     switch (program.getType()) {
       case FLOW: {
-        FlowSpecification flowSpec = program.getSpecification().getFlows().get(programId);
+        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId);
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec)
         );
@@ -273,7 +273,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   // FlowProgramRunner moved to run in AM.
   private Multimap<String, QueueName> getFlowletQueues(Program program, FlowSpecification flowSpec) {
     // Generate all queues specifications
-    Id.Application appId = Id.Application.from(program.getAccountId(), program.getApplicationId());
+    Id.Application appId = Id.Application.from(program.getNamespaceId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
       = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 
@@ -297,7 +297,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                      program.getAccountId(), program.getApplicationId(), program.getId());
+                                      program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
     JsonObject json = new JsonObject();
     // this will return an empty Json if there is no live instance

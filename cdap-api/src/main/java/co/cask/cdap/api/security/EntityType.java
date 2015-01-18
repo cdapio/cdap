@@ -28,7 +28,8 @@ public enum EntityType {
   WORKFLOW("workflows"),
   PROCEDURE("procedures"),
   DATASET("datasets"),
-  STREAM("streams");
+  STREAM("streams"),
+  NOTIFICATION("notifications");
 
   private final String pluralForm;
 

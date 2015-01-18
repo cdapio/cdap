@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaHash;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;

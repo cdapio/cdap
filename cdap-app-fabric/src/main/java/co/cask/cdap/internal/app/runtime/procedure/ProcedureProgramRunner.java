@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -123,7 +123,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   public ProgramController run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
-      ApplicationSpecification appSpec = program.getSpecification();
+      ApplicationSpecification appSpec = program.getApplicationSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
       ProgramType processorType = program.getType();
@@ -190,7 +190,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     Executor workerExecutor = Executors.newCachedThreadPool(
         new ThreadFactoryBuilder()
         .setDaemon(true)
-        .setNameFormat("procedure-worker-" + program.getAccountId() + "-%d")
+        .setNameFormat("procedure-worker-" + program.getNamespaceId() + "-%d")
         .build());
 
     ServerBootstrap bootstrap = new ServerBootstrap(
@@ -227,7 +227,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private String getServiceName(Program program) {
     return String.format("procedure.%s.%s.%s",
-                         program.getAccountId(), program.getApplicationId(), program.getName());
+                         program.getNamespaceId(), program.getApplicationId(), program.getName());
   }
 
   private final class ProcedureProgramController extends AbstractProgramController {

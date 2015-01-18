@@ -92,7 +92,7 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.3.0-SNAPSHOT</cask.common.cli.version>
+    <cask.common.cli.version>0.2.0</cask.common.cli.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -129,7 +129,7 @@
     <twill.version>0.4.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <spark.version>1.1.0</spark.version>
+    <spark.version>1.2.0</spark.version>
     <cdap.client.version>1.1.0</cdap.client.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -161,6 +161,8 @@
     <module>cdap-master</module>
     <module>cdap-web-app</module>
     <module>cdap-proto</module>
+    <module>cdap-notifications</module>
+    <module>cdap-notifications-api</module>
     <module>cdap-client</module>
     <module>cdap-client-tests</module>
     <module>cdap-cli</module>

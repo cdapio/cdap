@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
@@ -60,6 +61,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_ADAPTER = "adapter";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -76,40 +78,41 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
-  public ApplicationMeta getApplication(String accountId, String appId) {
-    return get(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(), ApplicationMeta.class);
+  public ApplicationMeta getApplication(String namespaceId, String appId) {
+    return get(new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
   }
 
-  public List<ApplicationMeta> getAllApplications(String accountId) {
-    return list(new Key.Builder().add(TYPE_APP_META, accountId).build(), ApplicationMeta.class);
+  public List<ApplicationMeta> getAllApplications(String namespaceId) {
+    return list(new Key.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
   }
 
-  public void writeApplication(String accountId, String appId, ApplicationSpecification spec, String archiveLocation) {
+  public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec,
+                               String archiveLocation) {
     // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
-    write(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(),
+    write(new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
           new ApplicationMeta(appId, spec, archiveLocation));
   }
 
-  public void deleteApplication(String accountId, String appId) {
-    deleteAll(new Key.Builder().add(TYPE_APP_META, accountId, appId).build());
+  public void deleteApplication(String namespaceId, String appId) {
+    deleteAll(new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build());
   }
 
-  public void deleteApplications(String accountId) {
-    deleteAll(new Key.Builder().add(TYPE_APP_META, accountId).build());
+  public void deleteApplications(String namespaceId) {
+    deleteAll(new Key.Builder().add(TYPE_APP_META, namespaceId).build());
   }
 
   // todo: do we need appId? may be use from appSpec?
-  public void updateAppSpec(String accountId, String appId, ApplicationSpecification spec) {
+  public void updateAppSpec(String namespaceId, String appId, ApplicationSpecification spec) {
     // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
-    Key key = new Key.Builder().add(TYPE_APP_META, accountId, appId).build();
+    Key key = new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build();
     ApplicationMeta existing = get(key, ApplicationMeta.class);
     if (existing == null) {
-      String msg = String.format("No meta for account %s app %s exists", accountId, appId);
+      String msg = String.format("No meta for namespace %s app %s exists", namespaceId, appId);
       LOG.error(msg);
       throw new IllegalArgumentException(msg);
     }
@@ -119,22 +122,22 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, updated);
 
     for (StreamSpecification stream : spec.getStreams().values()) {
-      writeStream(accountId, stream);
+      writeStream(namespaceId, stream);
     }
   }
 
-  public void recordProgramStart(String accountId, String appId, String programId, String pid, long startTs) {
-      write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
+  public void recordProgramStart(String namespaceId, String appId, String programId, String pid, long startTs) {
+      write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build(),
             new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING));
   }
 
-  public void recordProgramStop(String accountId, String appId, String programId,
+  public void recordProgramStop(String namespaceId, String appId, String programId,
                                 String pid, long stopTs, ProgramController.State endStatus) {
-    Key key = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build();
+    Key key = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build();
     RunRecord started = get(key, RunRecord.class);
     if (started == null) {
-      String msg = String.format("No meta for started run record for account %s app %s program %s pid %s exists",
-                                 accountId, appId, programId, pid);
+      String msg = String.format("No meta for started run record for namespace %s app %s program %s pid %s exists",
+                                 namespaceId, appId, programId, pid);
       LOG.error(msg);
       throw new IllegalArgumentException(msg);
     }
@@ -142,39 +145,39 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(key);
 
     key = new Key.Builder()
-      .add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId)
+      .add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId)
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
     write(key, new RunRecord(started, stopTs, endStatus.getRunStatus()));
   }
 
-  public List<RunRecord> getRuns(String accountId, String appId, String programId,
+  public List<RunRecord> getRuns(String namespaceId, String appId, String programId,
                                  ProgramRunStatus status,
                                  long startTime, long endTime, int limit) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecord> resultRecords = Lists.newArrayList();
-      resultRecords.addAll(getActiveRuns(accountId, appId, programId, startTime, endTime, limit));
-      resultRecords.addAll(getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit));
+      resultRecords.addAll(getActiveRuns(namespaceId, appId, programId, startTime, endTime, limit));
+      resultRecords.addAll(getHistoricalRuns(namespaceId, appId, programId, status, startTime, endTime, limit));
       return resultRecords;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
-      return getActiveRuns(accountId, appId, programId, startTime, endTime, limit);
+      return getActiveRuns(namespaceId, appId, programId, startTime, endTime, limit);
     } else {
-      return getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit);
+      return getHistoricalRuns(namespaceId, appId, programId, status, startTime, endTime, limit);
     }
   }
 
-  private List<RunRecord> getActiveRuns(String accountId, String appId, String programId,
+  private List<RunRecord> getActiveRuns(String namespaceId, String appId, String programId,
                                         final long startTime, final long endTime, int limit) {
-    Key activeKey = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build();
+    Key activeKey = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId).build();
     Key start = new Key.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
     Key stop = new Key.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
     return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
   }
 
-  private List<RunRecord> getHistoricalRuns(String accountId, String appId, String programId,
+  private List<RunRecord> getHistoricalRuns(String namespaceId, String appId, String programId,
                                             ProgramRunStatus status,
                                             final long startTime, final long endTime, int limit) {
-    Key historyKey = new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build();
+    Key historyKey = new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId).build();
     Key start = new Key.Builder(historyKey).add(getInvertedTsKeyPart(endTime)).build();
     Key stop = new Key.Builder(historyKey).add(getInvertedTsKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
@@ -200,54 +203,54 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return Long.MAX_VALUE - endTime;
   }
 
-  public void writeStream(String accountId, StreamSpecification spec) {
-    write(new Key.Builder().add(TYPE_STREAM, accountId, spec.getName()).build(), spec);
+  public void writeStream(String namespaceId, StreamSpecification spec) {
+    write(new Key.Builder().add(TYPE_STREAM, namespaceId, spec.getName()).build(), spec);
   }
 
-  public StreamSpecification getStream(String accountId, String name) {
-    return get(new Key.Builder().add(TYPE_STREAM, accountId, name).build(), StreamSpecification.class);
+  public StreamSpecification getStream(String namespaceId, String name) {
+    return get(new Key.Builder().add(TYPE_STREAM, namespaceId, name).build(), StreamSpecification.class);
   }
 
-  public List<StreamSpecification> getAllStreams(String accountId) {
-    return list(new Key.Builder().add(TYPE_STREAM, accountId).build(), StreamSpecification.class);
+  public List<StreamSpecification> getAllStreams(String namespaceId) {
+    return list(new Key.Builder().add(TYPE_STREAM, namespaceId).build(), StreamSpecification.class);
   }
 
-  public void deleteAllStreams(String accountId) {
-    deleteAll(new Key.Builder().add(TYPE_STREAM, accountId).build());
+  public void deleteAllStreams(String namespaceId) {
+    deleteAll(new Key.Builder().add(TYPE_STREAM, namespaceId).build());
   }
 
-  public void deleteStream(String accountId, String name) {
-    deleteAll(new Key.Builder().add(TYPE_STREAM, accountId, name).build());
+  public void deleteStream(String namespaceId, String name) {
+    deleteAll(new Key.Builder().add(TYPE_STREAM, namespaceId, name).build());
   }
 
-  public void writeProgramArgs(String accountId, String appId, String programName, Map<String, String> args) {
-    write(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId, appId, programName).build(), new ProgramArgs(args));
+  public void writeProgramArgs(String namespaceId, String appId, String programName, Map<String, String> args) {
+    write(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), new ProgramArgs(args));
   }
 
-  public ProgramArgs getProgramArgs(String accountId, String appId, String programName) {
-    return get(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId, appId, programName).build(), ProgramArgs.class);
+  public ProgramArgs getProgramArgs(String namespaceId, String appId, String programName) {
+    return get(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), ProgramArgs.class);
   }
 
-  public void deleteProgramArgs(String accountId, String appId, String programName) {
-    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId, appId, programName).build());
+  public void deleteProgramArgs(String namespaceId, String appId, String programName) {
+    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build());
   }
 
-  public void deleteProgramArgs(String accountId, String appId) {
-    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId, appId).build());
+  public void deleteProgramArgs(String namespaceId, String appId) {
+    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId).build());
   }
 
-  public void deleteProgramArgs(String accountId) {
-    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId).build());
+  public void deleteProgramArgs(String namespaceId) {
+    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId).build());
   }
 
-  public void deleteProgramHistory(String accountId, String appId) {
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId).build());
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId).build());
+  public void deleteProgramHistory(String namespaceId, String appId) {
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build());
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId).build());
   }
 
-  public void deleteProgramHistory(String accountId) {
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId).build());
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId).build());
+  public void deleteProgramHistory(String namespaceId) {
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId).build());
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
   }
 
   public void createNamespace(NamespaceMeta metadata) {
@@ -266,6 +269,26 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
+  public void writeAdapter(Id.Namespace id, AdapterSpecification spec) {
+    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), spec.getName()).build(), spec);
+  }
+
+  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
+    return get(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterSpecification.class);
+  }
+
+  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
+    return list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterSpecification.class);
+  }
+
+  public void deleteAdapter(Id.Namespace id, String name) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
+  }
+
+  public void deleteAllAdapters(Id.Namespace id) {
+    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build());
+  }
+
   private Key getNamespaceKey(@Nullable String name) {
     Key.Builder builder = new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE);
     if (null != name) {
@@ -273,5 +296,4 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
     return builder.build();
   }
-
 }

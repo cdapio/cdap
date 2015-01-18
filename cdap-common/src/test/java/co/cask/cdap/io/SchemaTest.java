@@ -16,16 +16,17 @@
 
 package co.cask.cdap.io;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -134,5 +135,11 @@ public class SchemaTest {
   public void testPrimitiveArray() throws UnsupportedTypeException {
     Schema schema = new ReflectionSchemaGenerator().generate(int[].class);
     Assert.assertEquals(Schema.arrayOf(Schema.of(Schema.Type.INT)), schema);
+  }
+
+  @Test
+  public void testParse() throws IOException, UnsupportedTypeException {
+    Schema schema = new ReflectionSchemaGenerator().generate(Node.class);
+    Assert.assertEquals(schema, Schema.parse(schema.toString()));
   }
 }

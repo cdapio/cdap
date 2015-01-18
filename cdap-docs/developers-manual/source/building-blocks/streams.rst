@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _streams:
 
@@ -16,7 +16,7 @@ They can be created programmatically within your application, using the
 using the :ref:`CDAP Command Line Interface. <cli>` 
 
 Data written to a Stream can be consumed in real-time by :ref:`Flows <flows>` or in batch
-by :ref:`MapReduce Jobs. <mapreduce>`.
+by :ref:`MapReduce programs. <mapreduce>`.
 
 
 .. rubric:: Creating a Stream

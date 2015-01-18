@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -92,7 +92,7 @@ public class AppFabricTestHelper {
 
     return factory.create(new ProgramTerminator() {
       @Override
-      public void stop(Id.Account id, Id.Program programId, ProgramType type) throws Exception {
+      public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws Exception {
         //No-op
       }
     });
@@ -120,7 +120,7 @@ public class AppFabricTestHelper {
 
     Location deployedJar = createAppJar(appClass);
     try {
-      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, deployedJar).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
       final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),

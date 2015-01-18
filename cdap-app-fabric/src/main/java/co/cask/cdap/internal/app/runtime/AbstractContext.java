@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,8 +82,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   @Override
   public String toString() {
-    return String.format("accountId=%s, applicationId=%s, program=%s, runid=%s",
-                         getAccountId(), getApplicationId(), getProgramName(), runId);
+    return String.format("namespaceId=%s, applicationId=%s, program=%s, runid=%s",
+                         getNamespaceId(), getApplicationId(), getProgramName(), runId);
   }
 
   public MetricsCollector getProgramMetrics() {
@@ -118,8 +118,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     return getDataset(name);
   }
 
-  public String getAccountId() {
-    return program.getAccountId();
+  public String getNamespaceId() {
+    return program.getNamespaceId();
   }
 
   public String getApplicationId() {
