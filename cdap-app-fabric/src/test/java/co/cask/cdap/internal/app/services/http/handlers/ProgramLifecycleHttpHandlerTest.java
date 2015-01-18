@@ -815,9 +815,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
         public void apply() throws Exception {
           // write more than one so that we can dequeue multiple times for multiple checks
           // we only dequeue twice, but ensure that the drop queues call drops the rest of the entries as well
-//          producer.enqueue(queueEntry);
-//          producer.enqueue(queueEntry);
-//          producer.enqueue(queueEntry);
           int numEntries = 0;
           while (numEntries++ < 5) {
             producer.enqueue(queueEntry);

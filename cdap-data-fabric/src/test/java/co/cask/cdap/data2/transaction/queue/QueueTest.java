@@ -417,35 +417,54 @@ public abstract class QueueTest {
   @Test
   public void testDropAllForNamespace() throws Exception {
     // create 4 queues
-    String queueInMySpace1 = QueueName.fromFlowlet("myspace", "myapp1", "myflow1", "myflowlet1", "myout1").toString();
-    String queueInMySpace2 = QueueName.fromFlowlet("myspace", "myapp2", "myflow2", "myflowlet2", "myout2").toString();
-    String queueInYourSpace1 = QueueName.fromFlowlet("yourspace", "yourapp1", "yourflow1", "yourflowlet1",
-                                                     "yourout1").toString();
-    String queueInYourSpace2 = QueueName.fromFlowlet("yourspace", "yourapp2", "yourflow2", "yourflowlet2",
-                                                     "yourout2").toString();
-    queueAdmin.create(queueInMySpace1);
-    queueAdmin.create(queueInMySpace2);
-    queueAdmin.create(queueInYourSpace1);
-    queueAdmin.create(queueInYourSpace2);
+    QueueName myQueue1 = QueueName.fromFlowlet("myspace", "myapp1", "myflow1", "myflowlet1", "myout1");
+    QueueName myQueue2 = QueueName.fromFlowlet("myspace", "myapp2", "myflow2", "myflowlet2", "myout2");
+    QueueName yourQueue1 = QueueName.fromFlowlet("yourspace", "yourapp1", "yourflow1", "yourflowlet1", "yourout1");
+    QueueName yourQueue2 = QueueName.fromFlowlet("yourspace", "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
+
+    String myQueueName1 = myQueue1.toString();
+    String myQueueName2 = myQueue2.toString();
+    String yourQueueName1 = yourQueue1.toString();
+    String yourQueueName2 = yourQueue2.toString();
+
+    queueAdmin.create(myQueueName1);
+    queueAdmin.create(myQueueName2);
+    queueAdmin.create(yourQueueName1);
+    queueAdmin.create(yourQueueName2);
 
     // verify that queues got created
-    Assert.assertTrue(queueAdmin.exists(queueInMySpace1) && queueAdmin.exists(queueInMySpace2) &&
-                        queueAdmin.exists(queueInYourSpace1) && queueAdmin.exists(queueInYourSpace2));
+    Assert.assertTrue(queueAdmin.exists(myQueueName1) && queueAdmin.exists(myQueueName2) &&
+                        queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+
+    // create some consumer configurations for all queues
+    configureGroups(myQueue1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(myQueue2, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(yourQueue1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(yourQueue2, ImmutableMap.of(0L, 1, 1L, 1));
+
+    // verify that the consumer config exists
+    verifyConsumerConfigExists(myQueue1, myQueue2, yourQueue1, yourQueue2);
 
     // drop queues in namespace 'myspace'
     queueAdmin.dropAllInNamespace("myspace");
 
     // verify queues in 'myspace' are dropped
-    Assert.assertFalse(queueAdmin.exists(queueInMySpace1) || queueAdmin.exists(queueInMySpace2));
+    Assert.assertFalse(queueAdmin.exists(myQueueName1) || queueAdmin.exists(myQueueName2));
+    // also verify that consumer config of all queues in 'myspace' is deleted
+    verifyConsumerConfigIsDeleted(myQueue1, myQueue2);
 
     // but the ones in 'yourspace' still exist
-    Assert.assertTrue(queueAdmin.exists(queueInYourSpace1) && queueAdmin.exists(queueInYourSpace2));
+    Assert.assertTrue(queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+    // consumer config for queues in 'yourspace' should also still exist
+    verifyConsumerConfigExists(yourQueue1, yourQueue2);
 
     // drop queues in 'yourspace'
     queueAdmin.dropAllInNamespace("yourspace");
 
     // verify queues in 'yourspace' are dropped
-    Assert.assertFalse(queueAdmin.exists(queueInYourSpace1) || queueAdmin.exists(queueInYourSpace2));
+    Assert.assertFalse(queueAdmin.exists(yourQueueName1) || queueAdmin.exists(yourQueueName2));
+    // verify that the consumer config of all queues in 'yourspace' is deleted
+    verifyConsumerConfigIsDeleted(yourQueue1, yourQueue2);
   }
 
   @Test

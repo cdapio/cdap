@@ -331,14 +331,22 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
+  private void deleteConsumerConfigurations(String namespaceId) throws IOException {
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespace(namespaceId));
+  }
+
   private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
+  }
+
+  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix) throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(configTableName)) {
       // we need to delete the row for this queue name from the config table
       HTable hTable = new HTable(admin.getConfiguration(), configTableName);
       try {
-        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(namespaceId, app, flow));
+        byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
         stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
 
@@ -414,6 +422,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     dropTablesWithPrefix(tableNamePrefix + "." + namespaceId);
+    deleteConsumerConfigurations(namespaceId);
   }
 
   @Override

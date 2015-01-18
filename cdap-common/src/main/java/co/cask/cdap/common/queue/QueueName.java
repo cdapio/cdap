@@ -81,6 +81,12 @@ public final class QueueName {
     return String.format("queue:///%s/%s/%s/", namespace, app, flow);
   }
 
+  public static String prefixForNamespace(String namespace) {
+    // queue:///namespace/
+    // Note that like above the trailing / is crucial, otherwise this could match namespaces of ns, ns1, nsx, etc.
+    return String.format("queue:///%s/", namespace);
+  }
+
   /**
    * Generates an QueueName for the stream.
    *

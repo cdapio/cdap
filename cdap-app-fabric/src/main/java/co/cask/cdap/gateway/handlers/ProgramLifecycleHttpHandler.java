@@ -1053,7 +1053,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             queueAdmin.dropAllInNamespace(namespaceId);
           }
         } else if (toClear == ToClear.STREAMS) {
-          // TODO: Drops everything for now. In CDAP-773 Add API for deleting streams in a namespace.
+          // TODO: Drops everything for now. In CDAP-773 add API for deleting streams in a namespace.
           streamAdmin.dropAll();
         }
         responder.sendStatus(HttpResponseStatus.OK);
