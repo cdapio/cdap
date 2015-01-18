@@ -82,6 +82,8 @@ public final class ScheduleTaskRunner {
 
       String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
       ScheduleSpecification spec = store.getApplication(programId.getApplication()).getSchedules().get(scheduleName);
+      Preconditions.checkNotNull(spec, "Schedule not found");
+
       userArgs.putAll(spec.getProperties());
 
       Map<String, String> runtimeArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(),

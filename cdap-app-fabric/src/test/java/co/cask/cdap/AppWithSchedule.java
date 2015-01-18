@@ -78,7 +78,6 @@ public class AppWithSchedule extends AbstractApplication {
       LOG.info("Ran dummy action");
       try {
         TimeUnit.MILLISECONDS.sleep(500);
-
         Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
         Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
         Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));

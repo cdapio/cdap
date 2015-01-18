@@ -632,8 +632,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                               Map<String, String> args)
     throws Exception {
     HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() {
-    }.getType());
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() {}.getType());
     String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
                                                            "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
                                                          namespace);
@@ -643,9 +642,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doGet(versionedRuntimeArgsUrl);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                 new TypeToken<Map<String, String>>() {
-                                                 }.getType());
+    String responseEntity = EntityUtils.toString(response.getEntity());
+    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() { }.getType());
 
     Assert.assertEquals(args.size(), argsRead.size());
   }
