@@ -32,6 +32,7 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.Map;
@@ -93,7 +94,18 @@ public class TimePartitionedFileSetDefinition extends AbstractDatasetDefinition<
     }
     FileSet fileset = filesetDef.getDataset(spec.getSpecification(FILESET_NAME), arguments, classLoader);
     Table table = tableDef.getDataset(spec.getSpecification(PARTITION_TABLE_NAME), arguments, classLoader);
-    return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, arguments,
-                                             injector.getInstance(ExploreFacade.class));
+
+    return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, spec, arguments,
+                                             new Provider<ExploreFacade>() {
+                                               @Override
+                                               public ExploreFacade get() {
+                                                 try {
+                                                   return injector.getInstance(ExploreFacade.class);
+                                                 } catch (Exception e) {
+                                                   // since explore is optional for this dataset, ignore
+                                                   return null;
+                                                 }
+                                               }
+                                             });
   }
 }

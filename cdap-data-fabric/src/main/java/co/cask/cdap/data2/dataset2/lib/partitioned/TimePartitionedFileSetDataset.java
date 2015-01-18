@@ -18,9 +18,11 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Put;
@@ -31,6 +33,7 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,14 +54,18 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
   private final FileSet files;
   private final Table partitions;
   private final Map<String, String> runtimeArguments;
-  private final ExploreFacade exploreFacade;
+  private final DatasetSpecification spec;
+  private final Provider<ExploreFacade> exploreFacadeProvider;
 
-  public TimePartitionedFileSetDataset(String name, FileSet fileSet, Table partitionTable,
-                                       Map<String, String> arguments, ExploreFacade exploreFacade) {
+  public TimePartitionedFileSetDataset(String name,
+                                       FileSet fileSet, Table partitionTable,
+                                       DatasetSpecification spec, Map<String, String> arguments,
+                                       Provider<ExploreFacade> exploreFacadeProvider) {
     super(name, partitionTable);
     this.files = fileSet;
     this.partitions = partitionTable;
-    this.exploreFacade = exploreFacade;
+    this.spec = spec;
+    this.exploreFacadeProvider = exploreFacadeProvider;
     this.runtimeArguments = arguments;
   }
 
@@ -74,10 +81,15 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
     partitions.put(put);
 
-    try {
-      exploreFacade.addPartition(getName(), time, files.getLocation(path).toURI().getPath());
-    } catch (Exception e) {
-      throw new DataSetException("Unable to add partition to explore table.", e);
+    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+      ExploreFacade exploreFacade = exploreFacadeProvider.get();
+      if (exploreFacade != null) {
+        try {
+          exploreFacade.addPartition(getName(), time, files.getLocation(path).toURI().getPath());
+        } catch (Exception e) {
+          throw new DataSetException("Unable to add partition to explore table.", e);
+        }
+      }
     }
   }
 

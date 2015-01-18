@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import com.google.common.collect.Maps;
 
@@ -24,6 +25,7 @@ import java.util.Map;
 /**
  * Helper to build properties for files datasets.
  */
+@Beta
 public class FileSetProperties {
 
   /**

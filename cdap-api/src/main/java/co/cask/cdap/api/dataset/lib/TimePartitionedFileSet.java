@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
@@ -33,6 +34,7 @@ import javax.annotation.Nullable;
  * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
  * created. The Hive table is partitioned by year, month, day, hour and minute.
  */
+@Beta
 public interface TimePartitionedFileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**

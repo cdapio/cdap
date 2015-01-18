@@ -16,12 +16,15 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Helpers for manipulating runtime arguments of time-partitioned file sets.
  */
+@Beta
 public class TimePartitionedFileSetArguments {
 
   public static final String OUTPUT_PARTITION_TIME = "output.partition.time";
