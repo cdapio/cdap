@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -43,7 +43,7 @@ instructions for building the “Hello World” of any development task with CDA
 .. |mapreduce-guide| replace:: **Batch Data Processing With CDAP:**
 .. _mapreduce-guide: cdap-mapreduce-guide.html
 
-- |mapreduce-guide|_ Learn how to **run MapReduce jobs to process data in CDAP.**
+- |mapreduce-guide|_ Learn how to **run MapReduce programs to process data in CDAP.**
 
 
 .. |bi-guide| replace:: **Analyzing CDAP Data from BI Tools:**

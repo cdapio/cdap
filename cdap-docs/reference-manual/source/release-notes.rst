@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc 
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -28,7 +28,7 @@ Cask Data Application Platform Release Notes
 
 API Changes
 -----------
--  API for specifying Services and MapReduce Jobs has been changed to use a "configurer" 
+-  API for specifying Services and MapReduce programs has been changed to use a "configurer" 
    style; this will require modification of user classes implementing either MapReduce
    or Service as the interfaces have changed (`CDAP-335
    <https://issues.cask.co/browse/CDAP-335>`__).
@@ -49,7 +49,7 @@ New Features
 
 - **MapReduce**
 
-  -  MapReduce jobs can now read binary stream data
+  -  MapReduce programs can now read binary stream data
      (`CDAP-331 <https://issues.cask.co/browse/CDAP-331>`__).
 
 - **Datasets**
@@ -297,7 +297,7 @@ Major CDAP Bug Fixes
 
 Known Issues
 ------------
-- Metrics for MapReduce jobs aren't populated on secure Hadoop clusters
+- Metrics for MapReduce programs aren't populated on secure Hadoop clusters
 - The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
   unless YARN has been configured to enable virtual cores
 - See also the *TWILL-110 Known Issue* of `version 2.6.0. <#known-issues-260>`_

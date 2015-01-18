@@ -1,16 +1,16 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _mapreduce:
 
 ============================================
-MapReduce Jobs
+MapReduce Programs
 ============================================
 
-A **MapReduce Job** is used to process data in batch. MapReduce jobs can be
+A **MapReduce** program is used to process data in batch. MapReduce can be
 written as in a conventional Hadoop system. Additionally, CDAP
-**Datasets** can be accessed from MapReduce jobs as both input and
+**Datasets** can be accessed from MapReduce as both input and
 output.
 
 To process data using MapReduce, either specify ``addMapReduce()`` in your
@@ -20,12 +20,12 @@ Application specification::
     ...
     addMapReduce(new WordCountJob());
     
-or specify ``addWorkflow()`` in your Application and specify your MapReduce Job in the
+or specify ``addWorkflow()`` in your Application and specify your MapReduce in the
 :ref:`Workflow <workflows>` definition::
 
   public void configure() {
     ...
-    // Run a MapReduce Job on the acquired data using a Workflow
+    // Run a MapReduce on the acquired data using a Workflow
     addWorkflow(new PurchaseHistoryWorkflow());
     
 You must implement the ``MapReduce`` interface, which requires the
@@ -40,7 +40,7 @@ implementation of three methods:
   public class PurchaseHistoryBuilder extends AbstractMapReduce {
     @Override
     public void configure() {
-      setName("Purchase History Builder MapReduce Job");
+      setName("Purchase History Builder MapReduce");
       setDescription("Builds a purchase history for each customer");
       useDatasets("frequentCustomers");
       setInputDataset("purchases");
@@ -48,14 +48,14 @@ implementation of three methods:
     }
 
 The configure method is similar to the one found in Flows and
-Applications. It defines the name and description of the MapReduce job.
-You can also specify Datasets to be used as input or output for the job, and
+Applications. It defines the name and description of the MapReduce.
+You can also specify Datasets to be used as input or output and
 resources (memory and virtual cores) used by the Mappers and Reducers.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
-MapReduce job is executed. Through a passed instance of the
+MapReduce is executed. Through a passed instance of the
 ``MapReduceContext`` you have access to the actual Hadoop job
-configuration, as though you were running the MapReduce job directly on
+configuration, as though you were running the MapReduce directly on
 Hadoop. For example, you can specify the Mapper and Reducer classes as
 well as the intermediate data format::
 
@@ -68,9 +68,9 @@ well as the intermediate data format::
     job.setReducerClass(PerUserReducer.class);
   }
 
-The ``onFinish()`` method is invoked after the MapReduce job has
+The ``onFinish()`` method is invoked after the MapReduce has
 finished. You could perform cleanup or send a notification of job
-completion, if that was required. Because many MapReduce jobs do not
+completion, if that was required. Because many MapReduce programs do not
 need this method, the ``AbstractMapReduce`` class provides a default
 implementation that does nothing::
 
@@ -128,7 +128,7 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 MapReduce and Datasets
 ----------------------
 
-.. rubric: Reading and Writing to Datasets from a MapReduce Job
+.. rubric: Reading and Writing to Datasets from a MapReduce program
 
 Both CDAP ``Mapper`` and ``Reducer`` can directly read
 or write to a Dataset, similar to the way a Flowlet or Service can.
@@ -136,7 +136,7 @@ or write to a Dataset, similar to the way a Flowlet or Service can.
 To access a Dataset directly in Mapper or Reducer, you need (1) a
 declaration and (2) an injection:
 
-#. Declare the Dataset in the MapReduce job’s configure() method.
+#. Declare the Dataset in the MapReduce’s configure() method.
    For example, to have access to a Dataset named *catalog*::
 
      public class MyMapReduceJob implements MapReduce {
@@ -163,13 +163,13 @@ declaration and (2) an injection:
 
 .. rubric: Datasets as MapReduce Input or Output
 
-Additionally, a MapReduce job can interact with a Dataset by using it as an input or an
-output, as described in :ref:`datasets-map-reduce-jobs`.
+Additionally, a MapReduce program can interact with a Dataset by using it as an input or an
+output, as described in :ref:`datasets-mapreduce-programs`.
 
 
-.. rubric::  Examples of Using Map Reduce Jobs
+.. rubric::  Examples of Using MapReduce Programs
 
-- For an example of **a MapReduce Job,** see the :ref:`Purchase
+- For an example of **a MapReduce program,** see the :ref:`Purchase
   <examples-purchase>` example.
 
 - For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
@@ -177,4 +177,4 @@ output, as described in :ref:`datasets-map-reduce-jobs`.
 
 - The :ref:`Tutorial <tutorials>` 
   `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__ 
-  uses a MapReduce Job.
+  uses MapReduce.

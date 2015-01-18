@@ -89,7 +89,7 @@ public interface Store {
 
   /**
    * Creates a new stream if it does not exist.
-   * @param id the account id
+   * @param id the namespace id
    * @param stream the stream to create
    * @throws OperationException
    */
@@ -97,16 +97,16 @@ public interface Store {
 
   /**
    * Get the spec of a named stream.
-   * @param id the account id
+   * @param id the namespace id
    * @param name the name of the stream
    * @throws OperationException
    */
   StreamSpecification getStream(Id.Namespace id, String name) throws OperationException;
 
   /**
-   * Get the specs of all streams for an account.
+   * Get the specs of all streams for a namespace.
    *
-   * @param id the account id
+   * @param id the namespace id
    * @throws OperationException
    */
 
@@ -249,16 +249,16 @@ public interface Store {
   void removeApplication(Id.Application id) throws OperationException;
 
   /**
-   * Removes all applications (with programs) of the given account.
+   * Removes all applications (with programs) associated with the given namespace.
    *
-   * @param id account id whose applications to remove
+   * @param id namespace id whose applications to remove
    */
   void removeAllApplications(Id.Namespace id) throws OperationException;
 
   /**
-   * Remove all metadata associated with account.
+   * Remove all metadata associated with the given namespace.
    *
-   * @param id account id whose items to remove
+   * @param id namespace id whose items to remove
    */
   void removeAll(Id.Namespace id) throws OperationException;
 
