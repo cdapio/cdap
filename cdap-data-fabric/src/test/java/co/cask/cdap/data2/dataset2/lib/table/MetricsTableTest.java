@@ -150,6 +150,7 @@ public abstract class MetricsTableTest {
 
   @Test
   @Ignore
+  //TODO: CDAP-1186
   public void testConcurrentIncrement() throws Exception {
     final MetricsTable table = getTable("testConcurrentIncrement");
     final int rounds = 500;
