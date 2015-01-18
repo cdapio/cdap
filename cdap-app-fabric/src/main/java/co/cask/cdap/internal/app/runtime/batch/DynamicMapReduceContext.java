@@ -17,6 +17,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -54,15 +55,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * letting users access datasets at runtime that aren't known about at compile time.
  * </p>
  */
-public class DynamicBasicMapReduceContext extends DynamicDatasetContext implements MapReduceContext {
-  private static final Logger LOG = LoggerFactory.getLogger(DynamicBasicMapReduceContext.class);
+public class DynamicMapReduceContext extends DynamicDatasetContext implements MapReduceContext {
+  private static final Logger LOG = LoggerFactory.getLogger(DynamicMapReduceContext.class);
   private final BasicMapReduceContext mapReduceContext;
   private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
 
-  public DynamicBasicMapReduceContext(BasicMapReduceContext mapReduceContext,
-                                      DatasetFramework datasetFramework,
-                                      TransactionContext transactionContext,
-                                      CConfiguration cConf) {
+  public DynamicMapReduceContext(BasicMapReduceContext mapReduceContext,
+                                 DatasetFramework datasetFramework,
+                                 TransactionContext transactionContext,
+                                 CConfiguration cConf) {
     super(transactionContext,
           new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf, Namespace.USER)),
           mapReduceContext.getProgram().getClassLoader(),
@@ -132,6 +133,16 @@ public class DynamicBasicMapReduceContext extends DynamicDatasetContext implemen
   @Override
   public void setOutput(String datasetName, Dataset dataset) {
     mapReduceContext.setOutput(datasetName, dataset);
+  }
+
+  @Override
+  public void setMapperResources(Resources resources) {
+    mapReduceContext.setMapperResources(resources);
+  }
+
+  @Override
+  public void setReducerResources(Resources resources) {
+    mapReduceContext.setReducerResources(resources);
   }
 
   @Nullable

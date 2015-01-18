@@ -392,12 +392,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // add datasets given in the application specification to the transaction context
     TransactionContext txContext =
       new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
-    DynamicBasicMapReduceContext mapReduceContextWithTX = null;
+    DynamicMapReduceContext mapReduceContextWithTX = null;
     try {
       txContext.start();
       // this context allows the onFinish in user code to get datasets not mentioned in the application spec
       // it will make sure any txAwares created through the user code will get added to the txContext.
-      mapReduceContextWithTX = new DynamicBasicMapReduceContext(context, datasetFramework, txContext, cConf);
+      mapReduceContextWithTX = new DynamicMapReduceContext(context, datasetFramework, txContext, cConf);
       userCode.apply(mapReduceContextWithTX);
       txContext.finish();
     } catch (TransactionFailureException e) {
