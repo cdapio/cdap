@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -236,7 +236,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
     for (Location location : baseLocation.list()) {
       // Partition must be a directory
-      if (!location.isDirectory()) {
+      if (!location.isDirectory() || !StreamUtils.isPartition(location.getName())) {
         continue;
       }
       long partitionStartTime = StreamUtils.getPartitionStartTime(location.getName());
