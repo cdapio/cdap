@@ -19,6 +19,7 @@ package co.cask.cdap.data2;
 /**
  * Defines OperationException.
  */
+@Deprecated
 public class OperationException extends Exception {
 
   int statusCode;
