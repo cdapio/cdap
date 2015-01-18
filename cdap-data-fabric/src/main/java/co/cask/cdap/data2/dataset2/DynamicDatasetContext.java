@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
-import com.google.common.base.Objects;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -39,6 +38,7 @@ import javax.annotation.Nullable;
  * into a started {@link TransactionContext}.
  */
 public abstract class DynamicDatasetContext implements DatasetContext {
+  private static final Map<String, String> EMPTY_MAP = ImmutableMap.<String, String>of();
   private final TransactionContext context;
   private final Set<String> allowedDatasets;
   private final DatasetFramework datasetFramework;
@@ -61,7 +61,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   }
 
   public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader) {
-    this(context, datasetFramework, classLoader, null, ImmutableMap.<String, String>of());
+    this(context, datasetFramework, classLoader, null, EMPTY_MAP);
   }
 
   /**

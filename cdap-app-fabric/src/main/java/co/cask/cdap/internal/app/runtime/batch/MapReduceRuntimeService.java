@@ -369,7 +369,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public void apply(MapReduceContext context) throws Exception {
         mapReduce.beforeSubmit(context);
       }
-    });
+    }, "beforeSubmit()");
   }
 
   /**
@@ -381,13 +381,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public void apply(MapReduceContext context) throws Exception {
         mapReduce.onFinish(succeeded, context);
       }
-    });
+    }, "onFinish()");
   }
 
   // since the user code may create new TransactionAwares, we need to do this ourselves instead
   // of going through tephra's TransactionExecutor, since the executor requires that you know all the txAwares
   // before executing.
-  private void runUserCodeInTx(TransactionExecutor.Procedure<MapReduceContext> userCode) {
+  private void runUserCodeInTx(TransactionExecutor.Procedure<MapReduceContext> userCode, String methodName) {
     // add datasets given in the application specification to the transaction context
     TransactionContext txContext =
       new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
@@ -400,9 +400,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       userCode.apply(mapReduceContextWithTX);
       txContext.finish();
     } catch (TransactionFailureException e) {
-      abortTransaction(e, "Failed to commit after running onFinish(). Aborting transaction.", txContext);
+      abortTransaction(e, "Failed to commit after running " + methodName + ". Aborting transaction.", txContext);
     } catch (Throwable t) {
-      abortTransaction(t, "Exception occurred running onFinish(). Aborting transaction.", txContext);
+      abortTransaction(t, "Exception occurred running " + methodName + ". Aborting transaction.", txContext);
     } finally {
       if (mapReduceContextWithTX != null) {
         mapReduceContextWithTX.close();
