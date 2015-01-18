@@ -62,12 +62,12 @@ public abstract class AbstractWorkflowProgram extends ForwardingProgram {
   }
 
   @Override
-  public abstract ApplicationSpecification getSpecification();
+  public abstract ApplicationSpecification getApplicationSpecification();
 
   /**
    * @return {@link ApplicationSpecification} from the {@link ForwardingProgram}
    */
   ApplicationSpecification getForwardingProgramSpecification() {
-    return super.getSpecification();
+    return super.getApplicationSpecification();
   }
 }

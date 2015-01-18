@@ -68,8 +68,8 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
-  public ApplicationSpecification getSpecification() {
-    return delegate.getSpecification();
+  public ApplicationSpecification getApplicationSpecification() {
+    return delegate.getApplicationSpecification();
   }
 
   @Override

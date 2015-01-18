@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _examples-fileset:
 
@@ -16,8 +16,8 @@ Overview
 
 This application demonstrates the use of the FileSet dataset:
 
-  - The ``lines`` FileSet is used as input for the ``WordCount`` MapReduce Job.
-  - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce Job.
+  - The ``lines`` FileSet is used as input for the ``WordCount`` MapReduce program.
+  - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce program.
   - The ``FileSetService`` allows uploading and downloading files within these two file sets.
 
 Let's look at some of these components, and then run the Application and see the results.
@@ -123,18 +123,18 @@ A sample text file is included in the ``resources`` directory of the example::
   curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
     -XPUT --data-binary @resources/lines.txt
 
-Now we start the MapReduce Job and configure it to use this file as its input, and to write its output to
+Now we start the MapReduce program and configure it to use this file as its input, and to write its output to
 ``counts.out``::
 
   curl -v localhost:10000/v2/apps/FileSetExample/mapreduce/WordCount/start \
     -d '{ "dataset.lines.input.paths": "some.txt", \
           "dataset.counts.output.path": "counts.out" }'
 
-Wait for the MapReduce Job to finish, and you can download the results of the computation::
+Wait for the MapReduce program to finish, and you can download the results of the computation::
 
   curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000
 
-Note that we have to download a part file that is under the output path that was specified for the MapReduce Job.
+Note that we have to download a part file that is under the output path that was specified for the MapReduce program.
 This is because in MapReduce, every reducer writes a separate part file into the output directory.
 In this case, as we have fixed the number of reducers to one, there is only a single part file to download.
 

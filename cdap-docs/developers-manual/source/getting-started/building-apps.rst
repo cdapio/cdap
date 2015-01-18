@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _cdap-building-running:
 
@@ -107,7 +107,7 @@ Once an application is deployed:
 Removing an Application
 ----------------------------------
 
-Once an application is stopped—all Processes (Flows, MapReduce Jobs, Workflows,
+Once an application is stopped—all Processes (Flows, MapReduce programs, Workflows,
 etc.), Queries, and Services are stopped—you can click the *Delete* button on the
 Application's detail page in the CDAP Console to delete the Application. After
 confirmation, the application will be deleted.
