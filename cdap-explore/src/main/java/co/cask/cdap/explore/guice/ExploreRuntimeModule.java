@@ -75,17 +75,20 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // the right thing, and we only want to test our/our user's code.
     getClass().getClassLoader().setPackageAssertionStatus("org.apache.hadoop.hive", false);
     getClass().getClassLoader().setPackageAssertionStatus("org.apache.hive", false);
-    return Modules.combine(new ExploreExecutorModule(), new ExploreLocalModule(true));
+    return Modules.combine(new ExploreExecutorModule(), new ExploreLocalModule(true),
+                           new ExploreClientModule());
   }
 
   @Override
   public Module getStandaloneModules() {
-    return Modules.combine(new ExploreExecutorModule(), new ExploreLocalModule(false));
+    return Modules.combine(new ExploreExecutorModule(), new ExploreLocalModule(false),
+                           new ExploreClientModule());
   }
 
   @Override
   public Module getDistributedModules() {
-    return Modules.combine(new ExploreExecutorModule(), new ExploreDistributedModule());
+    return Modules.combine(new ExploreExecutorModule(), new ExploreDistributedModule(),
+                           new ExploreClientModule());
   }
 
   private static final class ExploreExecutorModule extends PrivateModule {

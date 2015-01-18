@@ -42,7 +42,7 @@ public class StreamConversionApp extends AbstractApplication {
       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
     addStream(new Stream("events"));
-    addWorkflow(new StreamConversionWorkflow());
+    addMapReduce(new StreamConversionMapReduce());
     // this should not be in the app.  But there is no way to pass in the name of the dataset at runtime...
     // do this to get an outline of the app in place then change it after the framework can support runtime datasets.
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()
