@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,24 +15,18 @@
  */
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
  * Implements a simple Workflow with one Workflow action to run the PurchaseHistoryBuilder 
  * MapReduce with a schedule that runs every day at 4:00 A.M.
  */
-public class PurchaseHistoryWorkflow implements Workflow {
+public class PurchaseHistoryWorkflow extends AbstractWorkflow {
 
   @Override
-  public WorkflowSpecification configure() {
-    return WorkflowSpecification.Builder.with()
-      .setName("PurchaseHistoryWorkflow")
-      .setDescription("PurchaseHistoryWorkflow description")
-      .onlyWith(new PurchaseHistoryBuilder())
-      .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
-                                       Schedule.Action.START))
-      .build();
+  public void configure() {
+      setName("PurchaseHistoryWorkflow");
+      setDescription("PurchaseHistoryWorkflow description");
+      addMapReduce("PurchaseHistoryBuilder");
   }
 }

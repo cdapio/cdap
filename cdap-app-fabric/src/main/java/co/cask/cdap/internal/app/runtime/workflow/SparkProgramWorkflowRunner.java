@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -53,8 +54,8 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
    */
   @Override
   public Callable<RuntimeContext> create(String name) {
-
-    final SparkSpecification sparkSpec = workflowSpec.getSparks().get(name);
+    ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
+    final SparkSpecification sparkSpec = spec.getSpark().get(name);
     Preconditions.checkArgument(sparkSpec != null,
                                 "No Spark with name %s found in Workflow %s", name, workflowSpec.getName());
 

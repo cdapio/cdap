@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public interface Scheduler {
    * @param programType type of program.
    * @param schedules Schedule with which the program runs.
    */
-  public void schedule(Id.Program program, ProgramType programType, Iterable<Schedule> schedules);
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules);
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
@@ -45,7 +45,7 @@ public interface Scheduler {
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    */
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, ProgramType programType);
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType);
 
   /**
    * Get Schedule ids for a given program and program type.
@@ -54,22 +54,25 @@ public interface Scheduler {
    * @param programType type of program.
    * @return List of scheduleIds, empty List if there are no matching schedules.
    */
-  public List<String> getScheduleIds(Id.Program program, ProgramType programType);
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType);
 
   /**
-   * Suspends a schedule with the given ScheduleId. Sub-sequent schedules will not be for the job.
-   *
-   * @param scheduleId schedule id.
+   * Suspends a schedule. Sub-sequent schedules will not trigger for the job.
+   * @param program the program for which schedule needs to be suspended
+   * @param programType the type of the program
+   * @param scheduleName the name of the schedule
    */
-  public void suspendSchedule(String scheduleId);
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Resume given schedule. The scheduled job will trigger from the next possible runtime.
    * The schedules between pause and resume calls will not be re-run.
    *
-   * @param scheduleId schedule id.
+   * @param program the program for which schedule needs to be resumed
+   * @param programType the type of the program
+   * @param scheduleName the name of the schedule
    */
-  public void resumeSchedule(String scheduleId);
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Deletes the schedule.
@@ -86,15 +89,17 @@ public interface Scheduler {
    * @param programId Id of program that needs to be run.
    * @param programType type of program that needs to be run.
    */
-  public void deleteSchedules(Id.Program programId, ProgramType programType);
+  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType);
 
   /**
    * Get state of a particular schedule.
    *
-   * @param scheduleId ScheduleId for getting the state.
+   * @param program the program for which the state of the schedule is queried
+   * @param programType the type of the program
+   * @param scheduleName the name of the schedule
    * @return State of the schedule.
    */
-  public ScheduleState scheduleState (String scheduleId);
+  public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Schedule state.
