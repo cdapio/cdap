@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,25 +17,25 @@
 package co.cask.cdap.data2.increment.hbase94;
 
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
-import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
+import co.cask.cdap.data2.increment.hbase.TimestampOracle;
 import co.cask.tephra.hbase94.Filters;
-import co.cask.tephra.persist.TransactionSnapshot;
-import com.google.common.base.Supplier;
-import com.google.common.collect.Sets;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
@@ -69,54 +69,37 @@ import java.util.TreeMap;
  * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
-  /**
-   * Property set for {@link HColumnDescriptor} to indicate if increment is transactional. Default: "true", i.e.
-   * transactional.
-   */
-  public static final String PROPERTY_TRANSACTIONAL = "dataset.table.readless.increment.transactional";
-
-  // prefix bytes used to mark values that are deltas vs. full sums
-  public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
-  // expected length for values storing deltas (prefix + increment value)
-  public static final int DELTA_FULL_LENGTH = DELTA_MAGIC_PREFIX.length + Bytes.SIZEOF_LONG;
-  public static final int BATCH_UNLIMITED = -1;
-
   private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
   private HRegion region;
-  private TransactionStateCache cache;
-
-  protected Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+  private IncrementHandlerState state;
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
+      this.state = new IncrementHandlerState(env.getConfiguration(),
+          env.getRegion().getTableDesc().getNameAsString());
+
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
-        boolean txnl = !"false".equals(columnDesc.getValue(PROPERTY_TRANSACTIONAL));
-        LOG.info("Family " + columnDesc.getNameAsString() + " is transactional: " + txnl);
-        if (txnl) {
-          txnlFamilies.add(columnDesc.getName());
-        }
-      }
-
-      if (!txnlFamilies.isEmpty()) {
-        Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
-        this.cache = cacheSupplier.get();
+        state.initFamily(columnDesc.getName(), convertFamilyValues(columnDesc.getValues()));
       }
     }
   }
 
-  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
-    String tableName = env.getRegion().getTableDesc().getNameAsString();
-    String[] parts = tableName.split("\\.", 2);
-    String tableNamespace = "";
-    if (parts.length > 0) {
-      tableNamespace = parts[0];
+  @VisibleForTesting
+  public void setTimestampOracle(TimestampOracle timeOracle) {
+    state.setTimestampOracle(timeOracle);
+  }
+
+  private Map<byte[], byte[]> convertFamilyValues(Map<ImmutableBytesWritable, ImmutableBytesWritable> writableValues) {
+    Map<byte[], byte[]> converted = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e : writableValues.entrySet()) {
+      converted.put(e.getKey().get(), e.getValue().get());
     }
-    return new DefaultTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
+    return converted;
   }
 
   @Override
@@ -140,22 +123,62 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public void prePut(ObserverContext<RegionCoprocessorEnvironment> ctx, Put put, WALEdit edit, boolean writeToWAL)
     throws IOException {
-    if (put.getAttribute(HBaseOrderedTable.DELTA_WRITE) != null) {
+    // we assume that if any of the column families written to are transactional, the entire write is transactional
+    boolean transactional = state.containsTransactionalFamily(put.getFamilyMap().keySet());
+    boolean isIncrement = put.getAttribute(HBaseOrderedTable.DELTA_WRITE) != null;
+
+    if (isIncrement || !transactional) {
       // incremental write
       NavigableMap<byte[], List<KeyValue>> newFamilyMap = new TreeMap<byte[], List<KeyValue>>(Bytes.BYTES_COMPARATOR);
+
+      long tsToAssign = 0;
+      if (!transactional) {
+        tsToAssign = state.getUniqueTimestamp();
+      }
       for (Map.Entry<byte[], List<KeyValue>> entry : put.getFamilyMap().entrySet()) {
         List<KeyValue> newCells = new ArrayList<KeyValue>(entry.getValue().size());
         for (KeyValue kv : entry.getValue()) {
           // rewrite the cell value with a special prefix to identify it as a delta
           // for 0.98 we can update this to use cell tags
-          byte[] newValue = Bytes.add(DELTA_MAGIC_PREFIX, kv.getValue());
-          newCells.add(new KeyValue(kv.getRow(), kv.getFamily(), kv.getQualifier(), kv.getTimestamp(), newValue));
+          byte[] newValue = isIncrement ? Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, kv.getValue()) :
+              kv.getValue();
+          newCells.add(new KeyValue(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),
+              kv.getBuffer(), kv.getFamilyOffset(), kv.getFamilyLength(),
+              kv.getBuffer(), kv.getQualifierOffset(), kv.getQualifierLength(),
+              transactional ? kv.getTimestamp() : tsToAssign,
+              KeyValue.Type.Put,
+              newValue, 0, newValue.length));
         }
         newFamilyMap.put(entry.getKey(), newCells);
       }
       put.setFamilyMap(newFamilyMap);
     }
     // put completes normally with value prefix marker
+  }
+
+  @Override
+  public void preDelete(ObserverContext<RegionCoprocessorEnvironment> e, Delete delete, WALEdit edit,
+                        boolean writeToWAL) throws IOException {
+    boolean transactional = state.containsTransactionalFamily(delete.getFamilyMap().keySet());
+    if (!transactional) {
+      long tsToAssign = state.getUniqueTimestamp();
+      delete.setTimestamp(tsToAssign);
+      // new key values
+      NavigableMap<byte[], List<KeyValue>> newFamilyMap = new TreeMap<byte[], List<KeyValue>>(Bytes.BYTES_COMPARATOR);
+      for (Map.Entry<byte[], List<KeyValue>> entry : delete.getFamilyMap().entrySet()) {
+        List<KeyValue> newCells = new ArrayList<KeyValue>(entry.getValue().size());
+        for (KeyValue kv : entry.getValue()) {
+          // replace the timestamp
+          newCells.add(new KeyValue(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),
+              kv.getBuffer(), kv.getFamilyOffset(), kv.getFamilyLength(),
+              kv.getBuffer(), kv.getQualifierOffset(), kv.getQualifierLength(),
+              tsToAssign, KeyValue.Type.codeToType(kv.getType()),
+              kv.getBuffer(), kv.getValueOffset(), kv.getValueLength()));
+        }
+        newFamilyMap.put(entry.getKey(), newCells);
+      }
+      delete.setFamilyMap(newFamilyMap);
+    }
   }
 
   @Override
@@ -177,39 +200,32 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                   InternalScanner scanner) throws IOException {
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
-                                       ScanType.MINOR_COMPACT, getCompactionBound(store));
+    byte[] family = store.getFamily().getName();
+    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner,
+        ScanType.MINOR_COMPACT, state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 
   public static boolean isIncrement(KeyValue kv) {
-    return !KeyValue.isDelete(kv.getType()) && kv.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
-      Bytes.equals(kv.getBuffer(), kv.getValueOffset(), IncrementHandler.DELTA_MAGIC_PREFIX.length,
-                   IncrementHandler.DELTA_MAGIC_PREFIX, 0, IncrementHandler.DELTA_MAGIC_PREFIX.length);
+    return !KeyValue.isDelete(kv.getType()) && kv.getValueLength() == IncrementHandlerState.DELTA_FULL_LENGTH &&
+      Bytes.equals(kv.getBuffer(), kv.getValueOffset(), IncrementHandlerState.DELTA_MAGIC_PREFIX.length,
+                   IncrementHandlerState.DELTA_MAGIC_PREFIX, 0, IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
   }
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner) throws IOException {
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
-                                       ScanType.MINOR_COMPACT, getCompactionBound(store));
+    byte[] family = store.getFamily().getName();
+    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
+        state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, CompactionRequest request)
     throws IOException {
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+    byte[] family = store.getFamily().getName();
+    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner,
                                        request.isMajor() ? ScanType.MAJOR_COMPACT : ScanType.MINOR_COMPACT,
-                                       getCompactionBound(store));
-  }
-
-  private long getCompactionBound(Store store) {
-    if (txnlFamilies.contains(store.getFamily().getName())) {
-      TransactionSnapshot snapshot = cache.getLatestState();
-      // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-      return snapshot != null ? snapshot.getVisibilityUpperBound() : 0;
-    } else {
-      return HConstants.LATEST_TIMESTAMP;
-    }
+                                       state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 }

@@ -26,6 +26,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
+import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -214,7 +215,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
       table.increment(row, col, 10);
       table.commitTx();
       // verify that value was written as a delta value
-      final byte[] expectedValue = Bytes.add(IncrementHandler.DELTA_MAGIC_PREFIX, Bytes.toBytes(10L));
+      final byte[] expectedValue = Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, Bytes.toBytes(10L));
       final AtomicBoolean foundValue = new AtomicBoolean();
       testHBase.forEachRegion(Bytes.toBytes(enabledTableName), new Function<HRegion, Object>() {
         @Nullable

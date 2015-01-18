@@ -16,16 +16,17 @@
 
 package co.cask.cdap.data2.increment.hbase94;
 
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
+import co.cask.cdap.data2.increment.hbase.AbstractIncrementHandlerTest;
+import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
+import co.cask.cdap.data2.increment.hbase.TimestampOracle;
 import co.cask.cdap.test.SlowTests;
-import com.google.common.collect.Lists;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -33,13 +34,13 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.apache.hadoop.hbase.util.Pair;
 import org.junit.experimental.categories.Category;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -50,233 +51,10 @@ import static org.junit.Assert.assertNotNull;
  * Tests for the HBase 0.94 version of the {@link IncrementHandler} coprocessor.
  */
 @Category(SlowTests.class)
-public class IncrementHandlerTest {
-  private static final byte[] EMPTY_BYTES = new byte[0];
-  private static final byte[] FAMILY = Bytes.toBytes("i");
+public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
 
-  private static HBaseTestingUtility testUtil;
-  private static Configuration conf;
-
-  private long ts = 1;
-
-  @BeforeClass
-  public static void setup() throws Exception {
-    testUtil = new HBaseTestingUtility();
-    testUtil.startMiniCluster();
-    conf = testUtil.getConfiguration();
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    testUtil.shutdownMiniCluster();
-  }
-
-  @Test
-  public void testIncrements() throws Exception {
-    byte[] tableName = Bytes.toBytes("incrementTest");
-    HTableDescriptor tableDesc = new HTableDescriptor(tableName);
-    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
-    columnDesc.setMaxVersions(Integer.MAX_VALUE);
-    tableDesc.addFamily(columnDesc);
-    tableDesc.addCoprocessor(IncrementHandler.class.getName());
-    testUtil.getHBaseAdmin().createTable(tableDesc);
-    testUtil.waitTableAvailable(tableName, 5000);
-
-    HTable table = new HTable(conf, tableName);
-    try {
-      byte[] colA = Bytes.toBytes("a");
-      byte[] row1 = Bytes.toBytes("row1");
-
-      // test column containing only increments
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      assertColumn(table, row1, colA, 3);
-
-      // test intermixed increments and puts
-      Put putA = new Put(row1);
-      putA.add(FAMILY, colA, ts++, Bytes.toBytes(5L));
-      table.put(putA);
-
-      assertColumn(table, row1, colA, 5);
-
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      assertColumn(table, row1, colA, 7);
-
-      // test multiple increment columns
-      byte[] row2 = Bytes.toBytes("row2");
-      byte[] colB = Bytes.toBytes("b");
-
-      // increment A and B twice at the same timestamp
-      table.put(newIncrement(row2, colA, 1, 1));
-      table.put(newIncrement(row2, colB, 1, 1));
-      table.put(newIncrement(row2, colA, 2, 1));
-      table.put(newIncrement(row2, colB, 2, 1));
-      // increment A once more
-      table.put(newIncrement(row2, colA, 1));
-
-      assertColumns(table, row2, new byte[][]{ colA, colB }, new long[]{ 3, 2 });
-
-      // overwrite B with a new put
-      Put p = new Put(row2);
-      p.add(FAMILY, colB, ts++, Bytes.toBytes(10L));
-      table.put(p);
-
-      assertColumns(table, row2, new byte[][]{ colA, colB }, new long[]{ 3, 10 });
-
-      // check a full scan
-      Scan scan = new Scan();
-      ResultScanner scanner = table.getScanner(scan);
-      // row1
-      Result scanRes = scanner.next();
-      assertNotNull(scanRes);
-      assertFalse(scanRes.isEmpty());
-      KeyValue scanResCell = scanRes.getColumnLatest(FAMILY, colA);
-      assertArrayEquals(row1, scanResCell.getRow());
-      assertEquals(7L, Bytes.toLong(scanResCell.getValue()));
-
-      // row2
-      scanRes = scanner.next();
-      assertNotNull(scanRes);
-      assertFalse(scanRes.isEmpty());
-      scanResCell = scanRes.getColumnLatest(FAMILY, colA);
-      assertArrayEquals(row2, scanResCell.getRow());
-      assertEquals(3L, Bytes.toLong(scanResCell.getValue()));
-      scanResCell = scanRes.getColumnLatest(FAMILY, colB);
-      assertArrayEquals(row2, scanResCell.getRow());
-      assertEquals(10L, Bytes.toLong(scanResCell.getValue()));
-    } finally {
-      table.close();
-    }
-  }
-
-  @Test
-  public void testIncrementsCompaction() throws Exception {
-    // In this test we verify that squashing delta-increments during flush or compaction works as designed.
-
-    byte[] tableName = Bytes.toBytes("incrementCompactTest");
-    HTableDescriptor tableDesc = new HTableDescriptor(tableName);
-    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
-    columnDesc.setMaxVersions(Integer.MAX_VALUE);
-    tableDesc.addFamily(columnDesc);
-    tableDesc.addCoprocessor(IncrementHandler.class.getName());
-    testUtil.getHBaseAdmin().createTable(tableDesc);
-    testUtil.waitTableAvailable(tableName, 5000);
-
-    HTable table = new HTable(conf, tableName);
-    try {
-      byte[] colA = Bytes.toBytes("a");
-      byte[] row1 = Bytes.toBytes("row1");
-
-      // do some increments
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      assertColumn(table, row1, colA, 3);
-
-      testUtil.flush(tableName);
-
-      // verify increments after flush
-      assertColumn(table, row1, colA, 3);
-
-      // do some more increments
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      // verify increments merged well from hstore and memstore
-      assertColumn(table, row1, colA, 6);
-
-      testUtil.flush(tableName);
-
-      // verify increments merged well into hstores
-      assertColumn(table, row1, colA, 6);
-
-      // do another iteration to verify that multiple "squashed" increments merged well at scan and at flush
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      assertColumn(table, row1, colA, 9);
-      testUtil.flush(tableName);
-      assertColumn(table, row1, colA, 9);
-
-      // verify increments merged well on minor compaction
-      testUtil.compact(tableName, false);
-      assertColumn(table, row1, colA, 9);
-
-      // another round of increments to verify that merged on compaction merges well with memstore and with new hstores
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      assertColumn(table, row1, colA, 12);
-      testUtil.flush(tableName);
-      assertColumn(table, row1, colA, 12);
-
-      // do same, but with major compaction
-      // verify increments merged well on minor compaction
-      testUtil.compact(tableName, true);
-      assertColumn(table, row1, colA, 12);
-
-      // another round of increments to verify that merged on compaction merges well with memstore and with new hstores
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-      table.put(newIncrement(row1, colA, 1));
-
-      assertColumn(table, row1, colA, 15);
-      testUtil.flush(tableName);
-      assertColumn(table, row1, colA, 15);
-
-    } finally {
-      table.close();
-    }
-  }
-
-  @Test
-  public void testIncrementsCompactionUnlimBound() throws Exception {
-    // In this test we verify that having compaction bound unlim merges increments and leaves single version of a cell.
-    // It is important because in cases where we don't use tx nobody else will cleanup redundant (merged) keyvalues.
-    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
-    columnDesc.setValue(IncrementHandler.PROPERTY_TRANSACTIONAL, "false");
-    HRegion region = IncrementSummingScannerTest.createRegion(conf, "incrementCompactUnlimBoundTest", columnDesc);
-
-    try {
-      region.initialize();
-
-      byte[] colA = Bytes.toBytes("a");
-      byte[] row1 = Bytes.toBytes("row1");
-
-      // do some increments
-      IncrementSummingScannerTest.doPut(region, newIncrement(row1, colA, 1));
-      IncrementSummingScannerTest.doPut(region, newIncrement(row1, colA, 1));
-      IncrementSummingScannerTest.doPut(region, newIncrement(row1, colA, 1));
-
-      region.flushcache();
-
-      // verify increments merged after flush
-      assertSingleVersionColumn(region, row1, colA, 3);
-
-      // do some more increments
-      IncrementSummingScannerTest.doPut(region, newIncrement(row1, colA, 1));
-      IncrementSummingScannerTest.doPut(region, newIncrement(row1, colA, 1));
-      IncrementSummingScannerTest.doPut(region, newIncrement(row1, colA, 1));
-
-      region.flushcache();
-      region.compactStores(true);
-
-      // verify increments merged well into hstores
-      assertSingleVersionColumn(region, row1, colA, 6);
-    } finally {
-      region.close();
-    }
-  }
-
-  private void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
+  @Override
+  public void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
     Result res = table.get(new Get(row));
     KeyValue resA = res.getColumnLatest(FAMILY, col);
     assertFalse(res.isEmpty());
@@ -294,22 +72,8 @@ public class IncrementHandlerTest {
     assertEquals(expected, Bytes.toLong(scanResA.getValue()));
   }
 
-  private void assertSingleVersionColumn(HRegion region, byte[] row, byte[] col, long expected) throws Exception {
-    Scan scan = new Scan(row);
-    scan.addColumn(FAMILY, col);
-    scan.setMaxVersions();
-    RegionScanner scanner = region.getScanner(scan);
-    List<KeyValue> results = Lists.newArrayList();
-    Assert.assertFalse(scanner.nextRaw(results, "foo"));
-    Assert.assertEquals(1, results.size());
-    byte[] value = results.get(0).getValue();
-    // note: it may be stored as increment delta even after merge on flush/compact
-    long longValue =
-      Bytes.toLong(value, value.length > Bytes.SIZEOF_LONG ? IncrementHandler.DELTA_MAGIC_PREFIX.length : 0);
-    Assert.assertEquals(expected, longValue);
-  }
-
-  private void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception {
+  @Override
+  public void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception {
     assertEquals(cols.length, expected.length);
 
     Get get = new Get(row);
@@ -340,14 +104,100 @@ public class IncrementHandlerTest {
     }
   }
 
-  public Put newIncrement(byte[] row, byte[] column, long value) {
-      return newIncrement(row, column, ts++, value);
+  @Override
+  public RegionWrapper createRegion(String tableName, Map<String, String> familyProperties) throws Exception {
+    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
+    columnDesc.setMaxVersions(Integer.MAX_VALUE);
+    for (Map.Entry<String, String> prop : familyProperties.entrySet()) {
+      columnDesc.setValue(prop.getKey(), prop.getValue());
+    }
+    return new HBase94RegionWrapper(
+        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), tableName, columnDesc));
   }
 
-  public Put newIncrement(byte[] row, byte[] column, long timestamp, long value) {
-    Put p = new Put(row);
-    p.add(FAMILY, column, timestamp, Bytes.toBytes(value));
-    p.setAttribute(HBaseOrderedTable.DELTA_WRITE, EMPTY_BYTES);
-    return p;
+  @Override
+  public void createTable(String tableName) throws Exception {
+    HTableDescriptor tableDesc = new HTableDescriptor(tableName);
+    HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
+    columnDesc.setMaxVersions(Integer.MAX_VALUE);
+    columnDesc.setValue(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false");
+    tableDesc.addFamily(columnDesc);
+    tableDesc.addCoprocessor(IncrementHandler.class.getName());
+    testUtil.getHBaseAdmin().createTable(tableDesc);
+    testUtil.waitUntilTableAvailable(Bytes.toBytes(tableName), 5000);
+  }
+
+  public static ColumnCell convertCell(KeyValue cell) {
+    return new ColumnCell(cell.getRow(), cell.getFamily(), cell.getQualifier(),
+        cell.getTimestamp(), cell.getValue());
+  }
+
+  public class HBase94RegionWrapper implements RegionWrapper {
+    private final HRegion region;
+
+    public HBase94RegionWrapper(HRegion region) {
+      this.region = region;
+    }
+
+    @Override
+    public void initialize() throws IOException {
+      region.initialize();
+    }
+
+    /**
+     * Work around a bug in HRegion.internalPut(), where RegionObserver.prePut() modifications are not applied.
+     */
+    @Override
+    public void put(Put put) throws IOException {
+      region.batchMutate(new Pair[]{ new Pair<Mutation, Integer>(put, null) });
+    }
+
+    @Override
+    public boolean scanRegion(List<ColumnCell> results, byte[] startRow) throws IOException {
+      return scanRegion(results, startRow, null);
+    }
+
+    @Override
+    public boolean scanRegion(List<ColumnCell> results, byte[] startRow, byte[][] columns) throws IOException {
+      Scan scan = new Scan().setMaxVersions().setStartRow(startRow);
+      if (columns != null) {
+        for (int i = 0; i < columns.length; i++) {
+          scan.addColumn(FAMILY, columns[i]);
+        }
+      }
+      RegionScanner rs = region.getScanner(scan);
+      try {
+        List<KeyValue> tmpResults = new ArrayList<KeyValue>();
+        boolean hasMore = rs.next(tmpResults);
+        for (KeyValue cell : tmpResults) {
+          results.add(convertCell(cell));
+        }
+        return hasMore;
+      } finally {
+        rs.close();
+      }
+    }
+
+    @Override
+    public boolean flush() throws IOException {
+      return region.flushcache();
+    }
+
+    @Override
+    public void compact(boolean majorCompact) throws IOException {
+      region.compactStores(majorCompact);
+    }
+
+    @Override
+    public void setCoprocessorTimestampOracle(TimestampOracle timeOracle) {
+      Coprocessor cp = region.getCoprocessorHost().findCoprocessor(IncrementHandler.class.getName());
+      assertNotNull(cp);
+      ((IncrementHandler) cp).setTimestampOracle(timeOracle);
+    }
+
+    @Override
+    public void close() throws IOException {
+      region.close();
+    }
   }
 }
