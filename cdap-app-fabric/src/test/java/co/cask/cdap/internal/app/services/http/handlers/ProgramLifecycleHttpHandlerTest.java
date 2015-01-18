@@ -632,7 +632,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                               Map<String, String> args)
     throws Exception {
     HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() {}.getType());
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
     String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
                                                            "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
                                                          namespace);
