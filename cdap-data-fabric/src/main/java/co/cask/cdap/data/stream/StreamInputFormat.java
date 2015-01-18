@@ -350,8 +350,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
         BODY_FORMAT + " must be set in the configuration in order to use a format for the stream body.");
     }
     FormatSpecification formatSpec = GSON.fromJson(formatSpecStr, FormatSpecification.class);
-    RecordFormat<ByteBuffer, StructuredRecord> recordFormat = RecordFormats.create(formatSpec.getName());
-    recordFormat.initialize(formatSpec);
+    RecordFormat<ByteBuffer, StructuredRecord> recordFormat = RecordFormats.createInitializedFormat(formatSpec);
     return recordFormat;
   }
 }

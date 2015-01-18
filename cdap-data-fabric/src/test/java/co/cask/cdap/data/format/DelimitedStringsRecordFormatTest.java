@@ -33,7 +33,7 @@ import java.util.Collections;
 /**
  *
  */
-public class CSVStringsRecordFormatTest {
+public class DelimitedStringsRecordFormatTest {
 
   @Test
   public void testSimpleSchemaValidation() throws UnsupportedTypeException {
@@ -45,7 +45,7 @@ public class CSVStringsRecordFormatTest {
                                           Schema.Field.of("f5", Schema.of(Schema.Type.BYTES)),
                                           Schema.Field.of("f6", Schema.of(Schema.Type.STRING))
     );
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     FormatSpecification formatSpec =
       new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                               simpleSchema, Collections.<String, String>emptyMap());
@@ -63,7 +63,7 @@ public class CSVStringsRecordFormatTest {
       Schema.Field.of("f5", Schema.unionOf(Schema.of(Schema.Type.BYTES), Schema.of(Schema.Type.NULL))),
       Schema.Field.of("f6", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL)))
     );
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     FormatSpecification formatSpec =
       new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                               schema, Collections.<String, String>emptyMap());
@@ -84,7 +84,7 @@ public class CSVStringsRecordFormatTest {
     FormatSpecification formatSpec =
       new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                               schema, Collections.<String, String>emptyMap());
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     format.initialize(formatSpec);
   }
 
@@ -96,7 +96,7 @@ public class CSVStringsRecordFormatTest {
       new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                               schema, Collections.<String, String>emptyMap());
 
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     format.initialize(formatSpec);
   }
 
@@ -109,7 +109,7 @@ public class CSVStringsRecordFormatTest {
       new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                               schema, Collections.<String, String>emptyMap());
 
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     format.initialize(formatSpec);
   }
 
@@ -121,13 +121,13 @@ public class CSVStringsRecordFormatTest {
       new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                               schema, Collections.<String, String>emptyMap());
 
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     format.initialize(formatSpec);
   }
 
   @Test
   public void testStringArrayFormat() throws UnsupportedTypeException, UnexpectedFormatException {
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     format.initialize(null);
     String body = "userX,actionY,itemZ";
     StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
@@ -138,7 +138,7 @@ public class CSVStringsRecordFormatTest {
 
   @Test
   public void testDelimiter() throws UnsupportedTypeException, UnexpectedFormatException {
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     FormatSpecification spec = new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                                                        null,
                                                        ImmutableMap.of(DelimitedStringsRecordFormat.DELIMITER, " "));
@@ -162,7 +162,7 @@ public class CSVStringsRecordFormatTest {
       Schema.Field.of("f6", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
       Schema.Field.of("f7", Schema.arrayOf(Schema.of(Schema.Type.STRING)))
     );
-    DelimitedStringsRecordFormat format = new CSVRecordFormat();
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     FormatSpecification spec = new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
                                                        schema,
                                                        ImmutableMap.of(DelimitedStringsRecordFormat.DELIMITER, ","));

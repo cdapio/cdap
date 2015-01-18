@@ -41,13 +41,11 @@ import java.util.Map;
  * In addition, the very last field can be an array of strings.
  * </p>
  */
-public abstract class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
+public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   public static final String DELIMITER = "delimiter";
   private Charset charset = Charsets.UTF_8;
-  private String delimiter;
-
-  protected abstract String getDefaultDelimiter();
+  private String delimiter = ",";
 
   @Override
   public StructuredRecord read(ByteBuffer input) throws UnexpectedFormatException {
@@ -62,7 +60,7 @@ public abstract class DelimitedStringsRecordFormat extends ByteBufferRecordForma
       } else {
         String val = bodyFields.hasNext() ? bodyFields.next() : null;
         // if the body field is an empty string and the column is not a string type, interpret it as a null.
-        if (val.isEmpty() && fieldSchema.getType() != Schema.Type.STRING) {
+        if (val != null && val.isEmpty() && (fieldSchema.getType() != Schema.Type.STRING)) {
           val = null;
         }
         builder.convertAndSet(fieldName, val);
@@ -110,6 +108,8 @@ public abstract class DelimitedStringsRecordFormat extends ByteBufferRecordForma
       this.charset = Charset.forName(charsetStr);
     }
     String delimiter = settings.get(DELIMITER);
-    this.delimiter = delimiter == null ? getDefaultDelimiter() : delimiter;
+    if (delimiter != null) {
+      this.delimiter = delimiter;
+    }
   }
 }
