@@ -29,6 +29,12 @@ import java.util.Map;
  * This dataset represents a collection of files on the file system. The dataset has a base location, under which
  * all of its files are located. When instantiated, runtime arguments are required to specify the individual file
  * or files being used.
+ *
+ * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
+ * properties when the dataset is created. See {@link co.cask.cdap.api.dataset.lib.FileSetProperties}
+ * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
+ * created. The Hive table is not partitioned, and therefore querying will only work if every path in the
+ * fileset is a file (not a subdirectory).
  */
 @Beta
 public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
