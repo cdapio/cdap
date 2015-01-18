@@ -195,14 +195,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final List<ProgramRecord> listPrograms(Id.Namespace accId, ProgramType type, Store store) throws Exception {
+  protected final List<ProgramRecord> listPrograms(Id.Namespace namespaceId, ProgramType type, Store store)
+    throws Exception {
     try {
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
       return listPrograms(appSpecs, type);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      String errorMessage = String.format("Could not retrieve application spec for %s, reason: %s",
-                                           accId.toString(), throwable.getMessage());
+      String errorMessage = String.format("Could not retrieve application spec for namespace '%s', reason: %s",
+                                           namespaceId.toString(), throwable.getMessage());
       throw new Exception(errorMessage, throwable);
     }
   }
@@ -218,7 +219,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       return appSpec == null ? null : listPrograms(Collections.singletonList(appSpec), type);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      String errorMessage = String.format("Could not retrieve application spec for %s, reason: %s",
+      String errorMessage = String.format("Could not retrieve application spec for application id '%s', reason: %s",
                                           appId.toString(), throwable.getMessage());
       throw new Exception(errorMessage, throwable);
     }

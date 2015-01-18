@@ -627,6 +627,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // should not delete queues while running
     Assert.assertEquals(403, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
+    Assert.assertEquals(403, deleteQueues(TEST_NAMESPACE1));
 
     // stop
     status = getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
@@ -936,6 +937,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
     return scheduleId;
+  }
+
+  private int deleteQueues(String namespace) throws Exception {
+    String versionedDeleteUrl = getVersionedAPIPath("queues", Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doDelete(versionedDeleteUrl);
+    return response.getStatusLine().getStatusCode();
   }
 
   private int deleteQueues(String namespace, String appId, String flow) throws Exception {

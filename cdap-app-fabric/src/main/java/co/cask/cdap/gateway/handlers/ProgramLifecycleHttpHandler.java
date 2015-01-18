@@ -53,6 +53,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -1034,6 +1035,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/queues")
   public void clearQueues(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
+    // check if there are actively 'RUNNING' flows
+    try {
+      List<ProgramRecord> flows = listPrograms(Id.Namespace.from(namespaceId), ProgramType.FLOW, store);
+      for (ProgramRecord flow : flows) {
+        String appId = flow.getApp();
+        String flowId = flow.getId();
+        Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
+        ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
+        if (status.getStatus().equals("RUNNING")) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN,
+                               String.format("Flow '%s' from application '%s' in namespace '%s' is running, " +
+                                               "please stop it first.", flowId, appId, namespaceId));
+          return;
+        }
+      }
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      return;
+    }
+    // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
+    // TODO: CDAP-1184 Implement metrics deletion once metrics APIs accept namespace
     clear(request, responder, namespaceId, ToClear.QUEUES);
   }
 
@@ -1044,6 +1066,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     QUEUES, STREAMS
   }
 
+  /**
+   * Clears flows/streams. namespaceId here can be null if you want to delete all queues/streams across all namespaces.
+   * However, that API has not been exposed yet - CDAP-1180
+   */
   protected void clear(HttpRequest request, HttpResponder responder, @Nullable String namespaceId, ToClear toClear) {
       try {
         if (toClear == ToClear.QUEUES) {
@@ -1057,19 +1083,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           streamAdmin.dropAll();
         }
         responder.sendStatus(HttpResponseStatus.OK);
-      } catch (SecurityException e) {
-        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       } catch (Exception e) {
         LOG.error("Exception clearing data fabric: ", e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      } catch (Throwable e) {
-        LOG.error("Caught exception", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
   }
-
 
   /**
    * Populates requested and provisioned instances for a program type.
