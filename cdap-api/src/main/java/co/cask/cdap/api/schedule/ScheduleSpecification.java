@@ -17,7 +17,6 @@
 package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import com.google.common.base.Objects;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,22 +69,28 @@ public final class ScheduleSpecification {
 
     ScheduleSpecification that = (ScheduleSpecification) o;
 
-    return Objects.equal(this.schedule, that.schedule) &&
-      Objects.equal(this.program, that.program) &&
-      Objects.equal(this.properties, that.properties);
+    if (!program.equals(that.program) || !properties.equals(that.properties) || !schedule.equals(that.schedule)) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(schedule, program, properties);
+    int result = schedule.hashCode();
+    result = 31 * result + program.hashCode();
+    result = 31 * result + properties.hashCode();
+    return result;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("schedule", schedule)
-      .add("program", program)
-      .add("properties", properties)
-      .toString();
+    StringBuilder sb = new StringBuilder("ScheduleSpecification{");
+    sb.append("schedule=").append(schedule);
+    sb.append(", program=").append(program);
+    sb.append(", properties=").append(properties);
+    sb.append('}');
+    return sb.toString();
   }
 }
