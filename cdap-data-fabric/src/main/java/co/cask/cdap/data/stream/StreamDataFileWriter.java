@@ -24,6 +24,7 @@ import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.FileWriter;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -75,7 +76,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * </pre>
  */
 @NotThreadSafe
-public final class StreamDataFileWriter implements Closeable, Flushable, FileWriter<StreamEvent> {
+public final class StreamDataFileWriter implements TimestampCloseable, Flushable, FileWriter<StreamEvent> {
 
   private static final int BUFFER_SIZE = 256 * 1024;    // 256K
 
@@ -192,10 +193,9 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     }
   }
 
-  /**
-   * Returns the timestamp when this writer was closed or {@code -1} if this writer is not yet closed.
-   */
+  @Override
   public long getCloseTimestamp() {
+    Preconditions.checkState(closed, "Writer not closed");
     return closeTimestamp;
   }
 
