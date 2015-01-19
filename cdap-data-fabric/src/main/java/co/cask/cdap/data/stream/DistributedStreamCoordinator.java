@@ -77,8 +77,7 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
 
   @Inject
   public DistributedStreamCoordinator(StreamAdmin streamAdmin, ZKClient zkClient,
-                                      DiscoveryServiceClient discoveryServiceClient,
-                                      StreamMetaStore streamMetaStore) {
+                                      DiscoveryServiceClient discoveryServiceClient, StreamMetaStore streamMetaStore) {
     super(streamAdmin);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;

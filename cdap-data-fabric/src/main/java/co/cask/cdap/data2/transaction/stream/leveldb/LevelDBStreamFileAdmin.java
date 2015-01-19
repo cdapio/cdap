@@ -20,6 +20,7 @@ import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -31,7 +32,8 @@ public final class LevelDBStreamFileAdmin extends AbstractStreamFileAdmin {
 
   @Inject
   LevelDBStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator streamCoordinator,
-                         StreamConsumerStateStoreFactory stateStoreFactory, LevelDBStreamAdmin oldStreamAdmin) {
-    super(locationFactory, cConf, streamCoordinator, stateStoreFactory, oldStreamAdmin);
+                         StreamConsumerStateStoreFactory stateStoreFactory,
+                         NotificationFeedManager notificationFeedManager, LevelDBStreamAdmin oldStreamAdmin) {
+    super(locationFactory, cConf, streamCoordinator, stateStoreFactory, notificationFeedManager, oldStreamAdmin);
   }
 }

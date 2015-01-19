@@ -169,7 +169,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     // Verify stream name
     if (!isValidName(stream)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+                           "Stream name can only contain alphanumeric, '-' and '_' characters.");
       return;
     }
 
