@@ -645,6 +645,9 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
         Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+        String scheduleName = scheduleSpecification.getSchedule().getName();
+        Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
+          scheduleName  + "' already exists.");
         schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         // TODO: double check this ProgramType.valueOf()

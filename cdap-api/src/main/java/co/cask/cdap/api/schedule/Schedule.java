@@ -66,11 +66,11 @@ public class Schedule {
 
     Schedule schedule = (Schedule) o;
 
-    if (!cronEntry.equals(schedule.cronEntry) || !description.equals(schedule.description)
-      || !name.equals(schedule.name)) {
-      return false;
+    if (cronEntry.equals(schedule.cronEntry) && description.equals(schedule.description)
+      && name.equals(schedule.name)) {
+      return true;
     }
-    return true;
+    return false;
   }
 
   @Override

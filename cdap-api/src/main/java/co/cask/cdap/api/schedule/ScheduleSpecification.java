@@ -68,12 +68,10 @@ public final class ScheduleSpecification {
     }
 
     ScheduleSpecification that = (ScheduleSpecification) o;
-
-    if (!program.equals(that.program) || !properties.equals(that.properties) || !schedule.equals(that.schedule)) {
-      return false;
+    if (program.equals(that.program) && properties.equals(that.properties) && schedule.equals(that.schedule)) {
+      return true;
     }
-
-    return true;
+    return false;
   }
 
   @Override

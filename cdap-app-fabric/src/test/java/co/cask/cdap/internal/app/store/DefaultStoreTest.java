@@ -680,6 +680,7 @@ public class DefaultStoreTest {
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule schedule2 = new Schedule("Schedule2", "Every Hour", "0 * * * ?");
+  private static final Schedule scheduleWithSameName = new Schedule("Schedule2", "Every minute", "* * * * ?");
   private static final Map<String, String> properties1 = ImmutableMap.of();
   private static final Map<String, String> properties2 = ImmutableMap.of();
   private static final ScheduleSpecification scheduleSpec1 =
@@ -687,6 +688,10 @@ public class DefaultStoreTest {
                               properties1);
   private static final ScheduleSpecification scheduleSpec2 =
     new ScheduleSpecification(schedule2, new ScheduleProgramInfo(programType, AppWithWorkflow.SampleWorkflow.NAME),
+                              properties2);
+  private static final ScheduleSpecification scheduleWithSameNameSpec =
+    new ScheduleSpecification(scheduleWithSameName, new ScheduleProgramInfo(programType,
+                                                                            AppWithWorkflow.SampleWorkflow.NAME),
                               properties2);
 
   @Test
@@ -706,6 +711,14 @@ public class DefaultStoreTest {
     schedules = getSchedules(appId);
     Assert.assertEquals(2, schedules.size());
     Assert.assertEquals(scheduleSpec2, schedules.get("Schedule2"));
+
+    try {
+      store.addSchedule(program, scheduleWithSameNameSpec);
+      Assert.fail("Should have thrown Exception because multiple schedules with the same name are being added.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getCause().getMessage(),
+                          "Schedule with the name 'Schedule2' already exists.");
+    }
 
     store.deleteSchedule(program, programType, "Schedule2");
     schedules = getSchedules(appId);
