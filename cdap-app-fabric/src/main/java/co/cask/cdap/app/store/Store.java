@@ -270,7 +270,8 @@ public interface Store {
    */
   void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue);
   /**
-   * Adds a schedule for a particular program
+   * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
+   * throw RuntimeException.
    * @param program defines program to which a schedule is being added
    * @param scheduleSpecification defines the schedule to be added for the program
    */
