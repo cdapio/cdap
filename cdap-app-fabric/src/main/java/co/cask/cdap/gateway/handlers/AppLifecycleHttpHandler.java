@@ -435,7 +435,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final String namespaceId, final String appId , Location archive) throws Exception {
+  private void deploy(final String namespaceId, final String appId, Location archive) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
       Location archiveLocation = archive;
@@ -516,7 +516,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void setupSchedules(String namespaceId, ApplicationSpecification specification)  throws IOException {
+  private void setupSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
 
     deleteSchedules(namespaceId, specification);
 

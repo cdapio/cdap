@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.FlowMapReduceApp;
 import co.cask.cdap.NoProgramsApp;
 import co.cask.cdap.ToyApp;
@@ -44,11 +45,16 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.procedure.AbstractProcedure;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -57,6 +63,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -69,6 +76,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -667,6 +675,73 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
+  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
+  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
+  private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?");
+  private static final Schedule schedule2 = new Schedule("Schedule2", "Every Hour", "0 * * * ?");
+  private static final Schedule scheduleWithSameName = new Schedule("Schedule2", "Every minute", "* * * * ?");
+  private static final Map<String, String> properties1 = ImmutableMap.of();
+  private static final Map<String, String> properties2 = ImmutableMap.of();
+  private static final ScheduleSpecification scheduleSpec1 =
+    new ScheduleSpecification(schedule1, new ScheduleProgramInfo(programType, AppWithWorkflow.SampleWorkflow.NAME),
+                              properties1);
+  private static final ScheduleSpecification scheduleSpec2 =
+    new ScheduleSpecification(schedule2, new ScheduleProgramInfo(programType, AppWithWorkflow.SampleWorkflow.NAME),
+                              properties2);
+  private static final ScheduleSpecification scheduleWithSameNameSpec =
+    new ScheduleSpecification(scheduleWithSameName, new ScheduleProgramInfo(programType,
+                                                                            AppWithWorkflow.SampleWorkflow.NAME),
+                              properties2);
+
+  @Test
+  public void testDynamicScheduling() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
+    Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE, AppWithWorkflow.NAME);
+
+    Map<String, ScheduleSpecification> schedules = getSchedules(appId);
+    Assert.assertEquals(0, schedules.size());
+
+    store.addSchedule(program, scheduleSpec1);
+    schedules = getSchedules(appId);
+    Assert.assertEquals(1, schedules.size());
+    Assert.assertEquals(scheduleSpec1, schedules.get("Schedule1"));
+
+    store.addSchedule(program, scheduleSpec2);
+    schedules = getSchedules(appId);
+    Assert.assertEquals(2, schedules.size());
+    Assert.assertEquals(scheduleSpec2, schedules.get("Schedule2"));
+
+    try {
+      store.addSchedule(program, scheduleWithSameNameSpec);
+      Assert.fail("Should have thrown Exception because multiple schedules with the same name are being added.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getCause().getMessage(),
+                          "Schedule with the name 'Schedule2' already exists.");
+    }
+
+    store.deleteSchedule(program, programType, "Schedule2");
+    schedules = getSchedules(appId);
+    Assert.assertEquals(1, schedules.size());
+    Assert.assertEquals(null, schedules.get("Schedule2"));
+
+    try {
+      store.deleteSchedule(program, programType, "Schedule2");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals(NoSuchElementException.class, Throwables.getRootCause(e).getClass());
+    }
+    schedules = getSchedules(appId);
+    Assert.assertEquals(1, schedules.size());
+    Assert.assertEquals(null, schedules.get("Schedule2"));
+  }
+
+  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) {
+    ApplicationSpecification application = store.getApplication(appId);
+    Assert.assertNotNull(application);
+    return application.getSchedules();
+  }
   @Test
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");

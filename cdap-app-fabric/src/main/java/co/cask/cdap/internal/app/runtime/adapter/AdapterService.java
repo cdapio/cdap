@@ -64,8 +64,7 @@ import javax.annotation.Nullable;
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
   private static final Gson GSON = new Gson();
-  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>(){}.getType();
-  private static final String ADAPTER_SPEC = "adapter.spec";
+  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String DATASET_CLASS = "dataset.class";
 
   private final CConfiguration configuration;
