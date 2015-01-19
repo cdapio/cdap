@@ -195,7 +195,7 @@ public class AdapterService extends AbstractIdleService {
 
   // create the required sinks for the adapters. Currently only DATASET sink type is supported.
   private void createSinks(Set<Sink> sinks, AdapterTypeInfo adapterTypeInfo) {
-    // create sinks if not exist
+    // create sinks if it does not exist
     for (Sink sink : sinks) {
       if (Sink.Type.DATASET.equals(sink.getType())) {
         String datasetName = sink.getName();
