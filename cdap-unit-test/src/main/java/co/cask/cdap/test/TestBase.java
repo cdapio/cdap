@@ -42,9 +42,11 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
+import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamServiceModule;
@@ -247,6 +249,7 @@ public class TestBase {
           super.configure();
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
+          bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
           expose(StreamHandler.class);
         }
       },

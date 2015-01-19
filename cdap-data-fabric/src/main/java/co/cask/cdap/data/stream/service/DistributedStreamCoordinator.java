@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
+
+package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.PropertyStore;
-import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
@@ -26,20 +25,16 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
-import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data.stream.StreamLeaderListener;
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -55,20 +50,19 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A {@link StreamCoordinator} uses ZooKeeper to implementation coordination needed for stream. It also uses a
- * {@link ResourceCoordinator} to elect each handler as the leader of a set of streams.
+ * A {@link StreamCoordinator} that uses ZooKeeper to elect a leader amongst Stream handlers.ed
  */
-@Singleton
-public final class DistributedStreamCoordinator extends AbstractStreamCoordinator {
+public class DistributedStreamCoordinator extends AbstractIdleService implements StreamCoordinator {
+
   private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamCoordinator.class);
 
   private static final String STREAMS_COORDINATOR = "streams.coordinator";
 
-  private ZKClient zkClient;
-
+  private final ZKClient zkClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
+  private final Set<StreamLeaderListener> leaderListeners;
 
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
@@ -76,15 +70,15 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
   private Cancellable handlerSubscription;
 
   @Inject
-  public DistributedStreamCoordinator(StreamAdmin streamAdmin, ZKClient zkClient,
-                                      DiscoveryServiceClient discoveryServiceClient,
+  public DistributedStreamCoordinator(ZKClient zkClient, DiscoveryServiceClient discoveryServiceClient,
                                       StreamMetaStore streamMetaStore) {
-    super(streamAdmin);
+    super();
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.handlerDiscoverable = null;
+    this.leaderListeners = Sets.newHashSet();
   }
 
   @Override
@@ -138,7 +132,7 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
   }
 
   @Override
-  protected void doShutDown() throws Exception {
+  protected void shutDown() throws Exception {
     // revoke subscription to resource coordinator
     if (leaderElection != null) {
       Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
@@ -154,47 +148,48 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
   }
 
   @Override
-  protected <T> PropertyStore<T> createPropertyStore(Codec<T> codec) {
-    return ZKPropertyStore.create(zkClient, "/" + Constants.Service.STREAMS + "/properties", codec);
-  }
-
-  @Override
-  public ListenableFuture<Void> streamCreated(final String streamName) {
-    // modify the requirement to add the new stream as a new partition of the existing requirement
-    ListenableFuture<ResourceRequirement> future = resourceCoordinatorClient.modifyRequirement(
-      Constants.Service.STREAMS, new ResourceModifier() {
-        @Nullable
-        @Override
-        public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
-          Set<ResourceRequirement.Partition> partitions;
-          if (existingRequirement != null) {
-            partitions = existingRequirement.getPartitions();
-          } else {
-            partitions = ImmutableSet.of();
-          }
-
-          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName, 1);
-          if (partitions.contains(newPartition)) {
-            return null;
-          }
-
-          ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-          builder.addPartition(newPartition);
-          for (ResourceRequirement.Partition partition : partitions) {
-            builder.addPartition(partition);
-          }
-          return builder.build();
-        }
-      });
-    return Futures.transform(future, Functions.<Void>constant(null));
-  }
-
-  @Override
   public void setHandlerDiscoverable(Discoverable discoverable) {
-    handlerDiscoverable = discoverable;
+
   }
 
+  @Override
+  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
+    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
+    // is not overridden by user's code implementation of the equal method
+    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        listener.leaderOf(streamNames);
+      }
+    };
 
+    synchronized (this) {
+      leaderListeners.add(wrappedListener);
+    }
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        synchronized (DistributedStreamCoordinator.this) {
+          leaderListeners.remove(wrappedListener);
+        }
+      }
+    };
+  }
+
+  /**
+   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
+   *
+   * @param streamNames set of Streams that this coordinator is the leader of
+   */
+  protected void invokeLeaderListeners(Set<String> streamNames) {
+    Set<StreamLeaderListener> callbacks;
+    synchronized (this) {
+      callbacks = ImmutableSet.copyOf(leaderListeners);
+    }
+    for (StreamLeaderListener callback : callbacks) {
+      callback.leaderOf(streamNames);
+    }
+  }
   /**
    * Class that defines the behavior of a leader of a collection of Streams.
    */
@@ -207,15 +202,13 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
       Set<String> streamNames =
-        ImmutableSet.copyOf(Iterables.transform(
-          partitionReplicas,
-          new Function<PartitionReplica, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable PartitionReplica input) {
-              return input != null ? input.getName() : null;
-            }
-          }));
+        ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, String>() {
+          @Nullable
+          @Override
+          public String apply(@Nullable PartitionReplica input) {
+            return input != null ? input.getName() : null;
+          }
+        }));
       invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
     }
 

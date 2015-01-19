@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.OSDetector;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -61,7 +61,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     .create();
 
   private final Location streamBaseLocation;
-  private final StreamCoordinator streamCoordinator;
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
 
@@ -70,12 +70,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final StreamAdmin oldStreamAdmin;
 
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                                    StreamCoordinator streamCoordinator,
+                                    StreamCoordinatorClient streamCoordinatorClient,
                                     StreamConsumerStateStoreFactory stateStoreFactory,
                                     StreamAdmin oldStreamAdmin) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
-    this.streamCoordinator = streamCoordinator;
+    this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
     this.oldStreamAdmin = oldStreamAdmin;
   }
@@ -101,7 +101,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     for (Location streamLocation : locations) {
       try {
         StreamConfig streamConfig = loadConfig(streamLocation);
-        streamCoordinator.nextGeneration(streamConfig, StreamUtils.getGeneration(streamConfig)).get();
+        streamCoordinatorClient.nextGeneration(streamConfig, StreamUtils.getGeneration(streamConfig)).get();
       } catch (Exception e) {
         LOG.error("Failed to truncate stream {}", streamLocation.getName(), e);
       }
@@ -228,7 +228,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                 config.getName());
 
     if (originalConfig.getTTL() != config.getTTL()) {
-      streamCoordinator.changeTTL(originalConfig, config.getTTL());
+      streamCoordinatorClient.changeTTL(originalConfig, config.getTTL());
     }
     if (!originalConfig.getFormat().equals(config.getFormat())) {
       saveConfig(config);
@@ -273,7 +273,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
     saveConfig(config);
 
-    streamCoordinator.streamCreated(name);
+    streamCoordinatorClient.streamCreated(name);
   }
 
   @Override
@@ -284,7 +284,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     }
 
     StreamConfig config = getConfig(name);
-    streamCoordinator.nextGeneration(config, StreamUtils.getGeneration(config)).get();
+    streamCoordinatorClient.nextGeneration(config, StreamUtils.getGeneration(config)).get();
   }
 
   @Override

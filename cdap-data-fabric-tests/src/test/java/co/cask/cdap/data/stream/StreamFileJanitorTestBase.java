@@ -148,9 +148,10 @@ public abstract class StreamFileJanitorTestBase {
   protected static final class TestStreamFileAdmin extends AbstractStreamFileAdmin {
 
     @Inject
-    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator
-                        streamCoordinator, StreamConsumerStateStoreFactory stateStoreFactory) {
-      super(locationFactory, cConf, streamCoordinator, stateStoreFactory, new NoopStreamAdmin());
+    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
+                        StreamCoordinatorClient streamCoordinatorClient,
+                        StreamConsumerStateStoreFactory stateStoreFactory) {
+      super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, new NoopStreamAdmin());
     }
   }
 
