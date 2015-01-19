@@ -83,8 +83,8 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getNoopModules(),
       new LoggingModules().getInMemoryModules(),
+      new StreamAdminModules().getInMemoryModules(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules()
-
     );
 
     return Guice.createInjector(inMemoryModules);
