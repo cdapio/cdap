@@ -141,16 +141,21 @@ public class AdapterService extends AbstractIdleService {
       // TODO: Remove the schedule.
     }
 
-    startPrograms(appSpec, adapterTypeInfo.getProgramType(), adapterSpec);
+    startPrograms(appSpec, adapterTypeInfo, adapterSpec);
     store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
   }
 
   // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  private void startPrograms(ApplicationSpecification spec, ProgramType programType, AdapterSpecification adapterSpec) {
+  private void startPrograms(ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                             AdapterSpecification adapterSpec) {
+    ProgramType programType = adapterTypeInfo.getProgramType();
+    Map<String, String> adapterProperties = Maps.newHashMap();
+    adapterProperties.putAll(adapterTypeInfo.getDefaultAdapterProperties());
+    adapterProperties.putAll(adapterSpec.getProperties());
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-        //TODO: Schedule all programs
+        //TODO: Schedule all programs (passing the merged adapterProperties into the schedule spec's properties
       }
     } else {
       // Only Workflows are supported to be scheduled in the current implementation
@@ -256,6 +261,7 @@ public class AdapterService extends AbstractIdleService {
       String sinkType = mainAttributes.getValue("CDAP-Sink-Type");
       String defaultSourceProperties = mainAttributes.getValue("CDAP-Source-Properties");
       String defaultSinkProperties = mainAttributes.getValue("CDAP-Sink-Properties");
+      String defaultAdapterProperties = mainAttributes.getValue("CDAP-Adapter-Properties");
       String adapterProgramType = mainAttributes.getValue("CDAP-Adapter-Program-Type");
 
       if (adapterType != null && sourceType != null && sinkType != null && adapterProgramType != null) {
@@ -263,6 +269,7 @@ public class AdapterService extends AbstractIdleService {
                                    Sink.Type.valueOf(sinkType.toUpperCase()),
                                    propertiesFromString(defaultSourceProperties),
                                    propertiesFromString(defaultSinkProperties),
+                                   propertiesFromString(defaultAdapterProperties),
                                    ProgramType.valueOf(adapterProgramType.toUpperCase()));
       }
     }
@@ -284,21 +291,26 @@ public class AdapterService extends AbstractIdleService {
     private final Sink.Type sinkType;
     private final Map<String, String> defaultSourceProperties;
     private final Map<String, String> defaultSinkProperties;
+    private final Map<String, String> defaultAdapterProperties;
     private final ProgramType programType;
 
     public AdapterTypeInfo(File file, String adapterType, Source.Type sourceType, Sink.Type sinkType,
                            @Nullable Map<String, String> defaultSourceProperties,
                            @Nullable Map<String, String> defaultSinkProperties,
+                           @Nullable Map<String, String> defaultAdapterProperties,
                            ProgramType programType) {
       this.file = file;
       this.type = adapterType;
       this.sourceType = sourceType;
       this.sinkType = sinkType;
-      this.defaultSourceProperties =
-        defaultSourceProperties == null ? Maps.<String, String>newHashMap() : defaultSourceProperties;
-      this.defaultSinkProperties =
-        defaultSinkProperties == null ? Maps.<String, String>newHashMap() : defaultSinkProperties;
+      this.defaultSourceProperties = emptyMapIfNull(defaultSourceProperties);
+      this.defaultSinkProperties = emptyMapIfNull(defaultSinkProperties);
+      this.defaultAdapterProperties = emptyMapIfNull(defaultAdapterProperties);
       this.programType = programType;
+    }
+
+    private Map<String, String> emptyMapIfNull(Map<String, String> inputMap) {
+      return inputMap == null ? Maps.<String, String>newHashMap() : inputMap;
     }
 
     public File getFile() {
@@ -323,6 +335,10 @@ public class AdapterService extends AbstractIdleService {
 
     public Map<String, String> getDefaultSinkProperties() {
       return defaultSinkProperties;
+    }
+
+    public Map<String, String> getDefaultAdapterProperties() {
+      return defaultAdapterProperties;
     }
 
     public ProgramType getProgramType() {
