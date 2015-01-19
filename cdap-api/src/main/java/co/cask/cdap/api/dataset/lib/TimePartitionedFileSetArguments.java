@@ -42,7 +42,7 @@ public class TimePartitionedFileSetArguments {
   }
 
   /**
-   * @return the time of the outout partition to be written
+   * @return the time of the output partition to be written
    */
   @Nullable
   public static Long getOutputPartitionTime(Map<String, String> arguments) {

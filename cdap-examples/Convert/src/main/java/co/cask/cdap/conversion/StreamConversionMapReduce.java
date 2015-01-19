@@ -20,7 +20,6 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -106,11 +105,11 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
+      // TODO this should be done by TPFS's output format instead
       TimePartitionedFileSet converted = context.getDataset("converted");
 
       String outputPath = FileSetArguments.getOutputPath(converted.getUnderlyingFileSet().getRuntimeArguments());
-      Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(
-        FileSetProperties.getOutputProperties(converted.getRuntimeArguments()));
+      Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(converted.getRuntimeArguments());
       Preconditions.checkNotNull(time, "Output partition time is null.");
 
       LOG.info("Adding partition for time {} with path {} to dataset '{}'", time, outputPath, "converted");

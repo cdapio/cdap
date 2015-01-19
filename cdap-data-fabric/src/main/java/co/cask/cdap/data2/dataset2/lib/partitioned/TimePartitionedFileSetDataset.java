@@ -186,10 +186,15 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
     // all runtime arguments are passed on to the file set, so we can expect the partition time in the file set's
     // output format configuration. If it is not there, the output format will fail to register this partition.
     Map<String, String> config = files.getOutputFormatConfiguration();
-    if (TimePartitionedFileSetArguments.getOutputPartitionTime(config) == null) {
+    Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(runtimeArguments);
+    if (time == null) {
       throw new DataSetException("Time must be given for the new output partition as a runtime argument.");
     }
-    return config;
+    // add the output partition time to the output arguments of the embedded file set
+    Map<String, String> outputArgs = Maps.newHashMap();
+    outputArgs.putAll(config);
+    TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time);
+    return ImmutableMap.copyOf(outputArgs);
   }
 
   @Override
@@ -201,5 +206,4 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
   }
-
 }

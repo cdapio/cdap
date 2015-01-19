@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Table;
@@ -84,8 +83,7 @@ public class TimePartitionedFileSetDefinition extends AbstractDatasetDefinition<
     throws IOException {
     // if the arguments do not contain an output location, generate one from the partition time
     if (FileSetArguments.getOutputPath(arguments) == null) {
-      Long time = TimePartitionedFileSetArguments.
-        getOutputPartitionTime(FileSetProperties.getOutputProperties(arguments));
+      Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(arguments);
       if (time != null) {
         String path = String.format("%TY-%Tm-%Td/%TH-%TM.%d", time, time, time, time, time, time);
         arguments = Maps.newHashMap(arguments);
