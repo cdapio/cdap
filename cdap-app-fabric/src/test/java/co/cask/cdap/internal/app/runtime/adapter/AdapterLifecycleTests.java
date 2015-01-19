@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.collect.ImmutableMap;
@@ -49,19 +48,11 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
- *
+ * AdapterService life cycle tests.
  */
 public class AdapterLifecycleTests extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-  private static final String TEST_NAMESPACE1 = "testnamespace1";
-  private static final String TEST_NAMESPACE2 = "testnamespace2";
-  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
-    .setDisplayName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
-  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
-    .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
-
   private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
-  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
@@ -71,13 +62,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.ADAPTER_DIR));
-
-    HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
-                                  GSON.toJson(TEST_NAMESPACE_META1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
-                     GSON.toJson(TEST_NAMESPACE_META2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     setupAdapters();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerAdapters();
@@ -115,15 +99,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(specification, receivedAdapterSpecification);
     //TODO: Add Delete tests
   }
-
-  @Test
-  public void testNonexistentAdapter() throws Exception {
-    String nonexistentAdapterId = "nonexistentAdapterId";
-    HttpResponse response = getAdapter(Constants.DEFAULT_NAMESPACE, nonexistentAdapterId);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-  }
-
-
 
   private static void setupAdapters() throws IOException {
     setupAdapter(AdapterApp.class, "dummyAdapter", "AdapterWorkflow");
