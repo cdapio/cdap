@@ -323,7 +323,7 @@ public abstract class ConcurrentStreamWriterTestBase {
   private static final class TestMetricsCollector implements MetricsCollector {
 
     @Override
-    public void increment(String metricName, int value) {
+    public void increment(String metricName, long value) {
 
     }
 
