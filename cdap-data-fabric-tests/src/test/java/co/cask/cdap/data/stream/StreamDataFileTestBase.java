@@ -875,8 +875,13 @@ public abstract class StreamDataFileTestBase {
       writer.append(StreamFileTestUtils.createEvent(i, "Message " + i));
     }
 
-    // The close timestamp should be -1 before the writer is closed.
-    Assert.assertEquals(-1L, writer.getCloseTimestamp());
+    // Trying to get close timestamp should throw exception before the file get closed
+    try {
+      writer.getCloseTimestamp();
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      // Expected
+    }
     writer.close();
 
     // Get the close timestamp from the file for assertion below
