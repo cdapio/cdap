@@ -1052,8 +1052,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /*************************** Queues APIs **************************************/
   @DELETE
   @Path("/queues")
-  public void clearQueues(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) {
+  public synchronized void clearQueues(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId) {
+    // synchronized to avoid a potential race condition here:
+    // 1. the check for state returns that all flows are STOPPED
+    // 2. The API deletes queues because
+    // Between 1. and 2., a flow is started using the /namespaces/{namespace-id}/apps/{app-id}/flows/{flow-id}/start API
+    // Averting this race condition by synchronizing this method. The resource that needs to be locked here is
+    // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
+    // synchronized on this.
     // check if there are actively 'RUNNING' flows
     try {
       List<ProgramRecord> flows = listPrograms(Id.Namespace.from(namespaceId), ProgramType.FLOW, store);
@@ -1086,26 +1093,26 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Clears flows/streams. namespaceId here can be null if you want to delete all queues/streams across all namespaces.
+   * Clears queues/streams. namespaceId here can be null if you want to delete all queues/streams across all namespaces.
    * However, that API has not been exposed yet - CDAP-1180
    */
   protected void clear(HttpRequest request, HttpResponder responder, @Nullable String namespaceId, ToClear toClear) {
-      try {
-        if (toClear == ToClear.QUEUES) {
-          if (namespaceId == null) {
-            queueAdmin.dropAll();
-          } else {
-            queueAdmin.dropAllInNamespace(namespaceId);
-          }
-        } else if (toClear == ToClear.STREAMS) {
-          // TODO: Drops everything for now. In CDAP-773 add API for deleting streams in a namespace.
-          streamAdmin.dropAll();
+    try {
+      if (toClear == ToClear.QUEUES) {
+        if (namespaceId == null) {
+          queueAdmin.dropAll();
+        } else {
+          queueAdmin.dropAllInNamespace(namespaceId);
         }
-        responder.sendStatus(HttpResponseStatus.OK);
-      } catch (Exception e) {
-        LOG.error("Exception clearing data fabric: ", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      } else if (toClear == ToClear.STREAMS) {
+        // TODO: Drops everything for now. In CDAP-773 add API for deleting streams in a namespace.
+        streamAdmin.dropAll();
       }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Exception clearing data fabric: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
