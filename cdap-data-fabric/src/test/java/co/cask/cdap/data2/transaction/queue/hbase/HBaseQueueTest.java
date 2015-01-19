@@ -221,7 +221,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
     try {
-      byte[] rowKey = ((HBaseQueueAdmin) queueAdmin).getConfigTableRowKey(queueName);
+      byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
 
       NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
@@ -278,8 +278,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException {
     configCache.updateCache();
     for (QueueName queueName : queueNames) {
-      byte [] rowKey = ((HBaseQueueAdmin) queueAdmin).getConfigTableRowKey(queueName);
-      Assert.assertNotNull("for " + queueName, configCache.getConsumerConfig(rowKey));
+      Assert.assertNotNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
     }
   }
 
@@ -287,8 +286,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException {
     configCache.updateCache();
     for (QueueName queueName : queueNames) {
-      byte [] rowKey = ((HBaseQueueAdmin) queueAdmin).getConfigTableRowKey(queueName);
-      Assert.assertNull("for " + queueName, configCache.getConsumerConfig(rowKey));
+      Assert.assertNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
     }
   }
 
