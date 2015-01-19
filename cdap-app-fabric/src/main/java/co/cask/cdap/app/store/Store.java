@@ -19,6 +19,8 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -267,6 +269,22 @@ public interface Store {
    * @param newValue name of the new stream to connect to
    */
   void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue);
+  /**
+   * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
+   * throw RuntimeException.
+   * @param program defines program to which a schedule is being added
+   * @param scheduleSpecification defines the schedule to be added for the program
+   */
+  void addSchedule(Id.Program program, ScheduleSpecification scheduleSpecification);
+
+  /**
+   * Deletes a schedules from a particular program
+   * @param program defines program from which a schedule is being deleted
+   * @param programType defines the type of the program
+   * @param scheduleName the name of the schedule to be removed from the program
+   */
+  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
+
   /**
    * Check if a program exists.
    * @param id id of program.

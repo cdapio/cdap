@@ -27,6 +27,8 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -634,6 +636,68 @@ public class DefaultStore implements Store {
 
     // todo: change stream "used by" flow mapping in metadata?
   }
+
+  @Override
+  public void addSchedule(final Id.Program program, final ScheduleSpecification scheduleSpecification) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+        String scheduleName = scheduleSpecification.getSchedule().getName();
+        Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
+          scheduleName  + "' already exists.");
+        schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
+        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+        // TODO: double check this ProgramType.valueOf()
+        replaceAppSpecInProgramJar(program, newAppSpec,
+                                   ProgramType.valueOf(scheduleSpecification.getProgram().getProgramType().name()));
+        mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
+                             final String scheduleName) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+        ScheduleSpecification removed = schedules.remove(scheduleName);
+        if (removed == null) {
+          throw new NoSuchElementException("no such schedule @ account id: " + program.getNamespaceId() +
+                                             ", app id: " + program.getApplication() +
+                                             ", program id: " + program.getId() +
+                                             ", schedule name: " + scheduleName);
+        }
+
+        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+        // TODO: double check this ProgramType.valueOf()
+        replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
+        mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+  }
+
+  private static class AppSpecificationWithChangedSchedules extends ForwardingApplicationSpecification {
+    private final Map<String, ScheduleSpecification> newSchedules;
+
+    private AppSpecificationWithChangedSchedules(ApplicationSpecification delegate,
+                                                 Map<String, ScheduleSpecification> newSchedules) {
+      super(delegate);
+      this.newSchedules = newSchedules;
+    }
+
+    @Override
+    public Map<String, ScheduleSpecification> getSchedules() {
+      return newSchedules;
+    }
+  }
+
 
   @Override
   public boolean programExists(final Id.Program id, final ProgramType type) {

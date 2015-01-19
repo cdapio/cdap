@@ -22,10 +22,13 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.twill.filesystem.LocationFactory;
@@ -37,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * HBase based implementation for {@link MetricsTable}.
  */
+// todo: re-use HBase table based dataset instead of having separate classes hierarchies, see CDAP-1193
 public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {
   @Inject
   private Configuration hConf;
@@ -88,7 +92,10 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
-    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName());
+    AbstractHBaseDataSetAdmin.CoprocessorJar cpJar =
+      HBaseOrderedTableAdmin.createCoprocessorJarInternal(conf, locationFactory, hBaseTableUtil, true);
+    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName(),
+                                   new Path(cpJar.getJarLocation().toURI()), Coprocessor.PRIORITY_USER, null);
     return tableDescriptor;
   }
 }

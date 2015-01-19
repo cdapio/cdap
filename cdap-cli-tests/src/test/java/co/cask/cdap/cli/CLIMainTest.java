@@ -17,6 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.app.FakeApp;
+import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
@@ -26,7 +27,6 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -38,6 +38,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -242,6 +243,32 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  public void testPreferences() throws Exception {
+    testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("key", "instance");
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+    testCommandOutputContains(cli, String.format("set instance preferences '%s'", GSON.toJson(propMap)),
+                              "successfully");
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testPreferencesOutput(cli, "get instance resolved preferences", propMap);
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+    propMap.clear();
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    propMap.put("key", "flow");
+    testCommandOutputContains(cli, String.format("set flow preferences '%s' %s.%s", GSON.toJson(propMap),
+                                                 FakeApp.NAME, FakeFlow.NAME), "successfully");
+    testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
+    testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
+                              "successfully");
+    propMap.clear();
+    testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
+    testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
+    testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
+    testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
+  }
+
+  @Test
   public void testNamespaces() throws Exception {
     final String id = PREFIX + "testNamespace";
     final String displayName = "testDisplayName";
@@ -376,6 +403,20 @@ public class CLIMainTest extends StandaloneTestBase {
       }
     ).print(printStream);
     final String expectedOutput = outputStream.toString();
+    testCommand(cli, command, new Function<String, Void>() {
+      @Nullable
+      @Override
+      public Void apply(@Nullable String output) {
+        Assert.assertNotNull(output);
+        Assert.assertEquals(expectedOutput, output);
+        return null;
+      }
+    });
+  }
+
+  private static void testPreferencesOutput(CLI cli, String command, final Map<String, String> expected)
+    throws Exception {
+    final String expectedOutput = String.format("%s\n", GSON.toJson(expected));
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override
