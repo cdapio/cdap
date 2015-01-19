@@ -20,9 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -37,9 +34,6 @@ import java.util.Map;
  * Stream record format that interprets the body as avro encoded binary data.
  */
 public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
   private org.apache.avro.Schema avroSchema;
   private DecoderFactory decoderFactory = DecoderFactory.get();
   private DatumReader<GenericRecord> datumReader;
@@ -60,10 +54,9 @@ public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
 
   @Override
   protected void validateSchema(Schema desiredSchema) throws UnsupportedTypeException {
-    // rather than check for all inconsistencies, just try to read the schema string as an Avro schema.
-    String schemaStr = GSON.toJson(desiredSchema);
     try {
-      avroSchema = new org.apache.avro.Schema.Parser().parse(schemaStr);
+      // rather than check for all inconsistencies, just try to read the schema string as an Avro schema.
+      avroSchema = new org.apache.avro.Schema.Parser().parse(desiredSchema.toString());
     } catch (SchemaParseException e) {
       throw new UnsupportedTypeException("Schema is not a valid avro schema.", e);
     } catch (Exception e) {
