@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Specification that is used to configure an adapter.
  */
-public final class  AdapterSpecification {
+public final class AdapterSpecification {
 
   private final String name;
   private final String type;
@@ -41,8 +41,8 @@ public final class  AdapterSpecification {
    * @param name  Name of the adapter.
    * @param type  Adapter type.
    * @param properties Properties for configuring the adapter.
-   * @param sources {@link List} of {@Source}s used by the adapter.
-   * @param sinks {@link List} of {Sink}s used by the adapter.
+   * @param sources {@link List} of {@link Source}s used by the adapter.
+   * @param sinks {@link List} of {@link Sink}s used by the adapter.
    */
   public AdapterSpecification(String name, String type, Map<String, String> properties, Set<Source> sources,
                               Set<Sink> sinks) {

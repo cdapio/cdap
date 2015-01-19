@@ -36,6 +36,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +63,7 @@ import javax.annotation.Nullable;
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
   private static final Gson GSON = new Gson();
+  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>(){}.getType();
   private static final String ADAPTER_SPEC = "adapter.spec";
   private static final String DATASET_CLASS = "dataset.class";
 
@@ -120,29 +123,30 @@ public class AdapterService extends AbstractIdleService {
     return store.getAllAdapters(Id.Namespace.from(namespace));
   }
 
-  public void createAdapter(String namespaceId, AdapterSpecification spec) throws IllegalArgumentException {
+  public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
 
-    AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(spec.getType());
-    Preconditions.checkNotNull(adapterTypeInfo, "Adapter type %s not found", spec.getType());
+    AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
+    Preconditions.checkNotNull(adapterTypeInfo, "Adapter type %s not found", adapterSpec.getType());
 
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, spec.getType()));
-    Preconditions.checkNotNull(appSpec, "Application %s not found for the adapter %s", spec.getType(), spec.getName());
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
+    Preconditions.checkNotNull(appSpec, "Application %s not found for the adapter %s",
+                               adapterSpec.getType(), adapterSpec.getName());
 
-    validateSources(spec.getName(), spec.getSources());
-    createSinks(spec.getName(), spec.getSinks());
+    validateSources(adapterSpec.getName(), adapterSpec.getSources());
+    createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
     // If the adapter already exists, remove existing schedule to replace with the new one.
-    AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), spec.getName());
+    AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
     if (existingSpec != null) {
       // TODO: Remove the schedule.
     }
 
-    startPrograms(appSpec, adapterTypeInfo.getProgramType());
-    store.addAdapter(Id.Namespace.from(namespaceId), spec);
+    startPrograms(appSpec, adapterTypeInfo.getProgramType(), adapterSpec);
+    store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
   }
 
   // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  private void startPrograms(ApplicationSpecification spec, ProgramType programType) {
+  private void startPrograms(ApplicationSpecification spec, ProgramType programType, AdapterSpecification adapterSpec) {
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
@@ -184,12 +188,16 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // create the required sinks for the adapters. Currently only DATASET sink type is supported.
-  private void createSinks(String adapterName, Set<Sink> sinks) {
+  private void createSinks(Set<Sink> sinks, AdapterTypeInfo adapterTypeInfo) {
     // create sinks if not exist
     for (Sink sink : sinks) {
       if (Sink.Type.DATASET.equals(sink.getType())) {
         String datasetName = sink.getName();
-        createDataset(datasetName, sink.getProperties().get(DATASET_CLASS), sink.getProperties());
+        //TODO: should the defaultSinkProperties go into every spec of that adapterType as well?
+        Map<String, String> dsProperties = Maps.newHashMap();
+        dsProperties.putAll(adapterTypeInfo.getDefaultSinkProperties());
+        dsProperties.putAll(sink.getProperties());
+        createDataset(datasetName, sink.getProperties().get(DATASET_CLASS), dsProperties);
       } else {
         throw new IllegalArgumentException(String.format("Unknown Sink type: %s", sink.getType()));
       }
@@ -246,15 +254,23 @@ public class AdapterService extends AbstractIdleService {
       String adapterType = mainAttributes.getValue("CDAP-Adapter-Type");
       String sourceType = mainAttributes.getValue("CDAP-Source-Type");
       String sinkType = mainAttributes.getValue("CDAP-Sink-Type");
+      String defaultSourceProperties = mainAttributes.getValue("CDAP-Source-Properties");
+      String defaultSinkProperties = mainAttributes.getValue("CDAP-Sink-Properties");
       String adapterProgramType = mainAttributes.getValue("CDAP-Adapter-Program-Type");
 
       if (adapterType != null && sourceType != null && sinkType != null && adapterProgramType != null) {
         return new AdapterTypeInfo(file, adapterType, Source.Type.valueOf(sourceType.toUpperCase()),
                                    Sink.Type.valueOf(sinkType.toUpperCase()),
+                                   propertiesFromString(defaultSourceProperties),
+                                   propertiesFromString(defaultSinkProperties),
                                    ProgramType.valueOf(adapterProgramType.toUpperCase()));
       }
     }
     return null;
+  }
+
+  protected Map<String, String> propertiesFromString(String gsonEncodedMap) {
+    return GSON.fromJson(gsonEncodedMap, STRING_STRING_MAP_TYPE);
   }
 
   /**
@@ -266,14 +282,22 @@ public class AdapterService extends AbstractIdleService {
     private final String type;
     private final Source.Type sourceType;
     private final Sink.Type sinkType;
+    private final Map<String, String> defaultSourceProperties;
+    private final Map<String, String> defaultSinkProperties;
     private final ProgramType programType;
 
     public AdapterTypeInfo(File file, String adapterType, Source.Type sourceType, Sink.Type sinkType,
+                           @Nullable Map<String, String> defaultSourceProperties,
+                           @Nullable Map<String, String> defaultSinkProperties,
                            ProgramType programType) {
       this.file = file;
       this.type = adapterType;
       this.sourceType = sourceType;
       this.sinkType = sinkType;
+      this.defaultSourceProperties =
+        defaultSourceProperties == null ? Maps.<String, String>newHashMap() : defaultSourceProperties;
+      this.defaultSinkProperties =
+        defaultSinkProperties == null ? Maps.<String, String>newHashMap() : defaultSinkProperties;
       this.programType = programType;
     }
 
@@ -291,6 +315,14 @@ public class AdapterService extends AbstractIdleService {
 
     public Sink.Type getSinkType() {
       return sinkType;
+    }
+
+    public Map<String, String> getDefaultSourceProperties() {
+      return defaultSourceProperties;
+    }
+
+    public Map<String, String> getDefaultSinkProperties() {
+      return defaultSinkProperties;
     }
 
     public ProgramType getProgramType() {

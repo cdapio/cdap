@@ -45,13 +45,8 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -178,9 +173,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final PreferencesStore preferencesStore;
-  private final DatasetFramework datasetFramework;
-
-  private final StreamAdmin streamAdmin;
 
   private final AdapterService adapterService;
 
@@ -191,7 +183,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                                  AdapterService adapterService) {
     super(authenticator);
     this.configuration = configuration;
@@ -206,9 +197,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
-    this.datasetFramework =
-      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
-    this.streamAdmin = streamAdmin;
     this.adapterService = adapterService;
   }
 
