@@ -18,6 +18,8 @@ package co.cask.cdap.data.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
+import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -56,7 +58,7 @@ public class AvroRecordFormatTest {
       Schema.Field.of("nullable", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL)))
     );
     FormatSpecification formatSpecification = new FormatSpecification(
-      RecordFormats.AVRO,
+      Formats.AVRO,
       schema,
       Collections.<String, String>emptyMap()
     );
@@ -84,8 +86,7 @@ public class AvroRecordFormatTest {
     out.close();
     byte[] serializedRecord = out.toByteArray();
 
-    AvroRecordFormat format = new AvroRecordFormat();
-    format.initialize(formatSpecification);
+    RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     GenericRecord actual = format.read(ByteBuffer.wrap(serializedRecord));
     Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
@@ -128,12 +129,11 @@ public class AvroRecordFormatTest {
     byte[] serializedRecord = out.toByteArray();
 
     FormatSpecification formatSpecification = new FormatSpecification(
-      RecordFormats.AVRO,
+      Formats.AVRO,
       schema,
       Collections.<String, String>emptyMap()
     );
-    AvroRecordFormat format = new AvroRecordFormat();
-    format.initialize(formatSpecification);
+    RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     GenericRecord actual = format.read(ByteBuffer.wrap(serializedRecord));
     Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
