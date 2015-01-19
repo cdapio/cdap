@@ -198,6 +198,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
                           Map<String, String> properties) {
     Preconditions.checkNotNull(schedule, "Schedule cannot be null.");
+    Preconditions.checkNotNull(schedule.getName(), "Schedule name cannot be null.");
     Preconditions.checkArgument(!schedule.getName().isEmpty(), "Schedule name cannot be empty.");
     Preconditions.checkNotNull(programName, "Program name cannot be null.");
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
