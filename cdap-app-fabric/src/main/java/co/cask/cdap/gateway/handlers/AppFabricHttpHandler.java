@@ -32,9 +32,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -169,7 +169,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/ping")
   @GET
   public void ping(HttpRequest request, HttpResponder responder) {
-      responder.sendStatus(HttpResponseStatus.OK);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
@@ -640,8 +640,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") String appId,
                                   @PathParam("workflow-id") String workflowId) {
-   programLifecycleHttpHandler.getScheduledRunTime(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                   appId, workflowId);
+    programLifecycleHttpHandler.getScheduledRunTime(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                    appId, workflowId);
   }
 
   //TODO [SAGAR]: CDAP-1155: Implement API to get ScheduleSpecification given schedule name
@@ -651,10 +651,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") String appId,
-                                @PathParam("workflow-id") String workflowId) {
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("workflow-id") String workflowId) {
     programLifecycleHttpHandler.getWorkflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                  appId, workflowId);
+                                                     appId, workflowId);
   }
 
   /**
@@ -663,9 +663,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
   public void getScheduleState(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") String appId,
-                              @PathParam("workflow-id") String workflowId,
-                              @PathParam("schedule-id") String scheduleId) {
+                               @PathParam("app-id") String appId,
+                               @PathParam("workflow-id") String workflowId,
+                               @PathParam("schedule-id") String scheduleId) {
     programLifecycleHttpHandler.getScheduleState(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                  appId, workflowId, scheduleId);
   }
@@ -761,8 +761,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/spark/{spark-id}")
   public void sparkSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("spark-id")final String sparkId) {
+                                 @PathParam("app-id") final String appId,
+                                 @PathParam("spark-id")final String sparkId) {
     programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.SPARK.getCategoryName(), sparkId);
   }
@@ -943,7 +943,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") String appId) {
+                            @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
                                                  ProgramType.SPARK.getCategoryName());
   }
@@ -1042,82 +1042,68 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String getDataEntity(Id.Program programId, Data type, String name) throws Exception {
-    try {
-      Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
-      if (type == Data.DATASET) {
-        DatasetSpecification dsSpec = getDatasetSpec(name);
-        String typeName = null;
-        if (dsSpec != null) {
-          typeName = dsSpec.getType();
-        }
-        return GSON.toJson(makeDataSetRecord(name, typeName));
-      } else if (type == Data.STREAM) {
-        StreamSpecification spec = store.getStream(namespace, name);
-        return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
+  private String getDataEntity(Id.Program programId, Data type, String name) {
+    Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
+    if (type == Data.DATASET) {
+      DatasetSpecification dsSpec = getDatasetSpec(name);
+      String typeName = null;
+      if (dsSpec != null) {
+        typeName = dsSpec.getType();
       }
-      return "";
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+      return GSON.toJson(makeDataSetRecord(name, typeName));
+    } else if (type == Data.STREAM) {
+      StreamSpecification spec = store.getStream(namespace, name);
+      return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
     }
+    return "";
   }
 
   private String listDataEntities(Id.Program programId, Data type) throws Exception {
-    try {
-      if (type == Data.DATASET) {
-        Collection<DatasetSpecification> instances = dsFramework.getInstances();
-        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
-        for (DatasetSpecification instance : instances) {
-          result.add(makeDataSetRecord(instance.getName(), instance.getType()));
-        }
-        return GSON.toJson(result);
-      } else if (type == Data.STREAM) {
-        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
-        List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
-        for (StreamSpecification spec : specs) {
-          result.add(makeStreamRecord(spec.getName(), null));
-        }
-        return GSON.toJson(result);
+    if (type == Data.DATASET) {
+      Collection<DatasetSpecification> instances = dsFramework.getInstances();
+      List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
+      for (DatasetSpecification instance : instances) {
+        result.add(makeDataSetRecord(instance.getName(), instance.getType()));
       }
-      return "";
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+      return GSON.toJson(result);
+    } else if (type == Data.STREAM) {
+      Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
+      List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
+      for (StreamSpecification spec : specs) {
+        result.add(makeStreamRecord(spec.getName(), null));
+      }
+      return GSON.toJson(result);
     }
+    return "";
+
   }
 
   private String listDataEntitiesByApp(Id.Program programId, Data type) throws Exception {
-    try {
-      Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
-      ApplicationSpecification appSpec = store.getApplication(new Id.Application(
-        namespace, programId.getApplicationId()));
-      if (type == Data.DATASET) {
-        Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
-        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
-        for (String dsName : dataSetsUsed) {
-          String typeName = null;
-          DatasetSpecification dsSpec = getDatasetSpec(dsName);
-          if (dsSpec != null) {
-            typeName = dsSpec.getType();
-          }
-          result.add(makeDataSetRecord(dsName, typeName));
+    Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
+    ApplicationSpecification appSpec = store.getApplication(new Id.Application(
+      namespace, programId.getApplicationId()));
+    if (type == Data.DATASET) {
+      Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
+      List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
+      for (String dsName : dataSetsUsed) {
+        String typeName = null;
+        DatasetSpecification dsSpec = getDatasetSpec(dsName);
+        if (dsSpec != null) {
+          typeName = dsSpec.getType();
         }
-        return GSON.toJson(result);
+        result.add(makeDataSetRecord(dsName, typeName));
       }
-      if (type == Data.STREAM) {
-        Set<String> streamsUsed = streamsUsedBy(appSpec);
-        List<StreamRecord> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
-        for (String streamName : streamsUsed) {
-          result.add(makeStreamRecord(streamName, null));
-        }
-        return GSON.toJson(result);
-      }
-      return "";
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+      return GSON.toJson(result);
     }
+    if (type == Data.STREAM) {
+      Set<String> streamsUsed = streamsUsedBy(appSpec);
+      List<StreamRecord> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
+      for (String streamName : streamsUsed) {
+        result.add(makeStreamRecord(streamName, null));
+      }
+      return GSON.toJson(result);
+    }
+    return "";
   }
 
   @Nullable
@@ -1217,40 +1203,35 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private String listProgramsByDataAccess(Id.Program programId, ProgramType type, Data data,
                                           String name) throws Exception {
-    try {
-      List<ProgramRecord> result = Lists.newArrayList();
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
-        new Id.Namespace(programId.getNamespaceId()));
-      if (appSpecs != null) {
-        for (ApplicationSpecification appSpec : appSpecs) {
-          if (type == ProgramType.FLOW) {
-            for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-              if ((data == Data.DATASET && usesDataSet(flowSpec, name))
-                || (data == Data.STREAM && usesStream(flowSpec, name))) {
-                result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
-              }
+    List<ProgramRecord> result = Lists.newArrayList();
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
+      new Id.Namespace(programId.getNamespaceId()));
+    if (appSpecs != null) {
+      for (ApplicationSpecification appSpec : appSpecs) {
+        if (type == ProgramType.FLOW) {
+          for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+            if ((data == Data.DATASET && usesDataSet(flowSpec, name))
+              || (data == Data.STREAM && usesStream(flowSpec, name))) {
+              result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
             }
-          } else if (type == ProgramType.PROCEDURE) {
-            for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-              if (data == Data.DATASET && procedureSpec.getDataSets().contains(name)) {
-                result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
-              }
+          }
+        } else if (type == ProgramType.PROCEDURE) {
+          for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+            if (data == Data.DATASET && procedureSpec.getDataSets().contains(name)) {
+              result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
             }
-          } else if (type == ProgramType.MAPREDUCE) {
-            for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
-              if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
-                result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
-              }
+          }
+        } else if (type == ProgramType.MAPREDUCE) {
+          for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+            if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
+              result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
             }
           }
         }
       }
-      return GSON.toJson(result);
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve application specs for " +
-                                             programId.toString() + ", reason: " + e.getMessage());
     }
+    return GSON.toJson(result);
+
   }
 
   private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
