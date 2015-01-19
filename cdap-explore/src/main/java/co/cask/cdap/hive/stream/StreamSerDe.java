@@ -98,8 +98,7 @@ public class StreamSerDe implements SerDe {
       StreamAdmin streamAdmin = context.getStreamAdmin();
       StreamConfig streamConfig = streamAdmin.getConfig(streamName);
       FormatSpecification formatSpec = streamConfig.getFormat();
-      this.streamFormat = (ByteBufferRecordFormat) RecordFormats.create(formatSpec.getName());
-      this.streamFormat.initialize(formatSpec);
+      this.streamFormat = (ByteBufferRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
       // if we hit this something went wrong much earlier.

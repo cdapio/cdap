@@ -150,8 +150,9 @@ public abstract class StreamFileJanitorTestBase {
 
     @Inject
     TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                        StreamCoordinator streamCoordinator, StreamConsumerStateStoreFactory stateStoreFactory) {
-      super(locationFactory, cConf, streamCoordinator, stateStoreFactory, new NoOpNotificationFeedManager(),
+                        StreamCoordinatorClient streamCoordinatorClient,
+                        StreamConsumerStateStoreFactory stateStoreFactory) {
+      super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, new NoOpNotificationFeedManager(),
             new NoopStreamAdmin());
     }
   }

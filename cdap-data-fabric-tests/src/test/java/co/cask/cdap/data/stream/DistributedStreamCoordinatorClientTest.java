@@ -39,9 +39,9 @@ import org.junit.BeforeClass;
 import java.io.IOException;
 
 /**
- * Tests for {@link DistributedStreamCoordinator}
+ * Tests for {@link DistributedStreamCoordinatorClient}
  */
-public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase {
+public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTestBase {
 
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
@@ -78,8 +78,8 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
   }
 
   @Override
-  protected StreamCoordinator createStreamCoordinator() {
-    return injector.getInstance(StreamCoordinator.class);
+  protected StreamCoordinatorClient createStreamCoordinator() {
+    return injector.getInstance(StreamCoordinatorClient.class);
   }
 
   @AfterClass

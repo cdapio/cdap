@@ -481,12 +481,30 @@ public final class Schema {
    * @return true if it is a nullable type, false if not.
    */
   public boolean isNullable() {
-    if ((type == Schema.Type.UNION) && (unionSchemas.size() == 2)) {
-      Schema.Type type1 = unionSchemas.get(0).getType();
-      Schema.Type type2 = unionSchemas.get(1).getType();
+    if ((type == Type.UNION) && (unionSchemas.size() == 2)) {
+      Type type1 = unionSchemas.get(0).getType();
+      Type type2 = unionSchemas.get(1).getType();
       // may not need to check that both are not null, but better to be safe
-      return (type1 == Schema.Type.NULL && type2 != Schema.Type.NULL) ||
-        (type1 != Schema.Type.NULL && type2 == Schema.Type.NULL);
+      return (type1 == Type.NULL && type2 != Type.NULL) || (type1 != Type.NULL && type2 == Type.NULL);
+    }
+    return false;
+  }
+
+  /**
+   * Check if this is a nullable simple type, which is a union of a null and one other non-null simple type, where
+   * a simple type is a boolean, int, long, float, double, bytes, or string type.
+   *
+   * @return whether or not this is a nullable simple type.
+   */
+  public boolean isNullableSimple() {
+    if ((type == Type.UNION) && (unionSchemas.size() == 2)) {
+      Type type1 = unionSchemas.get(0).getType();
+      Type type2 = unionSchemas.get(1).getType();
+      if (type1 == Type.NULL) {
+        return type2 != Type.NULL && type2.isSimpleType();
+      } else if (type2 == Type.NULL) {
+        return type1.isSimpleType();
+      }
     }
     return false;
   }
@@ -498,7 +516,7 @@ public final class Schema {
    */
   public Schema getNonNullable() {
     Schema firstSchema = unionSchemas.get(0);
-    return firstSchema.getType() == Schema.Type.NULL ? unionSchemas.get(1) : firstSchema;
+    return firstSchema.getType() == Type.NULL ? unionSchemas.get(1) : firstSchema;
   }
 
   private boolean checkCompatible(Schema target, Multimap<String, String> recordCompared) {

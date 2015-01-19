@@ -20,7 +20,7 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -81,7 +81,7 @@ public final class ConcurrentStreamWriter implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriter.class);
 
-  private final StreamCoordinator streamCoordinator;
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamAdmin streamAdmin;
   private final StreamMetaStore streamMetaStore;
   private final int workerThreads;
@@ -92,10 +92,10 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final List<Cancellable> cancellables;
   private final Lock createLock;
 
-  public ConcurrentStreamWriter(StreamCoordinator streamCoordinator, StreamAdmin streamAdmin,
+  public ConcurrentStreamWriter(StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                                 StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                                 int workerThreads, MetricsCollector metricsCollector) {
-    this.streamCoordinator = streamCoordinator;
+    this.streamCoordinatorClient = streamCoordinatorClient;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.workerThreads = workerThreads;
@@ -190,7 +190,7 @@ public final class ConcurrentStreamWriter implements Closeable {
       StreamUtils.ensureExists(streamAdmin, streamName);
 
       if (generationWatched.add(streamName)) {
-        cancellables.add(streamCoordinator.addListener(streamName, writerSupplierFactory));
+        cancellables.add(streamCoordinatorClient.addListener(streamName, writerSupplierFactory));
       }
 
       eventQueue = new EventQueue(streamName, writerSupplierFactory.create(streamName), metricsCollector);
