@@ -49,7 +49,7 @@ public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
     try {
       return datumReader.read(null, decoderFactory.binaryDecoder(Bytes.toBytes(input), null));
     } catch (IOException e) {
-      throw new UnexpectedFormatException("Unable to decode the stream body as avro.",e );
+      throw new UnexpectedFormatException("Unable to decode the stream body as avro.", e);
     }
   }
 
