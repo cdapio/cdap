@@ -336,6 +336,43 @@ public final class StreamUtils {
     return genId;
   }
 
+  /**
+   * Finds the next sequence id for the given partition with the given file prefix.
+   *
+   * @param partitionLocation the directory where the stream partition is
+   * @param filePrefix prefix of file name to match
+   * @return the next sequence id, which is the current max id + 1.
+   * @throws IOException if failed to find the next sequence id
+   */
+  public static int getNextSequenceId(Location partitionLocation, String filePrefix) throws IOException {
+    // Try to find the file of this bucket with the highest sequence number.
+    int maxSequence = -1;
+    for (Location location : partitionLocation.list()) {
+      String fileName = location.getName();
+      if (!fileName.startsWith(filePrefix)) {
+        continue;
+      }
+      StreamUtils.getSequenceId(fileName);
+
+      int idx = fileName.lastIndexOf('.');
+      if (idx < filePrefix.length()) {
+        // Ignore file with invalid stream file name
+        continue;
+      }
+
+      try {
+        // File name format is [prefix].[sequenceId].[dat|idx]
+        int seq = StreamUtils.getSequenceId(fileName);
+        if (seq > maxSequence) {
+          maxSequence = seq;
+        }
+      } catch (NumberFormatException e) {
+        // Ignore stream file with invalid sequence id
+      }
+    }
+    return maxSequence + 1;
+  }
+
   private StreamUtils() {
   }
 }
