@@ -137,9 +137,8 @@ public abstract class GatewayTestBase {
           @Provides
           @Named(Constants.Router.ADDRESS)
           public final InetAddress providesHostname(CConfiguration cConf) {
-            return Networks.resolve(cConf.get
-              (Constants.Router.ADDRESS), new InetSocketAddress
-                                      ("localhost", 0).getAddress());
+            return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
+                                    new InetSocketAddress("localhost", 0).getAddress());
           }
         },
         new InMemorySecurityModule(),

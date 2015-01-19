@@ -136,6 +136,21 @@ public final class StreamUtils {
   }
 
   /**
+   * Returns the writer instance number of the given file name.
+   *
+   * @param name Name of the file.
+   * @return The writer instance number of the stream file.
+   * @see StreamInputFormat
+   */
+  public static int getWriterInstanceId(String name) {
+    String bucketName = getBucketName(name);
+    int idx = bucketName.lastIndexOf('.');
+    Preconditions.checkArgument(idx >= 0 && (idx + 1) < bucketName.length(),
+                                "Invalid name %s. Name is expected in [prefix].[seqId] format", bucketName);
+    return Integer.parseInt(bucketName.substring(0, idx));
+  }
+
+  /**
    * Gets the partition start time based on the name of the partition.
    *
    * @return The partition start timestamp in milliseconds.

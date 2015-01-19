@@ -40,6 +40,11 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -60,7 +65,6 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -93,23 +97,25 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final boolean exploreEnabled;
 
   // Executor for serving async enqueue requests
-  private ExecutorService asyncExecutor;
+  private ListeningExecutorService asyncExecutor;
 
   // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
+  private final StreamWriterSizeManager sizeManager;
+
   @Inject
-  public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                       StreamFileWriterFactory writerFactory,
-                       MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade) {
+  public StreamHandler(CConfiguration cConf, Authenticator authenticator, StreamCoordinator streamCoordinator,
+                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
+                       MetricsCollectionService metricsCollectionService, ExploreFacade exploreFacade,
+                       StreamWriterSizeManager sizeManager) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
+    this.sizeManager = sizeManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
@@ -134,7 +140,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                                                          Threads.createDaemonThreadFactory("async-exec-%d"),
                                                          createAsyncRejectedExecutionHandler());
     executor.allowCoreThreadTimeOut(true);
-    asyncExecutor = executor;
+    asyncExecutor = MoreExecutors.listeningDecorator(executor);
   }
 
   @Override
@@ -199,7 +205,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
 
     try {
-      streamWriter.enqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer());
+      long writtenBytes = streamWriter.enqueue(accountId, stream, getHeaders(request, stream),
+                                               request.getContent().toByteBuffer());
+      sizeManager.received(stream, writtenBytes);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -216,8 +224,19 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    streamWriter.asyncEnqueue(accountId, stream,
-                              getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
+    ListenableFuture<Long> future = streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream),
+                                                              request.getContent().toByteBuffer(), asyncExecutor);
+    Futures.addCallback(future, new FutureCallback<Long>() {
+      @Override
+      public void onSuccess(Long result) {
+        sizeManager.received(stream, result);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.debug("Failed to write event asynchronously to Stream {}", stream);
+      }
+    }, asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 

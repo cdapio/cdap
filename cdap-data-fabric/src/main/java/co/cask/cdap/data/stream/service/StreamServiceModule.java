@@ -16,6 +16,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
+import co.cask.cdap.data.stream.service.heartbeat.NoopHeartbeatPublisher;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
@@ -35,6 +37,10 @@ public class StreamServiceModule extends PrivateModule {
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(StreamFetchHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
+
+    // TODO change this binding once notifications are here
+    bind(HeartbeatPublisher.class).to(NoopHeartbeatPublisher.class).in(Scopes.SINGLETON);
+    expose(HeartbeatPublisher.class);
 
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);

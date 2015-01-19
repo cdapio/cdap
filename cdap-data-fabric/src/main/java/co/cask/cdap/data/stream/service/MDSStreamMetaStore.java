@@ -89,8 +89,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, Void>() {
       @Override
       public Void apply(StreamMds mds) throws Exception {
-        mds.streams.write(getKey(accountId, streamName),
-                          createStreamSpec(streamName));
+        mds.streams.write(getKey(accountId, streamName), createStreamSpec(streamName));
         return null;
       }
     });

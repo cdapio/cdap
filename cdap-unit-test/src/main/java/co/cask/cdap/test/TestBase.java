@@ -46,8 +46,10 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
+import co.cask.cdap.data.stream.service.StreamFileWriterSizeManager;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamServiceModule;
+import co.cask.cdap.data.stream.service.StreamWriterSizeManager;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -99,6 +101,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.Discoverable;
@@ -142,6 +145,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static StreamWriterSizeManager sizeManager;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -247,6 +251,9 @@ public class TestBase {
           super.configure();
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
+          bind(StreamWriterSizeManager.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
+          bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
+          expose(StreamWriterSizeManager.class);
           expose(StreamHandler.class);
         }
       },
@@ -282,6 +289,8 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
+    sizeManager = injector.getInstance(StreamWriterSizeManager.class);
+    sizeManager.startAndWait();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
     ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -339,6 +348,7 @@ public class TestBase {
 
   @AfterClass
   public static final void finish() {
+    sizeManager.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();
