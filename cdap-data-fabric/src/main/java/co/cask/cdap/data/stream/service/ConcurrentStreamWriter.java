@@ -37,6 +37,8 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -51,10 +53,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.ThreadSafe;
@@ -122,15 +125,16 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param stream name of the stream
    * @param headers header of the event
    * @param body content of the event
+   * @return the number of bytes written. Can be 0, if the event was written by another thread.
    *
    * @throws IOException if failed to write to stream
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void enqueue(String accountId, String stream,
+  public long enqueue(String accountId, String stream,
                       Map<String, String> headers, ByteBuffer body) throws IOException {
     EventQueue eventQueue = getEventQueue(accountId, stream);
     WriteRequest writeRequest = eventQueue.append(headers, body);
-    persistUntilCompleted(stream, eventQueue, writeRequest);
+    return persistUntilCompleted(stream, eventQueue, writeRequest);
   }
 
   /**
@@ -139,13 +143,15 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param accountId account id for the requester
    * @param stream name of the stream
    * @param events list of events to write
+   * @return the number of bytes written. Can be 0, if the event was written by another thread.
+   *
    * @throws IOException if failed to write to stream
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void enqueue(String accountId, String stream, Iterator<? extends StreamEventData> events) throws IOException {
+  public long enqueue(String accountId, String stream, Iterator<? extends StreamEventData> events) throws IOException {
     EventQueue eventQueue = getEventQueue(accountId, stream);
     WriteRequest writeRequest = eventQueue.append(events);
-    persistUntilCompleted(stream, eventQueue, writeRequest);
+    return persistUntilCompleted(stream, eventQueue, writeRequest);
   }
 
   /**
@@ -160,19 +166,22 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @throws IOException if fails to get stream information
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void asyncEnqueue(String accountId, final String stream,
-                           Map<String, String> headers, ByteBuffer body, Executor executor) throws IOException {
+  public ListenableFuture<Long> asyncEnqueue(String accountId, final String stream,
+                                             Map<String, String> headers, ByteBuffer body,
+                                             ListeningExecutorService executor)
+    throws IOException {
     // Put the event to the queue first and then execute the write asynchronously
     final EventQueue eventQueue = getEventQueue(accountId, stream);
     final WriteRequest writeRequest = eventQueue.append(headers, body);
-    executor.execute(new Runnable() {
+    return executor.submit(new Callable<Long>() {
       @Override
-      public void run() {
+      public Long call() throws Exception {
         try {
-          persistUntilCompleted(stream, eventQueue, writeRequest);
+          return persistUntilCompleted(stream, eventQueue, writeRequest);
         } catch (IOException e) {
           // Since it's done in the async executor, simply log the exception
           LOG.error("Async write failed", e);
+          throw e;
         }
       }
     });
@@ -256,11 +265,13 @@ public final class ConcurrentStreamWriter implements Closeable {
    *
    * @param eventQueue the queue containing events that needs to be persisted
    * @param request a request for persisting data to stream
+   * @return the number of bytes written. Can be 0, if the event was written by another thread.
    * @throws IOException if failed to write to stream
    */
-  private void persistUntilCompleted(String stream, EventQueue eventQueue, WriteRequest request) throws IOException {
+  private long persistUntilCompleted(String stream, EventQueue eventQueue, WriteRequest request) throws IOException {
+    AtomicLong writtenBytes = new AtomicLong(0);
     while (!request.isCompleted()) {
-      if (!eventQueue.tryWrite()) {
+      if (!eventQueue.tryWrite(writtenBytes)) {
         Thread.yield();
       }
     }
@@ -268,6 +279,7 @@ public final class ConcurrentStreamWriter implements Closeable {
       Throwables.propagateIfInstanceOf(request.getFailure(), IOException.class);
       throw new IOException("Unable to write stream event to " + stream, request.getFailure());
     }
+    return writtenBytes.get();
   }
 
   /**
@@ -469,9 +481,11 @@ public final class ConcurrentStreamWriter implements Closeable {
     /**
      * Attempts to write the queued events into the underlying stream.
      *
+     * @param writtenBytes {@link AtomicLong} object in which to store the number of bytes written
+     *                     to the stream by that thread.
      * @return true if become the writer leader and performed the write, false otherwise.
      */
-    boolean tryWrite() {
+    boolean tryWrite(AtomicLong writtenBytes) {
       int bytesWritten = 0;
       int eventsWritten = 0;
 
@@ -514,6 +528,7 @@ public final class ConcurrentStreamWriter implements Closeable {
       }
 
       emitMetrics(bytesWritten, eventsWritten);
+      writtenBytes.set(bytesWritten);
       return true;
     }
 

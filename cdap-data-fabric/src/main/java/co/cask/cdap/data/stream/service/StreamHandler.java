@@ -40,6 +40,8 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -60,7 +62,6 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -93,7 +94,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final boolean exploreEnabled;
 
   // Executor for serving async enqueue requests
-  private ExecutorService asyncExecutor;
+  private ListeningExecutorService asyncExecutor;
 
   // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
@@ -134,7 +135,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                                                          Threads.createDaemonThreadFactory("async-exec-%d"),
                                                          createAsyncRejectedExecutionHandler());
     executor.allowCoreThreadTimeOut(true);
-    asyncExecutor = executor;
+    asyncExecutor = MoreExecutors.listeningDecorator(executor);
   }
 
   @Override
