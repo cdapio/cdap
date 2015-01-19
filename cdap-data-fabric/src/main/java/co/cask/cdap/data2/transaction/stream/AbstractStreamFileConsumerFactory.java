@@ -235,7 +235,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
                                                                     streamConfig.getPartitionDuration());
 
     for (Location partitionLocation : streamLocation.list()) {
-      if (!partitionLocation.isDirectory()) {
+      if (!partitionLocation.isDirectory() || !StreamUtils.isPartition(partitionLocation.getName())) {
         // Partition should be a directory
         continue;
       }
