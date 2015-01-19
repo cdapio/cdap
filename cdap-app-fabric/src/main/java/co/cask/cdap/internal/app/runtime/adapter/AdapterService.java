@@ -199,23 +199,24 @@ public class AdapterService extends AbstractIdleService {
     for (Sink sink : sinks) {
       if (Sink.Type.DATASET.equals(sink.getType())) {
         String datasetName = sink.getName();
-        //TODO: should the defaultSinkProperties go into every spec of that adapterType as well?
-        Map<String, String> dsProperties = Maps.newHashMap();
-        dsProperties.putAll(adapterTypeInfo.getDefaultSinkProperties());
-        dsProperties.putAll(sink.getProperties());
-        createDataset(datasetName, sink.getProperties().get(DATASET_CLASS), dsProperties);
+        // add all propeties that were defined in the manifest (default sink properties), override that with sink
+        // properties passed while creating the sinks.
+        DatasetProperties properties = DatasetProperties.builder()
+                                            .addAll(adapterTypeInfo.getDefaultSinkProperties())
+                                            .addAll(sink.getProperties())
+                                            .build();
+        createDataset(datasetName, properties.getProperties().get(DATASET_CLASS), properties);
       } else {
         throw new IllegalArgumentException(String.format("Unknown Sink type: %s", sink.getType()));
       }
     }
   }
 
-  private void createDataset(String datasetName, String datasetClass, Map<String, String> properties) {
+  private void createDataset(String datasetName, String datasetClass, DatasetProperties properties) {
     Preconditions.checkNotNull(datasetClass, "Dataset class cannot be null");
     try {
       if (!datasetFramework.hasInstance(datasetName)) {
-        datasetFramework.addInstance(datasetClass, datasetName,
-                                     DatasetProperties.builder().addAll(properties).build());
+        datasetFramework.addInstance(datasetClass, datasetName, properties);
       } else {
         LOG.debug("Dataset instance {} already exists not creating a new one.", datasetName);
       }
