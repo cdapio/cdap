@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package co.cask.cdap.api.data.format;
 
 /**
- * An Enum of supported Programs in {@link Workflow}
+ * Names of {@link RecordFormat RecordFormats} built into the platform.
  */
-
-public enum WorkflowSupportedProgram {
-  MAPREDUCE, SPARK
+public final class Formats {
+  public static final String CSV = "csv";
+  public static final String TSV = "tsv";
+  public static final String STRING = "string";
 }

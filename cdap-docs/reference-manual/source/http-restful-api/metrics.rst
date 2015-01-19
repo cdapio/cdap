@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-metrics:
 
@@ -156,8 +156,17 @@ The time range of a metric query can be specified in various ways:
    * - ``start=1385625600&`` ``end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        both given as since the start of the Epoch
-   * - ``start=1385625600&`` ``count=3600``
-     - The same as before, but with the count given as a number of seconds
+   * - ``start=1385625600&`` ``count=3600&`` ``resolution=1s``
+     - The same as before, the count given as a number of seconds
+   * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=1m``
+     - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
+       with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.
+   * - ``start=1385625600&`` ``end=1385632800&`` ``resolution=1h``
+     - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
+       with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
+
+**Note:**
+``resolution=auto`` will automatically determine the resolution based on a time difference calculated between the start and end times. If ``(endTime - startTime) >= 3610``, resolution will be in hours; else if ``(endTime - startTime) >= 610``, resolution will be in minutes; otherwise, resolution will be in seconds.
 
 Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
@@ -166,7 +175,7 @@ aggregate of a metric over time. The following request will return the total num
 
 If the metric is a gauge type, the aggregate will return the latest value set for the metric.
 
-This request will retrieve the completion percentage for the map-stage of the MapReduce Job ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
+This request will retrieve the completion percentage for the map-stage of the MapReduce ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
 
   GET <base-ur>/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
 

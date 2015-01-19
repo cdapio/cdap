@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -102,7 +102,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
@@ -134,7 +134,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
-                                program.getSpecification().getDatasets().keySet(), spec,
+                                program.getApplicationSpecification().getDatasets().keySet(), spec,
                                 logicalStartTime,
                                 workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, cConf);
@@ -149,7 +149,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
-                                                                        streamAdmin, txSystemClient);
+                                                                        streamAdmin, txSystemClient, datasetFramework);
     ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
     LOG.info("Starting MapReduce Job: {}", context.toString());

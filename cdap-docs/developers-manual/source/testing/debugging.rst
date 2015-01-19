@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ================================================
 Debugging a CDAP Application
@@ -303,7 +303,7 @@ Here are options that you can use with the ``tx-debugger view`` commands:
   performed writes.
 
 While transactions don't inform you about the tasks that launched them—whether
-it was a Flowlet, a MapReduce job, etc.—you can match the time
+it was a Flowlet, a MapReduce program, etc.—you can match the time
 they were started with the activity of your CDAP to track potential
 issues.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
@@ -101,7 +102,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    */
   public static void useStreamInput(MapReduceContext context, String streamName, long startTime, long endTime) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString(), null);
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString());
   }
 
   /**
@@ -116,13 +117,13 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public static void useStreamInput(MapReduceContext context, String streamName,
                                     long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, decoderType).toURI().toString(), null);
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, decoderType).toURI().toString());
   }
 
   /**
    * Specifies to use the given stream as input of a MapReduce job, using the given {@link FormatSpecification}
    * describing how to read the body of a stream. Using this method means your mapper must use a
-   * mapreduce LongWritable as the map key and a {@link StructuredRecord} as the map value.
+   * mapreduce LongWritable as the map key and {@link GenericStreamEventData} as the map value.
    *
    * @param context The context of the MapReduce job
    * @param streamName Name of the stream
@@ -132,7 +133,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public static void useStreamInput(MapReduceContext context, String streamName,
                                     long startTime, long endTime, FormatSpecification bodyFormatSpec) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec).toURI().toString(), null);
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec).toURI().toString());
   }
 
   /**

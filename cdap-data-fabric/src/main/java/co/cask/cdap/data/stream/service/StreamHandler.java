@@ -328,9 +328,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       try {
         // if a format is given, make sure it is a valid format,
         // check that we can instantiate the format class
-        RecordFormat format = RecordFormats.create(formatName);
-        // check that this format + schema combination is valid
-        format.initialize(newFormatSpec);
+        RecordFormat format = RecordFormats.createInitializedFormat(newFormatSpec);
         // the request may contain a null schema, in which case the default schema of the format should be used.
         // create a new specification object that is guaranteed to have a non-null schema.
         newFormatSpec = new FormatSpecification(newFormatSpec.getName(),

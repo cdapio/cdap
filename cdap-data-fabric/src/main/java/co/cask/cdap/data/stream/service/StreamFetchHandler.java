@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -110,14 +110,18 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
     }
 
     StreamConfig streamConfig = streamAdmin.getConfig(stream);
-    startTime = Math.max(startTime, System.currentTimeMillis() - streamConfig.getTTL());
+    long now = System.currentTimeMillis();
+    startTime = Math.max(startTime, now - streamConfig.getTTL());
+    endTime = Math.min(endTime, now);
 
     // Create the stream event reader
     FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime);
     try {
-      ReadFilter readFilter = createReadFilter(startTime, endTime);
+      TimeRangeReadFilter readFilter = new TimeRangeReadFilter(startTime, endTime);
       List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
-      int eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+
+      // Reads the first batch of events from the stream.
+      int eventsRead = readEvents(reader, events, limit, readFilter);
 
       // If empty already, return 204 no content
       if (eventsRead <= 0) {
@@ -153,7 +157,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
         events.clear();
 
         if (limit > 0) {
-          eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+          eventsRead = readEvents(reader, events, limit, readFilter);
         }
       }
       jsonWriter.endArray();
@@ -167,6 +171,22 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
     } finally {
       reader.close();
     }
+  }
+
+  /**
+   * Reads events from the given reader.
+   */
+  private int readEvents(FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                         List<StreamEvent> events, int limit,
+                         TimeRangeReadFilter readFilter) throws IOException, InterruptedException {
+    // Keeps reading as long as the filter is active.
+    // This mean there are events in the stream, just that they are rejected by the filter.
+    int eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+    while (eventsRead == 0 && readFilter.isActive()) {
+      readFilter.reset();
+      eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+    }
+    return eventsRead;
   }
 
   /**
@@ -216,7 +236,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
     for (Location location : baseLocation.list()) {
       // Partition must be a directory
-      if (!location.isDirectory()) {
+      if (!location.isDirectory() || !StreamUtils.isPartition(location.getName())) {
         continue;
       }
       long partitionStartTime = StreamUtils.getPartitionStartTime(location.getName());
@@ -296,43 +316,6 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Creates a {@link ReadFilter} to only read events that are within the given time range.
-   *
-   * @param startTime Start timestamp for event to be valid (inclusive).
-   * @param endTime   End timestamp fo event to be valid (exclusive).
-   * @return A {@link ReadFilter} with the specific filtering property.
-   */
-  private ReadFilter createReadFilter(final long startTime, final long endTime) {
-    return new ReadFilter() {
-
-      private long hint;
-
-      @Override
-      public void reset() {
-        hint = -1L;
-      }
-
-      @Override
-      public long getNextTimestampHint() {
-        return hint;
-      }
-
-      @Override
-      public boolean acceptTimestamp(long timestamp) {
-        if (timestamp < startTime) {
-          hint = startTime;
-          return false;
-        }
-        if (timestamp >= endTime) {
-          hint = Long.MAX_VALUE;
-          return false;
-        }
-        return true;
-      }
-    };
-  }
-
-  /**
    * Returns the events limit for each round of read from the stream reader.
    *
    * @param count Number of events wanted to read.
@@ -340,5 +323,65 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
    */
   private int getReadLimit(int count) {
     return (count > MAX_EVENTS_PER_READ) ? MAX_EVENTS_PER_READ : count;
+  }
+
+  /**
+   * A {@link ReadFilter} for accepting events that are within a given time range.
+   */
+  private static final class TimeRangeReadFilter extends ReadFilter {
+    private final long startTime;
+    private final long endTime;
+    private long hint;
+    private boolean active;
+
+    /**
+     * Creates a {@link TimeRangeReadFilter} with the specific time range.
+     *
+     * @param startTime start timestamp for event to be accepted (inclusive)
+     * @param endTime end timestamp for event to be accepted (exclusive)
+     */
+    private TimeRangeReadFilter(long startTime, long endTime) {
+      this.startTime = startTime;
+      this.endTime = endTime;
+    }
+
+    @Override
+    public void reset() {
+      hint = -1L;
+      active = false;
+    }
+
+    @Override
+    public long getNextTimestampHint() {
+      return hint;
+    }
+
+    @Override
+    public boolean acceptTimestamp(long timestamp) {
+      if (timestamp < startTime) {
+        // Reading of stream events is always sorted by timestamp
+        // If the timestamp read is still smaller than the start time, there is still chance
+        // that there will be events that can satisfy this filter, hence needs to keep reading.
+        active = true;
+        hint = startTime;
+        return false;
+      }
+      if (timestamp >= endTime) {
+        // If the timestamp read already passed the end time, further reading will not get any more events that
+        // can satisfy this filter.
+        active = false;
+        hint = Long.MAX_VALUE;
+        return false;
+      }
+      active = true;
+      return true;
+    }
+
+    /**
+     * Returns true if this filter has been called at least once after the prior call to {@link #reset()}.
+     */
+    public boolean isActive() {
+      return active;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -144,10 +144,34 @@ public final class StreamUtils {
    */
   public static long getPartitionStartTime(String partitionName) {
     int idx = partitionName.indexOf('.');
-    Preconditions.checkArgument(idx >= 0,
+    Preconditions.checkArgument(idx > 0,
                                 "Invalid partition name %s. Partition name should be of format %s",
                                 partitionName, "[startTimestamp].[duration]");
     return TimeUnit.MILLISECONDS.convert(Long.parseLong(partitionName.substring(0, idx)), TimeUnit.SECONDS);
+  }
+
+  /**
+   * Returns true if it is valid partition name, false other. The partition name must be
+   * {@code [0-9]+.[0-9]+}
+   */
+  public static boolean isPartition(String partitionName) {
+    int dotPos = -1;
+    for (int i = 0; i < partitionName.length(); i++) {
+      char c = partitionName.charAt(i);
+      if (c == '.') {
+        // Make sure there is only one '.'
+        if (dotPos >= 0) {
+          return false;
+        }
+        dotPos = i;
+        continue;
+      }
+      if (c < '0' || c > '9') {
+        return false;
+      }
+    }
+    // Must sure '.' is not the first character and not the last
+    return dotPos > 0 && dotPos < partitionName.length() - 1;
   }
 
   /**
@@ -310,6 +334,43 @@ public final class StreamUtils {
       }
     }
     return genId;
+  }
+
+  /**
+   * Finds the next sequence id for the given partition with the given file prefix.
+   *
+   * @param partitionLocation the directory where the stream partition is
+   * @param filePrefix prefix of file name to match
+   * @return the next sequence id, which is the current max id + 1.
+   * @throws IOException if failed to find the next sequence id
+   */
+  public static int getNextSequenceId(Location partitionLocation, String filePrefix) throws IOException {
+    // Try to find the file of this bucket with the highest sequence number.
+    int maxSequence = -1;
+    for (Location location : partitionLocation.list()) {
+      String fileName = location.getName();
+      if (!fileName.startsWith(filePrefix)) {
+        continue;
+      }
+      StreamUtils.getSequenceId(fileName);
+
+      int idx = fileName.lastIndexOf('.');
+      if (idx < filePrefix.length()) {
+        // Ignore file with invalid stream file name
+        continue;
+      }
+
+      try {
+        // File name format is [prefix].[sequenceId].[dat|idx]
+        int seq = StreamUtils.getSequenceId(fileName);
+        if (seq > maxSequence) {
+          maxSequence = seq;
+        }
+      } catch (NumberFormatException e) {
+        // Ignore stream file with invalid sequence id
+      }
+    }
+    return maxSequence + 1;
   }
 
   private StreamUtils() {

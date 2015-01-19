@@ -396,7 +396,7 @@ public class DefaultStoreTest {
     // checking that program spec in program jar was adjsuted
     Program program = store.loadProgram(programId, ProgramType.FLOW);
     Assert.assertEquals(initialInstances + 5,
-                        program.getSpecification().
+                        program.getApplicationSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,13 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -45,7 +47,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, SparkSpecification> sparks;
   private final Map<String, WorkflowSpecification> workflows;
   private final Map<String, ServiceSpecification> services;
-
+  private final Map<String, ScheduleSpecification> schedules;
 
   public DefaultApplicationSpecification(String name, String description,
                                          Map<String, StreamSpecification> streams,
@@ -56,7 +58,8 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, MapReduceSpecification> mapReduces,
                                          Map<String, SparkSpecification> sparks,
                                          Map<String, WorkflowSpecification> workflows,
-                                         Map<String, ServiceSpecification> services) {
+                                         Map<String, ServiceSpecification> services,
+                                         Map<String, ScheduleSpecification> schedules) {
     this.name = name;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
@@ -68,6 +71,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.sparks = ImmutableMap.copyOf(sparks);
     this.workflows = ImmutableMap.copyOf(workflows);
     this.services = ImmutableMap.copyOf(services);
+    this.schedules = ImmutableMap.copyOf(schedules);
   }
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
@@ -76,7 +80,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(), spec.getProcedures(),
                                                spec.getMapReduce(), spec.getSpark(), spec.getWorkflows(),
-                                               spec.getServices());
+                                               spec.getServices(), spec.getSchedules());
   }
 
   @Override
@@ -135,5 +139,10 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public Map<String, ServiceSpecification> getServices() {
     return services;
+  }
+
+  @Override
+  public Map<String, ScheduleSpecification> getSchedules() {
+    return schedules;
   }
 }

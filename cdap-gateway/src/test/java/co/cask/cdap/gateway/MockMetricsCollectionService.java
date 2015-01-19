@@ -91,7 +91,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     }
 
     @Override
-    public void increment(String metricName, int value) {
+    public void increment(String metricName, long value) {
       synchronized (MockMetricsCollectionService.this) {
         MetricValue mv = new MetricValue(context, metricName, System.currentTimeMillis(), value, MetricType.COUNTER);
         MetricRecordsWrapper records = new MetricRecordsWrapper(ImmutableList.of(mv).iterator());

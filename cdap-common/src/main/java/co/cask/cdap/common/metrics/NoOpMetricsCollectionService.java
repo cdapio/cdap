@@ -39,7 +39,7 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
   public MetricsCollector getCollector(Map<String, String> tags) {
     return new MetricsCollector() {
       @Override
-      public void increment(String metricName, int value) {
+      public void increment(String metricName, long value) {
         // no-op
       }
 

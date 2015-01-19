@@ -17,7 +17,6 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.ReadFilter;
@@ -34,10 +33,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
-import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.hadoop.hbase.util.Strings;
 import org.apache.twill.filesystem.Location;
@@ -877,13 +874,18 @@ public abstract class StreamDataFileTestBase {
     for (int i = 0; i < 1000; i++) {
       writer.append(StreamFileTestUtils.createEvent(i, "Message " + i));
     }
+
+    // Trying to get close timestamp should throw exception before the file get closed
+    try {
+      writer.getCloseTimestamp();
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      // Expected
+    }
     writer.close();
 
     // Get the close timestamp from the file for assertion below
-    SeekableInputStream input = Locations.newInputSupplier(eventFile).getInput();
-    input.seek(input.size() - 8);
-    long timestamp = Math.abs(Longs.fromByteArray(ByteStreams.toByteArray(input)));
-    input.close();
+    long timestamp = writer.getCloseTimestamp();
 
     // Create a reader to read all events. All events should have the same timestamp
     StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));

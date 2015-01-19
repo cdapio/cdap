@@ -24,6 +24,7 @@ import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.FileWriter;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -75,7 +76,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * </pre>
  */
 @NotThreadSafe
-public final class StreamDataFileWriter implements Closeable, Flushable, FileWriter<StreamEvent> {
+public final class StreamDataFileWriter implements TimestampCloseable, Flushable, FileWriter<StreamEvent> {
 
   private static final int BUFFER_SIZE = 256 * 1024;    // 256K
 
@@ -91,6 +92,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
   private long nextIndexTime;
   private boolean synced;
   private boolean closed;
+  private long closeTimestamp;
 
   /**
    * Constructs a new instance that writes to given outputs. Same as calling
@@ -124,6 +126,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     }
     this.indexInterval = indexInterval;
     this.currentTimestamp = -1L;
+    this.closeTimestamp = -1L;
 
     Function<OutputStream, Encoder> encoderFactory = createEncoderFactory();
     this.encoder = new BufferedEncoder(BUFFER_SIZE, encoderFactory);
@@ -169,7 +172,8 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     try {
       flushBlock(false);
       // Write the tail marker, which is a -(current timestamp).
-      eventOutput.write(Longs.toByteArray(-System.currentTimeMillis()));
+      closeTimestamp = System.currentTimeMillis();
+      eventOutput.write(Longs.toByteArray(-closeTimestamp));
     } finally {
       closed = true;
       try {
@@ -187,6 +191,12 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
     } catch (IOException e) {
       throw closeWithException(e);
     }
+  }
+
+  @Override
+  public long getCloseTimestamp() {
+    Preconditions.checkState(closed, "Writer not closed");
+    return closeTimestamp;
   }
 
   private void doAppend(StreamEvent event, int flushLimit) throws IOException {

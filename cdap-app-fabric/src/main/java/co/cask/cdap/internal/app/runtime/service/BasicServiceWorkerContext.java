@@ -73,6 +73,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final int instanceCount;
   private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
   private final Program program;
+  private final Map<String, String> runtimeArgs;
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
                                    int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
@@ -93,6 +94,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsSerice, program,
                                                                  spec.getName(), runId.getId(), instanceId));
+    this.runtimeArgs = runtimeArgs.asMap();
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
@@ -152,7 +154,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(context, datasetFramework, getProgram().getClassLoader(), datasets) {
+      runnable.run(new DynamicDatasetContext(context, datasetFramework, getProgram().getClassLoader(),
+                                             datasets, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
           return datasetsCache;

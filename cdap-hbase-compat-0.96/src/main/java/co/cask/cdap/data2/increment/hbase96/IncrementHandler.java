@@ -22,11 +22,15 @@ import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.hbase96.Filters;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -48,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -66,6 +71,12 @@ import java.util.TreeMap;
  * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
+  /**
+   * Property set for {@link HColumnDescriptor} to indicate if increment is transactional. Default: "true", i.e.
+   * transactional.
+   */
+  public static final String PROPERTY_TRANSACTIONAL = "dataset.table.readless.increment.transactional";
+
   // prefix bytes used to mark values that are deltas vs. full sums
   public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
   // expected length for values storing deltas (prefix + increment value)
@@ -77,13 +88,26 @@ public class IncrementHandler extends BaseRegionObserver {
   private HRegion region;
   private TransactionStateCache cache;
 
+  protected Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
-      this.cache = cacheSupplier.get();
+      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
+        boolean txnl = !"false".equals(columnDesc.getValue(PROPERTY_TRANSACTIONAL));
+        LOG.info("Family " + columnDesc.getNameAsString() + " is transactional: " + txnl);
+        if (txnl) {
+          txnlFamilies.add(columnDesc.getName());
+        }
+      }
+
+      if (!txnlFamilies.isEmpty()) {
+        Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
+        this.cache = cacheSupplier.get();
+      }
     }
   }
 
@@ -157,10 +181,8 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                   InternalScanner scanner) throws IOException {
-    TransactionSnapshot snapshot = cache.getLatestState();
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.COMPACT_RETAIN_DELETES,
-        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+                                       ScanType.COMPACT_RETAIN_DELETES, getCompactionBound(store));
   }
 
   public static boolean isIncrement(Cell cell) {
@@ -172,20 +194,23 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, ScanType scanType) throws IOException {
-    TransactionSnapshot snapshot = cache.getLatestState();
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, scanType,
-        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, scanType, getCompactionBound(store));
   }
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, ScanType scanType, CompactionRequest request)
     throws IOException {
-    TransactionSnapshot snapshot = cache.getLatestState();
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, scanType,
-        // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
-        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, scanType, getCompactionBound(store));
   }
 
+  private long getCompactionBound(Store store) {
+    if (txnlFamilies.contains(store.getFamily().getName())) {
+      TransactionSnapshot snapshot = cache.getLatestState();
+      // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
+      return snapshot != null ? snapshot.getVisibilityUpperBound() : 0;
+    } else {
+      return HConstants.LATEST_TIMESTAMP;
+    }
+  }
 }

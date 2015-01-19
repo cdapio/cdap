@@ -232,7 +232,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     switch (program.getType()) {
       case FLOW: {
-        FlowSpecification flowSpec = program.getSpecification().getFlows().get(programId);
+        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId);
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec)
         );

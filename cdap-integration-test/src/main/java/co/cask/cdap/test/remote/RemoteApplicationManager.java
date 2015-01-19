@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.remote;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -198,7 +199,7 @@ public class RemoteApplicationManager implements ApplicationManager {
 
     return new WorkflowManager() {
       @Override
-      public List<String> getSchedules() {
+      public List<ScheduleSpecification> getSchedules() {
         throw new UnsupportedOperationException("TODO");
       }
 
