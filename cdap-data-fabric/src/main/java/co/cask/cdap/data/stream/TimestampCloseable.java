@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,23 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
-
-import java.io.IOException;
+import java.io.Closeable;
 
 /**
- *
+ * A {@link Closeable} that also provides timestamp when the actual close operation happened.
  */
-public interface StreamFileWriterFactory {
+public interface TimestampCloseable extends Closeable {
 
   /**
-   * Returns the file name prefix of all stream files created through this factory.
+   * Returns timestamp in milliseconds when the close operation happened.
+   *
+   * @throws IllegalStateException if close operation hasn't been performed
    */
-  String getFileNamePrefix();
-
-  FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException;
+  long getCloseTimestamp();
 }

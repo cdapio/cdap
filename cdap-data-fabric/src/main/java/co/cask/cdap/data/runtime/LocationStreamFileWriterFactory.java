@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimePartitionedStreamFileWriter;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -38,15 +37,18 @@ import java.io.IOException;
  */
 public final class LocationStreamFileWriterFactory implements StreamFileWriterFactory {
 
-  private final StreamAdmin streamAdmin;
   private final String filePrefix;
 
   @Inject
-  LocationStreamFileWriterFactory(CConfiguration cConf, StreamAdmin streamAdmin) {
-    this.streamAdmin = streamAdmin;
+  LocationStreamFileWriterFactory(CConfiguration cConf) {
     this.filePrefix = String.format("%s.%d",
                                     cConf.get(Constants.Stream.FILE_PREFIX),
                                     cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0));
+  }
+
+  @Override
+  public String getFileNamePrefix() {
+    return filePrefix;
   }
 
   @Override
