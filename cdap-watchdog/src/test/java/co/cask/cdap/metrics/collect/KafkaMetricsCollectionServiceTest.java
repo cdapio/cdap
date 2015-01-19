@@ -19,7 +19,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
 import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
 import co.cask.cdap.internal.io.DatumWriter;
@@ -158,7 +157,7 @@ public class KafkaMetricsCollectionServiceTest {
     // Consume from kafka
     final Map<String, MetricValue> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
-    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name().toLowerCase(), 0)
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
       ReflectionDatumReader<MetricValue> reader = new ReflectionDatumReader<MetricValue>(schema, metricRecordType);

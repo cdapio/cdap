@@ -25,7 +25,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
@@ -37,8 +37,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     setupMetrics();
   }
 
@@ -60,7 +60,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
           node("procedure", "RCounts"))));
 
     JsonObject reads = new JsonObject();
-    reads.addProperty("metric", "reads");
+    reads.addProperty("metric", "system.reads");
     reads.add("contexts", readContexts);
     expected.add(reads);
 
@@ -85,7 +85,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
           node("flow", "WordCounter", children(
             node("flowlet", "splitter"))))));
     JsonObject expectedReads = new JsonObject();
-    expectedReads.addProperty("metric", "reads");
+    expectedReads.addProperty("metric", "system.reads");
     expectedReads.add("contexts", contexts);
     expected.add(expectedReads);
     expected.add(expectedWrites());
@@ -159,7 +159,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
             node("flowlet", "splitter"))))));
 
     JsonObject writes = new JsonObject();
-    writes.addProperty("metric", "writes");
+    writes.addProperty("metric", "system.writes");
     writes.add("contexts", writeContexts);
     return writes;
   }

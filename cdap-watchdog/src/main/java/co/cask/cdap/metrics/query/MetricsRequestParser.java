@@ -158,6 +158,11 @@ final class MetricsRequestParser {
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();
     MetricsRequestContext.Builder contextBuilder = new MetricsRequestContext.Builder();
 
+    // everything
+    if (!pathParts.hasNext()) {
+      return contextBuilder.build();
+    }
+
     // scope is the first part of the path
     String scopeStr = pathParts.next();
     try {

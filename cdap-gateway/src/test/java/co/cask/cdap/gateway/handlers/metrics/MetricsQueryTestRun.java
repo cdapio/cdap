@@ -151,10 +151,10 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     String runnableRequest =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/reads?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/runnables/CountRunnable/reads?aggregate=true";
 
     String serviceRequest =
-      "/user/apps/WordCount/services/CounterService/reads?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/reads?aggregate=true";
     testSingleMetric(runnableRequest, 1);
     testSingleMetric(serviceRequest, 1);
   }
@@ -187,24 +187,24 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     String serviceRequest =
-      "/user/apps/WordCount/services/CounterService/runs/" + runId2 + "/rid_metric?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/runs/" + runId2 + "/rid_metric?aggregate=true";
 
     //service metric request with invliad runId
     String serviceRequestInvalidId =
-      "/user/apps/WordCount/services/CounterService/runs/fff/rid_metric?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/runs/fff/rid_metric?aggregate=true";
 
     //service metric request without specifying the runId and aggregate will run the sum of these two runIds
     String serviceRequestTotal =
-      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
 
     String mappersMetric =
-      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/mappers/entries.out?aggregate=true";
+      "/system/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/mappers/entries.out?aggregate=true";
 
     String reducersMetric =
-      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/reducers/entries.out?aggregate=true";
+      "/system/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/reducers/entries.out?aggregate=true";
 
     String mapredMetric =
-      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/entries.out?aggregate=true";
+      "/system/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/entries.out?aggregate=true";
 
 
     testSingleMetric(serviceRequest, 2);
@@ -246,10 +246,10 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     String runnableRequest =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/gmetric?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/runnables/CountRunnable/gmetric?aggregate=true";
 
     String serviceRequest =
-      "/user/apps/WordCount/services/CounterService/gmetric?aggregate=true";
+      "/system/apps/WordCount/services/CounterService/gmetric?aggregate=true";
     testSingleMetric(runnableRequest, 10);
     testSingleMetric(serviceRequest, 10);
   }
