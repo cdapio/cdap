@@ -331,6 +331,7 @@ public class StandaloneMain {
     //Run dataset service on random port
     List<Module> modules = createPersistentModules(cConf, hConf, webAppPath);
 
+    cConf.set(Constants.AppFabric.ADAPTER_DIR, "/Users/sree/plugins");
     return new StandaloneMain(modules, cConf, webAppPath);
   }
 
