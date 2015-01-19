@@ -358,15 +358,22 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
     @Override
     public boolean acceptTimestamp(long timestamp) {
-      active = true;
       if (timestamp < startTime) {
+        // Reading of stream events is always sorted by timestamp
+        // If the timestamp read is still smaller than the start time, there is still chance
+        // that there will be events that can satisfy this filter, hence needs to keep reading.
+        active = true;
         hint = startTime;
         return false;
       }
       if (timestamp >= endTime) {
+        // If the timestamp read already passed the end time, further reading will not get any more events that
+        // can satisfy this filter.
+        active = false;
         hint = Long.MAX_VALUE;
         return false;
       }
+      active = true;
       return true;
     }
 
