@@ -20,6 +20,10 @@ import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.adapter.Sink;
 import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
@@ -85,14 +89,14 @@ public class AdapterService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting AdapterInfoService");
+    LOG.info("Starting AdapterService");
     this.adapterTypeInfos = Maps.newHashMap();
     registerAdapters();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down AdapterInfoService");
+    LOG.info("Shutting down AdapterService");
   }
 
   /**
@@ -137,15 +141,15 @@ public class AdapterService extends AbstractIdleService {
     // If the adapter already exists, remove existing schedule to replace with the new one.
     AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
     if (existingSpec != null) {
-      // TODO: Remove the schedule.
+      stopPrograms(namespaceId, appSpec, adapterTypeInfo, existingSpec);
     }
 
-    startPrograms(appSpec, adapterTypeInfo, adapterSpec);
+    startPrograms(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
     store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
   }
 
   // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  private void startPrograms(ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+  private void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
                              AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
     Map<String, String> adapterProperties = Maps.newHashMap();
@@ -154,14 +158,49 @@ public class AdapterService extends AbstractIdleService {
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-        //TODO: Schedule all programs (passing the merged adapterProperties into the schedule spec's properties
+        String programName = entry.getValue().getName();
+        String cronExpr = toCronExpr(adapterSpec.getProperties().get("frequency"));
+        Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
+        ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programName);
+        ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule, scheduleProgramInfo, adapterProperties);
+        Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), programName);
+        addSchedule(programId, scheduleSpec);
       }
     } else {
       // Only Workflows are supported to be scheduled in the current implementation
       throw new UnsupportedOperationException(String.format("Unsupported program type %s for adapter",
-                                                             programType.toString()));
+                                                            programType.toString()));
     }
+  }
 
+  // Stop all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
+  private void stopPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                            AdapterSpecification adapterSpec) {
+    ProgramType programType = adapterTypeInfo.getProgramType();
+    if (programType.equals(ProgramType.WORKFLOW)) {
+      Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
+      for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+        Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
+        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.getScheduleName());
+      }
+    } else {
+      // Only Workflows are supported to be unscheduled in the current implementation
+      throw new UnsupportedOperationException(String.format("Unsupported program type %s for adapter",
+                                                            programType.toString()));
+    }
+  }
+
+  // Adds a schedule to the scheduler as well as to the appspec
+  private void addSchedule(Id.Program programId, ScheduleSpecification scheduleSpecification) {
+    scheduler.schedule(programId, scheduleSpecification.getProgram().getProgramType(),
+                       scheduleSpecification.getSchedule());
+    store.addSchedule(programId, scheduleSpecification);
+  }
+
+  // Deletes schedule from the scheduler as well as from the app spec
+  private void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
+    scheduler.deleteSchedule(programId, programType, scheduleName);
+    store.deleteSchedule(programId, programType, scheduleName);
   }
 
   // Sources for all adapters should exists before creating the adapters.
@@ -181,11 +220,7 @@ public class AdapterService extends AbstractIdleService {
 
   private boolean streamExists(String streamName) {
     try {
-      if (!streamAdmin.exists(streamName)) {
-        return false;
-      } else {
-        return true;
-      }
+      return streamAdmin.exists(streamName);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -215,8 +250,9 @@ public class AdapterService extends AbstractIdleService {
     try {
       if (!datasetFramework.hasInstance(datasetName)) {
         datasetFramework.addInstance(datasetClass, datasetName, properties);
+        LOG.debug("Dataset instance {} created with properties: {}.", datasetName, properties);
       } else {
-        LOG.debug("Dataset instance {} already exists not creating a new one.", datasetName);
+        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetName);
       }
     } catch (DatasetManagementException e) {
       LOG.error("Error while creating dataset {}", datasetName, e);

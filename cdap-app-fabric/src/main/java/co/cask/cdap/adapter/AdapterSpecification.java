@@ -96,6 +96,13 @@ public final class AdapterSpecification {
     return name;
   }
 
+  /**
+   * @return description of the schedule for this Adapter.
+   */
+  public String getScheduleDescription() {
+    return String.format("Schedule for adapter: %s", name);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
