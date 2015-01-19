@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.format.RecordFormats;
@@ -186,7 +187,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
       Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
     );
     FormatSpecification formatSpecification = new FormatSpecification(
-      RecordFormats.AVRO, schema, Collections.<String, String>emptyMap());
+      Formats.AVRO, schema, Collections.<String, String>emptyMap());
     StreamProperties properties = new StreamProperties("avroStream", Long.MAX_VALUE, formatSpecification);
     setStreamProperties("avroStream", properties);
 
