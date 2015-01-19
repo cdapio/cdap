@@ -863,6 +863,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     deploy(namespace, adapterType, archive);
   }
 
+  // POJO that specifies input parameters to create Adapter
   private static final class AdapterConfig {
     private String type;
     private Map<String, String> properties;

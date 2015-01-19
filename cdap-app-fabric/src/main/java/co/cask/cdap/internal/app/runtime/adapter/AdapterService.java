@@ -20,6 +20,8 @@ import co.cask.cdap.adapter.AdapterSpecification;
 import co.cask.cdap.adapter.Sink;
 import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,7 +35,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -92,17 +93,23 @@ public class AdapterService extends AbstractIdleService {
     LOG.info("Shutting down AdapterInfoService");
   }
 
+  /**
+   * Get the {@link AdapterTypeInfo} for a given adapter type.
+   *
+   * @param adapterType adapter type
+   * @return instance of {@link AdapterTypeInfo} if available, null otherwise
+   */
   @Nullable
   public AdapterTypeInfo getAdapterTypeInfo(String adapterType) {
     return this.adapterTypeInfos.get(adapterType);
   }
 
   /**
-   * Retrieves information about an Adapter
+   * Retrieves the {@link AdapterSpecification} specified by the name in a given namespace.
    *
    * @param namespace namespace to lookup the adapter
-   * @param adapterName the type of the requested AdapterInfo
-   * @return requested AdapterSpecification or null if no such AdapterInfo exists
+   * @param adapterName name of the adapter
+   * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
    */
   @Nullable
   public AdapterSpecification getAdapter(String namespace, String adapterName) {
@@ -116,30 +123,40 @@ public class AdapterService extends AbstractIdleService {
   public void createAdapter(String namespaceId, AdapterSpecification spec) throws IllegalArgumentException {
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(spec.getType());
-    String adapterAppName = spec.getType();
+    Preconditions.checkNotNull(adapterTypeInfo, "Adapter type %s not found", spec.getType());
+
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, spec.getType()));
+    Preconditions.checkNotNull(appSpec, "Application %s not found for the adapter %s", spec.getType(), spec.getName());
 
     validateSources(spec.getName(), spec.getSources());
     createSinks(spec.getName(), spec.getSinks());
-
-    //String programId = adapterTypeInfo.getScheduleProgramId();
-    // TODO: Schedule all programs of type.
-    // TODO: What happens when you schedule same program twice.
-    //ProgramType programType = adapterTypeInfo.getScheduleProgramType();
-    //Id.Program scheduledProgramId = Id.Program.from(namespaceId, adapterAppName, programId);
-    //Map<String, String> properties = ImmutableMap.of(ADAPTER_SPEC, GSON.toJson(spec));
 
     // If the adapter already exists, remove existing schedule to replace with the new one.
     AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), spec.getName());
     if (existingSpec != null) {
       // TODO: Remove the schedule.
-      String debugMessage = String.format("Existing adapter found while create: %s.%s",
-                                          namespaceId, existingSpec);
-      LOG.debug(debugMessage);
     }
-    //TODO: Schedule new programs once the API is available.
+
+    startPrograms(appSpec, adapterTypeInfo.getProgramType());
     store.addAdapter(Id.Namespace.from(namespaceId), spec);
   }
 
+  // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
+  private void startPrograms(ApplicationSpecification spec, ProgramType programType) {
+    if (programType.equals(ProgramType.WORKFLOW)) {
+      Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
+      for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+        //TODO: Schedule all programs
+      }
+    } else {
+      // Only Workflows are supported to be scheduled in the current implementation
+      throw new UnsupportedOperationException(String.format("Unsupported program type %s for adapter",
+                                                             programType.toString()));
+    }
+
+  }
+
+  // Sources for all adapters should exists before creating the adapters.
   private void validateSources(String adapterName, Set<Source> sources) throws IllegalArgumentException {
     // Ensure all sources exist
     for (Source source : sources) {
@@ -166,6 +183,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
+  // create the required sinks for the adapters. Currently only DATASET sink type is supported.
   private void createSinks(String adapterName, Set<Sink> sinks) {
     // create sinks if not exist
     for (Sink sink : sinks) {
@@ -196,6 +214,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
+  // Reads all the jars from the adapter directory and sets up required internal structures.
   @VisibleForTesting
   void registerAdapters() {
     try {
@@ -204,22 +223,23 @@ public class AdapterService extends AbstractIdleService {
       for (File file : files) {
         try {
           Manifest manifest = new JarFile(file.getAbsolutePath()).getManifest();
-          AdapterTypeInfo adapterTypeInfo = getAdapterTypeInfo(file, manifest);
+          AdapterTypeInfo adapterTypeInfo = createAdapterTypeInfo(file, manifest);
           if (adapterTypeInfo != null) {
             adapterTypeInfos.put(adapterTypeInfo.getType(), adapterTypeInfo);
           } else {
-            LOG.error("Missing information for adapter at {}", file.getAbsolutePath());
+            LOG.error("Missing required information to create adapter {}", file.getAbsolutePath());
           }
         } catch (IOException e) {
           LOG.warn(String.format("Unable to read adapter jar %s", file.getAbsolutePath()));
         }
       }
     } catch (Exception e) {
-      LOG.warn("Unable to read the plugins directory ");
+      LOG.warn("Unable to read the plugins directory");
     }
   }
 
-  private AdapterTypeInfo getAdapterTypeInfo(File file, Manifest manifest) {
+
+  private AdapterTypeInfo createAdapterTypeInfo(File file, Manifest manifest) {
     if (manifest != null) {
       Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -246,15 +266,15 @@ public class AdapterService extends AbstractIdleService {
     private final String type;
     private final Source.Type sourceType;
     private final Sink.Type sinkType;
-    private final ProgramType scheduleProgramType;
+    private final ProgramType programType;
 
     public AdapterTypeInfo(File file, String adapterType, Source.Type sourceType, Sink.Type sinkType,
-                           ProgramType scheduleProgramType) {
+                           ProgramType programType) {
       this.file = file;
       this.type = adapterType;
       this.sourceType = sourceType;
       this.sinkType = sinkType;
-      this.scheduleProgramType = scheduleProgramType;
+      this.programType = programType;
     }
 
     public File getFile() {
@@ -273,8 +293,8 @@ public class AdapterService extends AbstractIdleService {
       return sinkType;
     }
 
-    public ProgramType getScheduleProgramType() {
-      return scheduleProgramType;
+    public ProgramType getProgramType() {
+      return programType;
     }
   }
 
