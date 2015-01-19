@@ -59,7 +59,7 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Utility service that provides access to adapterTypeInfos currently registered
+ * Service that manages managing lifecycle of Adapters.
  */
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
