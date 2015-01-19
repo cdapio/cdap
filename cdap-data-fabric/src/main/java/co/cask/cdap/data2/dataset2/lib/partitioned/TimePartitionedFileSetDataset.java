@@ -153,16 +153,16 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
 
   @Override
   public Map<String, String> getInputFormatConfiguration() {
-    Map<String, String> config = files.getInputFormatConfiguration();
-    Long startTime = TimePartitionedFileSetArguments.getInputStartTime(config);
+    Long startTime = TimePartitionedFileSetArguments.getInputStartTime(runtimeArguments);
     if (startTime == null) {
       throw new DataSetException("Start time for input time range must be given as argument.");
     }
-    Long endTime = TimePartitionedFileSetArguments.getInputEndTime(config);
+    Long endTime = TimePartitionedFileSetArguments.getInputEndTime(runtimeArguments);
     if (endTime == null) {
       throw new DataSetException("End time for input time range must be given as argument.");
     }
     Collection<String> inputPaths = getPartitions(startTime, endTime);
+    Map<String, String> config = files.getInputFormatConfiguration();
     if (!inputPaths.isEmpty()) {
       config = Maps.newHashMap(config);
       for (String path : inputPaths) {
