@@ -29,6 +29,8 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
@@ -39,6 +41,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -338,7 +341,12 @@ public class HBaseQueueAdmin implements QueueAdmin {
       // we need to delete the row for this queue name from the config table
       HTable hTable = new HTable(admin.getConfiguration(), configTableName);
       try {
-        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(namespaceId, app, flow));
+        // TODO: CDAP-1194 Remove this hack when upgrade script is ready
+        String queueNamePrefix = QueueName.prefixForFlow(namespaceId, app, flow);
+        if (Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
+          queueNamePrefix = stripDefaultNamespaceIdFromPrefix(queueNamePrefix);
+        }
+        byte[] prefix = Bytes.toBytes(queueNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
         stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
 
@@ -428,7 +436,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), configTableName);
 
     try {
-      byte[] rowKey = queueName.toBytes();
+      byte[] rowKey = getConfigTableRowKey(queueName);
 
       // Get all latest entry row key of all existing instances
       // Consumer state column is named as "<groupId><instanceId>"
@@ -462,7 +470,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), configTableName);
 
     try {
-      byte[] rowKey = queueName.toBytes();
+      byte[] rowKey = getConfigTableRowKey(queueName);
 
       // Get the whole row
       Result result = hTable.get(new Get(rowKey));
@@ -663,5 +671,37 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
       tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, splitKeys);
     }
+  }
+
+  /**
+   * This is a hack to not add namespaceId in the rowKey in the queue.config table for default namespace only.
+   * This hack ensures that we stay backward compatible.
+   * TODO: CDAP-1194 Remove this hack when upgrade tool is ready.
+   *
+   * @param queueName the {@link QueueName} for this queue
+   * @return the rowKey with queueName stripped, if the queue belongs to the default namespace.
+   */
+  @VisibleForTesting
+  protected byte[] getConfigTableRowKey(QueueName queueName) {
+    String namespaceId = queueName.getFirstComponent();
+    if (Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
+      String rowKey = queueName.toString();
+      String defaultNamespaceRemoved = stripDefaultNamespaceIdFromPrefix(rowKey);
+      // using the same Charset that is used in QueueName
+      return defaultNamespaceRemoved.getBytes(Charsets.US_ASCII);
+    }
+    return queueName.toBytes();
+  }
+
+  /**
+   * Must be called only for default namespace
+   * @return prefix with 'default/' stripped
+   */
+  private String stripDefaultNamespaceIdFromPrefix(String prefix) {
+    String toRemove = Constants.DEFAULT_NAMESPACE + "/";
+    Preconditions.checkArgument(prefix.contains(toRemove),
+                                String.format("stripDefaultNamespaceId must only be called for default namespace. " +
+                                                "Found '%s'.", prefix));
+    return StringUtils.remove(prefix, toRemove);
   }
 }
