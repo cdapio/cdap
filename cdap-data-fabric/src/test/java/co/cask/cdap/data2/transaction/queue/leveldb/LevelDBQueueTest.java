@@ -96,5 +96,11 @@ public class LevelDBQueueTest extends QueueTest {
     Assert.assertEquals("testNamespace", LevelDBQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
+
+    try {
+      LevelDBQueueAdmin.getNamespaceId("test.system.queue.myspace.app.flow.unexpected");
+      Assert.fail("Should fail because of invalid table name");
+    } catch (IllegalArgumentException e) {
+    }
   }
 }
