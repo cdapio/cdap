@@ -581,7 +581,15 @@ public final class Constants {
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
 
-    public static final String KAFKA_DELEGATE_NOTIFICATION_SERVICE = "kafka.delegate.notification.service";
+    /**
+     * Notifications in Streams constants.
+     */
+    public static final class Stream {
+      public static final String STREAM_HEARTBEAT_FEED_CATEGORY = "streamHeartbeats";
+      public static final String STREAM_FEED_CATEGORY = "streams";
+
+      public static final long DEFAULT_DATA_THRESHOLD = 1000000000;
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

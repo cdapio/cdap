@@ -43,6 +43,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
@@ -74,6 +75,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -142,6 +144,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static StreamCoordinator streamCoordinator;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -256,6 +259,7 @@ public class TestBase {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -297,6 +301,8 @@ public class TestBase {
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    streamCoordinator = injector.getInstance(StreamCoordinator.class);
+    streamCoordinator.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -339,6 +345,7 @@ public class TestBase {
 
   @AfterClass
   public static final void finish() {
+    streamCoordinator.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();

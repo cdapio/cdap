@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -330,6 +331,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
