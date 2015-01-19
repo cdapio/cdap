@@ -1,0 +1,29 @@
+<div class="row" ng-controller="EmptySectionCtrl">
+  <div class="col-sm-6">
+    <div class="text-center">
+      <h2>Apps</h2>
+      <div> Check status of your apps here </div>
+      <hr/>
+      <my-file-select
+          button-label="Add App"
+          button-icon="fa-plus"
+          button-size="btn-lg"
+          on-file-select="onFileSelected($files)">
+      </my-file-select>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="text-center">
+      <h2>Data</h2>
+      <div> Check status of your data here </div>
+      <hr/>
+      <my-file-select
+          button-label="Add Data"
+          button-icon="fa-plus"
+          button-size="btn-lg"
+          button-disabled="true"
+          on-file-select="onFileSelected($files)">
+      </my-file-select>
+    </div>
+  </div>
+</div>
