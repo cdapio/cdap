@@ -16,6 +16,8 @@
 
 package co.cask.cdap.hive.stream;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.format.ByteBufferRecordFormat;
@@ -25,8 +27,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.hive.serde.ObjectTranslator;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
-import co.cask.cdap.internal.specification.FormatSpecification;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.serdeConstants;
@@ -98,8 +98,7 @@ public class StreamSerDe implements SerDe {
       StreamAdmin streamAdmin = context.getStreamAdmin();
       StreamConfig streamConfig = streamAdmin.getConfig(streamName);
       FormatSpecification formatSpec = streamConfig.getFormat();
-      this.streamFormat = (ByteBufferRecordFormat) RecordFormats.create(formatSpec.getName());
-      this.streamFormat.initialize(formatSpec);
+      this.streamFormat = (ByteBufferRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
       // if we hit this something went wrong much earlier.

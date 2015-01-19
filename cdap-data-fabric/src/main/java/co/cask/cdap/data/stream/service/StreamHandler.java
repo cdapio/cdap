@@ -15,6 +15,10 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.RecordFormat;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -28,11 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.internal.format.RecordFormat;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
-import co.cask.cdap.internal.specification.FormatSpecification;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
@@ -329,9 +329,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       try {
         // if a format is given, make sure it is a valid format,
         // check that we can instantiate the format class
-        RecordFormat format = RecordFormats.create(formatName);
-        // check that this format + schema combination is valid
-        format.initialize(newFormatSpec);
+        RecordFormat format = RecordFormats.createInitializedFormat(newFormatSpec);
         // the request may contain a null schema, in which case the default schema of the format should be used.
         // create a new specification object that is guaranteed to have a non-null schema.
         newFormatSpec = new FormatSpecification(newFormatSpec.getName(),

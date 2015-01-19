@@ -19,6 +19,10 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -346,7 +350,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final String namespaceId, final String appId , Location archive) throws Exception {
+  private void deploy(final String namespaceId, final String appId, Location archive) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
       Location archiveLocation = archive;
@@ -404,7 +408,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           stopProgramIfRunning(programId, type);
           break;
         case WORKFLOW:
-          scheduler.deleteSchedules(programId, ProgramType.WORKFLOW);
+          scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
           break;
         case MAPREDUCE:
           //no-op
@@ -418,17 +422,27 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void setupSchedules(String namespaceId, ApplicationSpecification specification)  throws IOException {
+  private void deleteSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
+    // Delete the existing schedules.
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
+      Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
+      scheduler.deleteSchedules(programId, programInfo.getProgramType());
+    }
+  }
 
-    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, specification.getName(), entry.getKey());
-      //Delete the existing schedules and add new ones.
-      scheduler.deleteSchedules(programId, ProgramType.WORKFLOW);
+  private void setupSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
 
-      // Add new schedules.
-      if (!entry.getValue().getSchedules().isEmpty()) {
-        scheduler.schedule(programId, ProgramType.WORKFLOW, entry.getValue().getSchedules());
-      }
+    deleteSchedules(namespaceId, specification);
+
+    // Add new schedules.
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
+      Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
+                                             programInfo.getProgramName());
+      List<Schedule> scheduleList = Lists.newArrayList();
+      scheduleList.add(entry.getValue().getSchedule());
+      scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
     }
   }
 
@@ -545,7 +559,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
-      scheduler.deleteSchedules(workflowProgramId, ProgramType.WORKFLOW);
+      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
     deleteMetrics(identifier.getNamespaceId(), identifier.getApplicationId());

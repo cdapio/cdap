@@ -16,15 +16,15 @@
 
 package co.cask.cdap.io;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

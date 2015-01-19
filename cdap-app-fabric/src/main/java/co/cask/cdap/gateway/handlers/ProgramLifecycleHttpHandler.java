@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -35,7 +37,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -62,6 +63,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -262,7 +264,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     startStopProgram(request, responder, namespaceId, appId, programType, runnableId, action);
   }
-  
+
   /**
    * Returns program runs based on options it returns either currently running or completed or failed.
    * Default it returns all.
@@ -312,7 +314,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
-                                                                         runnableType, runnableId);
+                                                                       runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
       LOG.error("Error getting runtime args {}", e.getMessage(), e);
@@ -366,7 +368,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                                 runnableType));
       return;
     }
-    
+
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
       String specification = programSpecificationToString(id, type);
@@ -575,7 +577,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId) {
+                             @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.SERVICE, null, store);
   }
 
@@ -798,7 +800,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, ProgramType.WORKFLOW);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
 
       JsonArray array = new JsonArray();
       for (ScheduledRuntime runtime : runtimes) {
@@ -817,36 +819,45 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the schedule ids for a given workflow.
+   * Get Workflow schedules
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void workflowSchedules(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
-      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, ProgramType.WORKFLOW));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("workflow-id") String workflowId) {
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+    if (appSpec == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
+      return;
     }
+
+    List<ScheduleSpecification> specList = Lists.newArrayList();
+    for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
+      ScheduleSpecification spec = entry.getValue();
+      if (spec.getProgram().getProgramName().equals(workflowId) &&
+        spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
+        specList.add(entry.getValue());
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, specList);
   }
 
   /**
    * Get schedule state.
    */
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/status")
   public void getScheduleState(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                              @PathParam("workflow-id") String workflowId,
-                              @PathParam("schedule-id") String scheduleId) {
+                               @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                               @PathParam("workflow-id") String workflowId,
+                               @PathParam("schedule-name") String scheduleName) {
     try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
       JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
+      json.addProperty("status", scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW,
+                                                         scheduleName).toString());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -860,19 +871,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Suspend a workflow schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                       @PathParam("workflow-id") String workflowId,
-                                      @PathParam("schedule-id") String scheduleId) {
+                                      @PathParam("schedule-name") String scheduleName) {
     try {
-      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
+      Scheduler.ScheduleState state = scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW, scheduleName);
       switch (state) {
         case NOT_FOUND:
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
           break;
         case SCHEDULED:
-          scheduler.suspendSchedule(scheduleId);
+          scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW, scheduleName);
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
         case SUSPENDED:
@@ -891,13 +903,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Resume a workflow schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                      @PathParam("workflow-id") String workflowId,
-                                     @PathParam("schedule-id") String scheduleId) {
+                                     @PathParam("schedule-name") String scheduleName) {
     try {
-      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
+      Scheduler.ScheduleState state = scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW, scheduleName);
       switch (state) {
         case NOT_FOUND:
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -906,7 +919,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
           break;
         case SUSPENDED:
-          scheduler.resumeSchedule(scheduleId);
+          scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW, scheduleName);
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
       }
@@ -924,10 +937,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
   public void getServiceInstances(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId,
-                           @PathParam("app-id") String appId,
-                           @PathParam("service-id") String serviceId,
-                           @PathParam("runnable-name") String runnableName) {
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId,
+                                  @PathParam("runnable-name") String runnableName) {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1033,7 +1046,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private void populateRunnableInstances(BatchEndpointInstances requestedObj, String namespaceId, String appId,
                                          ApplicationSpecification spec, ProgramType programType,
-                                         String programId) throws OperationException {
+                                         String programId) {
     int requested;
     String runnableId;
     if (programType == ProgramType.PROCEDURE) {
@@ -1147,31 +1160,31 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       final SettableFuture<StatusMap> statusFuture = SettableFuture.create();
       workflowClient.getWorkflowStatus(id.getNamespaceId(), id.getApplicationId(),
                                        workflowName, new WorkflowClient.Callback() {
-          @Override
-          public void handle(WorkflowClient.Status status) {
-            StatusMap result = new StatusMap();
+        @Override
+        public void handle(WorkflowClient.Status status) {
+          StatusMap result = new StatusMap();
 
-            if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-              result.setStatus("RUNNING");
-              result.setStatusCode(HttpResponseStatus.OK.getCode());
-            } else {
-              //mapreduce name might follow the same format even when its not part of the workflow.
-              try {
-                // getProgramStatus returns program status or http response status NOT_FOUND
-                getProgramStatus(id, type, result);
-              } catch (Exception e) {
-                LOG.error("Exception raised when getting program status for {} {}", id, type, e);
-                // error occurred so say internal server error
-                result.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
-                result.setError(e.getMessage());
-              }
+          if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+            result.setStatus("RUNNING");
+            result.setStatusCode(HttpResponseStatus.OK.getCode());
+          } else {
+            //mapreduce name might follow the same format even when its not part of the workflow.
+            try {
+              // getProgramStatus returns program status or http response status NOT_FOUND
+              getProgramStatus(id, type, result);
+            } catch (Exception e) {
+              LOG.error("Exception raised when getting program status for {} {}", id, type, e);
+              // error occurred so say internal server error
+              result.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
+              result.setError(e.getMessage());
             }
-
-            // This would make all changes in the result statusMap available to the other thread that doing
-            // the take() call.
-            statusFuture.set(result);
           }
+
+          // This would make all changes in the result statusMap available to the other thread that doing
+          // the take() call.
+          statusFuture.set(result);
         }
+      }
       );
       // wait for status to come back in case we are polling mapreduce status in workflow
       // status map contains either a status or an error
@@ -1492,10 +1505,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                              "Supported options for status of runs are running/completed/failed");
-      } catch (OperationException e) {
-        LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
-                               programId.toString(), e.getMessage()), e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1718,7 +1727,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @return
    */
   private int getRunnableCount(String namespaceId, String appId, ProgramType programType,
-                               String programId, String runnableId) throws OperationException {
+                               String programId, String runnableId) {
     Id.Program id = Id.Program.from(namespaceId, appId, programId);
     ProgramLiveInfo info = runtimeService.getLiveInfo(id, programType);
     int count = 0;
@@ -1745,7 +1754,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return 1;
   }
 
-  private int getRequestedServiceInstances(Id.Program serviceId, String runnableId) throws OperationException {
+  private int getRequestedServiceInstances(Id.Program serviceId, String runnableId) {
     // Not running on YARN, get it from store
     // If the runnable name is the same as the service name, get the instances from service spec.
     // Otherwise get it from worker spec.

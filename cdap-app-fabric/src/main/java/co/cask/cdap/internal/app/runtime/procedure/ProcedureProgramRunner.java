@@ -123,7 +123,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   public ProgramController run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
-      ApplicationSpecification appSpec = program.getSpecification();
+      ApplicationSpecification appSpec = program.getApplicationSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
       ProgramType processorType = program.getType();

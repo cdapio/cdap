@@ -39,9 +39,7 @@ import java.util.List;
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Inject
-  public HBaseStreamAdmin(Configuration hConf,
-                          CConfiguration cConf,
-                          LocationFactory locationFactory,
+  public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
                           HBaseTableUtil tableUtil) throws IOException {
     super(hConf, cConf, QueueConstants.QueueType.STREAM, locationFactory, tableUtil);
   }
@@ -83,5 +81,4 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   public void updateConfig(StreamConfig config) throws IOException {
 
   }
-
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -27,10 +28,12 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import org.apache.twill.common.Threads;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
@@ -71,14 +74,23 @@ public final class ScheduleTaskRunner {
     if (existingRuntimeInfo != null) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
     }
-    Map<String, String> userArgs;
+    Map<String, String> userArgs = Maps.newHashMap();
     Program program;
     try {
       program =  store.loadProgram(programId, ProgramType.WORKFLOW);
       Preconditions.checkNotNull(program, "Program not found");
 
-      userArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(), programId.getApplicationId(),
-                                                        programType.getCategoryName(), programId.getId());
+      String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
+      ScheduleSpecification spec = store.getApplication(programId.getApplication()).getSchedules().get(scheduleName);
+      Preconditions.checkNotNull(spec, "Schedule not found");
+
+      userArgs.putAll(spec.getProperties());
+
+      Map<String, String> runtimeArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(),
+                                                        programId.getApplicationId(), programType.getCategoryName(),
+                                                        programId.getId());
+
+      userArgs.putAll(runtimeArgs);
 
     } catch (Throwable t) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);

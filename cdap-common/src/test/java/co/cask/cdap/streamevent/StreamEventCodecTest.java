@@ -16,14 +16,14 @@
 
 package co.cask.cdap.streamevent;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaHash;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.SchemaHash;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;

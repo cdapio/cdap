@@ -32,7 +32,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       protected void configure() {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
-
         super.configure();
       }
     };

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,26 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
+import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
+import com.google.common.io.Flushables;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.hadoop.hbase.util.Strings;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -50,7 +53,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -64,11 +66,28 @@ public abstract class StreamDataFileTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(StreamDataFileTestBase.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   protected abstract LocationFactory getLocationFactory();
 
-  protected abstract StreamAdmin getStreamAdmin();
+  @Test
+  public void testEmptyFile() throws Exception {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Creates a stream file that has no event inside
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           10000L);
+    writer.close();
+
+    // Create a reader that starts from beginning.
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    List<StreamEvent> events = Lists.newArrayList();
+    Assert.assertEquals(-1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+    reader.close();
+  }
 
   /**
    * Test for basic read write to verify data encode/decode correctly.
@@ -579,14 +598,11 @@ public abstract class StreamDataFileTestBase {
   public void testLiveStream() throws Exception {
     String streamName = "live";
     final String filePrefix = "prefix";
-    StreamAdmin streamAdmin = getStreamAdmin();
     long partitionDuration = 5000;    // 5 seconds
+    Location location = getLocationFactory().create(streamName);
+    location.mkdirs();
 
-    // Create a stream with 5 seconds partition.
-    Properties properties = new Properties();
-    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(partitionDuration));
-    streamAdmin.create(streamName, properties);
-    final StreamConfig config = streamAdmin.getConfig(streamName);
+    final StreamConfig config = new StreamConfig(streamName, partitionDuration, 10000, Long.MAX_VALUE, location, null);
 
     // Create a thread that will write 10 event per second
     final AtomicInteger eventsWritten = new AtomicInteger();
@@ -698,6 +714,207 @@ public abstract class StreamDataFileTestBase {
     }
   }
 
+  /**
+   * This test is to validate batch write with the same timestamp are written in the same data block.
+   */
+  @Test
+  public void testAppendAll() throws Exception {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Creates a stream file
+    final StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           10000L);
+    try {
+      final CountDownLatch writeCompleted = new CountDownLatch(1);
+      final CountDownLatch readAttempted = new CountDownLatch(1);
+
+      // Write 1000 events using appendAll from a separate thread
+      // It writes 1000 events of size 300 bytes of the same timestamp and wait for a signal before ending.
+      // This make sure the data block is not written (internal buffer size is 256K if the writer flush),
+      // hence the reader shouldn't be seeing it.
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          try {
+            writer.appendAll(new AbstractIterator<StreamEvent>() {
+              int count = 1000;
+              long timestamp = System.currentTimeMillis();
+              Map<String, String> headers = ImmutableMap.of();
+
+              @Override
+              protected StreamEvent computeNext() {
+                if (count-- > 0) {
+                  return new StreamEvent(headers, Charsets.UTF_8.encode(String.format("%0300d", count)), timestamp);
+                }
+                writeCompleted.countDown();
+                Uninterruptibles.awaitUninterruptibly(readAttempted);
+                Flushables.flushQuietly(writer);
+                return endOfData();
+              }
+            });
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+      t.start();
+
+      // Create a reader
+      StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+      try {
+        List<PositionStreamEvent> events = Lists.newArrayList();
+
+        // Wait for the writer completion
+        Assert.assertTrue(writeCompleted.await(20, TimeUnit.SECONDS));
+
+        // Try to read a event, nothing should be read
+        Assert.assertEquals(0, reader.read(events, 1, 0, TimeUnit.SECONDS));
+
+        // Now signal writer to flush
+        readAttempted.countDown();
+
+        // Now should be able to read 1000 events
+        t.join(10000);
+        Assert.assertEquals(1000, reader.read(events, 1000, 0, TimeUnit.SECONDS));
+
+        int size = events.size();
+        long lastStart = -1;
+        for (int i = 0; i < size; i++) {
+          PositionStreamEvent event = events.get(i);
+          Assert.assertEquals(String.format("%0300d", size - i - 1), Charsets.UTF_8.decode(event.getBody()).toString());
+
+          if (lastStart > 0) {
+            // The position differences between two consecutive events should be 303
+            // 2 bytes for body length, 300 bytes body, 1 byte header map (value == 0)
+            Assert.assertEquals(303L, event.getStart() - lastStart);
+          }
+          lastStart = event.getStart();
+        }
+      } finally {
+        reader.close();
+      }
+    } finally {
+      writer.close();
+    }
+  }
+
+  /**
+   * This is to test batch write with different timestamps will write to different data block correctly.
+   */
+  @Test
+  public void testAppendAllMultiBlocks() throws IOException, InterruptedException {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Creates a stream file
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           10000L);
+
+    try {
+      // Writes with appendAll with events having 2 different timestamps
+      Map<String, String> headers = ImmutableMap.of();
+      writer.appendAll(ImmutableList.of(
+        new StreamEvent(headers, Charsets.UTF_8.encode("0"), 1000),
+        new StreamEvent(headers, Charsets.UTF_8.encode("0"), 1000),
+        new StreamEvent(headers, Charsets.UTF_8.encode("1"), 1001),
+        new StreamEvent(headers, Charsets.UTF_8.encode("1"), 1001)
+      ).iterator());
+    } finally {
+      writer.close();
+    }
+
+    // Reads all events and assert the event position to see if they are in two different blocks
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    try {
+      List<PositionStreamEvent> events = Lists.newArrayList();
+      Assert.assertEquals(4, reader.read(events, 4, 0, TimeUnit.SECONDS));
+
+      // Event is encoded as <var_int_body_length><body_bytes><var_int_map_size>
+      // Since we are writing single byte data,
+      // body_length is 1 byte, body_bytes is 1 byte and map_size is 1 byte (with value == 0)
+
+      // The position differences between the first two events should be 3 since they belongs to the same data block.
+      Assert.assertEquals(3L, events.get(1).getStart() - events.get(0).getStart());
+
+      // The position differences between the second and third events
+      // should be 3 (second event size) + 8 (timestamp) + 1 (block length) == 12
+      Assert.assertEquals(12L, events.get(2).getStart() - events.get(1).getStart());
+
+      // The position differences between the third and forth events should be 3 again since they are in the same block
+      Assert.assertEquals(3L, events.get(3).getStart() - events.get(2).getStart());
+    } finally {
+      reader.close();
+    }
+  }
+
+  /**
+   * This unit test is to test the v2 file format that supports
+   * defaulting values in stream event (timestamp and headers).
+   */
+  @Test
+  public void testEventTemplate() throws IOException, InterruptedException {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Creates a stream file with the uni timestamp property and a default header (key=value)
+    StreamDataFileWriter writer = new StreamDataFileWriter(
+      Locations.newOutputSupplier(eventFile), Locations.newOutputSupplier(indexFile), 10000L,
+      ImmutableMap.of(
+        StreamDataFileConstants.Property.Key.UNI_TIMESTAMP, StreamDataFileConstants.Property.Value.CLOSE_TIMESTAMP,
+        StreamDataFileConstants.Property.Key.EVENT_HEADER_PREFIX + "key", "value"
+      ));
+
+    // Write 1000 events with different timestamp
+    for (int i = 0; i < 1000; i++) {
+      writer.append(StreamFileTestUtils.createEvent(i, "Message " + i));
+    }
+
+    // Trying to get close timestamp should throw exception before the file get closed
+    try {
+      writer.getCloseTimestamp();
+      Assert.fail();
+    } catch (IllegalStateException e) {
+      // Expected
+    }
+    writer.close();
+
+    // Get the close timestamp from the file for assertion below
+    long timestamp = writer.getCloseTimestamp();
+
+    // Create a reader to read all events. All events should have the same timestamp
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    List<StreamEvent> events = Lists.newArrayList();
+    Assert.assertEquals(1000, reader.read(events, 1000, 0, TimeUnit.SECONDS));
+
+    // All events should have the same timestamp and contains a default header
+    for (StreamEvent event : events) {
+      Assert.assertEquals(timestamp, event.getTimestamp());
+      Assert.assertEquals("value", event.getHeaders().get("key"));
+    }
+
+    // No more events
+    Assert.assertEquals(-1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+    reader.close();
+
+    // Open another read that reads with a filter that skips all events by timestamp
+    reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    int res = reader.read(events, 1, 0, TimeUnit.SECONDS, new ReadFilter() {
+      @Override
+      public boolean acceptTimestamp(long timestamp) {
+        return false;
+      }
+    });
+
+    Assert.assertEquals(-1, res);
+
+    reader.close();
+  }
 
   private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
     return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),

@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -148,6 +149,8 @@ public abstract class MetricsTableTest {
   }
 
   @Test
+  @Ignore
+  //TODO: CDAP-1186
   public void testConcurrentIncrement() throws Exception {
     final MetricsTable table = getTable("testConcurrentIncrement");
     final int rounds = 500;
