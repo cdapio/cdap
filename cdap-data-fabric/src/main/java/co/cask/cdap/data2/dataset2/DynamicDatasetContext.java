@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -23,7 +25,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 import java.util.Set;
@@ -34,28 +38,50 @@ import javax.annotation.Nullable;
  * into a started {@link TransactionContext}.
  */
 public abstract class DynamicDatasetContext implements DatasetContext {
+  private static final Map<String, String> EMPTY_MAP = ImmutableMap.<String, String>of();
   private final TransactionContext context;
   private final Set<String> allowedDatasets;
   private final DatasetFramework datasetFramework;
   private final ClassLoader classLoader;
+  private final Map<String, String> runtimeArguments;
 
   @Nullable
   protected abstract LoadingCache<Long, Map<String, Dataset>> getDatasetsCache();
 
-  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader) {
-    this(context, datasetFramework, classLoader, null);
+  /**
+   * Get the runtime arguments for a specific dataset. Arguments not in the scope of the dataset are filtered out.
+   * For example, when getting the runtime arguments for a dataset named 'myds', only runtime arguments that start
+   * with 'dataset.myds.' are returned, with the prefix stripped from the arguments.
+   *
+   * @param name the name of the dataset
+   * @return runtime arguments for the given dataset
+   */
+  protected Map<String, String> getRuntimeArguments(String name) {
+    return RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
   }
 
+  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader) {
+    this(context, datasetFramework, classLoader, null, EMPTY_MAP);
+  }
+
+  /**
+   * Create a dynamic dataset context that will get datasets and add them to the transaction context.
+   *
+   * @param context the transaction context
+   * @param datasetFramework the dataset framework for creating dataset instances
+   * @param classLoader the classloader to use when creating dataset instances
+   * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
+   * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
+   *                         are expected to be scoped so that arguments for one dataset do not override arguments
+   *                         for another. For example, dataset.myfileset.output.path instead of output.path
+   */
   public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader,
-                               @Nullable Set<String> datasets) {
+                               @Nullable Set<String> datasets, Map<String, String> runtimeArguments) {
     this.context = context;
-    if (datasets != null) {
-      this.allowedDatasets = ImmutableSet.copyOf(datasets);
-    } else {
-      this.allowedDatasets = null;
-    }
+    this.allowedDatasets = datasets == null ? null : ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
     this.classLoader = classLoader;
+    this.runtimeArguments = ImmutableMap.copyOf(runtimeArguments);
   }
 
   /**
@@ -78,6 +104,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   /**
    * Get an instance of the specified Dataset. This method is thread-safe and may be used concurrently.
    * The returned dataset is also added to the transaction of the current {@link TransactionContext} call.
+   * Arguments given here will be applied on top of the runtime arguments for the dataset.
    *
    * @param name The name of the Dataset
    * @param arguments the arguments for this dataset instance
@@ -98,19 +125,29 @@ public abstract class DynamicDatasetContext implements DatasetContext {
                         "useDataset() in the configure() method", name));
     }
 
+    // apply arguments on top of runtime arguments for the dataset
+    Map<String, String> dsArguments = Maps.newHashMap();
+    Map<String, String> runtimeArgs = getRuntimeArguments(name);
+    if (runtimeArgs != null) {
+      dsArguments.putAll(runtimeArgs);
+    }
+    if (arguments != null) {
+      dsArguments.putAll(arguments);
+    }
+
     try {
       Dataset dataset;
       if (getDatasetsCache() != null) {
         Map<String, Dataset> threadLocalMap = getDatasetsCache().get(Thread.currentThread().getId());
         dataset = threadLocalMap.get(name);
         if (dataset == null) {
-          dataset = datasetFramework.getDataset(name, arguments, classLoader);
+          dataset = datasetFramework.getDataset(name, dsArguments, classLoader);
           if (dataset != null) {
             threadLocalMap.put(name, dataset);
           }
         }
       } else {
-        dataset = datasetFramework.getDataset(name, arguments, classLoader);
+        dataset = datasetFramework.getDataset(name, dsArguments, classLoader);
       }
 
       if (dataset == null) {

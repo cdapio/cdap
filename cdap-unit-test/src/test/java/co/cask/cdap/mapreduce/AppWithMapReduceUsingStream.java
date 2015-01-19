@@ -19,26 +19,18 @@ package co.cask.cdap.mapreduce;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
-import co.cask.cdap.data.format.RecordFormats;
-import co.cask.cdap.data.format.SingleStringRecordFormat;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -71,7 +63,7 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
       job.setMapOutputKeyClass(LongWritable.class);
       job.setMapOutputValueClass(StructuredRecord.class);
       FormatSpecification formatSpec = new FormatSpecification(
-        RecordFormats.STRING,
+        Formats.STRING,
         Schema.recordOf("event", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
         Collections.<String, String>emptyMap()
       );
