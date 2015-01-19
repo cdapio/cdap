@@ -38,18 +38,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * Handler to list metrics top-level-contexts , get next-level contexts and obtain metrics at a given context.
+ * Search metrics handler.
  */
-
-//todo : when MetricsQueryHandler class supports namespaces, these endpoints will conflict,
-// we might want to combine this logic into MetricsQueryHandler or change the endpoint here based on API Review.
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/metrics")
+@Path(Constants.Gateway.API_VERSION_3 + "/metrics/search")
 public class MetricsSearchHandler extends  BaseMetricsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
   private final Supplier<TimeSeriesTable> timeSeriesTables;
@@ -71,72 +67,48 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
   }
 
 
-  /**
-   * Returns all the unique elements available in the first context
-   */
-  @GET
-  @Path("/")
-  public void listFirstContexts(HttpRequest request, HttpResponder responder,
-                                @QueryParam("search") String search) throws IOException {
-    try {
-      if (search == null || !search.equals("childContext")) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                           "please provide queryparam search for childContext for getting contexts at next level");
-        return;
-      }
-      responder.sendJson(HttpResponseStatus.OK, getNextContext(null));
-    } catch (IllegalArgumentException exception) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
-        MetricsScope.USER);
-    } catch (OperationException e) {
-      LOG.warn("Exception while retrieving contexts", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+  @POST
+  public void handle(HttpRequest httpRequest, HttpResponder responder,
+                     @QueryParam("target") String target,
+                     @QueryParam("context") String context) throws IOException {
+    if (target == null) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
+      return;
+    }
+
+    if (context == null) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required context param is missing");
+      return;
+    }
+
+    if ("childContext".equals(target)) {
+      searchChildContextAndRespond(responder, context);
+    } else if ("metric".equals(target)) {
+      searchMetricAndRespond(responder, context);
+    } else {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
     }
   }
 
-  /**
-   * Returns all the unique elements available in the context after the given context prefix
-   */
-  @GET
-  @Path("/{context}")
-  public void listContextsByPrefix(HttpRequest request, HttpResponder responder,
-                                   @PathParam("context") final String context,
-                                   @QueryParam("search") String search) throws IOException {
+  private void searchMetricAndRespond(HttpResponder responder, String context) {
     try {
-      if (search == null || !search.equals("childContext")) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                           "please provide queryparam search for childContext for getting contexts at next level");
-        return;
-      }
-      responder.sendJson(HttpResponseStatus.OK, getNextContext(context));
-    } catch (IllegalArgumentException exception) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
-        MetricsScope.USER);
-    } catch (OperationException e) {
-      LOG.warn("Exception while retrieving contexts", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Returns all the unique metrics in the given context
-   */
-  @GET
-  @Path("/{context}/metrics")
-  public void listContextMetrics(HttpRequest request, HttpResponder responder,
-                                 @PathParam("context") final String context) throws IOException {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, getAvailableMetricNames(context));
-    } catch (IllegalArgumentException exception) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
-        MetricsScope.USER);
+      responder.sendJson(HttpResponseStatus.OK, searchMetric(context));
     } catch (OperationException e) {
       LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  private Set<String> getNextContext(String contextPrefix) throws OperationException {
+  private void searchChildContextAndRespond(HttpResponder responder, String context) {
+    try {
+      responder.sendJson(HttpResponseStatus.OK, searchChildContext(context));
+    } catch (OperationException e) {
+      LOG.warn("Exception while retrieving contexts", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private Set<String> searchChildContext(String contextPrefix) throws OperationException {
     SortedSet<String> nextLevelContexts = Sets.newTreeSet();
     TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
@@ -159,7 +131,7 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
     }
   }
 
-  private Set<String> getAvailableMetricNames(String contextPrefix) throws OperationException {
+  private Set<String> searchMetric(String contextPrefix) throws OperationException {
     SortedSet<String> metrics = Sets.newTreeSet();
     TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).

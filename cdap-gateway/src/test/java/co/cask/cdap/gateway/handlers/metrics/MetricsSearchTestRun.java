@@ -84,19 +84,19 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testMetricsContexts() throws Exception {
-    metricsResponseCheck("/v3/namespaces/default/metrics/WordCount.f?search=childContext", 1,
+  public void testSearchContext() throws Exception {
+    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WordCount.f", 1,
                          ImmutableList.<String>of("WordCounter"));
-    metricsResponseCheck("/v3/namespaces/default/metrics/WCount?search=childContext", 3,
+    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WCount", 3,
                          ImmutableList.<String>of("b", "f", "p"));
-    metricsResponseCheck("/v3/namespaces/default/metrics/WCount.b.ClassicWordCount?search=childContext", 2,
+    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount", 2,
                          ImmutableList.<String>of("m", "r"));
-    metricsResponseCheck("/v3/namespaces/default/metrics/WCount.b.ClassicWordCount.m?search=childContext", 0,
+    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount.m", 0,
                          ImmutableList.<String>of());
   }
 
   private void metricsResponseCheck(String url, int expected, List<String> expectedValues) throws Exception {
-    HttpResponse response = doGet(url);
+    HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
     List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
@@ -107,9 +107,9 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testMetrics() throws Exception {
-    String base = "/v3/namespaces/default/metrics/WordCount.f.WordCounter.splitter/metrics";
-    HttpResponse response = doGet(base);
+  public void testSearchMetrics() throws Exception {
+    String base = "/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.splitter";
+    HttpResponse response = doPost(base, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     String result = EntityUtils.toString(response.getEntity());
@@ -120,8 +120,8 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals("user.reads", resultList.get(2));
     Assert.assertEquals("user.writes", resultList.get(3));
 
-    base = "/v3/namespaces/default/metrics/WordCount.f.WordCounter.collector/metrics";
-    response = doGet(base);
+    base = "/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.collector";
+    response = doPost(base, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     result = EntityUtils.toString(response.getEntity());
