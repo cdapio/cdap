@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Specification that is used to configure an adapter.
  */
-public final class AdapterSpecification {
+public final class  AdapterSpecification {
 
   private final String name;
   private final String type;
@@ -88,6 +88,14 @@ public final class AdapterSpecification {
     return properties;
   }
 
+  /**
+   * @return name of the schedule for this Adapter.
+   */
+  public String getScheduleName() {
+    // For now, simply schedule the adapter's program with the name of the adapter.
+    return name;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -99,11 +107,8 @@ public final class AdapterSpecification {
 
     AdapterSpecification that = (AdapterSpecification) o;
 
-    if (name.equals(that.name) &&
-        properties.equals(that.properties) &&
-        sinks.equals(that.sinks) &&
-        sources.equals(that.sources) &&
-        type.equals(that.type)) {
+    if (name.equals(that.name) && properties.equals(that.properties) && sinks.equals(that.sinks) &&
+        sources.equals(that.sources) && type.equals(that.type)) {
       return true;
     } else {
       return false;
@@ -113,5 +118,16 @@ public final class AdapterSpecification {
   @Override
   public int hashCode() {
     return Objects.hashCode(this.name, this.type, this.properties, this.sources, this.sinks);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("type", type)
+      .add("properties", properties)
+      .add("sources", sources)
+      .add("sinks", sinks)
+      .toString();
   }
 }

@@ -86,8 +86,7 @@ public final class Sink {
 
     Sink sink = (Sink) o;
 
-    if (name.equals(sink.name) && properties.equals(sink.properties) &&
-        type == sink.type) {
+    if (name.equals(sink.name) && properties.equals(sink.properties) &&  type == sink.type) {
       return true;
     } else {
       return false;

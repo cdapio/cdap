@@ -19,10 +19,13 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.adapter.AdapterSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -34,6 +37,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for {@link AppLifecycleHttpHandler}
@@ -47,8 +51,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
     .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
+  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
+  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
+
   @BeforeClass
   public static void setup() throws Exception {
+    CConfiguration conf = getInjector().getInstance(CConfiguration.class);
+
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -185,6 +194,39 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
+
+
+
+
+
+
+  //TODO: move these elsewhere:
+//  @Test
+//  public void testCronConversion() {
+//    Assert.assertEquals("*/1 * * * ?", AppLifecycleHttpHandler.toCronExpr("1m"));
+//    Assert.assertEquals("*/52 * * * ?", AppLifecycleHttpHandler.toCronExpr("52m"));
+//    Assert.assertEquals("0 */4 * * ?", AppLifecycleHttpHandler.toCronExpr("4h"));
+//  }
+//
+//  @Test(expected = IllegalArgumentException.class)
+//  public void invalidExpression() {
+//    AppLifecycleHttpHandler.toCronExpr("62m");
+//  }
+//
+//  @Test(expected = IllegalArgumentException.class)
+//  public void invalidExpression1() {
+//    AppLifecycleHttpHandler.toCronExpr("am");
+//  }
+//
+//  @Test(expected = IllegalArgumentException.class)
+//  public void invalidExpression2() {
+//    AppLifecycleHttpHandler.toCronExpr("1w");
+//  }
+//
+//  @Test(expected = IllegalArgumentException.class)
+//  public void invalidExpression3() {
+//    AppLifecycleHttpHandler.toCronExpr("1d 1h");
+//  }
 
   @AfterClass
   public static void tearDown() throws Exception {

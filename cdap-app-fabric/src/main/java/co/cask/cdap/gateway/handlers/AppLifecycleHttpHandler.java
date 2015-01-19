@@ -16,6 +16,9 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.adapter.AdapterSpecification;
+import co.cask.cdap.adapter.Sink;
+import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -42,8 +45,13 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -51,6 +59,7 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -69,6 +78,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -93,6 +103,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -167,6 +178,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final PreferencesStore preferencesStore;
+  private final DatasetFramework datasetFramework;
+
+  private final StreamAdmin streamAdmin;
+
+  private final AdapterService adapterService;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -174,7 +190,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore) {
+                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
+                                 DatasetFramework datasetFramework, StreamAdmin streamAdmin,
+                                 AdapterService adapterService) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -188,6 +206,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
+    this.datasetFramework =
+      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.streamAdmin = streamAdmin;
+    this.adapterService = adapterService;
   }
 
   /**
@@ -222,6 +244,81 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
+    }
+  }
+
+  /**
+   * Retrieves all adapters in a given namespace.
+   */
+  @GET
+  @Path("/adapters")
+  public void listAdapters(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) {
+    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
+  }
+
+  /**
+   * Retrieves an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-name}")
+  public void getAdapter(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("adapter-name") String adapterName) {
+    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    if (adapterSpec == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Adapter not found: %s.%s", namespaceId, adapterName));
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, adapterSpec);
+  }
+
+  /**
+   * Create an adapter.
+   */
+  @PUT
+  @Path("/adapters/{adapter-name}")
+  public void createAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-name") String adapterName) {
+
+    try {
+      if (!namespaceExists(namespaceId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
+        return;
+      }
+
+      AdapterConfig config = parseBody(request, AdapterConfig.class);
+      if (config == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
+        return;
+      }
+
+      // Validate the adapter
+      String adapterType = config.type;
+      AdapterService.AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
+      if (adapterTypeInfo == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
+        return;
+      }
+
+      // Check to see if the App is already deployed
+      ApplicationSpecification applicationSpec = store.getApplication(Id.Application.from(namespaceId, adapterType));
+      if (applicationSpec == null) {
+        deployAdapterApplication(namespaceId, adapterType, adapterTypeInfo);
+      }
+
+      AdapterSpecification spec = getAdapterSpec(config, adapterName, adapterTypeInfo.getSourceType(),
+                                                 adapterTypeInfo.getSinkType());
+      adapterService.createAdapter(namespaceId, spec);
+      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable th) {
+      LOG.error("Failed to deploy adapter", th);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, th.getMessage());
     }
   }
 
@@ -739,5 +836,59 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
+  }
+
+  private void deployAdapterApplication(String namespace, String adapterType,
+                                        AdapterService.AdapterTypeInfo adapterTypeInfo) throws Exception {
+    // Deploy the application, by copying the jar to tmp location and moving it (atomically) after the copy.
+    Location archiveDirectory = locationFactory.create(this.archiveDir).append(namespace);
+    Locations.mkdirsIfNotExists(archiveDirectory);
+    Location archive = archiveDirectory.append(adapterType);
+
+    // Copy jar content to a temporary location
+    Location tmpLocation = archive.getTempFile(".tmp");
+    Files.copy(adapterTypeInfo.getFile(), Locations.newOutputSupplier(tmpLocation));
+
+    try {
+      // Finally, move archive to final location
+      if (tmpLocation.renameTo(archive) == null) {
+        throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                            tmpLocation.toURI(), archive.toURI()));
+      }
+    } catch (IOException e) {
+      // In case copy to temporary file failed, or rename failed
+      tmpLocation.delete();
+      throw e;
+    }
+    deploy(namespace, adapterType, archive);
+  }
+
+  private static final class AdapterConfig {
+    private String type;
+    private Map<String, String> properties;
+
+    private Source source;
+    private Sink sink;
+
+    private static final class Source {
+      private String name;
+      private Map<String, String> properties;
+    }
+
+    private static final class Sink {
+      private String name;
+      private Map<String, String> properties;
+    }
+  }
+
+  private AdapterSpecification getAdapterSpec(AdapterConfig config, String name,
+                                              Source.Type sourceType, Sink.Type sinkType) {
+    Set<Source> sources = Sets.newHashSet();
+    Set<Sink> sinks = Sets.newHashSet();
+
+    sources.add(new Source(config.source.name, sourceType, config.source.properties));
+    sinks.add(new Sink(config.sink.name, sinkType, config.sink.properties));
+
+    return new AdapterSpecification(name, config.type, config.properties, sources, sinks);
   }
 }
