@@ -23,7 +23,6 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -82,35 +81,31 @@ public interface Store {
    * @param endTime   fetch run history that has started before the endTime.
    * @param limit     max number of entries to fetch for this history call.
    * @return          list of logged runs
-   * @throws          OperationException
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
-                          long startTime, long endTime, int limit) throws OperationException;
+                          long startTime, long endTime, int limit);
 
   /**
    * Creates a new stream if it does not exist.
    * @param id the namespace id
    * @param stream the stream to create
-   * @throws OperationException
    */
-  void addStream(Id.Namespace id, StreamSpecification stream) throws OperationException;
+  void addStream(Id.Namespace id, StreamSpecification stream);
 
   /**
    * Get the spec of a named stream.
    * @param id the namespace id
    * @param name the name of the stream
-   * @throws OperationException
    */
-  StreamSpecification getStream(Id.Namespace id, String name) throws OperationException;
+  StreamSpecification getStream(Id.Namespace id, String name);
 
   /**
    * Get the specs of all streams for a namespace.
    *
    * @param id the namespace id
-   * @throws OperationException
    */
 
-  Collection<StreamSpecification> getAllStreams(Id.Namespace id) throws OperationException;
+  Collection<StreamSpecification> getAllStreams(Id.Namespace id);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
@@ -118,10 +113,9 @@ public interface Store {
    * @param id            application id
    * @param specification application specification to store
    * @param appArchiveLocation location of the deployed app archive
-   * @throws OperationException
    */
   void addApplication(Id.Application id,
-                      ApplicationSpecification specification, Location appArchiveLocation) throws OperationException;
+                      ApplicationSpecification specification, Location appArchiveLocation);
 
 
   /**
@@ -131,36 +125,32 @@ public interface Store {
    * @param id                   ApplicationId
    * @param specification        Application specification
    * @return                     List of ProgramSpecifications that are deleted
-   * @throws OperationException  on errors
    */
   List<ProgramSpecification> getDeletedProgramSpecifications (Id.Application id,
-                                                              ApplicationSpecification specification)
-                                                              throws OperationException;
+                                                              ApplicationSpecification specification);
 
   /**
    * Returns application specification by id.
    *
    * @param id application id
    * @return application specification
-   * @throws OperationException
    */
   @Nullable
-  ApplicationSpecification getApplication(Id.Application id) throws OperationException;
+  ApplicationSpecification getApplication(Id.Application id);
 
   /**
    * Returns a collection of all application specs.
    */
-  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id) throws OperationException;
+  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
 
   /**
    * Returns location of the application archive.
    *
    * @param id application id
    * @return application archive location
-   * @throws OperationException
    */
   @Nullable
-  Location getApplicationArchiveLocation(Id.Application id) throws OperationException;
+  Location getApplicationArchiveLocation(Id.Application id);
 
   /**
    * Sets number of instances of specific flowlet.
@@ -168,57 +158,51 @@ public interface Store {
    * @param id flow id
    * @param flowletId flowlet id
    * @param count new number of instances
-   * @throws OperationException
    */
-  void setFlowletInstances(Id.Program id, String flowletId, int count) throws OperationException;
+  void setFlowletInstances(Id.Program id, String flowletId, int count);
 
   /**
    * Gets number of instances of specific flowlet.
    *
    * @param id flow id
    * @param flowletId flowlet id
-   * @throws OperationException
    */
-  int getFlowletInstances(Id.Program id, String flowletId) throws OperationException;
+  int getFlowletInstances(Id.Program id, String flowletId);
 
   /**
    * Set the number of procedure instances.
    *
    * @param id     program id
    * @param count  new number of instances.
-   * @throws OperationException
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  void setProcedureInstances(Id.Program id, int count) throws OperationException;
+  void setProcedureInstances(Id.Program id, int count);
 
   /**
    * Gets the number of procedure instances.
    *
    * @param id  program id
    * @return    number of instances
-   * @throws OperationException
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  int getProcedureInstances(Id.Program id) throws OperationException;
+  int getProcedureInstances(Id.Program id);
 
   /**
    * Sets the number of instances of a service.
    *
    * @param id program id
    * @param instances number of instances
-   * @throws OperationException If failed to set the instances
    */
-  void setServiceInstances(Id.Program id, int instances) throws OperationException;
+  void setServiceInstances(Id.Program id, int instances);
 
   /**
    * Returns the number of instances of a service.
    * @param id program id
    * @return number of instances
-   * @throws OperationException
    */
-  int getServiceInstances(Id.Program id) throws OperationException;
+  int getServiceInstances(Id.Program id);
 
   /**
    * Sets the number of instances of a {@link ServiceWorker}.
@@ -226,9 +210,8 @@ public interface Store {
    * @param id program id
    * @param workerName name of the {@link ServiceWorker}
    * @param instances number of instances
-   * @throws OperationException
    */
-  void setServiceWorkerInstances(Id.Program id, String workerName, int instances) throws OperationException;
+  void setServiceWorkerInstances(Id.Program id, String workerName, int instances);
 
   /**
    * Returns the number of instances of a {@link ServiceWorker}.
@@ -236,49 +219,45 @@ public interface Store {
    * @param id program id
    * @param workerName name of the {@link ServiceWorker}.
    * @return number of instances
-   * @throws OperationException
    */
-  int getServiceWorkerInstances(Id.Program id, String workerName) throws OperationException;
+  int getServiceWorkerInstances(Id.Program id, String workerName);
 
   /**
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id
-   * @throws OperationException
    */
-  void removeApplication(Id.Application id) throws OperationException;
+  void removeApplication(Id.Application id);
 
   /**
    * Removes all applications (with programs) associated with the given namespace.
    *
    * @param id namespace id whose applications to remove
    */
-  void removeAllApplications(Id.Namespace id) throws OperationException;
+  void removeAllApplications(Id.Namespace id);
 
   /**
    * Remove all metadata associated with the given namespace.
    *
    * @param id namespace id whose items to remove
    */
-  void removeAll(Id.Namespace id) throws OperationException;
+  void removeAll(Id.Namespace id);
 
   /**
    * Store the user arguments needed in the run-time.
    *
    * @param programId id of program
    * @param arguments Map of key value arguments
-   * @throws OperationException
    */
-  void storeRunArguments(Id.Program programId, Map<String, String> arguments) throws OperationException;
+  void storeRunArguments(Id.Program programId, Map<String, String> arguments);
 
   /**
    * Get run time arguments for a program.
    *
    * @param programId id of the program.
    * @return Map of key, value pairs
-   * @throws OperationException
    */
-  Map<String, String> getRunArguments(Id.Program programId) throws OperationException;
+  Map<String, String> getRunArguments(Id.Program programId);
 
   /**
    * Changes input stream for a flowlet connection
@@ -286,18 +265,15 @@ public interface Store {
    * @param flowletId flowlet which connection to change
    * @param oldValue name of the stream in stream connection to change
    * @param newValue name of the new stream to connect to
-   * @throws OperationException
    */
-  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue)
-    throws OperationException;
-
+  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue);
   /**
    * Check if a program exists.
    * @param id id of program.
    * @param type type of program.
    * @return true if the program exists, false otherwise.
    */
-  boolean programExists(Id.Program id, ProgramType type) throws OperationException;
+  boolean programExists(Id.Program id, ProgramType type);
 
   /**
    * Creates a new namespace.
@@ -342,9 +318,8 @@ public interface Store {
    *
    * @param id Namespace id
    * @param adapterSpecification specification of the adapter
-   * @throws OperationException on errors.
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification) throws OperationException;
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
@@ -352,34 +327,30 @@ public interface Store {
    * @param id  Namespace id.
    * @param name Adapter name
    * @return an instance of {@link AdapterSpecification}.
-   * @throws OperationException on errors.
    */
-  AdapterSpecification getAdapter(Id.Namespace id, String name) throws OperationException;
+  AdapterSpecification getAdapter(Id.Namespace id, String name);
 
   /**
    * Fetch all the adapters in a given namespace.
    *
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specification.
-   * @throws OperationException on errors.
    */
-  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id) throws OperationException;
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.
    *
    * @param id Namespace id.
    * @param name Adapter name.
-   * @throws OperationException on errors.
    */
-  void removeAdapter(Id.Namespace id, String name) throws OperationException;
+  void removeAdapter(Id.Namespace id, String name);
 
   /**
    * Remove all the adapters in a given namespace.
    *
    * @param id Namespace id.
-   * @throws OperationException on errors.
    */
-  void removeAllAdapters(Id.Namespace id) throws OperationException;
+  void removeAllAdapters(Id.Namespace id);
 
 }
