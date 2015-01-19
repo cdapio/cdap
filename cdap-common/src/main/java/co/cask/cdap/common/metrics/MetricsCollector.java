@@ -27,7 +27,7 @@ public interface MetricsCollector {
    * @param metricName Name of the metric.
    * @param value value of the metric.
    */
-  void increment(String metricName, int value);
+  void increment(String metricName, long value);
 
   /**
    * Gauge a metric value at the current time.

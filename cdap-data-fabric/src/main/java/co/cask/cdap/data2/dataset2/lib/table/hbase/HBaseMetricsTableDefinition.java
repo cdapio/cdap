@@ -79,7 +79,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     // to make sure delta-increments get compacted on flush and major/minor compaction and redundant versions are
     // cleaned up. See IncrementHandler.CompactionBound.
-    columnDescriptor.setValue("increment.readless.compaction.bound", "UNLIMITED");
+    columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
