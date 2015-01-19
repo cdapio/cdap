@@ -35,6 +35,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -277,7 +278,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   protected Map<String, String> propertiesFromString(String gsonEncodedMap) {
-    return GSON.fromJson(gsonEncodedMap, STRING_STRING_MAP_TYPE);
+    Map<String, String> properties =  GSON.fromJson(gsonEncodedMap, STRING_STRING_MAP_TYPE);
+    return properties == null ? Maps.<String, String>newHashMap() : properties;
   }
 
   /**
@@ -295,22 +297,18 @@ public class AdapterService extends AbstractIdleService {
     private final ProgramType programType;
 
     public AdapterTypeInfo(File file, String adapterType, Source.Type sourceType, Sink.Type sinkType,
-                           @Nullable Map<String, String> defaultSourceProperties,
-                           @Nullable Map<String, String> defaultSinkProperties,
-                           @Nullable Map<String, String> defaultAdapterProperties,
+                           Map<String, String> defaultSourceProperties,
+                           Map<String, String> defaultSinkProperties,
+                           Map<String, String> defaultAdapterProperties,
                            ProgramType programType) {
       this.file = file;
       this.type = adapterType;
       this.sourceType = sourceType;
       this.sinkType = sinkType;
-      this.defaultSourceProperties = emptyMapIfNull(defaultSourceProperties);
-      this.defaultSinkProperties = emptyMapIfNull(defaultSinkProperties);
-      this.defaultAdapterProperties = emptyMapIfNull(defaultAdapterProperties);
+      this.defaultSourceProperties = ImmutableMap.copyOf(defaultSourceProperties);
+      this.defaultSinkProperties = ImmutableMap.copyOf(defaultSinkProperties);
+      this.defaultAdapterProperties = ImmutableMap.copyOf(defaultAdapterProperties);
       this.programType = programType;
-    }
-
-    private Map<String, String> emptyMapIfNull(Map<String, String> inputMap) {
-      return inputMap == null ? Maps.<String, String>newHashMap() : inputMap;
     }
 
     public File getFile() {
