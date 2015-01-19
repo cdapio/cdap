@@ -399,9 +399,8 @@ public class AdapterService extends AbstractIdleService {
    *
    * @return a cron expression
    */
-  // TODO: package private?
   @VisibleForTesting
-  public static String toCronExpr(String frequency) {
+  static String toCronExpr(String frequency) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(frequency));
     // remove all whitespace
     frequency = frequency.replaceAll("\\s+", "");

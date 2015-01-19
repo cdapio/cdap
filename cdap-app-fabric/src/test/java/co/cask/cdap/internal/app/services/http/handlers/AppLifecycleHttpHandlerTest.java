@@ -195,39 +195,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
-
-
-
-
-
-  //TODO: move these elsewhere:
-//  @Test
-//  public void testCronConversion() {
-//    Assert.assertEquals("*/1 * * * ?", AppLifecycleHttpHandler.toCronExpr("1m"));
-//    Assert.assertEquals("*/52 * * * ?", AppLifecycleHttpHandler.toCronExpr("52m"));
-//    Assert.assertEquals("0 */4 * * ?", AppLifecycleHttpHandler.toCronExpr("4h"));
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void invalidExpression() {
-//    AppLifecycleHttpHandler.toCronExpr("62m");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void invalidExpression1() {
-//    AppLifecycleHttpHandler.toCronExpr("am");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void invalidExpression2() {
-//    AppLifecycleHttpHandler.toCronExpr("1w");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void invalidExpression3() {
-//    AppLifecycleHttpHandler.toCronExpr("1d 1h");
-//  }
-
   @AfterClass
   public static void tearDown() throws Exception {
     HttpResponse response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
