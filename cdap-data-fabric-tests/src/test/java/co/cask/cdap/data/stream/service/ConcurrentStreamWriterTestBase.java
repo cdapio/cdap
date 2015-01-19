@@ -320,26 +320,35 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
   }
 
-  private static final class TestMetricsCollector implements MetricsCollector {
+  private static final class TestMetricsCollector extends StreamMetricsCollector {
 
-    @Override
-    public void increment(String metricName, long value) {
+    protected TestMetricsCollector() {
+      super(new MetricsCollector() {
+        @Override
+        public void increment(String metricName, long value) {
 
+        }
+
+        @Override
+        public void gauge(String metricName, long value) {
+
+        }
+
+        @Override
+        public MetricsCollector childCollector(Map<String, String> tags) {
+          return this;
+        }
+
+        @Override
+        public MetricsCollector childCollector(String tagName, String tagValue) {
+          return this;
+        }
+      });
     }
 
     @Override
-    public void gauge(String metricName, long value) {
+    public void emitMetrics(MetricsCollector metricsCollector, long bytesWritten, long eventsWritten) {
 
-    }
-
-    @Override
-    public MetricsCollector childCollector(Map<String, String> tags) {
-      return this;
-    }
-
-    @Override
-    public MetricsCollector childCollector(String tagName, String tagValue) {
-      return this;
     }
   }
 }

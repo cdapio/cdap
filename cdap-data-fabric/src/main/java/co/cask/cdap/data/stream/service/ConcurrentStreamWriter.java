@@ -18,7 +18,6 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.FileWriters;
 import co.cask.cdap.data.stream.StreamCoordinator;
@@ -93,7 +92,7 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final StreamAdmin streamAdmin;
   private final StreamMetaStore streamMetaStore;
   private final int workerThreads;
-  private final MetricsCollector metricsCollector;
+  private final StreamMetricsCollector metricsCollector;
   private final ConcurrentMap<String, EventQueue> eventQueues;
   private final StreamFileFactory streamFileFactory;
   private final Set<String> generationWatched;
@@ -102,7 +101,7 @@ public final class ConcurrentStreamWriter implements Closeable {
 
   ConcurrentStreamWriter(StreamCoordinator streamCoordinator, StreamAdmin streamAdmin,
                          StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
-                         int workerThreads, MetricsCollector metricsCollector) {
+                         int workerThreads, StreamMetricsCollector metricsCollector) {
     this.streamCoordinator = streamCoordinator;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
@@ -378,7 +377,7 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final class EventQueue implements Closeable {
 
     private final String streamName;
-    private final MetricsCollector metricsCollector;
+    private final StreamMetricsCollector metricsCollector;
     private final Queue<WriteRequest> queue;
     private final AtomicBoolean writerFlag;
     private final WriteRequest.Metrics metrics;
@@ -387,7 +386,7 @@ public final class ConcurrentStreamWriter implements Closeable {
     private FileWriter<StreamEventData> fileWriter;
     private boolean closed;
 
-    EventQueue(String streamName, MetricsCollector metricsCollector) {
+    EventQueue(String streamName, StreamMetricsCollector metricsCollector) {
       this.streamName = streamName;
       this.streamEvent = new MutableStreamEvent();
       this.queue = new ConcurrentLinkedQueue<WriteRequest>();
@@ -462,7 +461,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         writerFlag.set(false);
       }
 
-      emitMetrics(fileSize, eventCount);
+      metricsCollector.emitMetrics(metricsCollector, fileSize, eventCount);
       return true;
     }
 
@@ -513,17 +512,8 @@ public final class ConcurrentStreamWriter implements Closeable {
         writerFlag.set(false);
       }
 
-      emitMetrics(bytesWritten, eventsWritten);
+      metricsCollector.emitMetrics(metricsCollector, bytesWritten, eventsWritten);
       return true;
-    }
-
-    private void emitMetrics(long bytesWritten, long eventsWritten) {
-      if (bytesWritten > 0) {
-        metricsCollector.increment("collect.bytes", bytesWritten);
-      }
-      if (eventsWritten > 0) {
-        metricsCollector.increment("collect.events", eventsWritten);
-      }
     }
 
     /**
