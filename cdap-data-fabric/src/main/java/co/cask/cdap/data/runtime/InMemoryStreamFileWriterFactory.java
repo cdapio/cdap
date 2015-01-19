@@ -55,6 +55,12 @@ public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFa
   }
 
   @Override
+  public String getFileNamePrefix() {
+    // There is no file being created
+    return "";
+  }
+
+  @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
     final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getName()));
     final List<TransactionAware> txAwares = Lists.newArrayList();

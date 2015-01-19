@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,23 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
+package co.cask.cdap.data.stream.service;
+
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
+import org.junit.BeforeClass;
 
 import java.io.IOException;
 
 /**
  *
  */
-public interface StreamFileWriterFactory {
+public class LocalConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBase {
 
-  /**
-   * Returns the file name prefix of all stream files created through this factory.
-   */
-  String getFileNamePrefix();
+  private static LocationFactory locationFactory;
 
-  FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException;
+  @BeforeClass
+  public static void init() throws IOException {
+    locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+  }
+
+  @Override
+  protected LocationFactory getLocationFactory() {
+    return locationFactory;
+  }
 }

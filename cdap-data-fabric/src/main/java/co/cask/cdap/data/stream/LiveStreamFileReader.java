@@ -40,12 +40,13 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
 
   private final StreamFileOffset beginOffset;
   private final StreamConfig streamConfig;
-  private final long newFileCheckInterval;
+  private final long maxFileCheckInterval;
   private StreamPositionTransformFileReader reader;
+  private int retries;
   private long nextCheckTime = 0;
 
   /**
-   * Construct a reader with {@link Constants.Stream#NEW_FILE_CHECK_INTERVAL} as the interval to check for new file.
+   * Construct a reader with {@link Constants.Stream#NEW_FILE_CHECK_INTERVAL} as the max interval to check for new file.
    *
    * <p/>
    * Same as calling
@@ -60,14 +61,15 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
   /**
    * Creates a new file reader.
    *
-   * @param streamConfig The stream configuration.
-   * @param beginOffset The offset information to begin with.
-   * @param newFileCheckInterval Interval in milliseconds for checking for new stream file.
+   * @param streamConfig the stream configuration.
+   * @param beginOffset the offset information to begin with.
+   * @param maxFileCheckInterval maximum interval in milliseconds for checking for new stream file.
    */
-  public LiveStreamFileReader(StreamConfig streamConfig, StreamFileOffset beginOffset, long newFileCheckInterval) {
+  public LiveStreamFileReader(StreamConfig streamConfig, StreamFileOffset beginOffset, long maxFileCheckInterval) {
     this.streamConfig = streamConfig;
     this.beginOffset = beginOffset;
-    this.newFileCheckInterval = newFileCheckInterval;
+    this.maxFileCheckInterval = (maxFileCheckInterval <= 0) ? Constants.Stream.NEW_FILE_CHECK_INTERVAL
+                                                            : maxFileCheckInterval;
   }
 
   @Nullable
@@ -85,9 +87,6 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
     if (now < nextCheckTime && now < offset.getPartitionEnd()) {
       return null;
     }
-
-    // See if newer file is available.
-    nextCheckTime = now + newFileCheckInterval;
 
     // See if there is a higher sequence file available.
     Location eventLocation = StreamUtils.createStreamLocation(reader.getPartitionLocation(),
@@ -110,9 +109,24 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
 
     if (nextReader != null) {
       reader = nextReader;
+      retries = 0;
+      nextCheckTime = 0;
+    } else {
+      // Update the next check time to the next check interval if there is no new file found.
+      // This is for reducing load to the file system.
+      nextCheckTime = now + getCheckInterval();
     }
 
     return nextReader;
+  }
+
+  /**
+   * Computes the new file check interval based on number of retries that a new file hasn't been found.
+   */
+  private long getCheckInterval() {
+    retries = Math.min((retries + 1), Integer.SIZE);
+    int multiplier = retries >= Integer.SIZE ? Integer.MAX_VALUE : (1 << (retries - 1));
+    return Math.min(100L * multiplier, maxFileCheckInterval);
   }
 
   /**
