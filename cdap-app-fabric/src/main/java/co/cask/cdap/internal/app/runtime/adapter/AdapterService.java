@@ -66,13 +66,12 @@ public class AdapterService extends AbstractIdleService {
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String DATASET_CLASS = "dataset.class";
-
   private final CConfiguration configuration;
-  private Map<String, AdapterTypeInfo> adapterTypeInfos;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
   private final Scheduler scheduler;
   private final Store store;
+  private Map<String, AdapterTypeInfo> adapterTypeInfos;
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
@@ -257,13 +256,14 @@ public class AdapterService extends AbstractIdleService {
     if (manifest != null) {
       Attributes mainAttributes = manifest.getMainAttributes();
 
-      String adapterType = mainAttributes.getValue("CDAP-Adapter-Type");
-      String sourceType = mainAttributes.getValue("CDAP-Source-Type");
-      String sinkType = mainAttributes.getValue("CDAP-Sink-Type");
-      String defaultSourceProperties = mainAttributes.getValue("CDAP-Source-Properties");
-      String defaultSinkProperties = mainAttributes.getValue("CDAP-Sink-Properties");
-      String defaultAdapterProperties = mainAttributes.getValue("CDAP-Adapter-Properties");
-      String adapterProgramType = mainAttributes.getValue("CDAP-Adapter-Program-Type");
+      String adapterType = mainAttributes.getValue(AdapterManifestAttributes.ADAPTER_TYPE);
+      String adapterProgramType = mainAttributes.getValue(AdapterManifestAttributes.ADAPTER_PROGRAM_TYPE);
+      String defaultAdapterProperties = mainAttributes.getValue(AdapterManifestAttributes.ADAPTER_PROPERTIES);
+
+      String sourceType = mainAttributes.getValue(AdapterManifestAttributes.SOURCE_TYPE);
+      String sinkType = mainAttributes.getValue(AdapterManifestAttributes.SINK_TYPE);
+      String defaultSourceProperties = mainAttributes.getValue(AdapterManifestAttributes.SOURCE_PROPERTIES);
+      String defaultSinkProperties = mainAttributes.getValue(AdapterManifestAttributes.SINK_PROPERTIES);
 
       if (adapterType != null && sourceType != null && sinkType != null && adapterProgramType != null) {
         return new AdapterTypeInfo(file, adapterType, Source.Type.valueOf(sourceType.toUpperCase()),
@@ -342,6 +342,16 @@ public class AdapterService extends AbstractIdleService {
     public ProgramType getProgramType() {
       return programType;
     }
+  }
+
+  private static class AdapterManifestAttributes {
+    private static final String ADAPTER_TYPE = "CDAP-Adapter-Type";
+    private static final String ADAPTER_PROPERTIES = "CDAP-Adapter-Properties";
+    private static final String ADAPTER_PROGRAM_TYPE = "CDAP-Adapter-Program-Type";
+    private static final String SOURCE_TYPE = "CDAP-Source-Type";
+    private static final String SINK_TYPE = "CDAP-Sink-Type";
+    private static final String SOURCE_PROPERTIES = "CDAP-Source-Properties";
+    private static final String SINK_PROPERTIES = "CDAP-Sink-Properties";
   }
 
   /**
