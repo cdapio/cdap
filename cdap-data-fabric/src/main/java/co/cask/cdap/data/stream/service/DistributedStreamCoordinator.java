@@ -72,7 +72,6 @@ public class DistributedStreamCoordinator extends AbstractIdleService implements
   @Inject
   public DistributedStreamCoordinator(ZKClient zkClient, DiscoveryServiceClient discoveryServiceClient,
                                       StreamMetaStore streamMetaStore) {
-    super();
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
@@ -149,7 +148,7 @@ public class DistributedStreamCoordinator extends AbstractIdleService implements
 
   @Override
   public void setHandlerDiscoverable(Discoverable discoverable) {
-
+    handlerDiscoverable = discoverable;
   }
 
   @Override

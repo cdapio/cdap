@@ -22,10 +22,8 @@ import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -40,18 +38,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
-<<<<<<<HEAD:cdap-data-fabric/src/main/java/co/cask/cdap/data/stream/InMemoryStreamCoordinator.java
-  =======
-  >>>>>>>feature/split-stream-coordinator:cdap-data-fabric/src/main/java/co/cask/cdap/data/stream/InMemoryStreamCoordinatorClient.java
-  <<<<<<<HEAD:cdap-data-fabric/src/main/java/co/cask/cdap/data/stream/InMemoryStreamCoordinator.java
-  =======
-  >>>>>>>feature/split-stream-coordinator:cdap-data-fabric/src/main/java/co/cask/cdap/data/stream/InMemoryStreamCoordinatorClient.java
-
 /**
  * In memory implementation for {@link StreamCoordinatorClient}.
  */
 @Singleton
-public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordinatorClient
+public final class InMemoryStreamCoordinatorClient
+  extends AbstractStreamCoordinatorClient
   implements StreamCoordinator {
 
   private final StreamMetaStore streamMetaStore;
