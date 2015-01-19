@@ -33,12 +33,14 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * In memory implementation for {@link StreamCoordinatorClient}.
  */
 @Singleton
-public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordinatorClient
+public final class InMemoryStreamCoordinatorClient
+  extends AbstractStreamCoordinatorClient
   implements StreamCoordinator {
 
   private final StreamMetaStore streamMetaStore;
@@ -105,13 +107,13 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
     return Futures.immediateFuture(null);
   }
 
-  private void invokeLeaderListeners(String streamName) throws Exception {
+  private void invokeLeaderListeners(@Nullable String createdStream) throws Exception {
     Set<String> streamNames = Sets.newHashSet();
     for (StreamSpecification spec : streamMetaStore.listStreams()) {
       streamNames.add(spec.getName());
     }
-    if (streamNames.contains(streamName)) {
-      streamNames.add(streamName);
+    if (createdStream != null) {
+      streamNames.add(createdStream);
     }
     invokeLeaderListeners(streamNames);
   }

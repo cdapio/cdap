@@ -100,13 +100,8 @@ public final class StreamHttpService extends AbstractIdleService {
     janitorService.startAndWait();
     streamCoordinator.setHandlerDiscoverable(discoverable);
     streamCoordinator.startAndWait();
-
-    // In the in-memory implementations, streamCoordinator and streamCoordinatorLeader are the same implementation,
-    // hence we don't want to start them twice.
-    if (!streamCoordinatorClient.isRunning()) {
-      streamCoordinatorClient.startAndWait();
-    }
-  }
+    streamCoordinatorClient.startAndWait();
+}
 
   @Override
   protected void shutDown() throws Exception {
@@ -119,9 +114,7 @@ public final class StreamHttpService extends AbstractIdleService {
     } finally {
       httpService.stopAndWait();
       streamCoordinator.stopAndWait();
-      if (streamCoordinatorClient.isRunning()) {
-        streamCoordinatorClient.stopAndWait();
-      }
+      streamCoordinatorClient.stopAndWait();
     }
   }
 
