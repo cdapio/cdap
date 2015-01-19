@@ -49,7 +49,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     this.tags = tags;
   }
 
-  void increment(int value) {
+  void increment(long value) {
     this.value.addAndGet(value);
   }
 

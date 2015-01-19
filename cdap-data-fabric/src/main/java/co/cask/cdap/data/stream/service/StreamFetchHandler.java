@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -236,7 +236,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
     for (Location location : baseLocation.list()) {
       // Partition must be a directory
-      if (!location.isDirectory()) {
+      if (!location.isDirectory() || !StreamUtils.isPartition(location.getName())) {
         continue;
       }
       long partitionStartTime = StreamUtils.getPartitionStartTime(location.getName());
@@ -358,15 +358,22 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
     @Override
     public boolean acceptTimestamp(long timestamp) {
-      active = true;
       if (timestamp < startTime) {
+        // Reading of stream events is always sorted by timestamp
+        // If the timestamp read is still smaller than the start time, there is still chance
+        // that there will be events that can satisfy this filter, hence needs to keep reading.
+        active = true;
         hint = startTime;
         return false;
       }
       if (timestamp >= endTime) {
+        // If the timestamp read already passed the end time, further reading will not get any more events that
+        // can satisfy this filter.
+        active = false;
         hint = Long.MAX_VALUE;
         return false;
       }
+      active = true;
       return true;
     }
 

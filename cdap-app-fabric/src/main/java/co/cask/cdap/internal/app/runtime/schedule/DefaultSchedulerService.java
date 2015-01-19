@@ -56,19 +56,21 @@ public class DefaultSchedulerService {
       LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
                 context.getTrigger().getKey().toString());
 
-      String key = context.getJobDetail().getKey().getName();
+      String key = context.getTrigger().getKey().getName();
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 4);
+      Preconditions.checkArgument(parts.length == 5);
 
       String accountId = parts[0];
       String applicationId = parts[1];
       ProgramType programType = ProgramType.valueOf(parts[2]);
       String programId = parts[3];
+      String scheduleName = parts[4];
 
       LOG.debug("Schedule execute {}", key);
       Arguments args = new BasicArguments(ImmutableMap.of(
         ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),
-        ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount())
+        ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()),
+        ProgramOptionConstants.SCHEDULE_NAME, scheduleName
       ));
 
       taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);

@@ -27,6 +27,8 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -38,7 +40,6 @@ import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -276,7 +277,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public StreamSpecification getStream(final Id.Namespace id, final String name) throws OperationException {
+  public StreamSpecification getStream(final Id.Namespace id, final String name) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, StreamSpecification>() {
       @Override
       public StreamSpecification apply(AppMds mds) throws Exception {
@@ -286,7 +287,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<StreamSpecification> getAllStreams(final Id.Namespace id) throws OperationException {
+  public Collection<StreamSpecification> getAllStreams(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<StreamSpecification>>() {
       @Override
       public Collection<StreamSpecification> apply(AppMds mds) throws Exception {
@@ -375,7 +376,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setServiceInstances(final Id.Program id, final int instances) throws OperationException {
+  public void setServiceInstances(final Id.Program id, final int instances) {
     Preconditions.checkArgument(instances > 0,
                                 "cannot change number of program instances to negative number: %s", instances);
 
@@ -403,7 +404,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getServiceInstances(final Id.Program id) throws OperationException {
+  public int getServiceInstances(final Id.Program id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
@@ -416,7 +417,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setServiceWorkerInstances(final Id.Program id,
-                                        final String workerName, final int instances) throws OperationException {
+                                        final String workerName, final int instances) {
     Preconditions.checkArgument(instances > 0,
                                 "cannot change number of program instances to negative number: %s", instances);
 
@@ -453,7 +454,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getServiceWorkerInstances(final Id.Program id, final String workerName) throws OperationException {
+  public int getServiceWorkerInstances(final Id.Program id, final String workerName) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
@@ -637,6 +638,68 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void addSchedule(final Id.Program program, final ScheduleSpecification scheduleSpecification) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+        String scheduleName = scheduleSpecification.getSchedule().getName();
+        Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
+          scheduleName  + "' already exists.");
+        schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
+        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+        // TODO: double check this ProgramType.valueOf()
+        replaceAppSpecInProgramJar(program, newAppSpec,
+                                   ProgramType.valueOf(scheduleSpecification.getProgram().getProgramType().name()));
+        mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
+                             final String scheduleName) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+        ScheduleSpecification removed = schedules.remove(scheduleName);
+        if (removed == null) {
+          throw new NoSuchElementException("no such schedule @ account id: " + program.getNamespaceId() +
+                                             ", app id: " + program.getApplication() +
+                                             ", program id: " + program.getId() +
+                                             ", schedule name: " + scheduleName);
+        }
+
+        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+        // TODO: double check this ProgramType.valueOf()
+        replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
+        mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+  }
+
+  private static class AppSpecificationWithChangedSchedules extends ForwardingApplicationSpecification {
+    private final Map<String, ScheduleSpecification> newSchedules;
+
+    private AppSpecificationWithChangedSchedules(ApplicationSpecification delegate,
+                                                 Map<String, ScheduleSpecification> newSchedules) {
+      super(delegate);
+      this.newSchedules = newSchedules;
+    }
+
+    @Override
+    public Map<String, ScheduleSpecification> getSchedules() {
+      return newSchedules;
+    }
+  }
+
+
+  @Override
   public boolean programExists(final Id.Program id, final ProgramType type) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
       @Override
@@ -740,7 +803,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) throws OperationException {
+  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
       @Override
       public AdapterSpecification apply(AppMds mds) throws Exception {
@@ -750,7 +813,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) throws OperationException {
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
       @Override
       public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
@@ -760,7 +823,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAdapter(final Id.Namespace id, final String name) throws OperationException {
+  public void removeAdapter(final Id.Namespace id, final String name) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -771,7 +834,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAllAdapters(final Id.Namespace id) throws OperationException {
+  public void removeAllAdapters(final Id.Namespace id) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {

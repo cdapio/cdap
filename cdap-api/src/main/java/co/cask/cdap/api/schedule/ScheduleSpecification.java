@@ -57,4 +57,38 @@ public final class ScheduleSpecification {
   public Map<String, String> getProperties() {
     return properties;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ScheduleSpecification that = (ScheduleSpecification) o;
+    if (program.equals(that.program) && properties.equals(that.properties) && schedule.equals(that.schedule)) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = schedule.hashCode();
+    result = 31 * result + program.hashCode();
+    result = 31 * result + properties.hashCode();
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("ScheduleSpecification{");
+    sb.append("schedule=").append(schedule);
+    sb.append(", program=").append(program);
+    sb.append(", properties=").append(properties);
+    sb.append('}');
+    return sb.toString();
+  }
 }
