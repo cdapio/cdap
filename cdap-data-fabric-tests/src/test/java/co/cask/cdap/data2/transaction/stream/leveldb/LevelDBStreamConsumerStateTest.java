@@ -22,7 +22,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -53,7 +53,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
 
   private static StreamConsumerStateStoreFactory stateStoreFactory;
   private static StreamAdmin streamAdmin;
-  private static StreamCoordinator streamCoordinator;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -76,13 +76,13 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
     );
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
-    streamCoordinator = injector.getInstance(StreamCoordinator.class);
-    streamCoordinator.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void shutdown() throws Exception {
-    streamCoordinator.stopAndWait();
+    streamCoordinatorClient.stopAndWait();
   }
 
   @Override

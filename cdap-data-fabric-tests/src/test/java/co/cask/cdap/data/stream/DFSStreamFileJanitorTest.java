@@ -55,7 +55,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamAdmin streamAdmin;
   private static MiniDFSCluster dfsCluster;
   private static StreamFileWriterFactory fileWriterFactory;
-  private static StreamCoordinator streamCoordinator;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -95,13 +95,13 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     locationFactory = injector.getInstance(LocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
-    streamCoordinator = injector.getInstance(StreamCoordinator.class);
-    streamCoordinator.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void finish() {
-    streamCoordinator.stopAndWait();
+    streamCoordinatorClient.stopAndWait();
     dfsCluster.shutdown();
   }
 

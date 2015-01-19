@@ -49,7 +49,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static LocationFactory locationFactory;
   private static StreamAdmin streamAdmin;
   private static StreamFileWriterFactory fileWriterFactory;
-  private static StreamCoordinator streamCoordinator;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -74,13 +74,13 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
     locationFactory = injector.getInstance(LocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
-    streamCoordinator = injector.getInstance(StreamCoordinator.class);
-    streamCoordinator.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void shutdown() throws Exception {
-    streamCoordinator.stopAndWait();
+    streamCoordinatorClient.stopAndWait();
   }
 
   @Override

@@ -22,7 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -100,7 +100,7 @@ public abstract class AppFabricTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
-  private static StreamCoordinator streamCoordinator;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
@@ -130,13 +130,13 @@ public abstract class AppFabricTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
-    streamCoordinator = injector.getInstance(StreamCoordinator.class);
-    streamCoordinator.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() {
-    streamCoordinator.stopAndWait();
+    streamCoordinatorClient.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();

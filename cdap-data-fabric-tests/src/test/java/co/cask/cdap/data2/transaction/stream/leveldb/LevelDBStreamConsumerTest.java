@@ -22,7 +22,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -58,7 +58,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   private static TransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
-  private static StreamCoordinator streamCoordinator;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -86,15 +86,15 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
-    streamCoordinator = injector.getInstance(StreamCoordinator.class);
-    streamCoordinator.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
 
     txManager.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    streamCoordinator.stopAndWait();
+    streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
   }
 
