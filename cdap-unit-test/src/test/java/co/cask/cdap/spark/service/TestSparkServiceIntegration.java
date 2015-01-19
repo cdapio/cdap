@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 public class TestSparkServiceIntegration extends TestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestSparkServiceIntegration.class);
-  public static final int SERVICE_STATUS_CHECK_LIMIT = 5;
 
   @Test
   public void testSparkWithService() throws Exception {
@@ -72,24 +71,10 @@ public class TestSparkServiceIntegration extends TestBase {
   private void startService(ApplicationManager applicationManager) {
     ServiceManager serviceManager = applicationManager.startService(TestSparkServiceIntegrationApp.SERVICE_NAME);
     try {
-      serviceStatusCheck(serviceManager);
+      serviceManager.waitForStatus(true);
     } catch (InterruptedException e) {
       LOG.error("Failed to start {} service", TestSparkServiceIntegrationApp.SERVICE_NAME, e);
       throw Throwables.propagate(e);
     }
-  }
-
-  /**
-   * Check service to go in running state
-   */
-  private void serviceStatusCheck(ServiceManager serviceManger) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < SERVICE_STATUS_CHECK_LIMIT) {
-      if (serviceManger.isRunning()) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service didn't start in " + SERVICE_STATUS_CHECK_LIMIT + " seconds.");
   }
 }

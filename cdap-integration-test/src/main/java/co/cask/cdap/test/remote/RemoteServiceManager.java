@@ -20,7 +20,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.ServiceManager;
+import co.cask.cdap.test.AbstractServiceManager;
 import com.google.common.base.Throwables;
 
 import java.net.URL;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class RemoteServiceManager implements ServiceManager {
+public class RemoteServiceManager extends AbstractServiceManager {
 
   private final RemoteApplicationManager.ProgramId serviceId;
   private final ServiceClient serviceClient;
