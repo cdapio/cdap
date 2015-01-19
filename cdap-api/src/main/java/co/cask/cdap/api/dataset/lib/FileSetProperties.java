@@ -58,7 +58,7 @@ public class FileSetProperties {
   /**
    * Whether this dataset should be enabled for explore.
    */
-  public static final String PROPERTY_EXPLORE_ENABLED = "explore.enabled";
+  public static final String PROPERTY_ENABLE_EXPLORE_ON_CREATE = "explore.enabled";
 
   /**
    * The serde to use for the Hive table.
@@ -124,7 +124,7 @@ public class FileSetProperties {
    */
   public static boolean isExploreEnabled(Map<String, String> properties) {
     // Boolean.valueOf returns false if the value is null
-    return Boolean.valueOf(properties.get(PROPERTY_EXPLORE_ENABLED));
+    return Boolean.valueOf(properties.get(PROPERTY_ENABLE_EXPLORE_ON_CREATE));
   }
 
   /**
@@ -195,15 +195,31 @@ public class FileSetProperties {
      * Sets the output format of the file dataset.
      */
     public Builder setOutputFormat(Class<?> outputFormatClass) {
-      delegate.add(OUTPUT_FORMAT, outputFormatClass.getName());
+      setOutputFormat(outputFormatClass.getName());
       return this;
     }
 
     /**
      * Sets the output format of the file dataset.
      */
+    public Builder setOutputFormat(String className) {
+      delegate.add(OUTPUT_FORMAT, className);
+      return this;
+    }
+
+    /**
+     * Sets the input format of the file dataset.
+     */
     public Builder setInputFormat(Class<?> inputFormatClass) {
-      delegate.add(INPUT_FORMAT, inputFormatClass.getName());
+      setInputFormat(inputFormatClass.getName());
+      return this;
+    }
+
+    /**
+     * Sets the input format of the file dataset.
+     */
+    public Builder setInputFormat(String className) {
+      delegate.add(INPUT_FORMAT, className);
       return this;
     }
 
@@ -226,8 +242,8 @@ public class FileSetProperties {
     /**
      * Enable explore for this dataset.
      */
-    public Builder setExploreEnabled(boolean enabled) {
-      delegate.add(PROPERTY_EXPLORE_ENABLED, Boolean.toString(enabled));
+    public Builder setEnableExploreOnCreate(boolean enabled) {
+      delegate.add(PROPERTY_ENABLE_EXPLORE_ON_CREATE, Boolean.toString(enabled));
       return this;
     }
 

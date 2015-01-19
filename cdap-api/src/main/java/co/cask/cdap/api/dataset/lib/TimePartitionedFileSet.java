@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 
 /**
  * Represents a dataset that is split into partitions that can be uniquely addressed
- * by time. Each partition is a path in a file set, with a timestamp attached asmeta data.
+ * by time. Each partition is a path in a file set, with a timestamp attached as meta data.
  *
  * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
  * properties when the dataset is created. See {@link co.cask.cdap.api.dataset.lib.FileSetProperties}
