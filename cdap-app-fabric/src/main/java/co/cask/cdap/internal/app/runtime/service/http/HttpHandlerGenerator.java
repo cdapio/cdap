@@ -27,6 +27,7 @@ import co.cask.cdap.internal.asm.Signatures;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
@@ -56,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -601,14 +603,16 @@ final class HttpHandlerGenerator {
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
-      // wrapResponder(responder).sendStatus(500);
+      // wrapResponder(responder).sendString(500, transactionErrorMessage, Charsets.UTF_8);
       mg.loadThis();
       mg.loadArg(1);
       mg.invokeVirtual(classType,
                        Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
       mg.visitLdcInsn(500);
+      mg.visitLdcInsn("Transaction failure when committing changes. Aborted transaction.");
+      mg.getStatic(Type.getType(Charsets.class), "UTF_8", Type.getType(Charset.class));
       mg.invokeInterface(Type.getType(HttpServiceResponder.class),
-                         Methods.getMethod(void.class, "sendStatus", int.class));
+                         Methods.getMethod(void.class, "sendString", int.class, String.class, Charset.class));
 
       mg.mark(txFinish);
 

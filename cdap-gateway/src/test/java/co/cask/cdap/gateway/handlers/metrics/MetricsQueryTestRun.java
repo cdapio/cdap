@@ -30,6 +30,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
@@ -75,7 +76,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
     // Query for queue length
     HttpPost post = getPost("/v2/metrics");
-    post.setHeader("Content-type", "application/json");
+    post.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
     post.setEntity(new StringEntity(
       "[\"/system/apps/WordCount/flows/WordCounter/flowlets/unique/process.events.pending?aggregate=true\"]"));
     HttpResponse response = doPost(post);
@@ -299,7 +300,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
   private static void testSingleMetricWithPost(String resource, int value) throws Exception {
     HttpPost post = getPost("/v2/metrics");
-    post.setHeader("Content-type", "application/json");
+    post.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
     post.setEntity(new StringEntity("[\"" + resource + "\"]"));
     HttpResponse response = doPost(post);
     Assert.assertEquals("POST " + resource + " did not return 200 status.",
@@ -383,7 +384,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
       // test POST also fails, but with 400
       HttpPost post = getPost("/v2/metrics");
-      post.setHeader("Content-type", "application/json");
+      post.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
       post.setEntity(new StringEntity("[\"" + resource + "\"]"));
       response = doPost(post);
       Assert.assertEquals("POST for " + resource + " did not return 400 as expected.",
