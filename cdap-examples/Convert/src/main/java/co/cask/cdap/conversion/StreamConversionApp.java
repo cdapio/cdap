@@ -53,7 +53,7 @@ public class StreamConversionApp extends AbstractApplication {
       .setOutputProperty("schema", schema.toString())
       // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
-      .setSerde("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
       .setTableProperty("avro.schema.literal", GSON.toJson(schema))

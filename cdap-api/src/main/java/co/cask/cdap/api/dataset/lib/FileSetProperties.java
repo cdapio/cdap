@@ -130,7 +130,7 @@ public class FileSetProperties {
   /**
    * @return the class name of the serde configured in the properties.
    */
-  public static String getSerdeClassName(Map<String, String> properties) {
+  public static String getSerDe(Map<String, String> properties) {
     return properties.get(PROPERTY_EXPLORE_SERDE);
   }
 
@@ -250,7 +250,7 @@ public class FileSetProperties {
     /**
      * Set the class name of the SerDe used to create the Hive table.
      */
-    public Builder setSerde(String className) {
+    public Builder setSerDe(String className) {
       delegate.add(PROPERTY_EXPLORE_SERDE, className);
       return this;
     }
@@ -258,8 +258,8 @@ public class FileSetProperties {
     /**
      * Set the class name of the SerDe used to create the Hive table.
      */
-    public Builder setSerde(Class<?> serde) {
-      return setSerde(serde.getName());
+    public Builder setSerDe(Class<?> serde) {
+      return setSerDe(serde.getName());
     }
 
     /**
