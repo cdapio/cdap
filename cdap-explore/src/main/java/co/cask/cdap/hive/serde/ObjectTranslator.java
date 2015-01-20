@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.MapTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
@@ -165,6 +166,9 @@ public class ObjectTranslator {
     throws NoSuchFieldException, IllegalAccessException {
     if (record instanceof StructuredRecord) {
       return ((StructuredRecord) record).get(fieldName);
+    }
+    if (record instanceof GenericRecord) {
+      return ((GenericRecord) record).get(fieldName);
     }
     Class recordClass = record.getClass();
     Field field = recordClass.getDeclaredField(fieldName);

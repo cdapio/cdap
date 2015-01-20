@@ -76,7 +76,7 @@ public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<Structu
   }
 
   @Override
-  protected void validateDesiredSchema(Schema desiredSchema) throws UnsupportedTypeException {
+  protected void validateSchema(Schema desiredSchema) throws UnsupportedTypeException {
     // a valid schema is a record of simple types. In other words, no maps, arrays, records, unions, or enums allowed.
     // the exception is the very last field, which is allowed to be an array of simple types.
     // These types may be nullable, which is a union of a null and non-null type.
