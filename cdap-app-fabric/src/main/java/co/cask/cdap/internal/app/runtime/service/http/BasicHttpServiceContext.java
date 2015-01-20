@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.tephra.TransactionContext;
@@ -58,15 +57,14 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  CConfiguration conf, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program,
-                             spec.getName(), runId.getId(), instanceId),
+          getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
     this.spec = spec;
     this.runtimeArgs = runtimeArgs.asMap();
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
     this.userMetrics =
-      new ProgramUserMetrics(getMetricCollector(metricsCollectionService, MetricsScope.USER, program,
-                                                         spec.getName(), runId.getId(), instanceId));
+      new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
+                                                spec.getName(), runId.getId(), instanceId));
   }
 
   /**
@@ -88,7 +86,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     MetricsScope scope, Program program, String runnableName,
+                                                     Program program, String runnableName,
                                                      String runId, int instanceId) {
     if (service == null) {
       return null;
@@ -96,6 +94,6 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 }

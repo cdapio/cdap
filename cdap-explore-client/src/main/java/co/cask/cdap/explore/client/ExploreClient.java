@@ -70,6 +70,17 @@ public interface ExploreClient extends Closeable {
   ListenableFuture<Void> disableExploreStream(String streamName);
 
   /**
+   * Add a partition to a dataset's table.
+   *
+   * @param datasetName name of the dataset
+   * @param time the partition time
+   * @param path the file system path of the partition
+   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
+   *         the success of the operation.
+   */
+  ListenableFuture<Void> addPartition(String datasetName, long time, String path);
+
+  /**
    * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the
    * schema of the operation, and it contains an iterator on the results of the statement.
    *
