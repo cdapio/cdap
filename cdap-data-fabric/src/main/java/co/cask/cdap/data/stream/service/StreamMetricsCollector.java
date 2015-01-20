@@ -33,11 +33,10 @@ public abstract class StreamMetricsCollector implements MetricsCollector {
   /**
    * Emit stream metrics.
    *
-   * @param metricsCollector child {@link MetricsCollector} of the stream to publish metrics about
    * @param bytesWritten number of bytes written to the string
    * @param eventsWritten number of events written to the string
    */
-  public abstract void emitMetrics(MetricsCollector metricsCollector, long bytesWritten, long eventsWritten);
+  public abstract void emitMetrics(long bytesWritten, long eventsWritten);
 
   @Override
   public void increment(String metricName, long value) {
@@ -63,8 +62,8 @@ public abstract class StreamMetricsCollector implements MetricsCollector {
     final StreamMetricsCollector current = this;
     return new StreamMetricsCollector(collector) {
       @Override
-      public void emitMetrics(MetricsCollector metricsCollector, long bytesWritten, long eventsWritten) {
-        current.emitMetrics(collector, bytesWritten, eventsWritten);
+      public void emitMetrics(long bytesWritten, long eventsWritten) {
+        current.emitMetrics(bytesWritten, eventsWritten);
       }
     };
   }
