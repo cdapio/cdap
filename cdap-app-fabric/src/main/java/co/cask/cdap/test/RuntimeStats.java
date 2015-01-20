@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
@@ -49,7 +50,7 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    String prefix = String.format("%s.f.%s.%s", applicationId, flowId, flowletId);
+    String prefix = String.format("%s.%s.f.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
     String inputName = String.format("%s.system.process.tuples.read", prefix);
     String processedName = String.format("%s.system.process.events.processed", prefix);
     String exceptionName = String.format("%s.system.process.errors", prefix);
@@ -58,7 +59,7 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    String prefix = String.format("%s.p.%s", applicationId, procedureId);
+    String prefix = String.format("%s.%s.p.%s", Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
     String inputName = String.format("%s.system.query.requests", prefix);
     String processedName = String.format("%s.system.query.processed", prefix);
     String exceptionName = String.format("%s.system.query.failures", prefix);
@@ -67,7 +68,8 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
+    String prefix = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
+                                  TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
     String inputName = String.format("%s.system.requests.count", prefix);
     String processedName = String.format("%s.system.response.successful.count", prefix);
     String exceptionName = String.format("%s.system.response.server.error.count", prefix);
@@ -76,8 +78,8 @@ public final class RuntimeStats {
   }
 
   public static long getSparkMetrics(String applicationId, String procedureId, String keyEnding) {
-    String keyStarting = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
-                                       procedureId);
+    String keyStarting = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
+                                       TypeId.getMetricContextId(ProgramType.SPARK), procedureId);
     String inputName = getMetricsKey(keyStarting, keyEnding);
     AtomicLong input = counters.get(inputName);
     return input == null ? 0 : input.get();
