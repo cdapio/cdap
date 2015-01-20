@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
@@ -25,6 +26,7 @@ import java.util.List;
  * with the request.
  */
 public class MetricsRequestContext {
+  private final String namespaceId;
   private final String typeId;
   private final String requestId;
   private final String componentId;
@@ -45,9 +47,10 @@ public class MetricsRequestContext {
     QUEUE
   }
 
-  private MetricsRequestContext(String typeId, MetricsRequestParser.PathType pathType,
+  private MetricsRequestContext(String namespaceId, String typeId, MetricsRequestParser.PathType pathType,
                                 MetricsRequestParser.RequestType requestType,
                                 String requestId, String componentId, TagType tagType, String tag, String runId) {
+    this.namespaceId = namespaceId;
     this.typeId = typeId;
     this.pathType = pathType;
     this.requestType = requestType;
@@ -61,6 +64,10 @@ public class MetricsRequestContext {
     if (typeId == null || typeId.isEmpty()) {
       this.contextPrefix = null;
     } else {
+      // namespaceId is null for system services
+      if (this.namespaceId != null) {
+        contextParts.add(this.namespaceId);
+      }
       contextParts.add(typeId);
       if (requestType != null) {
         if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
@@ -117,6 +124,7 @@ public class MetricsRequestContext {
    * Builds a metrics context.
    */
   public static class Builder {
+    private String namespaceId;
     private String typeId;
     private String requestId;
     private String componentId;
@@ -125,6 +133,11 @@ public class MetricsRequestContext {
     private String runId;
     private MetricsRequestParser.RequestType requestType;
     private MetricsRequestParser.PathType pathType;
+
+    public Builder setNamespaceId(String namespaceId) {
+      this.namespaceId = namespaceId;
+      return this;
+    }
 
     public Builder setTypeId(String typeId) {
       this.typeId = typeId;
@@ -163,7 +176,8 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(typeId, pathType, requestType, requestId, componentId, tagType, tag, runId);
+      return new MetricsRequestContext(namespaceId, typeId, pathType, requestType, requestId, componentId, tagType, tag,
+                                       runId);
     }
   }
 }
