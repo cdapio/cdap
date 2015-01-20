@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
@@ -849,25 +850,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
-  }
-
-  // POJO that specifies input parameters to create Adapter
-  private static final class AdapterConfig {
-    private String type;
-    private Map<String, String> properties;
-
-    private Source source;
-    private Sink sink;
-
-    private static final class Source {
-      private String name;
-      private Map<String, String> properties;
-    }
-
-    private static final class Sink {
-      private String name;
-      private Map<String, String> properties;
-    }
   }
 
   private AdapterSpecification getAdapterSpec(AdapterConfig config, String name,
