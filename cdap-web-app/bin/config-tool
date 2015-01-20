@@ -40,10 +40,10 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-# source common.sh
+# Source common.sh
 source ${bin}/common.sh
 
-# find java and set $JAVA
+# Find java and set $JAVA
 set_java
 
 # In other environment, the jars are expected to be in <HOME>/lib directory.
