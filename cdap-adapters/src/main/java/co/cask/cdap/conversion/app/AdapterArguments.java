@@ -18,7 +18,6 @@ package co.cask.cdap.conversion.app;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.format.Formats;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
@@ -35,10 +34,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Determines requires arguments for the adapter from the runtime arguments given to the program.
  */
 public class AdapterArguments {
-  private static final Type mapType = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new Gson();
   // keys for adapter level args
   public static final String FREQUENCY = "frequency";
@@ -64,7 +63,7 @@ public class AdapterArguments {
 
   public AdapterArguments(Map<String, String> runtimeArgs) throws IOException {
     // get adapter level args
-    Map<String, String> adapterArgs = GSON.fromJson(getRequired(runtimeArgs, "adapter.properties"), mapType);
+    Map<String, String> adapterArgs = GSON.fromJson(getRequired(runtimeArgs, "adapter.properties"), MAP_TYPE);
     this.sourceName = getRequired(adapterArgs, SOURCE_NAME);
     this.sinkName = getRequired(adapterArgs, SINK_NAME);
     this.frequency = parseFrequency(getRequired(adapterArgs, FREQUENCY));
@@ -73,9 +72,9 @@ public class AdapterArguments {
     this.mapperResources = new Resources(mapperMemoryMB, mapperVirtualCores);
 
     // get source level args
-    Map<String, String> sourceArgs = GSON.fromJson(getRequired(runtimeArgs, "source.properties"), mapType);
-    String formatName = get(sourceArgs, FORMAT_NAME, Formats.STRING);
-    Map<String, String> formatSettings = GSON.fromJson( get(sourceArgs, FORMAT_SETTINGS, "{}"), mapType);
+    Map<String, String> sourceArgs = GSON.fromJson(getRequired(runtimeArgs, "source.properties"), MAP_TYPE);
+    String formatName = getRequired(sourceArgs, FORMAT_NAME);
+    Map<String, String> formatSettings = GSON.fromJson( get(sourceArgs, FORMAT_SETTINGS, "{}"), MAP_TYPE);
     String schemaStr = getRequired(sourceArgs, SCHEMA);
     co.cask.cdap.api.data.schema.Schema bodySchema = co.cask.cdap.api.data.schema.Schema.parse(schemaStr);
     this.sourceFormatSpec = new FormatSpecification(formatName, bodySchema, formatSettings);

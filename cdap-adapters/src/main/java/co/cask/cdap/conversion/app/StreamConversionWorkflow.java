@@ -20,7 +20,7 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
 /**
- *
+ * Workflow that periodically reads data from a stream and writes it into a time partitioned fileset.
  */
 public class StreamConversionWorkflow implements Workflow {
   @Override
