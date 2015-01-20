@@ -319,20 +319,14 @@ public abstract class ConcurrentStreamWriterTestBase {
   }
 
   private static final class TestMetricsCollectorFactory implements StreamMetricsCollectorFactory {
-
     @Override
     public StreamMetricsCollector createMetricsCollector(String streamName) {
       return new StreamMetricsCollector() {
         @Override
         public void emitMetrics(long bytesWritten, long eventsWritten) {
-
+          // No-op
         }
       };
-    }
-
-    @Override
-    public void eventRejected() {
-
     }
   }
 }

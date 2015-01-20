@@ -87,7 +87,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
-  private final StreamMetricsCollectorFactory metricsCollectorFactory;
+  private final MetricsCollector metricsCollector;
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
@@ -112,12 +112,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
-    final MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
-    metricsCollectorFactory = new StreamMetricsCollectorFactory() {
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
+    StreamMetricsCollectorFactory metricsCollectorFactory = new StreamMetricsCollectorFactory() {
       @Override
       public StreamMetricsCollector createMetricsCollector(String streamName) {
         final MetricsCollector childCollector =
-          collector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -129,11 +129,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
             }
           }
         };
-      }
-
-      @Override
-      public void eventRejected() {
-        collector.increment("collect.async.reject", 1);
       }
     };
 
@@ -379,7 +374,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
-          metricsCollectorFactory.eventRejected();
+          metricsCollector.increment("collect.async.reject", 1);
           r.run();
         }
       }

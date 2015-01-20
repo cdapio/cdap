@@ -42,9 +42,4 @@ public interface StreamMetricsCollectorFactory {
    * @return a {@link StreamMetricsCollector} for the given {@code streamName}
    */
   StreamMetricsCollector createMetricsCollector(String streamName);
-
-  /**
-   * Called when a stream event has been rejected
-   */
-  void eventRejected();
 }
