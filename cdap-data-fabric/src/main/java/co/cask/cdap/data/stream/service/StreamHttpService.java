@@ -99,6 +99,7 @@ public final class StreamHttpService extends AbstractIdleService {
 
     janitorService.startAndWait();
     sizeManager.startAndWait();
+    sizeManager.initialize();
     streamCoordinator.setHandlerDiscoverable(discoverable);
     streamCoordinator.startAndWait();
   }

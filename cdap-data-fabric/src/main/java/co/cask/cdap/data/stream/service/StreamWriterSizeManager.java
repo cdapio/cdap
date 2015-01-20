@@ -19,19 +19,14 @@ package co.cask.cdap.data.stream.service;
 import com.google.common.util.concurrent.Service;
 
 /**
- * Keep track of the sizes of the files written by one Stream handler.
- * The start up method of the implementations of this interface will process the size of data
- * already written to existing Streams using that Stream handler, and send an initial heartbeat
- * for each Stream..
+ * This interface manages the sizes of data written by one stream writer. For each stream, It sends
+ * {@link StreamWriterHeartbeat}s at regular intervals to notify listeners of the updated size of the stream.
  */
 public interface StreamWriterSizeManager extends Service {
 
   /**
-   * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream
-   * {@code streamName} using the stream handler from which this code is executed.
-   *
-   * @param streamName name of the stream that ingested data.
-   * @param dataSize amount of data ingested in bytes.
+   * Get the initial sizes of data written by this Stream writer, and send an initial heartbeat with the computed size,
+   * for each stream. This method also schedules publishing heartbeats at a regular pace.
    */
-  void received(String streamName, long dataSize);
+  void initialize();
 }

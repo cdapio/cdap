@@ -16,32 +16,17 @@
 
 package co.cask.cdap.data.stream.service;
 
-import com.google.common.util.concurrent.AbstractIdleService;
-
 /**
- * No-op implementation of a a {@link StreamWriterSizeCollector}.
+ * Keep track of the sizes of the files written by one Stream handler.
  */
-public class NoOpStreamWriterSizeManager
-  extends AbstractIdleService
-  implements StreamWriterSizeManager, StreamWriterSizeCollector {
+public interface StreamWriterSizeCollector {
 
-  @Override
-  protected void startUp() throws Exception {
-    // No-op
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    // No-op
-  }
-
-  @Override
-  public void received(String streamName, long dataSize) {
-    // No-op
-  }
-
-  @Override
-  public void initialize() {
-    // No-op
-  }
+  /**
+   * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream
+   * {@code streamName} using the stream handler from which this code is executed.
+   *
+   * @param streamName name of the stream that ingested data.
+   * @param dataSize amount of data ingested in bytes.
+   */
+  void received(String streamName, long dataSize);
 }
