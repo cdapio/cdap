@@ -31,7 +31,7 @@ import org.junit.BeforeClass;
 /**
  *
  */
-public class InMemoryStreamCoordinatorTest extends StreamCoordinatorTestBase {
+public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBase {
 
   private static Injector injector;
 
@@ -54,7 +54,7 @@ public class InMemoryStreamCoordinatorTest extends StreamCoordinatorTestBase {
   }
 
   @Override
-  protected StreamCoordinator createStreamCoordinator() {
-    return injector.getInstance(StreamCoordinator.class);
+  protected StreamCoordinatorClient createStreamCoordinator() {
+    return injector.getInstance(StreamCoordinatorClient.class);
   }
 }
