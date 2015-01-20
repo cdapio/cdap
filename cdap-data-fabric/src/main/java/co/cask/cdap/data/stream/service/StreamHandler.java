@@ -99,23 +99,26 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
+  private final StreamWriterSizeManager sizeManager;
+
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade) {
+                       ExploreFacade exploreFacade, final StreamWriterSizeManager sizeManager) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
+    this.sizeManager = sizeManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     final MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
     metricsCollectorFactory = new StreamStatisticsCollectorFactory() {
       @Override
-      public StreamStatisticsCollector createStatisticsCollector(String streamName) {
+      public StreamStatisticsCollector createStatisticsCollector(final String streamName) {
         final MetricsCollector childCollector =
           collector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
         return new StreamStatisticsCollector() {
@@ -123,6 +126,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
           public void emitStatistics(long bytesWritten, long eventsWritten) {
             if (bytesWritten > 0) {
               childCollector.increment("collect.bytes", bytesWritten);
+              sizeManager.received(streamName, bytesWritten);
             }
             if (eventsWritten > 0) {
               childCollector.increment("collect.events", eventsWritten);
