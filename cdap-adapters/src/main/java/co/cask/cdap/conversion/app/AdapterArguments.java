@@ -74,7 +74,7 @@ public class AdapterArguments {
     // get source level args
     Map<String, String> sourceArgs = GSON.fromJson(getRequired(runtimeArgs, "source.properties"), MAP_TYPE);
     String formatName = getRequired(sourceArgs, FORMAT_NAME);
-    Map<String, String> formatSettings = GSON.fromJson( get(sourceArgs, FORMAT_SETTINGS, "{}"), MAP_TYPE);
+    Map<String, String> formatSettings = GSON.fromJson(get(sourceArgs, FORMAT_SETTINGS, "{}"), MAP_TYPE);
     String schemaStr = getRequired(sourceArgs, SCHEMA);
     co.cask.cdap.api.data.schema.Schema bodySchema = co.cask.cdap.api.data.schema.Schema.parse(schemaStr);
     this.sourceFormatSpec = new FormatSpecification(formatName, bodySchema, formatSettings);
