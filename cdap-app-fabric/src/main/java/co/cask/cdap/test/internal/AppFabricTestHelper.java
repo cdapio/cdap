@@ -30,6 +30,7 @@ import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -85,9 +86,9 @@ public class AppFabricTestHelper {
   /**
    * @return Returns an instance of {@link co.cask.cdap.internal.app.deploy.LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
-    ManagerFactory<Location, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() {
+  public static Manager<DeploymentInfo, ApplicationWithPrograms> getLocalManager() {
+    ManagerFactory<DeploymentInfo, ApplicationWithPrograms> factory =
+      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() {
       }));
 
     return factory.create(new ProgramTerminator() {
