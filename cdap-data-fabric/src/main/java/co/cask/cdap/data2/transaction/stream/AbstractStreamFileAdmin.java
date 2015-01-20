@@ -299,18 +299,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     } catch (NotificationFeedException e) {
       LOG.error("Cannot create feed for Stream {}", stream, e);
     }
-
-    try {
-      NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-        .setNamespace("default")
-        .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
-        .setName(stream)
-        .setDescription(String.format("Heartbeats feed for Stream %s.", stream))
-        .build();
-      notificationFeedManager.createFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
-      LOG.error("Cannot create feed for Stream {} heartbeats.", stream, e);
-    }
   }
 
   @Override
