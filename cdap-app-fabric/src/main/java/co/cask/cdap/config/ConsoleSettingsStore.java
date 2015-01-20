@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class ConsoleSettingsStore {
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsStore.class);
-  private static final String NAMESPACE = "";
+  private static final String CONSOLE_NAMESPACE = "";
   private static final String CONFIG_TYPE = "usersettings";
 
   private final ConfigStore configStore;
@@ -39,27 +39,27 @@ public class ConsoleSettingsStore {
   }
 
   public Config get(String userId) throws ConfigNotFoundException {
-    return configStore.get(NAMESPACE, CONFIG_TYPE, userId);
+    return configStore.get(CONSOLE_NAMESPACE, CONFIG_TYPE, userId);
   }
 
   public void delete(String userId) throws ConfigNotFoundException {
-    configStore.delete(NAMESPACE, CONFIG_TYPE, userId);
+    configStore.delete(CONSOLE_NAMESPACE, CONFIG_TYPE, userId);
   }
 
   public void put(Config userConfig) {
-    configStore.createOrUpdate(NAMESPACE, CONFIG_TYPE, userConfig);
+    configStore.createOrUpdate(CONSOLE_NAMESPACE, CONFIG_TYPE, userConfig);
   }
 
   @VisibleForTesting
   List<Config> list() {
-    return configStore.list(NAMESPACE, CONFIG_TYPE);
+    return configStore.list(CONSOLE_NAMESPACE, CONFIG_TYPE);
   }
 
   public void delete() {
-    List<Config> configList = configStore.list(NAMESPACE, CONFIG_TYPE);
+    List<Config> configList = configStore.list(CONSOLE_NAMESPACE, CONFIG_TYPE);
     for (Config config : configList) {
       try {
-        configStore.delete(NAMESPACE, CONFIG_TYPE, config.getId());
+        configStore.delete(CONSOLE_NAMESPACE, CONFIG_TYPE, config.getId());
       } catch (ConfigNotFoundException e) {
         LOG.warn("ConsoleSettings for {} not found", config.getId());
       }
