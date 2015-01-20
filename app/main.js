@@ -42,7 +42,7 @@ angular
       'mgcrea.ngStrap.popover',
       'mgcrea.ngStrap.dropdown',
       'mgcrea.ngStrap.typeahead',
-      'mgcrea.ngStrap.select',
+      // 'mgcrea.ngStrap.select',
       'mgcrea.ngStrap.collapse',
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
