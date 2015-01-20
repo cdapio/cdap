@@ -47,7 +47,7 @@ public class SingleStringRecordFormat extends ByteBufferRecordFormat<StructuredR
   }
 
   @Override
-  protected void validateDesiredSchema(Schema desiredSchema) throws UnsupportedTypeException {
+  protected void validateSchema(Schema desiredSchema) throws UnsupportedTypeException {
     List<Schema.Field> fields = desiredSchema.getFields();
     if (fields.size() != 1 || fields.get(0).getSchema().getType() != Schema.Type.STRING) {
       throw new UnsupportedTypeException("Schema must be a record with a single string field.");

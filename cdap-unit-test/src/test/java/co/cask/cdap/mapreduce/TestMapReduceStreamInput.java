@@ -14,14 +14,24 @@
 
 package co.cask.cdap.mapreduce;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,21 +43,47 @@ public class TestMapReduceStreamInput extends TestBase {
   public void test() throws Exception {
 
     ApplicationManager applicationManager = deployApplication(AppWithMapReduceUsingStream.class);
+    Schema schema = new Schema.Parser().parse(AppWithMapReduceUsingStream.SCHEMA.toString());
     StreamWriter streamWriter = applicationManager.getStreamWriter("mrStream");
-    streamWriter.send("hello world");
-    streamWriter.send("foo bar");
+    streamWriter.send(createEvent(schema, "YHOO", 100, 10.0f));
+    streamWriter.send(createEvent(schema, "YHOO", 10, 10.1f));
+    streamWriter.send(createEvent(schema, "YHOO", 13, 9.9f));
+    float yhooTotal = 100 * 10.0f + 10 * 10.1f + 13 * 9.9f;
+    streamWriter.send(createEvent(schema, "AAPL", 5, 300.0f));
+    streamWriter.send(createEvent(schema, "AAPL", 3, 298.34f));
+    streamWriter.send(createEvent(schema, "AAPL", 50, 305.23f));
+    streamWriter.send(createEvent(schema, "AAPL", 1000, 284.13f));
+    float aaplTotal = 5 * 300.0f + 3 * 298.34f + 50 * 305.23f + 1000 * 284.13f;
 
     try {
       MapReduceManager mrManager = applicationManager.startMapReduce("BodyTracker");
       mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
-      KeyValueTable latestDS = (KeyValueTable) getDataset("latest").get();
-      Assert.assertNotNull(latestDS.read("hello world"));
-      Assert.assertNotNull(latestDS.read("foo bar"));
+      KeyValueTable pricesDS = (KeyValueTable) getDataset("prices").get();
+      float yhooVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("YHOO")));
+      float aaplVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("AAPL")));
+      Assert.assertTrue(Math.abs(yhooTotal - yhooVal) < 0.0000001);
+      Assert.assertTrue(Math.abs(aaplTotal - aaplVal) < 0.0000001);
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);
       clear();
     }
+  }
+
+  private byte[] createEvent(Schema schema, String ticker, int count, float price) throws IOException {
+    GenericRecord record = new GenericRecordBuilder(schema)
+      .set("ticker", ticker)
+      .set("num_traded", count)
+      .set("price", price)
+      .build();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(schema);
+
+    writer.write(record, encoder);
+    encoder.flush();
+    out.close();
+    return out.toByteArray();
   }
 }
