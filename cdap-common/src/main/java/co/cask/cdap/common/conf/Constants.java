@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -233,6 +233,7 @@ public final class Constants {
     public static final String FILE_PREFIX = "stream.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
     public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
+    public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
 
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";

@@ -280,6 +280,12 @@
       <description>Queue size per async worker thread for queuing up async write request</description>
     </property>
 
+    <property>
+      <name>stream.batch.buffer.threshold</name>
+      <value>1048576</value>
+      <description>Bytes retained in-memory before writing to a new stream file</description>
+    </property>
+
     <!--
         Data Fabric Configuration
     -->

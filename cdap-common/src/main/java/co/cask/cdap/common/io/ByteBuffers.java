@@ -50,6 +50,24 @@ public final class ByteBuffers {
     buffer.reset();
   }
 
+  /**
+   * Creates a new {@link ByteBuffer} which the content the same as the given {@link ByteBuffer}
+   * by copying the content. The new {@link ByteBuffer} will have position = 0, limit = content length.
+   * The returning {@link ByteBuffer} will always be heap based buffer. The position and limit of the original
+   * buffer will not be modified after this call.
+   */
+  public static ByteBuffer copy(ByteBuffer buffer) {
+    if (!buffer.hasRemaining()) {
+      return EMPTY_BUFFER;
+    }
+    byte[] bytes = new byte[buffer.remaining()];
+    buffer.mark();
+    buffer.get(bytes);
+    buffer.reset();
+
+    return ByteBuffer.wrap(bytes);
+  }
+
   private ByteBuffers() {
   }
 }
