@@ -207,6 +207,12 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
       }
     }
 
+    // todo: move to rules?
+    // adjusting metric name based on emitter
+    String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
+    // by default, metric is emitted by the framework
+    builder.prefixMetricName(scope == null ? "system." : scope + ".");
+
     return builder.build();
   }
 
@@ -230,7 +236,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
   private static final class MetricsRecordBuilder {
     private final StringBuilder context;      // Program context of where the metric get generated.
     private final String runId;               // RunId
-    private final String name;                // Name of the metric
+    private final StringBuilder name;         // Name of the metric
     private final List<TagMetric> tags;       // List of TagMetric
     private final long timestamp;             // Timestamp in second of when the metric happened.
     private final long value;                 // Value of the metric, regardless of tags
@@ -238,12 +244,16 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
 
     public MetricsRecordBuilder(String runId, String name, long timestamp, long value, MetricType type) {
       this.runId = runId;
-      this.name = name;
+      this.name = new StringBuilder(name);
       this.timestamp = timestamp;
       this.value = value;
       this.type = type;
       this.context = new StringBuilder();
       this.tags = new ArrayList<TagMetric>();
+    }
+
+    public void prefixMetricName(String prefix) {
+      name.insert(0, prefix);
     }
 
     public void appendContext(String contextPart) {
@@ -261,7 +271,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
       }
       // delete last "."
       context.deleteCharAt(context.length() - 1);
-      return new MetricsRecord(context.toString(), runId, name, tags, timestamp, value, type);
+      return new MetricsRecord(context.toString(), runId, name.toString(), tags, timestamp, value, type);
     }
   }
 

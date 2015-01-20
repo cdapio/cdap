@@ -27,7 +27,6 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
@@ -261,7 +260,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                   MetricsCollectionService metricsCollectionService) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     MetricsCollector collector =
-      getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program, runId.getId());
+      getMetricCollector(metricsCollectionService, program, runId.getId());
     HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, collector);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
@@ -275,9 +274,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       .build();
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     MetricsScope scope, Program program,
-                                                     String runId) {
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program, String runId) {
     if (service == null) {
       return null;
     }
@@ -285,7 +282,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 
   /**

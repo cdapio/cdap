@@ -23,7 +23,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -99,25 +98,24 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
-  private final StreamWriterSizeCollector sizeManager;
+  private final StreamWriterSizeCollector sizeCollector;
 
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade, final StreamWriterSizeCollector sizeManager) {
+                       ExploreFacade exploreFacade, StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
-    this.sizeManager = sizeManager;
+    this.sizeCollector = sizeCollector;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
+    this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
-
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
                                                    metricsCollectorFactory);
@@ -296,7 +294,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
           public void emitMetrics(long bytesWritten, long eventsWritten) {
             if (bytesWritten > 0) {
               childCollector.increment("collect.bytes", bytesWritten);
-              sizeManager.received(streamName, bytesWritten);
+              sizeCollector.received(streamName, bytesWritten);
             }
             if (eventsWritten > 0) {
               childCollector.increment("collect.events", eventsWritten);

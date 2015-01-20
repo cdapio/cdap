@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.query;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.data.Interpolator;
 
 import java.net.URI;
@@ -70,6 +69,4 @@ interface MetricsRequest {
   int getCount();
 
   Interpolator getInterpolator();
-
-  MetricsScope getScope();
 }
