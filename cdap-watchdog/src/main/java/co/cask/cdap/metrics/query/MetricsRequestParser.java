@@ -366,7 +366,7 @@ final class MetricsRequestParser {
   }
 
   /**
-   * From the query string determine the query type time range and related parameters.
+   * From the query string determine the query type, time range and related parameters.
    */
   public static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
