@@ -114,44 +114,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
-  //TODO: move these elsewhere:
-  @Test
-  public void testCronConversion() {
-    Assert.assertEquals("*/1 * * * ?", AdapterService.toCronExpr("1m"));
-    Assert.assertEquals("*/15 * * * ?", AdapterService.toCronExpr("15m"));
-    Assert.assertEquals("0 */4 * * ?", AdapterService.toCronExpr("4h"));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void frequencyNotDivisibleIntoHour() {
-    AdapterService.toCronExpr("16m");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void frequencyNotDivisibleIntoDay() {
-    AdapterService.toCronExpr("13h");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void invalidExpression() {
-    AdapterService.toCronExpr("62m");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void invalidExpression1() {
-    AdapterService.toCronExpr("am");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void invalidExpression2() {
-    AdapterService.toCronExpr("1w");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void invalidExpression3() {
-    AdapterService.toCronExpr("1d 1h");
-  }
-
   private static void setupAdapters() throws IOException {
     setupAdapter(AdapterApp.class, "dummyAdapter");
   }

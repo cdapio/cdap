@@ -354,7 +354,7 @@ public interface Store {
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specification.
    */
-  Iterable<AdapterSpecification> getAllAdapters(Id.Namespace id);
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.

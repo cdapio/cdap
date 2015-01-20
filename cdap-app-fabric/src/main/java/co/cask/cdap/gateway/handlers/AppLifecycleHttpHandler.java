@@ -40,7 +40,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
@@ -55,6 +54,7 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -74,7 +74,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -327,7 +326,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // Validate the adapter
       String adapterType = config.type;
-      AdapterService.AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
+      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
       if (adapterTypeInfo == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
         return;
@@ -466,7 +465,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final String namespaceId, final String appId, DeploymentInfo archive) throws Exception {
+  private void deploy(final String namespaceId, final String appId, DeploymentInfo deploymentInfo) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
 
@@ -478,7 +477,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
 
       ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, archive).get();
+        manager.deploy(id, appId, deploymentInfo).get();
       ApplicationSpecification specification = applicationWithPrograms.getSpecification();
       setupSchedules(namespaceId, specification);
     } catch (Throwable e) {
