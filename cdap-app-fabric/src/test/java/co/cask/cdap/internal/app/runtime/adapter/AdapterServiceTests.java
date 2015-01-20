@@ -87,7 +87,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
                                ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
 
     // Create Adapter
-    // Note: AdapterService assumes the adapter is already deployed. So adding the application spec for the adapter
+    // Note: AdapterService assumes the adapter is already deployed. Deploying AdapterApp outside of the service.
     AppFabricTestBase.deploy(AdapterApp.class, "dummyAdapter");
     adapterService.createAdapter(namespaceId, specification);
 
