@@ -8,7 +8,7 @@ angular.module(PKG.name + '.commons')
         // Enabling Customizability.
         scope.buttonLabel = attrs.buttonLabel || 'Upload';
         scope.buttonIcon = attrs.buttonIcon || 'fa-upload';
-        scope.buttonSize = attrs.buttonSize || '';
+        scope.buttonClass = attrs.buttonClass || '';
         scope.buttonDisabled = !!attrs.buttonDisabled || false;
 
         var fileElement = angular.element('<input class="sr-only" type="file" multiple="true">');
