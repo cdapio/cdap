@@ -30,6 +30,7 @@ import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -60,12 +61,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
+
   public static CConfiguration configuration;
   private static Injector injector;
+  private static File tempFolder = TEMP_FOLDER.newFolder("dest");
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
   }
+
 
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
@@ -85,9 +89,9 @@ public class AppFabricTestHelper {
   /**
    * @return Returns an instance of {@link co.cask.cdap.internal.app.deploy.LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
-    ManagerFactory<Location, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() {
+  public static Manager<DeploymentInfo, ApplicationWithPrograms> getLocalManager() {
+    ManagerFactory<DeploymentInfo, ApplicationWithPrograms> factory =
+      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() {
       }));
 
     return factory.create(new ProgramTerminator() {
@@ -117,10 +121,11 @@ public class AppFabricTestHelper {
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
-
     Location deployedJar = createAppJar(appClass);
+    Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
     try {
-      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, deployedJar).get();
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
       final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
@@ -142,6 +147,7 @@ public class AppFabricTestHelper {
         }
       };
     } finally {
+      info.getDestination().delete(true);
       deployedJar.delete(true);
     }
   }
@@ -150,6 +156,5 @@ public class AppFabricTestHelper {
     LocalLocationFactory lf = new LocalLocationFactory();
     return lf.create(JarFinder.getJar(appClass, AppFabricClient.getManifestWithMainClass(appClass)));
   }
-
 }
 
