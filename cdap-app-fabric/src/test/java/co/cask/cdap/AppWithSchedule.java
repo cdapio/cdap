@@ -21,10 +21,13 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,7 +43,13 @@ public class AppWithSchedule extends AbstractApplication {
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
-      scheduleWorkflow("SampleSchedule", "0/1 * * * * ?", "SampleWorkflow");
+
+      Map<String, String> scheduleProperties = Maps.newHashMap();
+      scheduleProperties.put("oneKey", "oneValue");
+      scheduleProperties.put("anotherKey", "anotherValue");
+      scheduleProperties.put("someKey", "someValue");
+
+      scheduleWorkflow("SampleSchedule", "0/1 * * * * ?", "SampleWorkflow", scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }
@@ -69,6 +78,10 @@ public class AppWithSchedule extends AbstractApplication {
       LOG.info("Ran dummy action");
       try {
         TimeUnit.MILLISECONDS.sleep(500);
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
       } catch (InterruptedException e) {
         LOG.info("Interrupted");
       }

@@ -48,7 +48,7 @@ public class AppWithWorkflow extends AbstractApplication {
    * Sample workflow. has a dummy action.
    */
   public static class SampleWorkflow extends AbstractWorkflow {
-    public static final String NAME = "SampleWorkFlow";
+    public static final String NAME = "SampleWorkflow";
 
     @Override
     public void configure() {
