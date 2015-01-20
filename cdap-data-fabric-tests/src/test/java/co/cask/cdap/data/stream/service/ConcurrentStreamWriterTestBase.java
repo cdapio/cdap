@@ -20,7 +20,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
@@ -51,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -191,7 +189,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     StreamMetaStore streamMetaStore = new NoOpStreamMetaStore();
     StreamCoordinator streamCoordinator = new InMemoryStreamCoordinator(streamAdmin, streamMetaStore);
     return new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore,
-                                      writerFactory, threads, new TestMetricsCollector());
+                                      writerFactory, threads, new TestStatisticsCollectorFactory());
   }
 
   private Runnable createWriterTask(final String accountId, final String streamName,
@@ -320,34 +318,20 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
   }
 
-  private static final class TestMetricsCollector extends StreamMetricsCollector {
+  private static final class TestStatisticsCollectorFactory implements StreamStatisticsCollectorFactory {
 
-    protected TestMetricsCollector() {
-      super(new MetricsCollector() {
+    @Override
+    public StreamStatisticsCollector createStatisticsCollector(String streamName) {
+      return new StreamStatisticsCollector() {
         @Override
-        public void increment(String metricName, long value) {
+        public void emitStatistics(long bytesWritten, long eventsWritten) {
 
         }
-
-        @Override
-        public void gauge(String metricName, long value) {
-
-        }
-
-        @Override
-        public MetricsCollector childCollector(Map<String, String> tags) {
-          return this;
-        }
-
-        @Override
-        public MetricsCollector childCollector(String tagName, String tagValue) {
-          return this;
-        }
-      });
+      };
     }
 
     @Override
-    public void emitMetrics(String streamName, long bytesWritten, long eventsWritten) {
+    public void eventRejected() {
 
     }
   }
