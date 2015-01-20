@@ -16,33 +16,16 @@
 
 package co.cask.cdap.data.stream.service;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
+
+import java.io.IOException;
 
 /**
- * No-op implementation of a {@link StreamWriterSizeManager}. Also includes a no-op
- * implementation of {@link StreamWriterSizeCollector}.
+ * Implementation of the {@link StreamWriterSizeFetcher} for Streams which data is kept in-memory.
  */
-public class NoOpStreamWriterSizeManager
-  extends AbstractIdleService
-  implements StreamWriterSizeManager, StreamWriterSizeCollector {
-
+public class InMemoryStreamWriterSizeFetcher implements StreamWriterSizeFetcher {
   @Override
-  protected void startUp() throws Exception {
-    // No-op
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    // No-op
-  }
-
-  @Override
-  public void received(String streamName, long dataSize) {
-    // No-op
-  }
-
-  @Override
-  public void initialize() {
-    // No-op
+  public long fetchSize(StreamConfig streamConfig) throws IOException {
+    return 0;
   }
 }
