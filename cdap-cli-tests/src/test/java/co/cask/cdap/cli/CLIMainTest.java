@@ -417,7 +417,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static void testPreferencesOutput(CLI cli, String command, final Map<String, String> expected)
     throws Exception {
-    final String expectedOutput = Joiner.on(System.lineSeparator()).join(expected.entrySet().iterator());
+    final String expectedOutput = Joiner.on(String.format("%n")).join(expected.entrySet().iterator());
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

@@ -45,7 +45,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
   }
 
   private String joinMapEntries(Map<String, String> map) {
-    return Joiner.on(System.lineSeparator()).join(map.entrySet().iterator());
+    return Joiner.on(String.format("%n")).join(map.entrySet().iterator());
   }
 
   @Override
