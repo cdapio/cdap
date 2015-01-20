@@ -40,6 +40,12 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
+# source common.sh
+source ${bin}/common.sh
+
+# find java and set $JAVA
+set_java
+
 # In other environment, the jars are expected to be in <HOME>/lib directory.
 # Load all the jar files. Not ideal, but we need to load only the things that
 # is needed by this script.
@@ -70,4 +76,4 @@ if [ $containsTokenFileArg -eq 0 ] && [ -f $auth_file ]; then
   set -- "$@" "--token-file" "$auth_file"
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.common.conf.ConfigurationJsonTool "$@"
+$JAVA -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.common.conf.ConfigurationJsonTool "$@"
