@@ -62,14 +62,14 @@ public class SendFileStreamCommand extends AbstractAuthCommand {
     File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
     String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
 
+    if (!file.isFile()) {
+      throw new IllegalArgumentException("Not a file: " + file);
+    }
     if (contentType.isEmpty()) {
       contentType = getContentType(Files.getFileExtension(file.getName()));
     }
     if (contentType.isEmpty()) {
       throw new IllegalArgumentException("Unsupported file format.");
-    }
-    if (!file.isFile()) {
-      throw new IllegalArgumentException("File not found: " + file);
     }
 
     streamClient.sendFile(streamId, contentType, file);

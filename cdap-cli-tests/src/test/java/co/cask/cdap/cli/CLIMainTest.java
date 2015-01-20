@@ -157,8 +157,14 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
-    // Generate a file to send
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
+    // If the file not exist or not a file, sendfile should fails with an error.
+    testCommandOutputContains(cli, "sendfile stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
+    testCommandOutputContains(cli,
+                              "sendfile stream " + streamId + " " + file.getParentFile().getAbsolutePath(),
+                              "Not a file");
+
+    // Generate a file to send
     BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       for (int i = 0; i < 10; i++) {
