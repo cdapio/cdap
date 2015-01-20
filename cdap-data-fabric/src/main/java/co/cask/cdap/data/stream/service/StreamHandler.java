@@ -220,7 +220,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
+    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream),
+                              request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 
