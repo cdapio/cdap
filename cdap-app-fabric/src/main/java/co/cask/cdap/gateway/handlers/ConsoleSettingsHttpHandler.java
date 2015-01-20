@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigNotFoundException;
-import co.cask.cdap.config.ConfigStore;
+import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -46,17 +46,16 @@ import javax.ws.rs.Path;
 public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
-  private static final String NAMESPACE = "";
-  private static final String CONFIG_TYPE = "usersettings";
+
   private static final String CONFIG_PROPERTY = "property";
   private static final String ID = "id";
 
-  private final ConfigStore configStore;
+  private final ConsoleSettingsStore store;
 
   @Inject
-  public ConsoleSettingsHttpHandler(Authenticator authenticator, ConfigStore configStore) {
+  public ConsoleSettingsHttpHandler(Authenticator authenticator, ConsoleSettingsStore store) {
     super(authenticator);
-    this.configStore = configStore;
+    this.store = store;
   }
 
   @Path("/")
@@ -65,7 +64,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
     String userId = getAuthenticatedAccountId(request);
     Config userConfig;
     try {
-      userConfig = configStore.get(NAMESPACE, CONFIG_TYPE, userId);
+      userConfig = store.get(userId);
     } catch (ConfigNotFoundException e) {
       Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, "{}");
       userConfig = new Config(userId, propMap);
@@ -84,7 +83,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder) throws Exception {
     String userId = getAuthenticatedAccountId(request);
     try {
-      configStore.delete(NAMESPACE, CONFIG_TYPE, userId);
+      store.delete(userId);
     } catch (ConfigNotFoundException e) {
       // no-op if configuration does not exist - possible if nothing was 'put'
     }
@@ -107,7 +106,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
     String userId = getAuthenticatedAccountId(request);
     Config userConfig = new Config(userId, propMap);
-    configStore.createOrUpdate(NAMESPACE, CONFIG_TYPE, userConfig);
+    store.put(userConfig);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

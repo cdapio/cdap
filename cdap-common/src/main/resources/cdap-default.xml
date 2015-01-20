@@ -280,6 +280,12 @@
       <description>Queue size per async worker thread for queuing up async write request</description>
     </property>
 
+    <property>
+      <name>stream.batch.buffer.threshold</name>
+      <value>1048576</value>
+      <description>Bytes retained in-memory before writing to a new stream file</description>
+    </property>
+
     <!--
         Data Fabric Configuration
     -->
@@ -532,6 +538,12 @@
         <name>app.output.dir</name>
         <value>/programs</value>
         <description>Directory where all archives are stored</description>
+    </property>
+
+    <property>
+      <name>app.adapter.dir</name>
+      <value>/opt/cdap/master/plugins</value>
+      <description>Directory where all archives for adapters are stored</description>
     </property>
 
     <property>
@@ -1109,5 +1121,6 @@
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
+
 
 </configuration>

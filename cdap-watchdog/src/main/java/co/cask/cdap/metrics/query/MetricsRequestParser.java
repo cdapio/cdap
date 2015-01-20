@@ -186,20 +186,26 @@ final class MetricsRequestParser {
       throw new MetricsPathException("invalid type: " + pathTypeStr);
     }
 
+    // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+
     switch (pathType) {
       case APPS:
+        contextBuilder.setNamespaceId(namespaceId);
         parseSubContext(pathParts, contextBuilder);
         break;
       case STREAMS:
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'streams' must be followed by a stream name");
         }
+        contextBuilder.setNamespaceId(namespaceId);
         contextBuilder.setTag(MetricsRequestContext.TagType.STREAM, urlDecode(pathParts.next()));
         break;
       case DATASETS:
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'datasets' must be followed by a dataset name");
         }
+        contextBuilder.setNamespaceId(namespaceId);
         contextBuilder.setTag(MetricsRequestContext.TagType.DATASET, urlDecode(pathParts.next()));
         // path can be /metric/scope/datasets/{dataset}/apps/...
         if (pathParts.hasNext()) {
@@ -366,9 +372,9 @@ final class MetricsRequestParser {
   }
 
   /**
-   * From the query string determine the query type and related parameters.
+   * From the query string determine the query type, time range and related parameters.
    */
-  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
+  public static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
     // Extracts the query type.

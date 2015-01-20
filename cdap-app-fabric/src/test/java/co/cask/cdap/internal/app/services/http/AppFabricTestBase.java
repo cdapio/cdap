@@ -27,7 +27,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.test.internal.AppFabricClient;
+import co.cask.cdap.test.internal.TempFolder;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -55,6 +55,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -62,6 +63,7 @@ import org.junit.BeforeClass;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -102,9 +104,16 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static final TempFolder TEMP_FOLDER = new TempFolder();
+  private static LocationFactory locationFactory;
+  private static File adapterDir;
+  private static final String adapterFolder = "adapter";
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
+    TEMP_FOLDER.newFolder(adapterFolder);
+    adapterDir = new File(String.format("%s/%s", TEMP_FOLDER.getRoot(), adapterFolder));
+
     CConfiguration conf = CConfiguration.create();
 
     conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
@@ -112,8 +121,12 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -143,6 +156,7 @@ public abstract class AppFabricTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
+    TEMP_FOLDER.delete();
   }
 
   protected static Injector getInjector() {
