@@ -87,7 +87,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
-  private final StreamStatisticsCollectorFactory metricsCollectorFactory;
+  private final MetricsCollector metricsCollector;
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
@@ -115,31 +115,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.sizeManager = sizeManager;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
-    final MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
-    metricsCollectorFactory = new StreamStatisticsCollectorFactory() {
-      @Override
-      public StreamStatisticsCollector createStatisticsCollector(final String streamName) {
-        final MetricsCollector childCollector =
-          collector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
-        return new StreamStatisticsCollector() {
-          @Override
-          public void emitStatistics(long bytesWritten, long eventsWritten) {
-            if (bytesWritten > 0) {
-              childCollector.increment("collect.bytes", bytesWritten);
-              sizeManager.received(streamName, bytesWritten);
-            }
-            if (eventsWritten > 0) {
-              childCollector.increment("collect.events", eventsWritten);
-            }
-          }
-        };
-      }
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
+    StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
 
-      @Override
-      public void eventRejected() {
-        collector.increment("collect.async.reject", 1);
-      }
-    };
 
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
@@ -309,6 +287,28 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {
+    return new StreamMetricsCollectorFactory() {
+      @Override
+      public StreamMetricsCollector createMetricsCollector(final String streamName) {
+        final MetricsCollector childCollector =
+          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+        return new StreamMetricsCollector() {
+          @Override
+          public void emitMetrics(long bytesWritten, long eventsWritten) {
+            if (bytesWritten > 0) {
+              childCollector.increment("collect.bytes", bytesWritten);
+              sizeManager.received(streamName, bytesWritten);
+            }
+            if (eventsWritten > 0) {
+              childCollector.increment("collect.events", eventsWritten);
+            }
+          }
+        };
+      }
+    };
+  }
+
   private Map<String, String> getMetricsContext() {
     return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
@@ -383,7 +383,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
-          metricsCollectorFactory.eventRejected();
+          metricsCollector.increment("collect.async.reject", 1);
           r.run();
         }
       }

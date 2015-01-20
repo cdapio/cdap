@@ -26,6 +26,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.quartz.CronScheduleBuilder;
@@ -87,6 +88,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule) {
+    delegate.schedule(programId, programType, schedule);
+  }
+
+  @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
     delegate.schedule(programId, programType, schedules);
   }
@@ -112,8 +118,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void deleteSchedule(String scheduleId) {
-    delegate.deleteSchedule(scheduleId);
+  public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+    delegate.deleteSchedule(program, programType, scheduleName);
   }
 
   @Override
@@ -156,6 +162,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       if (scheduler != null) {
         scheduler.shutdown();
       }
+    }
+
+    @Override
+    public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule) {
+      schedule(programId, programType, ImmutableList.of(schedule));
     }
 
     @Override
@@ -248,10 +259,10 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void deleteSchedule(String scheduleId) {
+    public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       checkInitialized();
       try {
-        Trigger trigger = scheduler.getTrigger(new TriggerKey(scheduleId));
+        Trigger trigger = scheduler.getTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
         Preconditions.checkNotNull(trigger);
 
         scheduler.unscheduleJob(trigger.getKey());
