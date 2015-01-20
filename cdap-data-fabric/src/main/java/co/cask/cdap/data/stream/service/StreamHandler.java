@@ -98,39 +98,24 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
+  private final StreamWriterSizeCollector sizeCollector;
+
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                        StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade) {
+                       ExploreFacade exploreFacade, StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
+    this.sizeCollector = sizeCollector;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
-    StreamMetricsCollectorFactory metricsCollectorFactory = new StreamMetricsCollectorFactory() {
-      @Override
-      public StreamMetricsCollector createMetricsCollector(String streamName) {
-        final MetricsCollector childCollector =
-          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
-        return new StreamMetricsCollector() {
-          @Override
-          public void emitMetrics(long bytesWritten, long eventsWritten) {
-            if (bytesWritten > 0) {
-              childCollector.increment("collect.bytes", bytesWritten);
-            }
-            if (eventsWritten > 0) {
-              childCollector.increment("collect.events", eventsWritten);
-            }
-          }
-        };
-      }
-    };
-
+    StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
                                                    metricsCollectorFactory);
@@ -235,8 +220,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    streamWriter.asyncEnqueue(accountId, stream,
-                              getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
+    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream),
+                              request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 
@@ -297,6 +282,28 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {
+    return new StreamMetricsCollectorFactory() {
+      @Override
+      public StreamMetricsCollector createMetricsCollector(final String streamName) {
+        final MetricsCollector childCollector =
+          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+        return new StreamMetricsCollector() {
+          @Override
+          public void emitMetrics(long bytesWritten, long eventsWritten) {
+            if (bytesWritten > 0) {
+              childCollector.increment("collect.bytes", bytesWritten);
+              sizeCollector.received(streamName, bytesWritten);
+            }
+            if (eventsWritten > 0) {
+              childCollector.increment("collect.events", eventsWritten);
+            }
+          }
+        };
+      }
+    };
   }
 
   private Map<String, String> getMetricsContext() {
