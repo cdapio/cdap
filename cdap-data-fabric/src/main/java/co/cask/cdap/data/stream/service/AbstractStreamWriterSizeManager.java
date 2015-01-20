@@ -132,13 +132,18 @@ public abstract class AbstractStreamWriterSizeManager
     scheduledExecutor.scheduleAtFixedRate(new Runnable() {
       @Override
       public void run() {
-        Long size = absoluteSizes.get(streamName);
+        try {
+          Long size = absoluteSizes.get(streamName);
 
-        // We don't want to block this executor, or make it fail if the get method on the future fails,
-        // hence we don't call the get method
-        heartbeatPublisher.sendHeartbeat(streamName,
-                                         new StreamWriterHeartbeat(System.currentTimeMillis(), size, instanceId,
-                                                                   StreamWriterHeartbeat.Type.REGULAR));
+          // We don't want to block this executor, or make it fail if the get method on the future fails,
+          // hence we don't call the get method
+          heartbeatPublisher.sendHeartbeat(
+            streamName,
+            new StreamWriterHeartbeat(System.currentTimeMillis(), size,
+                                      instanceId, StreamWriterHeartbeat.Type.REGULAR));
+        } catch (Throwable t) {
+          LOG.error("Could not send heartbeat for stream {}", streamName, t);
+        }
       }
     }, Constants.Stream.HEARTBEAT_DELAY, Constants.Stream.HEARTBEAT_DELAY, TimeUnit.SECONDS);
   }

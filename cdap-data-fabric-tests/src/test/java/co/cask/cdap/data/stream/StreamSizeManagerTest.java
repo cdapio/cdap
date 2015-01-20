@@ -57,6 +57,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -70,7 +71,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class StreamFileSizeManagerTest {
+public class StreamSizeManagerTest {
   private static final String API_KEY = "SampleTestApiKey";
   private static final byte[] TWO_BYTES = new byte[] { 'a', 'b' };
 
@@ -84,11 +85,12 @@ public class StreamFileSizeManagerTest {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static MockHeartbeatPublisher heartbeatPublisher;
-  private static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    tmpFolder.create();
     conf = CConfiguration.create();
     conf.set(Constants.Router.ADDRESS, HOSTNAME);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
@@ -99,7 +101,6 @@ public class StreamFileSizeManagerTest {
   @AfterClass
   public static void afterClass() {
     stopGateway(conf);
-    tmpFolder.delete();
   }
 
   public static Injector startGateway(final CConfiguration conf) {
