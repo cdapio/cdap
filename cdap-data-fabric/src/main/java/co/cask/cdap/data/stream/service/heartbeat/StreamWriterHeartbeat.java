@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.service.heartbeat;
 
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.service.StreamCoordinator;
 import com.google.common.base.Objects;
 
 /**

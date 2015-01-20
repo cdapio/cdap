@@ -55,7 +55,7 @@ import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -128,7 +128,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SchemaGenerator schemaGenerator;
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final StreamCoordinator streamCoordinator;
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -138,7 +138,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
                               DatumWriterFactory datumWriterFactory,
-                              DataFabricFacadeFactory dataFabricFacadeFactory, StreamCoordinator streamCoordinator,
+                              DataFabricFacadeFactory dataFabricFacadeFactory,
+                              StreamCoordinatorClient streamCoordinatorClient,
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
@@ -147,7 +148,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.streamCoordinator = streamCoordinator;
+    this.streamCoordinatorClient = streamCoordinatorClient;
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -649,7 +650,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
       };
     }
-    return new FlowletServiceHook(flowletName, streamCoordinator, streams, controller);
+    return new FlowletServiceHook(flowletName, streamCoordinatorClient, streams, controller);
   }
 
   private static interface ProcessMethodFactory {
@@ -668,13 +669,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   /**
    * This service is for start/stop listening to changes in stream property, through the help of
-   * {@link StreamCoordinator}, so that it can react to changes and properly reconfigure stream consumers used by
+   * {@link StreamCoordinatorClient}, so that it can react to changes and properly reconfigure stream consumers used by
    * the flowlet. This hook is provided to {@link FlowletRuntimeService} and being start/stop
    * when the driver start/stop.
    */
   private static final class FlowletServiceHook extends AbstractService {
 
-    private final StreamCoordinator streamCoordinator;
+    private final StreamCoordinatorClient streamCoordinatorClient;
     private final List<String> streams;
     private final AtomicReference<FlowletProgramController> controller;
     private final Executor executor;
@@ -682,9 +683,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
     private final StreamPropertyListener propertyListener;
     private Cancellable cancellable;
 
-    private FlowletServiceHook(final String flowletName, StreamCoordinator streamCoordinator, List<String> streams,
-                               AtomicReference<FlowletProgramController> controller) {
-      this.streamCoordinator = streamCoordinator;
+    private FlowletServiceHook(final String flowletName, StreamCoordinatorClient streamCoordinatorClient,
+                               List<String> streams, AtomicReference<FlowletProgramController> controller) {
+      this.streamCoordinatorClient = streamCoordinatorClient;
       this.streams = streams;
       this.controller = controller;
       this.executor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("flowlet-stream-update-%d"));
@@ -728,7 +729,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       };
 
       for (String stream : streams) {
-        cancellables.add(streamCoordinator.addListener(stream, propertyListener));
+        cancellables.add(streamCoordinatorClient.addListener(stream, propertyListener));
       }
       notifyStarted();
     }

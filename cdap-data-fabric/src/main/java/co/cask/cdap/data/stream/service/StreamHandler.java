@@ -24,7 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.format.RecordFormats;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -102,8 +102,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                       StreamFileWriterFactory writerFactory,
+                       StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
+                       StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
                        ExploreFacade exploreFacade, StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
@@ -116,7 +116,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
-    this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
                                                    metricsCollectorFactory);
   }
@@ -220,7 +220,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
+    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream),
+                              request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 

@@ -16,6 +16,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -34,6 +35,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         super.configure();
       }
     };
@@ -47,6 +49,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         super.configure();
       }
     };
@@ -60,6 +63,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Scopes.SINGLETON);
         super.configure();
       }
     };
