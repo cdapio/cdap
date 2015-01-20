@@ -194,6 +194,14 @@ public class AdapterService extends AbstractIdleService {
     // TODO: Delete the application if this is the last adapter
   }
 
+  public void stopAdapter(String namespace, String adapterName) {
+    //TODO:
+  }
+
+  public void startAdapter(String namespace, String adapterName) {
+    //TODO:
+  }
+
   // Deploys adapter application if it is not already deployed.
   private ApplicationSpecification deployApplication(String namespaceId, AdapterTypeInfo adapterTypeInfo)
     throws Exception {
@@ -307,7 +315,7 @@ public class AdapterService extends AbstractIdleService {
     for (Sink sink : sinks) {
       if (Sink.Type.DATASET.equals(sink.getType())) {
         String datasetName = sink.getName();
-        // add all propeties that were defined in the manifest (default sink properties), override that with sink
+        // add all properties that were defined in the manifest (default sink properties), override that with sink
         // properties passed while creating the sinks.
         DatasetProperties properties = DatasetProperties.builder()
                                             .addAll(adapterTypeInfo.getDefaultSinkProperties())
