@@ -26,12 +26,10 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -52,46 +50,42 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private static void setupMetrics() throws Exception {
-    HttpResponse response = doDelete("/v2/metrics");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-
-    // Adding metrics for app "WordCount" in namespace "myspace", "WCount" in "yourspace"
+    // Adding metrics for app "WordCount1" in namespace "myspace", "WCount1" in "yourspace"
     MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "splitter"));
+      collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount", "WCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount1", "WCounter", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
     collector.increment("reads", 1);
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
 
-    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount", "WCounter", "counter"));
+    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount1", "WCounter", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getProcedureContext(YOUR_SPACE, "WCount", "RCounts"));
+    collector = collectionService.getCollector(getProcedureContext(YOUR_SPACE, "WCount1", "RCounts"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext(YOUR_SPACE, "WCount", "ClassicWordCount",
+    collector = collectionService.getCollector(getMapReduceTaskContext(YOUR_SPACE, "WCount1", "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Mapper));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(
-      getMapReduceTaskContext(YOUR_SPACE, "WCount", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
+      getMapReduceTaskContext(YOUR_SPACE, "WCount1", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "collector"));
+    collector = collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount1", "WordCounter", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
 
     // also: user metrics
-    Metrics userMetrics =
-      new ProgramUserMetrics(collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter",
-                                                                              "splitter")));
+    Metrics userMetrics = new ProgramUserMetrics(
+      collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount1", "WordCounter", "splitter")));
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
@@ -102,67 +96,68 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testSearchContext() throws Exception {
     // WordCount is in myspace, WCount in yourspace
-    verifySearchResult(getContextSearchUri(MY_SPACE, null), ImmutableList.<String>of("WordCount"));
-    verifySearchResult(getContextSearchUri(YOUR_SPACE, null), ImmutableList.<String>of("WCount"));
+    verifySearchResult(getContextSearchUri(MY_SPACE, null), ImmutableList.<String>of("WordCount1"));
+    verifySearchResult(getContextSearchUri(YOUR_SPACE, null), ImmutableList.<String>of("WCount1"));
 
     // WordCount should be found in myspace, not in yourspace
-    verifySearchResult(getContextSearchUri(MY_SPACE, "WordCount.f"), ImmutableList.<String>of("WordCounter"));
-    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WordCount.f"), ImmutableList.<String>of());
+    verifySearchResult(getContextSearchUri(MY_SPACE, "WordCount1.f"), ImmutableList.<String>of("WordCounter"));
+    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WordCount1.f"), ImmutableList.<String>of());
 
     // WCount should be found in yourspace, not in myspace
-    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WCount"), ImmutableList.<String>of("b", "f", "p"));
-    verifySearchResult(getContextSearchUri(MY_SPACE, "WCount"), ImmutableList.<String>of());
+    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WCount1"), ImmutableList.<String>of("b", "f", "p"));
+    verifySearchResult(getContextSearchUri(MY_SPACE, "WCount1"), ImmutableList.<String>of());
 
     // verify other metrics for WCount app
-    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WCount.b.ClassicWordCount"),
+    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WCount1.b.ClassicWordCount"),
                        ImmutableList.<String>of("m", "r"));
-    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WCount.b.ClassicWordCount.m"), ImmutableList.<String>of());
+    verifySearchResult(getContextSearchUri(YOUR_SPACE, "WCount1.b.ClassicWordCount.m"), ImmutableList.<String>of());
   }
 
   @Test
   public void testQueryMetrics() throws Exception {
     // aggregate result, in the right namespace
     verifyAggregateQueryResult(
-      getMetricsAggregateQueryUri(YOUR_SPACE, "WCount.f.WCounter.splitter", "system.reads"), 3);
+      getMetricsAggregateQueryUri(YOUR_SPACE, "WCount1.f.WCounter.splitter", "system.reads"), 3);
     verifyAggregateQueryResult(
-      getMetricsAggregateQueryUri(YOUR_SPACE, "WCount.f.WCounter.counter", "system.reads"), 1);
+      getMetricsAggregateQueryUri(YOUR_SPACE, "WCount1.f.WCounter.counter", "system.reads"), 1);
 
     // aggregate result, in the wrong namespace
-    verifyAggregateQueryResult(getMetricsAggregateQueryUri(MY_SPACE, "WCount.f.WCounter.splitter", "system.reads"), 0);
+    verifyAggregateQueryResult(getMetricsAggregateQueryUri(MY_SPACE, "WCount1.f.WCounter.splitter", "system.reads"), 0);
 
     // time range
     // now-60s, now+60s
-    verifyRangeQueryResult(getMetricsRangeQueryUri(YOUR_SPACE, "WCount.f.WCounter.splitter", "system.reads",
+    verifyRangeQueryResult(getMetricsRangeQueryUri(YOUR_SPACE, "WCount1.f.WCounter.splitter", "system.reads",
                                                    "now%2D60s", "now%2B60s"), 2, 3);
     // note: times are in seconds, hence "divide by 1000";
     String start = String.valueOf((emitTs - 60 * 1000) / 1000);
     String end = String.valueOf((emitTs + 60 * 1000) / 1000);
-    verifyRangeQueryResult(getMetricsRangeQueryUri(YOUR_SPACE, "WCount.f.WCounter.splitter", "system.reads",
+    verifyRangeQueryResult(getMetricsRangeQueryUri(YOUR_SPACE, "WCount1.f.WCounter.splitter", "system.reads",
                                                    start, end), 2, 3);
     // range query, in the wrong namespace
-    verifyRangeQueryResult(getMetricsRangeQueryUri(MY_SPACE, "WCount.f.WCounter.splitter", "system.reads",
+    verifyRangeQueryResult(getMetricsRangeQueryUri(MY_SPACE, "WCount1.f.WCounter.splitter", "system.reads",
                                                    start, end), 0, 0);
   }
 
   @Test
   public void testSearchMetrics() throws Exception {
     // metrics in myspace
-    verifySearchResult(getMetricsSearchUri(MY_SPACE, "WordCount.f.WordCounter.splitter"),
+    verifySearchResult(getMetricsSearchUri(MY_SPACE, "WordCount1.f.WordCounter.splitter"),
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
 
-    verifySearchResult(getMetricsSearchUri(MY_SPACE, "WordCount.f.WordCounter.collector"),
+    verifySearchResult(getMetricsSearchUri(MY_SPACE, "WordCount1.f.WordCounter.collector"),
                        ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
 
     // wrong namespace
-    verifySearchResult(getMetricsSearchUri(YOUR_SPACE, "WordCount.f.WordCounter.splitter"), ImmutableList.<String>of());
+    verifySearchResult(getMetricsSearchUri(YOUR_SPACE, "WordCount1.f.WordCounter.splitter"),
+                       ImmutableList.<String>of());
 
 
     // metrics in yourspace
-    verifySearchResult(getMetricsSearchUri(YOUR_SPACE, "WCount.f.WCounter.splitter"),
+    verifySearchResult(getMetricsSearchUri(YOUR_SPACE, "WCount1.f.WCounter.splitter"),
                        ImmutableList.<String>of("system.reads"));
 
     // wrong namespace
-    verifySearchResult(getMetricsSearchUri(MY_SPACE, "WCount.f.WCounter.splitter"), ImmutableList.<String>of());
+    verifySearchResult(getMetricsSearchUri(MY_SPACE, "WCount1.f.WCounter.splitter"), ImmutableList.<String>of());
   }
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
