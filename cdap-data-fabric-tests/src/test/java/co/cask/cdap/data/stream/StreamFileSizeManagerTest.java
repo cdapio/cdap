@@ -158,20 +158,21 @@ public class StreamFileSizeManagerTest {
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
     urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
-
     return urlConn;
   }
 
   @Test
   public void streamPublishesHeartbeatTest() throws Exception {
-    // Now, create the new stream.
+    int entries = 10;
+
+    // Create a new stream.
     HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", HOSTNAME, port),
                                         HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Enqueue 10 entries
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < entries; ++i) {
       urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", HOSTNAME, port), HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
@@ -183,7 +184,7 @@ public class StreamFileSizeManagerTest {
     TimeUnit.SECONDS.sleep(Constants.Stream.HEARTBEAT_DELAY + 1);
     StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
     Assert.assertNotNull(heartbeat);
-    Assert.assertEquals(20, heartbeat.getAbsoluteDataSize());
+    Assert.assertEquals(entries * TWO_BYTES.length, heartbeat.getAbsoluteDataSize());
     Assert.assertEquals(StreamWriterHeartbeat.Type.REGULAR, heartbeat.getType());
   }
 
