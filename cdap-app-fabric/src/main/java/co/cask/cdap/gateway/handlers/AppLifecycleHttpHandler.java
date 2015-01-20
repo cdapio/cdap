@@ -53,6 +53,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
@@ -267,6 +268,27 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, adapterSpec);
   }
 
+  @POST
+  @Path("/adapters/{adapterId}/{action}")
+  public void startStopAdapter(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapterId") String adapterId,
+                               @PathParam("action") String action) {
+    try {
+      if ("start".equals(action)) {
+        adapterService.startAdapter(namespaceId, adapterId);
+      } else if ("stop".equals(action)) {
+        adapterService.stopAdapter(namespaceId, adapterId);
+      } else {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("Invalid adapter action: %s. Possible actions are: 'start', 'stop'.", action));
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
 
   /**
    * Deletes an adapter

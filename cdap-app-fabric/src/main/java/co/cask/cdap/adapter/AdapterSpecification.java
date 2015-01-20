@@ -16,6 +16,7 @@
 
 package co.cask.cdap.adapter;
 
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -91,9 +92,9 @@ public final class AdapterSpecification {
   /**
    * @return name of the schedule for this Adapter.
    */
-  public String getScheduleName() {
-    // For now, simply schedule the adapter's program with the name of the adapter.
-    return name;
+  public String getScheduleName(Id.Program programId) {
+    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter.
+    return String.format("%s.%s", name, programId.getId());
   }
 
   /**

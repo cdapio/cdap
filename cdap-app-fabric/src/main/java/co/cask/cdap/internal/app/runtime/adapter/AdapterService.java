@@ -131,10 +131,14 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace namespace to lookup the adapter
    * @param adapterName name of the adapter
    * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
+   * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  @Nullable
-  public AdapterSpecification getAdapter(String namespace, String adapterName) {
-    return store.getAdapter(Id.Namespace.from(namespace), adapterName);
+  public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpecification = store.getAdapter(Id.Namespace.from(namespace), adapterName);
+    if (adapterSpecification == null) {
+      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
+    }
+    return adapterSpecification;
   }
 
   /**
@@ -222,11 +226,7 @@ public class AdapterService extends AbstractIdleService {
    */
   public void removeAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
-    AdapterSpecification adapterSpec = store.getAdapter(namespaceId, adapterName);
-    if (adapterSpec == null) {
-      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
-    }
-
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
     unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
     store.removeAdapter(namespaceId, adapterName);
@@ -234,12 +234,16 @@ public class AdapterService extends AbstractIdleService {
     // TODO: Delete the application if this is the last adapter
   }
 
-  public void stopAdapter(String namespace, String adapterName) {
-    //TODO:
+  public void stopAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
+    unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
   }
 
-  public void startAdapter(String namespace, String adapterName) {
-    //TODO:
+  public void startAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
+    schedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
   }
 
   // Deploys adapter application if it is not already deployed.
@@ -291,7 +295,7 @@ public class AdapterService extends AbstractIdleService {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
         Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
-        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.getScheduleName());
+        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.getScheduleName(programId));
       }
     } else {
       // Only Workflows are supported to be unscheduled in the current implementation
@@ -304,7 +308,7 @@ public class AdapterService extends AbstractIdleService {
   private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
     String cronExpr = Schedules.toCronExpr(adapterSpec.getProperties().get("frequency"));
     Preconditions.checkNotNull(cronExpr, "Frequency of running the adapter is missing. Cannot schedule program");
-    Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
+    Schedule schedule = new Schedule(adapterSpec.getScheduleName(programId), adapterSpec.getScheduleDescription(), cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
                                            adapterSpec.getProperties());
