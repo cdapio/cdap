@@ -19,7 +19,8 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.client.FixedAddressExploreClient;
+import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.inject.Inject;
@@ -32,13 +33,33 @@ public class QueryClient {
   private final ExploreClient exploreClient;
 
   @Inject
-  public QueryClient(ClientConfig config) {
-    if (config.getAccessToken() != null) {
-      this.exploreClient = new FixedAddressExploreClient(config.getHostname(), config.getPort(),
-                                                         config.getAccessToken().getValue());
-    } else {
-      this.exploreClient = new FixedAddressExploreClient(config.getHostname(), config.getPort(), null);
-    }
+  public QueryClient(final ClientConfig config) {
+    Supplier<String> hostname = new Supplier<String>() {
+      @Override
+      public String get() {
+        return config.getHostname();
+      }
+    };
+
+    Supplier<Integer> port = new Supplier<Integer>() {
+      @Override
+      public Integer get() {
+        return config.getPort();
+      }
+    };
+
+    Supplier<String> accessToken = new Supplier<String>() {
+      @Override
+      public String get() {
+        if (config.getAccessToken() != null) {
+          return config.getAccessToken().getValue();
+        }
+
+        return null;
+      }
+    };
+
+    this.exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken);
   }
 
   /**

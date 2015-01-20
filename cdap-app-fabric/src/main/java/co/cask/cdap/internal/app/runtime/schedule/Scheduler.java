@@ -32,7 +32,16 @@ public interface Scheduler {
    *
    * @param program Program that needs to be run.
    * @param programType type of program.
-   * @param schedules Schedule with which the program runs.
+   * @param schedule Schedule with which the program runs.
+   */
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule);
+
+  /**
+   * Schedule a program to be run in a defined schedule.
+   *
+   * @param program Program that needs to be run.
+   * @param programType type of program.
+   * @param schedules Schedules with which the program runs.
    */
   public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules);
 
@@ -78,9 +87,9 @@ public interface Scheduler {
    * Deletes the schedule.
    * Deletes the associated Job if no other schedules exist for that job.
    *
-   * @param scheduleId schedule id.
+   * @param scheduleName the name of the schedule
    */
-  public void deleteSchedule(String scheduleId);
+  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName);
 
   /**
    * Delete all schedules associated with the given Program.

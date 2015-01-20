@@ -199,9 +199,15 @@ public class HBaseQueueAdmin implements QueueAdmin {
     if (parts.length == 5) {
       // cdap.system.queue.<app>.<flow>
       namespaceId = Constants.DEFAULT_NAMESPACE;
-    } else {
+    } else if (parts.length == 6) {
       // cdap.system.queue.<namespace>.<app>.<flow>
       namespaceId = parts[parts.length - 3];
+    } else {
+      throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
+                                                         "Expected 'cdap.system.queue.<app>.<flow>' or " +
+                                                         "'cdap.system.queue.<namespace>.<app>.<flow>'. " +
+                                                         "Received '%s'",
+                                                       queueTableName));
     }
     return namespaceId;
   }

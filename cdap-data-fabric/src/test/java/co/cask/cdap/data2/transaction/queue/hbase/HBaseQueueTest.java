@@ -192,6 +192,12 @@ public abstract class HBaseQueueTest extends QueueTest {
     Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
+
+    try {
+      HBaseQueueAdmin.getNamespaceId("test.system.queue.testNamespace.application1.flow1.unexpected");
+      Assert.fail("Should fail because of invalid table name");
+    } catch (IllegalArgumentException e) {
+    }
   }
 
   @Test
