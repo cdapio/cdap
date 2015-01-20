@@ -297,22 +297,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-name") String adapterName) {
     try {
-      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-      String appName = adapterSpec.getType();
-      adapterService.removeAdapter(namespaceId, adapterSpec);
-
-      // remove application if this adapter was the last adapter for that app
-      Iterable<AdapterSpecification> adaptersByType = adapterService.getAdapters(namespaceId, appName);
-      if (Iterables.isEmpty(adaptersByType)) {
-        Id.Application appId = Id.Application.from(namespaceId, appName);
-        try {
-          removeApplication(appId);
-          LOG.debug("Deleted application: {}, because there are no more adapters for it.", appId);
-        } catch (Exception e) {
-          LOG.error("Got exception while deploy of app: {}. ", appId, e);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-      }
+      adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());

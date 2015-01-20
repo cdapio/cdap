@@ -89,21 +89,6 @@ public final class AdapterSpecification {
     return properties;
   }
 
-  /**
-   * @return name of the schedule for this Adapter.
-   */
-  public String constructScheduleName(Id.Program programId) {
-    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter.
-    return String.format("%s.%s", name, programId.getId());
-  }
-
-  /**
-   * @return description of the schedule for this Adapter.
-   */
-  public String getScheduleDescription() {
-    return String.format("Schedule for adapter: %s", name);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {

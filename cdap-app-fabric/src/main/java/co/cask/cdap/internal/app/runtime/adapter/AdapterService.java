@@ -172,21 +172,6 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Removes an adapter, specified by namespace and the adapter's specification.
-   *
-   * @param namespace namespace to lookup the adapter
-   * @param adapterSpec specification of the adapter to remove
-   */
-  public void removeAdapter(String namespace, AdapterSpecification adapterSpec) {
-    String appId = adapterSpec.getType();
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, appId));
-    AdapterTypeInfo adapterTypeInfo = getAdapterTypeInfo(adapterSpec.getType());
-    unschedule(namespace, appSpec, adapterTypeInfo, adapterSpec);
-
-    store.removeAdapter(Id.Namespace.from(namespace), adapterSpec.getName());
-  }
-
-  /**
    * Creates the adapter
    * @param namespaceId namespace to create the adapter
    * @param adapterSpec specification of the adapter to create
@@ -217,7 +202,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  /**
+   /**
    * Remove adapter identified by the namespace and name.
    *
    * @param namespace namespace id
@@ -295,7 +280,8 @@ public class AdapterService extends AbstractIdleService {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
         Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
-        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.constructScheduleName(programId));
+        deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
+                       constructScheduleName(programId, adapterSpec.getName()));
       }
     } else {
       // Only Workflows are supported to be unscheduled in the current implementation
@@ -308,7 +294,9 @@ public class AdapterService extends AbstractIdleService {
   private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
     String cronExpr = Schedules.toCronExpr(adapterSpec.getProperties().get("frequency"));
     Preconditions.checkNotNull(cronExpr, "Frequency of running the adapter is missing. Cannot schedule program");
-    Schedule schedule = new Schedule(adapterSpec.constructScheduleName(programId), adapterSpec.getScheduleDescription(), cronExpr);
+    String adapterName = adapterSpec.getName();
+    Schedule schedule = new Schedule(constructScheduleName(programId, adapterName), getScheduleDescription(adapterName),
+                                     cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
                                            adapterSpec.getProperties());
@@ -442,5 +430,20 @@ public class AdapterService extends AbstractIdleService {
     private static final String SINK_TYPE = "CDAP-Sink-Type";
     private static final String SOURCE_PROPERTIES = "CDAP-Source-Properties";
     private static final String SINK_PROPERTIES = "CDAP-Sink-Properties";
+  }
+
+  /**
+   * @return construct a name of a schedule, given a programId and adapterName
+   */
+  public String constructScheduleName(Id.Program programId, String adapterName) {
+    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter.
+    return String.format("%s.%s", adapterName, programId.getId());
+  }
+
+  /**
+   * @return description of the schedule, given an adapterName.
+   */
+  public String getScheduleDescription(String adapterName) {
+    return String.format("Schedule for adapter: %s", adapterName);
   }
 }

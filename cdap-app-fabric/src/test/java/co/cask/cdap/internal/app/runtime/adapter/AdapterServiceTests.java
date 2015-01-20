@@ -88,8 +88,11 @@ public class AdapterServiceTests extends AppFabricTestBase {
     // Delete Adapter
     adapterService.removeAdapter(namespaceId, "myAdapter");
     // verify that the adapter is deleted
-    actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    Assert.assertNull(actualAdapterSpec);
+    try {
+      adapterService.getAdapter(namespaceId, adapterName);
+      Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapterName));
+    } catch (AdapterNotFoundException expected) {
+    }
 
     adapters = adapterService.getAdapters(namespaceId);
     Assert.assertTrue(adapters.isEmpty());
