@@ -1,20 +1,16 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log) {
 
     var dSrc = new MyDataSource();
 
     function MetricPickerCtrl ($scope) {
 
-      var types = ['system', 'user'];
-
       $scope.available = {
-        types: types,
         contexts: [],
-        metrics: []
+        names: []
       };
 
       $scope.metric = {
-        type: types[0],
         context: '',
         name: ''
       };
@@ -35,31 +31,32 @@ angular.module(PKG.name + '.commons')
       link: function (scope, elem, attr, ngModel) {
 
         function fetchAhead () {
-          var val = (scope.metric.context||'').replace(/\.$/, ''),
-              url = ['/metrics', scope.metric.type, val].join('/');
+          var val = scope.metric.context || $stateParams.namespace;
 
-          dSrc.request(
+          if(!val) { // should never happen, except on directive playground
+            val = 'default';
+            $log.warn('metric-picker using default namespace!');
+          }
+
+          scope.available.contexts = dSrc.request(
             {
-              _cdapNsPath: url + '?search=childContext'
-            },
-            function (result) {
-              scope.available.contexts = result.map(function (child) {
-                return val ? val + '.' + child : child;
-              });
+              method: 'POST',
+              _cdapPath: '/metrics/search?target=childContext' +
+                '&context=' + encodeURIComponent(val)
             }
           );
 
           if(val) {
-            // assigning the promise directly works
-            // only because results are used as is.
-            scope.available.metrics = dSrc.request(
+            scope.available.names = dSrc.request(
               {
-                _cdapNsPath: url + '/metrics'
+                method: 'POST',
+                _cdapPath: '/metrics/search?target=metric' +
+                  '&context=' + encodeURIComponent(val)
               }
             );
           }
           else {
-            scope.available.metrics = [];
+            scope.available.names = [];
           }
 
         }

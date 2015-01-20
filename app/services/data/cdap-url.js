@@ -10,15 +10,7 @@ angular.module(PKG.name + '.services')
         var namespace = $stateParams.namespace;
 
         if(!namespace) {
-
-          if($window.location.pathname.match(/\/test/)) {
-            // the "directive playground" doesnt have a namespace
-            $log.warn('_cdapNsPath using default namespace');
-            namespace = 'default';
-          }
-          else {
-            throw new Error('_cdapNsPath requires $stateParams.namespace to be defined');
-          }
+          throw new Error('_cdapNsPath requires $stateParams.namespace to be defined');
         }
 
         resource._cdapPath = [
