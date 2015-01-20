@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -61,7 +60,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
-    Injector injector = getInjector();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.ADAPTER_DIR));
     setupAdapters();
@@ -87,8 +85,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
                                ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
 
     // Create Adapter
-    // Note: AdapterService assumes the adapter is already deployed. Deploying AdapterApp outside of the service.
-    AppFabricTestBase.deploy(AdapterApp.class, "dummyAdapter");
     adapterService.createAdapter(namespaceId, specification);
 
     AdapterSpecification retreivedAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
