@@ -125,7 +125,7 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
       });
 
     // Schedule aggregation logic
-    final ScheduledFuture<?> scheduledFuture =scheduledExecutor.scheduleAtFixedRate(
+    final ScheduledFuture<?> scheduledFuture = scheduledExecutor.scheduleAtFixedRate(
       aggregator, Constants.Notification.Stream.INIT_HEARTBEAT_AGGREGATION_DELAY,
       Constants.Notification.Stream.HEARTBEAT_AGGREGATION_DELAY, TimeUnit.SECONDS);
 
