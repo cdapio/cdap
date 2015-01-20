@@ -490,7 +490,7 @@ public class AdapterService extends AbstractIdleService {
     Preconditions.checkArgument(StringUtils.isNumeric(value));
     Integer parsedValue = Integer.valueOf(value);
     Preconditions.checkArgument(parsedValue > 0);
-
+    // TODO: Check for regular frequency.
     String everyN = String.format("*/%s", value);
     char lastChar = frequency.charAt(frequency.length() - 1);
     switch (lastChar) {
