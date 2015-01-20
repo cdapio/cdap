@@ -27,6 +27,7 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -95,7 +96,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
   private static final String APP_WITH_CONCURRENT_WORKFLOW = "ConcurrentWorkflowApp";
   private static final String CONCURRENT_WORKFLOW_NAME = "ConcurrentWorkflow";
-  private static final String SEQUENTIAL_WORKFLOW_NAME = "SequentialWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
 
@@ -660,21 +660,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.put(ProgramOptionConstants.CONCURRENT_PROGRAM_RUN, "true");
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put(ProgramOptionConstants.CONCURRENT_PROGRAM_RUN, "true");
+    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
+    store.setProperties(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
+                        CONCURRENT_WORKFLOW_NAME, propMap);
 
-    setAndTestRuntimeArgs(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
-                          CONCURRENT_WORKFLOW_NAME, runtimeArguments);
-
-    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "all");
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
 
     List<Map<String, String>> historyRuns = scheduleHistoryRuns(60, runsUrl, 1);
+    // Two instances of the ConcurrentWorkflow should be RUNNING
     Assert.assertTrue(historyRuns.size() >= 2);
-    Long firstStartTime = Long.parseLong(historyRuns.get(0).get("start"));
-    Long secondStartTime = Long.parseLong(historyRuns.get(1).get("start"));
-    Assert.assertEquals(firstStartTime, secondStartTime, 10);
 
-    // get ConcurrentWorkflow schedules
+    // Suspend ConcurrentWorkflow schedules
     List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
                                                          CONCURRENT_WORKFLOW_NAME);
 
@@ -683,26 +681,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                CONCURRENT_WORKFLOW_NAME, spec.getSchedule().getName()));
     }
 
-    runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, SEQUENTIAL_WORKFLOW_NAME, "all");
-    historyRuns = scheduleHistoryRuns(60, runsUrl, 1);
-    Assert.assertTrue(historyRuns.size() >= 2);
-    firstStartTime = Long.parseLong(historyRuns.get(0).get("start"));
-    secondStartTime = Long.parseLong(historyRuns.get(1).get("start"));
-    Assert.assertTrue(Math.abs(firstStartTime - secondStartTime) >= 60);
-
-    // get SequentialWorkflow schedules
-    schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
-                             SEQUENTIAL_WORKFLOW_NAME);
-
-    for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
-                                               SEQUENTIAL_WORKFLOW_NAME, spec.getSchedule().getName()));
-    }
-    TimeUnit.SECONDS.sleep(30);
-    Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
-      .API_VERSION_3_TOKEN, TEST_NAMESPACE2)).getStatusLine().getStatusCode());
+    // delete the application
+    String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
+      .API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    deleteApplication(60, deleteUrl, 200);
   }
-
 
   @Category(XSlowTests.class)
   @Test

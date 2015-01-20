@@ -399,4 +399,17 @@ public abstract class AppFabricTestBase {
     }
     Assert.assertEquals(expected, status);
   }
+
+  protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {
+    int trial = 0;
+    HttpResponse response = null;
+    while (trial++ < retries) {
+      response = doDelete(deleteUrl);
+      if (200 == response.getStatusLine().getStatusCode()) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expectedReturnCode, response.getStatusLine().getStatusCode());
+  }
 }

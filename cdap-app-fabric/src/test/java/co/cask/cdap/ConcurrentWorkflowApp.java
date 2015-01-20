@@ -34,12 +34,10 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
     setName("ConcurrentWorkflowApp");
     setDescription("Application with concurrently running Workflow instances");
     addWorkflow(new ConcurrentWorkflow());
-    addWorkflow(new SequentialWorkflow());
-    // Schedule Workflow to run every minute
+
+    // Schedule Workflow
     scheduleWorkflow("concurrentWorkflowSchedule1", "* * * * *", "ConcurrentWorkflow");
     scheduleWorkflow("concurrentWorkflowSchedule2", "* * * * *", "ConcurrentWorkflow");
-    scheduleWorkflow("sequentialWorkflowSchedule1", "* * * * *", "SequentialWorkflow");
-    scheduleWorkflow("sequentialWorkflowSchedule2", "* * * * *", "SequentialWorkflow");
   }
 
   /**
@@ -52,30 +50,6 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
       setName("ConcurrentWorkflow");
       setDescription("Workflow configured to run concurrently.");
       addAction(new SleepAction());
-    }
-  }
-
-  /**
-   *
-   */
-  private static class SequentialWorkflow extends AbstractWorkflow {
-
-    @Override
-    public void configure() {
-      setName("SequentialWorkflow");
-      setDescription("Workflow configured to run sequentially.");
-      addAction(new SleepAction());
-    }
-  }
-
-  /**
-   * NoSleepAction
-   */
-  public static class NoSleepAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(NoSleepAction.class);
-    @Override
-    public void run() {
-      LOG.info("Ran NoSleep action");
     }
   }
 
@@ -94,5 +68,4 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
       }
     }
   }
-
 }
