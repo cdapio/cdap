@@ -40,6 +40,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -399,6 +400,14 @@ public class AdapterService extends AbstractIdleService {
     private static final String SINK_PROPERTIES = "CDAP-Sink-Properties";
   }
 
+
+  // Limiting values to a preset whitelist is required, so that the frequency between runs is constant.
+  // This can be worked around by using quartz' frequency scheduling (rather than scheduling by cron expression).
+  private static final Set<Integer> allowedMinutes = ImmutableSet.of(30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1);
+  private static final Set<Integer> allowedHours = ImmutableSet.of(12, 8, 6, 4, 3, 2, 1);
+  // allowed days: All months do not have the same number of days. This messes things up.
+  private static final Set<Integer> allowedDays = ImmutableSet.of();
+
   /**
    * Converts a frequency expression into cronExpression that is usable by quartz.
    * Supports frequency expressions with the following resolutions: minutes, hours, days.
@@ -427,12 +436,15 @@ public class AdapterService extends AbstractIdleService {
     switch (lastChar) {
       case 'm':
         DateBuilder.validateMinute(parsedValue);
+        Preconditions.checkArgument(allowedMinutes.contains(parsedValue));
         return String.format("%s * * * ?", everyN);
       case 'h':
         DateBuilder.validateHour(parsedValue);
+        Preconditions.checkArgument(allowedHours.contains(parsedValue));
         return String.format("0 %s * * ?", everyN);
       case 'd':
         DateBuilder.validateDayOfMonth(parsedValue);
+        Preconditions.checkArgument(allowedDays.contains(parsedValue));
         return String.format("0 0 %s * ?", everyN);
     }
     throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
