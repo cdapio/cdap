@@ -26,6 +26,12 @@ import java.util.Map;
 public interface StreamWriter {
 
   /**
+   * Create the stream.
+   * @throws java.io.IOException If there is an error creating the stream.
+   */
+  void createStream() throws IOException;
+
+  /**
    * Sends a UTF-8 encoded string to the stream.
    * @param content Data to be sent.
    * @throws java.io.IOException If there is error writing to the stream.

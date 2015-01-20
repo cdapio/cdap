@@ -49,6 +49,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
@@ -208,9 +209,9 @@ public abstract class ExternalAuthenticationServerTestBase {
     verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains("admin"));
 
     // Test correct headers being returned
-    String cacheControlHeader = response.getFirstHeader("Cache-Control").getValue();
-    String pragmaHeader = response.getFirstHeader("Pragma").getValue();
-    String contentType = response.getFirstHeader("Content-Type").getValue();
+    String cacheControlHeader = response.getFirstHeader(HttpHeaders.Names.CACHE_CONTROL).getValue();
+    String pragmaHeader = response.getFirstHeader(HttpHeaders.Names.PRAGMA).getValue();
+    String contentType = response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue();
 
     assertEquals("no-store", cacheControlHeader);
     assertEquals("no-cache", pragmaHeader);

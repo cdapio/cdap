@@ -57,6 +57,24 @@ public final class DefaultStreamWriter implements StreamWriter {
   }
 
   @Override
+  public void createStream() throws IOException {
+
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                     "/v2/streams/" + streamName.getSimpleName());
+
+    MockResponder responder = new MockResponder();
+    try {
+      streamHandler.create(httpRequest, responder, streamName.getSimpleName());
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
+    if (responder.getStatus() != HttpResponseStatus.OK) {
+      throw new IOException("Failed to create stream. Status = " + responder.getStatus());
+    }
+  }
+
+  @Override
   public void send(String content) throws IOException {
     send(Charsets.UTF_8.encode(content));
   }

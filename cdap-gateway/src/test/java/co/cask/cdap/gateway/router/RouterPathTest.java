@@ -59,14 +59,9 @@ public class RouterPathTest {
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    String metricsPath = "/v3/namespaces/default/metrics/user?search=childContext";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, metricsPath, httpRequest);
-    Assert.assertEquals(Constants.Service.METRICS, result);
-
-    testMetricsPath("/v3/namespaces/default/metrics/user?search=childContext");
-    testMetricsPath("/v3/namespaces/default/metrics/user/PurchaeHistory.f.PurchaseFlow?search=childContext");
-    testMetricsPath("/v3/namespaces/default/metrics/user/PurchaeHistory.f.PurchaseFlow/metrics");
+    testMetricsPath("/v3/metrics/search?target=childContext&context=user");
+    testMetricsPath("/v3/metrics/search?target=childContext&context=PurchaeHistory.f.PurchaseFlow");
+    testMetricsPath("/v3/metrics/search?target=metric&context=PurchaeHistory.f.PurchaseFlow");
   }
 
   private void testMetricsPath(String path) {

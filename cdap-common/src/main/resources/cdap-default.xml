@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -278,6 +278,12 @@
       <name>stream.async.queue.size</name>
       <value>100</value>
       <description>Queue size per async worker thread for queuing up async write request</description>
+    </property>
+
+    <property>
+      <name>stream.batch.buffer.threshold</name>
+      <value>1048576</value>
+      <description>Bytes retained in-memory before writing to a new stream file</description>
     </property>
 
     <!--
@@ -1079,6 +1085,28 @@
       <value>cdap</value>
       <description>Security realm used for authentication</description>
   </property>
+
+  <!--
+      Security configurations for Kerberos authentication
+  -->
+  <property>
+    <name>cdap.master.kerberos.keytab</name>
+    <value></value>
+    <description>The full path to the Kerberos keytab file containing the CDAP Master's
+    credentials.</description>
+  </property>
+
+  <property>
+    <name>cdap.master.kerberos.principal</name>
+    <value></value>
+    <description>
+      Example: "cdap/_HOST@EXAMPLE.COM".
+      The Kerberos principal name that should be used to login the CDAP Master process.
+      The principal name should be in the form "user/hostname@REALM".  If the hostname portion
+      contains the string "_HOST", it will be substituted with the local hostname.
+    </description>
+  </property>
+
 
   <!-- Configuration for enabling SSL -->
 

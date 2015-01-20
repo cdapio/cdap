@@ -172,6 +172,7 @@
     <module>cdap-archetypes</module>
     <module>cdap-test</module>
     <module>cdap-integration-test</module>
+    <module>cdap-adapters</module>
   </modules>
 
   <dependencyManagement>
@@ -1289,6 +1290,7 @@
                   <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>cdap-examples/**</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
+                  <exclude>**/MANIFEST.MF</exclude>
                 </excludes>
               </configuration>
             </execution>

@@ -34,7 +34,7 @@ public class TestMapReduceServiceIntegration extends TestBase {
     ApplicationManager applicationManager = deployApplication(TestMapReduceServiceIntegrationApp.class);
     try {
       ServiceManager serviceManager = applicationManager.startService(TestMapReduceServiceIntegrationApp.SERVICE_NAME);
-      serviceStatusCheck(serviceManager, true);
+      serviceManager.waitForStatus(true);
 
       DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet =
         applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
@@ -56,16 +56,5 @@ public class TestMapReduceServiceIntegration extends TestBase {
       TimeUnit.SECONDS.sleep(1);
       clear();
     }
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }
