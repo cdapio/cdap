@@ -118,8 +118,18 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testCronConversion() {
     Assert.assertEquals("*/1 * * * ?", AdapterService.toCronExpr("1m"));
-    Assert.assertEquals("*/52 * * * ?", AdapterService.toCronExpr("52m"));
+    Assert.assertEquals("*/15 * * * ?", AdapterService.toCronExpr("15m"));
     Assert.assertEquals("0 */4 * * ?", AdapterService.toCronExpr("4h"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void frequencyNotDivisibleIntoHour() {
+    AdapterService.toCronExpr("16m");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void frequencyNotDivisibleIntoDay() {
+    AdapterService.toCronExpr("13h");
   }
 
   @Test(expected = IllegalArgumentException.class)
