@@ -118,10 +118,12 @@ public class AppFabricTestHelper {
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
-
+    File tempFolder = TEMP_FOLDER.newFolder("dest");
     Location deployedJar = createAppJar(appClass);
+    Location destination = new LocalLocationFactory().create(tempFolder.toURI());
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
     try {
-      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, deployedJar).get();
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
       final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
@@ -143,6 +145,7 @@ public class AppFabricTestHelper {
         }
       };
     } finally {
+      info.getDestination().delete(true);
       deployedJar.delete(true);
     }
   }
