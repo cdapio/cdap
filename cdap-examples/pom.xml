@@ -30,6 +30,7 @@
   <name>CDAP Examples</name>
 
   <modules>
+    <module>Convert</module>
     <module>CountRandom</module>
     <module>FileSetExample</module>
     <module>HelloWorld</module>

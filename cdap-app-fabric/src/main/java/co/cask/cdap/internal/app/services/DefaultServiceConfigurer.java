@@ -26,7 +26,6 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -159,7 +158,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
     MetricsCollector noOpsMetricsCollector =
-      new NoOpMetricsCollectionService().getCollector(MetricsScope.SYSTEM, new HashMap<String, String>());
+      new NoOpMetricsCollectionService().getCollector(new HashMap<String, String>());
     HttpHandlerFactory factory = new HttpHandlerFactory("", noOpsMetricsCollector);
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());

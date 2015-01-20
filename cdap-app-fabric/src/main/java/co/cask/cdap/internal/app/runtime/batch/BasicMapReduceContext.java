@@ -34,7 +34,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -57,8 +56,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   // TODO: InstanceId is not supported in MR jobs, see CDAP-2
   private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
-  private final Map<MetricsScope, MetricsCollector> systemMapperMetrics;
-  private final Map<MetricsScope, MetricsCollector> systemReducerMetrics;
+  private final MetricsCollector mapperMetrics;
+  private final MetricsCollector reducerMetrics;
   private final long logicalStartTime;
   private final String workflowBatch;
   private final Metrics mapredMetrics;
@@ -87,31 +86,24 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DatasetFramework dsFramework,
                                CConfiguration conf) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(metricsCollectionService, MetricsScope.SYSTEM, program, type, runId.getId()),
+          getMetricCollector(metricsCollectionService, program, type, runId.getId()),
           dsFramework, conf, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
-      this.systemMapperMetrics = Maps.newHashMap();
-      this.systemReducerMetrics = Maps.newHashMap();
-      Map<MetricsScope, MetricsCollector> systemMetrics = Maps.newHashMap();
-      for (MetricsScope scope : MetricsScope.values()) {
-        this.systemMapperMetrics.put(scope, getMetricCollector(metricsCollectionService, scope, program,
-                                                               MapReduceMetrics.TaskType.Mapper, runId.getId()));
-        this.systemReducerMetrics.put(scope, getMetricCollector(metricsCollectionService, scope, program,
-                                                                MapReduceMetrics.TaskType.Reducer, runId.getId()));
-        systemMetrics.put(scope, getMetricCollector(metricsCollectionService, scope, program, null, runId.getId()));
-      }
+      mapperMetrics =
+        getMetricCollector(metricsCollectionService, program, MapReduceMetrics.TaskType.Mapper, runId.getId());
+      reducerMetrics =
+        getMetricCollector(metricsCollectionService, program, MapReduceMetrics.TaskType.Reducer, runId.getId());
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
       // launches the mapred job.
       this.mapredMetrics = (type == null) ?
-        null : new ProgramUserMetrics(getMetricCollector(metricsCollectionService, MetricsScope.USER,
-                                                         program, type, runId.getId()));
+        null : new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program, type, runId.getId()));
     } else {
-      this.systemMapperMetrics = null;
-      this.systemReducerMetrics = null;
+      this.mapperMetrics = null;
+      this.reducerMetrics = null;
       this.mapredMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
@@ -252,8 +244,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.reducerResources = resources;
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service, MetricsScope scope,
-                                                     Program program, MapReduceMetrics.TaskType type, String runId) {
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
+                                                     MapReduceMetrics.TaskType type, String runId) {
     if (service == null) {
       return null;
     }
@@ -261,7 +253,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     if (type != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
     }
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 
   @Override
@@ -273,20 +265,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return metricsCollectionService;
   }
 
-  public MetricsCollector getSystemMapperMetrics() {
-    return systemMapperMetrics.get(MetricsScope.SYSTEM);
+  public MetricsCollector getMapperMetrics() {
+    return mapperMetrics;
   }
 
-  public MetricsCollector getSystemReducerMetrics() {
-    return systemReducerMetrics.get(MetricsScope.SYSTEM);
-  }
-
-  public MetricsCollector getSystemMapperMetrics(MetricsScope scope) {
-    return systemMapperMetrics.get(scope);
-  }
-
-  public MetricsCollector getSystemReducerMetrics(MetricsScope scope) {
-    return systemReducerMetrics.get(scope);
+  public MetricsCollector getReducerMetrics() {
+    return reducerMetrics;
   }
 
   public LoggingContext getLoggingContext() {

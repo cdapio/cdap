@@ -30,13 +30,11 @@ public class FileAdmin implements DatasetAdmin {
 
   private final LocationFactory locationFactory;
 
-  private final String name;
   private final String basePath;
 
   public FileAdmin(LocationFactory locationFactory, DatasetSpecification spec) {
     this.locationFactory = locationFactory;
-    this.name = spec.getName();
-    this.basePath = spec.getProperties().get(FileSetProperties.BASE_PATH);
+    this.basePath = FileSetProperties.getBasePath(spec.getProperties());
   }
 
   @Override

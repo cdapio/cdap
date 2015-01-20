@@ -60,7 +60,7 @@ public class LevelDBFilterableOVCTableTest {
 
   @Test
   public void testAggregatesQuery() throws OperationException {
-    AggregatesTable table = tableFactory.createAggregates("test");
+    AggregatesTable table = tableFactory.createAggregates();
     List<MetricsRecord> records = Lists.newLinkedList();
     List<TagMetric> tags = Lists.newArrayList();
     long ts = 1317470400;
@@ -112,7 +112,7 @@ public class LevelDBFilterableOVCTableTest {
 
   @Test
   public void testTimeseriesQuery() throws OperationException {
-    TimeSeriesTable tsTable = tableFactory.createTimeSeries("test", 1);
+    TimeSeriesTable tsTable = tableFactory.createTimeSeries(1);
 
     // one below the 1317470400 timebase
     long ts = 1317470399;

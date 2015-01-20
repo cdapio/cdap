@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.proto.ProgramType;
@@ -37,7 +36,7 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
 
   public ProgramRunnableResourceReporter(Program program, MetricsCollectionService collectionService,
                                          TwillContext context) {
-    super(collectionService.getCollector(MetricsScope.SYSTEM, getMetricContext(program, context)));
+    super(collectionService.getCollector(getMetricContext(program, context)));
     this.runContext = context;
   }
 
