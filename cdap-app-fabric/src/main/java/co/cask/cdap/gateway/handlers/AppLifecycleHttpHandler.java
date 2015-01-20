@@ -226,6 +226,78 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns a list of applications associated with a namespace.
+   */
+  @GET
+  @Path("/apps")
+  public void getAllApps(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId) {
+    getAppDetails(responder, namespaceId, null);
+  }
+
+  /**
+   * Returns the info associated with the application.
+   */
+  @GET
+  @Path("/apps/{app-id}")
+  public void getAppInfo(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("app-id") final String appId) {
+    getAppDetails(responder, namespaceId, appId);
+  }
+
+  /**
+   * Delete an application specified by appId.
+   */
+  @DELETE
+  @Path("/apps/{app-id}")
+  public void deleteApp(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") final String appId) {
+    try {
+      Id.Application id = Id.Application.from(namespaceId, appId);
+
+      // Deletion of a particular application is not allowed if that application is used by an adapter
+      if (adapterService.getAdapterTypeInfo(appId) != null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("An adapter type exists with with the name: %s", appId));
+        return;
+      }
+
+      AppFabricServiceStatus appStatus = removeApplication(id);
+      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
+      responder.sendString(appStatus.getCode(), appStatus.getMessage());
+    } catch (SecurityException e) {
+      LOG.debug("Security Exception while deleting app: ", e);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes all applications in CDAP.
+   */
+  @DELETE
+  @Path("/apps")
+  public void deleteAllApps(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
+    try {
+      Id.Namespace id = Id.Namespace.from(namespaceId);
+      AppFabricServiceStatus status = removeAll(id);
+      LOG.trace("Delete all call at AppFabricHttpHandler");
+      responder.sendString(status.getCode(), status.getMessage());
+    } catch (SecurityException e) {
+      LOG.debug("Security Exception while deleting all apps: ", e);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * Retrieves all adapters in a given namespace.
    */
   @GET
@@ -335,78 +407,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable th) {
       LOG.error("Failed to deploy adapter", th);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of applications associated with a namespace.
-   */
-  @GET
-  @Path("/apps")
-  public void getAllApps(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) {
-    getAppDetails(responder, namespaceId, null);
-  }
-
-  /**
-   * Returns the info associated with the application.
-   */
-  @GET
-  @Path("/apps/{app-id}")
-  public void getAppInfo(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("app-id") final String appId) {
-    getAppDetails(responder, namespaceId, appId);
-  }
-
-  /**
-   * Delete an application specified by appId.
-   */
-  @DELETE
-  @Path("/apps/{app-id}")
-  public void deleteApp(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") final String appId) {
-    try {
-      Id.Application id = Id.Application.from(namespaceId, appId);
-
-      // Deletion of a particular application is not allowed if that application is used by an adapter
-      if (adapterService.getAdapterTypeInfo(appId) != null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("An adapter type exists with with the name: %s", appId));
-        return;
-      }
-
-      AppFabricServiceStatus appStatus = removeApplication(id);
-      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
-      responder.sendString(appStatus.getCode(), appStatus.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting app: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Deletes all applications in CDAP.
-   */
-  @DELETE
-  @Path("/apps")
-  public void deleteAllApps(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
-    try {
-      Id.Namespace id = Id.Namespace.from(namespaceId);
-      AppFabricServiceStatus status = removeAll(id);
-      LOG.trace("Delete all call at AppFabricHttpHandler");
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting all apps: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
