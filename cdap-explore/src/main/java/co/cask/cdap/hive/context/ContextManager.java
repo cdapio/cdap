@@ -29,6 +29,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -86,6 +87,7 @@ public class ContextManager {
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

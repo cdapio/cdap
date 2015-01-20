@@ -37,6 +37,7 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -82,6 +83,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new ExploreRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
       new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
       new AuthModule());
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
