@@ -41,6 +41,17 @@ public class RemoteStreamWriter implements StreamWriter {
   }
 
   @Override
+  public void createStream() throws IOException {
+    try {
+      streamClient.create(streamName);
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public void send(String content) throws IOException {
     try {
       streamClient.sendEvent(streamName, content);
