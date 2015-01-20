@@ -329,7 +329,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final String namespaceId, final String appId, DeploymentInfo archive) throws Exception {
+  private void deploy(final String namespaceId, final String appId, DeploymentInfo deploymentInfo) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
 
@@ -341,7 +341,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
 
       ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, archive).get();
+        manager.deploy(id, appId, deploymentInfo).get();
       ApplicationSpecification specification = applicationWithPrograms.getSpecification();
       setupSchedules(namespaceId, specification);
     } catch (Throwable e) {

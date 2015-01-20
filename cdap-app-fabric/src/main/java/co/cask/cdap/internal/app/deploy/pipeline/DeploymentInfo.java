@@ -24,16 +24,23 @@ import java.io.File;
  */
 public class DeploymentInfo {
 
-  private final File input;
+  private final File appJarFile;
   private final Location destination;
 
-  public DeploymentInfo(File input, Location destination) {
-    this.input = input;
+  /**
+   * Construct the DeploymentInfo with appJarFile and destination.
+   *
+   * @param appJarFile Application jar file that should be deployed. The File is expected to be present in the local
+   *                   file system.
+   * @param destination Destination that represents {@link Location} of the jar
+   */
+  public DeploymentInfo(File appJarFile, Location destination) {
+    this.appJarFile = appJarFile;
     this.destination = destination;
   }
 
   public File getInputLocation() {
-    return input;
+    return appJarFile;
   }
 
   public Location getDestination() {
