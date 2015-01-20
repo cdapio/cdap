@@ -30,6 +30,7 @@ import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -358,7 +359,7 @@ public abstract class AppFabricTestBase {
     return versionedApiBuilder.toString();
   }
 
-  protected void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+  protected List<Map<String, String>> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
     int trial = 0;
     int workflowRuns = 0;
     List<Map<String, String>> history;
@@ -371,11 +372,12 @@ public abstract class AppFabricTestBase {
       history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
       workflowRuns = history.size();
       if (workflowRuns > expected) {
-        return;
+        return history;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(workflowRuns > expected);
+    return Lists.newArrayList();
   }
 
   protected void scheduleStatusCheck(int retries, String url, String expected) throws Exception {
