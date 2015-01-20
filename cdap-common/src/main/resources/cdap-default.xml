@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -278,6 +278,12 @@
       <name>stream.async.queue.size</name>
       <value>100</value>
       <description>Queue size per async worker thread for queuing up async write request</description>
+    </property>
+
+    <property>
+      <name>stream.batch.buffer.threshold</name>
+      <value>1048576</value>
+      <description>Bytes retained in-memory before writing to a new stream file</description>
     </property>
 
     <!--
