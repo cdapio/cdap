@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.adapter.AdapterSpecification;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;

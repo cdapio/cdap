@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.adapter.Sink;
-import co.cask.cdap.adapter.Source;
+import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;

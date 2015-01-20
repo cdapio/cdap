@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.adapter;
+package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
