@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,13 +74,14 @@ public class StreamInputSplitFinder<T> {
     for (FileStatus partitionStatus : fs.listStatus(path)) {
 
       // partition should be directory
-      if (!partitionStatus.isDirectory()) {
+      String pathName = partitionStatus.getPath().getName();
+      if (!partitionStatus.isDirectory() || !StreamUtils.isPartition(pathName)) {
         continue;
       }
 
       // Match the time range
-      long partitionStartTime = StreamUtils.getPartitionStartTime(partitionStatus.getPath().getName());
-      long partitionEndTime = StreamUtils.getPartitionEndTime(partitionStatus.getPath().getName());
+      long partitionStartTime = StreamUtils.getPartitionStartTime(pathName);
+      long partitionEndTime = StreamUtils.getPartitionEndTime(pathName);
       if (partitionStartTime > endTime || partitionEndTime <= startTime) {
         continue;
       }

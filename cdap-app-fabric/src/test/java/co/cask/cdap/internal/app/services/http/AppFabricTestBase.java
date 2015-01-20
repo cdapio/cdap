@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;

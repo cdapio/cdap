@@ -20,13 +20,13 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 
 import java.lang.reflect.Type;
 import java.util.List;

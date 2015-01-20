@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.schedule;
 
+
 /**
  * Defines a cron-based schedule for running a program. 
  */
@@ -27,13 +28,10 @@ public class Schedule {
 
   private final String cronEntry;
 
-  private final Action action;
-
-  public Schedule(String name, String description, String cronEntry, Action action) {
+  public Schedule(String name, String description, String cronEntry) {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
-    this.action = action;
   }
 
   /**
@@ -57,15 +55,39 @@ public class Schedule {
     return cronEntry;
   }
 
-  /**
-   * @return Action for the schedule.
-   */
-  public Action getAction() {
-    return action;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Schedule schedule = (Schedule) o;
+
+    if (cronEntry.equals(schedule.cronEntry) && description.equals(schedule.description)
+      && name.equals(schedule.name)) {
+      return true;
+    }
+    return false;
   }
 
-  /**
-   * Defines the ScheduleAction.
-   */
-  public enum Action { START, STOP };
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + description.hashCode();
+    result = 31 * result + cronEntry.hashCode();
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Schedule{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
+    sb.append(", cronEntry='").append(cronEntry).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

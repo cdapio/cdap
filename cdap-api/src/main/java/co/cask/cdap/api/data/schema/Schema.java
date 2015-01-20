@@ -17,6 +17,7 @@
 package co.cask.cdap.api.data.schema;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
@@ -32,6 +33,7 @@ import com.google.common.io.CharStreams;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +43,7 @@ import java.util.Set;
  */
 @Beta
 public final class Schema {
+  private static final SchemaTypeAdapter schemaTypeAdapter = new SchemaTypeAdapter();
 
   /**
    * Types known to Schema.
@@ -112,6 +115,28 @@ public final class Schema {
     public Schema getSchema() {
       return schema;
     }
+  }
+
+  /**
+   * Parse the given json representation into a schema object.
+   *
+   * @param schemaJson the json representation of the schema
+   * @return the json representation parsed into a schema object
+   * @throws IOException if there was an exception parsing the schema
+   */
+  public static Schema parse(String schemaJson) throws IOException {
+    return schemaTypeAdapter.fromJson(schemaJson);
+  }
+
+  /**
+   * Parse the given json representation of a schema object contained in a reader into a schema object.
+   *
+   * @param reader the reader for reading the json representation of a schema
+   * @return the parsed schema object
+   * @throws IOException if there was an exception parsing the schema
+   */
+  public static Schema parse(Reader reader) throws IOException {
+    return schemaTypeAdapter.fromJson(reader);
   }
 
   /**
@@ -456,12 +481,30 @@ public final class Schema {
    * @return true if it is a nullable type, false if not.
    */
   public boolean isNullable() {
-    if ((type == Schema.Type.UNION) && (unionSchemas.size() == 2)) {
-      Schema.Type type1 = unionSchemas.get(0).getType();
-      Schema.Type type2 = unionSchemas.get(1).getType();
+    if ((type == Type.UNION) && (unionSchemas.size() == 2)) {
+      Type type1 = unionSchemas.get(0).getType();
+      Type type2 = unionSchemas.get(1).getType();
       // may not need to check that both are not null, but better to be safe
-      return (type1 == Schema.Type.NULL && type2 != Schema.Type.NULL) ||
-        (type1 != Schema.Type.NULL && type2 == Schema.Type.NULL);
+      return (type1 == Type.NULL && type2 != Type.NULL) || (type1 != Type.NULL && type2 == Type.NULL);
+    }
+    return false;
+  }
+
+  /**
+   * Check if this is a nullable simple type, which is a union of a null and one other non-null simple type, where
+   * a simple type is a boolean, int, long, float, double, bytes, or string type.
+   *
+   * @return whether or not this is a nullable simple type.
+   */
+  public boolean isNullableSimple() {
+    if ((type == Type.UNION) && (unionSchemas.size() == 2)) {
+      Type type1 = unionSchemas.get(0).getType();
+      Type type2 = unionSchemas.get(1).getType();
+      if (type1 == Type.NULL) {
+        return type2 != Type.NULL && type2.isSimpleType();
+      } else if (type2 == Type.NULL) {
+        return type1.isSimpleType();
+      }
     }
     return false;
   }
@@ -473,7 +516,7 @@ public final class Schema {
    */
   public Schema getNonNullable() {
     Schema firstSchema = unionSchemas.get(0);
-    return firstSchema.getType() == Schema.Type.NULL ? unionSchemas.get(1) : firstSchema;
+    return firstSchema.getType() == Type.NULL ? unionSchemas.get(1) : firstSchema;
   }
 
   private boolean checkCompatible(Schema target, Multimap<String, String> recordCompared) {
@@ -662,7 +705,7 @@ public final class Schema {
     StringBuilder builder = new StringBuilder();
     JsonWriter writer = new JsonWriter(CharStreams.asWriter(builder));
     try {
-      new co.cask.cdap.internal.io.SchemaTypeAdapter().write(writer, this);
+      schemaTypeAdapter.write(writer, this);
       writer.close();
       return builder.toString();
     } catch (IOException e) {

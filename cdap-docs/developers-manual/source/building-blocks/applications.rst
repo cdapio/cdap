@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _applications:
 
@@ -15,7 +15,7 @@ to—the data virtualization layer in CDAP.
 
 **Application virtualizations** include *Programs,* *Services,* and *Procedures.*
 
-Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce Jobs <mapreduce-jobs>`,
+Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
 :doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
 data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to serve data.
 
@@ -36,7 +36,7 @@ configuring each of the Application components::
           createDataset("myAppDataset", Table.class);
           addFlow(new MyAppFlow());
           addProcedure(new MyAppQuery());
-          addMapReduce(new MyMapReduceJob());
+          addMapReduce(new MyMapReduce());
           addWorkflow(new MyAppWorkflow());
         }
       }
@@ -58,7 +58,7 @@ A typical design of a CDAP Application consists of:
 - Streams to ingest data into CDAP;
 - Flows, consisting of Flowlets linked together, to process the ingested data
   in realtime or batch;
-- MapReduce Jobs, Spark Programs, and Workflows for batch processing tasks;
+- MapReduce programs, Spark programs, and Workflows for batch processing tasks;
 - Datasets for storage of data, either raw or the processed results; and
 - Services and Procedures for serving data and processed results.
 

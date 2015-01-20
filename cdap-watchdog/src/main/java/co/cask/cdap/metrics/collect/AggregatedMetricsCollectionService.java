@@ -170,7 +170,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     }
 
     @Override
-    public void increment(String metricName, int value) {
+    public void increment(String metricName, long value) {
       emitters.getUnchecked(keys.getUnchecked(metricName)).increment(value);
     }
 

@@ -101,7 +101,8 @@ public class DatasetOpExecutorServiceTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new IOModule(), new ZKClientModule(),
+      new IOModule(),
+      new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),

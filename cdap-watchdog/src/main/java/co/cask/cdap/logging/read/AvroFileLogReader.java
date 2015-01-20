@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.serialize.LoggingEvent;
@@ -193,7 +194,7 @@ public class AvroFileLogReader {
     private final long len;
 
     LocationSeekableInput(Location location) throws IOException {
-      this.is = SeekableInputStream.create(location.getInputStream());
+      this.is = Locations.newInputSupplier(location).getInput();
       this.len = location.length();
     }
 

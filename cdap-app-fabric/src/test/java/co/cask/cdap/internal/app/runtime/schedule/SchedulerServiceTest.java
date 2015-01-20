@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithWorkflow;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
 import org.junit.AfterClass;
@@ -34,12 +34,11 @@ public class SchedulerServiceTest {
   public static SchedulerService schedulerService;
 
   private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.class.getSimpleName());
-  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.class.getSimpleName());
-  private static final ProgramType programType = ProgramType.WORKFLOW;
-  private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?",
-                                                         Schedule.Action.START);
-  private static final Schedule schedule2 = new Schedule("Schedule2", "Every Hour", "0 * * * ?", Schedule.Action.START);
+  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
+  private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?");
+  private static final Schedule schedule2 = new Schedule("Schedule2", "Every Hour", "0 * * * ?");
 
   @BeforeClass
   public static void set() {
@@ -89,9 +88,9 @@ public class SchedulerServiceTest {
 
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
-    for (String scheduleId : scheduleIds) {
-      schedulerService.suspendSchedule(scheduleId);
-    }
+    schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule1");
+    schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule2");
+
     checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
 
     schedulerService.deleteSchedules(program, programType);
@@ -103,8 +102,9 @@ public class SchedulerServiceTest {
   }
 
   private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) {
-    for (String scheduleId : scheduleIds) {
-      Assert.assertEquals(expectedState, schedulerService.scheduleState(scheduleId));
-    }
+    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
+                                                                      "Schedule1"));
+    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
+                                                                        "Schedule1"));
   }
 }

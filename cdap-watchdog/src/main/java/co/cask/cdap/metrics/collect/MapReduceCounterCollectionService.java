@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * A {@link co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService} that publish
- * {@link co.cask.cdap.metrics.transport.MetricsRecord} to MapReduce counters.
+ * {@link MetricValue} to MapReduce counters.
  */
 @Singleton
 public final class MapReduceCounterCollectionService extends AggregatedMetricsCollectionService {

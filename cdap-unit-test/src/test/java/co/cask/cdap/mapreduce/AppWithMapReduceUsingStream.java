@@ -19,25 +19,18 @@ package co.cask.cdap.mapreduce;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.data.format.RecordFormats;
-import co.cask.cdap.data.format.SingleStringRecordFormat;
-import com.google.common.base.Throwables;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -70,7 +63,7 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
       job.setMapOutputKeyClass(LongWritable.class);
       job.setMapOutputValueClass(StructuredRecord.class);
       FormatSpecification formatSpec = new FormatSpecification(
-        RecordFormats.STRING,
+        Formats.STRING,
         Schema.recordOf("event", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
         Collections.<String, String>emptyMap()
       );
@@ -79,12 +72,13 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
   }
 
   // reads input from the stream and records the last timestamp that the body was seen
-  public static class StreamMapper extends Mapper<LongWritable, StructuredRecord, byte[], byte[]> {
+  public static class StreamMapper extends
+    Mapper<LongWritable, GenericStreamEventData<StructuredRecord>, byte[], byte[]> {
 
     @Override
-    public void map(LongWritable key, StructuredRecord streamEvent, Context context)
+    public void map(LongWritable key, GenericStreamEventData<StructuredRecord> eventData, Context context)
       throws IOException, InterruptedException {
-      context.write(Bytes.toBytes((String) streamEvent.get("body")), Bytes.toBytes(key.get()));
+      context.write(Bytes.toBytes((String) eventData.getBody().get("body")), Bytes.toBytes(key.get()));
     }
   }
 

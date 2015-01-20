@@ -51,6 +51,7 @@ import co.cask.cdap.cli.command.ListDatasetTypesCommand;
 import co.cask.cdap.cli.command.ListNamespacesCommand;
 import co.cask.cdap.cli.command.ListProgramsCommandSet;
 import co.cask.cdap.cli.command.ListStreamsCommand;
+import co.cask.cdap.cli.command.PreferencesCommandSet;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
 import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
@@ -102,6 +103,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .addAll(injector.getInstance(GetProgramRuntimeArgsCommandSet.class).getCommands())
       .addAll(injector.getInstance(SetProgramRuntimeArgsCommandSet.class).getCommands())
       .add(injector.getInstance(GetStreamEventsCommand.class))
+      .addAll(injector.getInstance(PreferencesCommandSet.class).getCommands())
       .add(injector.getInstance(ListAllProgramsCommand.class))
       .add(injector.getInstance(ListAppsCommand.class))
       .add(injector.getInstance(ListDatasetInstancesCommand.class))

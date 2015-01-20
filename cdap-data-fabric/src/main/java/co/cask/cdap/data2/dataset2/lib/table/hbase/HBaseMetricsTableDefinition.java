@@ -22,10 +22,13 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.twill.filesystem.LocationFactory;
@@ -37,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * HBase based implementation for {@link MetricsTable}.
  */
+// todo: re-use HBase table based dataset instead of having separate classes hierarchies, see CDAP-1193
 public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {
   @Inject
   private Configuration hConf;
@@ -58,6 +62,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
       .build();
   }
 
+
   @Override
   public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
@@ -69,12 +74,16 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
   }
 
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) {
+  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) throws IOException {
     final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
     hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    columnDescriptor.setMaxVersions(1);
+    // to support read-less increments, we need to allow storing many versions: each increment is a put to the same cell
+    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+    // to make sure delta-increments get compacted on flush and major/minor compaction and redundant versions are
+    // cleaned up. See IncrementHandler.CompactionBound.
+    columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
@@ -83,6 +92,10 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
+    AbstractHBaseDataSetAdmin.CoprocessorJar cpJar =
+      HBaseOrderedTableAdmin.createCoprocessorJarInternal(conf, locationFactory, hBaseTableUtil, true);
+    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName(),
+                                   new Path(cpJar.getJarLocation().toURI()), Coprocessor.PRIORITY_USER, null);
     return tableDescriptor;
   }
 }

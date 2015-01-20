@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,8 @@ import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -241,16 +240,14 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Runs a workflow action that calls loadTestClasses().
    */
-  public static class SimpleWorkflow implements Workflow {
+  public static class SimpleWorkflow extends AbstractWorkflow {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWorkflow.class);
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("SimpleWorkflow")
-        .setDescription("Description")
-        .onlyWith(new SimpleWorkflowAction())
-        .build();
+    public void configure() {
+        setName("SimpleWorkflow");
+        setDescription("Description");
+        addAction(new SimpleWorkflowAction());
     }
 
     private class SimpleWorkflowAction extends co.cask.cdap.api.workflow.AbstractWorkflowAction {

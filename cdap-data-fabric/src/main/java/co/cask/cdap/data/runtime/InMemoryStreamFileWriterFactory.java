@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * A Mock {@link StreamFileWriterFactory} that actually doesn't write to file, but to in memory queue instead.
  */
-final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
+public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
 
   private static final StreamEventCodec STREAM_EVENT_CODEC = new StreamEventCodec();
 
@@ -52,6 +52,12 @@ final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
   InMemoryStreamFileWriterFactory(QueueClientFactory queueClientFactory, TransactionExecutorFactory executorFactory) {
     this.queueClientFactory = queueClientFactory;
     this.executorFactory = executorFactory;
+  }
+
+  @Override
+  public String getFileNamePrefix() {
+    // There is no file being created
+    return "";
   }
 
   @Override

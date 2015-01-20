@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,14 +19,15 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,6 +43,13 @@ public class AppWithSchedule extends AbstractApplication {
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
+
+      Map<String, String> scheduleProperties = Maps.newHashMap();
+      scheduleProperties.put("oneKey", "oneValue");
+      scheduleProperties.put("anotherKey", "anotherValue");
+      scheduleProperties.put("someKey", "someValue");
+
+      scheduleWorkflow("SampleSchedule", "0/1 * * * * ?", "SampleWorkflow", scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }
@@ -50,18 +58,13 @@ public class AppWithSchedule extends AbstractApplication {
   /**
    * Sample workflow. Schedules a dummy MR job.
    */
-  public static class SampleWorkflow implements Workflow {
+  public static class SampleWorkflow extends AbstractWorkflow {
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("SampleWorkflow")
-        .setDescription("SampleWorkflow description")
-        .startWith(new DummyAction())
-        .last(new DummyAction())
-        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/1 * * * * ?",
-                                  Schedule.Action.START))
-        .build();
+    public void configure() {
+        setName("SampleWorkflow");
+        setDescription("SampleWorkflow description");
+        addAction(new DummyAction());
     }
   }
 
@@ -75,6 +78,10 @@ public class AppWithSchedule extends AbstractApplication {
       LOG.info("Ran dummy action");
       try {
         TimeUnit.MILLISECONDS.sleep(500);
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
       } catch (InterruptedException e) {
         LOG.info("Interrupted");
       }

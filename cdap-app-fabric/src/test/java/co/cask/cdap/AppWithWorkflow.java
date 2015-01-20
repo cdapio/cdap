@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,8 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +29,12 @@ import org.slf4j.LoggerFactory;
  * App with workflow.
  */
 public class AppWithWorkflow extends AbstractApplication {
+  public static final String NAME = "AppWithWorkflow";
 
   @Override
   public void configure() {
     try {
-      setName("AppWithWorkflow");
+      setName(NAME);
       setDescription("Sample application");
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
@@ -47,16 +47,15 @@ public class AppWithWorkflow extends AbstractApplication {
   /**
    * Sample workflow. has a dummy action.
    */
-  public static class SampleWorkflow implements Workflow {
+  public static class SampleWorkflow extends AbstractWorkflow {
+    public static final String NAME = "SampleWorkflow";
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("SampleWorkflow")
-        .setDescription("SampleWorkflow description")
-        .startWith(new DummyAction())
-        .last(new DummyAction())
-        .build();
+    public void configure() {
+        setName(NAME);
+        setDescription("SampleWorkflow description");
+        addAction(new DummyAction());
+        addAction(new DummyAction());
     }
   }
 

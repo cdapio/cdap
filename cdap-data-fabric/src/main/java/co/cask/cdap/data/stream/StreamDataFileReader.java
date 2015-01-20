@@ -19,6 +19,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
+import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
@@ -26,6 +27,7 @@ import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.JsonSyntaxException;
@@ -50,21 +52,20 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class StreamDataFileReader implements FileReader<PositionStreamEvent, Long> {
 
-  private static final byte[] MAGIC_HEADER = {'E', '1'};
-
   private final InputSupplier<? extends SeekableInputStream> eventInputSupplier;
   private final InputSupplier<? extends InputStream> indexInputSupplier;
   private final long startTime;
   private final long offset;
+  private final byte[] timestampBuffer;
   private final StreamEventBuffer streamEventBuffer;
   private StreamDataFileIndex index;
   private SeekableInputStream eventInput;
   private long position;
-  private byte[] timestampBuffer;
   private long timestamp;
   private boolean closed;
   private boolean eof;
   private Decoder decoder;
+  private StreamEvent eventTemplate;
 
   /**
    * Opens a new {@link StreamDataFileReader} with the given inputs.
@@ -289,18 +290,74 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   private void readHeader() throws IOException {
     // Read the header of the event file
     // First 2 bytes should be 'E' '1'
-    byte[] magic = new byte[MAGIC_HEADER.length];
+    byte[] magic = new byte[StreamDataFileConstants.MAGIC_HEADER_SIZE];
     ByteStreams.readFully(eventInput, magic);
 
-    if (!Arrays.equals(magic, MAGIC_HEADER)) {
-      throw new IOException("Unsupported stream file format. Expected magic bytes as 'E' '1'");
-    }
+    int fileVersion = decodeFileVersion(magic);
 
     // Read the properties map.
     Map<String, String> properties = StreamUtils.decodeMap(new BinaryDecoder(eventInput));
-    verifySchema(properties.get("stream.schema"));
+
+    verifySchema(properties);
+
+    // Create event template
+    if (fileVersion >= 2) {
+      eventTemplate = createEventTemplate(properties);
+    } else {
+      eventTemplate = new StreamEvent(ImmutableMap.<String, String>of(), ByteBuffers.EMPTY_BUFFER, -1L);
+    }
 
     position = eventInput.getPos();
+  }
+
+  /**
+   * Decodes the file version from the magic header.
+   *
+   * @return the file version
+   * @throws IOException if failed to decode file version from the magic header
+   */
+  private int decodeFileVersion(byte[] magic) throws IOException {
+    if (Arrays.equals(magic, StreamDataFileConstants.MAGIC_HEADER_V1)) {
+      return 1;
+    }
+    if (Arrays.equals(magic, StreamDataFileConstants.MAGIC_HEADER_V2)) {
+      return 2;
+    }
+    throw new IOException(
+      String.format("Unsupported stream file format. First two bytes must be %s or %s",
+                    Bytes.toStringBinary(StreamDataFileConstants.MAGIC_HEADER_V1),
+                    Bytes.toStringBinary(StreamDataFileConstants.MAGIC_HEADER_V2))
+    );
+  }
+
+  /**
+   * Creates a {@link StreamEvent} that will be used as a template for all events consumable from this reader.
+   */
+  private StreamEvent createEventTemplate(Map<String, String> properties) throws IOException {
+    long timestamp = -1L;
+
+    // See if all events in the file are of the same timestamp
+    String uniTimestamp = properties.get(StreamDataFileConstants.Property.Key.UNI_TIMESTAMP);
+    if (StreamDataFileConstants.Property.Value.CLOSE_TIMESTAMP.equals(uniTimestamp)) {
+      // Seek to the end - 8 of the stream to read the close timestamp
+      long pos = eventInput.getPos();
+      eventInput.seek(eventInput.size() - 8);
+      timestamp = Math.abs(readTimestamp());
+      eventInput.seek(pos);
+    } else if (uniTimestamp != null) {
+      timestamp = Long.parseLong(uniTimestamp);
+    }
+
+    // Grab the set of default headers for all events
+    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+    String prefix = StreamDataFileConstants.Property.Key.EVENT_HEADER_PREFIX;
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      if (entry.getKey().startsWith(prefix)) {
+        headers.put(entry.getKey().substring(prefix.length()), entry.getValue());
+      }
+    }
+
+    return new StreamEvent(headers.build(), ByteBuffers.EMPTY_BUFFER, timestamp);
   }
 
   private void initByOffset(final long offset) throws IOException {
@@ -348,7 +405,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         long timestamp = readTimestamp();
 
         // If EOF or condition match, upper bound found. Break the loop.
-        eof = timestamp == -1L;
+        eof = timestamp < 0;
         if (eof || condition.apply(positionBound, timestamp)) {
           break;
         }
@@ -389,9 +446,11 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     }
   }
 
-  private void verifySchema(String schemaStr) throws IOException {
+  private void verifySchema(Map<String, String> properties) throws IOException {
+    String schemaKey = StreamDataFileConstants.Property.Key.SCHEMA;
+    String schemaStr = properties.get(schemaKey);
     if (schemaStr == null) {
-      throw new IOException("Missing 'stream.schema' property.");
+      throw new IOException("Missing '" + schemaKey + "' property.");
     }
 
     try {
@@ -411,15 +470,12 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   }
 
   private int readLength() throws IOException {
-    try {
-      return decoder.readInt();
-    } catch (IOException e) {
-      throw e;
-    }
+    return decoder.readInt();
   }
 
   private void readDataBlock(ReadFilter filter) throws IOException {
     // Data block is <timestamp> <length> <stream_data>+
+    position = eventInput.getPos();
     long timestamp = readTimestamp();
     if (timestamp < 0) {
       eof = true;
@@ -427,14 +483,24 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     }
 
     filter.reset();
+
+    // Use the template timestamp if available
+    timestamp = eventTemplate.getTimestamp() >= 0 ? eventTemplate.getTimestamp() : timestamp;
     if (filter.acceptTimestamp(timestamp)) {
       streamEventBuffer.fillBuffer(eventInput, readLength());
       this.timestamp = timestamp;
       return;
     }
 
+    // If timestamp is not accepted and the timestamp comes from event template, then the whole file can be skipped
+    if (eventTemplate.getTimestamp() >= 0) {
+      eof = true;
+      return;
+    }
+
     long nextTimestamp = filter.getNextTimestampHint();
     if (nextTimestamp > timestamp) {
+      eventInput.seek(position);
       initByTime(nextTimestamp);
       readDataBlock(filter);
       return;
@@ -445,6 +511,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     if (bytesSkipped != length) {
       throw new EOFException("Expected to skip " + length + " but only " + bytesSkipped + " was skipped.");
     }
+    position = eventInput.getPos();
   }
 
   /**
@@ -455,14 +522,14 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * @return The next StreamEvent or {@code null} if the event is rejected by the filter or reached EOF.
    */
   private PositionStreamEvent nextStreamEvent(ReadFilter filter) throws IOException {
-    while (!streamEventBuffer.hasEvent()) {
+    while (!eof && !streamEventBuffer.hasEvent()) {
       readDataBlock(filter);
     }
     if (eof) {
       return null;
     }
 
-    PositionStreamEvent event = streamEventBuffer.nextEvent(timestamp, filter);
+    PositionStreamEvent event = streamEventBuffer.nextEvent(timestamp, eventTemplate.getHeaders(), filter);
     position = streamEventBuffer.getPosition();
     return event;
   }
