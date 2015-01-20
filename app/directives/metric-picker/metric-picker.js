@@ -5,16 +5,16 @@ angular.module(PKG.name + '.commons')
 
     function MetricPickerCtrl ($scope) {
 
-      var a = ['system', 'user'];
+      var types = ['system', 'user'];
 
       $scope.available = {
-        types: a,
+        types: types,
         contexts: [],
         metrics: []
       };
 
       $scope.metric = {
-        type: a[0],
+        type: types[0],
         context: '',
         name: ''
       };
@@ -35,26 +35,26 @@ angular.module(PKG.name + '.commons')
       link: function (scope, elem, attr, ngModel) {
 
         function fetchAhead () {
-          var v = (scope.metric.context||'').replace(/\.$/, ''),
-              u = ['/metrics', scope.metric.type, v].join('/');
+          var val = (scope.metric.context||'').replace(/\.$/, ''),
+              url = ['/metrics', scope.metric.type, val].join('/');
 
           dSrc.request(
             {
-              _cdapNsPath: u + '?search=childContext'
+              _cdapNsPath: url + '?search=childContext'
             },
-            function (r) {
-              scope.available.contexts = r.map(function (c) {
-                return v ? v + '.' + c : c;
+            function (result) {
+              scope.available.contexts = result.map(function (child) {
+                return val ? val + '.' + child : child;
               });
             }
           );
 
-          if(v) {
+          if(val) {
             // assigning the promise directly works
             // only because results are used as is.
             scope.available.metrics = dSrc.request(
               {
-                _cdapNsPath: u + '/metrics'
+                _cdapNsPath: url + '/metrics'
               }
             );
           }
@@ -64,9 +64,9 @@ angular.module(PKG.name + '.commons')
 
         }
 
-        var s = ngModel.$setTouched.bind(ngModel);
-        elem.find('button').on('blur', s);
-        elem.find('input').on('blur', s);
+        var onBlurHandler = ngModel.$setTouched.bind(ngModel);
+        elem.find('button').on('blur', onBlurHandler);
+        elem.find('input').on('blur', onBlurHandler);
 
         scope.$watchCollection('metric', function (newVal, oldVal) {
 
@@ -85,16 +85,16 @@ angular.module(PKG.name + '.commons')
           }
 
           if(newVal.context && newVal.name) {
-            var m = [
+            var parts = [
               '/metrics',
               newVal.type,
             ];
             if(newVal.context) {
-              m.push(newVal.context);
+              parts.push(newVal.context);
             }
-            m.push(newVal.name);
+            parts.push(newVal.name);
 
-            ngModel.$setViewValue(m.join('/'));
+            ngModel.$setViewValue(parts.join('/'));
           }
           else {
             if(ngModel.$dirty) {
