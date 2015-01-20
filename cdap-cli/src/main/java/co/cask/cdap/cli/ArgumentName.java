@@ -60,7 +60,9 @@ public enum ArgumentName {
 
   NAMESPACE_ID("namespace-id"),
   NAMESPACE_DISPLAY_NAME("namespace-display-name"),
-  NAMESPACE_DESCRIPTION("namespace-description");
+  NAMESPACE_DESCRIPTION("namespace-description"),
+
+  INSTANCE("instance-id");
 
   private final String name;
 
