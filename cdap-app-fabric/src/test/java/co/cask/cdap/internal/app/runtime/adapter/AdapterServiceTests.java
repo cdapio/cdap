@@ -59,7 +59,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testAdapters() {
+  public void testAdapters() throws Exception {
     //Basic adapter service tests.
     String namespaceId = Constants.DEFAULT_NAMESPACE;
 
@@ -86,8 +86,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   private static void setupAdapters() throws Exception {
-    // Note: AdapterService assumes the adapter is already deployed. Deploying AdapterApp outside of the service.
-    AppFabricTestBase.deploy(AdapterApp.class, "dummyAdapter");
     setupAdapter(AdapterApp.class, "dummyAdapter");
   }
 

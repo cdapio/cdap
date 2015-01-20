@@ -40,6 +40,7 @@ import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
@@ -76,7 +77,6 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.apache.twill.filesystem.Location;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -207,9 +207,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<Location, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalManager<Location, ApplicationWithPrograms>>() { })
-          .build(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() { })
+          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
+                     new TypeLiteral<LocalManager<DeploymentInfo, ApplicationWithPrograms>>() { })
+          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { })
       );
 
       bind(StoreFactory.class).to(DefaultStoreFactory.class);

@@ -39,7 +39,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testSimpleAggregates() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
       // Insert 10 metrics.
@@ -77,7 +77,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testIntOverflow() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("intOverflow");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -98,7 +98,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testGaugeValues() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("testGauge");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -125,7 +125,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testScanAllTags() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggScanAllTags");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
     try {
       aggregatesTable.update(ImmutableList.of(
         new MetricsRecord("app1.f.flow1.flowlet1", "0", "metric", ImmutableList.of(
@@ -156,7 +156,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testScanTagPrefix() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggScanTagPrefix");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
     try {
       aggregatesTable.update(ImmutableList.of(
         new MetricsRecord("app1.f.flow1.flowlet1", "0", "metric", ImmutableList.of(
@@ -196,7 +196,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testClear() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggDelete");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     for (int i = 1; i <= 10; i++) {
       MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
@@ -232,7 +232,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testRowFilter() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
       // Insert 20 different metrics from the same context.
@@ -261,7 +261,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testTags() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
       // Insert 10 metrics, each with 20 tags.
@@ -293,7 +293,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testDeleteContext() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
       List<TagMetric> tags = Lists.newArrayList();
@@ -344,7 +344,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testDeleteContextAndMetric() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
       List<TagMetric> tags = Lists.newArrayList();
@@ -413,7 +413,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testDeletes() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
       String metric = "metric";
@@ -472,7 +472,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testSwap() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggSave");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
     try {
       checkSwapForTag(aggregatesTable, null);
       checkSwapForTag(aggregatesTable, "tag");

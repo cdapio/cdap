@@ -613,12 +613,12 @@ public class TestFrameworkTest extends TestBase {
                                                                        "BatchSinkFlowlet");
 
       // Generator generators 99 events + 99 batched events
-      sinkMetrics.waitFor("process.events.in", 198, 5, TimeUnit.SECONDS);
+      sinkMetrics.waitFor("system.process.events.in", 198, 5, TimeUnit.SECONDS);
       sinkMetrics.waitForProcessed(198, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, sinkMetrics.getException());
 
       // Batch sink only get the 99 batch events
-      batchSinkMetrics.waitFor("process.events.in", 99, 5, TimeUnit.SECONDS);
+      batchSinkMetrics.waitFor("system.process.events.in", 99, 5, TimeUnit.SECONDS);
       batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, batchSinkMetrics.getException());
 

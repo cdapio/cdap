@@ -26,6 +26,8 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.deploy.Manager;
+import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,6 +35,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.deploy.ProgramTerminator;
+import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -50,6 +55,8 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.quartz.DateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +67,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -73,21 +81,29 @@ public class AdapterService extends AbstractIdleService {
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String DATASET_CLASS = "dataset.class";
+  private final LocationFactory locationFactory;
+  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final CConfiguration configuration;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
   private final Scheduler scheduler;
   private final Store store;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
+  private final String archiveDir;
+
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
-                        StreamAdmin streamAdmin, StoreFactory storeFactory) {
+                        StreamAdmin streamAdmin, StoreFactory storeFactory, LocationFactory locationFactory,
+                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory) {
     this.configuration = configuration;
     this.datasetFramework = datasetFramework;
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
+    this.locationFactory = locationFactory;
+    this.managerFactory = managerFactory;
+    archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
   }
 
   @Override
@@ -167,26 +183,58 @@ public class AdapterService extends AbstractIdleService {
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
     Preconditions.checkNotNull(adapterTypeInfo, "Adapter type %s not found", adapterSpec.getType());
 
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
-    Preconditions.checkNotNull(appSpec, "Application %s not found for the adapter %s",
-                               adapterSpec.getType(), adapterSpec.getName());
+    try {
+      ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
-    validateSources(adapterSpec.getName(), adapterSpec.getSources());
-    createSinks(adapterSpec.getSinks(), adapterTypeInfo);
+      validateSources(adapterSpec.getName(), adapterSpec.getSources());
+      createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
-    // If the adapter already exists, remove existing schedule to replace with the new one.
-    AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
-    if (existingSpec != null) {
-      stopPrograms(namespaceId, appSpec, adapterTypeInfo, existingSpec);
+      // If the adapter already exists, remove existing schedule to replace with the new one.
+      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
+      if (existingSpec != null) {
+        stopPrograms(namespaceId, appSpec, adapterTypeInfo, existingSpec);
+      }
+
+      startPrograms(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
+      store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
+
+    } catch (Exception e) {
+      throw new RuntimeException("Error deploying adapter application " + e.getMessage());
+    }
+  }
+
+  // Deploys adapter application if it is not already deployed.
+  private ApplicationSpecification deployApplication(String namespaceId, AdapterTypeInfo adapterTypeInfo)
+    throws Exception {
+
+    ApplicationSpecification spec = store.getApplication(Id.Application.from(namespaceId, adapterTypeInfo.getType()));
+
+    if (spec != null) {
+      return spec;
     }
 
-    startPrograms(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
-    store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
+    try {
+      Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+
+        }
+      });
+
+      Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
+      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
+      ApplicationWithPrograms applicationWithPrograms = manager.deploy(Id.Namespace.from(namespaceId),
+                                                                       adapterTypeInfo.getType(), deploymentInfo).get();
+      return applicationWithPrograms.getSpecification();
+
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  public void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                            AdapterSpecification adapterSpec) {
+  private void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                             AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
     Map<String, String> adapterProperties = Maps.newHashMap();
     adapterProperties.putAll(adapterTypeInfo.getDefaultAdapterProperties());

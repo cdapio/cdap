@@ -50,27 +50,27 @@ public final class RuntimeStats {
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     String prefix = String.format("%s.f.%s.%s", applicationId, flowId, flowletId);
-    String inputName = String.format("%s.process.tuples.read", prefix);
-    String processedName = String.format("%s.process.events.processed", prefix);
-    String exceptionName = String.format("%s.process.errors", prefix);
+    String inputName = String.format("%s.system.process.tuples.read", prefix);
+    String processedName = String.format("%s.system.process.events.processed", prefix);
+    String exceptionName = String.format("%s.system.process.errors", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
     String prefix = String.format("%s.p.%s", applicationId, procedureId);
-    String inputName = String.format("%s.query.requests", prefix);
-    String processedName = String.format("%s.query.processed", prefix);
-    String exceptionName = String.format("%s.query.failures", prefix);
+    String inputName = String.format("%s.system.query.requests", prefix);
+    String processedName = String.format("%s.system.query.processed", prefix);
+    String exceptionName = String.format("%s.system.query.failures", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
     String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
-    String inputName = String.format("%s.requests.count", prefix);
-    String processedName = String.format("%s.response.successful.count", prefix);
-    String exceptionName = String.format("%s.response.server.error.count", prefix);
+    String inputName = String.format("%s.system.requests.count", prefix);
+    String processedName = String.format("%s.system.response.successful.count", prefix);
+    String exceptionName = String.format("%s.system.response.server.error.count", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }

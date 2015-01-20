@@ -36,6 +36,7 @@ public final class RecordFormats {
       .put(Formats.STRING, SingleStringRecordFormat.class)
       .put(Formats.CSV, DelimitedStringsRecordFormat.class)
       .put(Formats.TSV, DelimitedStringsRecordFormat.class)
+      .put(Formats.AVRO, AvroRecordFormat.class)
       .build();
   private static final Map<String, Map<String, String>> NAME_SETTINGS_MAP =
     ImmutableMap.<String, Map<String, String>>builder()
