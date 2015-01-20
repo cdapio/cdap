@@ -205,7 +205,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   /**
    * Holder for coprocessor information.
    */
-  protected static final class CoprocessorJar {
+  // todo: make protected, after CDAP-1193 is fixed
+  public static final class CoprocessorJar {
     public static final CoprocessorJar EMPTY = new CoprocessorJar(ImmutableList.<Class<? extends Coprocessor>>of(),
                                                                   null);
 
