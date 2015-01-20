@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ import java.util.concurrent.Callable;
 /**
  * {@link StreamWriterSizeManager} implementation for Streams written to files.
  */
+@Singleton
 public class StreamFileWriterSizeManager extends AbstractStreamWriterSizeManager {
   private static final Logger LOG = LoggerFactory.getLogger(StreamFileWriterSizeManager.class);
 
