@@ -64,6 +64,4 @@ public class Schedules {
       throw new IllegalArgumentException("Could not parse the frequency");
     }
   }
-
-
 }
