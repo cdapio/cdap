@@ -106,10 +106,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    // The app will get deleted since there are no more adapters using the app.
-    deployedApps = getAppList(namespaceId);
-    Assert.assertEquals(0, deployedApps.size());
-
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }

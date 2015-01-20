@@ -16,10 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.proto.AdapterConfig;
-import co.cask.cdap.proto.AdapterSpecification;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -54,18 +50,22 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -74,8 +74,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -98,7 +96,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -109,7 +106,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-
 /**
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
  */
@@ -117,11 +113,6 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
-
-  /**
-   * Json serializer.
-   */
-  private static final Gson GSON = new Gson();
 
   /**
    * Timeout to get response from metrics system.
@@ -237,115 +228,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Retrieves all adapters in a given namespace.
-   */
-  @GET
-  @Path("/adapters")
-  public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceExists(namespaceId)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Namespace '%s' does not exist.", namespaceId));
-      return;
-    }
-    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
-  }
-
-  /**
-   * Retrieves an adapter
-   */
-  @GET
-  @Path("/adapters/{adapter-name}")
-  public void getAdapter(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-name") String adapterName) {
-    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    if (adapterSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Adapter not found: %s.%s", namespaceId, adapterName));
-      return;
-    }
-    responder.sendJson(HttpResponseStatus.OK, adapterSpec);
-  }
-
-
-  /**
-   * Deletes an adapter
-   */
-  @DELETE
-  @Path("/adapters/{adapter-name}")
-  public void deleteAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
-    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    if (adapterSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Adapter not found: %s.%s", namespaceId, adapterName));
-      return;
-    }
-    String appName = adapterSpec.getType();
-    adapterService.removeAdapter(namespaceId, adapterSpec);
-
-    // remove application if this adapter was the last adapter for that app
-    Iterable<AdapterSpecification> adaptersByType = adapterService.getAdapters(namespaceId, appName);
-    if (Iterables.isEmpty(adaptersByType)) {
-      Id.Application appId = Id.Application.from(namespaceId, appName);
-      try {
-        removeApplication(appId);
-        LOG.debug("Deleted application: {}, because there are no more adapters for it.", appId);
-      } catch (Exception e) {
-        LOG.error("Got exception while deploy of app: {}. ", appId, e);
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-      }
-    }
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-
-
-  /**
-   * Create an adapter.
-   */
-  @PUT
-  @Path("/adapters/{adapter-name}")
-  public void createAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
-
-    try {
-      if (!namespaceExists(namespaceId)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
-        return;
-      }
-
-      AdapterConfig config = parseBody(request, AdapterConfig.class);
-      if (config == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
-        return;
-      }
-
-      // Validate the adapter
-      String adapterType = config.type;
-      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
-      if (adapterTypeInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
-        return;
-      }
-
-      AdapterSpecification spec = getAdapterSpec(config, adapterName, adapterTypeInfo.getSourceType(),
-                                                 adapterTypeInfo.getSinkType());
-      adapterService.createAdapter(namespaceId, spec);
-      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Throwable th) {
-      LOG.error("Failed to deploy adapter", th);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, th.getMessage());
-    }
-  }
-
-  /**
    * Returns a list of applications associated with a namespace.
    */
   @GET
@@ -414,6 +296,119 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Retrieves all adapters in a given namespace.
+   */
+  @GET
+  @Path("/adapters")
+  public void listAdapters(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) {
+    if (!namespaceExists(namespaceId)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Namespace '%s' does not exist.", namespaceId));
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
+  }
+
+  /**
+   * Retrieves an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-name}")
+  public void getAdapter(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("adapter-name") String adapterName) {
+    try {
+      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Starts/stops an adapter
+   */
+  @POST
+  @Path("/adapters/{adapterId}/{action}")
+  public void startStopAdapter(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapterId") String adapterId,
+                               @PathParam("action") String action) {
+    try {
+      if ("start".equals(action)) {
+        adapterService.startAdapter(namespaceId, adapterId);
+      } else if ("stop".equals(action)) {
+        adapterService.stopAdapter(namespaceId, adapterId);
+      } else {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].", action));
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Deletes an adapter
+   */
+  @DELETE
+  @Path("/adapters/{adapter-name}")
+  public void deleteAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-name") String adapterName) {
+    try {
+      adapterService.removeAdapter(namespaceId, adapterName);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Create an adapter.
+   */
+  @PUT
+  @Path("/adapters/{adapter-name}")
+  public void createAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-name") String adapterName) {
+
+    try {
+      if (!namespaceExists(namespaceId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
+        return;
+      }
+
+      AdapterConfig config = parseBody(request, AdapterConfig.class);
+      if (config == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
+        return;
+      }
+
+      // Validate the adapter
+      String adapterType = config.getType();
+      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
+      if (adapterTypeInfo == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
+        return;
+      }
+
+      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo);
+      adapterService.createAdapter(namespaceId, spec);
+      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable th) {
+      LOG.error("Failed to deploy adapter", th);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
   }
 
@@ -588,7 +583,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       Id.Namespace accId = Id.Namespace.from(namespaceId);
-      List<ApplicationRecord> result = Lists.newArrayList();
+      List<ApplicationRecord> appRecords = Lists.newArrayList();
       List<ApplicationSpecification> specList;
       if (appId == null) {
         specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
@@ -602,18 +597,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       for (ApplicationSpecification appSpec : specList) {
-        result.add(makeAppRecord(appSpec));
+        appRecords.add(makeAppRecord(appSpec));
       }
 
-      String json;
       if (appId == null) {
-        json = GSON.toJson(result);
+        responder.sendJson(HttpResponseStatus.OK, appRecords);
       } else {
-        json = GSON.toJson(result.get(0));
+        responder.sendJson(HttpResponseStatus.OK, appRecords.get(0));
       }
-
-      responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
     } catch (SecurityException e) {
       LOG.debug("Security Exception while retrieving app details: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -851,6 +842,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
   }
+<<<<<<< HEAD
 
   private AdapterSpecification getAdapterSpec(AdapterConfig config, String name,
                                               Source.Type sourceType, Sink.Type sinkType) {
@@ -862,4 +854,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     return new AdapterSpecification(name, config.type, config.properties, sources, sinks);
   }
+=======
+>>>>>>> ce5ff42fb04b653193d838ab1ea8999b671d20f6
 }
