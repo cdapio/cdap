@@ -98,7 +98,7 @@ Spark programs in CDAP can directly access **Dataset** similar to the way a MapR
 Procedure can. These programs can create Spark's Resilient Distributed Dataset (RDD) by
 reading a Dataset and can also write RDD to a Dataset.
 
-In order to access a Dataset in Spark, both the key and value classes has to be serializable.
+In order to access a Dataset in Spark, both the key and value classes have to be serializable.
 Otherwise, Spark will fail to read or write them.
 For example, the Table Dataset has a value type of Row, which is not serializable.
 
