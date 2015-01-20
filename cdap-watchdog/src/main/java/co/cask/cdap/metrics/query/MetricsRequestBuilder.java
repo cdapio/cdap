@@ -17,7 +17,6 @@ package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.data.Interpolator;
-import com.google.common.base.Preconditions;
 
 import java.net.URI;
 
@@ -98,8 +97,11 @@ final class MetricsRequestBuilder {
   }
 
   MetricsRequest build() {
-    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix,
-                                  tagPrefix, startTime, endTime, type, resolution, count, scope, interpolator);
+    String metricNamePrefix =
+      scope == null || metricPrefix == null ? metricPrefix : scope.name().toLowerCase() + "." + metricPrefix;
+
+    return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricNamePrefix,
+                                  tagPrefix, startTime, endTime, type, resolution, count, interpolator);
   }
 
   private static class MetricsRequestImpl implements MetricsRequest {
@@ -113,13 +115,11 @@ final class MetricsRequestBuilder {
     private final Type type;
     private final int resolution;
     private final int count;
-    private MetricsScope scope;
     private Interpolator interpolator;
 
     public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix, String tagPrefix,
                               long startTime, long endTime, Type type, int resolution,
-                              int count, MetricsScope scope, Interpolator interpolator) {
-      Preconditions.checkNotNull(scope);
+                              int count, Interpolator interpolator) {
       this.contextPrefix = contextPrefix;
       this.requestURI = requestURI;
       this.runId = runId;
@@ -129,7 +129,6 @@ final class MetricsRequestBuilder {
       this.endTime = endTime;
       this.type = type;
       this.count = count;
-      this.scope = scope;
       this.interpolator = interpolator;
       this.resolution = resolution;
     }
@@ -187,11 +186,6 @@ final class MetricsRequestBuilder {
     @Override
     public Interpolator getInterpolator() {
       return interpolator;
-    }
-
-    @Override
-    public MetricsScope getScope() {
-      return scope;
     }
   }
 }

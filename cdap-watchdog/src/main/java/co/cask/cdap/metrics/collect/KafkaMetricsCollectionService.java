@@ -17,7 +17,6 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricValue;
@@ -76,7 +75,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     KafkaPublisher publisher = getPublisher();
     if (publisher == null) {
       LOG.warn("Unable to get kafka publisher, will not be able to publish metrics.");
@@ -84,7 +83,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
     }
     encoderOutputStream.reset();
 
-    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix + "." + scope.name().toLowerCase());
+    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix);
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
       MetricValue value = metrics.next();

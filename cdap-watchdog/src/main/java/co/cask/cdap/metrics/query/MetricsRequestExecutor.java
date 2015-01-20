@@ -17,7 +17,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.OperationException;
@@ -61,19 +60,15 @@ public class MetricsRequestExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsRequestExecutor.class);
   private static final Gson GSON = new Gson();
 
-  private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
+  private final Supplier<AggregatesTable> aggregatesTables;
   private final TimeSeriesTables timeSeriesTables;
 
   public MetricsRequestExecutor(final MetricsTableFactory metricsTableFactory) {
     this.timeSeriesTables = new TimeSeriesTables(metricsTableFactory);
-    this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
+    this.aggregatesTables = Suppliers.memoize(new Supplier<AggregatesTable>() {
       @Override
-      public Map<MetricsScope, AggregatesTable> get() {
-        Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
-        for (final MetricsScope scope : MetricsScope.values()) {
-          map.put(scope, metricsTableFactory.createAggregates(scope.name()));
-        }
-        return map;
+      public AggregatesTable get() {
+        return metricsTableFactory.createAggregates();
       }
     });
   }
@@ -86,14 +81,13 @@ public class MetricsRequestExecutor {
       TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(metricsRequest.getStartTime(),
                                                                       metricsRequest.getEndTime());
       // Special metrics handle that requires computation from multiple time series.
-      if ("process.busyness".equals(metricsRequest.getMetricPrefix())) {
+      if ("system.process.busyness".equals(metricsRequest.getMetricPrefix())) {
         computeProcessBusyness(metricsRequest, builder);
       } else {
         MetricsScanQuery scanQuery = createScanQuery(metricsRequest);
 
         PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
-          queryTimeSeries(metricsRequest.getScope(),
-                          scanQuery,
+          queryTimeSeries(scanQuery,
                           metricsRequest.getInterpolator(),
                           metricsRequest.getTimeSeriesResolution()));
 
@@ -123,7 +117,7 @@ public class MetricsRequestExecutor {
 
     } else if (metricsRequest.getType() == MetricsRequest.Type.AGGREGATE) {
       // Special metrics handle that requires computation from multiple aggregates results.
-      if ("process.events.pending".equals(metricsRequest.getMetricPrefix())) {
+      if ("system.process.events.pending".equals(metricsRequest.getMetricPrefix())) {
         resultObj = computeQueueLength(metricsRequest);
       } else {
         resultObj = getAggregates(metricsRequest);
@@ -140,21 +134,20 @@ public class MetricsRequestExecutor {
     long end = (metricsRequest.getEndTime() / resolution) * resolution;
     MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
       .setContext(metricsRequest.getContextPrefix())
-      .setMetric("process.tuples.read")
+      .setMetric("system.process.tuples.read")
       .build(start, end);
-    MetricsScope scope = metricsRequest.getScope();
 
     PeekingIterator<TimeValue> tuplesReadItor =
-      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator(),
+      Iterators.peekingIterator(queryTimeSeries(scanQuery, metricsRequest.getInterpolator(),
                                                 metricsRequest.getTimeSeriesResolution()));
 
     scanQuery = new MetricsScanQueryBuilder()
       .setContext(metricsRequest.getContextPrefix())
-      .setMetric("process.events.processed")
+      .setMetric("system.process.events.processed")
       .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
 
     PeekingIterator<TimeValue> eventsProcessedItor =
-      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator(),
+      Iterators.peekingIterator(queryTimeSeries(scanQuery, metricsRequest.getInterpolator(),
                                                 metricsRequest.getTimeSeriesResolution()));
     long resultTimeStamp = start;
 
@@ -179,14 +172,14 @@ public class MetricsRequestExecutor {
   }
 
   private Object computeQueueLength(MetricsRequest metricsRequest) {
-    AggregatesTable aggregatesTable = aggregatesTables.get().get(metricsRequest.getScope());
+    AggregatesTable aggregatesTable = aggregatesTables.get();
 
     // process.events.processed will have a tag like "input.queue://PurchaseFlow/reader/queue" which indicates
     // where the processed event came from.  So first get the aggregate count for events processed and all the
     // queues they came from. Next, for all those queues, get the aggregate count for events they wrote,
     // and subtract the two to get queue length.
     AggregatesScanner scanner = aggregatesTable.scan(metricsRequest.getContextPrefix(),
-                                                     "process.events.processed",
+                                                     "system.process.events.processed",
                                                      metricsRequest.getRunId(),
                                                      "input");
 
@@ -219,21 +212,22 @@ public class MetricsRequestExecutor {
     long enqueue = 0;
     for (ImmutablePair<String, String> pair : queueNameContexts) {
       // The paths would be /flowId/flowletId/queueSimpleName
-      enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "process.events.out", "0", pair.getFirst()));
+      enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "system.process.events.out", "0", pair.getFirst()));
     }
     for (String streamName : streamNames) {
       String ctx = Constants.Gateway.METRICS_CONTEXT + "." + Constants.Gateway.STREAM_HANDLER_NAME;
-      enqueue += sumAll(aggregatesTable.scan(ctx, "collect.events", "0", streamName));
+      enqueue += sumAll(aggregatesTable.scan(ctx, "system.collect.events", "0", streamName));
     }
 
     long len = enqueue - processed;
     return new AggregateResponse(len >= 0 ? len : 0);
   }
 
-  private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery,
-                                              Interpolator interpolator, int resolution) throws OperationException {
+  private Iterator<TimeValue> queryTimeSeries(MetricsScanQuery scanQuery, Interpolator interpolator, int resolution)
+    throws OperationException {
+
     Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
-    MetricsScanner scanner = timeSeriesTables.scan(scope, resolution, scanQuery);
+    MetricsScanner scanner = timeSeriesTables.scan(resolution, scanQuery);
     while (scanner.hasNext()) {
       MetricsScanResult res = scanner.next();
       // if we get multiple scan results for the same logical timeseries, concatenate them together.
@@ -251,7 +245,7 @@ public class MetricsRequestExecutor {
   }
 
   private AggregateResponse getAggregates(MetricsRequest request) {
-    AggregatesTable aggregatesTable = aggregatesTables.get().get(request.getScope());
+    AggregatesTable aggregatesTable = aggregatesTables.get();
     AggregatesScanner scanner = aggregatesTable.scan(request.getContextPrefix(), request.getMetricPrefix(),
                                                      request.getRunId(), request.getTagPrefix());
     return new AggregateResponse(sumAll(scanner));

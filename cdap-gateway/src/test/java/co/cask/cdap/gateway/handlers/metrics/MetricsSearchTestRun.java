@@ -16,9 +16,10 @@
 
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -57,40 +58,38 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
 
     // Adding metrics for app "WordCount" in namespace "myspace", "WCount" in "yourspace"
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER, getFlowletContext(MY_SPACE, "WordCount", "WordCounter",
-                                                                          "splitter"));
+      collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext(YOUR_SPACE, "WCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext(YOUR_SPACE, "WCount", "WCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount", "WCounter", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext(YOUR_SPACE, "WCount", "WCounter", "counter"));
+    collector = collectionService.getCollector(getFlowletContext(YOUR_SPACE, "WCount", "WCounter", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getProcedureContext(YOUR_SPACE, "WCount", "RCounts"));
+    collector = collectionService.getCollector(getProcedureContext(YOUR_SPACE, "WCount", "RCounts"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getMapReduceTaskContext(YOUR_SPACE, "WCount", "ClassicWordCount",
+    collector = collectionService.getCollector(getMapReduceTaskContext(YOUR_SPACE, "WCount", "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Mapper));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getMapReduceTaskContext(YOUR_SPACE, "WCount", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Reducer));
+    collector = collectionService.getCollector(
+      getMapReduceTaskContext(YOUR_SPACE, "WCount", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "collector"));
+    collector = collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
+
+    // also: user metrics
+    Metrics userMetrics =
+      new ProgramUserMetrics(collectionService.getCollector(getFlowletContext(MY_SPACE, "WordCount", "WordCounter",
+                                                                              "splitter")));
+    userMetrics.count("reads", 1);
+    userMetrics.count("writes", 2);
 
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);
@@ -134,7 +133,11 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
 
     String result = EntityUtils.toString(response.getEntity());
     List<String> resultList = new Gson().fromJson(result, LIST_TYPE);
-    Assert.assertEquals(2, resultList.size());
+    Assert.assertEquals(4, resultList.size());
+    Assert.assertEquals("system.reads", resultList.get(0));
+    Assert.assertEquals("system.writes", resultList.get(1));
+    Assert.assertEquals("user.reads", resultList.get(2));
+    Assert.assertEquals("user.writes", resultList.get(3));
 
     base = getMetricsUri(MY_SPACE, "WordCount.f.WordCounter.collector");
     response = doGet(base);
@@ -143,9 +146,9 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
     result = EntityUtils.toString(response.getEntity());
     resultList = GSON.fromJson(result, LIST_TYPE);
     Assert.assertEquals(3, resultList.size());
-    Assert.assertEquals("aa", resultList.get(0));
-    Assert.assertEquals("ab", resultList.get(1));
-    Assert.assertEquals("zz", resultList.get(2));
+    Assert.assertEquals("system.aa", resultList.get(0));
+    Assert.assertEquals("system.ab", resultList.get(1));
+    Assert.assertEquals("system.zz", resultList.get(2));
 
     // make sure that WordCount is not found in yourspace
     base = getMetricsUri(YOUR_SPACE, "WordCount.f.WordCounter.collector");
@@ -162,7 +165,7 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
     result = EntityUtils.toString(response.getEntity());
     resultList = GSON.fromJson(result, LIST_TYPE);
     Assert.assertEquals(1, resultList.size());
-    Assert.assertEquals("reads", resultList.get(0));
+    Assert.assertEquals("system.reads", resultList.get(0));
 
     // WCount should not be found in myspace
     base = getMetricsUri(MY_SPACE, "WCount.b.ClassicWordCount.m");
@@ -176,14 +179,14 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
   private static String getMetricsSearchUri(String namespaceId, @Nullable String prefix) {
     String metricsSearchUri;
     if (prefix == null) {
-      metricsSearchUri = String.format("/v3/namespaces/%s/metrics/user?search=childContext", namespaceId);
+      metricsSearchUri = String.format("/v3/namespaces/%s/metrics?search=childContext", namespaceId);
     } else {
-      metricsSearchUri = String.format("/v3/namespaces/%s/metrics/user/%s?search=childContext", namespaceId, prefix);
+      metricsSearchUri = String.format("/v3/namespaces/%s/metrics/%s?search=childContext", namespaceId, prefix);
     }
     return metricsSearchUri;
   }
 
   private static String getMetricsUri(String namespaceId, String metric) {
-    return String.format("/v3/namespaces/%s/metrics/user/%s/metrics", namespaceId, metric);
+    return String.format("/v3/namespaces/%s/metrics/%s/metrics", namespaceId, metric);
   }
 }

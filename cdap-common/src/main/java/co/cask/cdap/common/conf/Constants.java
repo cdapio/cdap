@@ -382,6 +382,8 @@ public final class Constants {
       public static final String FLOWLET_QUEUE = "flq";
       public static final String CLUSTER_METRICS = "cls";
       public static final String NAMESPACE = "ns";
+      // who emitted: user vs system (scope is historical name)
+      public static final String SCOPE = "scp";
     }
   }
 

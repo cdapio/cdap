@@ -17,11 +17,8 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricType;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -48,16 +45,16 @@ public class MapReduceMetricsWriter {
 
   private final Job jobConf;
   private final BasicMapReduceContext context;
-  private final Table<MetricsScope, String, Integer> previousMapStats;
-  private final Table<MetricsScope, String, Integer> previousReduceStats;
-  private final Table<MetricsScope, String, Integer> previousDatasetStats;
+  private final Map<String, Integer> previousMapStats;
+  private final Map<String, Integer> previousReduceStats;
+  private final Map<String, Integer> previousDatasetStats;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.context = context;
-    this.previousMapStats = HashBasedTable.create();
-    this.previousReduceStats = HashBasedTable.create();
-    this.previousDatasetStats = HashBasedTable.create();
+    this.previousMapStats = Maps.newHashMap();
+    this.previousReduceStats = Maps.newHashMap();
+    this.previousDatasetStats = Maps.newHashMap();
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -87,12 +84,12 @@ public class MapReduceMetricsWriter {
     long mapOutputRecords = getTaskCounter(TaskCounter.MAP_OUTPUT_RECORDS);
     long mapOutputBytes = getTaskCounter(TaskCounter.MAP_OUTPUT_BYTES);
 
-    context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge(METRIC_INPUT_RECORDS, mapInputRecords);
-    context.getSystemMapperMetrics().gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
-    context.getSystemMapperMetrics().gauge(METRIC_BYTES, mapOutputBytes);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
+    context.getMapperMetrics().gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
+    context.getMapperMetrics().gauge(METRIC_INPUT_RECORDS, mapInputRecords);
+    context.getMapperMetrics().gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
+    context.getMapperMetrics().gauge(METRIC_BYTES, mapOutputBytes);
+    context.getMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
+    context.getMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
     LOG.trace("Reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
               (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
@@ -103,11 +100,11 @@ public class MapReduceMetricsWriter {
     long reduceInputRecords = getTaskCounter(TaskCounter.REDUCE_INPUT_RECORDS);
     long reduceOutputRecords = getTaskCounter(TaskCounter.REDUCE_OUTPUT_RECORDS);
 
-    context.getSystemReducerMetrics().gauge(METRIC_COMPLETION, (long) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
-    context.getSystemReducerMetrics().gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
+    context.getReducerMetrics().gauge(METRIC_COMPLETION, (long) (reduceProgress * 100));
+    context.getReducerMetrics().gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
+    context.getReducerMetrics().gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
+    context.getReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
+    context.getReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
     LOG.trace("Reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
               (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
@@ -121,23 +118,14 @@ public class MapReduceMetricsWriter {
       if (group.startsWith("cdap.")) {
         String[] parts = group.split("\\.");
         MetricType metricType = MetricType.valueOf(parts[parts.length - 2]);
-        String scopePart = parts[parts.length - 1];
-        // last one should be scope
-        MetricsScope scope;
-        try {
-          scope = MetricsScope.valueOf(scopePart);
-        } catch (IllegalArgumentException e) {
-          // SHOULD NEVER happen, simply skip if happens
-          continue;
-        }
 
         //TODO: Refactor to support any context
         String programPart = parts[1];
         if (programPart.equals("mapper")) {
-          reportSystemStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
+          reportSystemStats(counters.getGroup(group), context.getMapperMetrics(),
                             previousMapStats, metricType);
         } else if (programPart.equals("reducer")) {
-          reportSystemStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
+          reportSystemStats(counters.getGroup(group), context.getReducerMetrics(),
                             previousReduceStats, metricType);
         }
       }
@@ -146,26 +134,25 @@ public class MapReduceMetricsWriter {
 
   // convenience function to set the table value to the given value and return the difference between the given value
   // and the previous table value, where the previous value is 0 if there was no entry in the table to begin with.
-  private int calcDiffAndSetTableValue(Table<MetricsScope, String, Integer> table,
-                                       MetricsScope scope, String key, long value) {
-    Integer previous = table.get(scope, key);
+  private int calcDiffAndSetTableValue(Map<String, Integer> table, String key, long value) {
+    Integer previous = table.get(key);
     previous = (previous == null) ? 0 : previous;
-    table.put(scope, key, (int) value);
+    table.put(key, (int) value);
     return (int) value - previous;
   }
 
-  private void reportSystemStats(Iterable<Counter> counters, MetricsCollector collector, MetricsScope scope,
-                                 Table<MetricsScope, String, Integer> previousStats,  MetricType type) {
+  private void reportSystemStats(Iterable<Counter> counters, MetricsCollector collector,
+                                 Map<String, Integer> previousStats,  MetricType type) {
     if (type == MetricType.GAUGE) {
       reportGaugeSystemStats(counters, collector);
     } else {
-      reportIncrementSystemStats(counters, collector, scope, previousStats);
+      reportIncrementSystemStats(counters, collector, previousStats);
     }
   }
 
 
-  private void reportIncrementSystemStats(Iterable<Counter> counters, MetricsCollector collector, MetricsScope scope,
-                                          Table<MetricsScope, String, Integer> previousStats) {
+  private void reportIncrementSystemStats(Iterable<Counter> counters, MetricsCollector collector,
+                                          Map<String, Integer> previousStats) {
 
     // we don't want to overcount the untagged version of the metric.  For example.  If "metric":"store.bytes"
     // comes in with "tag":"dataset1" and value 10, we will also have another counter for just the metric without the
@@ -180,7 +167,7 @@ public class MapReduceMetricsWriter {
       // mapred counters are running counters whereas our metrics timeseries and aggregates make more
       // sense as incremental numbers.  So we want to subtract the current counter value from the previous before
       // emitting to the metrics system.
-      int emitValue = calcDiffAndSetTableValue(previousStats, scope, counter.getName(), counter.getValue());
+      int emitValue = calcDiffAndSetTableValue(previousStats, counter.getName(), counter.getValue());
 
       // "<metric>" or "<metric>,<tag>" if tag is present
       String[] parts = counter.getName().split(",", 2);

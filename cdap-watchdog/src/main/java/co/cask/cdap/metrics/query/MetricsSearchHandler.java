@@ -27,7 +27,6 @@ import co.cask.cdap.metrics.data.TimeSeriesTable;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -37,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.ws.rs.GET;
@@ -54,7 +52,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/metrics")
 public class MetricsSearchHandler extends  BaseMetricsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
-  private final Supplier<Map<MetricsScope, TimeSeriesTable>> timeSeriesTables;
+  private final Supplier<TimeSeriesTable> timeSeriesTables;
 
   // NOTE: Hour is the lowest resolution and also has the highest TTL compared to minute and second resolutions.
   // highest TTL ensures, this is good for querying all available metrics and also has fewer rows of data points.
@@ -64,14 +62,10 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
   public MetricsSearchHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
     super(authenticator);
 
-    this.timeSeriesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, TimeSeriesTable>>() {
+    this.timeSeriesTables = Suppliers.memoize(new Supplier<TimeSeriesTable>() {
       @Override
-      public Map<MetricsScope, TimeSeriesTable> get() {
-        Map<MetricsScope, TimeSeriesTable> map = Maps.newHashMap();
-        for (MetricsScope scope : MetricsScope.values()) {
-          map.put(scope, metricsTableFactory.createTimeSeries(scope.name(), LOWEST_RESOLUTION));
-        }
-        return map;
+      public TimeSeriesTable get() {
+        return metricsTableFactory.createTimeSeries(LOWEST_RESOLUTION);
       }
     });
   }
@@ -81,10 +75,9 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
    * Returns all the unique elements available in the first context
    */
   @GET
-  @Path("/{scope}")
+  @Path("/")
   public void listFirstContexts(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
-                                @PathParam("scope") final String scope,
                                 @QueryParam("search") String search) throws IOException {
     try {
       if (search == null || !search.equals("childContext")) {
@@ -92,8 +85,7 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
                            "please provide queryparam search for childContext for getting contexts at next level");
         return;
       }
-      MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      responder.sendJson(HttpResponseStatus.OK, getNextContext(metricsScope, namespaceId));
+      responder.sendJson(HttpResponseStatus.OK, getNextContext(namespaceId));
     } catch (IllegalArgumentException exception) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
         MetricsScope.USER);
@@ -107,10 +99,9 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
    * Returns all the unique elements available in the context after the given context prefix
    */
   @GET
-  @Path("/{scope}/{context}")
+  @Path("/{context}")
   public void listContextsByPrefix(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("scope") final String scope,
                                    @PathParam("context") final String context,
                                    @QueryParam("search") String search) throws IOException {
     try {
@@ -119,9 +110,7 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
                            "please provide queryparam search for childContext for getting contexts at next level");
         return;
       }
-      MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      responder.sendJson(HttpResponseStatus.OK,
-                         getNextContext(metricsScope, String.format("%s.%s", namespaceId, context)));
+      responder.sendJson(HttpResponseStatus.OK, getNextContext(String.format("%s.%s", namespaceId, context)));
     } catch (IllegalArgumentException exception) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
         MetricsScope.USER);
@@ -135,15 +124,12 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
    * Returns all the unique metrics in the given context
    */
   @GET
-  @Path("/{scope}/{context}/metrics")
+  @Path("/{context}/metrics")
   public void listContextMetrics(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("scope") final String scope,
                                  @PathParam("context") final String context) throws IOException {
     try {
-      MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      responder.sendJson(HttpResponseStatus.OK,
-                         getAvailableMetricNames(metricsScope, String.format("%s.%s", namespaceId, context)));
+      responder.sendJson(HttpResponseStatus.OK, getAvailableMetricNames(String.format("%s.%s", namespaceId, context)));
     } catch (IllegalArgumentException exception) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Available scopes are : " + MetricsScope.SYSTEM + " and " +
         MetricsScope.USER);
@@ -153,21 +139,21 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
     }
   }
 
-  private Set<String> getNextContext(MetricsScope scope, String contextPrefix) throws OperationException {
+  private Set<String> getNextContext(String contextPrefix) throws OperationException {
     SortedSet<String> nextLevelContexts = Sets.newTreeSet();
-    TimeSeriesTable table = timeSeriesTables.get().get(scope);
+    TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
       allowEmptyMetric().build(-1, -1);
 
     List<String> results = table.getNextLevelContexts(query);
     for (String nextContext : results) {
       nextContext = (contextPrefix == null) ? nextContext : nextContext.substring(contextPrefix.length() + 1);
-      nextLevelContexts.add(getNextContext(nextContext));
+      nextLevelContexts.add(getNextPart(nextContext));
     }
     return nextLevelContexts;
   }
 
-  private String getNextContext(String context) {
+  private String getNextPart(String context) {
     int index = context.indexOf(".");
     if (index == -1) {
       return context;
@@ -176,9 +162,9 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
     }
   }
 
-  private Set<String> getAvailableMetricNames(MetricsScope scope, String contextPrefix) throws OperationException {
+  private Set<String> getAvailableMetricNames(String contextPrefix) throws OperationException {
     SortedSet<String> metrics = Sets.newTreeSet();
-    TimeSeriesTable table = timeSeriesTables.get().get(scope);
+    TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
       allowEmptyMetric().build(-1, -1);
     metrics.addAll(table.getAllMetrics(query));

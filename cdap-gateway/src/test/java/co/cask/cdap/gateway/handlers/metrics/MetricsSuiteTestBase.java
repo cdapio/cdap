@@ -65,6 +65,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
@@ -151,6 +152,11 @@ public abstract class MetricsSuiteTestBase {
     } finally {
       tmpFolder.delete();
     }
+  }
+
+  @After
+  public void after() throws Exception {
+    doDelete("/v2/metrics/");
   }
 
   public static void initialize() throws IOException, OperationException {

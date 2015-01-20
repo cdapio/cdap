@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.data.Interpolators;
 import org.junit.Assert;
 import org.junit.Test;
@@ -139,26 +138,17 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testScope() throws MetricsPathException {
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/system/apps/app1/reads?summary=true"));
-    Assert.assertEquals(MetricsScope.SYSTEM, request.getScope());
-
-    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/reads?summary=true"));
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
-  }
-
-  @Test
   public void testOverview() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/system/reads?aggregate=true"));
     Assert.assertNull(request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
   }
 
   @Test
   public void testApps() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/system/apps/app1/reads?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
   }
 
   @Test
@@ -166,30 +156,30 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/process.bytes?count=60&start=1&end=61"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("process.bytes", request.getMetricPrefix());
+    Assert.assertEquals("system.process.bytes", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/some.metric?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1", request.getContextPrefix());
-    Assert.assertEquals("some.metric", request.getMetricPrefix());
+    Assert.assertEquals("system.some.metric", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/loads?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f", request.getContextPrefix());
-    Assert.assertEquals("loads", request.getMetricPrefix());
+    Assert.assertEquals("system.loads", request.getMetricPrefix());
 
     //flow with runId
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/1234/some.metric?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1", request.getContextPrefix());
-    Assert.assertEquals("some.metric", request.getMetricPrefix());
+    Assert.assertEquals("system.some.metric", request.getMetricPrefix());
     Assert.assertEquals("1234", request.getRunId());
 
     //flowlet with runId
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/1234/flowlets/flowlet1/some.metric?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("some.metric", request.getMetricPrefix());
+    Assert.assertEquals("system.some.metric", request.getMetricPrefix());
     Assert.assertEquals("1234", request.getRunId());
   }
 
@@ -205,32 +195,32 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("process.bytes.in", request.getMetricPrefix());
+    Assert.assertEquals("system.process.bytes.in", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.out?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("process.bytes.out", request.getMetricPrefix());
+    Assert.assertEquals("system.process.bytes.out", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.in?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("process.events.in", request.getMetricPrefix());
+    Assert.assertEquals("system.process.events.in", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.out?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("process.events.out", request.getMetricPrefix());
+    Assert.assertEquals("system.process.events.out", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/run123/flowlets/flowlet1/queues/queue1/" +
                    "process.events.out?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("process.events.out", request.getMetricPrefix());
+    Assert.assertEquals("system.process.events.out", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
     Assert.assertEquals("run123", request.getRunId());
   }
@@ -240,33 +230,33 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/mappers/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.b.mapred1.m", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reducers/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.b.mapred1.r", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.b.mapred1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/mapreduce/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.b", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/runs/run123/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.b.mapred1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
     Assert.assertEquals("run123", request.getRunId());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/runs/run123/mappers/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.b.mapred1.m", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
     Assert.assertEquals("run123", request.getRunId());
   }
 
@@ -275,17 +265,17 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/procedures/proc1/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.p.proc1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/procedures/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.p", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/procedures/proc1/runs/run123/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.p.proc1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
     Assert.assertEquals("run123", request.getRunId());
   }
 
@@ -294,17 +284,17 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/services/serve1/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.u.serve1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.u.serve1.run1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/services/serve1/runs/runid123/runnables/run1/reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.u.serve1.run1", request.getContextPrefix());
-    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("system.reads", request.getMetricPrefix());
     Assert.assertEquals("runid123", request.getRunId());
   }
 
@@ -313,12 +303,12 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/sparkmetric?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.s.fakespark", request.getContextPrefix());
-    Assert.assertEquals("sparkmetric", request.getMetricPrefix());
+    Assert.assertEquals("system.sparkmetric", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/runs/runid123/sparkmetric?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.s.fakespark", request.getContextPrefix());
-    Assert.assertEquals("sparkmetric", request.getMetricPrefix());
+    Assert.assertEquals("system.sparkmetric", request.getMetricPrefix());
     Assert.assertEquals("runid123", request.getRunId());
   }
 
@@ -341,39 +331,39 @@ public class MetricsRequestParserTest {
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/run1/" +
                    "flowlets/flowlet1/store.reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
     Assert.assertEquals("run1", request.getRunId());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/store.reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1", request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/123/store.reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f.flow1", request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
     Assert.assertEquals("123", request.getRunId());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/store.reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f", request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/store.reads?summary=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1", request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/store.reads?summary=true"));
     Assert.assertNull(request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
   }
 
@@ -382,7 +372,7 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/streams/stream1/collect.events?summary=true"));
     Assert.assertNull(request.getContextPrefix());
-    Assert.assertEquals("collect.events", request.getMetricPrefix());
+    Assert.assertEquals("system.collect.events", request.getMetricPrefix());
     Assert.assertEquals("stream1", request.getTagPrefix());
   }
 
@@ -392,7 +382,7 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/services/appfabric/request.received?aggregate=true"));
     Assert.assertEquals("appfabric", request.getContextPrefix());
-    Assert.assertEquals("request.received", request.getMetricPrefix());
+    Assert.assertEquals("system.request.received", request.getMetricPrefix());
   }
 
 
@@ -402,7 +392,7 @@ public class MetricsRequestParserTest {
       URI.create("/system/services/appfabric/handlers/AppFabricHttpHandler/runs/123/" +
                    "response.server-error?aggregate=true"));
     Assert.assertEquals("appfabric.AppFabricHttpHandler", request.getContextPrefix());
-    Assert.assertEquals("response.server-error", request.getMetricPrefix());
+    Assert.assertEquals("system.response.server-error", request.getMetricPrefix());
     Assert.assertEquals("123", request.getRunId());
   }
 
@@ -412,7 +402,7 @@ public class MetricsRequestParserTest {
       URI.create("/system/services/metrics/handlers/MetricsQueryHandler/methods/handleComponent/" +
                    "response.successful?aggregate=true"));
     Assert.assertEquals("metrics.MetricsQueryHandler.handleComponent", request.getContextPrefix());
-    Assert.assertEquals("response.successful", request.getMetricPrefix());
+    Assert.assertEquals("system.response.successful", request.getMetricPrefix());
   }
 
   @Test(expected = MetricsPathException.class)
@@ -428,7 +418,7 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
     Assert.assertEquals("-.cluster", request.getContextPrefix());
-    Assert.assertEquals("resources.total.storage", request.getMetricPrefix());
+    Assert.assertEquals("system.resources.total.storage", request.getMetricPrefix());
   }
 
 
@@ -437,7 +427,7 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/transactions/invalid?count=1&start=12345678&interpolate=step"));
     Assert.assertEquals("transactions", request.getContextPrefix());
-    Assert.assertEquals("invalid", request.getMetricPrefix());
+    Assert.assertEquals("system.invalid", request.getMetricPrefix());
   }
 
   @Test
@@ -448,14 +438,12 @@ public class MetricsRequestParserTest {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/user/apps/app1/flows/" + encodedWeirdMetric + "?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1.f", request.getContextPrefix());
-    Assert.assertEquals(weirdMetric, request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
+    Assert.assertEquals("user." + weirdMetric, request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/user/apps/app1/" + encodedWeirdMetric + "?aggregate=true"));
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE + ".app1", request.getContextPrefix());
-    Assert.assertEquals(weirdMetric, request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
+    Assert.assertEquals("user." + weirdMetric, request.getMetricPrefix());
   }
 
 
