@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,8 +24,12 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.format.RecordFormats;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.upload.BufferedContentWriterFactory;
+import co.cask.cdap.data.stream.service.upload.ContentWriterFactory;
+import co.cask.cdap.data.stream.service.upload.FileContentWriterFactory;
+import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -33,6 +37,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -48,6 +53,7 @@ import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -90,6 +96,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
+  private final long batchBufferThreshold;
+  private final StreamBodyConsumerFactory streamBodyConsumerFactory;
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
@@ -98,40 +106,26 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
+  private final StreamWriterSizeCollector sizeCollector;
+
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                       StreamFileWriterFactory writerFactory,
+                       StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
+                       StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade) {
+                       ExploreFacade exploreFacade, StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.exploreFacade = exploreFacade;
+    this.sizeCollector = sizeCollector;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-
+    this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
+    this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
     this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
-    StreamMetricsCollectorFactory metricsCollectorFactory = new StreamMetricsCollectorFactory() {
-      @Override
-      public StreamMetricsCollector createMetricsCollector(String streamName) {
-        final MetricsCollector childCollector =
-          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
-        return new StreamMetricsCollector() {
-          @Override
-          public void emitMetrics(long bytesWritten, long eventsWritten) {
-            if (bytesWritten > 0) {
-              childCollector.increment("collect.bytes", bytesWritten);
-            }
-            if (eventsWritten > 0) {
-              childCollector.increment("collect.events", eventsWritten);
-            }
-          }
-        };
-      }
-    };
-
-    this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
+    StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
+    this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
                                                    metricsCollectorFactory);
   }
@@ -231,13 +225,32 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/async")
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
-                           @PathParam("stream") final String stream) throws Exception {
+                           @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    streamWriter.asyncEnqueue(accountId, stream,
-                              getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
+    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream),
+                              request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
+  }
+
+  @POST
+  @Path("/{stream}/batch")
+  public BodyConsumer batch(HttpRequest request, HttpResponder responder,
+                            @PathParam("stream") String stream) throws Exception {
+    String accountId = getAuthenticatedAccountId(request);
+
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
+      return null;
+    }
+
+    try {
+      return streamBodyConsumerFactory.create(request, createContentWriterFactory(accountId, stream, request));
+    } catch (UnsupportedOperationException e) {
+      responder.sendString(HttpResponseStatus.NOT_ACCEPTABLE, e.getMessage());
+      return null;
+    }
   }
 
   @POST
@@ -297,6 +310,28 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {
+    return new StreamMetricsCollectorFactory() {
+      @Override
+      public StreamMetricsCollector createMetricsCollector(final String streamName) {
+        final MetricsCollector childCollector =
+          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+        return new StreamMetricsCollector() {
+          @Override
+          public void emitMetrics(long bytesWritten, long eventsWritten) {
+            if (bytesWritten > 0) {
+              childCollector.increment("collect.bytes", bytesWritten);
+              sizeCollector.received(streamName, bytesWritten);
+            }
+            if (eventsWritten > 0) {
+              childCollector.increment("collect.events", eventsWritten);
+            }
+          }
+        };
+      }
+    };
   }
 
   private Map<String, String> getMetricsContext() {
@@ -400,6 +435,20 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
     return headers.build();
+  }
+
+  /**
+   * Creates a {@link ContentWriterFactory} based on the request size. Used by the batch endpoint.
+   */
+  private ContentWriterFactory createContentWriterFactory(String accountId,
+                                                          String stream, HttpRequest request) throws IOException {
+    long contentLength = HttpHeaders.getContentLength(request, -1L);
+    if (contentLength >= 0 && contentLength <= batchBufferThreshold) {
+      return new BufferedContentWriterFactory(accountId, stream, streamWriter, getHeaders(request, stream));
+    }
+
+    StreamConfig config = streamAdmin.getConfig(stream);
+    return new FileContentWriterFactory(accountId, config, streamWriter, getHeaders(request, stream));
   }
 
   /**

@@ -81,7 +81,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         @Override
         protected void configure() {
           // Tests are running in same process, hence no need to have ZK to coordinate
-          bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
+          bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
           bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
         }

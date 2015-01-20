@@ -68,7 +68,7 @@ public class HelloWorldTest extends TestBase {
     ServiceManager serviceManager = appManager.startService(HelloWorld.Greeting.SERVICE_NAME);
 
     // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+    serviceManager.waitForStatus(true);
 
     URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "greet");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -82,16 +82,5 @@ public class HelloWorldTest extends TestBase {
     Assert.assertEquals("Hello 5!", response);
 
     appManager.stopAll();
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }

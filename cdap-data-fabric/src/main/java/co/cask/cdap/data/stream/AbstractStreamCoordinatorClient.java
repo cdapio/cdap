@@ -32,8 +32,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -48,16 +46,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
 /**
- * Base implementation for {@link StreamCoordinator}.
+ * Base implementation for {@link StreamCoordinatorClient}.
  */
-public abstract class AbstractStreamCoordinator extends AbstractIdleService implements StreamCoordinator {
+public abstract class AbstractStreamCoordinatorClient extends AbstractIdleService implements StreamCoordinatorClient {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinatorClient.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -66,9 +63,8 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
   private final Executor updateExecutor;
   private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
-  private final Set<StreamLeaderListener> leaderListeners;
 
-  protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
+  protected AbstractStreamCoordinatorClient(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
 
     propertyStore = Suppliers.memoize(new Supplier<PropertyStore<StreamProperty>>() {
@@ -80,8 +76,6 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
 
     // Update action should be infrequent, hence just use an executor that create a new thread everytime.
     updateExecutor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("stream-coordinator-update-%d"));
-
-    leaderListeners = Sets.newHashSet();
   }
 
   /**
@@ -168,48 +162,9 @@ public abstract class AbstractStreamCoordinator extends AbstractIdleService impl
   }
 
   @Override
-  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
-    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
-    // is not overridden by user's code implementation of the equal method
-    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
-      @Override
-      public void leaderOf(Set<String> streamNames) {
-        listener.leaderOf(streamNames);
-      }
-    };
-
-    synchronized (this) {
-      leaderListeners.add(wrappedListener);
-    }
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        synchronized (AbstractStreamCoordinator.this) {
-          leaderListeners.remove(wrappedListener);
-        }
-      }
-    };
-  }
-
-  @Override
   protected final void shutDown() throws Exception {
     propertyStore.get().close();
     doShutDown();
-  }
-
-  /**
-   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
-   *
-   * @param streamNames set of Streams that this coordinator is the leader of
-   */
-  protected void invokeLeaderListeners(Set<String> streamNames) {
-    Set<StreamLeaderListener> callbacks;
-    synchronized (this) {
-      callbacks = ImmutableSet.copyOf(leaderListeners);
-    }
-    for (StreamLeaderListener callback : callbacks) {
-      callback.leaderOf(streamNames);
-    }
   }
 
   /**

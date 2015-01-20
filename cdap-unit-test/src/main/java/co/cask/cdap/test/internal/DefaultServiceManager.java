@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.test.AbstractServiceManager;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -33,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 /**
  * A default implementation of {@link ServiceManager}.
  */
-public class DefaultServiceManager implements ServiceManager {
+public class DefaultServiceManager extends AbstractServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;

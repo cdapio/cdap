@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigExistsException;
 import co.cask.cdap.config.ConfigNotFoundException;
-import co.cask.cdap.config.ConfigStore;
+import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -52,16 +51,15 @@ import javax.ws.rs.PathParam;
 public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
-  private static final String CONFIG_TYPE = "dashboard";
   private static final String CONFIG_PROPERTY = "config";
   private static final String ID = "id";
 
-  private final ConfigStore configStore;
+  private final DashboardStore dashboardStore;
 
   @Inject
-  public DashboardHttpHandler(Authenticator authenticator, ConfigStore configStore) {
+  public DashboardHttpHandler(Authenticator authenticator, DashboardStore dashboardStore) {
     super(authenticator);
-    this.configStore = configStore;
+    this.dashboardStore = dashboardStore;
   }
 
   @Path("/")
@@ -83,9 +81,9 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
     //Config ID = dashboardId (randomUUID)
     //Config Properties = Map (Key = CONFIG_PROPERTY, value = Serialized JSON string of dashboard configuration)
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
-    String dashboardId = UUID.randomUUID().toString();
+    String dashboardId = "";
     try {
-      configStore.create(namespace, CONFIG_TYPE, new Config(dashboardId, propMap));
+      dashboardId = dashboardStore.create(namespace, propMap);
       Map<String, String> returnMap = ImmutableMap.of(ID, dashboardId);
       responder.sendJson(HttpResponseStatus.OK, returnMap);
     } catch (ConfigExistsException e) {
@@ -98,7 +96,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespace) throws Exception {
     JsonArray jsonArray = new JsonArray();
-    List<Config> configList = configStore.list(namespace, CONFIG_TYPE);
+    List<Config> configList = dashboardStore.list(namespace);
     for (Config config : configList) {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty(ID, config.getId());
@@ -114,7 +112,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
                      @PathParam("namespace-id") String namespace,
                      @PathParam("dashboard-id") String id) throws Exception {
     try {
-      configStore.delete(namespace, CONFIG_TYPE, id);
+      dashboardStore.delete(namespace, id);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (ConfigNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
@@ -127,7 +125,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
                   @PathParam("namespace-id") String namespace,
                   @PathParam("dashboard-id") String id) throws Exception {
     try {
-      Config dashConfig = configStore.get(namespace, CONFIG_TYPE, id);
+      Config dashConfig = dashboardStore.get(namespace, id);
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty(ID, id);
 
@@ -153,7 +151,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
       }
 
       Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
-      configStore.update(namespace, CONFIG_TYPE, new Config(id, propMap));
+      dashboardStore.put(namespace, new Config(id, propMap));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (ConfigNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Dashboard not found");
