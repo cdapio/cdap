@@ -57,6 +57,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.utils.Dependencies;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -386,6 +387,7 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     Type typeToken = new TypeToken<JsonObject>() { }.getType();
     return readResponse(response, typeToken);
   }

@@ -391,6 +391,7 @@ public class TestFrameworkTest extends TestBase {
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(500, response.getResponseCode());
+      Assert.assertTrue(response.getResponseBodyAsString().contains("Transaction failure"));
 
       // Call the verify ClassLoader endpoint
       url = new URL(serviceURL, "verifyClassLoader");
