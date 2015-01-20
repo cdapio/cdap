@@ -189,7 +189,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     StreamMetaStore streamMetaStore = new NoOpStreamMetaStore();
     StreamCoordinator streamCoordinator = new InMemoryStreamCoordinator(streamAdmin, streamMetaStore);
     return new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore,
-                                      writerFactory, threads, new TestStatisticsCollectorFactory());
+                                      writerFactory, threads, new TestMetricsCollectorFactory());
   }
 
   private Runnable createWriterTask(final String accountId, final String streamName,
@@ -318,13 +318,13 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
   }
 
-  private static final class TestStatisticsCollectorFactory implements StreamStatisticsCollectorFactory {
+  private static final class TestMetricsCollectorFactory implements StreamMetricsCollectorFactory {
 
     @Override
-    public StreamStatisticsCollector createStatisticsCollector(String streamName) {
-      return new StreamStatisticsCollector() {
+    public StreamMetricsCollector createMetricsCollector(String streamName) {
+      return new StreamMetricsCollector() {
         @Override
-        public void emitStatistics(long bytesWritten, long eventsWritten) {
+        public void emitMetrics(long bytesWritten, long eventsWritten) {
 
         }
       };

@@ -87,7 +87,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
-  private final StreamStatisticsCollectorFactory metricsCollectorFactory;
+  private final StreamMetricsCollectorFactory metricsCollectorFactory;
   private final ConcurrentStreamWriter streamWriter;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
@@ -113,14 +113,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     final MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
-    metricsCollectorFactory = new StreamStatisticsCollectorFactory() {
+    metricsCollectorFactory = new StreamMetricsCollectorFactory() {
       @Override
-      public StreamStatisticsCollector createStatisticsCollector(String streamName) {
+      public StreamMetricsCollector createMetricsCollector(String streamName) {
         final MetricsCollector childCollector =
           collector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
-        return new StreamStatisticsCollector() {
+        return new StreamMetricsCollector() {
           @Override
-          public void emitStatistics(long bytesWritten, long eventsWritten) {
+          public void emitMetrics(long bytesWritten, long eventsWritten) {
             if (bytesWritten > 0) {
               childCollector.increment("collect.bytes", bytesWritten);
             }

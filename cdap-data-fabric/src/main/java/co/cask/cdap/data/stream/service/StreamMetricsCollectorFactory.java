@@ -17,31 +17,31 @@
 package co.cask.cdap.data.stream.service;
 
 /**
- * Factory for creating {@link StreamStatisticsCollector}s.
+ * Factory for creating {@link StreamMetricsCollector}s.
  */
-public interface StreamStatisticsCollectorFactory {
+public interface StreamMetricsCollectorFactory {
 
   /**
-   * Collector of statistics for a stream.
+   * Collector of metrics for a stream.
    */
-  public interface StreamStatisticsCollector {
+  public interface StreamMetricsCollector {
 
     /**
-     * Emit stream statistics.
+     * Emit stream metrics.
      *
      * @param bytesWritten number of bytes written to the stream
      * @param eventsWritten number of events written to the stream
      */
-    void emitStatistics(long bytesWritten, long eventsWritten);
+    void emitMetrics(long bytesWritten, long eventsWritten);
   }
 
   /**
-   * Create a {@link StreamStatisticsCollector} for the given {@code streamName}.
+   * Create a {@link StreamMetricsCollector} for the given {@code streamName}.
    *
    * @param streamName stream name to create a collector for
-   * @return a {@link StreamStatisticsCollector} for the given {@code streamName}
+   * @return a {@link StreamMetricsCollector} for the given {@code streamName}
    */
-  StreamStatisticsCollector createStatisticsCollector(String streamName);
+  StreamMetricsCollector createMetricsCollector(String streamName);
 
   /**
    * Called when a stream event has been rejected
