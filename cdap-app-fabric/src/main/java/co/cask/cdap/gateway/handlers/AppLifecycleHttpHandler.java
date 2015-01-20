@@ -74,6 +74,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -96,6 +97,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -401,7 +403,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo);
+      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo.getSourceType(),
+                                                       adapterTypeInfo.getSinkType());
       adapterService.createAdapter(namespaceId, spec);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
@@ -842,18 +845,4 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
   }
-<<<<<<< HEAD
-
-  private AdapterSpecification getAdapterSpec(AdapterConfig config, String name,
-                                              Source.Type sourceType, Sink.Type sinkType) {
-    Set<Source> sources = Sets.newHashSet();
-    Set<Sink> sinks = Sets.newHashSet();
-
-    sources.add(new Source(config.source.name, sourceType, config.source.properties));
-    sinks.add(new Sink(config.sink.name, sinkType, config.sink.properties));
-
-    return new AdapterSpecification(name, config.type, config.properties, sources, sinks);
-  }
-=======
->>>>>>> ce5ff42fb04b653193d838ab1ea8999b671d20f6
 }

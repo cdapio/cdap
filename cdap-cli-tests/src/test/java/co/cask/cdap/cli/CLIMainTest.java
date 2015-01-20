@@ -350,7 +350,7 @@ public class CLIMainTest extends StandaloneTestBase {
       " props " + GSON.toJson(ImmutableMap.of("frequency", "1m")) +
       " src mySource" +
       " sink mySink sink-props " + GSON.toJson(ImmutableMap.of("dataset.class", FileSet.class.getName()));
-    testCommandOutputContains(cli, createCommand, "Succesfully created adapter");
+    testCommandOutputContains(cli, createCommand, "Successfully created adapter");
 
     // Check that the created adapter is present
     adapterClient.waitForExists(namespaceId, "someAdapter", 30, TimeUnit.SECONDS);
