@@ -158,10 +158,10 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
-    // If the file not exist or not a file, sendfile should fails with an error.
-    testCommandOutputContains(cli, "sendfile stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
     testCommandOutputContains(cli,
-                              "sendfile stream " + streamId + " " + file.getParentFile().getAbsolutePath(),
+                              "load stream " + streamId + " " + file.getParentFile().getAbsolutePath(),
                               "Not a file");
 
     // Generate a file to send
@@ -174,7 +174,7 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "sendfile stream " + streamId + " " + file.getAbsolutePath(),
+    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully send stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
   }

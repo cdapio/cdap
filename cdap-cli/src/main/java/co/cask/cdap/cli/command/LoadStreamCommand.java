@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * Command for sending file to stream
  */
-public class SendFileStreamCommand extends AbstractAuthCommand {
+public class LoadStreamCommand extends AbstractAuthCommand {
 
   // A map from file extension to content type
   private static final Map<String, String> CONTENT_TYPE_MAP;
@@ -51,7 +51,7 @@ public class SendFileStreamCommand extends AbstractAuthCommand {
   private final StreamClient streamClient;
 
   @Inject
-  public SendFileStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  public LoadStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -78,13 +78,14 @@ public class SendFileStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("sendfile stream <%s> <%s> [<%s>]",
+    return String.format("load stream <%s> <%s> [<%s>]",
                          ArgumentName.STREAM, ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
   }
 
   @Override
   public String getDescription() {
-    return "Sends a file to a " + ElementType.STREAM.getPrettyName() + ". " +
+    return "Loads a file to a " + ElementType.STREAM.getPrettyName() + ". " +
+           "The content of the file will become multiple events in the stream, based on the content type. " +
            "If <" + ArgumentName.CONTENT_TYPE + "> is not provided, it will be detected by the file extension";
   }
 

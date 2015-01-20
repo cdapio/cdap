@@ -135,7 +135,7 @@ public class StreamClient {
   }
 
   /**
-   * Sends a file of the given content type to a stream.
+   * Sends a file of the given content type to a stream batch endpoint.
    *
    * @param streamId ID of the stream
    * @param contentType content type of the file
@@ -149,7 +149,7 @@ public class StreamClient {
   }
 
   /**
-   * Sends a batch request to a stream.
+   * Sends a batch request to a stream batch endpoint.
    *
    * @param streamId ID of the stream
    * @param contentType content type of the data
