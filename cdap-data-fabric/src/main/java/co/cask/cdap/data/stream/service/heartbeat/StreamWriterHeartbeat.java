@@ -16,10 +16,12 @@
 
 package co.cask.cdap.data.stream.service.heartbeat;
 
+import co.cask.cdap.data.stream.StreamCoordinator;
 import com.google.common.base.Objects;
 
 /**
- * Heartbeat sent by a Stream writer containing the total size of its files, in bytes..
+ * Heartbeat sent by a Stream writer containing the total size of its files, in bytes. The heartbeats
+ * concerning one stream are aggregated by the {@link StreamCoordinator} elected leader of the stream.
  */
 public class StreamWriterHeartbeat {
 

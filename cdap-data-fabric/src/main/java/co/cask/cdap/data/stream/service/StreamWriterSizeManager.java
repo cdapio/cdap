@@ -16,11 +16,13 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import com.google.common.util.concurrent.Service;
 
 /**
- * This interface manages the sizes of data written by one stream writer. For each stream, It sends
- * {@link StreamWriterHeartbeat}s at regular intervals to notify listeners of the updated size of the stream.
+ * This interface manages the sizes of data written by one stream writer run in a {@link StreamHandler}.
+ * For each stream, It sends {@link StreamWriterHeartbeat}s at regular intervals to notify listeners
+ * of the updated size of the stream.
  */
 public interface StreamWriterSizeManager extends Service {
 

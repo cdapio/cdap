@@ -19,7 +19,7 @@ package co.cask.cdap.data.stream.service;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
- * No-op implementation of a a {@link StreamWriterSizeCollector}.
+ * No-op implementation of a {@link StreamWriterSizeCollector}.
  */
 public class NoOpStreamWriterSizeManager
   extends AbstractIdleService

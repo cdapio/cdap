@@ -17,13 +17,14 @@
 package co.cask.cdap.data.stream.service;
 
 /**
- * Keep track of the sizes of the files written by one Stream handler.
+ * Keep track of the sizes of the files written by one {@link StreamHandler}.
  */
 public interface StreamWriterSizeCollector {
 
   /**
    * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream
-   * {@code streamName} using the stream handler from which this code is executed.
+   * {@code streamName} using the stream handler from which this code is executed. The {@code dataSize}
+   * is an incremental size.
    *
    * @param streamName name of the stream that ingested data.
    * @param dataSize amount of data ingested in bytes.
