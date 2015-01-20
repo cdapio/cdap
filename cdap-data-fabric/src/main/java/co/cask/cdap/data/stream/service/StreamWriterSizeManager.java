@@ -30,5 +30,5 @@ public interface StreamWriterSizeManager extends Service {
    * Get the initial sizes of data written by this Stream writer, and send an initial heartbeat with the computed size,
    * for each stream. This method also schedules publishing heartbeats at a regular pace.
    */
-  void initialize();
+  void initialize() throws Exception;
 }

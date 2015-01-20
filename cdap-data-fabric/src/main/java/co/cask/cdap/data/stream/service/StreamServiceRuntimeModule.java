@@ -53,8 +53,8 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeCollector.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeManager.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
         bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         super.configure();
@@ -68,8 +68,8 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeCollector.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeManager.class).to(StreamFileWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Scopes.SINGLETON);
         super.configure();
       }
