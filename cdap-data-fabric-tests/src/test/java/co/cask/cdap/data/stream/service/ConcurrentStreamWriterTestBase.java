@@ -75,11 +75,13 @@ public abstract class ConcurrentStreamWriterTestBase {
   @Test
   public void testConcurrentWrite() throws Exception {
     final String streamName = "testConcurrentWrite";
+    String accountId = "account";
     StreamAdmin streamAdmin = new TestStreamAdmin(getLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = 20;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
-    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, streamAdmin, threads, fileWriterFactory);
+    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, accountId, streamAdmin, threads,
+                                                                   fileWriterFactory);
 
     // Starts 20 threads to write events through stream writer, each thread write 1000 events
     final int msgPerThread = 1000;
@@ -88,11 +90,11 @@ public abstract class ConcurrentStreamWriterTestBase {
     ExecutorService executor = Executors.newFixedThreadPool(threads);
     // Half of the threads write events one by one, the other half writes in batch of size 10
     for (int i = 0; i < threads / 2; i++) {
-      executor.execute(createWriterTask("account", streamName, streamWriter,
+      executor.execute(createWriterTask(accountId, streamName, streamWriter,
                                         i, msgPerThread, 1, startLatch, completion));
     }
     for (int i = threads / 2; i < threads; i++) {
-      executor.execute(createWriterTask("account", streamName, streamWriter,
+      executor.execute(createWriterTask(accountId, streamName, streamWriter,
                                         i, msgPerThread, 10, startLatch, completion));
     }
     startLatch.countDown();
@@ -119,11 +121,13 @@ public abstract class ConcurrentStreamWriterTestBase {
   @Test
   public void testConcurrentAppendFile() throws Exception {
     final String streamName = "testConcurrentFile";
+    String accountId = "account";
     StreamAdmin streamAdmin = new TestStreamAdmin(getLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = 20;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
-    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, streamAdmin, threads, fileWriterFactory);
+    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, accountId, streamAdmin, threads,
+                                                                   fileWriterFactory);
 
     int msgCount = 10000;
     LocationFactory locationFactory = getLocationFactory();
@@ -140,11 +144,11 @@ public abstract class ConcurrentStreamWriterTestBase {
     final CountDownLatch completion = new CountDownLatch(threads);
     ExecutorService executor = Executors.newFixedThreadPool(threads);
     for (int i = 0; i < threads / 2; i++) {
-      executor.execute(createAppendFileTask("account", streamName, streamWriter,
+      executor.execute(createAppendFileTask(accountId, streamName, streamWriter,
                                             fileInfos.get(i), startLatch, completion));
     }
     for (int i = threads / 2; i < threads; i++) {
-      executor.execute(createWriterTask("account", streamName, streamWriter, i, msgCount, 50, startLatch, completion));
+      executor.execute(createWriterTask(accountId, streamName, streamWriter, i, msgCount, 50, startLatch, completion));
     }
 
     startLatch.countDown();
@@ -183,12 +187,14 @@ public abstract class ConcurrentStreamWriterTestBase {
     return true;
   }
 
-  private ConcurrentStreamWriter createStreamWriter(String streamName, StreamAdmin streamAdmin, int threads,
-                                                    StreamFileWriterFactory writerFactory) throws IOException {
+  private ConcurrentStreamWriter createStreamWriter(String streamName, String accountId, StreamAdmin streamAdmin,
+                                                    int threads, StreamFileWriterFactory writerFactory)
+    throws Exception {
     StreamConfig streamConfig = streamAdmin.getConfig(streamName);
     streamConfig.getLocation().mkdirs();
 
     StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
+    streamMetaStore.addStream(accountId, streamName);
     StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(streamAdmin, streamMetaStore);
     return new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore,
                                       writerFactory, threads, new TestMetricsCollector());
