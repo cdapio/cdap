@@ -371,7 +371,7 @@ public final class Constants {
       public static final String RUN_ID = "run";
       public static final String INSTANCE_ID = "ins";
       public static final String COMPONENT = "cmp";
-      public static final String StreSTREAM = "str";
+      public static final String STREAM = "str";
       public static final String DATASET = "ds";
       public static final String SERVICE = "srv";
       public static final String SERVICE_RUNNABLE = "srn";

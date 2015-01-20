@@ -19,11 +19,13 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 /**
  * {@link StreamWriterSizeManager} for in-memory Streams.
  */
+@Singleton
 public class InMemoryStreamWriterSizeManager extends AbstractStreamWriterSizeManager {
 
   @Inject
