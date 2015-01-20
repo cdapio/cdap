@@ -21,9 +21,9 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
-import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamDataFileReader;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
 import co.cask.cdap.data.stream.StreamFileTestUtils;
@@ -187,8 +187,8 @@ public abstract class ConcurrentStreamWriterTestBase {
     streamConfig.getLocation().mkdirs();
 
     StreamMetaStore streamMetaStore = new NoOpStreamMetaStore();
-    StreamCoordinator streamCoordinator = new InMemoryStreamCoordinator(streamAdmin, streamMetaStore);
-    return new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore,
+    StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(streamAdmin, streamMetaStore);
+    return new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore,
                                       writerFactory, threads, new TestMetricsCollectorFactory());
   }
 

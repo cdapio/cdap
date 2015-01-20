@@ -22,7 +22,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -46,19 +46,25 @@ public final class StreamHttpService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamCoordinator streamCoordinator;
   private final StreamFileJanitorService janitorService;
+  private final StreamWriterSizeManager sizeManager;
   private Cancellable cancellable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            StreamCoordinator streamCoordinator,
+                           StreamCoordinatorClient streamCoordinatorClient,
                            StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
-                           @Nullable MetricsCollectionService metricsCollectionService) {
+                           @Nullable MetricsCollectionService metricsCollectionService,
+                           StreamWriterSizeManager sizeManager) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
     this.janitorService = janitorService;
+    this.sizeManager = sizeManager;
+    this.streamCoordinatorClient = streamCoordinatorClient;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -95,12 +101,16 @@ public final class StreamHttpService extends AbstractIdleService {
     cancellable = discoveryService.register(discoverable);
 
     janitorService.startAndWait();
+    sizeManager.startAndWait();
+    sizeManager.initialize();
     streamCoordinator.setHandlerDiscoverable(discoverable);
     streamCoordinator.startAndWait();
-  }
+    streamCoordinatorClient.startAndWait();
+}
 
   @Override
   protected void shutDown() throws Exception {
+    sizeManager.stopAndWait();
     janitorService.stopAndWait();
 
     try {
@@ -110,6 +120,7 @@ public final class StreamHttpService extends AbstractIdleService {
     } finally {
       httpService.stopAndWait();
       streamCoordinator.stopAndWait();
+      streamCoordinatorClient.stopAndWait();
     }
   }
 
