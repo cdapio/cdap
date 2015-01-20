@@ -36,7 +36,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Search available contexts and metrics tests
  */
-public class MetricsSearchTestRun extends MetricsSuiteTestBase {
+public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
+
+  private static long emitTs;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -52,8 +54,14 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
     collector.increment("writes", 1);
     collector = collectionService.getCollector(getFlowletContext("WCount", "WordCounter", "splitter"));
     collector.increment("reads", 1);
+
     collector = collectionService.getCollector(getFlowletContext("WCount", "WCounter", "splitter"));
+    emitTs = System.currentTimeMillis();
+    // we want to emit in two different seconds
     collector.increment("reads", 1);
+    TimeUnit.MILLISECONDS.sleep(2000);
+    collector.increment("reads", 2);
+
     collector = collectionService.getCollector(getFlowletContext("WCount", "WCounter", "counter"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getProcedureContext("WCount", "RCounts"));
@@ -85,50 +93,93 @@ public class MetricsSearchTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testSearchContext() throws Exception {
-    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WordCount.f", 1,
-                         ImmutableList.<String>of("WordCounter"));
-    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WCount", 3,
-                         ImmutableList.<String>of("b", "f", "p"));
-    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount", 2,
-                         ImmutableList.<String>of("m", "r"));
-    metricsResponseCheck("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount.m", 0,
-                         ImmutableList.<String>of());
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WordCount.f",
+                       ImmutableList.<String>of("WordCounter"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount",
+                       ImmutableList.<String>of("b", "f", "p"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount",
+                       ImmutableList.<String>of("m", "r"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount.m",
+                       ImmutableList.<String>of());
   }
 
-  private void metricsResponseCheck(String url, int expected, List<String> expectedValues) throws Exception {
+  @Test
+  public void testQueryMetrics() throws Exception {
+    // aggregate result
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=WCount.f.WCounter.splitter&metric=system.reads&aggregate=true", 3);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=WCount.f.WCounter.counter&metric=system.reads&aggregate=true", 1);
+
+    // time range
+    // now-60s, now+60s
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=WCount.f.WCounter.splitter&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+    // note: times are in seconds, hence "divide by 1000";
+    long start = (emitTs - 60 * 1000) / 1000;
+    long end = (emitTs + 60 * 1000) / 1000;
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=WCount.f.WCounter.splitter&metric=system.reads&start=" + start + "&end=" + end, 2, 3);
+  }
+
+  @Test
+  public void testSearchMetrics() throws Exception {
+    verifySearchResult("/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.splitter",
+                       ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
+
+    verifySearchResult("/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.collector",
+                       ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
+  }
+
+  private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
+    Assert.assertEquals(expectedValue, post(url, AggregateQueryResult.class).data);
+  }
+
+  private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
+    TimeRangeQueryResult result = post(url, TimeRangeQueryResult.class);
+    for (DataPoint point : result.data) {
+      if (point.value != 0) {
+        nonZeroPointsCount--;
+        expectedSum -= point.value;
+      }
+    }
+
+    Assert.assertEquals(0, nonZeroPointsCount);
+    Assert.assertEquals(0, expectedSum);
+  }
+
+  private <T> T post(String url, Class<T> clazz) throws Exception {
+    HttpResponse response = doPost(url, null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    return new Gson().fromJson(result, clazz);
+  }
+
+  private void verifySearchResult(String url, List<String> expectedValues) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
     List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(expected, reply.size());
+    Assert.assertEquals(expectedValues.size(), reply.size());
     for (int i = 0; i < expectedValues.size(); i++) {
       Assert.assertEquals(expectedValues.get(i), reply.get(i));
     }
   }
 
-  @Test
-  public void testSearchMetrics() throws Exception {
-    String base = "/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.splitter";
-    HttpResponse response = doPost(base, null);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  // helpers to easier json results parsing & verification
 
-    String result = EntityUtils.toString(response.getEntity());
-    List<String> resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(4, resultList.size());
-    Assert.assertEquals("system.reads", resultList.get(0));
-    Assert.assertEquals("system.writes", resultList.get(1));
-    Assert.assertEquals("user.reads", resultList.get(2));
-    Assert.assertEquals("user.writes", resultList.get(3));
+  private static final class TimeRangeQueryResult {
+    private long start;
+    private long end;
+    private DataPoint[] data;
+  }
+  
+  private static final class DataPoint {
+    private long time;
+    private long value;
+  }
 
-    base = "/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.collector";
-    response = doPost(base, null);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    result = EntityUtils.toString(response.getEntity());
-    resultList = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(3, resultList.size());
-    Assert.assertEquals("system.aa", resultList.get(0));
-    Assert.assertEquals("system.ab", resultList.get(1));
-    Assert.assertEquals("system.zz", resultList.get(2));
+  private static final class AggregateQueryResult {
+    private long data;
   }
 }

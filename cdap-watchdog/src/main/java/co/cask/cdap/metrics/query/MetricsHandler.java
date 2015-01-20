@@ -17,9 +17,9 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
+import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.data.MetricsScanQuery;
 import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
@@ -28,6 +28,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Sets;
+import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -45,18 +47,23 @@ import javax.ws.rs.QueryParam;
 /**
  * Search metrics handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/metrics/search")
-public class MetricsSearchHandler extends  BaseMetricsHandler {
+@Path(Constants.Gateway.API_VERSION_3 + "/metrics")
+public class MetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
+
+  private final MetricsRequestExecutor requestExecutor;
   private final Supplier<TimeSeriesTable> timeSeriesTables;
 
   // NOTE: Hour is the lowest resolution and also has the highest TTL compared to minute and second resolutions.
-  // highest TTL ensures, this is good for querying all available metrics and also has fewer rows of data points.
+  // highest TTL ensures, this is good for searching all available metrics and also has fewer rows of data points.
   private static final int LOWEST_RESOLUTION = 3600;
 
   @Inject
-  public MetricsSearchHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+  public MetricsHandler(Authenticator authenticator,
+                        final MetricsTableFactory metricsTableFactory) {
     super(authenticator);
+
+    this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
 
     this.timeSeriesTables = Suppliers.memoize(new Supplier<TimeSeriesTable>() {
       @Override
@@ -66,9 +73,9 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
     });
   }
 
-
   @POST
-  public void handle(HttpRequest httpRequest, HttpResponder responder,
+  @Path("/search")
+  public void search(HttpRequest request, HttpResponder responder,
                      @QueryParam("target") String target,
                      @QueryParam("context") String context) throws IOException {
     if (target == null) {
@@ -88,6 +95,21 @@ public class MetricsSearchHandler extends  BaseMetricsHandler {
     } else {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
     }
+  }
+
+  @POST
+  @Path("/query")
+  public void query(HttpRequest request, HttpResponder responder,
+                     @QueryParam("context") String context,
+                     @QueryParam("metric") String metric) throws Exception {
+    MetricsRequestBuilder builder =
+      new MetricsRequestBuilder(null)
+        .setContextPrefix(context)
+        .setMetricPrefix(metric);
+    // sets time range, query type, etc.
+    MetricsRequestParser.parseQueryString(new URI(request.getUri()), builder);
+    JsonElement queryResult = requestExecutor.executeQuery(builder.build());
+    responder.sendJson(HttpResponseStatus.OK, queryResult);
   }
 
   private void searchMetricAndRespond(HttpResponder responder, String context) {
