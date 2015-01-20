@@ -212,23 +212,18 @@ public class AdapterService extends AbstractIdleService {
       return spec;
     }
 
-    try {
-      Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
-        @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+    Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+      @Override
+      public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        // no-op
+      }
+    });
 
-        }
-      });
-
-      Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
-      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
-      ApplicationWithPrograms applicationWithPrograms = manager.deploy(Id.Namespace.from(namespaceId),
-                                                                       adapterTypeInfo.getType(), deploymentInfo).get();
-      return applicationWithPrograms.getSpecification();
-
-    } catch (Exception e) {
-      throw e;
-    }
+    Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
+    DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
+    ApplicationWithPrograms applicationWithPrograms = manager.deploy(Id.Namespace.from(namespaceId),
+                                                                     adapterTypeInfo.getType(), deploymentInfo).get();
+    return applicationWithPrograms.getSpecification();
   }
 
   // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
@@ -268,7 +263,7 @@ public class AdapterService extends AbstractIdleService {
   // Adds a schedule to the scheduler as well as to the appspec
   private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
     String cronExpr = toCronExpr(adapterSpec.getProperties().get("frequency"));
-    Preconditions.checkNotNull(cronExpr, "CronExpression is missing. Cannot schedule program");
+    Preconditions.checkNotNull(cronExpr, "Frequency of running the adapter is missing. Cannot schedule program");
     Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
@@ -397,7 +392,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   protected Map<String, String> propertiesFromString(String gsonEncodedMap) {
-    Map<String, String> properties =  GSON.fromJson(gsonEncodedMap, STRING_STRING_MAP_TYPE);
+    Map<String, String> properties = GSON.fromJson(gsonEncodedMap, STRING_STRING_MAP_TYPE);
     return properties == null ? Maps.<String, String>newHashMap() : properties;
   }
 
