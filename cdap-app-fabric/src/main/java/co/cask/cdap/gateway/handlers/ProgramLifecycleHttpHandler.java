@@ -1055,6 +1055,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // Averting this race condition by synchronizing this method. The resource that needs to be locked here is
     // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
     // synchronized on this.
+    // TODO: CDAP-1198: However, this race still exists in HA mode.
     // check if there are actively 'RUNNING' flows
     try {
       List<ProgramRecord> flows = listPrograms(Id.Namespace.from(namespaceId), ProgramType.FLOW, store);
@@ -1063,7 +1064,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         String flowId = flow.getId();
         Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
         ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
-        if (status.getStatus().equals("RUNNING")) {
+        if (!"STOPPED".equals(status.getStatus())) {
           responder.sendString(HttpResponseStatus.FORBIDDEN,
                                String.format("Flow '%s' from application '%s' in namespace '%s' is running, " +
                                                "please stop it first.", flowId, appId, namespaceId));
