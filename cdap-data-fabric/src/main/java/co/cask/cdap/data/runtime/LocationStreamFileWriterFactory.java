@@ -40,7 +40,7 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   private final String filePrefix;
 
   @Inject
-  LocationStreamFileWriterFactory(CConfiguration cConf) {
+  public LocationStreamFileWriterFactory(CConfiguration cConf) {
     this.filePrefix = String.format("%s.%d",
                                     cConf.get(Constants.Stream.FILE_PREFIX),
                                     cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0));
