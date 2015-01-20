@@ -70,7 +70,7 @@ public class SparkKMeansAppTest extends TestBase {
     ServiceManager serviceManager = appManager.startService(SparkKMeansApp.CentersService.SERVICE_NAME);
 
     // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+    serviceManager.waitForStatus(true);
 
     // Request data and verify it
     String response = requestService(new URL(serviceManager.getServiceURL(), "centers/1"));
@@ -101,16 +101,5 @@ public class SparkKMeansAppTest extends TestBase {
     } finally {
       conn.disconnect();
     }
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }

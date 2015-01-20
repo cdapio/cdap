@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,4 +71,20 @@ public interface ServiceManager {
    * @return URL of the service or {@code null} if the service is not available
    */
   URL getServiceURL(long timeout, TimeUnit timeoutUnit);
+
+  /**
+   * Wait for the status of the Service with default retries of 5 and a timeout of 1 second between retry attempts.
+   * @param status true if waiting for started, false if waiting for stopped.
+   * @throws InterruptedException if the method is interrupted while waiting for the status.
+   */
+  void waitForStatus(boolean status) throws InterruptedException;
+
+  /**
+   * Wait for the status of the Service, retrying a given number of times with a timeout between attempts.
+   * @param status true if waiting for started, false if waiting for stopped.
+   * @param retries number of attempts to check for status.
+   * @param timeout timeout in seconds between attempts.
+   * @throws InterruptedException if the method is interrupted while waiting for the status.
+   */
+  void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
 }
