@@ -31,6 +31,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -80,6 +81,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new DataSetsModules().getDistributedModule(),
       new LoggingModules().getDistributedModules(),
       new ExploreRuntimeModule().getDistributedModules(),
+      new ExploreClientModule(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AuthModule());

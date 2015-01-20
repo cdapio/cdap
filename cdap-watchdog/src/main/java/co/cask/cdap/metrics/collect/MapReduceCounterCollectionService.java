@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.inject.Inject;
@@ -45,13 +44,11 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     while (metrics.hasNext()) {
       MetricValue record = metrics.next();
 
-      StringBuilder counterGroup = new StringBuilder("cdap.")
-        .append(scope).append(".")
-        .append(record.getType());
+      StringBuilder counterGroup = new StringBuilder("cdap.").append(record.getType());
 
       // flatten tags
       for (Map.Entry<String, String> tag : record.getTags().entrySet()) {

@@ -20,6 +20,7 @@ package co.cask.cdap.api.data.format;
  * Names of {@link RecordFormat RecordFormats} built into the platform.
  */
 public final class Formats {
+  public static final String AVRO = "avro";
   public static final String CSV = "csv";
   public static final String TSV = "tsv";
   public static final String STRING = "string";

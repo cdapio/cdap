@@ -17,7 +17,6 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.common.io.ByteBufferInputStream;
@@ -43,17 +42,14 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsMessageCallback.class);
 
-  private final MetricsScope scope;
   private final DatumReader<MetricValue> recordReader;
   private final Schema recordSchema;
   private final Set<MetricsProcessor> processors;
   private long recordProcessed;
 
-  public MetricsMessageCallback(MetricsScope scope,
-                                Set<MetricsProcessor> processors,
+  public MetricsMessageCallback(Set<MetricsProcessor> processors,
                                 DatumReader<MetricValue> recordReader,
                                 Schema recordSchema) {
-    this.scope = scope;
     this.processors = processors;
     this.recordReader = recordReader;
     this.recordSchema = recordSchema;
@@ -82,12 +78,12 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
     }
     // Invoke processors one by one.
     for (MetricsProcessor processor : processors) {
-      processor.process(scope, new MetricRecordsWrapper(records.iterator()));
+      processor.process(new MetricRecordsWrapper(records.iterator()));
     }
 
     recordProcessed += records.size();
     if (recordProcessed % 1000 == 0) {
-      LOG.info("{} metrics of {} records processed", scope, recordProcessed);
+      LOG.info("{} metrics records processed", recordProcessed);
       LOG.info("Last record time: {}", records.get(records.size() - 1).getTimestamp());
     }
   }

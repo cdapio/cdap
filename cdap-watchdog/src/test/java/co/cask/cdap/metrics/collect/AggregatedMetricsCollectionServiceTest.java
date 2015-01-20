@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Iterators;
@@ -43,7 +42,7 @@ public class AggregatedMetricsCollectionServiceTest {
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) {
+      protected void publish(Iterator<MetricValue> metrics) {
         Iterators.addAll(published, metrics);
       }
 
@@ -56,10 +55,10 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", Integer.MAX_VALUE);
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 2);
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 3);
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 4);
+      service.getCollector(EMPTY_TAGS).increment("metric", Integer.MAX_VALUE);
+      service.getCollector(EMPTY_TAGS).increment("metric", 2);
+      service.getCollector(EMPTY_TAGS).increment("metric", 3);
+      service.getCollector(EMPTY_TAGS).increment("metric", 4);
 
       MetricValue record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
@@ -69,11 +68,11 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).increment("metric", 1);
+      service.getCollector(EMPTY_TAGS).increment("metric", 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish metrics for child context
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS)
+      service.getCollector(EMPTY_TAGS)
         .childCollector("tag1", "1").childCollector("tag2", "2").increment("metric", 4);
 
       record = published.poll(3, TimeUnit.SECONDS);
@@ -84,9 +83,9 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       //update the metrics multiple times with gauge.
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).gauge("metric", 1);
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).gauge("metric", 2);
-      service.getCollector(MetricsScope.SYSTEM, EMPTY_TAGS).gauge("metric", 3);
+      service.getCollector(EMPTY_TAGS).gauge("metric", 1);
+      service.getCollector(EMPTY_TAGS).gauge("metric", 2);
+      service.getCollector(EMPTY_TAGS).gauge("metric", 3);
 
       // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);

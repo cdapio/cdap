@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.data.TimeSeriesTables;
@@ -62,10 +61,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     List<MetricValue> records = ImmutableList.copyOf(metrics);
     for (MetricsProcessor processor : processors) {
-      processor.process(scope, new MetricRecordsWrapper(records.iterator()));
+      processor.process(new MetricRecordsWrapper(records.iterator()));
     }
   }
 
@@ -112,9 +111,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
 
-        for (MetricsScope scope : MetricsScope.values()) {
-          timeSeriesTables.deleteBefore(scope, deleteBefore);
-        }
+        timeSeriesTables.deleteBefore(deleteBefore);
         scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };

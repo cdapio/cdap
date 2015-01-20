@@ -23,7 +23,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -112,9 +111,29 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
+    this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
+    StreamMetricsCollectorFactory metricsCollectorFactory = new StreamMetricsCollectorFactory() {
+      @Override
+      public StreamMetricsCollector createMetricsCollector(String streamName) {
+        final MetricsCollector childCollector =
+          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+        return new StreamMetricsCollector() {
+          @Override
+          public void emitMetrics(long bytesWritten, long eventsWritten) {
+            if (bytesWritten > 0) {
+              childCollector.increment("collect.bytes", bytesWritten);
+            }
+            if (eventsWritten > 0) {
+              childCollector.increment("collect.events", eventsWritten);
+            }
+          }
+        };
+      }
+    };
+
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
-                                                   cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
+                                                   cConf.getInt(Constants.Stream.WORKER_THREADS),
+                                                   metricsCollectorFactory);
   }
 
   @Override
