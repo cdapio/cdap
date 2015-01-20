@@ -19,7 +19,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import org.junit.Assert;
@@ -66,12 +65,21 @@ public class AggregatedMetricsCollectionServiceTest {
     };
 
     service.startAndWait();
+
+    // non-empty tags.
+    final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
+                                         Constants.Metrics.Tag.APP, APP,
+                                         Constants.Metrics.Tag.PROGRAM_TYPE, PROGRAM_TYPE,
+                                         Constants.Metrics.Tag.PROGRAM, PROGRAM,
+                                         Constants.Metrics.Tag.RUN_ID, RUNID);
+
     try {
-      // Publish couple metrics, they should be aggregated.
-      service.getCollector(EMPTY_TAGS).increment("metric", Integer.MAX_VALUE);
-      service.getCollector(EMPTY_TAGS).increment("metric", 2);
-      service.getCollector(EMPTY_TAGS).increment("metric", 3);
-      service.getCollector(EMPTY_TAGS).increment("metric", 4);
+      // The first section tests with empty tags.
+      // Publish couple metrics with empty tags, they should be aggregated.
+      service.getCollector(EMPTY_TAGS).increment(METRIC, Integer.MAX_VALUE);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 2);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 3);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 4);
 
       MetricValue record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
@@ -81,60 +89,20 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(EMPTY_TAGS).increment("metric", 1);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
-      // Publish metrics for child context
-      service.getCollector(EMPTY_TAGS)
-        .childCollector("tag1", "1").childCollector("tag2", "2").increment("metric", 4);
-
-      record = published.poll(3, TimeUnit.SECONDS);
-      Assert.assertNotNull(record);
-      Assert.assertEquals(4, record.getValue());
-
-      // No publishing for 0 value metrics
-      Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
-
       //update the metrics multiple times with gauge.
-      service.getCollector(EMPTY_TAGS).gauge("metric", 1);
-      service.getCollector(EMPTY_TAGS).gauge("metric", 2);
-      service.getCollector(EMPTY_TAGS).gauge("metric", 3);
+      service.getCollector(EMPTY_TAGS).gauge(METRIC, 1);
+      service.getCollector(EMPTY_TAGS).gauge(METRIC, 2);
+      service.getCollector(EMPTY_TAGS).gauge(METRIC, 3);
 
       // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
       Assert.assertEquals(3, record.getValue());
-    } finally {
-      service.stopAndWait();
-    }
-  }
 
-  @Category(XSlowTests.class)
-  @Test
-  public void testPublishWithTags() throws InterruptedException {
-    // TODO: refactor out of method to share with previous test
-    final BlockingQueue<MetricValue> published = new LinkedBlockingQueue<MetricValue>();
-
-    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
-      @Override
-      protected void publish(Iterator<MetricValue> metrics) {
-        Iterators.addAll(published, metrics);
-      }
-
-      @Override
-      protected Scheduler scheduler() {
-        return Scheduler.newFixedRateSchedule(5, 1, TimeUnit.SECONDS);
-      }
-    };
-
-    final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
-                                         Constants.Metrics.Tag.APP, APP,
-                                         Constants.Metrics.Tag.PROGRAM_TYPE, PROGRAM_TYPE,
-                                         Constants.Metrics.Tag.PROGRAM, PROGRAM,
-                                         Constants.Metrics.Tag.RUN_ID, RUNID);
-    service.startAndWait();
-    try {
-      // define collectors
+      // define collectors for non-empty tags
       MetricsCollector baseCollector = service.getCollector(baseTags);
       MetricsCollector flowletInstanceCollector = baseCollector.childCollector(Constants.Metrics.Tag.FLOWLET, FLOWLET)
         .childCollector(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
