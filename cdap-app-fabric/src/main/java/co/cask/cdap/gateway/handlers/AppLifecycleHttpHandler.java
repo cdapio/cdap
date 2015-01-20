@@ -37,8 +37,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
@@ -51,6 +49,7 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -69,7 +68,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -131,7 +129,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final CConfiguration configuration;
 
-  private final ManagerFactory<Location, ApplicationWithPrograms> managerFactory;
+  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
 
   /**
    * App fabric output directory.
@@ -170,7 +168,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                 ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
+                                 ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
@@ -312,34 +310,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    final Location archiveDir = locationFactory.create(this.archiveDir).append(namespaceId);
-    final Location archive = archiveDir.append(archiveName);
+    final Location archive = locationFactory.create(this.archiveDir).append(namespaceId).append(archiveName);
 
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          Locations.mkdirsIfNotExists(archiveDir);
-
-          // Copy uploaded content to a temporary location
-          Location tmpLocation = archive.getTempFile(".tmp");
-          try {
-            LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
-            Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
-
-            // Finally, move archive to final location
-            if (tmpLocation.renameTo(archive) == null) {
-              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                  tmpLocation.toURI(), archive.toURI()));
-            }
-          } catch (IOException e) {
-            // In case copy to temporary file failed, or rename failed
-            tmpLocation.delete();
-            throw e;
-          }
-
-          deploy(namespaceId, appId, archive);
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          deploy(namespaceId, appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
           LOG.error("Deploy failure", e);
@@ -350,11 +329,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final String namespaceId, final String appId, Location archive) throws Exception {
+  private void deploy(final String namespaceId, final String appId, DeploymentInfo archive) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
-      Location archiveLocation = archive;
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+
+      Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
           deleteHandler(programId, type);
@@ -362,7 +341,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
 
       ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, archiveLocation).get();
+        manager.deploy(id, appId, archive).get();
       ApplicationSpecification specification = applicationWithPrograms.getSpecification();
       setupSchedules(namespaceId, specification);
     } catch (Throwable e) {
@@ -619,16 +598,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Can't find Metrics endpoint");
     }
 
-    for (MetricsScope scope : MetricsScope.values()) {
-      for (ApplicationSpecification application : applications) {
-        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                   discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.API_VERSION_2,
-                                   scope.name().toLowerCase(),
-                                   application.getName());
-        sendMetricsDelete(url);
-      }
+    for (ApplicationSpecification application : applications) {
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.API_VERSION_2,
+                                 "ignored",
+                                 application.getName());
+      sendMetricsDelete(url);
     }
 
     if (applicationId == null) {

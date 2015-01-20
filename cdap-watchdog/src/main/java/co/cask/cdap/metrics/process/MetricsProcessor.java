@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 
 import java.util.Iterator;
@@ -26,5 +25,5 @@ import java.util.Iterator;
  */
 public interface MetricsProcessor {
 
-  void process(MetricsScope scope, Iterator<MetricsRecord> records);
+  void process(Iterator<MetricsRecord> records);
 }

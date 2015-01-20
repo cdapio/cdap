@@ -20,9 +20,13 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -50,11 +54,12 @@ public final class FileSetDataset implements FileSet {
   private final List<Location> inputLocations;
   private final Location outputLocation;
 
-  private final Class<? extends InputFormat> inputFormatClass;
-  private final Class<? extends OutputFormat> outputFormatClass;
+  private final ClassLoader classLoader;
+  private final String inputFormatClassName;
+  private final String outputFormatClassName;
 
   /**
-   * Contructor.
+   * Constructor.
    * @param name name of the dataset
    * @param locationFactory the location factory
    * @param properties the dataset's properties from the spec
@@ -70,14 +75,15 @@ public final class FileSetDataset implements FileSet {
     Preconditions.checkArgument(!name.isEmpty(), "Dataset name must not be empty");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
     Preconditions.checkNotNull(properties, "Dataset properties must not be null");
-    Preconditions.checkNotNull(properties.get(FileSetProperties.BASE_PATH), "Base path must not be null");
+    Preconditions.checkNotNull(FileSetProperties.getBasePath(properties), "Base path must not be null");
 
     this.name = name;
     this.properties = properties;
-    this.baseLocation = locationFactory.create(properties.get(FileSetProperties.BASE_PATH));
+    this.baseLocation = locationFactory.create(FileSetProperties.getBasePath(properties));
     this.runtimeArguments = runtimeArguments;
-    this.inputFormatClass = getFormat(FileSetProperties.INPUT_FORMAT, InputFormat.class, classLoader);
-    this.outputFormatClass = getFormat(FileSetProperties.OUTPUT_FORMAT, OutputFormat.class, classLoader);
+    this.classLoader = classLoader;
+    this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
+    this.outputFormatClassName = FileSetProperties.getOutputFormat(properties);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
   }
@@ -109,8 +115,7 @@ public final class FileSetDataset implements FileSet {
     }
   }
 
-  private <T> Class<? extends T> getFormat(String propertyName, Class<?> baseClass, ClassLoader classLoader) {
-    String className = properties.get(propertyName);
+  private <T> Class<? extends T> getFormat(String className, Class<?> baseClass, ClassLoader classLoader) {
     if (className == null) {
       return null;
     }
@@ -127,24 +132,8 @@ public final class FileSetDataset implements FileSet {
         throw new DataSetException("Class '" + className + "' does not extend " + baseClass.getName());
       }
     } catch (ClassNotFoundException e) {
-      throw new DataSetException(propertyName + " class '" + className + "' not found. ", e);
+      throw new DataSetException(baseClass.getName() + " class '" + className + "' not found. ", e);
     }
-  }
-
-  private Map<String, String> getFormatConfiguration(String propertyPrefix, Map<String, String> additional) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      if (entry.getKey().startsWith(propertyPrefix)) {
-        builder.put(entry.getKey().substring(propertyPrefix.length()), entry.getValue());
-      }
-    }
-    for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
-      if (entry.getKey().startsWith(propertyPrefix)) {
-        builder.put(entry.getKey().substring(propertyPrefix.length()), entry.getValue());
-      }
-    }
-    builder.putAll(additional);
-    return builder.build();
   }
 
   @Override
@@ -175,38 +164,45 @@ public final class FileSetDataset implements FileSet {
   @Override
   @SuppressWarnings("unchecked")
   public <T> Class<? extends T> getInputFormatClass() {
-    return (Class<? extends T>) inputFormatClass;
+    return (Class<? extends T>) getFormat(inputFormatClassName, InputFormat.class, classLoader);
   }
 
   @Override
   public Map<String, String> getInputFormatConfiguration() {
-    StringBuilder paths = new StringBuilder();
-    String sep = "";
-    for (Location location : inputLocations) {
-      paths.append(sep).append(getFileSystemPath(location));
-      sep = ",";
-    }
-    return getFormatConfiguration(FileSetProperties.INPUT_PROPERTIES_PREFIX,
-                                  ImmutableMap.of("mapred.input.dir", paths.toString()));
+    String inputs = Joiner.on(',').join(Iterables.transform(inputLocations, new Function<Location, String>() {
+      @Override
+      public String apply(@Nullable Location location) {
+        return getFileSystemPath(location);
+      }
+    }));
+    Map<String, String> config = Maps.newHashMap();
+    config.putAll(FileSetProperties.getInputProperties(properties));
+    config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
+    config.put("mapred.input.dir", inputs);
+    return ImmutableMap.copyOf(config);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Class<? extends T> getOutputFormatClass() {
-    return (Class<? extends T>) outputFormatClass;
+    return (Class<? extends T>) getFormat(outputFormatClassName, OutputFormat.class, classLoader);
   }
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
-    return getFormatConfiguration(FileSetProperties.OUTPUT_PROPERTIES_PREFIX,
-                                  ImmutableMap.of(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation)));
+    Map<String, String> config = Maps.newHashMap();
+    config.putAll(FileSetProperties.getOutputProperties(properties));
+    config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
+    config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
+    return ImmutableMap.copyOf(config);
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return runtimeArguments;
   }
 
   private String getFileSystemPath(Location loc) {
     return loc.toURI().getPath();
-  }
-
-  public String getName() {
-    return name;
   }
 }
