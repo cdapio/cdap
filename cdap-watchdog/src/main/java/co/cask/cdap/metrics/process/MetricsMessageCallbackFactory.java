@@ -17,7 +17,6 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -59,8 +58,8 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   }
 
   @Override
-  public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsScope scope) {
+  public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable) {
     return new PersistedMessageCallback(
-      new MetricsMessageCallback(scope, processors, datumReader, recordSchema), metaTable, persistThreshold);
+      new MetricsMessageCallback(processors, datumReader, recordSchema), metaTable, persistThreshold);
   }
 }

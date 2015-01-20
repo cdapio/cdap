@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.data.TimeSeriesTables;
@@ -47,13 +46,13 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
   }
 
   @Override
-  public void process(MetricsScope scope, Iterator<MetricsRecord> records) {
+  public void process(Iterator<MetricsRecord> records) {
     try {
       List<MetricsRecord> metricsRecords = Lists.newArrayList();
       while (records.hasNext()) {
         metricsRecords.add(records.next());
         if (metricsRecords.size() == MAX_RECORDLIST_SIZE || !records.hasNext()) {
-          timeSeriesTables.save(scope, metricsRecords);
+          timeSeriesTables.save(metricsRecords);
           metricsRecords.clear();
         }
       }

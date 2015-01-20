@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -50,13 +51,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final PreferencesStore preferencesStore;
+  private final DashboardStore dashboardStore;
 
   @Inject
   public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                              PreferencesStore preferencesStore) {
+                              PreferencesStore preferencesStore, DashboardStore dashboardStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.preferencesStore = preferencesStore;
+    this.dashboardStore = dashboardStore;
   }
 
   @GET
@@ -162,6 +165,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       // Delete Preferences associated with this namespace
       preferencesStore.deleteProperties(namespace);
+
+      // Delete all dashboards associated with this namespace
+      dashboardStore.delete(namespace);
 
       // Store#deleteNamespace already checks for existence
       NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);

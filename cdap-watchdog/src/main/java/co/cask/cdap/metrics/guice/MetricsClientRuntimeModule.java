@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
@@ -88,7 +87,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService() {
           @Override
-          protected void publish(MetricsScope scope, Iterator<MetricValue> metrics) throws Exception {
+          protected void publish(Iterator<MetricValue> metrics) throws Exception {
             // No-op
           }
         });

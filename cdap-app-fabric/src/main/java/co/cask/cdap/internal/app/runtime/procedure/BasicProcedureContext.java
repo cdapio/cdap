@@ -27,7 +27,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.ProcedureLoggingContext;
@@ -57,14 +56,14 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
                         DiscoveryServiceClient discoveryServiceClient,
                         DatasetFramework dsFramework, CConfiguration conf) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(collectionService, MetricsScope.SYSTEM, program, runId.getId(), instanceId),
+          getMetricCollector(collectionService, program, runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
     this.procedureId = program.getName();
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.procedureSpec = procedureSpec;
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(collectionService, MetricsScope.USER,
-                                                                 program, runId.getId(), instanceId));
+    this.userMetrics = new ProgramUserMetrics(getMetricCollector(collectionService, program,
+                                                                 runId.getId(), instanceId));
     this.procedureLoggingContext = new ProcedureLoggingContext(getNamespaceId(), getApplicationId(), getProcedureId());
   }
 
@@ -101,14 +100,13 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     MetricsScope scope, Program program,
-                                                     String runId, int instanceId) {
+                                                     Program program, String runId, int instanceId) {
     if (service == null) {
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 
   public void setInstanceCount(int count) {

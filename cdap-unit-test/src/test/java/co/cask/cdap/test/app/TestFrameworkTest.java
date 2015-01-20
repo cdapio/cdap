@@ -249,7 +249,7 @@ public class TestFrameworkTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     try {
       ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
-      serviceStatusCheck(centralServiceManager, true);
+      centralServiceManager.waitForStatus(true);
 
       // Test procedure's getServiceURL
       ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
@@ -262,12 +262,12 @@ public class TestFrameworkTest extends TestBase {
 
       // Test serviceWorker's getServiceURL
       ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      serviceStatusCheck(serviceWithWorker, true);
+      serviceWithWorker.waitForStatus(true);
       // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping
       // the CentralService, get the appropriate response, and write to to a dataset.
       Thread.sleep(2000);
       serviceWithWorker.stop();
-      serviceStatusCheck(serviceWithWorker, false);
+      serviceWithWorker.waitForStatus(false);
 
       result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
                                                                     AppUsingGetServiceURL.DATASET_KEY));
@@ -276,7 +276,7 @@ public class TestFrameworkTest extends TestBase {
       procedureManager.stop();
 
       centralServiceManager.stop();
-      serviceStatusCheck(centralServiceManager, false);
+      centralServiceManager.waitForStatus(false);
     } finally {
       applicationManager.stopAll();
     }
@@ -315,7 +315,7 @@ public class TestFrameworkTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     try {
       ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      serviceStatusCheck(serviceManager, true);
+      serviceManager.waitForStatus(true);
 
       String runnableName = AppUsingGetServiceURL.SERVICE_WITH_WORKER;
       int retries = 5;
@@ -350,7 +350,7 @@ public class TestFrameworkTest extends TestBase {
       }
 
       serviceManager.stop();
-      serviceStatusCheck(serviceManager, false);
+      serviceManager.waitForStatus(false);
 
       // Should be 0 instances when stopped.
       runnableInstancesCheck(serviceManager, runnableName, 0, retries, "provisioned");
@@ -373,7 +373,7 @@ public class TestFrameworkTest extends TestBase {
     try {
       LOG.info("Deployed.");
       ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
-      serviceStatusCheck(serviceManager, true);
+      serviceManager.waitForStatus(true);
 
       LOG.info("Service Started");
 
@@ -391,6 +391,7 @@ public class TestFrameworkTest extends TestBase {
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(500, response.getResponseCode());
+      Assert.assertTrue(response.getResponseBodyAsString().contains("Transaction failure"));
 
       // Call the verify ClassLoader endpoint
       url = new URL(serviceURL, "verifyClassLoader");
@@ -414,7 +415,7 @@ public class TestFrameworkTest extends TestBase {
                           AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
       ServiceManager datasetWorkerServiceManager = applicationManager
         .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
-      serviceStatusCheck(datasetWorkerServiceManager, true);
+      datasetWorkerServiceManager.waitForStatus(true);
 
       ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
       ProcedureClient procedureClient = procedureManager.getClient();
@@ -433,10 +434,10 @@ public class TestFrameworkTest extends TestBase {
       Assert.assertEquals(200, response.getResponseCode());
 
       datasetWorkerServiceManager.stop();
-      serviceStatusCheck(datasetWorkerServiceManager, false);
+      datasetWorkerServiceManager.waitForStatus(false);
       LOG.info("DatasetUpdateService Stopped");
       serviceManager.stop();
-      serviceStatusCheck(serviceManager, false);
+      serviceManager.waitForStatus(false);
       LOG.info("ServerService Stopped");
 
       result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
@@ -456,7 +457,7 @@ public class TestFrameworkTest extends TestBase {
     try {
       LOG.info("Deployed.");
       ServiceManager serviceManager = applicationManager.startService(AppWithServices.TRANSACTIONS_SERVICE_NAME);
-      serviceStatusCheck(serviceManager, true);
+      serviceManager.waitForStatus(true);
 
       LOG.info("Service Started");
 
@@ -505,7 +506,7 @@ public class TestFrameworkTest extends TestBase {
 
       executorService.shutdown();
       serviceManager.stop();
-      serviceStatusCheck(serviceManager, false);
+      serviceManager.waitForStatus(false);
 
       DataSetManager<KeyValueTable> dsManager
         = applicationManager.getDataSet(AppWithServices.TRANSACTIONS_DATASET_NAME);
@@ -514,17 +515,6 @@ public class TestFrameworkTest extends TestBase {
     } finally {
       applicationManager.stopAll();
     }
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
@@ -613,12 +603,12 @@ public class TestFrameworkTest extends TestBase {
                                                                        "BatchSinkFlowlet");
 
       // Generator generators 99 events + 99 batched events
-      sinkMetrics.waitFor("process.events.in", 198, 5, TimeUnit.SECONDS);
+      sinkMetrics.waitFor("system.process.events.in", 198, 5, TimeUnit.SECONDS);
       sinkMetrics.waitForProcessed(198, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, sinkMetrics.getException());
 
       // Batch sink only get the 99 batch events
-      batchSinkMetrics.waitFor("process.events.in", 99, 5, TimeUnit.SECONDS);
+      batchSinkMetrics.waitFor("system.process.events.in", 99, 5, TimeUnit.SECONDS);
       batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, batchSinkMetrics.getException());
 

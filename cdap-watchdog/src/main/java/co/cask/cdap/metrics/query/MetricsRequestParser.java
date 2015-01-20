@@ -158,6 +158,11 @@ final class MetricsRequestParser {
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();
     MetricsRequestContext.Builder contextBuilder = new MetricsRequestContext.Builder();
 
+    // everything
+    if (!pathParts.hasNext()) {
+      return contextBuilder.build();
+    }
+
     // scope is the first part of the path
     String scopeStr = pathParts.next();
     try {
@@ -361,9 +366,9 @@ final class MetricsRequestParser {
   }
 
   /**
-   * From the query string determine the query type and related parameters.
+   * From the query string determine the query type, time range and related parameters.
    */
-  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
+  public static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
     // Extracts the query type.
