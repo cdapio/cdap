@@ -258,13 +258,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-name") String adapterName) {
-    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    if (adapterSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Adapter not found: %s.%s", namespaceId, adapterName));
-      return;
+    try {
+      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
-    responder.sendJson(HttpResponseStatus.OK, adapterSpec);
   }
 
   @POST
@@ -297,28 +296,27 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-name") String adapterName) {
-    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    if (adapterSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Adapter not found: %s.%s", namespaceId, adapterName));
-      return;
-    }
-    String appName = adapterSpec.getType();
-    adapterService.removeAdapter(namespaceId, adapterSpec);
+    try {
+      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+      String appName = adapterSpec.getType();
+      adapterService.removeAdapter(namespaceId, adapterSpec);
 
-    // remove application if this adapter was the last adapter for that app
-    Iterable<AdapterSpecification> adaptersByType = adapterService.getAdapters(namespaceId, appName);
-    if (Iterables.isEmpty(adaptersByType)) {
-      Id.Application appId = Id.Application.from(namespaceId, appName);
-      try {
-        removeApplication(appId);
-        LOG.debug("Deleted application: {}, because there are no more adapters for it.", appId);
-      } catch (Exception e) {
-        LOG.error("Got exception while deploy of app: {}. ", appId, e);
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      // remove application if this adapter was the last adapter for that app
+      Iterable<AdapterSpecification> adaptersByType = adapterService.getAdapters(namespaceId, appName);
+      if (Iterables.isEmpty(adaptersByType)) {
+        Id.Application appId = Id.Application.from(namespaceId, appName);
+        try {
+          removeApplication(appId);
+          LOG.debug("Deleted application: {}, because there are no more adapters for it.", appId);
+        } catch (Exception e) {
+          LOG.error("Got exception while deploy of app: {}. ", appId, e);
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
       }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
 

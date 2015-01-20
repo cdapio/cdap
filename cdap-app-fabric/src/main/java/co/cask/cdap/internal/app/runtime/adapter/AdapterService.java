@@ -295,7 +295,7 @@ public class AdapterService extends AbstractIdleService {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
         Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
-        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.getScheduleName(programId));
+        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.constructScheduleName(programId));
       }
     } else {
       // Only Workflows are supported to be unscheduled in the current implementation
@@ -308,7 +308,7 @@ public class AdapterService extends AbstractIdleService {
   private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
     String cronExpr = Schedules.toCronExpr(adapterSpec.getProperties().get("frequency"));
     Preconditions.checkNotNull(cronExpr, "Frequency of running the adapter is missing. Cannot schedule program");
-    Schedule schedule = new Schedule(adapterSpec.getScheduleName(programId), adapterSpec.getScheduleDescription(), cronExpr);
+    Schedule schedule = new Schedule(adapterSpec.constructScheduleName(programId), adapterSpec.getScheduleDescription(), cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
                                            adapterSpec.getProperties());

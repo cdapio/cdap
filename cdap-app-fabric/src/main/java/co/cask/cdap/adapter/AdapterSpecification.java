@@ -92,7 +92,7 @@ public final class AdapterSpecification {
   /**
    * @return name of the schedule for this Adapter.
    */
-  public String getScheduleName(Id.Program programId) {
+  public String constructScheduleName(Id.Program programId) {
     // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter.
     return String.format("%s.%s", name, programId.getId());
   }
