@@ -87,6 +87,9 @@ public class CLIConfig {
 
   public void setCurrentNamespace(String currentNamespace) {
     this.currentNamespace = currentNamespace;
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
+    }
   }
 
   public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
@@ -268,21 +271,21 @@ public class CLIConfig {
   public void setHostname(String hostname) {
     clientConfig.setHostname(hostname);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getBaseURI());
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
   }
 
   public void setPort(int port) {
     clientConfig.setPort(port);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getBaseURI());
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
   }
 
   public void setSSLEnabled(boolean sslEnabled) {
     clientConfig.setSSLEnabled(sslEnabled);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getBaseURI());
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
   }
 
@@ -298,7 +301,7 @@ public class CLIConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(URI newURI);
+    void onConnectionChanged(String currentNamespace, URI newURI);
   }
 
   /**

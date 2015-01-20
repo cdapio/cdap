@@ -100,8 +100,8 @@ public class CLIMain {
 
     this.cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onConnectionChanged(URI newURI) {
-        cli.getReader().setPrompt("cdap (" + newURI + ")> ");
+      public void onConnectionChanged(String newNamespace, URI newURI) {
+        cli.getReader().setPrompt("cdap (" + newURI + "//" + newNamespace + ")> ");
       }
     });
   }
