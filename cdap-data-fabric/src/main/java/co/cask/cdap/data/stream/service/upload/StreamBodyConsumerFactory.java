@@ -42,6 +42,9 @@ public class StreamBodyConsumerFactory {
     if (contentType.startsWith("text/")) {
       return new TextStreamBodyConsumer(contentWriterFactory);
     }
+    if (contentType.equals("avro/binary")) {
+      return new AvroStreamBodyConsumer(contentWriterFactory);
+    }
     throw new UnsupportedOperationException("Unsupported content type " + contentType);
   }
 }
