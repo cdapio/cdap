@@ -247,8 +247,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "instance");
+    propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences '%s'", GSON.toJson(propMap)),
+    testCommandOutputContains(cli, String.format("set instance preferences 'key=instance k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
     testPreferencesOutput(cli, "get instance resolved preferences", propMap);
@@ -256,7 +257,7 @@ public class CLIMainTest extends StandaloneTestBase {
     propMap.clear();
     testPreferencesOutput(cli, "get instance preferences", propMap);
     propMap.put("key", "flow");
-    testCommandOutputContains(cli, String.format("set flow preferences '%s' %s.%s", GSON.toJson(propMap),
+    testCommandOutputContains(cli, String.format("set flow preferences 'key=flow' %s.%s",
                                                  FakeApp.NAME, FakeFlow.NAME), "successfully");
     testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
     testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
@@ -416,7 +417,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static void testPreferencesOutput(CLI cli, String command, final Map<String, String> expected)
     throws Exception {
-    final String expectedOutput = String.format("%s\n", GSON.toJson(expected));
+    final String expectedOutput = Joiner.on(System.lineSeparator()).join(expected.entrySet().iterator());
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override
