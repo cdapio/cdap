@@ -35,7 +35,6 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -1217,12 +1216,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, "", "");
-      String list = listProgramsByDataAccess(programId, type, data, name);
-      if (list.isEmpty()) {
+      List<ProgramRecord> programRecords = listProgramsByDataAccess(programId, type, data, name);
+      if (programRecords.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        responder.sendJson(HttpResponseStatus.OK, programRecords);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1232,8 +1230,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String listProgramsByDataAccess(Id.Program programId, ProgramType type, Data data,
-                                          String name) throws Exception {
+  private List<ProgramRecord> listProgramsByDataAccess(Id.Program programId, ProgramType type,
+                                                       Data data, String name) throws Exception {
     List<ProgramRecord> result = Lists.newArrayList();
     Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
       new Id.Namespace(programId.getNamespaceId()));
@@ -1261,8 +1259,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
     }
-    return GSON.toJson(result);
-
+    return result;
   }
 
   private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {

@@ -59,7 +59,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -471,7 +470,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       Id.Namespace accId = Id.Namespace.from(namespaceId);
-      List<ApplicationRecord> result = Lists.newArrayList();
+      List<ApplicationRecord> appRecords = Lists.newArrayList();
       List<ApplicationSpecification> specList;
       if (appId == null) {
         specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
@@ -485,18 +484,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       for (ApplicationSpecification appSpec : specList) {
-        result.add(makeAppRecord(appSpec));
+        appRecords.add(makeAppRecord(appSpec));
       }
 
-      String json;
       if (appId == null) {
-        json = GSON.toJson(result);
+        responder.sendJson(HttpResponseStatus.OK, appRecords);
       } else {
-        json = GSON.toJson(result.get(0));
+        responder.sendJson(HttpResponseStatus.OK, appRecords.get(0));
       }
-
-      responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
     } catch (SecurityException e) {
       LOG.debug("Security Exception while retrieving app details: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
