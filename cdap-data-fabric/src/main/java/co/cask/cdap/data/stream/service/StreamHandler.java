@@ -123,7 +123,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
-
     this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
