@@ -44,7 +44,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -137,6 +136,12 @@ public class AdapterService extends AbstractIdleService {
     return store.getAdapter(Id.Namespace.from(namespace), adapterName);
   }
 
+  /**
+   * Get all adapters in a given namespace.
+   *
+   * @param namespace namespace to look up the adapters
+   * @return {@link Collection} of {@link AdapterSpecification}
+   */
   public Collection<AdapterSpecification> getAdapters(String namespace) {
     return store.getAllAdapters(Id.Namespace.from(namespace));
   }
@@ -162,10 +167,10 @@ public class AdapterService extends AbstractIdleService {
       // If the adapter already exists, remove existing schedule to replace with the new one.
       AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
       if (existingSpec != null) {
-        stopPrograms(namespaceId, appSpec, adapterTypeInfo, existingSpec);
+        unschedule(namespaceId, appSpec, adapterTypeInfo, existingSpec);
       }
 
-      startPrograms(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
+      schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
       store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
 
     } catch (Exception e) {
@@ -188,7 +193,7 @@ public class AdapterService extends AbstractIdleService {
     }
 
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
-    stopPrograms(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+    unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
     store.removeAdapter(namespaceId, adapterName);
 
     // TODO: Delete the application if this is the last adapter
@@ -226,9 +231,9 @@ public class AdapterService extends AbstractIdleService {
     return applicationWithPrograms.getSpecification();
   }
 
-  // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  private void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                             AdapterSpecification adapterSpec) {
+  // Schedule all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
+  private void schedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                        AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
@@ -243,9 +248,9 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  // Stop all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
-  private void stopPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                            AdapterSpecification adapterSpec) {
+  // Unschedule all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
+  private void unschedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                          AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
@@ -285,14 +290,11 @@ public class AdapterService extends AbstractIdleService {
   private void validateSources(String adapterName, Set<Source> sources) throws IllegalArgumentException {
     // Ensure all sources exist
     for (Source source : sources) {
-      if (Source.Type.STREAM.equals(source.getType())) {
-        if (!streamExists(source.getName())) {
-          throw new IllegalArgumentException(String.format("Stream %s must exist during create of adapter: %s",
-                                                           source.getName(), adapterName));
-        }
-      } else {
-        throw new IllegalArgumentException(String.format("Unknown Source type: %s", source.getType()));
-      }
+      Preconditions.checkArgument(Source.Type.STREAM.equals(source.getType()),
+                                  String.format("Unknown Source type: %s", source.getType()));
+      Preconditions.checkArgument(streamExists(source.getName()),
+                                  String.format("Stream %s must exist during create of adapter: %s",
+                                                source.getName(), adapterName));
     }
   }
 
@@ -308,18 +310,15 @@ public class AdapterService extends AbstractIdleService {
   private void createSinks(Set<Sink> sinks, AdapterTypeInfo adapterTypeInfo) {
     // create sinks if it does not exist
     for (Sink sink : sinks) {
-      if (Sink.Type.DATASET.equals(sink.getType())) {
-        String datasetName = sink.getName();
-        // add all properties that were defined in the manifest (default sink properties), override that with sink
-        // properties passed while creating the sinks.
-        DatasetProperties properties = DatasetProperties.builder()
-                                            .addAll(adapterTypeInfo.getDefaultSinkProperties())
-                                            .addAll(sink.getProperties())
-                                            .build();
-        createDataset(datasetName, properties.getProperties().get(DATASET_CLASS), properties);
-      } else {
-        throw new IllegalArgumentException(String.format("Unknown Sink type: %s", sink.getType()));
-      }
+      Preconditions.checkArgument(Sink.Type.DATASET.equals(sink.getType()),
+                                  String.format("Unknown Sink type: %s", sink.getType()));
+      // add all properties that were defined in the manifest (default sink properties), override that with sink
+      // properties passed while creating the sinks.
+      DatasetProperties properties = DatasetProperties.builder()
+        .addAll(adapterTypeInfo.getDefaultSinkProperties())
+        .addAll(sink.getProperties())
+        .build();
+      createDataset(sink.getName(), properties.getProperties().get(DATASET_CLASS), properties);
     }
   }
 
@@ -354,7 +353,7 @@ public class AdapterService extends AbstractIdleService {
           if (adapterTypeInfo != null) {
             adapterTypeInfos.put(adapterTypeInfo.getType(), adapterTypeInfo);
           } else {
-            LOG.error("Missing required information to create adapter {}", file.getAbsolutePath());
+            LOG.warn("Missing required information to create adapter {}", file.getAbsolutePath());
           }
         } catch (IOException e) {
           LOG.warn(String.format("Unable to read adapter jar %s", file.getAbsolutePath()));
@@ -396,68 +395,6 @@ public class AdapterService extends AbstractIdleService {
     return properties == null ? Maps.<String, String>newHashMap() : properties;
   }
 
-  /**
-   * Holds information about an Adapter
-   */
-  public static final class AdapterTypeInfo {
-
-    private final File file;
-    private final String type;
-    private final Source.Type sourceType;
-    private final Sink.Type sinkType;
-    private final Map<String, String> defaultSourceProperties;
-    private final Map<String, String> defaultSinkProperties;
-    private final Map<String, String> defaultAdapterProperties;
-    private final ProgramType programType;
-
-    public AdapterTypeInfo(File file, String adapterType, Source.Type sourceType, Sink.Type sinkType,
-                           Map<String, String> defaultSourceProperties,
-                           Map<String, String> defaultSinkProperties,
-                           Map<String, String> defaultAdapterProperties,
-                           ProgramType programType) {
-      this.file = file;
-      this.type = adapterType;
-      this.sourceType = sourceType;
-      this.sinkType = sinkType;
-      this.defaultSourceProperties = ImmutableMap.copyOf(defaultSourceProperties);
-      this.defaultSinkProperties = ImmutableMap.copyOf(defaultSinkProperties);
-      this.defaultAdapterProperties = ImmutableMap.copyOf(defaultAdapterProperties);
-      this.programType = programType;
-    }
-
-    public File getFile() {
-      return file;
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public Source.Type getSourceType() {
-      return sourceType;
-    }
-
-    public Sink.Type getSinkType() {
-      return sinkType;
-    }
-
-    public Map<String, String> getDefaultSourceProperties() {
-      return defaultSourceProperties;
-    }
-
-    public Map<String, String> getDefaultSinkProperties() {
-      return defaultSinkProperties;
-    }
-
-    public Map<String, String> getDefaultAdapterProperties() {
-      return defaultAdapterProperties;
-    }
-
-    public ProgramType getProgramType() {
-      return programType;
-    }
-  }
-
   private static class AdapterManifestAttributes {
     private static final String ADAPTER_TYPE = "CDAP-Adapter-Type";
     private static final String ADAPTER_PROPERTIES = "CDAP-Adapter-Properties";
@@ -487,23 +424,26 @@ public class AdapterService extends AbstractIdleService {
     frequency = frequency.toLowerCase();
 
     String value = frequency.substring(0, frequency.length() - 1);
-    Preconditions.checkArgument(StringUtils.isNumeric(value));
-    Integer parsedValue = Integer.valueOf(value);
-    Preconditions.checkArgument(parsedValue > 0);
-    // TODO: Check for regular frequency.
-    String everyN = String.format("*/%s", value);
-    char lastChar = frequency.charAt(frequency.length() - 1);
-    switch (lastChar) {
-      case 'm':
-        DateBuilder.validateMinute(parsedValue);
-        return String.format("%s * * * ?", everyN);
-      case 'h':
-        DateBuilder.validateHour(parsedValue);
-        return String.format("0 %s * * ?", everyN);
-      case 'd':
-        DateBuilder.validateDayOfMonth(parsedValue);
-        return String.format("0 0 %s * ?", everyN);
+    try {
+      int parsedValue = Integer.parseInt(value);
+      Preconditions.checkArgument(parsedValue > 0);
+      // TODO: Check for regular frequency.
+      String everyN = String.format("*/%s", value);
+      char lastChar = frequency.charAt(frequency.length() - 1);
+      switch (lastChar) {
+        case 'm':
+          DateBuilder.validateMinute(parsedValue);
+          return String.format("%s * * * ?", everyN);
+        case 'h':
+          DateBuilder.validateHour(parsedValue);
+          return String.format("0 %s * * ?", everyN);
+        case 'd':
+          DateBuilder.validateDayOfMonth(parsedValue);
+          return String.format("0 0 %s * ?", everyN);
+      }
+      throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Could not parse the frequency");
     }
-    throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
   }
 }

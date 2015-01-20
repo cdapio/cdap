@@ -114,12 +114,8 @@ public final class AdapterSpecification {
 
     AdapterSpecification that = (AdapterSpecification) o;
 
-    if (name.equals(that.name) && properties.equals(that.properties) && sinks.equals(that.sinks) &&
-        sources.equals(that.sources) && type.equals(that.type)) {
-      return true;
-    } else {
-      return false;
-    }
+    return (name.equals(that.name) && properties.equals(that.properties) && sinks.equals(that.sinks) &&
+        sources.equals(that.sources) && type.equals(that.type));
   }
 
   @Override
