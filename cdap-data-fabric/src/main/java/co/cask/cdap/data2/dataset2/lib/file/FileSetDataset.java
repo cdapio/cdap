@@ -26,6 +26,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -174,11 +175,11 @@ public final class FileSetDataset implements FileSet {
         return getFileSystemPath(location);
       }
     }));
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.putAll(FileSetProperties.getInputProperties(properties));
-    builder.putAll(FileSetProperties.getInputProperties(runtimeArguments));
-    builder.put("mapred.input.dir", inputs);
-    return builder.build();
+    Map<String, String> config = Maps.newHashMap();
+    config.putAll(FileSetProperties.getInputProperties(properties));
+    config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
+    config.put("mapred.input.dir", inputs);
+    return ImmutableMap.copyOf(config);
   }
 
   @Override
@@ -189,11 +190,11 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.putAll(FileSetProperties.getOutputProperties(properties));
-    builder.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
-    builder.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
-    return builder.build();
+    Map<String, String> config = Maps.newHashMap();
+    config.putAll(FileSetProperties.getOutputProperties(properties));
+    config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
+    config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
+    return ImmutableMap.copyOf(config);
   }
 
   @Override
