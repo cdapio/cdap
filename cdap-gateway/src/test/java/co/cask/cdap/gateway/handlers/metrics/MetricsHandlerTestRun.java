@@ -81,8 +81,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector.increment("ab", 1);
 
     // also: user metrics
-    Metrics userMetrics =
-      new ProgramUserMetrics(collectionService.getCollector(getFlowletContext("WordCount1", "WordCounter", "splitter")));
+    Metrics userMetrics = new ProgramUserMetrics(
+      collectionService.getCollector(getFlowletContext("WordCount1", "WordCounter", "splitter")));
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
