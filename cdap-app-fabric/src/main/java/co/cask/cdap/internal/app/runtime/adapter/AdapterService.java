@@ -172,6 +172,28 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
+  /**
+   * Remove adapter identified by the namespace and name.
+   *
+   * @param namespace namespace id
+   * @param adapterName adapter name
+   * @throws AdapterNotFoundException if the adapter to be removed is not found.
+   */
+  public void removeAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    AdapterSpecification adapterSpec = store.getAdapter(namespaceId, adapterName);
+    if (adapterSpec == null) {
+      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
+    }
+
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
+    stopPrograms(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+    store.removeAdapter(namespaceId, adapterName);
+
+    // TODO: Delete the application if this is the last adapter
+
+  }
+
   // Deploys adapter application if it is not already deployed.
   private ApplicationSpecification deployApplication(String namespaceId, AdapterTypeInfo adapterTypeInfo)
     throws Exception {

@@ -42,6 +42,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -79,18 +80,34 @@ public class AdapterServiceTests extends AppFabricTestBase {
     ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
 
     String adapterName = "myAdapter";
-    AdapterSpecification specification =
+    AdapterSpecification adapterSpecification =
       new AdapterSpecification(adapterName, "dummyAdapter", properties,
                                ImmutableSet.of(new Source("mySource", Source.Type.STREAM, sourceProperties)),
                                ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
 
     // Create Adapter
-    adapterService.createAdapter(namespaceId, specification);
+    adapterService.createAdapter(namespaceId, adapterSpecification);
 
-    AdapterSpecification retreivedAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    Assert.assertNotNull(retreivedAdapterSpec);
-    Assert.assertEquals(specification, retreivedAdapterSpec);
+    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    Assert.assertNotNull(actualAdapterSpec);
+    Assert.assertEquals(adapterSpecification, actualAdapterSpec);
+
+    // list all adapters
+    Collection<AdapterSpecification> adapters = adapterService.getAdapters(namespaceId);
+    Assert.assertArrayEquals(new AdapterSpecification[] {adapterSpecification}, adapters.toArray());
+
+    // Delete Adapter
+    adapterService.removeAdapter(namespaceId, "myAdapter");
+    // verify that the adapter is deleted
+    actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    Assert.assertNull(actualAdapterSpec);
+
+    adapters = adapterService.getAdapters(namespaceId);
+    Assert.assertTrue(adapters.isEmpty());
   }
+
+
+  // TODO: Negative tests for deploying adapters
 
   private static void setupAdapters() throws IOException {
     setupAdapter(AdapterApp.class, "dummyAdapter");
