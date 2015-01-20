@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.apps')
         },
         function(res) {
           res.forEach(function(program) {
-            program.type_plural = program.type + 's';
+            program.type_plural = program.type + ((['Mapreduce', 'Spark'].indexOf(program.type) === -1) ? 's': '');
           });
           $scope.programs = $scope.programs.concat(res);
           res.forEach(function(prog) {

@@ -45,8 +45,7 @@ angular.module(PKG.name+'.feature.apps')
           .state('apps.detail.overview.tab', {
             url: '/:tab',
             ncyBreadcrumb: {
-              parent: 'apps.detail',
-              label: '{{$state.params.tabId}}'
+              skip: true
             }
           });
 
