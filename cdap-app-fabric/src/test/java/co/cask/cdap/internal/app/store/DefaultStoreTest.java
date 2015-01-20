@@ -753,15 +753,8 @@ public class DefaultStoreTest {
     Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
                                                    ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
 
-    Gson gson = new Gson();
-
     AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", "batchStreamToAvro",
                                                                      properties, sources, sinks);
-
-
-    String data = gson.toJson(specStreamToAvro1, AdapterSpecification.class).toString();
-
-    System.out.println(data);
 
     AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
                                                                      properties, sources, sinks);

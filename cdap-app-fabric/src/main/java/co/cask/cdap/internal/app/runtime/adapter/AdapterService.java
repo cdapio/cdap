@@ -42,10 +42,9 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Schedules;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -61,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -154,24 +154,32 @@ public class AdapterService extends AbstractIdleService {
    * @param adapterType type of requested adapters
    * @return Iterable of requested {@link AdapterSpecification}
    */
-  public Iterable<AdapterSpecification> getAdapters(String namespace, final String adapterType) {
+  public Collection<AdapterSpecification> getAdapters(String namespace, final String adapterType) {
     // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
     // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
-    return Iterables.filter(getAdapters(namespace), new Predicate<AdapterSpecification>() {
-      @Override
-      public boolean apply(AdapterSpecification input) {
-        return input.getType().equals(adapterType);
+    List<AdapterSpecification> adaptersByType = Lists.newArrayList();
+    Collection<AdapterSpecification> adapters = getAdapters(namespace);
+    for (AdapterSpecification adapterSpec : adapters) {
+      if (adapterSpec.getType().equals(adapterType)) {
+        adaptersByType.add(adapterSpec);
       }
-    });
+    }
+    return adaptersByType;
   }
 
-  public void removeAdapter(String namespaceId, AdapterSpecification adapterSpec) {
+  /**
+   * Removes an adapter, specified by namespace and the adapter's specification.
+   *
+   * @param namespace namespace to lookup the adapter
+   * @param adapterSpec specification of the adapter to remove
+   */
+  public void removeAdapter(String namespace, AdapterSpecification adapterSpec) {
     String appId = adapterSpec.getType();
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, appId));
     AdapterTypeInfo adapterTypeInfo = getAdapterTypeInfo(adapterSpec.getType());
-    unschedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
+    unschedule(namespace, appSpec, adapterTypeInfo, adapterSpec);
 
-    store.removeAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
+    store.removeAdapter(Id.Namespace.from(namespace), adapterSpec.getName());
   }
 
   /**
