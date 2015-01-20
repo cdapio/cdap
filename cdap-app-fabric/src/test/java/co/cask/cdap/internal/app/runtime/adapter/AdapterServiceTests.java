@@ -22,8 +22,6 @@ import co.cask.cdap.adapter.Sink;
 import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -32,9 +30,6 @@ import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -42,8 +37,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -51,28 +44,22 @@ import java.util.jar.Manifest;
  * AdapterService life cycle tests.
  */
 public class AdapterServiceTests extends AppFabricTestBase {
-  private static final Gson GSON = new Gson();
-  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
-  private static Store store;
 
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
-    Injector injector = getInjector();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.ADAPTER_DIR));
     setupAdapters();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerAdapters();
-    store = getInjector().getInstance(StoreFactory.class).create();
   }
 
   @Test
-  public void testAdapters() throws Exception {
-
+  public void testAdapters() {
     //Basic adapter service tests.
     String namespaceId = Constants.DEFAULT_NAMESPACE;
 
@@ -86,17 +73,21 @@ public class AdapterServiceTests extends AppFabricTestBase {
                                ImmutableSet.of(new Source("mySource", Source.Type.STREAM, sourceProperties)),
                                ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
 
-    // Create Adapter
-    // Note: AdapterService assumes the adapter is already deployed. Deploying AdapterApp outside of the service.
-    AppFabricTestBase.deploy(AdapterApp.class, "dummyAdapter");
     adapterService.createAdapter(namespaceId, specification);
 
-    AdapterSpecification retreivedAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    Assert.assertNotNull(retreivedAdapterSpec);
-    Assert.assertEquals(specification, retreivedAdapterSpec);
+    AdapterSpecification retrievedAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    Assert.assertNotNull(retrievedAdapterSpec);
+    Assert.assertEquals(specification, retrievedAdapterSpec);
+
+    adapterService.removeAdapter(namespaceId, specification);
+
+    retrievedAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    Assert.assertNull(retrievedAdapterSpec);
   }
 
-  private static void setupAdapters() throws IOException {
+  private static void setupAdapters() throws Exception {
+    // Note: AdapterService assumes the adapter is already deployed. Deploying AdapterApp outside of the service.
+    AppFabricTestBase.deploy(AdapterApp.class, "dummyAdapter");
     setupAdapter(AdapterApp.class, "dummyAdapter");
   }
 

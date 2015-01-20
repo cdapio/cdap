@@ -36,6 +36,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -372,6 +373,21 @@ public abstract class AppFabricTestBase {
     }
     versionedApiBuilder.append(nonVersionedApiPath);
     return versionedApiBuilder.toString();
+  }
+
+  protected List<JsonObject> getAppList(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<JsonObject>() { }.getType();
+    return readResponse(response, typeToken);
   }
 
   protected void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {

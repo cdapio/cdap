@@ -242,6 +242,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
+    if (!namespaceExists(namespaceId)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Namespace '%s' does not exist.", namespaceId));
+      return;
+    }
     responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
   }
 
@@ -261,6 +266,41 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     responder.sendJson(HttpResponseStatus.OK, adapterSpec);
   }
+
+
+  /**
+   * Deletes an adapter
+   */
+  @DELETE
+  @Path("/adapters/{adapter-name}")
+  public void deleteAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-name") String adapterName) {
+    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    if (adapterSpec == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Adapter not found: %s.%s", namespaceId, adapterName));
+      return;
+    }
+    String appName = adapterSpec.getType();
+    adapterService.removeAdapter(namespaceId, adapterSpec);
+
+    // remove application if this adapter was the last adapter for that app
+    Iterable<AdapterSpecification> adaptersByType = adapterService.getAdapters(namespaceId, appName);
+    if (Iterables.isEmpty(adaptersByType)) {
+      Id.Application appId = Id.Application.from(namespaceId, appName);
+      try {
+        removeApplication(appId);
+        LOG.debug("Deleted application: {}, because there are no more adapters for it.", appId);
+      } catch (Exception e) {
+        LOG.error("Got exception while deploy of app: {}. ", appId, e);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      }
+    }
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+
 
   /**
    * Create an adapter.
@@ -340,7 +380,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appId) {
     try {
-      Id.Program id = Id.Program.from(namespaceId, appId, "");
+      Id.Application id = Id.Application.from(namespaceId, appId);
+
+      // Deletion of a particular application is not allowed if that application is used by an adapter
+      if (adapterService.getAdapterTypeInfo(appId) != null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("An adapter type exists with with the name: %s", appId));
+        return;
+      }
+
       AppFabricServiceStatus appStatus = removeApplication(id);
       LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
       responder.sendString(appStatus.getCode(), appStatus.getMessage());
@@ -382,6 +430,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));
       return null;
+    }
+
+    // Don't allow user application with the same name as an application deployed by a system adapter.
+    // System adapter do not get deployed to system namespace because they deal directly with data in user namespace
+    if (adapterService.getAdapterTypeInfo(appId) != null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("Deploy failed - An adapter type exists with with the name: %s", appId));
     }
 
     if (archiveName == null || archiveName.isEmpty()) {
@@ -614,16 +669,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     //All Apps are STOPPED, delete them
     for (ApplicationSpecification appSpec : allSpecs) {
-      Id.Program id = Id.Program.from(identifier.getId(), appSpec.getName() , "");
+      Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
       removeApplication(id);
     }
     return AppFabricServiceStatus.OK;
   }
 
-  private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
-    Id.Namespace namespaceId = Id.Namespace.from(identifier.getNamespaceId());
-    final Id.Application appId = Id.Application.from(namespaceId, identifier.getApplicationId());
-
+  private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
     boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
       @Override
@@ -647,7 +699,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
-    deleteMetrics(identifier.getNamespaceId(), identifier.getApplicationId());
+    deleteMetrics(appId.getNamespaceId(), appId.getId());
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId);
@@ -671,7 +723,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
       }
 
-      queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
+      queueAdmin.dropAllForFlow(appId.getId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
 

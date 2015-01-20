@@ -19,25 +19,19 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Tests for {@link AppLifecycleHttpHandler}
@@ -51,13 +45,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
     .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
-  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
-  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
-
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration conf = getInjector().getInstance(CConfiguration.class);
-
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -148,21 +137,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //delete app in testnamespace2
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-  }
-
-  private List<JsonObject> getAppList(String namespace) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
-    return readResponse(response, typeToken);
-  }
-
-  private JsonObject getAppDetails(String namespace, String appName) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
-                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<JsonObject>() { }.getType();
-    return readResponse(response, typeToken);
   }
 
   /**

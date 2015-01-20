@@ -38,9 +38,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -123,14 +125,41 @@ public class AdapterService extends AbstractIdleService {
     return store.getAdapter(Id.Namespace.from(namespace), adapterName);
   }
 
-  public Collection<AdapterSpecification> getAdapters(String namespace) {
+  public Iterable<AdapterSpecification> getAdapters(String namespace) {
     return store.getAllAdapters(Id.Namespace.from(namespace));
   }
 
   /**
+   * Retrieves an Iterable of {@link AdapterSpecification} specified by the adapterType in a given namespace.
+   *
+   * @param namespace namespace to lookup the adapter
+   * @param adapterType type of requested adapters
+   * @return Iterable of requested {@link AdapterSpecification}
+   */
+  public Iterable<AdapterSpecification> getAdapters(String namespace, final String adapterType) {
+    // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
+    // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
+    return Iterables.filter(getAdapters(namespace), new Predicate<AdapterSpecification>() {
+      @Override
+      public boolean apply(AdapterSpecification input) {
+        return input.getType().equals(adapterType);
+      }
+    });
+  }
+
+  public void removeAdapter(String namespaceId, AdapterSpecification adapterSpec) {
+    String appId = adapterSpec.getType();
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+    AdapterService.AdapterTypeInfo adapterTypeInfo = getAdapterTypeInfo(adapterSpec.getType());
+    stopPrograms(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
+
+    store.removeAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
+  }
+
+  /**
    * Creates the adapter
-   * @param namespaceId
-   * @param adapterSpec
+   * @param namespaceId namespace to create the adapter in
+   * @param adapterSpec specification of the adapter to create
    * @throws IllegalArgumentException
    */
   public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
@@ -156,8 +185,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Start all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  private void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                             AdapterSpecification adapterSpec) {
+  public void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                            AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
     Map<String, String> adapterProperties = Maps.newHashMap();
     adapterProperties.putAll(adapterTypeInfo.getDefaultAdapterProperties());
@@ -176,8 +205,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Stop all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
-  private void stopPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                            AdapterSpecification adapterSpec) {
+  public void stopPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
+                           AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();

@@ -71,19 +71,19 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     setupAdapters();
 
     String namespaceId = Constants.DEFAULT_NAMESPACE;
-    String adapterId = "dummyAdapter";
-    String adapterName = "myStreamConvertor";
+    String adapterType = "dummyAdapter";
+    String adapterName = "myStreamConverter";
 
     ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
     ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
     ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
 
     AdapterSpecification specification =
-      new AdapterSpecification(adapterName, adapterId, properties,
+      new AdapterSpecification(adapterName, adapterType, properties,
                                ImmutableSet.of(new Source("mySource", Source.Type.STREAM, sourceProperties)),
                                ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
 
-    HttpResponse response = createAdapter(namespaceId, adapterId, adapterName, "mySource", "mySink", properties,
+    HttpResponse response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
                                           sourceProperties, sinkProperties);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -97,7 +97,21 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     AdapterSpecification receivedAdapterSpecification = readResponse(response, AdapterSpecification.class);
     Assert.assertEquals(specification, receivedAdapterSpecification);
-    //TODO: Add Delete tests
+
+    List<JsonObject> deployedApps = getAppList(namespaceId);
+    Assert.assertEquals(1, deployedApps.size());
+    JsonObject deployedApp = deployedApps.get(0);
+    Assert.assertEquals(adapterType, deployedApp.get("id").getAsString());
+
+    response = deleteAdapter(namespaceId, adapterName);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // The app will get deleted since there are no more adapters using the app.
+    deployedApps = getAppList(namespaceId);
+    Assert.assertEquals(0, deployedApps.size());
+
+    response = getAdapter(namespaceId, adapterName);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
   //TODO: move these elsewhere:
@@ -129,11 +143,10 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   private static void setupAdapters() throws IOException {
-    setupAdapter(AdapterApp.class, "dummyAdapter", "AdapterWorkflow");
+    setupAdapter(AdapterApp.class, "dummyAdapter");
   }
 
-  private static void setupAdapter(Class<?> clz, String adapterType, String scheduledProgram) throws IOException {
-
+  private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
@@ -184,6 +197,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private HttpResponse getAdapter(String namespaceId, String adapterId) throws Exception {
     return doGet(String.format("%s/namespaces/%s/adapters/%s",
                                Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
+  }
+
+  private HttpResponse deleteAdapter(String namespaceId, String adapterId) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/adapters/%s",
+                                  Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
   }
 
   private JsonObject toJsonObject(Map<String, String> properties) {
