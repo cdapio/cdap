@@ -37,8 +37,8 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       protected void configure() {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeCollector.class).to(InMemoryStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeManager.class).to(InMemoryStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
         super.configure();
       }

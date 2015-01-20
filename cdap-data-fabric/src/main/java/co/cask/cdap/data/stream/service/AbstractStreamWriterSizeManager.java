@@ -125,9 +125,8 @@ public abstract class AbstractStreamWriterSizeManager
   }
 
   /**
-   * Schedule publishing heartbeats for the {@code streamName}. At fixed rate, a heartbeat will be send
-   * with containing the absolute size of the files own by this stream handler and concerning the stream
-   * {@code streamName}.
+   * Schedule publishing heartbeats for the {@code streamName}. At fixed rate, a heartbeat will be sent
+   * containing the absolute size of the files own by this stream handler and concerning the stream {@code streamName}.
    */
   protected void scheduleHeartbeats(final String streamName) {
     scheduledExecutor.scheduleAtFixedRate(new Runnable() {
