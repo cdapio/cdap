@@ -338,7 +338,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable th) {
       LOG.error("Failed to deploy adapter", th);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, th.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
   }
 
