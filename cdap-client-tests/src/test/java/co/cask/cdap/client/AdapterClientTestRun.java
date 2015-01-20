@@ -64,12 +64,6 @@ public class AdapterClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testAll() throws Exception {
-
-  }
-
-
-  @Test
   public void testAdapters() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     setupAdapters();
