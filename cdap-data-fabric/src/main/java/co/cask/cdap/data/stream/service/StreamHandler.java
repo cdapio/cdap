@@ -112,8 +112,28 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
 
     this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
+    StreamMetricsCollectorFactory metricsCollectorFactory = new StreamMetricsCollectorFactory() {
+      @Override
+      public StreamMetricsCollector createMetricsCollector(String streamName) {
+        final MetricsCollector childCollector =
+          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+        return new StreamMetricsCollector() {
+          @Override
+          public void emitMetrics(long bytesWritten, long eventsWritten) {
+            if (bytesWritten > 0) {
+              childCollector.increment("collect.bytes", bytesWritten);
+            }
+            if (eventsWritten > 0) {
+              childCollector.increment("collect.events", eventsWritten);
+            }
+          }
+        };
+      }
+    };
+
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
-                                                   cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
+                                                   cConf.getInt(Constants.Stream.WORKER_THREADS),
+                                                   metricsCollectorFactory);
   }
 
   @Override
