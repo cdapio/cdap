@@ -26,7 +26,7 @@ angular.module(PKG.name + '.commons')
 
       require: 'ngModel',
 
-      scope: true,
+      scope: {},
 
       templateUrl: 'metric-picker/metric-picker.html',
 
