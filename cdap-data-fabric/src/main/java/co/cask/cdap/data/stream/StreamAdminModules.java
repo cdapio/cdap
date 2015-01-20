@@ -48,7 +48,7 @@ public class StreamAdminModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamAdmin.class).to(InMemoryStreamFileAdmin.class).in(Singleton.class);
-        bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Singleton.class);
+        bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class)
@@ -63,7 +63,7 @@ public class StreamAdminModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Singleton.class);
+        bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class)
           .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
@@ -79,7 +79,7 @@ public class StreamAdminModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Singleton.class);
+        bind(StreamCoordinatorClient.class).to(DistributedStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
         bind(StreamAdmin.class).to(HBaseStreamFileAdmin.class).in(Singleton.class);
