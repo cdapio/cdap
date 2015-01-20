@@ -26,6 +26,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -52,9 +53,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
   public static final String SCHEMA_KEY = "cdap.stream.conversion.output.schema";
   public static final String MAPPER_MEMORY = "cdap.stream.conversion.mapper.memorymb";
 
-  // impala only supports scalar types, so we can't include headers as a map
-  // instead, allow a comma separated list of headers to be set in runtime args as columns to include.
-  // assumes the schema of the output dataset is appropriately named.
+  private final Map<String, String> dsArguments = Maps.newHashMap();
 
   @Override
   public void configure() {
@@ -82,12 +81,24 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
       job.getConfiguration().set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperMemoryMB * 0.8) + "m");
     }
 
-    // the time when this MapReduce job is supposed to start if this job is started by the scheduler
-    long logicalStartTime = context.getLogicalStartTime();
-    long runFrequency = TimeUnit.MINUTES.toMillis(5);
-    StreamBatchReadable.useStreamInput(context, "events", logicalStartTime - runFrequency, logicalStartTime);
+    // we will read <interval.minutes> of events from the stream, ending at <logical.time>
+    // (default: 5 minutes up to logical start time of the job).
+    long logicalTime = context.getLogicalStartTime();
+    long intervalLength = TimeUnit.MINUTES.toMillis(5);;
 
-    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted");
+    if (runtimeArgs.containsKey("logical.time")) {
+      logicalTime = Long.parseLong(runtimeArgs.get("logical.time"));
+    }
+    if (runtimeArgs.containsKey("interval.minutes")) {
+      intervalLength = Long.parseLong(runtimeArgs.get("interval.minutes"));
+    }
+
+    // configure the stream input format
+    StreamBatchReadable.useStreamInput(context, "events", logicalTime - intervalLength, logicalTime);
+
+    // configure the output dataset
+    TimePartitionedFileSetArguments.setOutputPartitionTime(dsArguments, logicalTime);
+    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
 
     // this schema is our schema, which is slightly different than avro's schema in terms of the types it supports.
     // Incompatibilities will surface here and cause the job to fail.
@@ -99,14 +110,14 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     // each job will output to a partition with its logical start time.
     LOG.info("Output location for new partition is: {}",
              partitionedFileSet.getUnderlyingFileSet().getOutputLocation().toURI().toString());
-    context.setOutput("converted");
+    context.setOutput("converted", partitionedFileSet);
   }
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
       // TODO this should be done by TPFS's output format instead
-      TimePartitionedFileSet converted = context.getDataset("converted");
+      TimePartitionedFileSet converted = context.getDataset("converted", dsArguments);
 
       String outputPath = FileSetArguments.getOutputPath(converted.getUnderlyingFileSet().getRuntimeArguments());
       Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(converted.getRuntimeArguments());
