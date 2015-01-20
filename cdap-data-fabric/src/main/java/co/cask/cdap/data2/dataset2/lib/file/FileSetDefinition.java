@@ -55,7 +55,7 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Map<String, String> props = properties.getProperties();
-    String basePath = props.get(FileSetProperties.BASE_PATH);
+    String basePath = FileSetProperties.getBasePath(props);
     if (basePath == null) {
       basePath = instanceName.replace('.', '/');
       props = Maps.newHashMap(props);

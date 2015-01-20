@@ -29,7 +29,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -83,7 +82,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    TransactionSystemClient transactionSystemClient,
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsSerice, MetricsScope.SYSTEM, program, spec.getName(), runId.getId(), instanceId),
+          getMetricCollector(metricsSerice, program, spec.getName(), runId.getId(), instanceId),
           datasetFramework, cConf, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
@@ -93,7 +92,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsSerice, MetricsScope.USER, program,
+    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsSerice, program,
                                                                  spec.getName(), runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
@@ -134,16 +133,15 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                          program.getId().getId(), specification.getName());
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     MetricsScope scope, Program program, String runnableName,
-                                                     String runId, int instanceId) {
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
+                                                     String runnableName, String runId, int instanceId) {
     if (service == null) {
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-    return service.getCollector(scope, tags);
+    return service.getCollector(tags);
   }
 
   @Override

@@ -25,7 +25,6 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -93,7 +92,7 @@ public class HttpHandlerGeneratorTest {
   @Test
   public void testHttpHandlerGenerator() throws Exception {
     MetricsCollector noOpsMetricsCollector =
-      new NoOpMetricsCollectionService().getCollector(MetricsScope.SYSTEM, new HashMap<String, String>());
+      new NoOpMetricsCollectionService().getCollector(new HashMap<String, String>());
     HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsCollector);
 
     HttpHandler httpHandler = factory.createHttpHandler(

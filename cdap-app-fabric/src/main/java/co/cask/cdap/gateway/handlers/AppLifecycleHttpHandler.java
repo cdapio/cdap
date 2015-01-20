@@ -37,7 +37,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
@@ -599,16 +598,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Can't find Metrics endpoint");
     }
 
-    for (MetricsScope scope : MetricsScope.values()) {
-      for (ApplicationSpecification application : applications) {
-        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                   discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.API_VERSION_2,
-                                   scope.name().toLowerCase(),
-                                   application.getName());
-        sendMetricsDelete(url);
-      }
+    for (ApplicationSpecification application : applications) {
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.API_VERSION_2,
+                                 "ignored",
+                                 application.getName());
+      sendMetricsDelete(url);
     }
 
     if (applicationId == null) {

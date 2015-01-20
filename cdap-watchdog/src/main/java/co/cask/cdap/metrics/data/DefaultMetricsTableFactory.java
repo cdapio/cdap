@@ -30,10 +30,9 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +48,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricsTableFactory.class);
 
   private final CConfiguration cConf;
-  // Stores the MetricsEntityCodec per namespace
-  private final LoadingCache<String, MetricsEntityCodec> entityCodecs;
+  private final Supplier<MetricsEntityCodec> entityCodec;
   private final DatasetFramework dsFramework;
 
   private Boolean ttlSupported;
@@ -58,44 +56,45 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   @Inject
   public DefaultMetricsTableFactory(final CConfiguration cConf,
                                     final DatasetFramework dsFramework) {
-    try {
-      this.cConf = cConf;
-      this.dsFramework =
-        new NamespacedDatasetFramework(dsFramework,
-                                       new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
+    this.cConf = cConf;
+    this.dsFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
 
-      this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
-        @Override
-        public MetricsEntityCodec load(String namespace) throws Exception {
-          String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                                                       MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-          MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-          EntityTable entityTable = new EntityTable(table);
+    this.entityCodec = Suppliers.memoize(new Supplier<MetricsEntityCodec>() {
 
-          return new MetricsEntityCodec(entityTable,
-                                        MetricsConstants.DEFAULT_CONTEXT_DEPTH,
-                                        MetricsConstants.DEFAULT_METRIC_DEPTH,
-                                        MetricsConstants.DEFAULT_TAG_DEPTH);
+      @Override
+      public MetricsEntityCodec get() {
+        String tableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                     MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+        MetricsTable table;
+        try {
+          table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
-      });
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+        EntityTable entityTable = new EntityTable(table);
+
+        return new MetricsEntityCodec(entityTable,
+                                      MetricsConstants.DEFAULT_CONTEXT_DEPTH,
+                                      MetricsConstants.DEFAULT_METRIC_DEPTH,
+                                      MetricsConstants.DEFAULT_TAG_DEPTH);
+      }
+    });
   }
 
   @Override
-  public TimeSeriesTable createTimeSeries(String namespace, int resolution) {
+  public TimeSeriesTable createTimeSeries(int resolution) {
     try {
-      String tableName = namespace.toLowerCase() + "." +
-                          cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                    MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
       int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
       DatasetProperties props = ttl > 0 ?
         DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
       MetricsTable table = getOrCreateMetricsTable(tableName, props);
       LOG.info("TimeSeriesTable created: {}", tableName);
-      return new TimeSeriesTable(table, entityCodecs.getUnchecked(namespace), resolution, getRollTime(resolution));
+      return new TimeSeriesTable(table, entityCodec.get(), resolution, getRollTime(resolution));
     } catch (Exception e) {
       LOG.error("Exception in creating TimeSeriesTable.", e);
       throw Throwables.propagate(e);
@@ -103,14 +102,13 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   }
 
   @Override
-  public AggregatesTable createAggregates(String namespace) {
+  public AggregatesTable createAggregates() {
     try {
-      String tableName = namespace.toLowerCase() + "." +
-                          cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                    MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
+      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
       LOG.info("AggregatesTable created: {}", tableName);
-      return new AggregatesTable(table, entityCodecs.getUnchecked(namespace));
+      return new AggregatesTable(table, entityCodec.get());
     } catch (Exception e) {
       LOG.error("Exception in creating AggregatesTable.", e);
       throw Throwables.propagate(e);
@@ -118,10 +116,10 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   }
 
   @Override
-  public KafkaConsumerMetaTable createKafkaConsumerMeta(String namespace) {
+  public KafkaConsumerMetaTable createKafkaConsumerMeta() {
     try {
-      String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                     MetricsConstants.DEFAULT_KAFKA_META_TABLE);
+      String tableName = cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+                                   MetricsConstants.DEFAULT_KAFKA_META_TABLE);
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
       LOG.info("KafkaConsumerMetaTable created: {}", tableName);
       return new KafkaConsumerMetaTable(table);
