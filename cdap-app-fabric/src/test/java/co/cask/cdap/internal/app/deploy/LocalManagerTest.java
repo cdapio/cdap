@@ -43,6 +43,9 @@ import java.util.jar.Manifest;
  * Tests the functionality of Deploy Manager.
  */
 public class LocalManagerTest {
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
   private static LocationFactory lf;
   private static File temp;
 
@@ -51,9 +54,6 @@ public class LocalManagerTest {
     lf = new LocalLocationFactory();
     temp = TMP_FOLDER.newFolder("pipeline");
   }
-
-  @ClassRule
-  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   /**
    * Improper Manifest file should throw an exception.
