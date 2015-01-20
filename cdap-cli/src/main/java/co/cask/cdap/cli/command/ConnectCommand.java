@@ -59,7 +59,11 @@ public class ConnectCommand implements Command {
     }
 
     CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
-    cliConfig.tryConnect(connectionInfo, output, true);
+    try {
+      cliConfig.tryConnect(connectionInfo, output, true);
+    } catch (Exception e) {
+      output.println("Failed to connect to " + uriString + ": " + e.getMessage());
+    }
   }
 
   @Override

@@ -41,7 +41,6 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
-import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Configuration for the CDAP CLI.
@@ -58,10 +57,13 @@ public class CLIConfig {
   private List<ConnectionChangeListener> connectionChangeListeners;
   private ConnectionInfo connectionInfo;
 
+  private String currentNamespace;
+
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    */
   public CLIConfig(String hostname) {
+    this.currentNamespace = "default";
     this.clientConfig = createClientConfig(hostname);
     this.resolver = new FilePathResolver();
     this.version = tryGetVersion();
@@ -79,6 +81,14 @@ public class CLIConfig {
     return clientConfigBuilder.build();
   }
 
+  public String getCurrentNamespace() {
+    return currentNamespace;
+  }
+
+  public void setCurrentNamespace(String currentNamespace) {
+    this.currentNamespace = currentNamespace;
+  }
+
   public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
 
     this.connectionInfo = connectionInfo;
@@ -89,6 +99,7 @@ public class CLIConfig {
       setPort(connectionInfo.getPort());
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
+      setCurrentNamespace("default");
 
       if (verbose) {
         output.printf("Successfully connected CDAP instance at %s:%d\n",
@@ -99,7 +110,6 @@ public class CLIConfig {
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
                                           e.getMessage()));
     }
-
   }
 
   public void updateAccessToken(PrintStream output) throws IOException {
