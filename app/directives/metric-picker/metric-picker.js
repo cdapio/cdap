@@ -49,11 +49,18 @@ angular.module(PKG.name + '.commons')
             }
           );
 
-          scope.available.metrics = v ? dSrc.request(
-            {
-              _cdapNsPath: u + '/metrics'
-            }
-          ) : [];
+          if(v) {
+            // assigning the promise directly works
+            // only because results are used as is.
+            scope.available.metrics = dSrc.request(
+              {
+                _cdapNsPath: u + '/metrics'
+              }
+            );
+          }
+          else {
+            scope.available.metrics = [];
+          }
 
         }
 
