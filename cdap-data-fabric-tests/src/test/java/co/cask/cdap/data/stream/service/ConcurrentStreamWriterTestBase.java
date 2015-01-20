@@ -20,7 +20,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
@@ -51,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -191,7 +189,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     StreamMetaStore streamMetaStore = new NoOpStreamMetaStore();
     StreamCoordinator streamCoordinator = new InMemoryStreamCoordinator(streamAdmin, streamMetaStore);
     return new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore,
-                                      writerFactory, threads, new TestMetricsCollector());
+                                      writerFactory, threads, new TestMetricsCollectorFactory());
   }
 
   private Runnable createWriterTask(final String accountId, final String streamName,
@@ -320,26 +318,15 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
   }
 
-  private static final class TestMetricsCollector implements MetricsCollector {
-
+  private static final class TestMetricsCollectorFactory implements StreamMetricsCollectorFactory {
     @Override
-    public void increment(String metricName, long value) {
-
-    }
-
-    @Override
-    public void gauge(String metricName, long value) {
-
-    }
-
-    @Override
-    public MetricsCollector childCollector(Map<String, String> tags) {
-      return this;
-    }
-
-    @Override
-    public MetricsCollector childCollector(String tagName, String tagValue) {
-      return this;
+    public StreamMetricsCollector createMetricsCollector(String streamName) {
+      return new StreamMetricsCollector() {
+        @Override
+        public void emitMetrics(long bytesWritten, long eventsWritten) {
+          // No-op
+        }
+      };
     }
   }
 }
