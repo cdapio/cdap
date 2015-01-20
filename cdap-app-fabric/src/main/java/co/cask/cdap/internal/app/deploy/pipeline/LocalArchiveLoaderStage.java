@@ -29,6 +29,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,8 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
       throw e;
     }
 
-    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(id, outputLocation);
+    InMemoryConfigurator inMemoryConfigurator =
+                new InMemoryConfigurator(id, new LocalLocationFactory().create(input.toURI()));
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
