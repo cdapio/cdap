@@ -154,6 +154,6 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Sets the preferences of a " + type.getPluralPrettyName() + "." +
-      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a keyn\"";
+      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
   }
 }
