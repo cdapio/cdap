@@ -25,14 +25,15 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
-import co.cask.cdap.test.internal.TempFolder;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.concurrent.ExecutionException;
@@ -43,15 +44,16 @@ import java.util.jar.Manifest;
  */
 public class LocalManagerTest {
   private static LocationFactory lf;
-  private static TempFolder tempFolder;
   private static File temp;
 
   @BeforeClass
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
-    tempFolder = new TempFolder();
-    temp = tempFolder.newFolder("pipeline");
+    temp = TMP_FOLDER.newFolder("pipeline");
   }
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   /**
    * Improper Manifest file should throw an exception.
@@ -92,7 +94,7 @@ public class LocalManagerTest {
 
   @AfterClass
   public static void cleanup() {
-    tempFolder.delete();
+    TMP_FOLDER.delete();
   }
 
 }

@@ -78,7 +78,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     Location parent = Locations.getParent(outputLocation);
     Locations.mkdirsIfNotExists(parent);
 
-    File input = deploymentInfo.getInputLocation();
+    File input = deploymentInfo.getAppJarFile();
     Location tmpLocation = parent.getTempFile(".tmp");
     LOG.debug("Copy from {} to {}", input.getName(), tmpLocation.toURI());
     Files.copy(input, Locations.newOutputSupplier(tmpLocation));

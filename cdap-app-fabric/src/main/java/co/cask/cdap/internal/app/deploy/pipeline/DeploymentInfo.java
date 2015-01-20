@@ -39,7 +39,7 @@ public class DeploymentInfo {
     this.destination = destination;
   }
 
-  public File getInputLocation() {
+  public File getAppJarFile() {
     return appJarFile;
   }
 
