@@ -367,7 +367,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     throws IllegalArgumentException {
 
     String tableName = getHiveTableName(name);
-    String serde = FileSetProperties.getSerdeClassName(properties);
+    String serde = FileSetProperties.getSerDe(properties);
     String inputFormat = FileSetProperties.getExploreInputFormat(properties);
     String outputFormat = FileSetProperties.getExploreOutputFormat(properties);
 
