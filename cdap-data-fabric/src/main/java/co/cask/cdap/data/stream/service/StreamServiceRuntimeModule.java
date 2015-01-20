@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -40,6 +41,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamWriterSizeCollector.class).to(InMemoryStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeManager.class).to(InMemoryStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
+        bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         super.configure();
       }
     };
@@ -54,6 +56,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
+        bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         super.configure();
       }
     };
@@ -67,6 +70,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
+        bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Scopes.SINGLETON);
         super.configure();
       }
 
