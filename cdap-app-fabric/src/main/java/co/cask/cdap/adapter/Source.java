@@ -86,12 +86,7 @@ public final class Source {
 
     Source source = (Source) o;
 
-    if (name.equals(source.name) && properties.equals(source.properties) &&
-        type == source.type) {
-      return true;
-    } else {
-      return false;
-    }
+    return (name.equals(source.name) && properties.equals(source.properties) && type == source.type);
   }
 
   @Override

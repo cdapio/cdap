@@ -84,6 +84,7 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
+    public static final String ADAPTER_DIR = "app.adapter.dir";
 
     /**
      * Defaults.
