@@ -89,7 +89,7 @@ public final class ScheduleTaskRunner {
       userArgs.putAll(runtimeArgs);
 
       boolean runMultipleProgramInstances =
-        Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_PROGRAM_RUN));
+        Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
 
       if (!runMultipleProgramInstances) {
         ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);

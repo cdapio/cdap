@@ -50,7 +50,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -661,7 +660,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Map<String, String> propMap = Maps.newHashMap();
-    propMap.put(ProgramOptionConstants.CONCURRENT_PROGRAM_RUN, "true");
+    propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
     store.setProperties(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
                         CONCURRENT_WORKFLOW_NAME, propMap);
