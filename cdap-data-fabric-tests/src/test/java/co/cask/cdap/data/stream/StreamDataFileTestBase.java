@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -225,6 +226,54 @@ public abstract class StreamDataFileTestBase {
       Assert.assertEquals("Testing " + ts, Charsets.UTF_8.decode(event.getBody()).toString());
       ts++;
     }
+  }
+
+  @Test
+  public void testFilter() throws Exception {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    final Location eventFile = dir.getTempFile(".dat");
+    final Location indexFile = dir.getTempFile(".idx");
+
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           10000L);
+    writer.append(StreamFileTestUtils.createEvent(0, "Message 1"));
+    writer.flush();
+
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    List<StreamEvent> events = Lists.newArrayList();
+
+    final AtomicBoolean active = new AtomicBoolean(false);
+    ReadFilter filter = new ReadFilter() {
+      private long nextTimestamp = -1L;
+
+      @Override
+      public void reset() {
+        active.set(false);
+        nextTimestamp = -1L;
+      }
+
+      @Override
+      public boolean acceptTimestamp(long timestamp) {
+        active.set(true);
+        nextTimestamp = timestamp + 1;
+        return false;
+      }
+
+      @Override
+      public long getNextTimestampHint() {
+        return nextTimestamp;
+      }
+    };
+
+    Assert.assertEquals(0, reader.read(events, 1, 0, TimeUnit.SECONDS, filter));
+    Assert.assertTrue(active.get());
+    filter.reset();
+    Assert.assertEquals(0, reader.read(events, 1, 0, TimeUnit.SECONDS, filter));
+    Assert.assertFalse(active.get());
+
+    reader.close();
+    writer.close();
   }
 
   @Test
