@@ -126,6 +126,12 @@ public class AdapterService extends AbstractIdleService {
     return store.getAllAdapters(Id.Namespace.from(namespace));
   }
 
+  /**
+   * Creates the adapter
+   * @param namespaceId
+   * @param adapterSpec
+   * @throws IllegalArgumentException
+   */
   public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
@@ -158,13 +164,8 @@ public class AdapterService extends AbstractIdleService {
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-        String programName = entry.getValue().getName();
-        String cronExpr = toCronExpr(adapterSpec.getProperties().get("frequency"));
-        Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
-        ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programName);
-        ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule, scheduleProgramInfo, adapterProperties);
-        Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), programName);
-        addSchedule(programId, scheduleSpec);
+        Id.Program programId = Id.Program.from(namespaceId, spec.getName(), entry.getValue().getName());
+        addSchedule(programId, adapterSpec);
       }
     } else {
       // Only Workflows are supported to be scheduled in the current implementation
@@ -191,10 +192,18 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Adds a schedule to the scheduler as well as to the appspec
-  private void addSchedule(Id.Program programId, ScheduleSpecification scheduleSpecification) {
-    scheduler.schedule(programId, scheduleSpecification.getProgram().getProgramType(),
-                       scheduleSpecification.getSchedule());
-    store.addSchedule(programId, scheduleSpecification);
+  private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
+    String cronExpr = toCronExpr(adapterSpec.getProperties().get("frequency"));
+    Preconditions.checkNotNull(cronExpr, "CronExpression is missing. Cannot schedule program");
+
+    Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
+    ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
+                                                                      programId.getId());
+    ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule, scheduleProgramInfo,
+                                                                   adapterSpec.getProperties());
+
+    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    store.addSchedule(programId, scheduleSpec);
   }
 
   // Deletes schedule from the scheduler as well as from the app spec
