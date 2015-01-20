@@ -21,8 +21,8 @@ import com.google.common.util.concurrent.Service;
 
 /**
  * This interface manages the sizes of data written by one stream writer run in a {@link StreamHandler}.
- * For each stream, It sends {@link StreamWriterHeartbeat}s at regular intervals to notify listeners
- * of the updated size of the stream.
+ * It sends {@link StreamWriterHeartbeat}s at regular intervals to notify listeners
+ * of the updated size of all existing streams.
  */
 public interface StreamWriterSizeManager extends Service {
 

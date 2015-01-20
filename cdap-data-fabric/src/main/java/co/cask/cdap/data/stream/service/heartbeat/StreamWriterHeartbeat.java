@@ -18,6 +18,10 @@ package co.cask.cdap.data.stream.service.heartbeat;
 
 import co.cask.cdap.data.stream.service.StreamCoordinator;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * Heartbeat sent by a Stream writer containing the total size of its files, in bytes. The heartbeats
@@ -26,30 +30,28 @@ import com.google.common.base.Objects;
 public class StreamWriterHeartbeat {
 
   /**
-   * Type of heartbeat, describing at what moment it is sent by a Stream writer.
+   * Type of information that describes one {@link StreamSize} object.
    */
-  public enum Type {
+  public enum StreamSizeType {
     /**
-     * Heartbeat sent during Stream writer initialization.
+     * Size sent during Stream writer initialization.
      */
     INIT,
 
     /**
-     * Heartbeat sent during regular Stream writer life.
+     * Size sent during regular Stream writer life.
      */
     REGULAR
   }
 
   private final long timestamp;
-  private final long absoluteDataSize;
   private final int writerID;
-  private final Type type;
+  private final Map<String, StreamSize> streamsSizes;
 
-  public StreamWriterHeartbeat(long timestamp, long absoluteDataSize, int writerID, Type type) {
+  private StreamWriterHeartbeat(long timestamp, int writerID, Map<String, StreamSize> streamsSizes) {
     this.timestamp = timestamp;
-    this.absoluteDataSize = absoluteDataSize;
     this.writerID = writerID;
-    this.type = type;
+    this.streamsSizes = ImmutableMap.copyOf(streamsSizes);
   }
 
   public long getTimestamp() {
@@ -60,21 +62,70 @@ public class StreamWriterHeartbeat {
     return writerID;
   }
 
-  public long getAbsoluteDataSize() {
-    return absoluteDataSize;
-  }
-
-  public Type getType() {
-    return type;
+  public Map<String, StreamSize> getStreamsSizes() {
+    return streamsSizes;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(StreamWriterHeartbeat.class)
       .add("timestamp", timestamp)
-      .add("absoluteDataSize", absoluteDataSize)
       .add("writerID", writerID)
-      .add("type", type)
+      .add("streamsSizes", streamsSizes)
       .toString();
+  }
+
+  /**
+   * Builder of a {@link StreamWriterHeartbeat}.
+   */
+  public static final class Builder {
+
+    private long timestamp;
+    private int writerID;
+    private final Map<String, StreamSize> streamSizes;
+
+    public Builder() {
+      streamSizes = Maps.newHashMap();
+    }
+
+    public Builder setTimestamp(long timestamp) {
+      this.timestamp = timestamp;
+      return this;
+    }
+
+    public Builder setWriterID(int writerID) {
+      this.writerID = writerID;
+      return this;
+    }
+
+    public Builder addStreamSize(String streamName, long absoluteDataSize, StreamSizeType streamSizeType) {
+      streamSizes.put(streamName, new StreamSize(absoluteDataSize, streamSizeType));
+      return this;
+    }
+
+    public StreamWriterHeartbeat build() {
+      return new StreamWriterHeartbeat(timestamp, writerID, streamSizes);
+    }
+  }
+
+  /**
+   * POJO class describing a stream size for the current writer.
+   */
+  public static final class StreamSize {
+    private final long absoluteDataSize;
+    private final StreamSizeType streamSizeType;
+
+    public StreamSize(long absoluteDataSize, StreamSizeType streamSizeType) {
+      this.absoluteDataSize = absoluteDataSize;
+      this.streamSizeType = streamSizeType;
+    }
+
+    public long getAbsoluteDataSize() {
+      return absoluteDataSize;
+    }
+
+    public StreamSizeType getStreamSizeType() {
+      return streamSizeType;
+    }
   }
 }
