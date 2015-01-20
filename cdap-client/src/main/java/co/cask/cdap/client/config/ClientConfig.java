@@ -88,6 +88,19 @@ public class ClientConfig {
   }
 
   /**
+   * Resolves a path against the target CDAP server with the provided apiVersion and namespace
+   * @param apiVersion the api version to use
+   * @param namespace the namespace to use
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:10000/v2/apps".
+   * @return URL of the resolved path
+   * @throws MalformedURLException
+   */
+  public URL resolveURL(String apiVersion, String namespace, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
+  }
+
+  /**
    * Resolves a path against the target CDAP server with the provided apiVersion
    * @param apiVersion the api version to use
    * @param path Path to the HTTP endpoint. For example, "apps" would result

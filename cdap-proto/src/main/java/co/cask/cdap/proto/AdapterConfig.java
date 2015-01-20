@@ -15,10 +15,24 @@ public final class AdapterConfig {
   public static final class Source {
     public String name;
     public Map<String, String> properties;
+
+    public Source() {}
+
+    public Source(String name, Map<String, String> properties) {
+      this.name = name;
+      this.properties = properties;
+    }
   }
 
   public static final class Sink {
     public String name;
     public Map<String, String> properties;
+
+    public Sink() {}
+
+    public Sink(String name, Map<String, String> properties) {
+      this.name = name;
+      this.properties = properties;
+    }
   }
 }
