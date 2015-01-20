@@ -74,7 +74,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -108,7 +107,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-
 /**
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
  */
@@ -116,11 +114,6 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
-
-  /**
-   * Json serializer.
-   */
-  private static final Gson GSON = new Gson();
 
   /**
    * Timeout to get response from metrics system.
@@ -266,6 +259,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Starts/stops an adapter
+   */
   @POST
   @Path("/adapters/{adapterId}/{action}")
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
@@ -279,7 +275,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         adapterService.stopAdapter(namespaceId, adapterId);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Invalid adapter action: %s. Possible actions are: 'start', 'stop'.", action));
+                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].", action));
         return;
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -303,8 +299,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
   }
-
-
 
   /**
    * Create an adapter.

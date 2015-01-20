@@ -70,7 +70,7 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Service that manages managing lifecycle of Adapters.
+ * Service that manages lifecycle of Adapters.
  */
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
@@ -202,7 +202,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-   /**
+  /**
    * Remove adapter identified by the namespace and name.
    *
    * @param namespace namespace id
@@ -436,7 +436,7 @@ public class AdapterService extends AbstractIdleService {
    * @return construct a name of a schedule, given a programId and adapterName
    */
   public String constructScheduleName(Id.Program programId, String adapterName) {
-    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter.
+    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter
     return String.format("%s.%s", adapterName, programId.getId());
   }
 

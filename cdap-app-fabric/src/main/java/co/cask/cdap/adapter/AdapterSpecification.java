@@ -16,7 +16,6 @@
 
 package co.cask.cdap.adapter;
 
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
