@@ -61,12 +61,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
+
   public static CConfiguration configuration;
   private static Injector injector;
+  private static File tempFolder = TEMP_FOLDER.newFolder("dest");
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
   }
+
 
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
@@ -118,9 +121,8 @@ public class AppFabricTestHelper {
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
-    File tempFolder = TEMP_FOLDER.newFolder("dest");
     Location deployedJar = createAppJar(appClass);
-    Location destination = new LocalLocationFactory().create(tempFolder.toURI());
+    Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
     DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
@@ -154,6 +156,5 @@ public class AppFabricTestHelper {
     LocalLocationFactory lf = new LocalLocationFactory();
     return lf.create(JarFinder.getJar(appClass, AppFabricClient.getManifestWithMainClass(appClass)));
   }
-
 }
 
