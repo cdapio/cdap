@@ -17,8 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.adapter.Sink;
-import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -58,6 +56,7 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -73,7 +72,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -96,7 +94,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -323,15 +320,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // Validate the adapter
-      String adapterType = config.type;
+      String adapterType = config.getType();
       AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
       if (adapterTypeInfo == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
         return;
       }
 
-      AdapterSpecification spec = getAdapterSpec(config, adapterName, adapterTypeInfo.getSourceType(),
-                                                 adapterTypeInfo.getSinkType());
+      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo);
       adapterService.createAdapter(namespaceId, spec);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
@@ -843,35 +839,5 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
-  }
-
-  // POJO that specifies input parameters to create Adapter
-  private static final class AdapterConfig {
-    private String type;
-    private Map<String, String> properties;
-
-    private Source source;
-    private Sink sink;
-
-    private static final class Source {
-      private String name;
-      private Map<String, String> properties;
-    }
-
-    private static final class Sink {
-      private String name;
-      private Map<String, String> properties;
-    }
-  }
-
-  private AdapterSpecification getAdapterSpec(AdapterConfig config, String name,
-                                              Source.Type sourceType, Sink.Type sinkType) {
-    Set<Source> sources = Sets.newHashSet();
-    Set<Sink> sinks = Sets.newHashSet();
-
-    sources.add(new Source(config.source.name, sourceType, config.source.properties));
-    sinks.add(new Sink(config.sink.name, sinkType, config.sink.properties));
-
-    return new AdapterSpecification(name, config.type, config.properties, sources, sinks);
   }
 }
