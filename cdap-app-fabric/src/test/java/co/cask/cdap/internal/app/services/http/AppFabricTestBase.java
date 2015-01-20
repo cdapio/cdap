@@ -55,7 +55,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.utils.Dependencies;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
@@ -105,14 +104,12 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static final TempFolder TEMP_FOLDER = new TempFolder();
-  private static LocationFactory locationFactory;
-  private static File adapterDir;
   private static final String adapterFolder = "adapter";
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
     TEMP_FOLDER.newFolder(adapterFolder);
-    adapterDir = new File(String.format("%s/%s", TEMP_FOLDER.getRoot(), adapterFolder));
+    File adapterDir = new File(String.format("%s/%s", TEMP_FOLDER.getRoot(), adapterFolder));
 
     CConfiguration conf = CConfiguration.create();
 
@@ -124,8 +121,6 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
-
-    locationFactory = injector.getInstance(LocationFactory.class);
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();

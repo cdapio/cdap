@@ -106,7 +106,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
-
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
