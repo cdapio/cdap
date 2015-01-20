@@ -23,6 +23,8 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamLeaderListener;
+import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -50,6 +52,7 @@ public final class StreamHttpService extends AbstractIdleService {
   private final StreamCoordinator streamCoordinator;
   private final StreamFileJanitorService janitorService;
   private final StreamWriterSizeManager sizeManager;
+  private final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator;
   private Cancellable cancellable;
 
   @Inject
@@ -59,12 +62,14 @@ public final class StreamHttpService extends AbstractIdleService {
                            StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService,
-                           StreamWriterSizeManager sizeManager) {
+                           StreamWriterSizeManager sizeManager,
+                           final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
     this.janitorService = janitorService;
     this.sizeManager = sizeManager;
     this.streamCoordinatorClient = streamCoordinatorClient;
+    this.streamsHeartbeatsAggregator = streamsHeartbeatsAggregator;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -78,6 +83,13 @@ public final class StreamHttpService extends AbstractIdleService {
       .setChannelConfig("child.bufferFactory",
                         HeapChannelBufferFactory.getInstance()) // ChannelBufferFactory that always creates new Buffer
       .build();
+
+    streamCoordinator.addLeaderListener(new StreamLeaderListener() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        streamsHeartbeatsAggregator.aggregate(streamNames);
+      }
+    });
   }
 
   @Override
@@ -101,6 +113,7 @@ public final class StreamHttpService extends AbstractIdleService {
     cancellable = discoveryService.register(discoverable);
 
     janitorService.startAndWait();
+    streamsHeartbeatsAggregator.startAndWait();
     sizeManager.startAndWait();
     sizeManager.initialize();
     streamCoordinator.setHandlerDiscoverable(discoverable);
@@ -119,6 +132,7 @@ public final class StreamHttpService extends AbstractIdleService {
       }
     } finally {
       httpService.stopAndWait();
+      streamsHeartbeatsAggregator.stopAndWait();
       streamCoordinator.stopAndWait();
       streamCoordinatorClient.stopAndWait();
     }
