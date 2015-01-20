@@ -26,7 +26,6 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -75,7 +74,9 @@ public class CLIMain {
     );
 
     ConnectCommand connectCommand = injector.getInstance(ConnectCommand.class);
-    connectCommand.tryDefaultConnection(System.out, false);
+    if (!cliConfig.isHostnameProvided()) {
+      connectCommand.tryDefaultConnection(System.out, false);
+    }
 
     this.commands = Iterables.concat(new DefaultCommands(injector).get(),
                                      ImmutableList.<Command>of(helpCommand));
@@ -115,7 +116,7 @@ public class CLIMain {
   }
 
   public static void main(String[] args) throws Exception {
-    String hostname = Objects.firstNonNull(System.getenv(Constants.EV_HOSTNAME), "localhost");
+    String hostname = System.getenv(Constants.EV_HOSTNAME);
     PrintStream output = System.out;
 
     CLIConfig config = new CLIConfig(hostname);
