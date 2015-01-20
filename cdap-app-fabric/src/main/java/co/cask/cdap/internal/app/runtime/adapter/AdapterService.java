@@ -143,8 +143,9 @@ public class AdapterService extends AbstractIdleService {
 
   /**
    * Creates the adapter
-   * @param namespaceId
-   * @param adapterSpec
+   *
+   * @param namespaceId namespace
+   * @param adapterSpec instance of {@link AdapterSpecification}
    * @throws IllegalArgumentException
    */
   public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
@@ -191,7 +192,6 @@ public class AdapterService extends AbstractIdleService {
     store.removeAdapter(namespaceId, adapterName);
 
     // TODO: Delete the application if this is the last adapter
-
   }
 
   // Deploys adapter application if it is not already deployed.
@@ -199,7 +199,7 @@ public class AdapterService extends AbstractIdleService {
     throws Exception {
 
     ApplicationSpecification spec = store.getApplication(Id.Application.from(namespaceId, adapterTypeInfo.getType()));
-
+    // Application is already deployed.
     if (spec != null) {
       return spec;
     }
@@ -227,9 +227,6 @@ public class AdapterService extends AbstractIdleService {
   private void startPrograms(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
                              AdapterSpecification adapterSpec) {
     ProgramType programType = adapterTypeInfo.getProgramType();
-    Map<String, String> adapterProperties = Maps.newHashMap();
-    adapterProperties.putAll(adapterTypeInfo.getDefaultAdapterProperties());
-    adapterProperties.putAll(adapterSpec.getProperties());
     if (programType.equals(ProgramType.WORKFLOW)) {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
