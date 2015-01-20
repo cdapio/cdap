@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
@@ -48,9 +49,8 @@ public final class RuntimeStats {
     }
   }
 
-  public static RuntimeMetrics getFlowletMetrics(String namespaceId, String applicationId, String flowId,
-                                                 String flowletId) {
-    String prefix = String.format("%s.%s.f.%s.%s", namespaceId, applicationId, flowId, flowletId);
+  public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
+    String prefix = String.format("%s.%s.f.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
     String inputName = String.format("%s.process.tuples.read", prefix);
     String processedName = String.format("%s.process.events.processed", prefix);
     String exceptionName = String.format("%s.process.errors", prefix);
@@ -58,8 +58,8 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static RuntimeMetrics getProcedureMetrics(String namespaceId, String applicationId, String procedureId) {
-    String prefix = String.format("%s.%s.p.%s", namespaceId, applicationId, procedureId);
+  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
+    String prefix = String.format("%s.%s.p.%s", Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
     String inputName = String.format("%s.query.requests", prefix);
     String processedName = String.format("%s.query.processed", prefix);
     String exceptionName = String.format("%s.query.failures", prefix);
@@ -67,8 +67,8 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static RuntimeMetrics getServiceMetrics(String namespaceId, String applicationId, String serviceId) {
-    String prefix = String.format("%s.%s.%s.%s", namespaceId, applicationId,
+  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
+    String prefix = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
                                   TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
     String inputName = String.format("%s.requests.count", prefix);
     String processedName = String.format("%s.response.successful.count", prefix);
@@ -77,8 +77,8 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
-  public static long getSparkMetrics(String namespaceId, String applicationId, String procedureId, String keyEnding) {
-    String keyStarting = String.format("%s.%s.%s.%s", namespaceId, applicationId,
+  public static long getSparkMetrics(String applicationId, String procedureId, String keyEnding) {
+    String keyStarting = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
                                        TypeId.getMetricContextId(ProgramType.SPARK), procedureId);
     String inputName = getMetricsKey(keyStarting, keyEnding);
     AtomicLong input = counters.get(inputName);

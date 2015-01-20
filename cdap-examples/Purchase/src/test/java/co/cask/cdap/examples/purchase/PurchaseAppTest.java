@@ -16,7 +16,6 @@
 
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -63,8 +62,7 @@ public class PurchaseAppTest extends TestBase {
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "PurchaseHistory",
-                                                              "PurchaseFlow", "collector");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("PurchaseHistory", "PurchaseFlow", "collector");
       metrics.waitForProcessed(5, 15, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();

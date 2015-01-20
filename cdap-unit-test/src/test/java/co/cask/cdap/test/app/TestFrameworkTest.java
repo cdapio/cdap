@@ -26,7 +26,6 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -216,8 +215,7 @@ public class TestFrameworkTest extends TestBase {
       s2.send("testing 2");
       s3.send("testing 3");
 
-      RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "JoinMulti",
-                                                                      "JoinMultiFlow", "Terminal");
+      RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti", "JoinMultiFlow", "Terminal");
 
       terminalMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
@@ -400,8 +398,7 @@ public class TestFrameworkTest extends TestBase {
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
 
-      RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(Constants.DEFAULT_NAMESPACE,
-                                                                     AppWithServices.APP_NAME,
+      RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
                                                                      AppWithServices.SERVICE_NAME);
       serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
       Assert.assertEquals(3, serviceMetrics.getInput());
@@ -545,8 +542,7 @@ public class TestFrameworkTest extends TestBase {
       }
 
       // Check the flowlet metrics
-      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE,
-                                                                     "WordCountApp",
+      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
                                                                      "WordCountFlow",
                                                                      "CountByField");
       flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
@@ -566,8 +562,7 @@ public class TestFrameworkTest extends TestBase {
       Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
       // check the metrics
-      RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics(Constants.DEFAULT_NAMESPACE, "WordCountApp",
-                                                                         "WordFrequency");
+      RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
       procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, procedureMetrics.getException());
 
@@ -605,18 +600,15 @@ public class TestFrameworkTest extends TestBase {
       applicationManager.startFlow("GenSinkFlow");
 
       // Check the flowlet metrics
-      RuntimeMetrics genMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE,
-                                                                 "GenSinkApp",
+      RuntimeMetrics genMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
                                                                  "GenSinkFlow",
                                                                  "GenFlowlet");
 
-      RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE,
-                                                                  "GenSinkApp",
+      RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
                                                                   "GenSinkFlow",
                                                                   "SinkFlowlet");
 
-      RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE,
-                                                                       "GenSinkApp",
+      RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
                                                                        "GenSinkFlow",
                                                                        "BatchSinkFlowlet");
 
@@ -671,8 +663,7 @@ public class TestFrameworkTest extends TestBase {
     try {
       FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
-      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "DataSetInitApp",
-                                                                     "DataSetFlow", "Consumer");
+      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
 
       flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
 
@@ -820,8 +811,7 @@ public class TestFrameworkTest extends TestBase {
       FlowManager flowManager = appManager.startFlow("BasicFlow");
 
       // Wait for at least 10 records being generated
-      RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "ClassLoaderTestApp",
-                                                                  "BasicFlow", "Sink");
+      RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
       flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
       flowManager.stop();
 

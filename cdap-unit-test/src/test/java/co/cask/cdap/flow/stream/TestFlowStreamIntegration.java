@@ -16,7 +16,6 @@
 
 package co.cask.cdap.flow.stream;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
@@ -44,8 +43,7 @@ public class TestFlowStreamIntegration extends TestBase {
       }
 
       applicationManager.startFlow("StreamTestFlow");
-      RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE,
-                                                                      "TestFlowStreamIntegrationApp",
+      RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics("TestFlowStreamIntegrationApp",
                                                                       "StreamTestFlow", "StreamReader");
       flowletMetrics1.waitForProcessed(1, 10, TimeUnit.SECONDS);
       if (flowletMetrics1.getException() > 0) {

@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.examples.helloworld;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeMetrics;
@@ -58,8 +57,7 @@ public class HelloWorldTest extends TestBase {
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics(Constants.DEFAULT_NAMESPACE, "HelloWorld", "WhoFlow",
-                                                              "saver");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("HelloWorld", "WhoFlow", "saver");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();

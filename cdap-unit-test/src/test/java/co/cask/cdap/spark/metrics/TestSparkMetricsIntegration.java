@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spark.metrics;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
@@ -43,8 +42,7 @@ public class TestSparkMetricsIntegration extends TestBase {
       SparkManager sparkManager = applicationManager.startSpark(TestSparkMetricsIntegrationApp.APP_SPARK_NAME);
       sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
-      Assert.assertTrue(RuntimeStats.getSparkMetrics(Constants.DEFAULT_NAMESPACE,
-                                                     TestSparkMetricsIntegrationApp.APP_NAME,
+      Assert.assertTrue(RuntimeStats.getSparkMetrics(TestSparkMetricsIntegrationApp.APP_NAME,
                                                      TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0);
       //TODO: Add test to check user metrics once the support is added: CDAP-765
     } finally {
