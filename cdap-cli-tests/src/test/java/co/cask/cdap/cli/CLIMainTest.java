@@ -34,11 +34,13 @@ import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -48,6 +50,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -151,8 +154,29 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "get stream " + streamId + " -10m", "helloworld");
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "set stream ttl " + streamId + " 123", "Successfully set TTL of stream");
-    testCommandOutputContains(cli, "describe stream " + streamId, "123");
+    testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
+    testCommandOutputContains(cli, "describe stream " + streamId, "100000");
+
+    File file = new File(TMP_FOLDER.newFolder(), "test.txt");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
+    testCommandOutputContains(cli,
+                              "load stream " + streamId + " " + file.getParentFile().getAbsolutePath(),
+                              "Not a file");
+
+    // Generate a file to send
+    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      for (int i = 0; i < 10; i++) {
+        writer.write("Event " + i);
+        writer.newLine();
+      }
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
+                              "Successfully send stream event to stream");
+    testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
   }
 
   @Test

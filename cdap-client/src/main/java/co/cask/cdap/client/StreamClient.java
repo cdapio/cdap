@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,18 +34,23 @@ import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.HttpHeaders;
@@ -127,6 +132,43 @@ public class StreamClient {
                                                                    StreamNotFoundException,
                                                                    UnAuthorizedAccessTokenException {
     writeEvent(config.resolveURL(String.format("streams/%s/async", streamId)), streamId, event);
+  }
+
+  /**
+   * Sends a file of the given content type to a stream batch endpoint.
+   *
+   * @param streamId ID of the stream
+   * @param contentType content type of the file
+   * @param file the file to upload
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void sendFile(String streamId, String contentType,
+                       File file) throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+    sendBatch(streamId, contentType, Files.newInputStreamSupplier(file));
+  }
+
+  /**
+   * Sends a batch request to a stream batch endpoint.
+   *
+   * @param streamId ID of the stream
+   * @param contentType content type of the data
+   * @param inputSupplier provides content for the batch request
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void sendBatch(String streamId, String contentType,
+                        InputSupplier<? extends InputStream> inputSupplier) throws IOException,
+                                                                                   StreamNotFoundException,
+                                                                                   UnAuthorizedAccessTokenException {
+    URL url = config.resolveURL(String.format("streams/%s/batch", streamId));
+    Map<String, String> headers = ImmutableMap.of("Content-type", contentType);
+    HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(inputSupplier).build();
+
+    HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new StreamNotFoundException(streamId);
+    }
   }
 
   /**
