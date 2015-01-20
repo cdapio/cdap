@@ -27,6 +27,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -46,44 +47,42 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private static void setupMetrics() throws Exception {
-    HttpResponse response = doDelete("/v2/metrics");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "splitter"));
+      collectionService.getCollector(getFlowletContext("WordCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(getFlowletContext("WCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext("WCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
 
-    collector = collectionService.getCollector(getFlowletContext("WCount", "WCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext("WCount1", "WCounter", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
     collector.increment("reads", 1);
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
 
-    collector = collectionService.getCollector(getFlowletContext("WCount", "WCounter", "counter"));
+    collector = collectionService.getCollector(getFlowletContext("WCount1", "WCounter", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getProcedureContext("WCount", "RCounts"));
+    collector = collectionService.getCollector(getProcedureContext("WCount1", "RCounts"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext("WCount", "ClassicWordCount",
+    collector = collectionService.getCollector(getMapReduceTaskContext("WCount1", "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Mapper));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(
-      getMapReduceTaskContext("WCount", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
+      getMapReduceTaskContext("WCount1", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext("WordCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "collector"));
+    collector = collectionService.getCollector(getFlowletContext("WordCount1", "WordCounter", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
 
     // also: user metrics
     Metrics userMetrics =
-      new ProgramUserMetrics(collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "splitter")));
+      new ProgramUserMetrics(collectionService.getCollector(getFlowletContext("WordCount1", "WordCounter", "splitter")));
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
@@ -93,13 +92,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testSearchContext() throws Exception {
-    verifySearchResult("/v3/metrics/search?target=childContext&context=WordCount.f",
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WordCount1.f",
                        ImmutableList.<String>of("WordCounter"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount",
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount1",
                        ImmutableList.<String>of("b", "f", "p"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount",
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount1.b.ClassicWordCount",
                        ImmutableList.<String>of("m", "r"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount.b.ClassicWordCount.m",
+    verifySearchResult("/v3/metrics/search?target=childContext&context=WCount1.b.ClassicWordCount.m",
                        ImmutableList.<String>of());
   }
 
@@ -107,27 +106,27 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testQueryMetrics() throws Exception {
     // aggregate result
     verifyAggregateQueryResult(
-      "/v3/metrics/query?context=WCount.f.WCounter.splitter&metric=system.reads&aggregate=true", 3);
+      "/v3/metrics/query?context=WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 3);
     verifyAggregateQueryResult(
-      "/v3/metrics/query?context=WCount.f.WCounter.counter&metric=system.reads&aggregate=true", 1);
+      "/v3/metrics/query?context=WCount1.f.WCounter.counter&metric=system.reads&aggregate=true", 1);
 
     // time range
     // now-60s, now+60s
     verifyRangeQueryResult(
-      "/v3/metrics/query?context=WCount.f.WCounter.splitter&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+      "/v3/metrics/query?context=WCount1.f.WCounter.splitter&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
     verifyRangeQueryResult(
-      "/v3/metrics/query?context=WCount.f.WCounter.splitter&metric=system.reads&start=" + start + "&end=" + end, 2, 3);
+      "/v3/metrics/query?context=WCount1.f.WCounter.splitter&metric=system.reads&start=" + start + "&end=" + end, 2, 3);
   }
 
   @Test
   public void testSearchMetrics() throws Exception {
-    verifySearchResult("/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=WordCount1.f.WordCounter.splitter",
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
 
-    verifySearchResult("/v3/metrics/search?target=metric&context=WordCount.f.WordCounter.collector",
+    verifySearchResult("/v3/metrics/search?target=metric&context=WordCount1.f.WordCounter.collector",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
   }
 
