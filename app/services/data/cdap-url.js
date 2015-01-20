@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('myCdapUrl', function myCdapUrl($stateParams, $log, MY_CONFIG) {
+  .factory('myCdapUrl', function myCdapUrl($window, $stateParams, $log, MY_CONFIG) {
 
     function constructUrl(resource) {
 
@@ -10,8 +10,15 @@ angular.module(PKG.name + '.services')
         var namespace = $stateParams.namespace;
 
         if(!namespace) {
-          $log.warn('_cdapNsPath using default namespace');
-          namespace = 'default';
+
+          if($window.location.pathname.match(/\/test/)) {
+            // the "directive playground" doesnt have a namespace
+            $log.warn('_cdapNsPath using default namespace');
+            namespace = 'default';
+          }
+          else {
+            throw new Error('_cdapNsPath requires $stateParams.namespace to be defined');
+          }
         }
 
         resource._cdapPath = [
