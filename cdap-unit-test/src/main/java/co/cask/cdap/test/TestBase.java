@@ -433,10 +433,15 @@ public class TestBase {
     @SuppressWarnings("unchecked")
     final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
     try {
-      TransactionAware txAwareDataset = (TransactionAware) dataSet;
-      final TransactionContext txContext =
-        new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
-      txContext.start();
+      final TransactionContext txContext;
+      // not every dataset is TransactionAware. FileSets for example, are not transactional.
+      if (dataSet instanceof TransactionAware) {
+        TransactionAware txAwareDataset = (TransactionAware) dataSet;
+        txContext = new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
+        txContext.start();
+      } else {
+        txContext = null;
+      }
       return new DataSetManager<T>() {
         @Override
         public T get() {
@@ -446,8 +451,10 @@ public class TestBase {
         @Override
         public void flush() {
           try {
-            txContext.finish();
-            txContext.start();
+            if (txContext != null) {
+              txContext.finish();
+              txContext.start();
+            }
           } catch (TransactionFailureException e) {
             throw Throwables.propagate(e);
           }
