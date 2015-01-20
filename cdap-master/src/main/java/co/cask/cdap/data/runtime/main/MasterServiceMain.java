@@ -29,6 +29,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -144,6 +145,13 @@ public class MasterServiceMain extends DaemonMain {
     serviceName = Constants.Service.MASTER_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
+    try {
+      SecurityUtil.loginForMasterService(cConf);
+    } catch (Exception e) {
+      LOG.error("Failed to login as CDAP user", e);
+      throw Throwables.propagate(e);
+    }
+
     baseInjector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -221,6 +229,7 @@ public class MasterServiceMain extends DaemonMain {
         }
 
         LOG.info("Became leader");
+
         Injector injector = baseInjector.createChildInjector();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
