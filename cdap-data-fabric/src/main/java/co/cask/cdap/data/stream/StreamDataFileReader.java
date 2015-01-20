@@ -475,6 +475,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
   private void readDataBlock(ReadFilter filter) throws IOException {
     // Data block is <timestamp> <length> <stream_data>+
+    position = eventInput.getPos();
     long timestamp = readTimestamp();
     if (timestamp < 0) {
       eof = true;
@@ -499,6 +500,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
     long nextTimestamp = filter.getNextTimestampHint();
     if (nextTimestamp > timestamp) {
+      eventInput.seek(position);
       initByTime(nextTimestamp);
       readDataBlock(filter);
       return;
@@ -509,6 +511,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     if (bytesSkipped != length) {
       throw new EOFException("Expected to skip " + length + " but only " + bytesSkipped + " was skipped.");
     }
+    position = eventInput.getPos();
   }
 
   /**
