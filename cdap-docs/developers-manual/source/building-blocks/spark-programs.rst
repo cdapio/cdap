@@ -100,7 +100,7 @@ reading a Dataset and can also write RDD to a Dataset.
 
 In order to access a Dataset in Spark, both the key and value classes has to be serializable.
 Otherwise, Spark will fail to read or write them.
-For example, in Table Dataset, the value type is Row which is not Serializable.
+For example, the Table Dataset has a value type of Row, which is not serializable.
 
 - Creating an RDD from Dataset
 
