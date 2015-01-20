@@ -269,20 +269,20 @@ public class AdapterService extends AbstractIdleService {
   private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
     String cronExpr = toCronExpr(adapterSpec.getProperties().get("frequency"));
     Preconditions.checkNotNull(cronExpr, "CronExpression is missing. Cannot schedule program");
-
     Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
-    ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
-                                                                      programId.getId());
-    ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule, scheduleProgramInfo,
-                                                                   adapterSpec.getProperties());
+    ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
+                                           new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
+                                           adapterSpec.getProperties());
 
     scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(programId, scheduleSpec);
   }
 
   // Deletes schedule from the scheduler as well as from the app spec
   private void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
     scheduler.deleteSchedule(programId, programType, scheduleName);
+    //TODO: Scheduler API should also manage the MDS.
     store.deleteSchedule(programId, programType, scheduleName);
   }
 
