@@ -20,7 +20,6 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
-import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
@@ -39,24 +38,21 @@ import java.util.concurrent.TimeUnit;
  * Test reading from a stream with map reduce.
  */
 public class TestMapReduceStreamInput extends TestBase {
-  private static final Schema bodySchema = Schema.createRecord(Lists.newArrayList(
-    new Schema.Field("ticker", Schema.create(Schema.Type.STRING), "stock ticker", null),
-    new Schema.Field("num_traded", Schema.create(Schema.Type.INT), "stocks traded", null),
-    new Schema.Field("price", Schema.create(Schema.Type.FLOAT), "price per stock", null)));
 
   @Test
   public void test() throws Exception {
 
     ApplicationManager applicationManager = deployApplication(AppWithMapReduceUsingStream.class);
+    Schema schema = new Schema.Parser().parse(AppWithMapReduceUsingStream.SCHEMA.toString());
     StreamWriter streamWriter = applicationManager.getStreamWriter("mrStream");
-    streamWriter.send(createEvent("YHOO", 100, 10.0f));
-    streamWriter.send(createEvent("YHOO", 10, 10.1f));
-    streamWriter.send(createEvent("YHOO", 13, 9.9f));
+    streamWriter.send(createEvent(schema, "YHOO", 100, 10.0f));
+    streamWriter.send(createEvent(schema, "YHOO", 10, 10.1f));
+    streamWriter.send(createEvent(schema, "YHOO", 13, 9.9f));
     float yhooTotal = 100 * 10.0f + 10 * 10.1f + 13 * 9.9f;
-    streamWriter.send(createEvent("AAPL", 5, 300.0f));
-    streamWriter.send(createEvent("AAPL", 3, 298.34f));
-    streamWriter.send(createEvent("AAPL", 50, 305.23f));
-    streamWriter.send(createEvent("AAPL", 1000, 284.13f));
+    streamWriter.send(createEvent(schema, "AAPL", 5, 300.0f));
+    streamWriter.send(createEvent(schema, "AAPL", 3, 298.34f));
+    streamWriter.send(createEvent(schema, "AAPL", 50, 305.23f));
+    streamWriter.send(createEvent(schema, "AAPL", 1000, 284.13f));
     float aaplTotal = 5 * 300.0f + 3 * 298.34f + 50 * 305.23f + 1000 * 284.13f;
 
     try {
@@ -75,15 +71,15 @@ public class TestMapReduceStreamInput extends TestBase {
     }
   }
 
-  private byte[] createEvent(String ticker, int count, float price) throws IOException {
-    GenericRecord record = new GenericRecordBuilder(bodySchema)
+  private byte[] createEvent(Schema schema, String ticker, int count, float price) throws IOException {
+    GenericRecord record = new GenericRecordBuilder(schema)
       .set("ticker", ticker)
       .set("num_traded", count)
       .set("price", price)
       .build();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(bodySchema);
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(schema);
 
     writer.write(record, encoder);
     encoder.flush();

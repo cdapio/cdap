@@ -42,6 +42,12 @@ import java.util.Collections;
  * App used to test whether M/R can read from streams.
  */
 public class AppWithMapReduceUsingStream extends AbstractApplication {
+  static final Schema SCHEMA = Schema.recordOf(
+    "event",
+    Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("num_traded", Schema.of(Schema.Type.INT)),
+    Schema.Field.of("price", Schema.of(Schema.Type.FLOAT))
+  );
 
   @Override
   public void configure() {
@@ -67,17 +73,8 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
       job.setMapOutputValueClass(FloatWritable.class);
       job.setOutputKeyClass(byte[].class);
       job.setOutputValueClass(byte[].class);
-      Schema schema = Schema.recordOf(
-        "event",
-        Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
-        Schema.Field.of("num_traded", Schema.of(Schema.Type.INT)),
-        Schema.Field.of("price", Schema.of(Schema.Type.FLOAT))
-      );
       FormatSpecification formatSpec = new FormatSpecification(
-        Formats.AVRO,
-        schema,
-        Collections.<String, String>emptyMap()
-      );
+        Formats.AVRO, SCHEMA, Collections.<String, String>emptyMap());
       StreamBatchReadable.useStreamInput(context, "mrStream", 0, Long.MAX_VALUE, formatSpec);
     }
   }
