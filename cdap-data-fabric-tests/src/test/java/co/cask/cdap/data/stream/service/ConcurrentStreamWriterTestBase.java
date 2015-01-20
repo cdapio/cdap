@@ -347,7 +347,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
 
     @Override
-    public void emitMetrics(long bytesWritten, long eventsWritten) {
+    public void emitMetrics(String streamName, long bytesWritten, long eventsWritten) {
 
     }
   }

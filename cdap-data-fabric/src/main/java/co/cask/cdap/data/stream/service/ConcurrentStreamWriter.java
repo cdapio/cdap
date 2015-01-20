@@ -461,7 +461,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         writerFlag.set(false);
       }
 
-      metricsCollector.emitMetrics(fileSize, eventCount);
+      metricsCollector.emitMetrics(streamName, fileSize, eventCount);
       return true;
     }
 
@@ -512,7 +512,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         writerFlag.set(false);
       }
 
-      metricsCollector.emitMetrics(bytesWritten, eventsWritten);
+      metricsCollector.emitMetrics(streamName, bytesWritten, eventsWritten);
       return true;
     }
 

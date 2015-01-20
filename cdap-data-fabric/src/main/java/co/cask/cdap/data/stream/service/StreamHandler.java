@@ -115,7 +115,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext());
     this.metricsCollector = new StreamMetricsCollector(collector) {
       @Override
-      public void emitMetrics(long bytesWritten, long eventsWritten) {
+      public void emitMetrics(String streamName, long bytesWritten, long eventsWritten) {
         if (bytesWritten > 0) {
           increment("collect.bytes", bytesWritten);
         }
