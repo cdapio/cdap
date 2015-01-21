@@ -25,8 +25,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.name.Named;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
 /**
@@ -43,7 +43,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeFetcher.class).to(InMemoryStreamWriterSizeFetcher.class).in(Scopes.SINGLETON);
-        bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
       }
     };
   }
@@ -55,7 +54,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeFetcher.class).to(InMemoryStreamWriterSizeFetcher.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeFetcher.class).to(StreamFileWriterSizeFetcher.class).in(Scopes.SINGLETON);
         bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
       }
