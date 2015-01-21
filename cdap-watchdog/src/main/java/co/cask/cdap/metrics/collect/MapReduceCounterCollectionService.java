@@ -17,10 +17,12 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricValue;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -48,8 +50,11 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
     while (metrics.hasNext()) {
       MetricValue record = metrics.next();
 
-      StringBuilder counterGroup = new StringBuilder("cdap.").append(record.getType());
+      // The format of the counters:
+      // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
+      // * counter name: metric name
 
+      StringBuilder counterGroup = new StringBuilder("cdap");
       // flatten tags
       for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
         counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
@@ -62,6 +67,23 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
         taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
       }
     }
+  }
+
+  public static Map<String, String> parseTags(String counterGroupName) {
+    // see publish method for format info
+
+    if (counterGroupName.startsWith("cdap.")) {
+      return Collections.emptyMap();
+    }
+    String[] parts = counterGroupName.split("\\.");
+    Map<String, String> tags = Maps.newHashMap();
+    // todo: assert that we have odd count of parts?
+    for (int i = 1; i < parts.length; i += 2) {
+      String tagName = parts[i];
+      String tagValue = parts[i + 1];
+      tags.put(tagName, tagValue);
+    }
+    return tags;
   }
 
   private String getCounterName(String metric) {

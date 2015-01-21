@@ -64,10 +64,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(getProcedureContext("yourspace", "WCount1", "RCounts"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Mapper));
+                                                                       MapReduceMetrics.TaskType.Mapper,
+                                                                       "run1", "task1"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(
-      getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
+      getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
+                              MapReduceMetrics.TaskType.Reducer, "run1", "task2"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
@@ -111,6 +113,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount",
                        ImmutableList.<String>of("m", "r"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m",
+                       ImmutableList.<String>of("task1"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m.task1",
                        ImmutableList.<String>of());
   }
 
