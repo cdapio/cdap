@@ -141,11 +141,12 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
-        new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getStandaloneModules()
+        new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
+          install(new StreamServiceRuntimeModule().getStandaloneModules());
+
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
           // AppFabricServiceModule
