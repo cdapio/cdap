@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.adapter;
+package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -22,18 +22,18 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Defines an Adapter Sink.
+ * Defines adapter source.
  */
-public final class Sink {
+public final class Source {
 
   /**
-   * Defines the Sink Type.
+   * Defines the source type.
    */
   public enum Type {
     /**
-     * Defines the sink type to be Dataset
+     * Defines the source type to be Stream.
      */
-    DATASET
+    STREAM
   }
 
   private final String name;
@@ -41,27 +41,27 @@ public final class Sink {
   private final Map<String, String> properties;
 
   /**
-   * Construct a Sink with the given parameters.
+   * Construct a Source with the given parameters.
    *
-   * @param name  Name of the Sink.
-   * @param type  Name of the Sink.
-   * @param properties {@Map} of properties associated with the Sink.
+   * @param name  Name of the Source.
+   * @param type  Name of the Source.
+   * @param properties {@Map} of properties associated with the Source.
    */
-  public Sink(String name, Type type, Map<String, String> properties) {
+  public Source(String name, Type type, Map<String, String> properties) {
     this.name = name;
     this.type = type;
     this.properties = ImmutableMap.copyOf(properties);
   }
 
   /**
-   * @return name of the Sink.
+   * @return name of the Source.
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return type of the Sink.
+   * @return type of the Source.
    */
   public Type getType() {
     return type;
@@ -84,9 +84,9 @@ public final class Sink {
       return false;
     }
 
-    Sink sink = (Sink) o;
+    Source source = (Source) o;
 
-    return (name.equals(sink.name) && properties.equals(sink.properties) &&  type == sink.type);
+    return (name.equals(source.name) && properties.equals(source.properties) && type == source.type);
   }
 
   @Override
