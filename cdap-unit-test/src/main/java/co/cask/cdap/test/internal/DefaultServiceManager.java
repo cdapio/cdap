@@ -17,33 +17,21 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.discovery.ServiceDiscoveries;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractServiceManager;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.NoSuchElementException;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ServiceManager}.
  */
 public class DefaultServiceManager extends AbstractServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;
   private final String accountId;
@@ -114,56 +102,9 @@ public class DefaultServiceManager extends AbstractServiceManager {
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
-                                                                                        accountId,
-                                                                                        applicationId,
-                                                                                        serviceName));
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable != null) {
-      return createURL(discoverable, applicationId, serviceName);
-    }
-
-    final SynchronousQueue<URL> discoverableQueue = new SynchronousQueue<URL>();
-    Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        try {
-          URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceName);
-          discoverableQueue.offer(url);
-        } catch (NoSuchElementException e) {
-          LOG.debug("serviceDiscovered is empty");
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    try {
-      URL url = discoverableQueue.poll(timeout, timeoutUnit);
-      if (url == null) {
-        LOG.debug("Discoverable endpoint not found for appID: {}, serviceName: {}.", applicationId, serviceName);
-      }
-      return url;
-    } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
-      return null;
-    } finally {
-      discoveryCancel.cancel();
-    }
-  }
-
-  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceName) {
-    if (discoverable == null) {
-      return null;
-    }
-    String hostName = discoverable.getSocketAddress().getHostName();
-    int port = discoverable.getSocketAddress().getPort();
-    String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/", hostName, port,
+    String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceName);
+    String path = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
                                 Constants.Gateway.API_VERSION_3, accountId, applicationId, serviceName);
-    try {
-      return new URL(path);
-    } catch (MalformedURLException e) {
-      LOG.error("Got exception while creating serviceURL", e);
-      return null;
-    }
+    return ServiceDiscoveries.discoverURL(discoveryServiceClient, discoveryName, "http", path, timeout, timeoutUnit);
   }
 }

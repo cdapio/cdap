@@ -53,6 +53,7 @@ public class CLIConfig {
   private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
+  private final boolean hostnameProvided;
 
   private List<ConnectionChangeListener> connectionChangeListeners;
   private ConnectionInfo connectionInfo;
@@ -64,10 +65,15 @@ public class CLIConfig {
    */
   public CLIConfig(String hostname) {
     this.currentNamespace = "default";
+    this.hostnameProvided = hostname != null && !hostname.isEmpty();
     this.clientConfig = createClientConfig(hostname);
     this.resolver = new FilePathResolver();
     this.version = tryGetVersion();
     this.connectionChangeListeners = Lists.newArrayList();
+  }
+
+  public CLIConfig() {
+    this(null);
   }
 
   private ClientConfig createClientConfig(String hostname) {
@@ -90,6 +96,10 @@ public class CLIConfig {
     for (ConnectionChangeListener listener : connectionChangeListeners) {
       listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
+  }
+
+  public boolean isHostnameProvided() {
+    return hostnameProvided;
   }
 
   public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
