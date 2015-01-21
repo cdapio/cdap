@@ -25,15 +25,12 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -140,22 +137,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //delete app in testnamespace2
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-  }
-
-  private List<JsonObject> getAppList(String namespace) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
-    return readResponse(response, typeToken);
-  }
-
-  private JsonObject getAppDetails(String namespace, String appName) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
-                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
-    Type typeToken = new TypeToken<JsonObject>() { }.getType();
-    return readResponse(response, typeToken);
   }
 
   /**

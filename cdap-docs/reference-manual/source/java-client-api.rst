@@ -61,6 +61,38 @@ Alphabetical list:
 
 The above lists link to the examples below for each portion of the API.
 
+.. _client-api-configuring-client:
+
+Configuring your *Client
+------------------------
+
+Every *\*Client* constructor requires a `ClientConfig` instance which configures the hostname and port of the CDAP
+instance that you wish to interact with.
+
+In a non-secure (default) CDAP instance, instantiate as follows::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+In a secure CDAP instance, first pull in the ``cdap-authentication-client`` Maven dependency::
+
+  <dependency>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap-authentication-client</artifactId>
+    <version>${cdap.client.version}</version>
+  </dependency>
+
+Then, instantiate as follows::
+
+  // Obtain AccessToken
+  AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+  authenticationClient.setConnectionInfo("example.com", 10000, sslEnabled);
+  // Configure the AuthenticationClient as documented in
+  // https://github.com/caskdata/cdap-clients/blob/develop/cdap-authentication-clients/java
+  AccessToken accessToken = authenticationClient.getAccessToken();
+
+  // Interact with the secure CDAP instance located at example.com, port 10000, with the provided accessToken
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000, accessToken);
 
 .. _application-client:
 
@@ -68,8 +100,7 @@ ApplicationClient
 -----------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   ApplicationClient appClient = new ApplicationClient(clientConfig);
@@ -94,8 +125,7 @@ ProgramClient
 -------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
@@ -137,8 +167,7 @@ StreamClient
 ------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   StreamClient streamClient = new StreamClient(clientConfig);
@@ -206,8 +235,7 @@ DatasetClient
 -------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   DatasetClient datasetClient = new DatasetClient(clientConfig);
@@ -231,8 +259,7 @@ DatasetModuleClient
 -------------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
@@ -254,8 +281,7 @@ DatasetTypeClient
 -----------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
@@ -273,8 +299,7 @@ QueryClient
 -----------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   QueryClient queryClient = new QueryClient(clientConfig);
@@ -319,8 +344,7 @@ ProcedureClient
 ---------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   ProcedureClient procedureClient = new ProcedureClient(clientConfig);
@@ -339,8 +363,7 @@ ServiceClient
 -------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   ServiceClient serviceClient = new ServiceClient(clientConfig);
@@ -355,8 +378,7 @@ MetricsClient
 -------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   MetricsClient metricsClient = new MetricsClient(clientConfig);
@@ -372,8 +394,7 @@ MonitorClient
 -------------
 ::
 
-  // Interact with the CDAP instance located at example.com, port 10000
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+  ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
   MonitorClient monitorClient = new MonitorClient(clientConfig);

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.adapter;
+package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -86,21 +86,6 @@ public final class AdapterSpecification {
    */
   public Map<String, String> getProperties() {
     return properties;
-  }
-
-  /**
-   * @return name of the schedule for this Adapter.
-   */
-  public String getScheduleName() {
-    // For now, simply schedule the adapter's program with the name of the adapter.
-    return name;
-  }
-
-  /**
-   * @return description of the schedule for this Adapter.
-   */
-  public String getScheduleDescription() {
-    return String.format("Schedule for adapter: %s", name);
   }
 
   @Override

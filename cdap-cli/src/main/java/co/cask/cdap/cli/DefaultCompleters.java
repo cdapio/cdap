@@ -49,6 +49,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
         .put(ArgumentName.DATASET_TYPE.getName(), injector.getInstance(DatasetTypeNameCompleter.class))
         .put(ArgumentName.STREAM.getName(), injector.getInstance(StreamIdCompleter.class))
+        .put(ArgumentName.LOCAL_FILE_PATH.getName(), new FileNameCompleter())
         .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())

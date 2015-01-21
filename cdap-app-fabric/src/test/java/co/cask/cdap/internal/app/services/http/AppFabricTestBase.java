@@ -31,12 +31,14 @@ import co.cask.cdap.test.internal.TempFolder;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -55,8 +57,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.utils.Dependencies;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -105,14 +107,12 @@ public abstract class AppFabricTestBase {
   private static TransactionSystemClient txClient;
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static final TempFolder TEMP_FOLDER = new TempFolder();
-  private static LocationFactory locationFactory;
-  private static File adapterDir;
   private static final String adapterFolder = "adapter";
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
     TEMP_FOLDER.newFolder(adapterFolder);
-    adapterDir = new File(String.format("%s/%s", TEMP_FOLDER.getRoot(), adapterFolder));
+    File adapterDir = new File(String.format("%s/%s", TEMP_FOLDER.getRoot(), adapterFolder));
 
     CConfiguration conf = CConfiguration.create();
 
@@ -124,8 +124,6 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
-
-    locationFactory = injector.getInstance(LocationFactory.class);
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -377,7 +375,23 @@ public abstract class AppFabricTestBase {
     return versionedApiBuilder.toString();
   }
 
-  protected void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+  protected List<JsonObject> getAppList(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
+    Type typeToken = new TypeToken<JsonObject>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  protected List<Map<String, String>> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
     int trial = 0;
     int workflowRuns = 0;
     List<Map<String, String>> history;
@@ -390,11 +404,12 @@ public abstract class AppFabricTestBase {
       history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
       workflowRuns = history.size();
       if (workflowRuns > expected) {
-        return;
+        return history;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(workflowRuns > expected);
+    return Lists.newArrayList();
   }
 
   protected void scheduleStatusCheck(int retries, String url, String expected) throws Exception {
@@ -415,5 +430,18 @@ public abstract class AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertEquals(expected, status);
+  }
+
+  protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {
+    int trial = 0;
+    HttpResponse response = null;
+    while (trial++ < retries) {
+      response = doDelete(deleteUrl);
+      if (200 == response.getStatusLine().getStatusCode()) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expectedReturnCode, response.getStatusLine().getStatusCode());
   }
 }

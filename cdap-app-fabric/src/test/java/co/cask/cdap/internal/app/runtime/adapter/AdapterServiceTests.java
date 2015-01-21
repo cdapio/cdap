@@ -17,23 +17,19 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
-import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.adapter.Sink;
-import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -41,9 +37,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -51,12 +45,9 @@ import java.util.jar.Manifest;
  * AdapterService life cycle tests.
  */
 public class AdapterServiceTests extends AppFabricTestBase {
-  private static final Gson GSON = new Gson();
-  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
-  private static Store store;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -66,12 +57,10 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapters();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerAdapters();
-    store = getInjector().getInstance(StoreFactory.class).create();
   }
 
   @Test
   public void testAdapters() throws Exception {
-
     //Basic adapter service tests.
     String namespaceId = Constants.DEFAULT_NAMESPACE;
 
@@ -99,8 +88,11 @@ public class AdapterServiceTests extends AppFabricTestBase {
     // Delete Adapter
     adapterService.removeAdapter(namespaceId, "myAdapter");
     // verify that the adapter is deleted
-    actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-    Assert.assertNull(actualAdapterSpec);
+    try {
+      adapterService.getAdapter(namespaceId, adapterName);
+      Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapterName));
+    } catch (AdapterNotFoundException expected) {
+    }
 
     adapters = adapterService.getAdapters(namespaceId);
     Assert.assertTrue(adapters.isEmpty());
@@ -114,7 +106,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
-
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
