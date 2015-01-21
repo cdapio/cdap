@@ -26,6 +26,7 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.clearspring.analytics.util.Lists;
@@ -62,6 +63,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final ProgramRuntimeService programRuntimeService;
   private final AdapterService adapterService;
   private final Set<String> servicesNames;
+  private final Set<String> handlerHookNames;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -78,7 +80,8 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
-                         @Named("appfabric.services.names") Set<String> servicesNames) {
+                         @Named("appfabric.services.names") Set<String> servicesNames,
+                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -88,6 +91,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.programRuntimeService = programRuntimeService;
     this.adapterService = adapterService;
     this.servicesNames = servicesNames;
+    this.handlerHookNames = handlerHookNames;
   }
 
   /**
@@ -107,11 +111,16 @@ public final class AppFabricServer extends AbstractIdleService {
     adapterService.start();
     programRuntimeService.start();
 
+    // Create handler hooks
+    ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
+    for (String hook : handlerHookNames) {
+      builder.add(new MetricsReporterHook(metricsCollectionService, hook));
+    }
+
     // Run http service on random port
     httpService = new CommonNettyHttpServiceBuilder(configuration)
       .setHost(hostname.getCanonicalHostName())
-      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.APP_FABRIC_HTTP)))
+      .setHandlerHooks(builder.build())
       .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
                                                  Constants.AppFabric.DEFAULT_BACKLOG))
