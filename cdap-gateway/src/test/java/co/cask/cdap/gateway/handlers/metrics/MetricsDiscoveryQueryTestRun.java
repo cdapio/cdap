@@ -16,6 +16,7 @@
 package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -121,28 +122,36 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doDelete("/v2/metrics");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "splitter"));
+      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
+                                                       "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(getFlowletContext("WCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WordCounter",
+                                                                 "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("WCount", "WCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WCounter",
+                                                                 "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("WCount", "WCounter", "counter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WCounter",
+                                                                 "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getProcedureContext("WCount", "RCounts"));
+    collector = collectionService.getCollector(getProcedureContext(Constants.DEFAULT_NAMESPACE, "WCount", "RCounts"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext("WCount", "ClassicWordCount",
+    collector = collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
+                                                                       "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Mapper));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext("WCount", "ClassicWordCount",
+    collector = collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
+                                                                       "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Reducer));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                                 "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(getFlowletContext("WordCount", "WordCounter", "collector"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                                 "WordCounter", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);

@@ -41,6 +41,7 @@ import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -57,6 +58,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -164,8 +166,29 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "get stream " + streamId + " -10m", "helloworld");
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "set stream ttl " + streamId + " 123", "Successfully set TTL of stream");
-    testCommandOutputContains(cli, "describe stream " + streamId, "123");
+    testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
+    testCommandOutputContains(cli, "describe stream " + streamId, "100000");
+
+    File file = new File(TMP_FOLDER.newFolder(), "test.txt");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
+    testCommandOutputContains(cli,
+                              "load stream " + streamId + " " + file.getParentFile().getAbsolutePath(),
+                              "Not a file");
+
+    // Generate a file to send
+    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      for (int i = 0; i < 10; i++) {
+        writer.write("Event " + i);
+        writer.newLine();
+      }
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
+                              "Successfully send stream event to stream");
+    testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
   }
 
   @Test
@@ -260,8 +283,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "instance");
+    propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences '%s'", GSON.toJson(propMap)),
+    testCommandOutputContains(cli, String.format("set instance preferences 'key=instance k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
     testPreferencesOutput(cli, "get instance resolved preferences", propMap);
@@ -269,7 +293,7 @@ public class CLIMainTest extends StandaloneTestBase {
     propMap.clear();
     testPreferencesOutput(cli, "get instance preferences", propMap);
     propMap.put("key", "flow");
-    testCommandOutputContains(cli, String.format("set flow preferences '%s' %s.%s", GSON.toJson(propMap),
+    testCommandOutputContains(cli, String.format("set flow preferences 'key=flow' %s.%s",
                                                  FakeApp.NAME, FakeFlow.NAME), "successfully");
     testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
     testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
@@ -478,7 +502,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static void testPreferencesOutput(CLI cli, String command, final Map<String, String> expected)
     throws Exception {
-    final String expectedOutput = String.format("%s\n", GSON.toJson(expected));
+    final String expectedOutput = Joiner.on(String.format("%n")).join(expected.entrySet().iterator());
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

@@ -40,6 +40,8 @@ public enum ArgumentName {
   DATASET("dataset-name"),
   NEW_DATASET("new-dataset-name"),
   STREAM_EVENT("stream-event"),
+  CONTENT_TYPE("content-type"),
+  LOCAL_FILE_PATH("local-file-path"),
   NEW_STREAM("new-stream-id"),
   PARAMETER_MAP("parameter-map"),
   TTL_IN_SECONDS("ttl-in-seconds"),
