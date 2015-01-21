@@ -16,19 +16,21 @@
 
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
-import com.google.common.util.concurrent.Service;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
+
+import java.io.IOException;
 
 /**
- * This interface manages the sizes of data written by one stream writer run in a {@link StreamHandler}.
- * For each stream, It sends {@link StreamWriterHeartbeat}s at regular intervals to notify listeners
- * of the updated size of the stream.
+ * Fetches the size of the data persisted by the stream writer in which this interface is run.
  */
-public interface StreamWriterSizeManager extends Service {
+public interface StreamWriterSizeFetcher {
 
   /**
-   * Get the initial sizes of data written by this Stream writer, and send an initial heartbeat with the computed size,
-   * for each stream. This method also schedules publishing heartbeats at a regular pace.
+   * Get the size of the data persisted by this Stream writer for the stream which config is the {@code streamConfig}.
+   *
+   * @param streamConfig stream to get data size of
+   * @return the size of the data persisted by this Stream writer for the stream which config is the {@code streamName}
+   * @throws IOException in case of any error in fetching the size
    */
-  void initialize();
+  long fetchSize(StreamConfig streamConfig) throws IOException;
 }

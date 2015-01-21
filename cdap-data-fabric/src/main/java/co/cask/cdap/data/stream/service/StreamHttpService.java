@@ -49,7 +49,6 @@ public final class StreamHttpService extends AbstractIdleService {
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamCoordinator streamCoordinator;
   private final StreamFileJanitorService janitorService;
-  private final StreamWriterSizeManager sizeManager;
   private Cancellable cancellable;
 
   @Inject
@@ -58,12 +57,10 @@ public final class StreamHttpService extends AbstractIdleService {
                            StreamCoordinatorClient streamCoordinatorClient,
                            StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
-                           @Nullable MetricsCollectionService metricsCollectionService,
-                           StreamWriterSizeManager sizeManager) {
+                           @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
     this.janitorService = janitorService;
-    this.sizeManager = sizeManager;
     this.streamCoordinatorClient = streamCoordinatorClient;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
@@ -101,8 +98,6 @@ public final class StreamHttpService extends AbstractIdleService {
     cancellable = discoveryService.register(discoverable);
 
     janitorService.startAndWait();
-    sizeManager.startAndWait();
-    sizeManager.initialize();
     streamCoordinator.setHandlerDiscoverable(discoverable);
     streamCoordinator.startAndWait();
     streamCoordinatorClient.startAndWait();
@@ -110,7 +105,6 @@ public final class StreamHttpService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    sizeManager.stopAndWait();
     janitorService.stopAndWait();
 
     try {
