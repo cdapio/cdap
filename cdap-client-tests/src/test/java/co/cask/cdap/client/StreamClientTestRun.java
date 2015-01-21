@@ -90,14 +90,20 @@ public class StreamClientTestRun extends ClientTestBase {
     String streamId = "testEvents";
 
     streamClient.create(streamId);
-    for (int i = 0; i < 10; i++) {
+
+    // Send 5000 events
+    int eventCount = 5000;
+    for (int i = 0; i < eventCount; i++) {
       streamClient.sendEvent(streamId, "Testing " + i);
     }
 
     // Read all events
     List<StreamEvent> events = streamClient.getEvents(streamId, 0, Long.MAX_VALUE,
                                                       Integer.MAX_VALUE, Lists.<StreamEvent>newArrayList());
-    Assert.assertEquals(10, events.size());
+    Assert.assertEquals(eventCount, events.size());
+    for (int i = 0; i < eventCount; i++) {
+      Assert.assertEquals("Testing " + i, Bytes.toString(events.get(i).getBody()));
+    }
 
     // Read first 5 only
     events.clear();
