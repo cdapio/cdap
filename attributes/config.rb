@@ -27,7 +27,6 @@ default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 default['cdap']['cdap_site']['hdfs.namespace'] = "/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['hdfs.user'] = 'yarn'
 default['cdap']['cdap_site']['kafka.log.dir'] = '/data/cdap/kafka-logs'
-default['cdap']['cdap_site']['kafka.broker.quorum'] = "#{node['fqdn']}:9092"
 default['cdap']['cdap_site']['kafka.seed.brokers'] = "#{node['fqdn']}:9092"
 default['cdap']['cdap_site']['kafka.default.replication.factor'] = '1'
 default['cdap']['cdap_site']['log.retention.duration.days'] = '7'
