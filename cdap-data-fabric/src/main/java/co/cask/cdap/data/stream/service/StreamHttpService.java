@@ -22,10 +22,10 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -42,29 +42,21 @@ import javax.annotation.Nullable;
 /**
  * A Http service endpoint that host the stream handler.
  */
-public final class StreamHttpService extends AbstractIdleService {
+public final class StreamHttpService extends AbstractIdleService implements Supplier<Discoverable> {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final StreamCoordinatorClient streamCoordinatorClient;
-  private final StreamCoordinator streamCoordinator;
-  private final StreamFileJanitorService janitorService;
-  private final StreamWriterSizeManager sizeManager;
+  private final DistributedStreamService streamService;
   private Cancellable cancellable;
+  private Discoverable discoverable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
-                           StreamCoordinator streamCoordinator,
-                           StreamCoordinatorClient streamCoordinatorClient,
-                           StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService,
-                           StreamWriterSizeManager sizeManager) {
+                           DistributedStreamService streamService) {
     this.discoveryService = discoveryService;
-    this.streamCoordinator = streamCoordinator;
-    this.janitorService = janitorService;
-    this.sizeManager = sizeManager;
-    this.streamCoordinatorClient = streamCoordinatorClient;
+    this.streamService = streamService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -87,7 +79,7 @@ public final class StreamHttpService extends AbstractIdleService {
                                                                        Constants.Service.STREAMS));
     httpService.startAndWait();
 
-    Discoverable discoverable = new Discoverable() {
+    discoverable = new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.STREAMS;
@@ -98,29 +90,19 @@ public final class StreamHttpService extends AbstractIdleService {
         return httpService.getBindAddress();
       }
     };
+    streamService.setDiscoverable(discoverable);
+    streamService.startAndWait();
     cancellable = discoveryService.register(discoverable);
-
-    janitorService.startAndWait();
-    sizeManager.startAndWait();
-    sizeManager.initialize();
-    streamCoordinator.setHandlerDiscoverable(discoverable);
-    streamCoordinator.startAndWait();
-    streamCoordinatorClient.startAndWait();
 }
 
   @Override
   protected void shutDown() throws Exception {
-    sizeManager.stopAndWait();
-    janitorService.stopAndWait();
-
     try {
       if (cancellable != null) {
         cancellable.cancel();
       }
     } finally {
       httpService.stopAndWait();
-      streamCoordinator.stopAndWait();
-      streamCoordinatorClient.stopAndWait();
     }
   }
 
@@ -137,6 +119,11 @@ public final class StreamHttpService extends AbstractIdleService {
    * @return socket address the server has bound to.
    */
   public InetSocketAddress getBindAddress() {
-    return httpService.getBindAddress();
+    return discoverable.getSocketAddress();
+  }
+
+  @Override
+  public Discoverable get() {
+    return discoverable;
   }
 }
