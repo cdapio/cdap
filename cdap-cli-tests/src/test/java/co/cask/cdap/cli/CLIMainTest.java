@@ -53,6 +53,7 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -364,6 +365,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  @Ignore //https://issues.cask.co/browse/CDAP-1221
   public void testAdapters() throws Exception {
     File adapterDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
     String namespaceId = co.cask.cdap.common.conf.Constants.DEFAULT_NAMESPACE;
