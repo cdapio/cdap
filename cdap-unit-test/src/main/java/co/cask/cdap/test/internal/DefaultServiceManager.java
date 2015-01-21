@@ -17,21 +17,30 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.ServiceDiscoveries;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractServiceManager;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ServiceManager}.
  */
 public class DefaultServiceManager extends AbstractServiceManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;
   private final String accountId;
@@ -103,8 +112,23 @@ public class DefaultServiceManager extends AbstractServiceManager {
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
     String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceName);
-    String path = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
+    ServiceDiscovered discovered = discoveryServiceClient.discover(discoveryName);
+    return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
+  }
+
+  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceName) {
+    if (discoverable == null) {
+      return null;
+    }
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/",
+                                address.getHostName(), address.getPort(),
                                 Constants.Gateway.API_VERSION_3, accountId, applicationId, serviceName);
-    return ServiceDiscoveries.discoverURL(discoveryServiceClient, discoveryName, "http", path, timeout, timeoutUnit);
+    try {
+      return new URL(path);
+    } catch (MalformedURLException e) {
+      LOG.error("Got exception while creating serviceURL", e);
+      return null;
+    }
   }
 }

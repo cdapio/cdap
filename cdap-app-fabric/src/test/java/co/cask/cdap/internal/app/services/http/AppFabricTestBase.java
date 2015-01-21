@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -58,6 +57,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.internal.utils.Dependencies;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
@@ -142,11 +142,9 @@ public abstract class AppFabricTestBase {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    EndpointStrategy endpointStrategy =
-      new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP)),
-        1L, TimeUnit.SECONDS);
-    port = endpointStrategy.pick().getSocketAddress().getPort();
+    ServiceDiscovered appFabricHttpDiscovered = discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP);
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(appFabricHttpDiscovered);
+    port = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress().getPort();
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();

@@ -19,7 +19,6 @@ package co.cask.cdap.notifications.feeds.client;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -62,15 +61,13 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new TimeLimitEndpointStrategy(new RandomEndpointStrategy(
-          discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP)), 3L, TimeUnit.SECONDS);
+        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
       }
     });
   }
 
   private InetSocketAddress getServiceAddress() throws NotificationFeedException {
-    EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    Discoverable discoverable = endpointStrategy.pick();
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
