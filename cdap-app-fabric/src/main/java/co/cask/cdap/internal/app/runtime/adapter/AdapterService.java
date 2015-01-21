@@ -219,16 +219,30 @@ public class AdapterService extends AbstractIdleService {
     // TODO: Delete the application if this is the last adapter
   }
 
-  public void stopAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  // Suspends all schedules for this adapter
+  public void suspendAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
-    unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+
+    checkWorkflow(adapterTypeInfos.get(adapterSpec.getType()).getProgramType());
+    Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
+    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+      scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW, constructScheduleName(programId, adapterName));
+    }
   }
 
-  public void startAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  // Resumes all schedules for this adapter
+  public void resumeAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
-    schedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+
+    checkWorkflow(adapterTypeInfos.get(adapterSpec.getType()).getProgramType());
+    Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
+    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+      scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW, constructScheduleName(programId, adapterName));
+    }
   }
 
   // Deploys adapter application if it is not already deployed.
@@ -258,47 +272,41 @@ public class AdapterService extends AbstractIdleService {
   // Schedule all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
   private void schedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
                         AdapterSpecification adapterSpec) {
-    ProgramType programType = adapterTypeInfo.getProgramType();
-    if (programType.equals(ProgramType.WORKFLOW)) {
-      Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
-      for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-        Id.Program programId = Id.Program.from(namespaceId, spec.getName(), entry.getValue().getName());
-        addSchedule(programId, adapterSpec);
-      }
-    } else {
-      // Only Workflows are supported to be scheduled in the current implementation
-      throw new UnsupportedOperationException(String.format("Unsupported program type %s for adapter",
-                                                            programType.toString()));
+    checkWorkflow(adapterTypeInfo.getProgramType());
+    Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
+    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), entry.getValue().getName());
+      addSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec);
     }
   }
 
   // Unschedule all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
   private void unschedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
                           AdapterSpecification adapterSpec) {
-    ProgramType programType = adapterTypeInfo.getProgramType();
-    if (programType.equals(ProgramType.WORKFLOW)) {
-      Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
-      for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-        Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
-        deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
-                       constructScheduleName(programId, adapterSpec.getName()));
-      }
-    } else {
-      // Only Workflows are supported to be unscheduled in the current implementation
-      throw new UnsupportedOperationException(String.format("Unsupported program type %s for adapter",
-                                                            programType.toString()));
+    checkWorkflow(adapterTypeInfo.getProgramType());
+    Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
+    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
+      deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
+                     constructScheduleName(programId, adapterSpec.getName()));
     }
   }
 
+  private void checkWorkflow(ProgramType programType) {
+    // Only Workflows are supported to be scheduled in the current implementation
+    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                String.format("Unsupported program type %s for adapter", programType.toString()));
+  }
+
   // Adds a schedule to the scheduler as well as to the appspec
-  private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
+  private void addSchedule(Id.Program programId, SchedulableProgramType programType, AdapterSpecification adapterSpec) {
     String cronExpr = Schedules.toCronExpr(adapterSpec.getProperties().get("frequency"));
     Preconditions.checkNotNull(cronExpr, "Frequency of running the adapter is missing. Cannot schedule program");
     String adapterName = adapterSpec.getName();
     Schedule schedule = new Schedule(constructScheduleName(programId, adapterName), getScheduleDescription(adapterName),
                                      cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
-                                           new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
+                                           new ScheduleProgramInfo(programType, programId.getId()),
                                            adapterSpec.getProperties());
 
     scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());

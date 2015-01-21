@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -103,6 +104,28 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     JsonObject deployedApp = deployedApps.get(0);
     Assert.assertEquals(adapterType, deployedApp.get("id").getAsString());
 
+    List<ScheduleSpecification> schedules = getSchedules(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME);
+    Assert.assertEquals(1, schedules.size());
+    // Upon adapter create, the workflow schedules should be in a SCHEDULED state
+    for (ScheduleSpecification schedule : schedules) {
+      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME, schedule.getSchedule().getName());
+      scheduleStatusCheck(5, url, "SCHEDULED");
+    }
+
+    // suspending the adapter should put the associated schedules into a SUSPENDED state
+    suspendResumeAdapter(namespaceId, adapterName, "suspend");
+    for (ScheduleSpecification schedule : schedules) {
+      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME, schedule.getSchedule().getName());
+      scheduleStatusCheck(5, url, "SUSPENDED");
+    }
+
+    // resuming the adapter puts the associated schedules back into a SCHEDULED state
+    suspendResumeAdapter(namespaceId, adapterName, "resume");
+    for (ScheduleSpecification schedule : schedules) {
+      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME, schedule.getSchedule().getName());
+      scheduleStatusCheck(5, url, "SCHEDULED");
+    }
+
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -165,6 +188,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private HttpResponse getAdapter(String namespaceId, String adapterId) throws Exception {
     return doGet(String.format("%s/namespaces/%s/adapters/%s",
                                Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
+  }
+
+  private HttpResponse suspendResumeAdapter(String namespaceId, String adapterId, String action) throws Exception {
+    return doPost(String.format("%s/namespaces/%s/adapters/%s/%s",
+                                Constants.Gateway.API_VERSION_3, namespaceId, adapterId, action));
   }
 
   private HttpResponse deleteAdapter(String namespaceId, String adapterId) throws Exception {
