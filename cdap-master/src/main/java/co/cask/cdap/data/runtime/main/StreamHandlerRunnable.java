@@ -31,6 +31,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -39,12 +40,17 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -90,7 +96,13 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new StreamServiceRuntimeModule().getDistributedModules(),
         new NotificationFeedClientModule(),
         new NotificationServiceRuntimeModule().getDistributedModules(),
-        new StreamAdminModules().getDistributedModules()
+        new StreamAdminModules().getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(Key.get(new TypeLiteral<Supplier<Discoverable>>() { })).to(StreamHttpService.class);
+          }
+        }
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
@@ -109,5 +121,6 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
+    services.add(injector.getInstance(StreamService.class));
   }
 }

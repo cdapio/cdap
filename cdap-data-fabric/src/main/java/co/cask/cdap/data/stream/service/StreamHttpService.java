@@ -22,13 +22,10 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
-import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -45,29 +42,18 @@ import javax.annotation.Nullable;
 /**
  * A Http service endpoint that host the stream handler.
  */
-public final class StreamHttpService extends AbstractIdleService {
+public final class StreamHttpService extends AbstractIdleService implements Supplier<Discoverable> {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final StreamCoordinatorClient streamCoordinatorClient;
-  private final StreamCoordinator streamCoordinator;
-  private final StreamFileJanitorService janitorService;
-  private final StreamWriterSizeManager sizeManager;
-  private final NotificationFeedManager feedManager;
   private Cancellable cancellable;
+  private Discoverable discoverable;
 
   @Inject
-  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService, StreamCoordinator streamCoordinator,
-                           StreamCoordinatorClient streamCoordinatorClient, StreamFileJanitorService janitorService,
+  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
-                           @Nullable MetricsCollectionService metricsCollectionService,
-                           StreamWriterSizeManager sizeManager, NotificationFeedManager feedManager) {
+                           @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.streamCoordinator = streamCoordinator;
-    this.janitorService = janitorService;
-    this.sizeManager = sizeManager;
-    this.streamCoordinatorClient = streamCoordinatorClient;
-    this.feedManager = feedManager;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -85,14 +71,12 @@ public final class StreamHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    createHeartbeatsFeed();
-
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.STREAMS));
     httpService.startAndWait();
 
-    Discoverable discoverable = new Discoverable() {
+    discoverable = new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.STREAMS;
@@ -104,28 +88,16 @@ public final class StreamHttpService extends AbstractIdleService {
       }
     };
     cancellable = discoveryService.register(discoverable);
-
-    janitorService.startAndWait();
-    sizeManager.startAndWait();
-    sizeManager.initialize();
-    streamCoordinator.setHandlerDiscoverable(discoverable);
-    streamCoordinator.startAndWait();
-    streamCoordinatorClient.startAndWait();
 }
 
   @Override
   protected void shutDown() throws Exception {
-    sizeManager.stopAndWait();
-    janitorService.stopAndWait();
-
     try {
       if (cancellable != null) {
         cancellable.cancel();
       }
     } finally {
       httpService.stopAndWait();
-      streamCoordinator.stopAndWait();
-      streamCoordinatorClient.stopAndWait();
     }
   }
 
@@ -142,25 +114,11 @@ public final class StreamHttpService extends AbstractIdleService {
    * @return socket address the server has bound to.
    */
   public InetSocketAddress getBindAddress() {
-    return httpService.getBindAddress();
+    return discoverable.getSocketAddress();
   }
 
-  /**
-   * Create Notification feed for stream's heartbeats, if it does not already exist.
-   */
-  private void createHeartbeatsFeed() throws NotificationFeedException {
-    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
-    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace("default")
-      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
-      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-      .setDescription("Streams heartbeats feed.")
-      .build();
-
-    try {
-      feedManager.getFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
-      feedManager.createFeed(streamHeartbeatsFeed);
-    }
+  @Override
+  public Discoverable get() {
+    return discoverable;
   }
 }

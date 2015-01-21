@@ -19,35 +19,26 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
 
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
  * In memory implementation for {@link StreamCoordinatorClient}.
  */
 @Singleton
-public final class InMemoryStreamCoordinatorClient
-  extends AbstractStreamCoordinatorClient
-  implements StreamCoordinator {
+public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordinatorClient {
 
   private final StreamMetaStore streamMetaStore;
-  private ListeningExecutorService executor;
   private final Set<StreamLeaderListener> leaderListeners;
 
   @Inject
@@ -59,14 +50,12 @@ public final class InMemoryStreamCoordinatorClient
 
   @Override
   protected void startUp() throws Exception {
-    executor = MoreExecutors.listeningDecorator(
-      Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("stream-leader-manager")));
     invokeLeaderListeners((String) null);
   }
 
   @Override
   protected void doShutDown() throws Exception {
-    executor.shutdownNow();
+    // No-op
   }
 
   @Override
@@ -75,44 +64,13 @@ public final class InMemoryStreamCoordinatorClient
   }
 
   @Override
-  public void setHandlerDiscoverable(Discoverable discoverable) {
-    // No-op
-  }
-
-  @Override
-  public ListenableFuture<Void> streamCreated(final String streamName) {
-    // Note: the leader of a stream in local mode is always the only existing stream handler
-    return executor.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        invokeLeaderListeners(streamName);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
-    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
-    // is not overridden by user's code implementation of the equal method
-    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
-      @Override
-      public void leaderOf(Set<String> streamNames) {
-        listener.leaderOf(streamNames);
-      }
-    };
-
-    synchronized (this) {
-      leaderListeners.add(wrappedListener);
+  public ListenableFuture<Void> streamCreated(String streamName) {
+    try {
+      invokeLeaderListeners(streamName);
+    } catch (Exception e) {
+      Throwables.propagate(e);
     }
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        synchronized (InMemoryStreamCoordinatorClient.this) {
-          leaderListeners.remove(wrappedListener);
-        }
-      }
-    };
+    return Futures.immediateFuture(null);
   }
 
   private void invokeLeaderListeners(@Nullable String createdStream) throws Exception {

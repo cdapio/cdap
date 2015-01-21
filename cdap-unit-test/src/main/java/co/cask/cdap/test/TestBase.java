@@ -48,10 +48,8 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.NoOpStreamWriterSizeManager;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamServiceModule;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.StreamWriterSizeManager;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -250,17 +248,14 @@ public class TestBase {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new StreamServiceModule() {
+      new AbstractModule() {
         @Override
         protected void configure() {
-          super.configure();
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-          bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
-          expose(StreamWriterSizeManager.class);
-          expose(StreamHandler.class);
+          bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },
       new TestMetricsClientModule(),

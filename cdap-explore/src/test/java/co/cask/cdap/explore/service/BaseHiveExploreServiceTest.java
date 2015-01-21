@@ -30,6 +30,8 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -41,6 +43,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -51,6 +54,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -62,6 +66,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -299,6 +306,14 @@ public class BaseHiveExploreServiceTest {
         @Override
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+
+          Multibinder<HttpHandler> handlerBinder =
+            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandler.class);
+          handlerBinder.addBinding().to(StreamFetchHandler.class);
+          handlerBinder.addBinding().to(PingHandler.class);
+
+          bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -337,6 +352,14 @@ public class BaseHiveExploreServiceTest {
         @Override
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+
+          Multibinder<HttpHandler> handlerBinder =
+            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandler.class);
+          handlerBinder.addBinding().to(StreamFetchHandler.class);
+          handlerBinder.addBinding().to(PingHandler.class);
+
+          bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }
     );
