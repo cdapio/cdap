@@ -12,6 +12,7 @@ body.theme-default {
     background-color: lighten(@body-bg, 2%);
   }
 
+
   //
   // Buttons
   // --------------------------------------------------
@@ -41,7 +42,7 @@ body.theme-default {
   // Mixin for generating new styles
   .btn-styles(@btn-color: #555) {
     #gradient > .vertical(@start-color: @btn-color; @end-color: darken(@btn-color, 12%));
-    .reset-filter(); // Disable gradients for IE9 because filter bleeds through rounded corners
+    .reset-filter(); // Disable gradients for IE9 because filter bleeds through rounded corners; see https://github.com/twbs/bootstrap/issues/10620
     background-repeat: repeat-x;
     border-color: darken(@btn-color, 14%);
 
@@ -57,6 +58,7 @@ body.theme-default {
       border-color: darken(@btn-color, 14%);
     }
 
+    &.disabled,
     &:disabled,
     &[disabled] {
       background-color: darken(@btn-color, 12%);
@@ -135,7 +137,7 @@ body.theme-default {
   // Inverted navbar
   .navbar-inverse {
     #gradient > .vertical(@start-color: lighten(@navbar-inverse-bg, 10%); @end-color: @navbar-inverse-bg);
-    .reset-filter(); // Remove gradient in IE<10 to fix bug where dropdowns don't get triggered
+    .reset-filter(); // Remove gradient in IE<10 to fix bug where dropdowns don't get triggered; see https://github.com/twbs/bootstrap/issues/10257
 
     .navbar-nav > .open > a,
     .navbar-nav > .active > a {
