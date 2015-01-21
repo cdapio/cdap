@@ -73,4 +73,14 @@ public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvi
    * @return the runtime arguments specified for this file set.
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * A variant of {@link co.cask.cdap.api.data.batch.InputFormatProvider#getInputFormatConfiguration}
+   * that allows passing in the input locations (rather than using the input locations that were
+   * determined from runtime arguments).
+   *
+   * @param inputLocs the input locations to be used
+   */
+  Map<String, String> getInputFormatConfiguration(Iterable<Location> inputLocs);
+
 }
