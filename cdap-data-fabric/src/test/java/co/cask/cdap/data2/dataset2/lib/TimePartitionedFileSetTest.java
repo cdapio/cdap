@@ -46,13 +46,13 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
 
   @Before
-  public void beforeClass() throws Exception {
+  public void before() throws Exception {
     createInstance("timePartitionedFileSet", "tpfs", FileSetProperties.builder()
       .setBasePath("testDir").build());
   }
 
   @After
-  public void afterClass() throws Exception {
+  public void after() throws Exception {
     deleteInstance("tpfs");
   }
 

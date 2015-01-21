@@ -64,12 +64,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)
-          // properties for partitioned hive table
-          // .setEnableExploreOnCreate(true)
-          // .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-          // .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-          // .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-          // .setTableProperty("avro.schema.literal", SCHEMA_STRING)
+        // don't configure properties for the Hive table - this is used in a context where explore is disabled
         .build());
       addMapReduce(new PartitionWriter());
       addMapReduce(new PartitionReader());

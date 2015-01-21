@@ -166,7 +166,6 @@ public class MapReduceWithPartitionedTest {
           String path = tpfs.getPartition(time);
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
-          System.err.println("Path for partition: " + path);
         }
       });
 
@@ -193,7 +192,6 @@ public class MapReduceWithPartitionedTest {
           String path = tpfs.getPartition(time5);
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-20"));
-          System.err.println("Path for partition 5: " + path);
         }
       });
 
