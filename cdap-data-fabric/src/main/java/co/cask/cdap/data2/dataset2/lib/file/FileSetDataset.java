@@ -173,7 +173,7 @@ public final class FileSetDataset implements FileSet {
   }
 
   @Override
-  public Map<String, String> getInputFormatConfiguration(Iterable<Location> inputLocs) {
+  public Map<String, String> getInputFormatConfiguration(Iterable<? extends Location> inputLocs) {
     String inputs = Joiner.on(',').join(Iterables.transform(inputLocs, new Function<Location, String>() {
       @Override
       public String apply(@Nullable Location location) {

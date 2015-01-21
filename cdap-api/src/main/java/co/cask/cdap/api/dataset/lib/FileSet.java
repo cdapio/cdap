@@ -81,6 +81,6 @@ public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvi
    *
    * @param inputLocs the input locations to be used
    */
-  Map<String, String> getInputFormatConfiguration(Iterable<Location> inputLocs);
+  Map<String, String> getInputFormatConfiguration(Iterable<? extends Location> inputLocs);
 
 }
