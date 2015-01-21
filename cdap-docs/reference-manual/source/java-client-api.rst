@@ -61,12 +61,12 @@ Alphabetical list:
 
 The above lists link to the examples below for each portion of the API.
 
-.. _configuring-client:
+.. _client-api-configuring-client:
 
 Configuring your *Client
 ------------------------
 
-Every *Client constructor requires a `ClientConfig` instance which configures the hostname and port of the CDAP
+Every *\*Client* constructor requires a `ClientConfig` instance which configures the hostname and port of the CDAP
 instance that you wish to interact with.
 
 In a non-secure (default) CDAP instance, instantiate as follows::
@@ -74,7 +74,7 @@ In a non-secure (default) CDAP instance, instantiate as follows::
   // Interact with the CDAP instance located at example.com, port 10000
   ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
-In a secure CDAP instance, first pull in the cdap-authentication-client artifact::
+In a secure CDAP instance, first pull in the ``cdap-authentication-client`` Maven dependency::
 
   <dependency>
     <groupId>co.cask.cdap</groupId>
@@ -88,10 +88,10 @@ Then, instantiate as follows::
   AuthenticationClient authenticationClient = new BasicAuthenticationClient();
   authenticationClient.setConnectionInfo("example.com", 10000, sslEnabled);
   // Configure the AuthenticationClient as documented in
-  // https://github.com/caskdata/cdap-clients/blob/develop/cdap-authentication-clients/java/README.md
+  // https://github.com/caskdata/cdap-clients/blob/develop/cdap-authentication-clients/java
   AccessToken accessToken = authenticationClient.getAccessToken();
 
-  // Interact with the secure CDAP instance located at example.com, port 10000, with a provided accessToken
+  // Interact with the secure CDAP instance located at example.com, port 10000, with the provided accessToken
   ClientConfig clientConfig = new ClientConfig("example.com", 10000, accessToken);
 
 .. _application-client:
