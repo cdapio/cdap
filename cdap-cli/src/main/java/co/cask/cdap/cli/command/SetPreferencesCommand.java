@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
@@ -23,9 +24,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.Arguments;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
+import com.google.common.base.Splitter;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -35,9 +34,6 @@ import java.util.Map;
  */
 public class SetPreferencesCommand extends AbstractAuthCommand {
   private static final String SUCCESS = "Set Preferences successfully for the '%s'";
-  private static final String JSON = "json";
-  private static final Gson GSON = new Gson();
-  private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final PreferencesClient client;
   private final ElementType type;
@@ -51,17 +47,11 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String[] programIdParts = new String[0];
-    String jsonMap = arguments.get(JSON);
+    String runtimeArgs = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
+    Map<String, String> args = Splitter.on(" ").withKeyValueSeparator("=").split(runtimeArgs);
 
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
-    }
-
-    Map<String, String> args;
-    try {
-      args = GSON.fromJson(jsonMap, STRING_MAP_TYPE);
-    } catch (JsonSyntaxException e) {
-      throw new IllegalArgumentException("JSON format is invalid");
     }
 
     switch (type) {
@@ -157,11 +147,13 @@ public class SetPreferencesCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("set %s preferences <%s> [<%s>]", type.getName(), JSON, type.getArgumentName());
+    return String.format("set %s preferences <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
+                         type.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return "Sets the preferences of a " + type.getPluralPrettyName() + " using a json map";
+    return "Sets the preferences of a " + type.getPluralPrettyName() + "." +
+      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
   }
 }

@@ -977,7 +977,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
-    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed", 0);
+    scheduleHistoryRuns(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed", 0);
 
     //Check suspend status
     String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
@@ -1017,7 +1017,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPost(scheduleResume);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed",
+    scheduleHistoryRuns(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed",
                          workflowRunsAfterSuspend);
 
     //check scheduled state

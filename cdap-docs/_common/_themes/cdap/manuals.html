@@ -9,6 +9,7 @@
 {%- if   pagename == 'release-notes' %}{% set doc5 = '<b>' %}{% set doc5b = '</b>' %}
 {%- elif pagename == 'glossary'      %}{% set doc6 = '<b>' %}{% set doc6b = '</b>' %}
 {%- elif pagename == 'faq'           %}{% set doc7 = '<b>' %}{% set doc7b = '</b>' %}
+{%- elif pagename == 'search'        %}{% set doc8 = '<b>' %}{% set doc8b = '</b>' %}
 {%- elif html_short_title_toc == titles[0] and pagename == 'index' %}{% set doc0 = '<b>' %}{% set doc0b = '</b>' %}
 {%- elif html_short_title_toc == titles[1] %}{% set doc1 = '<b>' %}{% set doc1b = '</b>' %}
 {%- elif html_short_title_toc == titles[2] %}{% set doc2 = '<b>' %}{% set doc2b = '</b>' %}
@@ -36,5 +37,7 @@
             rel="nofollow">{{ _('Glossary') }}</a>{{ doc6b }}</li>
       <li>{{ doc7 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/faq.html') }}"
             rel="nofollow">{{ _('FAQ') }}</a>{{ doc7b }}</li>
+      <li>{{ doc8 }}<a href="{{ master_url_root }}{{ _('/../search.html') }}"
+            rel="nofollow">{{ _('Search') }}</a>{{ doc8b }}</li>
     </ul>
    </div>

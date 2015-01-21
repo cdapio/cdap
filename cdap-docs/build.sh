@@ -30,11 +30,13 @@ source _common/common-build.sh
 
 BUILD_TEMP="build-temp"
 COMMON="_common"
+COMMON_HTACCESS="$COMMON/htaccess"
 COMMON_IMAGES="$COMMON/_images"
 COMMON_SOURCE="$COMMON/_source"
 COMMON_CONF_PY="$COMMON/common_conf.py"
 COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
 COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
+HTACCESS="htaccess"
 
 ARG_1="$1"
 ARG_2="$2"
@@ -56,13 +58,12 @@ function usage() {
   echo ""
   echo "  Options (select one)"
   echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
-  echo "    docs           Clean build of just the HTML docs, skipping Javadocs"
+  echo ""
+  echo "    docs           Clean build of just the HTML docs, skipping Javadocs, zipped for placing on docs.cask.co webserver"
   echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
   echo ""
-  echo "    zip            Zips results; options: none, $WEB, or $GITHUB"
   echo "    licenses       Clean build of License Dependency PDFs"
-  echo ""
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
   echo ""
@@ -78,7 +79,6 @@ function run_command() {
     docs )              build_docs; exit 1;;
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
-    zip )               build_zip $2; exit 1;;
     licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
@@ -125,9 +125,9 @@ function build_docs_outer_level() {
 
   # Build outer-level docs
   cd $SCRIPT_PATH
-  cp $COMMON_HIGHLEVEL_PY $BUILD/$SOURCE/conf.py
-  cp -R $COMMON_IMAGES    $BUILD/$SOURCE/
-  cp $COMMON_SOURCE/*.rst $BUILD/$SOURCE/
+  cp $COMMON_HIGHLEVEL_PY  $BUILD/$SOURCE/conf.py
+  cp -R $COMMON_IMAGES     $BUILD/$SOURCE/
+  cp $COMMON_SOURCE/*.rst  $BUILD/$SOURCE/
   
   if [ "x$1" == "x" ]; then
     sphinx-build -b html -d build/doctrees build/source build/html
@@ -140,8 +140,13 @@ function build_docs_outer_level() {
   copy_html developers-manual
   copy_html reference-manual
   copy_html examples-manual
-}
 
+  # Rewrite 404 file
+  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$PROJECT_VERSION/en/_static"
+  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$PROJECT_VERSION/en/_images"
+  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$PROJECT_VERSION/en/|g"
+  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$PROJECT_VERSION/en/search.html"
+}
 
 ################################################## current
 
@@ -154,16 +159,9 @@ function build_all() {
   mv $SCRIPT_PATH/$BUILD/*.zip $SCRIPT_PATH/$BUILD_TEMP
   echo "Building Web Docs."
   ./build.sh docs-web $ARG_2 $ARG_3
-  echo "Moving GitHub Docs."
+  echo "Replacing GitHub Docs."
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
-  bell
-}
-
-function build_docs() {
-  build "docs"
-  build_docs_outer_level
-  build_zip $WEB
   bell
 }
 
@@ -171,22 +169,25 @@ function build_docs_javadocs() {
   build "build"
 }
 
+function build_docs() {
+  _build_docs "docs" $GOOGLE_ANALYTICS_WEB $WEB $TRUE
+}
+
 function build_docs_github() {
-  build "build-github"
-  build_docs_outer_level $GOOGLE_ANALYTICS_GITHUB
-  build_zip $GITHUB
-  bell
+  _build_docs "docs-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
 }
 
 function build_docs_web() {
-  build "build-web"
-  build_docs_outer_level $GOOGLE_ANALYTICS_WEB
-  cd $SCRIPT_PATH
-  set_project_path
+  _build_docs "build-web" $GOOGLE_ANALYTICS_WEB $WEB $TRUE
+}
+
+function _build_docs() {
+  build $1
+  build_docs_outer_level $2
+  build_zip $3
+  zip_extras $4
   display_version
-  make_zip_localized_web $WEB
-  echo "Building zip completed."
-  bell
+  bell "Building $1 completed."
 }
 
 function build() {
@@ -205,13 +206,23 @@ function build_specific_doc() {
 function build_zip() {
   cd $SCRIPT_PATH
   set_project_path
-  display_version
-  if [ "x$1" == "x" ]; then
-    make_zip
-  else
-    make_zip_localized $1
+  make_zip $1
+}
+
+function zip_extras() {
+  if [ "x$1" == "x$FALSE" ]; then
+    return
   fi
-  echo "Building zip completed."
+  # Add JSON file
+  cd $SCRIPT_PATH/$BUILD/$SOURCE
+  JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
+  local json_file_path=$SCRIPT_PATH/$BUILD/$PROJECT_VERSION/$JSON_FILE
+  echo `python -c 'import conf; conf.print_json_versions();'` > $json_file_path
+  # Add .htaccess file (404 file)
+  cd $SCRIPT_PATH
+  rewrite $COMMON_SOURCE/$HTACCESS $BUILD/$PROJECT_VERSION/.$HTACCESS "<version>" "$PROJECT_VERSION"
+  cd $SCRIPT_PATH/$BUILD
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/$JSON_FILE $PROJECT_VERSION/.$HTACCESS
 }
 
 function build_sdk() {
@@ -230,18 +241,12 @@ function print_version() {
 }
 
 function bell() {
-  echo -e "\a"
+  # Pass a message as $1
+  echo -e "\a$1"
 }
 
-
 function test() {
-#   echo "Test..."
-#   echo "Version..."
-#   display_version
-#   echo "Build all docs..."
-#   build
-#   echo "Build SDK..."
-#   build_sdk
+  echo "Test..."
   build_json
   echo "Test completed."
 }
