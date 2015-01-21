@@ -29,6 +29,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -75,7 +76,8 @@ public class DistributedStreamService extends AbstractStreamService {
                                   StreamWriterSizeManager sizeManager,
                                   ZKClient zkClient,
                                   DiscoveryServiceClient discoveryServiceClient,
-                                  StreamMetaStore streamMetaStore) {
+                                  StreamMetaStore streamMetaStore,
+                                  Supplier<Discoverable> discoverableSupplier) {
     super(streamCoordinatorClient, janitorService, sizeManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;

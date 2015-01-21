@@ -25,6 +25,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -41,12 +42,13 @@ import javax.annotation.Nullable;
 /**
  * A Http service endpoint that host the stream handler.
  */
-public final class StreamHttpService extends AbstractIdleService {
+public final class StreamHttpService extends AbstractIdleService implements Supplier<Discoverable> {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private final DistributedStreamService streamService;
   private Cancellable cancellable;
+  private Discoverable discoverable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
@@ -77,7 +79,7 @@ public final class StreamHttpService extends AbstractIdleService {
                                                                        Constants.Service.STREAMS));
     httpService.startAndWait();
 
-    Discoverable discoverable = new Discoverable() {
+    discoverable = new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.STREAMS;
@@ -117,6 +119,11 @@ public final class StreamHttpService extends AbstractIdleService {
    * @return socket address the server has bound to.
    */
   public InetSocketAddress getBindAddress() {
-    return httpService.getBindAddress();
+    return discoverable.getSocketAddress();
+  }
+
+  @Override
+  public Discoverable get() {
+    return discoverable;
   }
 }
