@@ -101,7 +101,7 @@ public class DefaultStore implements Store {
 
   @Inject
   public DefaultStore(CConfiguration conf,
-                     LocationFactory locationFactory,
+                      LocationFactory locationFactory,
                       final TransactionSystemClient txClient,
                       DatasetFramework framework) {
 

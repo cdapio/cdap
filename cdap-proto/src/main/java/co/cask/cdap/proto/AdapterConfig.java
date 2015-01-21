@@ -36,7 +36,7 @@ public final class AdapterConfig {
   }
 
   /**
-   *
+   * Specifies the source of the Adapter
    */
   public static final class Source {
     public String name;
@@ -52,7 +52,7 @@ public final class AdapterConfig {
   }
 
   /**
-   *
+   * Specifies the sink of the Adapter
    */
   public static final class Sink {
     public String name;
@@ -67,7 +67,15 @@ public final class AdapterConfig {
     }
   }
 
-  public AdapterSpecification toAdapterSpec(String name, co.cask.cdap.proto.Source.Type sourceType,
+  /**
+   * Creates an {@link AdapterSpecification} from an adapter name, source type, and sink type.
+   *
+   * @param adapterName name of the adapter
+   * @param sourceType type of the source
+   * @param sinkType type of the sink
+   * @return the {@link AdapterSpecification}
+   */
+  public AdapterSpecification toAdapterSpec(String adapterName, co.cask.cdap.proto.Source.Type sourceType,
                                             co.cask.cdap.proto.Sink.Type sinkType) {
     Set<co.cask.cdap.proto.Source> sources = Sets.newHashSet();
     Set<co.cask.cdap.proto.Sink> sinks = Sets.newHashSet();
@@ -75,6 +83,6 @@ public final class AdapterConfig {
     sources.add(new co.cask.cdap.proto.Source(source.name, sourceType, source.properties));
     sinks.add(new co.cask.cdap.proto.Sink(sink.name, sinkType, sink.properties));
 
-    return new AdapterSpecification(name, type, properties, sources, sinks);
+    return new AdapterSpecification(adapterName, type, properties, sources, sinks);
   }
 }
