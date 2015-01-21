@@ -121,7 +121,8 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void initialize() throws Exception {
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
-    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), new StreamsLeaderHandler());
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
+                                                                   new StreamsLeaderHandler());
     performLeaderElection();
     initStreamsBaseSizes();
   }
