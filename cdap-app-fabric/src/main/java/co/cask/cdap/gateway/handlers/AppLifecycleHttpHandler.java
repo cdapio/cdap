@@ -420,13 +420,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    // Don't allow user application with the same name as an application deployed by a system adapter.
-    // System adapter do not get deployed to system namespace because they deal directly with data in user namespace
-    if (adapterService.getAdapterTypeInfo(appId) != null) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Deploy failed - An adapter type exists with with the name: %s", appId));
-    }
-
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
                            ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));

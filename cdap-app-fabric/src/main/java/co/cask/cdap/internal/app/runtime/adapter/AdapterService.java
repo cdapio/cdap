@@ -250,8 +250,8 @@ public class AdapterService extends AbstractIdleService {
 
     Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
     DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
-    ApplicationWithPrograms applicationWithPrograms = manager.deploy(Id.Namespace.from(namespaceId),
-                                                                     adapterTypeInfo.getType(), deploymentInfo).get();
+    ApplicationWithPrograms applicationWithPrograms =
+      manager.deploy(Id.Namespace.from(namespaceId), adapterTypeInfo.getType(), deploymentInfo, true).get();
     return applicationWithPrograms.getSpecification();
   }
 

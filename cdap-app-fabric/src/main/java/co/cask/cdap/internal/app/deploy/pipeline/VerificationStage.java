@@ -28,6 +28,7 @@ import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
