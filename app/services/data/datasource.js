@@ -28,7 +28,7 @@ angular.module(PKG.name+'.services')
     ); // will post to <host>:<port>/v3/system/config
    */
   .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT) {
+    MYSOCKET_EVENT, $q) {
 
     var instances = {}; // keyed by scopeid
 
@@ -128,14 +128,16 @@ angular.module(PKG.name+'.services')
      * fetch a resource
      */
     DataSource.prototype.request = function (resource, cb) {
-      var once = false;
+      var once = false,
+          deferred = $q.defer();
 
       this.bindings.push({
         resource: resource,
-        callback: function() {
+        callback: function (result) {
           if(!once) {
             once = true;
             cb && cb.apply(this, arguments);
+            deferred.resolve(result);
           }
         }
       });
@@ -144,6 +146,8 @@ angular.module(PKG.name+'.services')
         action: 'request',
         resource: resource
       });
+
+      return deferred.promise;
     };
 
     return DataSource;

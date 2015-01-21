@@ -4,7 +4,6 @@
 
       <form name="addWdgtForm" class="form-horizontal"
           ng-submit="doAddWidget()"
-          ng-class="{'has-error': addWdgtForm.$invalid}"
           novalidate>
 
         <div class="modal-header">
@@ -35,11 +34,14 @@
           </div>
 
           <div class="form-group" ng-if="model.type !== widgetTypes[0].type">
-            <label for="addWdgtMetric" class="col-xs-3 control-label">Metric Context</label>
+            <label class="col-xs-3 control-label">Metric</label>
             <div class="col-xs-9">
-              <input id="addWdgtMetric" type="text" name="metric" class="form-control"
-                placeholder="Context"
-                ng-model="model.metric" required/>
+
+              <my-metric-picker
+                ng-model="model.metric"
+                required
+              ></my-metric-picker>
+
             </div>
           </div>
 
