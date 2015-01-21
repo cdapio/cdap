@@ -41,7 +41,6 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
-import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Configuration for the CDAP CLI.
@@ -168,8 +167,8 @@ public class CLIConfig {
     authenticationClient.configure(properties);
     AccessToken accessToken = authenticationClient.getAccessToken();
 
-    if (accessToken != null && saveAccessToken(accessToken, connectionInfo.getHostname())) {
-      if (verbose) {
+    if (accessToken != null) {
+      if (saveAccessToken(accessToken, connectionInfo.getHostname()) && verbose) {
         output.printf("Saved access token to %s\n", getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
       }
     }
@@ -201,10 +200,9 @@ public class CLIConfig {
     File accessTokenFile = getAccessTokenFile(hostname);
 
     try {
-      if (accessTokenFile.createNewFile()) {
-        Files.write(accessToken.getValue(), accessTokenFile, Charsets.UTF_8);
-        return true;
-      }
+      accessTokenFile.createNewFile();
+      Files.write(accessToken.getValue(), accessTokenFile, Charsets.UTF_8);
+      return true;
     } catch (IOException ignored) {
       // NO-OP
     }
