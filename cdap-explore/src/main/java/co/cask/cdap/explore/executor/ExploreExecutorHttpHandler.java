@@ -265,19 +265,29 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      // TODO we also have to drop the Hive table for file sets
-      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
-        // It is not an error to get non-Record enabled datasets, since the type of dataset may not be known where this
-        // call originates from.
-        LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
-                  RecordWritable.class.getName());
+      String deleteStatement = null;
+      if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+        deleteStatement = generateDeleteStatement(datasetName);
+      } else if (dataset instanceof FileSet || dataset instanceof TimePartitionedFileSet) {
+        // this cannot fail because we were able to instantiate the dataset
+        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetName);
+        if (spec != null) {
+          Map<String, String> properties = spec.getProperties();
+          if (FileSetProperties.isExploreEnabled(properties)) {
+            deleteStatement = generateDeleteStatement(datasetName);
+          }
+        }
+      }
+
+      if (deleteStatement == null) {
+        // This is not an error: whether the dataset is explorable may not be known where this call originates from.
+        LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
 
-      String deleteStatement = generateDeleteStatement(datasetName);
       LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
 
       QueryHandle handle = exploreService.execute(deleteStatement);
