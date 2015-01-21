@@ -84,7 +84,7 @@ public class CLIMain {
     cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
-      public void handleException(PrintStream output, Exception e) {
+      public boolean handleException(PrintStream output, Exception e, int timesRetried) {
         if (e instanceof SSLHandshakeException) {
           output.printf("To ignore this error, set -D%s=false when starting the CLI\n",
                         CLIConfig.PROP_VERIFY_SSL_CERT);
@@ -94,6 +94,8 @@ public class CLIMain {
         } else {
           output.println("Error: " + e.getMessage());
         }
+
+        return false;
       }
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
