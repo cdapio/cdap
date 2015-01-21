@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.inject.Inject;
 
 /**
@@ -26,8 +27,10 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                            StreamFileJanitorService janitorService, StreamWriterSizeManager sizeManager) {
-    super(streamCoordinatorClient, janitorService, sizeManager);
+                            StreamFileJanitorService janitorService,
+                            StreamWriterSizeManager sizeManager,
+                            NotificationFeedManager notificationFeedManager) {
+    super(streamCoordinatorClient, janitorService, sizeManager, notificationFeedManager);
   }
 
   @Override

@@ -27,6 +27,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -76,8 +77,9 @@ public class DistributedStreamService extends AbstractStreamService {
                                   ZKClient zkClient,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   StreamMetaStore streamMetaStore,
-                                  Supplier<Discoverable> discoverableSupplier) {
-    super(streamCoordinatorClient, janitorService, sizeManager);
+                                  Supplier<Discoverable> discoverableSupplier,
+                                  NotificationFeedManager notificationFeedManager) {
+    super(streamCoordinatorClient, janitorService, sizeManager, notificationFeedManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
