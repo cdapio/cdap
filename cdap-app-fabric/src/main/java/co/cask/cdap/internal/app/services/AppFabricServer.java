@@ -24,9 +24,11 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -43,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -57,6 +60,8 @@ public final class AppFabricServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
+  private final AdapterService adapterService;
+  private final Set<String> servicesNames;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -72,7 +77,8 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService) {
+                         ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         @Named("appfabric.services.names") Set<String> servicesNames) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -80,6 +86,8 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
+    this.adapterService = adapterService;
+    this.servicesNames = servicesNames;
   }
 
   /**
@@ -96,6 +104,7 @@ public final class AppFabricServer extends AbstractIdleService {
     FileUtils.deleteDirectory(tmpDir);
 
     schedulerService.start();
+    adapterService.start();
     programRuntimeService.start();
 
     // Run http service on random port
@@ -118,41 +127,47 @@ public final class AppFabricServer extends AbstractIdleService {
     // Remove from service discovery when it is stopped.
     httpService.addListener(new ServiceListenerAdapter() {
 
-      private Cancellable cancellable;
+      private List<Cancellable> cancellables = Lists.newArrayList();
 
       @Override
       public void running() {
         final InetSocketAddress socketAddress = httpService.getBindAddress();
         LOG.info("AppFabric HTTP Service started at {}", socketAddress);
 
+        // TODO accept a list of services, and start them here
         // When it is running, register it with service discovery
-        cancellable = discoveryService.register(new Discoverable() {
+        for (final String serviceName : servicesNames) {
+          cancellables.add(discoveryService.register(new Discoverable() {
+            @Override
+            public String getName() {
+              return serviceName;
+            }
 
-          @Override
-          public String getName() {
-            return Constants.Service.APP_FABRIC_HTTP;
-          }
-
-          @Override
-          public InetSocketAddress getSocketAddress() {
-            return socketAddress;
-          }
-        });
+            @Override
+            public InetSocketAddress getSocketAddress() {
+              return socketAddress;
+            }
+          }));
+        }
       }
 
       @Override
       public void terminated(State from) {
         LOG.info("AppFabric HTTP service stopped.");
-        if (cancellable != null) {
-          cancellable.cancel();
+        for (Cancellable cancellable : cancellables) {
+          if (cancellable != null) {
+            cancellable.cancel();
+          }
         }
       }
 
       @Override
       public void failed(State from, Throwable failure) {
         LOG.info("AppFabric HTTP service stopped with failure.", failure);
-        if (cancellable != null) {
-          cancellable.cancel();
+        for (Cancellable cancellable : cancellables) {
+          if (cancellable != null) {
+            cancellable.cancel();
+          }
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -165,5 +180,6 @@ public final class AppFabricServer extends AbstractIdleService {
     httpService.stopAndWait();
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
+    adapterService.stopAndWait();
   }
 }
