@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,6 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
-import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Configuration for the CDAP CLI.
@@ -58,10 +57,13 @@ public class CLIConfig {
   private List<ConnectionChangeListener> connectionChangeListeners;
   private ConnectionInfo connectionInfo;
 
+  private String currentNamespace;
+
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    */
   public CLIConfig(String hostname) {
+    this.currentNamespace = "default";
     this.clientConfig = createClientConfig(hostname);
     this.resolver = new FilePathResolver();
     this.version = tryGetVersion();
@@ -79,6 +81,17 @@ public class CLIConfig {
     return clientConfigBuilder.build();
   }
 
+  public String getCurrentNamespace() {
+    return currentNamespace;
+  }
+
+  public void setCurrentNamespace(String currentNamespace) {
+    this.currentNamespace = currentNamespace;
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
+    }
+  }
+
   public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
 
     this.connectionInfo = connectionInfo;
@@ -89,6 +102,7 @@ public class CLIConfig {
       setPort(connectionInfo.getPort());
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
+      setCurrentNamespace("default");
 
       if (verbose) {
         output.printf("Successfully connected CDAP instance at %s:%d\n",
@@ -99,7 +113,6 @@ public class CLIConfig {
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
                                           e.getMessage()));
     }
-
   }
 
   public void updateAccessToken(PrintStream output) throws IOException {
@@ -258,21 +271,21 @@ public class CLIConfig {
   public void setHostname(String hostname) {
     clientConfig.setHostname(hostname);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getBaseURI());
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
   }
 
   public void setPort(int port) {
     clientConfig.setPort(port);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getBaseURI());
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
   }
 
   public void setSSLEnabled(boolean sslEnabled) {
     clientConfig.setSSLEnabled(sslEnabled);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getBaseURI());
+      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
     }
   }
 
@@ -288,7 +301,7 @@ public class CLIConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(URI newURI);
+    void onConnectionChanged(String currentNamespace, URI newURI);
   }
 
   /**

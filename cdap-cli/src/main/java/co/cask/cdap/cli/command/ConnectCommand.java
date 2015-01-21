@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2012-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,7 +59,11 @@ public class ConnectCommand implements Command {
     }
 
     CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
-    cliConfig.tryConnect(connectionInfo, output, true);
+    try {
+      cliConfig.tryConnect(connectionInfo, output, true);
+    } catch (Exception e) {
+      output.println("Failed to connect to " + uriString + ": " + e.getMessage());
+    }
   }
 
   @Override
