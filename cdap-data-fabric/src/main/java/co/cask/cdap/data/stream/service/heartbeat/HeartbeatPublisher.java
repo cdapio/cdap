@@ -14,21 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.data.stream.service.heartbeat;
 
-import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
 /**
- * This interface manages the sizes of data written by one stream writer run in a {@link StreamHandler}.
- * For each stream, It sends {@link StreamWriterHeartbeat}s at regular intervals to notify listeners
- * of the updated size of the stream.
+ * Publish {@link StreamWriterHeartbeat}s.
  */
-public interface StreamWriterSizeManager extends Service {
+public interface HeartbeatPublisher extends Service {
 
   /**
-   * Get the initial sizes of data written by this Stream writer, and send an initial heartbeat with the computed size,
-   * for each stream. This method also schedules publishing heartbeats at a regular pace.
+   * Publish one heartbeat.
+   *
+   * @param streamName Stream name on behalf of which to publish a heartbeat
+   * @param heartbeat heartbeat to publish
+   * @return a {@link ListenableFuture} describing the state of publishing. The {@link ListenableFuture#get} method
+   * will return the published heartbeat.
    */
-  void initialize() throws Exception;
+  ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(String streamName, StreamWriterHeartbeat heartbeat);
 }
