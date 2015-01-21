@@ -50,6 +50,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
@@ -94,6 +95,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -492,8 +494,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       }
 
       ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
+      Set<String> fieldNames = Sets.newHashSet();
       for (FieldSchema column : tableFields) {
         schemaBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(), column.getComment()));
+        fieldNames.add(column.getName());
       }
 
       ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
@@ -501,8 +505,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         TableInfo.ColumnInfo columnInfo = new TableInfo.ColumnInfo(column.getName(), column.getType(),
                                                                    column.getComment());
         partitionKeysBuilder.add(columnInfo);
-        // add partition keys to the schema as well, since they show up when you do a 'describe <table>' command.
-        schemaBuilder.add(columnInfo);
+        // add partition keys to the schema if they are not already there,
+        // since they show up when you do a 'describe <table>' command.
+        if (!fieldNames.contains(column.getName())) {
+          schemaBuilder.add(columnInfo);
+        }
       }
 
       // its a cdap generated table if it uses our storage handler, or if a property is set on the table.
