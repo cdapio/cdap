@@ -66,6 +66,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerAdapters();
   }
+
   @Test
   public void testAdapterLifeCycle() throws Exception {
     setupAdapters();

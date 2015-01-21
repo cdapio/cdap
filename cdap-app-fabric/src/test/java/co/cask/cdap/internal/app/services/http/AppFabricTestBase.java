@@ -109,8 +109,7 @@ public abstract class AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    TEMP_FOLDER.newFolder(adapterFolder);
-    File adapterDir = new File(String.format("%s/%s", TEMP_FOLDER.getRoot(), adapterFolder));
+    File adapterDir = TEMP_FOLDER.newFolder(adapterFolder);
 
     CConfiguration conf = CConfiguration.create();
 
