@@ -46,17 +46,14 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final DistributedStreamService streamService;
   private Cancellable cancellable;
   private Discoverable discoverable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
-                           @Nullable MetricsCollectionService metricsCollectionService,
-                           DistributedStreamService streamService) {
+                           @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.streamService = streamService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -90,8 +87,6 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
         return httpService.getBindAddress();
       }
     };
-    streamService.setDiscoverable(discoverable);
-    streamService.startAndWait();
     cancellable = discoveryService.register(discoverable);
 }
 

@@ -31,6 +31,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -116,5 +117,6 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
+    services.add(injector.getInstance(StreamService.class));
   }
 }

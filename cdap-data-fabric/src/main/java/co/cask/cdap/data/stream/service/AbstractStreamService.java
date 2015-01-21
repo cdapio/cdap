@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.Service;
 /**
  * Stream service meant to run in an HTTP service.
  */
-public abstract class AbstractStreamService extends AbstractIdleService implements Service {
+public abstract class AbstractStreamService extends AbstractIdleService implements StreamService {
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;

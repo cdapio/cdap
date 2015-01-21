@@ -32,7 +32,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.LocalStreamService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -82,7 +82,7 @@ public class StandaloneMain {
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
   private final ServiceStore serviceStore;
-  private final LocalStreamService streamService;
+  private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
@@ -110,7 +110,7 @@ public class StandaloneMain {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
-    streamService = injector.getInstance(LocalStreamService.class);
+    streamService = injector.getInstance(StreamService.class);
 
     this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 

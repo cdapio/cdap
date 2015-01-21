@@ -28,7 +28,6 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -64,10 +63,10 @@ public class DistributedStreamService extends AbstractStreamService {
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final Set<StreamLeaderListener> leaderListeners;
+  private Supplier<Discoverable> discoverableSupplier;
 
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
-  private Discoverable serviceDiscoverable;
   private Cancellable coordinationSubscription;
 
   @Inject
@@ -82,15 +81,15 @@ public class DistributedStreamService extends AbstractStreamService {
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
+    this.discoverableSupplier = discoverableSupplier;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
   }
 
   @Override
   protected void initialize() throws Exception {
-    Preconditions.checkNotNull(serviceDiscoverable, "Stream Handler discoverable has not been set");
     resourceCoordinatorClient.startAndWait();
-    coordinationSubscription = resourceCoordinatorClient.subscribe(serviceDiscoverable.getName(),
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
                                                                    new StreamsLeaderHandler());
     performLeaderElection();
   }
@@ -108,16 +107,6 @@ public class DistributedStreamService extends AbstractStreamService {
     if (resourceCoordinatorClient != null) {
       resourceCoordinatorClient.stopAndWait();
     }
-  }
-
-  /**
-   * Set the discoverable in which this {@link DistributedStreamService} is running.
-   * This method has to be called before this service is started.
-   *
-   * @param discoverable discoverable in which this {@link DistributedStreamService} is running
-   */
-  public void setDiscoverable(Discoverable discoverable) {
-    serviceDiscoverable = discoverable;
   }
 
   /**
@@ -220,7 +209,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private final class StreamsLeaderHandler extends ResourceHandler {
 
     protected StreamsLeaderHandler() {
-      super(serviceDiscoverable);
+      super(discoverableSupplier.get());
     }
 
     @Override
@@ -239,7 +228,8 @@ public class DistributedStreamService extends AbstractStreamService {
     @Override
     public void finished(Throwable failureCause) {
       if (failureCause != null) {
-        LOG.error("Finished with failure for Stream handler instance {}", serviceDiscoverable.getName(), failureCause);
+        LOG.error("Finished with failure for Stream handler instance {}", discoverableSupplier.get().getName(),
+                  failureCause);
       }
     }
   }
