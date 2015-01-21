@@ -32,7 +32,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.map.WrappedMapper;
-import org.apache.hadoop.yarn.util.ApplicationClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,8 +19,6 @@ package co.cask.cdap.data.format;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
-import java.nio.ByteBuffer;
-
 /**
  * Format for a record contained in a {@link StreamEvent}.
  *

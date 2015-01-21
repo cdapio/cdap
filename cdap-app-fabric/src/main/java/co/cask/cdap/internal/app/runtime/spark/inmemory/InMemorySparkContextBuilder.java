@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.spark.inmemory;
 
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;

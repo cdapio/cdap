@@ -18,9 +18,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
-import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 

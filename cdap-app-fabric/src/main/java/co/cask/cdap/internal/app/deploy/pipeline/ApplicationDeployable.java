@@ -17,15 +17,9 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**

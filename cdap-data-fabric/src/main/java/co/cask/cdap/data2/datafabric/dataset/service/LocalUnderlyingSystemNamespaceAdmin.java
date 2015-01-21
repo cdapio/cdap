@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Manages namespaces on local underlying systems.

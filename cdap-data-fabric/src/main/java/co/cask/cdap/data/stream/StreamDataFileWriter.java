@@ -32,7 +32,6 @@ import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.fs.Syncable;
 
-import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
