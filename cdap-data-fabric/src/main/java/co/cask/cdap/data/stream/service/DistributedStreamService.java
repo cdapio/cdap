@@ -60,7 +60,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Stream service running in a {@link TwillRunnable}.
+ * Stream service running in a {@link TwillRunnable}. It is responsible for sending {@link StreamWriterHeartbeat}s
+ * at a fixed rate, describing the sizes of the stream files on which this service writes data, for each stream.
  */
 public class DistributedStreamService extends AbstractStreamService {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamService.class);
@@ -120,9 +121,9 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void initialize() throws Exception {
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
-    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
-                                                                   new StreamsLeaderHandler());
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), new StreamsLeaderHandler());
     performLeaderElection();
+    initStreamsBaseSizes();
   }
 
   @Override
@@ -153,7 +154,7 @@ public class DistributedStreamService extends AbstractStreamService {
       Long baseSize = streamsBaseSizes.get(streamSpec.getName());
       if (baseSize == null) {
         // First time that this stream is called in this method
-        baseSize = streamWriterSizeFetcher.fetchSize(streamAdmin.getConfig(streamSpec.getName()));
+        baseSize = (long) 0;
         streamsBaseSizes.put(streamSpec.getName(), baseSize);
       }
 
@@ -161,13 +162,13 @@ public class DistributedStreamService extends AbstractStreamService {
       StreamWriterHeartbeat.StreamSizeType type = isInit ?
         StreamWriterHeartbeat.StreamSizeType.INIT :
         StreamWriterHeartbeat.StreamSizeType.REGULAR;
-      isInit = false;
       builder.addStreamSize(streamSpec.getName(), absoluteSize, type);
     }
     builder.setWriterID(writerID);
     builder.setTimestamp(System.currentTimeMillis());
 
     heartbeatPublisher.sendHeartbeat(builder.build());
+    isInit = false;
   }
 
   @Override
@@ -206,6 +207,16 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       }
     };
+  }
+
+  /**
+   * For all existing streams, we initialize their base sizes.
+   */
+  private void initStreamsBaseSizes() throws Exception {
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+      long baseSize = streamWriterSizeFetcher.fetchSize(streamAdmin.getConfig(streamSpec.getName()));
+      streamsBaseSizes.put(streamSpec.getName(), baseSize);
+    }
   }
 
   /**

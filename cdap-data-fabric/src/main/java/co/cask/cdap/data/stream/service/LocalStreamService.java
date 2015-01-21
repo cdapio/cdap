@@ -78,7 +78,7 @@ public class LocalStreamService extends AbstractStreamService {
       // TODO check that this size is higher than a threshold, and send a notification is so - or if isInit is true too
       // TODO will come in a later PR
 
-      isInit = false;
     }
+    isInit = false;
   }
 }

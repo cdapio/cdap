@@ -127,5 +127,13 @@ public class StreamWriterHeartbeat {
     public StreamSizeType getStreamSizeType() {
       return streamSizeType;
     }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(StreamWriterHeartbeat.class)
+        .add("absoluteDataSize", absoluteDataSize)
+        .add("streamSizeType", streamSizeType)
+        .toString();
+    }
   }
 }
