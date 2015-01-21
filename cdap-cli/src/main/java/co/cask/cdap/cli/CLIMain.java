@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2012-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -103,8 +103,8 @@ public class CLIMain {
 
     this.cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onConnectionChanged(URI newURI) {
-        cli.getReader().setPrompt("cdap (" + newURI + ")> ");
+      public void onConnectionChanged(String newNamespace, URI newURI) {
+        cli.getReader().setPrompt("cdap (" + newURI + "//" + newNamespace + ")> ");
       }
     });
   }
