@@ -29,7 +29,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.internal.app.deploy.pipeline.AdapterConflictCheckStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
@@ -39,7 +38,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.VerificationStage;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;
@@ -69,7 +67,6 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final DatasetFramework datasetFramework;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
-  private final AdapterService adapterService;
 
   private final ProgramTerminator programTerminator;
 
@@ -80,8 +77,8 @@ public class LocalManager<I, O> implements Manager<I, O> {
                       LocationFactory locationFactory, StoreFactory storeFactory,
                       StreamConsumerFactory streamConsumerFactory,
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                      ExploreFacade exploreFacade, AdapterService adapterService,
+                      DatasetFramework datasetFramework,
+                      StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                       @Assisted ProgramTerminator programTerminator) {
 
     this.configuration = configuration;
@@ -98,21 +95,12 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-    this.adapterService = adapterService;
   }
 
   @Override
   public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception {
-    return deploy(id, appId, input, false);
-  }
-
-  public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input, boolean isAdapterApplication)
-    throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
-    if (!isAdapterApplication) {
-      pipeline.addLast(new AdapterConflictCheckStage(adapterService));
-    }
     pipeline.addLast(new VerificationStage(datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));

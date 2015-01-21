@@ -38,17 +38,4 @@ public interface Manager<I, O> {
    * @return A future of Application with Programs.
    */
   ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception;
-
-  /**
-   * Executes a pipeline for deploying an input.
-   *
-   * @param id namespace id to which the archive is deployed.
-   * @param appId application id to be used to override app name provided by app spec. If null, name of app spec is used
-   * @param input the input to the deployment pipeline
-   * @param isAdapterApplication whether this application is an adapter application or not
-   * @return A future of Application with Programs.
-   */
-  ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input, boolean isAdapterApplication)
-    throws Exception;
-
 }
