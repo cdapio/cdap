@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,12 +78,40 @@ public class ClientConfig {
 
   /**
    * Resolves a path against the target CDAP server
+   *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
   public URL resolveURL(String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
+  }
+
+  /**
+   * Resolves a path against the target CDAP server with the provided apiVersion and namespace
+   *
+   * @param apiVersion the api version to use
+   * @param namespace the namespace to use
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:10000/v2/apps".
+   * @return URL of the resolved path
+   * @throws MalformedURLException
+   */
+  public URL resolveURL(String apiVersion, String namespace, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
+  }
+
+  /**
+   * Resolves a path against the target CDAP server with the provided apiVersion
+   *
+   * @param apiVersion the api version to use
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:10000/v2/apps".
+   * @return URL of the resolved path
+   * @throws MalformedURLException
+   */
+  public URL resolveURL(String apiVersion, String path) throws MalformedURLException {
     return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
   }
 

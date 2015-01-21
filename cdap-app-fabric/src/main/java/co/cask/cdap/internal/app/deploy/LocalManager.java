@@ -64,12 +64,12 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
+  private final DatasetFramework datasetFramework;
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
 
   private final ProgramTerminator programTerminator;
 
-  private final DatasetFramework datasetFramework;
 
 
   @Inject

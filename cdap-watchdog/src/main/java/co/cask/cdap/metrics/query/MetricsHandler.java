@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -83,11 +84,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    if (context == null) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required context param is missing");
-      return;
-    }
-
     if ("childContext".equals(target)) {
       searchChildContextAndRespond(responder, context);
     } else if ("metric".equals(target)) {
@@ -130,27 +126,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Set<String> searchChildContext(String contextPrefix) throws OperationException {
+  private Collection<String> searchChildContext(String contextPrefix) throws OperationException {
     SortedSet<String> nextLevelContexts = Sets.newTreeSet();
     TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
       allowEmptyMetric().build(-1, -1);
 
     List<String> results = table.getNextLevelContexts(query);
-    for (String nextContext : results) {
-      nextContext = (contextPrefix == null) ? nextContext : nextContext.substring(contextPrefix.length() + 1);
-      nextLevelContexts.add(getNextPart(nextContext));
+    for (String context : results) {
+      int nextPartEnd = context.indexOf(".", contextPrefix == null ? 0 : contextPrefix.length() + 1);
+      nextLevelContexts.add(nextPartEnd == -1 ? context : context.substring(0, nextPartEnd));
     }
     return nextLevelContexts;
-  }
-
-  private String getNextPart(String context) {
-    int index = context.indexOf(".");
-    if (index == -1) {
-      return context;
-    } else {
-      return context.substring(0, context.indexOf("."));
-    }
   }
 
   private Set<String> searchMetric(String contextPrefix) throws OperationException {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
                       MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
-                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class })
+                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
+                      AdapterClientTestRun.class })
 public class ClientTestsSuite extends StandaloneTestBase {
 
 }
