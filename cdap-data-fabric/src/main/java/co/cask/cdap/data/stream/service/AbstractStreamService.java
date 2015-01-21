@@ -21,13 +21,27 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 
 /**
- *
+ * Stream service meant to run in an HTTP service.
  */
 public abstract class AbstractStreamService extends AbstractIdleService implements Service {
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
   private final StreamWriterSizeManager sizeManager;
+
+  /**
+   * Children classes should implement this method to add logic to the start of this {@link Service}.
+   *
+   * @throws Exception in case of any error while initializing
+   */
+  protected abstract void initialize() throws Exception;
+
+  /**
+   * Children classes should implement this method to add logic to the shutdown of this {@link Service}.
+   *
+   * @throws Exception in case of any error while shutting down
+   */
+  protected abstract void doShutdown() throws Exception;
 
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
@@ -43,10 +57,12 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
     janitorService.startAndWait();
     sizeManager.startAndWait();
     sizeManager.initialize();
+    initialize();
   }
 
   @Override
   protected final void shutDown() throws Exception {
+    doShutdown();
     sizeManager.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();

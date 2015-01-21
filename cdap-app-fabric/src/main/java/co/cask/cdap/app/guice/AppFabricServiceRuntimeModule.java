@@ -25,6 +25,8 @@ import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
@@ -66,6 +68,7 @@ import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -91,6 +94,7 @@ import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * AppFabric Service Runtime Module.
@@ -99,7 +103,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -125,6 +129,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
+
+                               Multibinder<String> servicesNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.services.names"));
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
                              }
                            });
   }
@@ -132,7 +142,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -158,13 +168,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
+
+                               Multibinder<String> servicesNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.services.names"));
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
                              }
                            });
   }
 
   @Override
   public Module getDistributedModules() {
-
 
     return Modules.combine(new AppFabricServiceModule(),
                            new ConfigStoreModule().getDistributedModule(),
@@ -192,6 +207,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
+
+                               Multibinder<String> servicesNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.services.names"));
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                              }
                            });
   }
@@ -200,6 +220,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
    * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
   private static final class AppFabricServiceModule extends AbstractModule {
+
+    private final List<Class<? extends HttpHandler>> handlerClasses;
+
+    private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
+      this.handlerClasses = ImmutableList.copyOf(handlerClasses);
+    }
 
     @Override
     protected void configure() {
@@ -228,6 +254,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
+
+      for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
+        handlerBinder.addBinding().to(handlerClass);
+      }
     }
 
     @Provides

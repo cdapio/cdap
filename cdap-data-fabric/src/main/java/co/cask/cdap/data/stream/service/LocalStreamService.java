@@ -17,18 +17,26 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 
 /**
- *
+ * Stream service running in local mode.
  */
 public class LocalStreamService extends AbstractStreamService {
 
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                               StreamFileJanitorService janitorService, StreamWriterSizeManager sizeManager) {
+                            StreamFileJanitorService janitorService, StreamWriterSizeManager sizeManager) {
     super(streamCoordinatorClient, janitorService, sizeManager);
+  }
+
+  @Override
+  protected void initialize() throws Exception {
+    // No-op
+  }
+
+  @Override
+  protected void doShutdown() throws Exception {
+    // No-op
   }
 }
