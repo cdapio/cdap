@@ -27,7 +27,7 @@ public class LocalStreamService extends AbstractStreamService {
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
                             StreamFileJanitorService janitorService) {
-    super(streamCoordinatorClient, janitorService);
+    super(streamCoordinatorClient, janitorService, streamMetaStore, streamWriterSizeCollector, streamWriterSizeFetcher);
   }
 
   @Override

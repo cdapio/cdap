@@ -76,7 +76,7 @@ public class DistributedStreamService extends AbstractStreamService {
                                   DiscoveryServiceClient discoveryServiceClient,
                                   StreamMetaStore streamMetaStore,
                                   Supplier<Discoverable> discoverableSupplier) {
-    super(streamCoordinatorClient, janitorService);
+    super(streamCoordinatorClient, janitorService, streamMetaStore, streamWriterSizeCollector, streamWriterSizeFetcher);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;

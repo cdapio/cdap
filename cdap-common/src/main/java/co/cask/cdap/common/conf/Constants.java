@@ -271,6 +271,9 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
     /* End constants used by stream */
+
+    // Delay in seconds between two heartbeats in a stream service
+    public static final int HEARTBEAT_DELAY = 2;
   }
 
   /**
