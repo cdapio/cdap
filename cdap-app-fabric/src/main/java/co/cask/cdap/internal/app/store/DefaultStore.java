@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -50,6 +49,7 @@ import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -101,7 +101,7 @@ public class DefaultStore implements Store {
 
   @Inject
   public DefaultStore(CConfiguration conf,
-                      LocationFactory locationFactory,
+                     LocationFactory locationFactory,
                       final TransactionSystemClient txClient,
                       DatasetFramework framework) {
 

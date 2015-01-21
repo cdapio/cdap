@@ -72,7 +72,8 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("create adapter <%s> type <%s> [props <%s>] src <%s> [src-props <%s>] sink <%s> [sink-props <%s>]",
+    return String.format("create adapter <%s> type <%s> [props <%s>]" +
+                         " src <%s> [src-props <%s>] sink <%s> [sink-props <%s>]",
                          ArgumentName.ADAPTER, ArgumentName.ADAPTER_TYPE,
                          ArgumentName.ADAPTER_PROPS,
                          ArgumentName.ADAPTER_SOURCE, ArgumentName.ADAPTER_SOURCE_PROPS,
