@@ -32,6 +32,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -40,6 +42,7 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -84,7 +87,13 @@ public class InMemoryExploreServiceTest {
         new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
-        new StreamAdminModules().getInMemoryModules());
+        new StreamAdminModules().getInMemoryModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          }
+        });
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 

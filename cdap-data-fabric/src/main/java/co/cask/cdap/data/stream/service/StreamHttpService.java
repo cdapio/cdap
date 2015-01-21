@@ -23,6 +23,9 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -50,21 +53,21 @@ public final class StreamHttpService extends AbstractIdleService {
   private final StreamCoordinator streamCoordinator;
   private final StreamFileJanitorService janitorService;
   private final StreamWriterSizeManager sizeManager;
+  private final NotificationFeedManager feedManager;
   private Cancellable cancellable;
 
   @Inject
-  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
-                           StreamCoordinator streamCoordinator,
-                           StreamCoordinatorClient streamCoordinatorClient,
-                           StreamFileJanitorService janitorService,
+  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService, StreamCoordinator streamCoordinator,
+                           StreamCoordinatorClient streamCoordinatorClient, StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService,
-                           StreamWriterSizeManager sizeManager) {
+                           StreamWriterSizeManager sizeManager, NotificationFeedManager feedManager) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
     this.janitorService = janitorService;
     this.sizeManager = sizeManager;
     this.streamCoordinatorClient = streamCoordinatorClient;
+    this.feedManager = feedManager;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
@@ -82,6 +85,8 @@ public final class StreamHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    createHeartbeatsFeed();
+
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.STREAMS));
@@ -138,5 +143,24 @@ public final class StreamHttpService extends AbstractIdleService {
    */
   public InetSocketAddress getBindAddress() {
     return httpService.getBindAddress();
+  }
+
+  /**
+   * Create Notification feed for stream's heartbeats, if it does not already exist.
+   */
+  private void createHeartbeatsFeed() throws NotificationFeedException {
+    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
+    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
+      .setNamespace("default")
+      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
+      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
+      .setDescription("Streams heartbeats feed.")
+      .build();
+
+    try {
+      feedManager.getFeed(streamHeartbeatsFeed);
+    } catch (NotificationFeedException e) {
+      feedManager.createFeed(streamHeartbeatsFeed);
+    }
   }
 }

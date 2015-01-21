@@ -43,6 +43,9 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -55,6 +58,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -69,7 +73,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -290,7 +293,14 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
-      new StreamAdminModules().getInMemoryModules()
+      new StreamAdminModules().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+        }
+      }
     );
   }
 
@@ -321,7 +331,14 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new StreamAdminModules().getStandaloneModules(),
+      new NotificationServiceRuntimeModule().getStandaloneModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+        }
+      }
     );
   }
 }
