@@ -21,6 +21,8 @@ package co.cask.cdap.data.stream.service;
  */
 public interface StreamWriterSizeCollector {
 
+  // TODO have one implementation of this
+
   /**
    * Get the total amount of bytes collected for the stream {@code streamName} so far.
    *

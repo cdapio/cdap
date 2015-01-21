@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
@@ -58,7 +59,7 @@ public class StreamFileWriterSizeFetcherTest {
     streamAdmin.create(streamName);
     StreamConfig config = streamAdmin.getConfig(streamName);
 
-    StreamWriterSizeFetcher fetcher = new StreamFileWriterSizeFetcher(0);
+    StreamWriterSizeFetcher fetcher = new StreamFileWriterSizeFetcher(CConfiguration.create());
     try {
       fetcher.fetchSize(config);
       Assert.fail("No stream file created yet");
@@ -83,7 +84,7 @@ public class StreamFileWriterSizeFetcherTest {
 
     writer.close();
 
-    fetcher = new StreamFileWriterSizeFetcher(0);
+    fetcher = new StreamFileWriterSizeFetcher(CConfiguration.create());
     long size = fetcher.fetchSize(config);
     Assert.assertTrue(size > 0);
   }

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -35,8 +35,8 @@ public class StreamFileWriterSizeFetcher implements StreamWriterSizeFetcher {
   private final int instanceId;
 
   @Inject
-  public StreamFileWriterSizeFetcher(@Named(Constants.Stream.CONTAINER_INSTANCE_ID) int instanceId) {
-    this.instanceId = instanceId;
+  public StreamFileWriterSizeFetcher(CConfiguration cConf) {
+    this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
   }
 
   @Override

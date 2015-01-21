@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
@@ -27,17 +28,22 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
+import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
+import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
@@ -46,7 +52,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -60,33 +69,56 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private final ZKClient zkClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final StreamAdmin streamAdmin;
+  private final StreamWriterSizeCollector streamWriterSizeCollector;
+  private final StreamWriterSizeFetcher streamWriterSizeFetcher;
+  private final HeartbeatPublisher heartbeatPublisher;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final Set<StreamLeaderListener> leaderListeners;
+  private final int writerID;
+  private final Map<String, Long> streamsBaseSizes;
+
+  private boolean isInit;
   private Supplier<Discoverable> discoverableSupplier;
 
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
   private Cancellable coordinationSubscription;
 
+  private volatile ScheduledExecutorService executor;
+
   @Inject
-  public DistributedStreamService(StreamCoordinatorClient streamCoordinatorClient,
+  public DistributedStreamService(CConfiguration cConf,
+                                  StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
                                   ZKClient zkClient,
+                                  StreamAdmin streamAdmin,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   StreamMetaStore streamMetaStore,
-                                  Supplier<Discoverable> discoverableSupplier) {
-    super(streamCoordinatorClient, janitorService, streamMetaStore, streamWriterSizeCollector, streamWriterSizeFetcher);
+                                  Supplier<Discoverable> discoverableSupplier,
+                                  StreamWriterSizeCollector streamWriterSizeCollector,
+                                  StreamWriterSizeFetcher streamWriterSizeFetcher,
+                                  HeartbeatPublisher heartbeatPublisher) {
+    super(streamCoordinatorClient, janitorService);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.discoverableSupplier = discoverableSupplier;
+    this.streamWriterSizeCollector = streamWriterSizeCollector;
+    this.streamWriterSizeFetcher = streamWriterSizeFetcher;
+    this.heartbeatPublisher = heartbeatPublisher;
+    this.writerID = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
+    this.streamsBaseSizes = Maps.newHashMap();
+    this.isInit = true;
   }
 
   @Override
   protected void initialize() throws Exception {
+    heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
     coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
                                                                    new StreamsLeaderHandler());
@@ -95,6 +127,11 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void doShutdown() throws Exception {
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+    heartbeatPublisher.stopAndWait();
+
     if (leaderElection != null) {
       Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
     }
@@ -106,6 +143,37 @@ public class DistributedStreamService extends AbstractStreamService {
     if (resourceCoordinatorClient != null) {
       resourceCoordinatorClient.stopAndWait();
     }
+  }
+
+  @Override
+  protected void runOneIteration() throws Exception {
+    LOG.trace("Performing heartbeat publishing in Stream service instance {}", writerID);
+    StreamWriterHeartbeat.Builder builder = new StreamWriterHeartbeat.Builder();
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+      Long baseSize = streamsBaseSizes.get(streamSpec.getName());
+      if (baseSize == null) {
+        // First time that this stream is called in this method
+        baseSize = streamWriterSizeFetcher.fetchSize(streamAdmin.getConfig(streamSpec.getName()));
+        streamsBaseSizes.put(streamSpec.getName(), baseSize);
+      }
+
+      long absoluteSize = baseSize + streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
+      StreamWriterHeartbeat.StreamSizeType type = isInit ?
+        StreamWriterHeartbeat.StreamSizeType.INIT :
+        StreamWriterHeartbeat.StreamSizeType.REGULAR;
+      isInit = false;
+      builder.addStreamSize(streamSpec.getName(), absoluteSize, type);
+    }
+    builder.setWriterID(writerID);
+    builder.setTimestamp(System.currentTimeMillis());
+
+    heartbeatPublisher.sendHeartbeat(builder.build());
+  }
+
+  @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
+    return executor;
   }
 
   /**
@@ -188,17 +256,17 @@ public class DistributedStreamService extends AbstractStreamService {
   }
 
   /**
-   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
+   * Call all the listeners that are interested in knowing that this coordinator is the leader of a set of Streams.
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
   private void invokeLeaderListeners(Set<String> streamNames) {
-    Set<StreamLeaderListener> callbacks;
+    Set<StreamLeaderListener> listeners;
     synchronized (this) {
-      callbacks = ImmutableSet.copyOf(leaderListeners);
+      listeners = ImmutableSet.copyOf(leaderListeners);
     }
-    for (StreamLeaderListener callback : callbacks) {
-      callback.leaderOf(streamNames);
+    for (StreamLeaderListener listener : listeners) {
+      listener.leaderOf(streamNames);
     }
   }
 
