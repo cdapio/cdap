@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.apps')
-  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myFileUploader, $alert, $state) {
+  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myAppUploader, $alert, $state) {
     var data = new MyDataSource($scope);
 
     data.request({
@@ -9,33 +9,7 @@ angular.module(PKG.name + '.feature.apps')
       $scope.apps = res;
     });
 
-    $scope.onFileSelected = function(files) {
-      for (var i = 0; i < files.length; i++) {
-        myFileUploader.upload({
-          path: '/namespaces/' + $state.params.namespace + '/apps',
-          file: files[i]
-        })
-          .then(success,error);
-      }
-
-      function success() {
-        $alert({
-          type: 'success',
-          title: 'Upload success!',
-          content: 'The application has been uploaded successfully!'
-        });
-        $state.reload();
-      }
-
-      // Independent xhr request. Failure case will not be handled by $rootScope.
-      function error(err) {
-        $alert({
-          type: 'danger',
-          title: 'Upload failed!',
-          content: err || ''
-        });
-      }
-    };
+    $scope.onFileSelected = myAppUploader.upload;
 
 
     $scope.deleteApp = function(app) {

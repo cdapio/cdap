@@ -27,7 +27,7 @@ function ($scope, MyDataSource, $state) {
     if (angular.isArray($scope.apps) && $scope.apps.length) {
       $scope.dataAppsTemplate = p + 'data-apps-section.html';
     } else {
-      $scope.dataAppsTemplate = p + 'empty.html';
+      $scope.dataAppsTemplate = p + 'data-apps-empty-section.html';
     }
     console.log('Apps: ', $scope.apps);
   });
