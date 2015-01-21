@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('myCdapUrl', function myCdapUrl($window, $stateParams, $log, MY_CONFIG) {
+  .factory('myCdapUrl', function myCdapUrl($stateParams, $log, MY_CONFIG) {
 
     function constructUrl(resource) {
 

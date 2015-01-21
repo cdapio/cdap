@@ -31,33 +31,28 @@ angular.module(PKG.name + '.commons')
       link: function (scope, elem, attr, ngModel) {
 
         function fetchAhead () {
-          var val = scope.metric.context || $stateParams.namespace;
+          var context = scope.metric.context || $stateParams.namespace;
 
-          if(!val) { // should never happen, except on directive playground
-            val = 'default';
-            $log.warn('metric-picker using default namespace!');
+          if(!context) { // should never happen, except on directive playground
+            context = 'default';
+            $log.warn('metric-picker using default namespace as context!');
           }
 
           scope.available.contexts = dSrc.request(
             {
               method: 'POST',
               _cdapPath: '/metrics/search?target=childContext' +
-                '&context=' + encodeURIComponent(val)
+                '&context=' + encodeURIComponent(context)
             }
           );
 
-          if(val) {
-            scope.available.names = dSrc.request(
-              {
-                method: 'POST',
-                _cdapPath: '/metrics/search?target=metric' +
-                  '&context=' + encodeURIComponent(val)
-              }
-            );
-          }
-          else {
-            scope.available.names = [];
-          }
+          scope.available.names = dSrc.request(
+            {
+              method: 'POST',
+              _cdapPath: '/metrics/search?target=metric' +
+                '&context=' + encodeURIComponent(context)
+            }
+          );
 
         }
 
