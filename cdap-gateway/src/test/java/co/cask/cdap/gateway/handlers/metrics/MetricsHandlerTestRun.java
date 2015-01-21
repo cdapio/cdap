@@ -90,26 +90,34 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testSearchContext() throws Exception {
+    // empty context
+    verifySearchResultContains("/v3/metrics/search?target=childContext",
+                               ImmutableList.<String>of("myspace", "yourspace"));
+
+    // WordCount is in myspace, WCount in yourspace
+    verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace",
+                       ImmutableList.<String>of("yourspace.WCount1"));
     // WordCount is in myspace, WCount in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=myspace",
-                       ImmutableList.<String>of("WordCount1"));
+                       ImmutableList.<String>of("myspace.WordCount1"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace",
-                       ImmutableList.<String>of("WCount1"));
+                       ImmutableList.<String>of("yourspace.WCount1"));
 
     // WordCount should be found in myspace, not in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=myspace.WordCount1.f",
-                       ImmutableList.<String>of("WordCounter"));
+                       ImmutableList.<String>of("myspace.WordCount1.f.WordCounter"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WordCount1.f",
                        ImmutableList.<String>of());
 
     // WCount should be found in yourspace, not in myspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1",
-                       ImmutableList.<String>of("b", "f", "p"));
+                       ImmutableList.<String>of("yourspace.WCount1.b", "yourspace.WCount1.f", "yourspace.WCount1.p"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=myspace.WCount1", ImmutableList.<String>of());
 
     // verify other metrics for WCount app
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount",
-                       ImmutableList.<String>of("m", "r"));
+                       ImmutableList.<String>of("yourspace.WCount1.b.ClassicWordCount.m",
+                                                "yourspace.WCount1.b.ClassicWordCount.r"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m",
                        ImmutableList.<String>of());
   }
@@ -199,6 +207,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     for (int i = 0; i < expectedValues.size(); i++) {
       Assert.assertEquals(expectedValues.get(i), reply.get(i));
     }
+  }
+
+  private void verifySearchResultContains(String url, List<String> expectedValues) throws Exception {
+    HttpResponse response = doPost(url, null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertTrue(reply.containsAll(expectedValues));
   }
 
   // helpers to easier json results parsing & verification
