@@ -63,6 +63,7 @@ import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -325,6 +326,25 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  @DELETE
+  @Path("/datasets/{dataset}/partitions/{time}")
+  public void dropPartition(HttpRequest request, HttpResponder responder,
+                           @PathParam("dataset") final String datasetName,
+                           @PathParam("time") final long partitionTime) {
+    try {
+      String dropPartitionStatement = generateDropPartitionStatement(datasetName, partitionTime);
+      LOG.debug("Drop partition for time {} dataset {} - {}", partitionTime, datasetName, dropPartitionStatement);
+
+      QueryHandle handle = exploreService.execute(dropPartitionStatement);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", handle.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
   private static String getStreamTableName(String streamName) {
     return getHiveTableName("cdap_stream_" + streamName);
   }
@@ -437,6 +457,18 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     int minute = calendar.get(Calendar.MINUTE);
     return String.format("ALTER TABLE %s ADD PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d) LOCATION '%s'",
                          getHiveTableName(name), year, month, day, hour, minute, path);
+  }
+
+  public static String generateDropPartitionStatement(String name, long time) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(time);
+    int year = calendar.get(Calendar.YEAR);
+    int month = calendar.get(Calendar.MONTH);
+    int day = calendar.get(Calendar.DAY_OF_MONTH);
+    int hour = calendar.get(Calendar.HOUR_OF_DAY);
+    int minute = calendar.get(Calendar.MINUTE);
+    return String.format("ALTER TABLE %s DROP PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d)",
+                         getHiveTableName(name), year, month, day, hour, minute);
   }
 
   /**
