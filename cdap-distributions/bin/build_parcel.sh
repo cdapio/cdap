@@ -33,12 +33,16 @@ if [ -n "${PARCEL_DELIVERY_OPTIONS_FILE}" ]; then
   source ${PARCEL_DELIVERY_OPTIONS_FILE}
 fi
 
+function die {
+  echo "ERROR: ${1}" 1>&2
+  exit 1
+}
+
 # Ensure environment is as expected, with maven-produced staging directories
 function validate_env {
   # First ensure we are in clean state and no partial parcel build exists
   if [ -d ${STAGE_DIR} ]; then
-    echo "Staging directory ${STAGE_DIR} already exists."
-    exit 1
+    die "Staging directory ${STAGE_DIR} already exists."
   fi
 
   # Check that all components have been built by maven with the same version
@@ -58,8 +62,7 @@ function set_and_check_version {
     local __component_version=`cat ${__version_file}`
     # Check that the VERSION file had some content
     if [ -z "${__component_version}" ]; then
-      echo "Component ${__component} has an undefined version, expected in ${__version_file}"
-      exit 1
+      die "Component ${__component} has an undefined version, expected in ${__version_file}"
     fi
     # If this is the first iteration, set the expected ${VERSION}
     if [ -z "$VERSION" ]; then
@@ -67,12 +70,10 @@ function set_and_check_version {
     fi 
     # Ensure that each component has the same version
     if [ "${VERSION}" != "${__component_version}" ] ; then
-      echo "Mismatched versions found. Expecting ${VERSION}, found component ${__component} version: ${__component_version}"
-      exit 1
+      die "Mismatched versions found. Expecting ${VERSION}, found component ${__component} version: ${__component_version}"
     fi
   else
-    echo "No version file found for component ${__component}, expecting ${__version_file}"
-    exit 1
+    die "No version file found for component ${__component}, expecting ${__version_file}"
   fi
 }
 
@@ -109,8 +110,7 @@ function generate_parcel {
   tar czf ${TARGET_DIR}/${PARCEL_NAME} -C ${STAGE_DIR} ${PARCEL_ROOT_DIR}/ --owner=root --group=root
   local __ret=$?
   if [ $__ret -ne 0 ]; then
-    echo "Tar generation unsuccessful"
-    exit 1
+    die "Tar generation unsuccessful"
   else
     echo "Generated ${TARGET_DIR}/${PARCEL_NAME}"
   fi
@@ -119,14 +119,13 @@ function generate_parcel {
 # Scp the parcel somewhere, optional
 function scp_parcel {
   if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_PATH}" ]; then
-    echo "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_IDENTITY"
+    die "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_IDENTITY"
   fi
   echo "Copying ${TARGET_DIR}/${PARCEL_NAME} to remote host ${PARCEL_SCP_HOST}"
   scp ${PARCEL_SCP_IDENTITY} ${TARGET_DIR}/${PARCEL_NAME} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST}:${PARCEL_SCP_PATH}
   local __ret=$?
   if [ $__ret -ne 0 ]; then
-    echo "Scp unsuccessful"
-    exit 1
+    die "Scp unsuccessful"
   fi 
 }
 
