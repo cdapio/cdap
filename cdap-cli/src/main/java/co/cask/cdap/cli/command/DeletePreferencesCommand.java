@@ -21,7 +21,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -34,11 +33,13 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
 
   private final PreferencesClient client;
   private final ElementType type;
+  private final CLIConfig cliConfig;
 
   protected DeletePreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
+    this.cliConfig = cliConfig;
   }
 
   @Override
@@ -67,70 +68,63 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         break;
 
       case APP:
-        // todo : change this to 2 when namespace id is part of the argument.
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        client.deleteApplicationPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0]);
+        client.deleteApplicationPreferences(cliConfig.getCurrentNamespace(), programIdParts[0]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
       case FLOW:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                         programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
       case PROCEDURE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                         programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
       case MAPREDUCE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                         programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
       case WORKFLOW:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                         programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
       case SERVICE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                         programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
       case SPARK:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                         programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;

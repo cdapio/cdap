@@ -21,7 +21,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.common.conf.Constants;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -32,11 +31,13 @@ import java.util.Map;
 public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand {
   private final PreferencesClient client;
   private final ElementType type;
+  private final CLIConfig cliConfig;
 
   protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
+    this.cliConfig = cliConfig;
   }
 
   protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
@@ -61,70 +62,63 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         break;
 
       case APP:
-        // todo : change this to 2 when namespace id is part of the argument.
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        client.setApplicationPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], args);
+        client.setApplicationPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], args);
         printSuccessMessage(printStream, type);
         break;
 
       case FLOW:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                      programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
       case PROCEDURE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                      programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
       case MAPREDUCE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                      programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
       case WORKFLOW:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                      programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
       case SERVICE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                      programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
       case SPARK:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0], type.getPluralName(),
+        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
                                      programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
