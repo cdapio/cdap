@@ -35,6 +35,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
+import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
@@ -133,7 +134,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
 
     final BasicMapReduceContext context =
-      new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
+      new BasicMapReduceContext(program, null, runId, null, options.getUserArguments(),
                                 program.getApplicationSpecification().getDatasets().keySet(), spec,
                                 logicalStartTime,
                                 workflowBatch, discoveryServiceClient, metricsCollectionService,
@@ -142,6 +143,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
                       new PropertyFieldSetter(context.getSpecification().getProperties()),
+                      new MetricsFieldSetter(context.getMetrics()),
                       new DataSetFieldSetter(context));
 
     // note: this sets logging context on the thread level

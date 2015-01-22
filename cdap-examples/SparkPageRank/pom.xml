@@ -30,16 +30,9 @@
 
   <properties>
     <app.main.class>co.cask.cdap.examples.sparkpagerank.SparkPageRankApp</app.main.class>
-    <cdap.version>2.7.0-SNAPSHOT</cdap.version>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-data-fabric</artifactId>
-      <version>${cdap.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.10</artifactId>

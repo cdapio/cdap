@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
@@ -34,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Provider;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,17 +87,29 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
         try {
           exploreFacade.addPartition(getName(), time, files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
-          throw new DataSetException("Unable to add partition to explore table.", e);
+          throw new DataSetException(String.format(
+            "Unable to add partition for time %d with path %s to explore table.", time, path), e);
         }
       }
     }
   }
 
   @Override
-  public void removePartition(long time) {
+  public void dropPartition(long time) {
     final byte[] rowkey = Bytes.toBytes(time);
     partitions.delete(rowkey);
-    // TODO remove this partition from Hive
+
+    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+      ExploreFacade exploreFacade = exploreFacadeProvider.get();
+      if (exploreFacade != null) {
+        try {
+          exploreFacade.dropPartition(getName(), time);
+        } catch (Exception e) {
+          throw new DataSetException(String.format(
+            "Unable to drop partition for time %d from explore table.", time), e);
+        }
+      }
+    }
   }
 
   @Override
@@ -162,15 +174,11 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
       throw new DataSetException("End time for input time range must be given as argument.");
     }
     Collection<String> inputPaths = getPartitions(startTime, endTime);
-    Map<String, String> config = files.getInputFormatConfiguration();
-    if (!inputPaths.isEmpty()) {
-      config = Maps.newHashMap(config);
-      for (String path : inputPaths) {
-        FileSetArguments.addInputPath(config, path);
-      }
-      config = ImmutableMap.copyOf(config);
+    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
+    for (String path : inputPaths) {
+      inputLocations.add(files.getLocation(path));
     }
-    return config;
+    return files.getInputFormatConfiguration(inputLocations);
   }
 
   @Override

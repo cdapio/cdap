@@ -16,33 +16,27 @@
 
 package co.cask.cdap.data.stream.service;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import com.google.inject.Inject;
 
 /**
- * No-op implementation of a {@link StreamWriterSizeManager}. Also includes a no-op
- * implementation of {@link StreamWriterSizeCollector}.
+ * Stream service running in local mode.
  */
-public class NoOpStreamWriterSizeManager
-  extends AbstractIdleService
-  implements StreamWriterSizeManager, StreamWriterSizeCollector {
+public class LocalStreamService extends AbstractStreamService {
+
+  @Inject
+  public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
+                            StreamFileJanitorService janitorService) {
+    super(streamCoordinatorClient, janitorService);
+  }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void initialize() throws Exception {
     // No-op
   }
 
   @Override
-  protected void shutDown() throws Exception {
-    // No-op
-  }
-
-  @Override
-  public void received(String streamName, long dataSize) {
-    // No-op
-  }
-
-  @Override
-  public void initialize() {
+  protected void doShutdown() throws Exception {
     // No-op
   }
 }
