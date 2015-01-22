@@ -16,38 +16,34 @@
 
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.List;
 
 /**
- * Implementation of the {@link StreamWriterSizeFetcher} for Streams written on files.
+ * Util class to get the size of files written for a stream.
  */
-public class StreamFileWriterSizeFetcher implements StreamWriterSizeFetcher {
+public class StreamFileSizeFetcher {
 
-  private final int instanceId;
-
-  @Inject
-  public StreamFileWriterSizeFetcher(@Named(Constants.Stream.CONTAINER_INSTANCE_ID) int instanceId) {
-    this.instanceId = instanceId;
-  }
-
-  @Override
-  public long fetchSize(StreamConfig streamConfig) throws IOException {
+  /**
+   * Get the size of the data persisted for the stream which config is the {@code streamConfig}.
+   *
+   * @param streamConfig stream to get data size of
+   * @return the size of the data persisted for the stream which config is the {@code streamName}
+   * @throws IOException in case of any error in fetching the size
+   */
+  public static long fetchSize(StreamConfig streamConfig) throws IOException {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     long size = 0;
     List<Location> locations = streamPath.list();
     // All directories are partition directories
     for (Location location : locations) {
-      if (!location.isDirectory()) {
+      if (!location.isDirectory() || !StreamUtils.isPartition(location.getName())) {
         continue;
       }
 
@@ -59,12 +55,14 @@ public class StreamFileWriterSizeFetcher implements StreamWriterSizeFetcher {
       List<Location> partitionFiles = location.list();
       for (Location partitionFile : partitionFiles) {
         if (!partitionFile.isDirectory()
-          && StreamFileType.EVENT.isMatched(partitionFile.getName())
-          && StreamUtils.getWriterInstanceId(partitionFile.getName()) == instanceId) {
+          && StreamFileType.EVENT.isMatched(partitionFile.getName())) {
           size += partitionFile.length();
         }
       }
     }
     return size;
+  }
+
+  private StreamFileSizeFetcher() {
   }
 }
