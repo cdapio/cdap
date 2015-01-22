@@ -102,7 +102,6 @@ function stage_parcel_bits {
 
   # Substitute our version
   sed -i -e "s#{{VERSION}}#${VERSION}#" ${STAGE_DIR}/${PARCEL_ROOT_DIR}/meta/parcel.json
-
 }
 
 # Create the parcel via tar
