@@ -20,7 +20,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.common.Threads;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,6 +33,8 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
+
+  private ScheduledExecutorService executor;
 
   /**
    * Children classes should implement this method to add logic to the start of this {@link Service}.
@@ -61,6 +66,11 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   @Override
   protected final void shutDown() throws Exception {
     doShutdown();
+
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }
@@ -68,5 +78,11 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   @Override
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+  }
+
+  @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
+    return executor;
   }
 }
