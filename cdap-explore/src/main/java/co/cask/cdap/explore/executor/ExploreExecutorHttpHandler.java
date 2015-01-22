@@ -348,9 +348,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     String tableName = getStreamTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
-                           "LOCATION \"%s\"",
+                           "LOCATION \"%s\"" +
+                           "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.STREAM_NAME, name, location);
+                         Constants.Explore.STREAM_NAME, name, location,
+                         // this is set so we know what stream it is created from, and so we know it's from CDAP
+                         Constants.Explore.CDAP_NAME, name);
   }
 
   public static String generateCreateStatement(String name, Dataset dataset)
@@ -358,9 +361,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Dataset\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")" +
+                           "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.DATASET_NAME, name);
+                         Constants.Explore.DATASET_NAME, name,
+                         // this is set so we know what dataset it is created from, and so we know it's from CDAP
+                         Constants.Explore.CDAP_NAME, name);
   }
 
   public static String generateFileSetCreateStatement(String name, Dataset dataset, Map<String, String> properties)
@@ -386,6 +392,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
     String tblProperties = "";
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
+    tableProperties.put(Constants.Explore.CDAP_NAME, name);
     if (!tableProperties.isEmpty()) {
       StringBuilder builder = new StringBuilder("TBLPROPERTIES (");
       Joiner.on(", ").appendTo(builder, Iterables.transform(

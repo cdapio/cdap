@@ -16,6 +16,9 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.cli.app.AdapterApp;
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
@@ -23,14 +26,18 @@ import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
@@ -42,9 +49,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -58,6 +67,8 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -76,6 +87,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static final String PORT = "10000";
 
   private static ProgramClient programClient;
+  private static AdapterClient adapterClient;
   private static CLIConfig cliConfig;
   private static CLI cli;
 
@@ -89,6 +101,7 @@ public class CLIMainTest extends StandaloneTestBase {
     cliConfig.getClientConfig().setAllTimeouts(60000);
 
     programClient = new ProgramClient(cliConfig.getClientConfig());
+    adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
     CLIMain cliMain = new CLIMain(cliConfig);
     cli = cliMain.getCLI();
@@ -271,8 +284,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "instance");
+    propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences '%s'", GSON.toJson(propMap)),
+    testCommandOutputContains(cli, String.format("set instance preferences 'key=instance k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
     testPreferencesOutput(cli, "get instance resolved preferences", propMap);
@@ -280,7 +294,7 @@ public class CLIMainTest extends StandaloneTestBase {
     propMap.clear();
     testPreferencesOutput(cli, "get instance preferences", propMap);
     propMap.put("key", "flow");
-    testCommandOutputContains(cli, String.format("set flow preferences '%s' %s.%s", GSON.toJson(propMap),
+    testCommandOutputContains(cli, String.format("set flow preferences 'key=flow' %s.%s",
                                                  FakeApp.NAME, FakeFlow.NAME), "successfully");
     testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
     testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
@@ -348,6 +362,56 @@ public class CLIMainTest extends StandaloneTestBase {
     // delete namespace and verify
     command = String.format("delete namespace %s", id);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", id));
+  }
+
+  @Test
+  @Ignore //https://issues.cask.co/browse/CDAP-1221
+  public void testAdapters() throws Exception {
+    File adapterDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
+    String namespaceId = co.cask.cdap.common.conf.Constants.DEFAULT_NAMESPACE;
+    setupAdapters(adapterDir);
+
+    // Create Adapter
+    String createCommand = "create adapter someAdapter type dummyAdapter" +
+      " props " + GSON.toJson(ImmutableMap.of("frequency", "1m")) +
+      " src mySource" +
+      " sink mySink sink-props " + GSON.toJson(ImmutableMap.of("dataset.class", FileSet.class.getName()));
+    testCommandOutputContains(cli, createCommand, "Successfully created adapter");
+
+    // Check that the created adapter is present
+    adapterClient.waitForExists(namespaceId, "someAdapter", 30, TimeUnit.SECONDS);
+    Assert.assertTrue(adapterClient.exists(namespaceId, "someAdapter"));
+
+    testCommandOutputContains(cli, "list adapters", "someAdapter");
+    testCommandOutputContains(cli, "get adapter someAdapter", "someAdapter");
+    testCommandOutputContains(cli, "delete adapter someAdapter", "Successfully deleted adapter");
+    testCommandOutputNotContains(cli, "list adapters", "someAdapter");
+  }
+
+  private void setupAdapters(File adapterDir) throws IOException {
+    setupAdapter(adapterDir, AdapterApp.class, "dummyAdapter");
+  }
+
+  private void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
+    Attributes attributes = new Attributes();
+    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
+    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().putAll(attributes);
+
+    File tempDir = Files.createTempDir();
+    try {
+      File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
+      File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
+      Files.copy(adapterJar, destination);
+    } finally {
+      DirUtils.deleteDirectoryContents(tempDir);
+    }
   }
 
   private static File createAppJarFile(Class<?> cls) {
@@ -440,7 +504,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static void testPreferencesOutput(CLI cli, String command, final Map<String, String> expected)
     throws Exception {
-    final String expectedOutput = String.format("%s\n", GSON.toJson(expected));
+    final String expectedOutput = Joiner.on(String.format("%n")).join(expected.entrySet().iterator());
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

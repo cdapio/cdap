@@ -93,7 +93,7 @@ class ConfigHandler extends AbstractHttpHandler {
     }
   }
 
-  private Map<String, String> toMap(Iterable<Map.Entry<String,String>> configuration) {
+  private Map<String, String> toMap(Iterable<Map.Entry<String, String>> configuration) {
     ImmutableMap.Builder<String, String> result = ImmutableMap.builder();
     for (Map.Entry<String, String> entry : configuration) {
       result.put(entry.getKey(), entry.getValue());

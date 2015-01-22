@@ -67,6 +67,7 @@ public final class MapReduceContextProvider {
       context = getBuilder(conf)
         .build(type,
                contextConfig.getRunId(),
+               taskContext.getTaskAttemptID().getTaskID().toString(),
                contextConfig.getLogicalStartTime(),
                contextConfig.getWorkflowBatch(),
                contextConfig.getArguments(),

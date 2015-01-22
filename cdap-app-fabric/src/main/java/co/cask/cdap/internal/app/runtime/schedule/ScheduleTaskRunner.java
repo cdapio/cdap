@@ -70,10 +70,6 @@ public final class ScheduleTaskRunner {
    * @throws JobExecutionException If fails to execute the program.
    */
   public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws JobExecutionException {
-    ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
-    if (existingRuntimeInfo != null) {
-      throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
-    }
     Map<String, String> userArgs = Maps.newHashMap();
     Program program;
     try {
@@ -92,6 +88,15 @@ public final class ScheduleTaskRunner {
 
       userArgs.putAll(runtimeArgs);
 
+      boolean runMultipleProgramInstances =
+        Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
+
+      if (!runMultipleProgramInstances) {
+        ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
+        if (existingRuntimeInfo != null) {
+          throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
+        }
+      }
     } catch (Throwable t) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }

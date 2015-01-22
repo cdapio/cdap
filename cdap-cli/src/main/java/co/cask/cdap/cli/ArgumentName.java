@@ -64,7 +64,14 @@ public enum ArgumentName {
   NAMESPACE_DISPLAY_NAME("namespace-display-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
 
-  INSTANCE("instance-id");
+  INSTANCE("instance-id"),
+  ADAPTER_TYPE("adapter-type"),
+  ADAPTER_PROPS("adapter-props"),
+  ADAPTER_SOURCE("adapter-source"),
+  ADAPTER_SOURCE_PROPS("adapter-source-config"),
+  ADAPTER_SINK("adapter-sink"),
+  ADAPTER_SINK_PROPS("adapter-sink-config"),
+  ADAPTER("adapter-name");
 
   private final String name;
 
