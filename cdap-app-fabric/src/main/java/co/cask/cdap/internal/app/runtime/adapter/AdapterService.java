@@ -218,7 +218,9 @@ public class AdapterService extends AbstractIdleService {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
-    checkWorkflow(adapterTypeInfos.get(adapterSpec.getType()).getProgramType());
+    ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
+    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
       Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
@@ -232,7 +234,9 @@ public class AdapterService extends AbstractIdleService {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
-    checkWorkflow(adapterTypeInfos.get(adapterSpec.getType()).getProgramType());
+    ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
+    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
       Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
@@ -270,7 +274,10 @@ public class AdapterService extends AbstractIdleService {
   // Schedule all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
   private void schedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
                         AdapterSpecification adapterSpec) {
-    checkWorkflow(adapterTypeInfo.getProgramType());
+    ProgramType programType = adapterTypeInfo.getProgramType();
+    // Only Workflows are supported to be scheduled in the current implementation
+    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
       Id.Program programId = Id.Program.from(namespaceId, spec.getName(), entry.getValue().getName());
@@ -281,19 +288,16 @@ public class AdapterService extends AbstractIdleService {
   // Unschedule all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
   private void unschedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
                           AdapterSpecification adapterSpec) {
-    checkWorkflow(adapterTypeInfo.getProgramType());
+    // Only Workflows are supported to be scheduled in the current implementation
+    ProgramType programType = adapterTypeInfo.getProgramType();
+    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
       Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
       deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
                      constructScheduleName(programId, adapterSpec.getName()));
     }
-  }
-
-  private void checkWorkflow(ProgramType programType) {
-    // Only Workflows are supported to be scheduled in the current implementation
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
   }
 
   // Adds a schedule to the scheduler as well as to the appspec
