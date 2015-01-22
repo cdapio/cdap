@@ -93,7 +93,7 @@ Glossary
       query and manage the Cask Data Application Platform instance.
 
    Apache Spark
-      See :term:`Spark Program`.
+      See :term:`Spark Program <spark>`.
 
    Apache Hadoop
       See :term:`Hadoop`.
