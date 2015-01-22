@@ -17,6 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricValue;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -72,9 +73,8 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
   public static Map<String, String> parseTags(String counterGroupName) {
     // see publish method for format info
 
-    if (counterGroupName.startsWith("cdap.")) {
-      return Collections.emptyMap();
-    }
+    Preconditions.checkArgument(counterGroupName.startsWith("cdap."),
+                                "Counters group was not created by CDAP: " + counterGroupName);
     String[] parts = counterGroupName.split("\\.");
     Map<String, String> tags = Maps.newHashMap();
     // todo: assert that we have odd count of parts?

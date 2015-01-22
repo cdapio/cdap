@@ -238,7 +238,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       return null;
     }
     Map<String, String> tags = Maps.newHashMap();
-    // NOTE: Currently we report metrics thru mapreduce counters and to it in mapreduce program runner. It "knows" all
+    // NOTE: Currently we report metrics thru mapreduce counters and emit them in mapreduce program runner. It "knows" all
     //       the details about program, run, etc. so no need to pollute counters with it. Also counter name has strict
     //       limits by default (64 bytes), we simply can't risk overflowing it.
     if (type != null) {
