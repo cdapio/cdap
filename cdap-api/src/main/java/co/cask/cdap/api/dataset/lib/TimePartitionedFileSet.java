@@ -45,7 +45,7 @@ public interface TimePartitionedFileSet extends Dataset, InputFormatProvider, Ou
   /**
    * Remove a partition for a given time.
    */
-  public void removePartition(long time);
+  public void dropPartition(long time);
 
   /**
    * @return the relative path of the partition for a specific time.

@@ -115,6 +115,15 @@ abstract class ExploreHttpClient implements Explore {
                                  ". Reason: " + getDetails(response));
   }
 
+  protected QueryHandle doDropPartition(String datasetName, long time) throws ExploreException {
+    HttpResponse response = doDelete(String.format("data/explore/datasets/%s/partitions/%d", datasetName, time));
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot drop partition with time " + time + "from dataset " + datasetName +
+                                 ". Reason: " + getDetails(response));
+  }
+
   protected QueryHandle doEnableExploreDataset(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("data/explore/datasets/%s/enable", datasetInstance), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {

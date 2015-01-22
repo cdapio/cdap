@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "name": "CDAP",
+  "version": "{{VERSION}}",
+  "setActiveSymlink": true,
+  "depends": "",
+  "replaces": "",
+  "conflicts": "",
+  "provides": [
+    "cdap"
+  ],
+  "scripts": {
+    "defines": "cdap_env.sh"
+  },
+  "packages": [
+    {
+      "name": "cdap",
+      "version": "{{VERSION}}"
+    }
+  ],
+  "components": [
+    {
+      "name": "cdap-gateway",
+      "version": "{{VERSION}}",
+      "pkg_version": "{{VERSION}}",
+      "pkg_release": "{{VERSION}}"
+    },
+    {
+      "name": "cdap-master",
+      "version": "{{VERSION}}",
+      "pkg_version": "{{VERSION}}",
+      "pkg_release": "{{VERSION}}"
+    },
+    {
+      "name": "cdap-kafka",
+      "version": "{{VERSION}}",
+      "pkg_version": "{{VERSION}}",
+      "pkg_release": "{{VERSION}}"
+    },
+    {
+      "name": "cdap-security",
+      "version": "{{VERSION}}",
+      "pkg_version": "{{VERSION}}",
+      "pkg_release": "{{VERSION}}"
+    },
+    {
+      "name": "cdap-web-app",
+      "version": "{{VERSION}}",
+      "pkg_version": "{{VERSION}}",
+      "pkg_release": "{{VERSION}}"
+    }
+  ],
+  "users": {
+    "cdap": {
+      "longname": "Cask DAP",
+      "home": "/var/run/cdap",
+      "shell": "/bin/bash",
+      "extra_groups": [ "cdap" ]
+    }
+  },
+  "groups": [
+    "cdap"
+  ]
+}

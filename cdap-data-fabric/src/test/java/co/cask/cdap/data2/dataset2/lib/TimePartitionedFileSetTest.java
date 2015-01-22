@@ -118,7 +118,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     }
 
     // remove first partition and validate
-    fileSet.removePartition(time);
+    fileSet.dropPartition(time);
     Assert.assertNull("should return null", fileSet.getPartition(time));
 
     paths = fileSet.getPartitions(0L, Long.MAX_VALUE);
@@ -137,7 +137,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // try to delete  another partition with the same key
     try {
-      fileSet.removePartition(time);
+      fileSet.dropPartition(time);
     } catch (DataSetException e) {
       Assert.fail("Should not have have thrown Exception for removing non-existent partition");
     }

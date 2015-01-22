@@ -232,6 +232,7 @@ public final class Constants {
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String INSTANCE_FILE_PREFIX = "stream.instance.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
     public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
     public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
@@ -588,7 +589,17 @@ public final class Constants {
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
 
-    public static final String KAFKA_DELEGATE_NOTIFICATION_SERVICE = "kafka.delegate.notification.service";
+    /**
+     * Notifications in Streams constants.
+     */
+    public static final class Stream {
+      public static final String STREAM_HEARTBEAT_FEED_CATEGORY = "streamHeartbeats";
+      public static final String STREAM_HEARTBEAT_FEED_NAME = "streamHeartbeats";
+      public static final String STREAM_FEED_CATEGORY = "streams";
+
+      /** Default number of bytes received by a stream after which a notification is sent */
+      public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
