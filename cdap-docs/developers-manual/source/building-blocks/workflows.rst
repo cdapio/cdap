@@ -16,8 +16,8 @@ transferred to the next job in sequence until the last job in the sequence is ex
 failure, the execution is stopped at the failed job and no subsequent jobs in the sequence
 are executed.
 
-To execute MapReduce or Spark programs in the Workflow, you will need to add them in your
-application along with the Workflow. You can optionally add schedule to the Workflow.::
+To execute MapReduce or Spark programs in a Workflow, you will need to add them in your
+application along with the Workflow. You can optionally add a schedule to the Workflow::
 
   public void configure() {
     ...
@@ -30,9 +30,9 @@ application along with the Workflow. You can optionally add schedule to the Work
   }
 
 You'll then extend the ``AbstractWorkflow`` class and implement the
-``configure()`` method. From within ``configure``, you can add multiple MapReduce, Spark
-or Custom Action programs to the Workflow. The programs will get executed in a sequence in
-which they are added in the ``configure()`` method.::
+``configure()`` method. Inside ``configure``, you can add multiple MapReduce, Spark, or Custom Action
+programs to the Workflow. The programs will be executed in the order they are specified in the ``configure``
+method::
 
   public static class MyWorkflow extends AbstractWorkflow {
 
@@ -47,13 +47,14 @@ which they are added in the ``configure()`` method.::
     }
   }
 
-``MyWorkflow`` will be executed every 5 hours. During each execution of the Workflow - ``MyMapReduce``,
-``MySpark``, ``AnotherMapReduce`` and ``MyAction`` programs will be executed in a sequence.
+In this example, the ``MyWorkflow`` will be executed every 5 hours. During each execution of the Workflow,
+the ``MyMapReduce``, ``MySpark``, ``AnotherMapReduce``, and ``MyAction`` programs will be executed in order.
 
 .. rubric::  Workflow Custom Action
 
-Apart from MapReduce and Spark programs, Workflow can be extended to execute custom actions. For
-defining custom action, you will need to extend the ``AbstractWorkflowAction`` and implement the ``run()`` method.::
+In addition to MapReduce and Spark programs, Workflow can also execute custom actions. Custom actions are
+implemented in Java and can perform tasks such as make a REST call to an external system. To define
+custom action, you will need to extend the ``AbstractWorkflowAction`` and implement the ``run()`` method::
 
   public static class MyAction extends AbstractWorkflowAction {
 
@@ -63,7 +64,7 @@ defining custom action, you will need to extend the ``AbstractWorkflowAction`` a
     }
   }
 
-The custom action then can be added to the Workflow using ``addAction()`` method as shown above.
+The custom action then can be added to the Workflow using the ``addAction()`` method as shown above.
 
 .. rubric::  Example of Using a Workflow
 
