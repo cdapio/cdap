@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -41,10 +40,9 @@ import javax.ws.rs.Path;
 /**
  * Handles requests to view {@link CConfiguration}.
  */
-public class ConfigHandler extends AbstractHttpHandler {
+class ConfigHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
-  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -90,7 +88,7 @@ public class ConfigHandler extends AbstractHttpHandler {
       ChannelBuffer output = ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, stringWriter.toString(), Charsets.UTF_8);
       responder.sendContent(HttpResponseStatus.OK, output, "application/xml", null);
     } catch (IOException e) {
-      LOG.info("Failed to write cConf to XML", e);
+      LOG.info("Failed to write hConf to XML", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }

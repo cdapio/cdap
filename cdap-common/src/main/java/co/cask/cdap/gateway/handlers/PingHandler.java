@@ -27,7 +27,7 @@ import javax.ws.rs.Path;
 /**
  * Handles ping requests.
  */
-public class PingHandler extends AbstractHttpHandler {
+class PingHandler extends AbstractHttpHandler {
 
   @Path("/ping")
   @GET

@@ -43,7 +43,7 @@ import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
 import com.google.inject.Module;
@@ -103,8 +103,8 @@ public class DataSetServiceModules {
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        CommonHandlers.add(handlerBinder);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
 
@@ -150,8 +150,8 @@ public class DataSetServiceModules {
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        CommonHandlers.add(handlerBinder);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
@@ -197,8 +197,8 @@ public class DataSetServiceModules {
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        CommonHandlers.add(handlerBinder);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
