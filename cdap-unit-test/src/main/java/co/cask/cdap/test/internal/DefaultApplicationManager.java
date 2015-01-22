@@ -43,6 +43,7 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -240,14 +241,16 @@ public class DefaultApplicationManager implements ApplicationManager {
     return jobId;
   }
 
-  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit, ProgramId jobId)
-    throws InterruptedException, TimeoutException {
-    while (timeout > 0 && isRunning(jobId)) {
-      timeoutUnit.sleep(1);
-      timeout--;
+  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit,
+                                    ProgramId jobId) throws InterruptedException, TimeoutException {
+    // Min sleep time is 10ms, max sleep time is 1 seconds
+    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+    Stopwatch stopwatch = new Stopwatch().start();
+    while (isRunning(jobId) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+      TimeUnit.MILLISECONDS.sleep(sleepMillis);
     }
 
-    if (timeout == 0 && isRunning(jobId)) {
+    if (isRunning(jobId)) {
       throw new TimeoutException("Time limit reached.");
     }
   }
