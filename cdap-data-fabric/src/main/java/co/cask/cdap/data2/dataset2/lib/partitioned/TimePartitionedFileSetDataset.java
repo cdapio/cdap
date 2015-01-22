@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
@@ -34,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Provider;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,15 +174,11 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
       throw new DataSetException("End time for input time range must be given as argument.");
     }
     Collection<String> inputPaths = getPartitions(startTime, endTime);
-    Map<String, String> config = files.getInputFormatConfiguration();
-    if (!inputPaths.isEmpty()) {
-      config = Maps.newHashMap(config);
-      for (String path : inputPaths) {
-        FileSetArguments.addInputPath(config, path);
-      }
-      config = ImmutableMap.copyOf(config);
+    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
+    for (String path : inputPaths) {
+      inputLocations.add(files.getLocation(path));
     }
-    return config;
+    return files.getInputFormatConfiguration(inputLocations);
   }
 
   @Override
