@@ -25,9 +25,10 @@ import com.google.common.collect.Multimaps;
 import java.util.List;
 
 /**
- *
+ * In-memory implementation of the {@link StreamMetaStore}. Used for testing.
  */
 public class InMemoryStreamMetaStore implements StreamMetaStore {
+
   private final Multimap<String, String> streams;
 
   public InMemoryStreamMetaStore() {
@@ -50,7 +51,7 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public List<StreamSpecification> listStreams() throws Exception {
+  public synchronized List<StreamSpecification> listStreams() throws Exception {
     ImmutableList.Builder<StreamSpecification> builder = ImmutableList.builder();
     for (String stream : streams.values()) {
       builder.add(new StreamSpecification.Builder().setName(stream).create());

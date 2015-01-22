@@ -31,6 +31,7 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -53,7 +54,6 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -94,6 +94,11 @@ public class CLIMainTest extends StandaloneTestBase {
   @BeforeClass
   public static void setUpClass() throws Exception {
     if (START_LOCAL_STANDALONE) {
+      File adapterDir = TMP_FOLDER.newFolder("adapter");
+      configuration = CConfiguration.create();
+      configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+      setupAdapters(adapterDir);
+
       StandaloneTestBase.setUpClass();
     }
 
@@ -283,10 +288,10 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
-    propMap.put("key", "instance");
+    propMap.put("key", "new instance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences 'key=instance k1=v1'"),
+    testCommandOutputContains(cli, String.format("set instance preferences 'key=new instance, k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
     testPreferencesOutput(cli, "get instance resolved preferences", propMap);
@@ -304,6 +309,35 @@ public class CLIMainTest extends StandaloneTestBase {
     testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
     testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
+
+    File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "Not a file");
+    testCommandOutputContains(cli, "load instance preferences " + file.getParentFile().getAbsolutePath() + " json",
+                              "Not a file");
+    // Generate a file to load
+    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key':'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
+    propMap.clear();
+    propMap.put("key", "somevalue");
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+
+    //Try invalid Json
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.txt");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key:'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
   }
 
   @Test
@@ -365,11 +399,8 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore //https://issues.cask.co/browse/CDAP-1221
   public void testAdapters() throws Exception {
-    File adapterDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
-    String namespaceId = co.cask.cdap.common.conf.Constants.DEFAULT_NAMESPACE;
-    setupAdapters(adapterDir);
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
 
     // Create Adapter
     String createCommand = "create adapter someAdapter type dummyAdapter" +
@@ -388,11 +419,11 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "list adapters", "someAdapter");
   }
 
-  private void setupAdapters(File adapterDir) throws IOException {
+  private static void setupAdapters(File adapterDir) throws IOException {
     setupAdapter(adapterDir, AdapterApp.class, "dummyAdapter");
   }
 
-  private void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
+  private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");

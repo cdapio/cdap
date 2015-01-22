@@ -14,35 +14,38 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
 /**
- * No-op implementation of the {@link StreamMetaStore}. Used for testing.
+ * Implementation of the {@link NotificationFeedManager} used for testing purposes.
  */
-public class NoOpStreamMetaStore implements StreamMetaStore {
+public class NoOpNotificationFeedManager implements NotificationFeedManager {
 
   @Override
-  public void addStream(String accountId, String streamName) throws Exception {
-    // No-op
-  }
-
-  @Override
-  public void removeStream(String accountId, String streamName) throws Exception {
-    // No-op
-  }
-
-  @Override
-  public boolean streamExists(String accountId, String streamName) throws Exception {
+  public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
     return true;
   }
 
   @Override
-  public List<StreamSpecification> listStreams() throws Exception {
+  public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
+    // No-op
+  }
+
+  @Override
+  public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
+    return feed;
+  }
+
+  @Override
+  public List<NotificationFeed> listFeeds() throws NotificationFeedException {
     return ImmutableList.of();
   }
 }

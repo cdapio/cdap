@@ -30,6 +30,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -87,8 +88,9 @@ public class DistributedStreamService extends AbstractStreamService {
                                   StreamMetaStore streamMetaStore,
                                   Supplier<Discoverable> discoverableSupplier,
                                   StreamWriterSizeCollector streamWriterSizeCollector,
-                                  HeartbeatPublisher heartbeatPublisher) {
-    super(streamCoordinatorClient, janitorService);
+                                  HeartbeatPublisher heartbeatPublisher,
+                                  NotificationFeedManager notificationFeedManager) {
+    super(streamCoordinatorClient, janitorService, notificationFeedManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;

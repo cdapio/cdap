@@ -38,12 +38,19 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -87,7 +94,16 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new AuthModule(),
         new ExploreClientModule(),
         new StreamServiceRuntimeModule().getDistributedModules(),
-        new StreamAdminModules().getDistributedModules()
+        new StreamAdminModules().getDistributedModules(),
+        new NotificationFeedClientModule(),
+        new NotificationServiceRuntimeModule().getDistributedModules(),
+        new StreamAdminModules().getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(Key.get(new TypeLiteral<Supplier<Discoverable>>() { })).to(StreamHttpService.class);
+          }
+        }
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
