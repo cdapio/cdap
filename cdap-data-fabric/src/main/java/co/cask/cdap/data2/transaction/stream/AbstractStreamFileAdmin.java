@@ -25,6 +25,9 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -64,6 +67,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
+  private final NotificationFeedManager notificationFeedManager;
 
   // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
   // TODO: Remove usage of this when no longer needed
@@ -72,8 +76,10 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
                                     StreamCoordinatorClient streamCoordinatorClient,
                                     StreamConsumerStateStoreFactory stateStoreFactory,
+                                    NotificationFeedManager notificationFeedManager,
                                     StreamAdmin oldStreamAdmin) {
     this.cConf = cConf;
+    this.notificationFeedManager = notificationFeedManager;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
@@ -273,7 +279,26 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
     saveConfig(config);
 
+    // Create the notification feeds linked to that stream
+    createStreamFeeds(name);
+
     streamCoordinatorClient.streamCreated(name);
+  }
+
+  private void createStreamFeeds(String stream) {
+    // TODO use accountID as namespace?
+    try {
+      NotificationFeed streamFeed = new NotificationFeed.Builder()
+        .setNamespace("default")
+        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+        .setName(stream)
+        .setDescription(String.format("Size updates feed for Stream %s every %dMB",
+                                      stream, Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD))
+        .build();
+      notificationFeedManager.createFeed(streamFeed);
+    } catch (NotificationFeedException e) {
+      LOG.error("Cannot create feed for Stream {}", stream, e);
+    }
   }
 
   @Override

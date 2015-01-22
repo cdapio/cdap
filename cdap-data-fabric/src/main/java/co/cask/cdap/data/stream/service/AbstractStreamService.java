@@ -18,6 +18,9 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
 
@@ -30,6 +33,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
+  private final NotificationFeedManager feedManager;
 
   /**
    * Children classes should implement this method to add logic to the start of this {@link Service}.
@@ -46,13 +50,17 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   protected abstract void doShutdown() throws Exception;
 
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                                  StreamFileJanitorService janitorService) {
+                                  StreamFileJanitorService janitorService,
+                                  NotificationFeedManager feedManager) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
+    this.feedManager = feedManager;
   }
 
   @Override
   protected final void startUp() throws Exception {
+    createHeartbeatsFeed();
+
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
     initialize();
@@ -68,5 +76,24 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   @Override
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_DELAY, TimeUnit.SECONDS);
+  }
+
+    /**
+   * Create Notification feed for stream's heartbeats, if it does not already exist.
+   */
+  private void createHeartbeatsFeed() throws NotificationFeedException {
+    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
+    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
+      .setNamespace("default")
+      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
+      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
+      .setDescription("Streams heartbeats feed.")
+      .build();
+
+    try {
+      feedManager.getFeed(streamHeartbeatsFeed);
+    } catch (NotificationFeedException e) {
+      feedManager.createFeed(streamHeartbeatsFeed);
+    }
   }
 }

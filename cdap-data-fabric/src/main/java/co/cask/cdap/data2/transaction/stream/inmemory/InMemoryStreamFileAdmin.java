@@ -21,6 +21,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -33,7 +34,8 @@ public final class InMemoryStreamFileAdmin extends AbstractStreamFileAdmin {
   @Inject
   InMemoryStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
                           StreamCoordinatorClient streamCoordinatorClient,
-                          StreamConsumerStateStoreFactory stateStoreFactory, InMemoryStreamAdmin oldStreamAdmin) {
-    super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, oldStreamAdmin);
+                          StreamConsumerStateStoreFactory stateStoreFactory,
+                          NotificationFeedManager notificationFeedManager, InMemoryStreamAdmin oldStreamAdmin) {
+    super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, notificationFeedManager, oldStreamAdmin);
   }
 }
