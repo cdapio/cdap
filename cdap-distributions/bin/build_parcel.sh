@@ -86,7 +86,7 @@ PARCEL_SUFFIX="el6"
 # Components should map to top-level directories: "cdap-${COMPONENT}"
 COMPONENTS="gateway hbase-compat-0.94 hbase-compat-0.96 hbase-compat-0.98 kafka master security web-app"
 
-# Attempt to set APP_HOME
+# Find our script's location and base repo directory
 # Resolve links: $0 may be a link
 PRG=${0}
 # Need this for relative symlinks.
@@ -99,7 +99,6 @@ while [ -h ${PRG} ]; do
         PRG=`dirname ${PRG}`/${link}
     fi
 done
-SAVED=`pwd`
 cd `dirname ${PRG}`/.. >&-
 DISTRIBUTIONS_HOME=`pwd -P`
 cd `dirname ${DISTRIBUTIONS_HOME}` >&-
@@ -120,33 +119,4 @@ stage_artifacts
 stage_parcel_bits
 
 generate_parcel
-
-exit 0
-
-# get version
-VERSION=$(cd ${DISTRIBUTIONS_HOME} && mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive  org.codehaus.mojo:exec-maven-plugin:1.3.1:exec)
-echo "VERSION:${VERSION}"
-
-# copy in 'stage-package' directories from everwhere there is a corresponding .tgz
-for tgz in `find ${REPO_HOME} -name 'cdap*.tar.gz' -print`; do
-  __project_target=`dirname $tgz`
-  echo "project target: ${__project_target}"
-  if [ -d ${__project_target}/stage-packaging/opt/cdap ]; then
-    echo "using: ${__project_target}/stage-packaging"
-    cp -r ${__project_target}/stage-packaging/opt/cdap/* ${STAGE_DIR}/.
-  else
-    echo "skipping: ${__project_target}"
-  fi
-done
-
-# copy the /etc/conf.dist dir
-mkdir -p ${STAGE_DIR}/etc/cdap/conf.dist
-cp -r ${DISTRIBUTIONS_HOME}/src/etc/cdap/conf.dist/* ${STAGE_DIR}/etc/cdap/conf.dist/.
-
-# copy in our meta
-META_DIR=${DISTRIBUTIONS_HOME}/src/parcel
-cp -r ${DISTRIBUTIONS_HOME}/src/parcel/* ${STAGE_DIR}/.
-
-# substitute are version
-sed -i -e "s#{{VERSION}}#${VERSION}#" ${STAGE_DIR}/meta/parcel.json
 
