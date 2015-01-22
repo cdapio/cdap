@@ -30,6 +30,7 @@ import co.cask.cdap.notifications.service.NotificationService;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *
+ * {@link StreamsHeartbeatsAggregator} of notification heartbeats.
  */
 public class NotificationHeartbeatsAggregator extends AbstractScheduledService implements StreamsHeartbeatsAggregator {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationHeartbeatsAggregator.class);
@@ -52,6 +53,7 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
   private final Map<String, Aggregator> aggregators;
   private Cancellable heartbeatsSubscription;
 
+  @Inject
   public NotificationHeartbeatsAggregator(StreamAdmin streamAdmin, NotificationService notificationService) {
     this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
