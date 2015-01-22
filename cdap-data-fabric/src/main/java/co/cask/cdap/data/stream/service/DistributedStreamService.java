@@ -30,6 +30,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import co.cask.cdap.data.stream.service.heartbeat.StreamsHeartbeatsAggregator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.base.Function;
@@ -77,9 +78,12 @@ public class DistributedStreamService extends AbstractStreamService {
   private final HeartbeatPublisher heartbeatPublisher;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
-  private final Set<StreamLeaderListener> leaderListeners;
+  private final StreamsHeartbeatsAggregator streamsHeartbeatsAggregator;
   private final int writerID;
+
+  private final Set<StreamLeaderListener> leaderListeners;
   private final Map<String, Long> streamsBaseSizes;
+  private final Cancellable leaderListenerCancellable;
 
   private boolean isInit;
   private Supplier<Discoverable> discoverableSupplier;
@@ -102,7 +106,8 @@ public class DistributedStreamService extends AbstractStreamService {
                                   StreamWriterSizeCollector streamWriterSizeCollector,
                                   StreamWriterSizeFetcher streamWriterSizeFetcher,
                                   HeartbeatPublisher heartbeatPublisher,
-                                  NotificationFeedManager notificationFeedManager) {
+                                  NotificationFeedManager notificationFeedManager,
+                                  StreamsHeartbeatsAggregator streamsHeartbeatsAggregator) {
     super(streamCoordinatorClient, janitorService, notificationFeedManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -112,11 +117,19 @@ public class DistributedStreamService extends AbstractStreamService {
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.streamWriterSizeFetcher = streamWriterSizeFetcher;
     this.heartbeatPublisher = heartbeatPublisher;
+    this.streamsHeartbeatsAggregator = streamsHeartbeatsAggregator;
     this.writerID = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
     this.streamsBaseSizes = Maps.newHashMap();
     this.isInit = true;
+
+    this.leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        DistributedStreamService.this.streamsHeartbeatsAggregator.aggregate(streamNames);
+      }
+    });
   }
 
   @Override
@@ -131,6 +144,8 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void doShutdown() throws Exception {
+    leaderListenerCancellable.cancel();
+
     if (executor != null) {
       executor.shutdownNow();
     }
@@ -189,24 +204,15 @@ public class DistributedStreamService extends AbstractStreamService {
    *                 of a collection of streams
    * @return A {@link Cancellable} to cancel the watch
    */
-  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
-    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
-    // is not overridden by user's code implementation of the equal method
-    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
-      @Override
-      public void leaderOf(Set<String> streamNames) {
-        listener.leaderOf(streamNames);
-      }
-    };
-
+  private Cancellable addLeaderListener(final StreamLeaderListener listener) {
     synchronized (this) {
-      leaderListeners.add(wrappedListener);
+      leaderListeners.add(listener);
     }
     return new Cancellable() {
       @Override
       public void cancel() {
         synchronized (DistributedStreamService.this) {
-          leaderListeners.remove(wrappedListener);
+          leaderListeners.remove(listener);
         }
       }
     };
