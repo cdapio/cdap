@@ -16,20 +16,78 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *
  */
-public class AppWithMultipleScheduledWorkflows extends AppWithMultipleWorkflows {
+public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
 
   @Override
   public void configure() {
-    super.configure();
     setName("AppWithMultipleScheduledWorkflows");
+    setDescription("Sample application with multiple Workflows");
+    addWorkflow(new SomeWorkflow());
+    addWorkflow(new AnotherWorkflow());
     scheduleWorkflow("SomeSchedule1", "0 4 * * *", "SomeWorkflow");
     scheduleWorkflow("SomeSchedule2", "0 5 * * *", "SomeWorkflow");
     scheduleWorkflow("AnotherSchedule1", "0 6 * * *", "AnotherWorkflow");
     scheduleWorkflow("AnotherSchedule2", "0 7 * * *", "AnotherWorkflow");
     scheduleWorkflow("AnotherSchedule3", "0 8 * * *", "AnotherWorkflow");
+  }
+
+  /**
+   * Some Workflow
+   */
+  public static class SomeWorkflow extends AbstractWorkflow {
+    public static final String NAME = "SampleWorkflow";
+    @Override
+    public void configure() {
+      setName(NAME);
+      setDescription("SampleWorkflow description");
+      addAction(new SomeDummyAction());
+    }
+  }
+
+  /**
+   * Some Dummy Action
+   */
+  public static class SomeDummyAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(SomeDummyAction.class);
+
+    @Override
+    public void run() {
+      LOG.info("Ran some dummy action");
+    }
+  }
+
+  /**
+   * Another Workflow
+   */
+  public static class AnotherWorkflow extends AbstractWorkflow {
+    public static final String NAME = "AnotherWorkflow";
+    @Override
+    public void configure() {
+      setName(NAME);
+      setDescription("AnotherWorkflow description");
+      addAction(new AnotherDummyAction());
+    }
+  }
+
+  /**
+   * Another Dummy Action
+   */
+  public static class AnotherDummyAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(AnotherDummyAction.class);
+
+    @Override
+    public void run() {
+      LOG.info("Ran another dummy action");
+    }
   }
 }
 
