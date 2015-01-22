@@ -11,6 +11,7 @@ angular
       PKG.name+'.feature.apps',
       PKG.name+'.feature.programs',
       PKG.name+'.feature.datasets',
+      PKG.name+'.feature.streams',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.foo'
     ]).name,

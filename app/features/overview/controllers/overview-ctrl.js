@@ -45,7 +45,7 @@ function ($scope, MyDataSource, $state) {
     _cdapPathV2: '/streams'
   }, function(res) {
     if (angular.isArray(res) && res.length) {
-      $scope.datasets = res.concat($scope.datasets);
+      $scope.streams = res;
     }
   })
 
