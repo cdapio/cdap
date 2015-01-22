@@ -115,7 +115,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     }
 
     // suspending the adapter should put the associated schedules into a SUSPENDED state
-    suspendResumeAdapter(namespaceId, adapterName, "suspend");
+    startStopAdapter(namespaceId, adapterName, "stop");
     for (ScheduleSpecification schedule : schedules) {
       String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
                                 schedule.getSchedule().getName());
@@ -123,7 +123,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     }
 
     // resuming the adapter puts the associated schedules back into a SCHEDULED state
-    suspendResumeAdapter(namespaceId, adapterName, "resume");
+    startStopAdapter(namespaceId, adapterName, "start");
     for (ScheduleSpecification schedule : schedules) {
       String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
                                 schedule.getSchedule().getName());
@@ -251,7 +251,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
                                Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
   }
 
-  private HttpResponse suspendResumeAdapter(String namespaceId, String adapterId, String action) throws Exception {
+  private HttpResponse startStopAdapter(String namespaceId, String adapterId, String action) throws Exception {
     return doPost(String.format("%s/namespaces/%s/adapters/%s/%s",
                                 Constants.Gateway.API_VERSION_3, namespaceId, adapterId, action));
   }

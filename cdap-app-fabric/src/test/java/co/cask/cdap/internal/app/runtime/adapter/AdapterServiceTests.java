@@ -112,7 +112,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     adapterService.registerAdapters();
     Assert.assertNotNull(adapterService.getAdapterTypeInfo(adapterType));
 
-
     List<String> requiredAttributes = ImmutableList.of("CDAP-Source-Type", "CDAP-Sink-Type",
                                                        "CDAP-Adapter-Type", "CDAP-Adapter-Program-Type");
 

@@ -214,7 +214,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Suspends all schedules for this adapter
-  public void suspendAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  public void stopAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
@@ -228,7 +228,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Resumes all schedules for this adapter
-  public void resumeAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  public void startAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 

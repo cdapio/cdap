@@ -329,22 +329,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Suspends/resumes an adapter
+   * Starts/stops an adapter
    */
   @POST
   @Path("/adapters/{adapterId}/{action}")
-  public void suspendResumeAdapter(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("adapterId") String adapterId,
-                                   @PathParam("action") String action) {
+  public void startStopAdapter(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapterId") String adapterId,
+                               @PathParam("action") String action) {
     try {
-      if ("resume".equals(action)) {
-        adapterService.resumeAdapter(namespaceId, adapterId);
-      } else if ("suspend".equals(action)) {
-        adapterService.suspendAdapter(namespaceId, adapterId);
+      if ("start".equals(action)) {
+        adapterService.startAdapter(namespaceId, adapterId);
+      } else if ("stop".equals(action)) {
+        adapterService.stopAdapter(namespaceId, adapterId);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Invalid adapter action: %s. Possible actions: ['resume', 'suspend'].",
+                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].",
                                            action));
         return;
       }
