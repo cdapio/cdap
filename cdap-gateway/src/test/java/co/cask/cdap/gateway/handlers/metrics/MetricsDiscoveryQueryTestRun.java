@@ -139,11 +139,11 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
                                                                        "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Mapper));
+                                                                       MapReduceMetrics.TaskType.Mapper, "run1", "t1"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
-                                                                       "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Reducer));
+    collector = collectionService.getCollector(
+      getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount", "ClassicWordCount",
+                              MapReduceMetrics.TaskType.Reducer, "run1", "t2"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount",
                                                                  "WordCounter", "splitter"));

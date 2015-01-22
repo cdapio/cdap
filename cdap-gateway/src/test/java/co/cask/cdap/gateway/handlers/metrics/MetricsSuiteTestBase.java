@@ -429,7 +429,7 @@ public abstract class MetricsSuiteTestBase {
 
   protected static Map<String, String> getFlowletQueueContext(String namespaceId, String appName, String flowName,
                                                               String flowletName, String queueName) {
-    ImmutableMap immutableMap = ImmutableMap.builder()
+    return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW))
@@ -437,7 +437,6 @@ public abstract class MetricsSuiteTestBase {
       .put(Constants.Metrics.Tag.FLOWLET, flowletName)
       .put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName)
       .build();
-    return ImmutableMap.copyOf(immutableMap);
   }
 
   protected static Map<String, String> getStreamHandlerContext(String streamName, String instanceId) {
@@ -465,7 +464,7 @@ public abstract class MetricsSuiteTestBase {
 
   protected static Map<String, String> getUserServiceContext(String namespaceId, String appName, String serviceName,
                                                              String runnableName, String runId) {
-    ImmutableMap immutableMap = ImmutableMap.builder()
+    return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE))
@@ -473,28 +472,19 @@ public abstract class MetricsSuiteTestBase {
       .put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName)
       .put(Constants.Metrics.Tag.RUN_ID, runId)
       .build();
-    return ImmutableMap.copyOf(immutableMap);
   }
 
   protected static Map<String, String> getMapReduceTaskContext(String namespaceId, String appName, String jobName,
-                                                               MapReduceMetrics.TaskType type) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
-                           Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.MAPREDUCE),
-                           Constants.Metrics.Tag.PROGRAM, jobName,
-                           Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
-  }
-
-  protected static Map<String, String> getMapReduceTaskContext(String namespaceId, String appName, String jobName,
-                                                               MapReduceMetrics.TaskType type, String runId) {
-    ImmutableMap immutableMap = ImmutableMap.builder()
+                                                               MapReduceMetrics.TaskType type,
+                                                               String runId, String instanceId) {
+    return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.MAPREDUCE))
       .put(Constants.Metrics.Tag.PROGRAM, jobName)
       .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
       .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
       .build();
-    return ImmutableMap.copyOf(immutableMap);
   }
 }
