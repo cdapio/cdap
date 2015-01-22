@@ -18,190 +18,140 @@ package co.cask.cdap.data.stream.service.heartbeat;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data.stream.StreamPropertyListener;
+import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.NotificationContext;
+import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Inject;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * {@link StreamsHeartbeatsAggregator} in which heartbeats are received as notifications. This implementation
- * uses the {@link NotificationService} to subscribe to heartbeats sent by Stream writers.
+ *
  */
-public class NotificationHeartbeatsAggregator extends AbstractIdleService implements StreamsHeartbeatsAggregator {
+public class NotificationHeartbeatsAggregator extends AbstractScheduledService implements StreamsHeartbeatsAggregator {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationHeartbeatsAggregator.class);
 
-  private static final int AGGREGATION_EXECUTOR_POOL_SIZE = 10;
-
-  private final Map<String, Cancellable> streamHeartbeatsSubscriptions;
+  private final StreamAdmin streamAdmin;
   private final NotificationService notificationService;
-  private final StreamCoordinatorClient streamCoordinatorClient;
+  private final Map<String, Aggregator> aggregators;
+  private Cancellable heartbeatsSubscription;
 
-  private ListeningScheduledExecutorService scheduledExecutor;
-
-  @Inject
-  public NotificationHeartbeatsAggregator(NotificationService notificationService,
-                                          StreamCoordinatorClient streamCoordinatorClient) {
+  public NotificationHeartbeatsAggregator(StreamAdmin streamAdmin, NotificationService notificationService) {
+    this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
-    this.streamCoordinatorClient = streamCoordinatorClient;
-    this.streamHeartbeatsSubscriptions = Maps.newHashMap();
+    this.aggregators = Maps.newConcurrentMap();
   }
 
   @Override
   protected void startUp() throws Exception {
-    this.scheduledExecutor = MoreExecutors.listeningDecorator(
-      Executors.newScheduledThreadPool(AGGREGATION_EXECUTOR_POOL_SIZE,
-                                       Threads.createDaemonThreadFactory("streams-heartbeats-aggregator")));
+    heartbeatsSubscription = subscribeToHeartbeatsFeed();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    try {
-      for (Cancellable subscription : streamHeartbeatsSubscriptions.values()) {
-        subscription.cancel();
-      }
-    } finally {
-      scheduledExecutor.shutdownNow();
+    if (heartbeatsSubscription != null) {
+      heartbeatsSubscription.cancel();
     }
   }
 
   @Override
-  public synchronized void aggregate(Set<String> streamNames) {
-    Set<String> alreadyListeningStreams = Sets.newHashSet(streamHeartbeatsSubscriptions.keySet());
-    for (final String streamName : streamNames) {
-      if (alreadyListeningStreams.remove(streamName)) {
+  protected void runOneIteration() throws Exception {
+    for (Aggregator aggregator : aggregators.values()) {
+      aggregator.checkAggregatedSize();
+    }
+  }
+
+  @Override
+  protected Scheduler scheduler() {
+    return Scheduler.newFixedRateSchedule(Constants.Notification.Stream.INIT_HEARTBEAT_AGGREGATION_DELAY,
+                                          Constants.Notification.Stream.HEARTBEAT_AGGREGATION_DELAY,
+                                          TimeUnit.SECONDS);
+  }
+
+  @Override
+  public void aggregate(Set<String> streamNames) {
+    Set<String> existingAggregators = Sets.newHashSet(aggregators.keySet());
+    for (String streamName : streamNames) {
+      if (existingAggregators.remove(streamName)) {
         continue;
       }
+
+      long filesSize = 0;
       try {
-        aggregate(streamName);
+        StreamConfig config = streamAdmin.getConfig(streamName);
+        filesSize = StreamUtils.fetchStreamFilesSize(config);
       } catch (IOException e) {
-        LOG.warn("Unable to listen to heartbeats of Stream {}", streamName, e);
+        LOG.error("Could not compute sizes of files for stream {}", streamName);
       }
+
+      Aggregator aggregator = new Aggregator(streamName, filesSize);
+      aggregators.put(streamName, aggregator);
     }
 
     // Remove subscriptions to the heartbeats we used to listen to before the call to that method,
     // but don't anymore
-    for (String outdatedStream : alreadyListeningStreams) {
-      Cancellable cancellable = streamHeartbeatsSubscriptions.remove(outdatedStream);
-      if (cancellable != null) {
-        cancellable.cancel();
-      }
+    for (String outdatedStream : existingAggregators) {
+      aggregators.remove(outdatedStream);
     }
   }
 
-  private synchronized void aggregate(String streamName) throws IOException {
-    final Aggregator aggregator = new Aggregator(streamName);
-
-    final Cancellable heartbeatsSubscription = subscribeToStreamHeartbeats(streamName, aggregator);
-    final Cancellable truncationListener =
-      streamCoordinatorClient.addListener(streamName, new StreamPropertyListener() {
-        @Override
-        public void generationChanged(String streamName, int generation) {
-          aggregator.reset();
-        }
-      });
-
-    // Schedule aggregation logic
-    final ScheduledFuture<?> scheduledFuture = scheduledExecutor.scheduleAtFixedRate(
-      aggregator, Constants.Notification.Stream.INIT_HEARTBEAT_AGGREGATION_DELAY,
-      Constants.Notification.Stream.HEARTBEAT_AGGREGATION_DELAY, TimeUnit.SECONDS);
-
-    streamHeartbeatsSubscriptions.put(streamName, new Cancellable() {
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationException {
+    final NotificationFeed heartbeatsFeed = new NotificationFeed.Builder()
+      .setNamespace("default")
+      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
+      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
+      .build();
+    return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
       @Override
-      public void cancel() {
-        truncationListener.cancel();
-        heartbeatsSubscription.cancel();
-        scheduledFuture.cancel(false);
+      public Type getNotificationFeedType() {
+        return StreamWriterHeartbeat.class;
+      }
+
+      @Override
+      public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
+        for (Map.Entry<String, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
+          Aggregator aggregator = aggregators.get(entry.getKey());
+          if (aggregator == null) {
+            continue;
+          }
+          aggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
+        }
       }
     });
-  }
-
-  /**
-   * Subscribe to the notification feed concerning heartbeats of the feed {@code streamName}.
-   *
-   * @param streamName stream with heartbeats to subscribe to
-   * @param aggregator heartbeats aggregator for the {@code streamName}
-   */
-  private Cancellable subscribeToStreamHeartbeats(String streamName, final Aggregator aggregator) throws IOException {
-    try {
-      final NotificationFeed heartbeatFeed = new NotificationFeed.Builder()
-        .setNamespace("default")
-        .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
-        .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-        .build();
-
-      return notificationService.subscribe(
-        heartbeatFeed, new NotificationHandler<StreamWriterHeartbeat>() {
-          @Override
-          public Type getNotificationFeedType() {
-            return StreamWriterHeartbeat.class;
-          }
-
-          @Override
-          public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
-            if (heartbeat.getType().equals(StreamWriterHeartbeat.Type.INIT)) {
-              // Init heartbeats don't describe "new" data, hence we consider their data as part of the base count
-              // If a writer is killed, a new one comes back up and sends an init heartbeat. The leader checks
-              // if it already has a heartbeat from this writer and only adds the difference with the last heartbeat.
-              StreamWriterHeartbeat lastHeartbeat = aggregator.getHeartbeats().get(heartbeat.getWriterID());
-              long toAdd;
-              if (lastHeartbeat == null) {
-                toAdd = heartbeat.getAbsoluteDataSize();
-              } else {
-                // Recalibrate the leader's base count according to that particular writer's base count
-                toAdd = heartbeat.getAbsoluteDataSize() - lastHeartbeat.getAbsoluteDataSize();
-              }
-              aggregator.getStreamBaseCount().addAndGet(toAdd);
-            }
-            aggregator.getHeartbeats().put(heartbeat.getWriterID(), heartbeat);
-          }
-        });
-    } catch (NotificationFeedNotFoundException e) {
-      throw new IOException(e);
-    } catch (NotificationFeedException e) {
-      throw new IOException(e);
-    }
   }
 
   /**
    * Runnable scheduled to aggregate the sizes of all stream writers. A notification is published
    * if the aggregated size is higher than a threshold.
    */
-  private final class Aggregator implements Runnable {
+  private final class Aggregator {
 
-    private final Map<Integer, StreamWriterHeartbeat> heartbeats;
+    private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
 
     // This boolean will ensure that an extra Stream notification is sent at CDAP start-up.
     private boolean initNotificationSent;
 
-    protected Aggregator(String streamName) {
-      this.heartbeats = Maps.newHashMap();
-      this.streamBaseCount = new AtomicLong(0);
+    protected Aggregator(String streamName, long baseCount) {
+      this.streamWriterSizes = Maps.newHashMap();
+      this.streamBaseCount = new AtomicLong(baseCount);
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace("default")
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
@@ -210,24 +160,35 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
       this.initNotificationSent = false;
     }
 
-    public Map<Integer, StreamWriterHeartbeat> getHeartbeats() {
-      return heartbeats;
-    }
-
-    public AtomicLong getStreamBaseCount() {
-      return streamBaseCount;
-    }
-
     public void reset() {
-      heartbeats.clear();
+      streamWriterSizes.clear();
       streamBaseCount.set(0);
     }
 
-    @Override
-    public void run() {
+    /**
+     * Notify this aggregator that a certain number of bytes have been received from the stream writer with instance
+     * {@code instanceId}.
+     *
+     * @param instanceId id of the stream writer from which we received some bytes
+     * @param nbBytes number of bytes of data received
+     */
+    public void bytesReceived(int instanceId, long nbBytes) {
+      Long lastSize = streamWriterSizes.get(instanceId);
+      if (lastSize == null) {
+        streamWriterSizes.put(instanceId, nbBytes);
+        return;
+      }
+      streamWriterSizes.put(instanceId, lastSize + nbBytes);
+    }
+
+    /**
+     * Check that the aggregated size of the heartbeats received by all Stream writers is higher than some threshold.
+     * If it is, we publish a notification.
+     */
+    public void checkAggregatedSize() {
       int sum = 0;
-      for (StreamWriterHeartbeat heartbeat : heartbeats.values()) {
-        sum += heartbeat.getAbsoluteDataSize();
+      for (Long size : streamWriterSizes.values()) {
+        sum += size;
       }
 
       if (!initNotificationSent || sum - streamBaseCount.get() > Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD) {
@@ -242,9 +203,7 @@ public class NotificationHeartbeatsAggregator extends AbstractIdleService implem
 
     private void publishNotification(long absoluteSize) {
       try {
-        notificationService.publish(
-          streamFeed,
-          new StreamSizeNotification(System.currentTimeMillis(), absoluteSize))
+        notificationService.publish(streamFeed, new StreamSizeNotification(System.currentTimeMillis(), absoluteSize))
           .get();
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);

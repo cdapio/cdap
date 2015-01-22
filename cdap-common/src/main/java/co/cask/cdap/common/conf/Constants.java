@@ -601,6 +601,9 @@ public final class Constants {
 
       /** Default number of bytes received by a stream after which a notification is sent */
       public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
+
+      public static final int INIT_HEARTBEAT_AGGREGATION_DELAY = 2;
+      public static final int HEARTBEAT_AGGREGATION_DELAY = 5;
     }
   }
 
