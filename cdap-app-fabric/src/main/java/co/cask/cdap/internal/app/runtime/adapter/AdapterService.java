@@ -136,7 +136,7 @@ public class AdapterService extends AbstractIdleService {
   public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     AdapterSpecification adapterSpecification = store.getAdapter(Id.Namespace.from(namespace), adapterName);
     if (adapterSpecification == null) {
-      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
+      throw new AdapterNotFoundException(adapterName);
     }
     return adapterSpecification;
   }
@@ -175,21 +175,31 @@ public class AdapterService extends AbstractIdleService {
    * Creates the adapter
    * @param namespaceId namespace to create the adapter
    * @param adapterSpec specification of the adapter to create
-   * @throws IllegalArgumentException on errors.
+   * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
+   * @throws IllegalArgumentException on other input errors.
    */
-  public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
+  public void createAdapter(String namespaceId, AdapterSpecification adapterSpec)
+    throws IllegalArgumentException, AdapterAlreadyExistsException {
+    //TODO: ensure that this method does not catch AdapterAlreadyExistsException and pass on as RuntimeExceptions
+    // (being done in another PR)
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
-    Preconditions.checkNotNull(adapterTypeInfo, "Adapter type %s not found", adapterSpec.getType());
+    Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
 
     try {
+      String adapterName = adapterSpec.getName();
+      AdapterSpecification existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+      if (existingAdapter != null) {
+        throw new AdapterAlreadyExistsException(adapterName);
+      }
+
       ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
-      validateSources(adapterSpec.getName(), adapterSpec.getSources());
+      validateSources(adapterName, adapterSpec.getSources());
       createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
       // If the adapter already exists, remove existing schedule to replace with the new one.
-      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
+      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
       if (existingSpec != null) {
         unschedule(namespaceId, appSpec, adapterTypeInfo, existingSpec);
       }

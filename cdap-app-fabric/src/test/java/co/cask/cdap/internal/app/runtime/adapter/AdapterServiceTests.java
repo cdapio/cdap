@@ -77,6 +77,13 @@ public class AdapterServiceTests extends AppFabricTestBase {
     // Create Adapter
     adapterService.createAdapter(namespaceId, adapterSpecification);
 
+    try {
+      // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
+      adapterService.createAdapter(namespaceId, adapterSpecification);
+      Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
+    } catch (AdapterAlreadyExistsException expected) {
+    }
+
     AdapterSpecification actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
     Assert.assertEquals(adapterSpecification, actualAdapterSpec);

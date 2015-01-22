@@ -88,6 +88,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
                                           sourceProperties, sinkProperties);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // A duplicate create request (or any other create request with the same namespace + adapterName) will result in 409
+    response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
+                             sourceProperties, sinkProperties);
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
@@ -154,8 +159,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   private HttpResponse createAdapter(String namespaceId, String name, String adapterConfig) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/adapters/%s",
-                               Constants.Gateway.API_VERSION_3, namespaceId, name), adapterConfig);
+    return doPost(String.format("%s/namespaces/%s/adapters/%s",
+                                Constants.Gateway.API_VERSION_3, namespaceId, name), adapterConfig);
   }
 
   private HttpResponse listAdapters(String namespaceId) throws Exception {

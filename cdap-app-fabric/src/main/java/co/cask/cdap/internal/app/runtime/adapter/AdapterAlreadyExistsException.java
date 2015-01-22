@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Thrown when Adapter is not found.
+ * Thrown when Adapter creation is requested, but an adapter already exists.
  */
-public class AdapterNotFoundException extends Exception {
-  public AdapterNotFoundException(String adapterName) {
-    super(String.format("Adapter %s not found.", adapterName));
+public class AdapterAlreadyExistsException extends Exception {
+  public AdapterAlreadyExistsException(String adapterName) {
+    super(String.format("Adapter %s already exists.", adapterName));
   }
 }

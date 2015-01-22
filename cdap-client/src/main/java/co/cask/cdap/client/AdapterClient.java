@@ -108,7 +108,7 @@ public class AdapterClient {
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL("v3", namespace, String.format("adapters/%s", adapterName));
-    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(adapterConfig)).build();
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
