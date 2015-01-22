@@ -30,13 +30,11 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
@@ -52,7 +50,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -70,17 +67,13 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private final ZKClient zkClient;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
-  private final StreamWriterSizeFetcher streamWriterSizeFetcher;
   private final HeartbeatPublisher heartbeatPublisher;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final Set<StreamLeaderListener> leaderListeners;
   private final int writerID;
-  private final Map<String, Long> streamsBaseSizes;
 
-  private boolean isInit;
   private Supplier<Discoverable> discoverableSupplier;
 
   private LeaderElection leaderElection;
@@ -94,27 +87,21 @@ public class DistributedStreamService extends AbstractStreamService {
                                   StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
                                   ZKClient zkClient,
-                                  StreamAdmin streamAdmin,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   StreamMetaStore streamMetaStore,
                                   Supplier<Discoverable> discoverableSupplier,
                                   StreamWriterSizeCollector streamWriterSizeCollector,
-                                  StreamWriterSizeFetcher streamWriterSizeFetcher,
                                   HeartbeatPublisher heartbeatPublisher) {
     super(streamCoordinatorClient, janitorService);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.discoverableSupplier = discoverableSupplier;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
-    this.streamWriterSizeFetcher = streamWriterSizeFetcher;
     this.heartbeatPublisher = heartbeatPublisher;
     this.writerID = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
-    this.streamsBaseSizes = Maps.newHashMap();
-    this.isInit = true;
   }
 
   @Override
@@ -124,7 +111,6 @@ public class DistributedStreamService extends AbstractStreamService {
     coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
                                                                    new StreamsLeaderHandler());
     performLeaderElection();
-    initStreamsBaseSizes();
   }
 
   @Override
@@ -152,24 +138,13 @@ public class DistributedStreamService extends AbstractStreamService {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", writerID);
     StreamWriterHeartbeat.Builder builder = new StreamWriterHeartbeat.Builder();
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      Long baseSize = streamsBaseSizes.get(streamSpec.getName());
-      if (baseSize == null) {
-        // First time that this stream is called in this method
-        baseSize = (long) 0;
-        streamsBaseSizes.put(streamSpec.getName(), baseSize);
-      }
-
-      long absoluteSize = baseSize + streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
-      StreamWriterHeartbeat.StreamSizeType type = isInit ?
-        StreamWriterHeartbeat.StreamSizeType.INIT :
-        StreamWriterHeartbeat.StreamSizeType.REGULAR;
-      builder.addStreamSize(streamSpec.getName(), absoluteSize, type);
+      builder.addStreamSize(streamSpec.getName(),
+                            streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
     builder.setWriterID(writerID);
     builder.setTimestamp(System.currentTimeMillis());
 
     heartbeatPublisher.sendHeartbeat(builder.build());
-    isInit = false;
   }
 
   @Override
@@ -208,16 +183,6 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       }
     };
-  }
-
-  /**
-   * For all existing streams, we initialize their base sizes.
-   */
-  private void initStreamsBaseSizes() throws Exception {
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      long baseSize = streamWriterSizeFetcher.fetchSize(streamAdmin.getConfig(streamSpec.getName()));
-      streamsBaseSizes.put(streamSpec.getName(), baseSize);
-    }
   }
 
   /**
