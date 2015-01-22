@@ -29,6 +29,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
@@ -219,6 +220,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                                         Names.named("appfabric.http.handler"));
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
+      handlerBinder.addBinding().to(ConfigHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
