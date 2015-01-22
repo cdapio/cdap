@@ -180,12 +180,12 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
     MetricsCollector collector3 =
       collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterMapRed",
-                                                             MapReduceMetrics.TaskType.Mapper, runId3));
+                                                             MapReduceMetrics.TaskType.Mapper, runId3, "t1"));
     collector3.gauge("entries.out", 10);
 
     MetricsCollector collector4 =
       collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterMapRed",
-                                                             MapReduceMetrics.TaskType.Reducer, runId3));
+                                                             MapReduceMetrics.TaskType.Reducer, runId3, "t2"));
     collector4.gauge("entries.out", 10);
 
     // Wait for collection to happen
