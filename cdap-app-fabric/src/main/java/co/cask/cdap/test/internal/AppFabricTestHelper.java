@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
@@ -82,6 +83,7 @@ public class AppFabricTestHelper {
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(SchedulerService.class).startAndWait();
+      injector.getInstance(StreamCoordinatorClient.class).startAndWait();
     }
     return injector;
   }

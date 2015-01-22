@@ -33,7 +33,6 @@ public class DFSStreamDataFileTest extends StreamDataFileTestBase {
   private static LocationFactory locationFactory;
   private static MiniDFSCluster dfsCluster;
 
-
   @BeforeClass
   public static void init() throws IOException {
     Configuration hConf = new Configuration();
