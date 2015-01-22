@@ -215,7 +215,10 @@ public class MetricsRequestExecutor {
       enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "system.process.events.out", "0", pair.getFirst()));
     }
     for (String streamName : streamNames) {
-      String ctx = Constants.Gateway.METRICS_CONTEXT + "." + Constants.Gateway.STREAM_HANDLER_NAME;
+      String ctx = String.format("%s.%s.%s",
+                                 Constants.SYSTEM_NAMESPACE,
+                                 Constants.Gateway.METRICS_CONTEXT,
+                                 Constants.Gateway.STREAM_HANDLER_NAME);
       enqueue += sumAll(aggregatesTable.scan(ctx, "system.collect.events", "0", streamName));
     }
 

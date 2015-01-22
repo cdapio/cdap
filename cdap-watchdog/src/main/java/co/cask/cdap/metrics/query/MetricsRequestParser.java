@@ -135,13 +135,13 @@ final class MetricsRequestParser {
 
     MetricsRequestContext metricsRequestContext;
     if (strippedPath.startsWith("/system/cluster")) {
-      builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
+      builder.setContextPrefix(String.format("%s.%s", Constants.SYSTEM_NAMESPACE, CLUSTER_METRICS_CONTEXT));
       builder.setScope(MetricsScope.SYSTEM);
-      metricsRequestContext = new MetricsRequestContext.Builder().build();
+      metricsRequestContext = new MetricsRequestContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build();
     } else if (strippedPath.startsWith("/system/transactions")) {
-      builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
+      builder.setContextPrefix(String.format("%s.%s", Constants.SYSTEM_NAMESPACE, TRANSACTION_METRICS_CONTEXT));
       builder.setScope(MetricsScope.SYSTEM);
-      metricsRequestContext = new MetricsRequestContext.Builder().build();
+      metricsRequestContext = new MetricsRequestContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
@@ -219,6 +219,7 @@ final class MetricsRequestParser {
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'services must be followed by a service name");
         }
+        contextBuilder.setNamespaceId(Constants.SYSTEM_NAMESPACE);
         parseSubContext(pathParts, contextBuilder);
         break;
     }

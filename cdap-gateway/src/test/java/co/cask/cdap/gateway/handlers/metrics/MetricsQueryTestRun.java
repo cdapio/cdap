@@ -103,7 +103,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingSystemMetrics() throws Exception {
     // Insert system metric
     MetricsCollector collector =
-      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "appfabric",
+      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                                                     Constants.Metrics.Tag.COMPONENT, "appfabric",
                                                      Constants.Metrics.Tag.HANDLER, "AppFabricHttpHandler",
                                                      Constants.Metrics.Tag.METHOD, "getAllApps"));
     collector.increment("request.received", 1);
@@ -319,10 +320,11 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testingTransactoinMetrics() throws Exception {
+  public void testingTransactionMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)
     MetricsCollector collector =
-      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "transactions"));
+      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                                                     Constants.Metrics.Tag.COMPONENT, "transactions"));
     collector.increment("inprogress", 1);
 
     // Wait for collection to happen
@@ -344,7 +346,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
                                                             "counter", "wordStream"));
     collector.increment("collect.events", 10);
     collector = collectionService.getCollector(
-      ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                      Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
     collector.increment("resources.total.storage", 10);
 
     // Wait for collection to happen

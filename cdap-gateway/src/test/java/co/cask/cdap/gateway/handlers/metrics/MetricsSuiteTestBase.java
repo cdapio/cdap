@@ -441,7 +441,8 @@ public abstract class MetricsSuiteTestBase {
   }
 
   protected static Map<String, String> getStreamHandlerContext(String streamName, String instanceId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, instanceId,
                            Constants.Metrics.Tag.STREAM, streamName);
