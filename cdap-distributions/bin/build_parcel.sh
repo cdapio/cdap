@@ -1,5 +1,33 @@
 #!/usr/bin/env bash
 
+# Parcel name vars 
+PARCEL_BASE="CDAP"
+PARCEL_SUFFIX="el6"
+
+# Components should map to top-level directories: "cdap-${COMPONENT}"
+COMPONENTS="gateway hbase-compat-0.94 hbase-compat-0.96 hbase-compat-0.98 kafka master security web-app"
+
+# Find our location and base repo directory
+# Resolve links: $0 may be a link
+PRG=${0}
+# Need this for relative symlinks.
+while [ -h ${PRG} ]; do
+    ls=`ls -ld ${PRG}`
+    link=`expr ${ls} : '.*-> \(.*\)$'`
+    if expr ${link} : '/.*' > /dev/null; then
+        PRG=${link}
+    else
+        PRG=`dirname ${PRG}`/${link}
+    fi
+done
+cd `dirname ${PRG}`/.. >&-
+DISTRIBUTIONS_HOME=`pwd -P`
+cd `dirname ${DISTRIBUTIONS_HOME}` >&-
+REPO_HOME=`pwd -P`
+
+TARGET_DIR=${DISTRIBUTIONS_HOME}/target
+STAGE_DIR=${TARGET_DIR}/parcel
+
 # Ensure environment is as expected, with maven-produced staging directories
 function validate_env {
   # First ensure we are in clean state and no partial parcel build exists
@@ -78,34 +106,7 @@ function generate_parcel {
 }
 
 
-
-# Parcel name vars 
-PARCEL_BASE="CDAP"
-PARCEL_SUFFIX="el6"
-
-# Components should map to top-level directories: "cdap-${COMPONENT}"
-COMPONENTS="gateway hbase-compat-0.94 hbase-compat-0.96 hbase-compat-0.98 kafka master security web-app"
-
-# Find our location and base repo directory
-# Resolve links: $0 may be a link
-PRG=${0}
-# Need this for relative symlinks.
-while [ -h ${PRG} ]; do
-    ls=`ls -ld ${PRG}`
-    link=`expr ${ls} : '.*-> \(.*\)$'`
-    if expr ${link} : '/.*' > /dev/null; then
-        PRG=${link}
-    else
-        PRG=`dirname ${PRG}`/${link}
-    fi
-done
-cd `dirname ${PRG}`/.. >&-
-DISTRIBUTIONS_HOME=`pwd -P`
-cd `dirname ${DISTRIBUTIONS_HOME}` >&-
-REPO_HOME=`pwd -P`
-
-TARGET_DIR=${DISTRIBUTIONS_HOME}/target
-STAGE_DIR=${TARGET_DIR}/parcel
+# Do stuff
 
 validate_env
 
