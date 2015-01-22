@@ -98,9 +98,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertTrue(adapters.isEmpty());
   }
 
-
-  // TODO: Negative tests for deploying adapters
-
   private static void setupAdapters() throws IOException {
     setupAdapter(AdapterApp.class, "dummyAdapter");
   }

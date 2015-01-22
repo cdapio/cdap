@@ -424,6 +424,11 @@ public abstract class AppFabricTestBase {
     return getVersionedAPIPath(statusUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
+  protected String getRunsUrl(String namespace, String appName, String workflow, String status) {
+    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=%s", appName, workflow, status);
+    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
   protected List<Map<String, String>> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
     int trial = 0;
     int workflowRuns = 0;

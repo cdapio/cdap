@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithMultipleWorkflows;
+import co.cask.cdap.AppWithMultipleScheduledWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorkflow;
@@ -89,7 +89,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
   private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
   private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
-  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleWorkflows";
+  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleScheduledWorkflows";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW = "SomeWorkflow";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
   private static final String APP_WITH_CONCURRENT_WORKFLOW = "ConcurrentWorkflowApp";
@@ -775,7 +775,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
-    HttpResponse response = deploy(AppWithMultipleWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
+    HttpResponse response = deploy(AppWithMultipleScheduledWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -920,12 +920,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     return history.size();
   }
-
-  private String getRunsUrl(String namespace, String appName, String workflow, String status) {
-    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=%s", appName, workflow, status);
-    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-  }
-
   private int deleteQueues(String namespace, String appId, String flow) throws Exception {
     String deleteQueuesUrl = String.format("apps/%s/flows/%s/queues", appId, flow);
     String versionedDeleteUrl = getVersionedAPIPath(deleteQueuesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);

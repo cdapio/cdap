@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
+import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
@@ -28,6 +29,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricClient;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -35,6 +37,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -69,8 +72,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
   @Test
   public void testAdapterLifeCycle() throws Exception {
-    setupAdapters();
-
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterType = "dummyAdapter";
     String adapterName = "myStreamConverter";
@@ -108,21 +109,24 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(1, schedules.size());
     // Upon adapter create, the workflow schedules should be in a SCHEDULED state
     for (ScheduleSpecification schedule : schedules) {
-      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME, schedule.getSchedule().getName());
+      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
+                                schedule.getSchedule().getName());
       scheduleStatusCheck(5, url, "SCHEDULED");
     }
 
     // suspending the adapter should put the associated schedules into a SUSPENDED state
     suspendResumeAdapter(namespaceId, adapterName, "suspend");
     for (ScheduleSpecification schedule : schedules) {
-      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME, schedule.getSchedule().getName());
+      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
+                                schedule.getSchedule().getName());
       scheduleStatusCheck(5, url, "SUSPENDED");
     }
 
     // resuming the adapter puts the associated schedules back into a SCHEDULED state
     suspendResumeAdapter(namespaceId, adapterName, "resume");
     for (ScheduleSpecification schedule : schedules) {
-      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME, schedule.getSchedule().getName());
+      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
+                                schedule.getSchedule().getName());
       scheduleStatusCheck(5, url, "SCHEDULED");
     }
 
@@ -133,8 +137,65 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testMultipleWorkflows() throws Exception {
+    //Testcase with multiple workflows. Ensure all are scheduled and run upon adapter create.
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String adapterType = "AppWithMultipleWorkflows";
+    String adapterName = "myStreamConverter";
+
+    ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
+    ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
+    ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
+
+    HttpResponse response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
+                                          sourceProperties, sinkProperties);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    List<ScheduleSpecification> workflowSchedules = Lists.newArrayList();
+    workflowSchedules.addAll(getSchedules(namespaceId, adapterType, AppWithMultipleWorkflows.SomeWorkflow.NAME));
+    Assert.assertEquals(1, workflowSchedules.size());
+    workflowSchedules.addAll(getSchedules(namespaceId, adapterType, AppWithMultipleWorkflows.AnotherWorkflow.NAME));
+    Assert.assertEquals(2, workflowSchedules.size());
+
+    // Upon adapter create, the workflow schedules should be in a SCHEDULED state
+    for (ScheduleSpecification schedule : workflowSchedules) {
+      String workflowName = schedule.getProgram().getProgramName();
+      String url = getStatusUrl(namespaceId, adapterType, workflowName, schedule.getSchedule().getName());
+      scheduleStatusCheck(5, url, "SCHEDULED");
+      scheduleHistoryRuns(120, getRunsUrl(namespaceId, adapterType, workflowName, "completed"), 0);
+    }
+  }
+
+  @Test
+  public void testInvalidAdapters() throws Exception {
+    //Invalid adapter  tests.
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+
+    ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
+    ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
+    ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
+
+    String adapterName = "myAdapter";
+    String adapterType = "dummyAdapter";
+
+    // Create Adapter without specifying the dataset.class attribute in the sink properties results in an error.
+    HttpResponse httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
+                                              properties, sourceProperties, ImmutableMap.<String, String>of());
+    Assert.assertEquals(400, httpResponse.getStatusLine().getStatusCode());
+    Assert.assertEquals("Dataset class cannot be null", EntityUtils.toString(httpResponse.getEntity()));
+
+    // Create Adapter without specifying the frequency attribute in the adapter properties results in an error.
+    httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
+                                 ImmutableMap.<String, String>of(), sourceProperties, sinkProperties);
+    Assert.assertEquals(400, httpResponse.getStatusLine().getStatusCode());
+    Assert.assertEquals("Frequency of running the adapter is missing from adapter properties. Cannot schedule program.",
+                        EntityUtils.toString(httpResponse.getEntity()));
+  }
+
   private static void setupAdapters() throws IOException {
     setupAdapter(AdapterApp.class, "dummyAdapter");
+    setupAdapter(AppWithMultipleWorkflows.class, "AppWithMultipleWorkflows");
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
