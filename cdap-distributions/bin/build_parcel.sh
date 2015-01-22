@@ -28,6 +28,11 @@ REPO_HOME=`pwd -P`
 TARGET_DIR=${DISTRIBUTIONS_HOME}/target
 STAGE_DIR=${TARGET_DIR}/parcel
 
+# Source additional settings if configured
+if [ -n "${PARCEL_DELIVERY_OPTIONS_FILE}" ]; then
+  source ${PARCEL_DELIVERY_OPTIONS_FILE}
+fi
+
 # Ensure environment is as expected, with maven-produced staging directories
 function validate_env {
   # First ensure we are in clean state and no partial parcel build exists
@@ -103,8 +108,28 @@ function stage_parcel_bits {
 # Create the parcel via tar
 function generate_parcel {
   tar czf ${TARGET_DIR}/${PARCEL_NAME} -C ${STAGE_DIR} ${PARCEL_ROOT_DIR}/ --owner=root --group=root
+  local __ret=$?
+  if [ $__ret -ne 0 ]; then
+    echo "Tar generation unsuccessful"
+    exit 1
+  else
+    echo "Generated ${TARGET_DIR}/${PARCEL_NAME}"
+  fi
 }
 
+# Scp the parcel somewhere, optional
+function scp_parcel {
+  if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_PATH}" ]; then
+    echo "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_IDENTITY"
+  fi
+  echo "Copying ${TARGET_DIR}/${PARCEL_NAME} to remote host ${PARCEL_SCP_HOST}"
+  scp ${PARCEL_SCP_IDENTITY} ${TARGET_DIR}/${PARCEL_NAME} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST}:${PARCEL_SCP_PATH}
+  local __ret=$?
+  if [ $__ret -ne 0 ]; then
+    echo "Scp unsuccessful"
+    exit 1
+  fi 
+}
 
 # Do stuff
 
@@ -119,3 +144,8 @@ stage_artifacts
 stage_parcel_bits
 
 generate_parcel
+
+# Scp settings must be configured in ${PARCEL_DELIVERY_OPTIONS_FILE}
+if [ -n "${PARCEL_SCP_ENABLED}" ]; then
+  scp_parcel
+fi
