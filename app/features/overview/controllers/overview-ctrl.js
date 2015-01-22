@@ -12,24 +12,31 @@ function ($scope, MyDataSource, $state) {
     return;
   }
 
-  $scope.apps = null;
+  $scope.apps = [];
+  $scope.datasets = [];
   $scope.hideWelcomeMessage = false;
 
-  var dataSrc = new MyDataSource($scope);
+  var dataSrc = new MyDataSource($scope),
+      partialPath = '/assets/features/overview/templates/';
 
   dataSrc.request({
-    _cdapNsPath: '/apps',
-    method: 'GET'
+    _cdapNsPath: '/apps'
   }, function(res) {
     $scope.apps = res;
-
-    var p = '/assets/features/overview/templates/';
-    if (angular.isArray($scope.apps) && $scope.apps.length) {
-      $scope.dataAppsTemplate = p + 'data-apps-section.html';
-    } else {
-      $scope.dataAppsTemplate = p + 'data-apps-empty-section.html';
-    }
+    var isValidArray = angular.isArray($scope.apps) && $scope.apps.length;
+    $scope.appsTemplate = partialPath +
+      (isValidArray ? 'apps-section.html': 'apps-empty-section.html');
     console.log('Apps: ', $scope.apps);
+  });
+
+  dataSrc.request({
+    _cdapPathV2: '/data/datasets'
+  }, function(res) {
+    $scope.datasets = res;
+    var isValidArray = angular.isArray($scope.datasets) && $scope.datasets.length;
+    $scope.dataTemplate = partialPath +
+      (isValidArray ? 'data-section.html': 'data-empty-section.html');
+    console.log('Datasets: ', $scope.datasets);
   });
 
 });

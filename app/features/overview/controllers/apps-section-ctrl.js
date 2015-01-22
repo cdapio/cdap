@@ -1,4 +1,4 @@
 angular.module(PKG.name + '.feature.overview')
-  .controller('EmptySectionCtrl', function($scope, myAppUploader) {
+  .controller('AppsSectionCtrl', function($scope, myAppUploader) {
     $scope.onFileSelected = myAppUploader.upload;
   });
