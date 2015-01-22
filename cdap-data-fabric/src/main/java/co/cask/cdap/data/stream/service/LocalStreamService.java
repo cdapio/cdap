@@ -19,8 +19,8 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.common.collect.Maps;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
 import java.util.Map;

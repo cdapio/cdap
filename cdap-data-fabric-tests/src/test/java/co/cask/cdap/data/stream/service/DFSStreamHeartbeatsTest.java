@@ -84,18 +84,18 @@ public class DFSStreamHeartbeatsTest {
   private static ZKClientService zkClient;
 
   @ClassRule
-  public final static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
+    zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
     conf = CConfiguration.create();
     conf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     conf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
 
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
       Modules.override(
         new ZKClientModule(),
