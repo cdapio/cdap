@@ -21,7 +21,7 @@
        ng-repeat="app in apps"
        ui-sref="apps.detail.overview({appId: app.id})">
       <strong ng-bind="app.name">  </strong>
-      <div ng-bind="app.description"> </div>
+      <em> <div ng-bind="app.description"> </div> </em>
     </a>
   </div>
 </div>

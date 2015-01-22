@@ -40,4 +40,13 @@ function ($scope, MyDataSource, $state) {
         (isValidArray ? 'data-section.html': 'data-empty-section.html');
       console.log('Datasets: ', $scope.datasets);
     });
+
+  dataSrc.request({
+    _cdapPathV2: '/streams'
+  }, function(res) {
+    if (angular.isArray(res) && res.length) {
+      $scope.datasets = res.concat($scope.datasets);
+    }
+  })
+
 });

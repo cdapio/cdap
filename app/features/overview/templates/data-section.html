@@ -17,10 +17,10 @@
 <div class="pre-scrollable">
 <div class="list-group">
   <a class="list-group-item"
-     ng-repeat="dataset in datasets"
+     ng-repeat="dataset in datasets track by $index"
      ui-sref="dataset.detail.overview({datasetId: dataset.name})">
-    <strong ng-bind="dataset.name">  </strong>
-    <div ng-bind="'Type: ' + (dataset.type)"> </div>
+    <strong ng-bind="dataset.name | camelCaseFilter">  </strong>
+    <em> <div ng-bind="'Type: ' + (dataset.type)"> </div></em>
   </a>
 </div>
 </div>
