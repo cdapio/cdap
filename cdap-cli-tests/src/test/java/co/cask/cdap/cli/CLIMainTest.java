@@ -283,10 +283,10 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
-    propMap.put("key", "instance");
+    propMap.put("key", "new instance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences 'key=instance k1=v1'"),
+    testCommandOutputContains(cli, String.format("set instance preferences 'key=new instance, k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
     testPreferencesOutput(cli, "get instance resolved preferences", propMap);
@@ -304,6 +304,35 @@ public class CLIMainTest extends StandaloneTestBase {
     testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
     testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
+
+    File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "Not a file");
+    testCommandOutputContains(cli, "load instance preferences " + file.getParentFile().getAbsolutePath() + " json",
+                              "Not a file");
+    // Generate a file to load
+    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key':'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
+    propMap.clear();
+    propMap.put("key", "somevalue");
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+
+    //Try invalid Json
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.txt");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key:'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
   }
 
   @Test
