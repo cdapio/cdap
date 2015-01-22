@@ -2,13 +2,9 @@ angular.module(PKG.name + '.feature.apps')
   .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myAppUploader, $alert, $state) {
     var data = new MyDataSource($scope);
 
-    data.request({
-      _cdapNsPath: '/apps/',
-      method: 'GET',
-    }, function(res) {
-      $scope.apps = res;
+    $scope.apps = data.request({
+      _cdapNsPath: '/apps/'
     });
-
     $scope.onFileSelected = myAppUploader.upload;
 
 
