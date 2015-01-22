@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
@@ -39,7 +38,7 @@ import java.io.IOException;
 /**
  *
  */
-public class StreamFileWriterSizeFetcherTest {
+public class StreamFileSizeFetcherTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
@@ -59,9 +58,8 @@ public class StreamFileWriterSizeFetcherTest {
     streamAdmin.create(streamName);
     StreamConfig config = streamAdmin.getConfig(streamName);
 
-    StreamWriterSizeFetcher fetcher = new StreamFileWriterSizeFetcher(CConfiguration.create());
     try {
-      fetcher.fetchSize(config);
+      StreamUtils.fetchStreamFilesSize(config);
       Assert.fail("No stream file created yet");
     } catch (IOException e) {
       // Expected
@@ -71,9 +69,9 @@ public class StreamFileWriterSizeFetcherTest {
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     StreamDataFileWriter writer =
       new StreamDataFileWriter(
-        Locations.newOutputSupplier(StreamUtils.createStreamLocation(partitionLocation, "writer.0", 0,
+        Locations.newOutputSupplier(StreamUtils.createStreamLocation(partitionLocation, "writer", 0,
                                                                      StreamFileType.EVENT)),
-        Locations.newOutputSupplier(StreamUtils.createStreamLocation(partitionLocation, "writer.0", 0,
+        Locations.newOutputSupplier(StreamUtils.createStreamLocation(partitionLocation, "writer", 0,
                                                                      StreamFileType.INDEX)),
         10000L);
 
@@ -84,8 +82,7 @@ public class StreamFileWriterSizeFetcherTest {
 
     writer.close();
 
-    fetcher = new StreamFileWriterSizeFetcher(CConfiguration.create());
-    long size = fetcher.fetchSize(config);
+    long size = StreamUtils.fetchStreamFilesSize(config);
     Assert.assertTrue(size > 0);
   }
 

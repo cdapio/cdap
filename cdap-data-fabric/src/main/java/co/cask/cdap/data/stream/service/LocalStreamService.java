@@ -32,10 +32,8 @@ public class LocalStreamService extends AbstractStreamService {
 
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
-  private final StreamWriterSizeFetcher streamWriterSizeFetcher;
   private final StreamMetaStore streamMetaStore;
   private final Map<String, Long> streamsBaseSizes;
-  private boolean isInit;
 
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
@@ -43,15 +41,12 @@ public class LocalStreamService extends AbstractStreamService {
                             StreamMetaStore streamMetaStore,
                             StreamAdmin streamAdmin,
                             StreamWriterSizeCollector streamWriterSizeCollector,
-                            StreamWriterSizeFetcher streamWriterSizeFetcher,
                             NotificationFeedManager notificationFeedManager) {
     super(streamCoordinatorClient, janitorService, notificationFeedManager);
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
-    this.streamWriterSizeFetcher = streamWriterSizeFetcher;
     this.streamsBaseSizes = Maps.newHashMap();
-    this.isInit = true;
   }
 
   @Override
@@ -68,19 +63,11 @@ public class LocalStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      Long baseSize = streamsBaseSizes.get(streamSpec.getName());
-      if (baseSize == null) {
-        // First time that this stream is called in this method
-        baseSize = streamWriterSizeFetcher.fetchSize(streamAdmin.getConfig(streamSpec.getName()));
-        streamsBaseSizes.put(streamSpec.getName(), baseSize);
-      }
-
-      long absoluteSize = baseSize + streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
+      long absoluteSize = streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
 
       // TODO check that this size is higher than a threshold, and send a notification is so - or if isInit is true too
       // TODO will come in a later PR
 
     }
-    isInit = false;
   }
 }

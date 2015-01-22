@@ -197,10 +197,9 @@ public class DFSStreamHeartbeatsTest {
     StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
     Assert.assertNotNull(heartbeat);
     Assert.assertEquals(1, heartbeat.getStreamsSizes().size());
-    StreamWriterHeartbeat.StreamSize streamSize = heartbeat.getStreamsSizes().get(streamName);
+    Long streamSize = heartbeat.getStreamsSizes().get(streamName);
     Assert.assertNotNull(streamSize);
-    Assert.assertEquals(entries * TWO_BYTES.length, streamSize.getAbsoluteDataSize());
-    Assert.assertEquals(StreamWriterHeartbeat.StreamSizeType.REGULAR, streamSize.getStreamSizeType());
+    Assert.assertEquals(entries * TWO_BYTES.length, (long) streamSize);
   }
 
   /**
