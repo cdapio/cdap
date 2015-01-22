@@ -16,48 +16,54 @@ transferred to the next job in sequence until the last job in the sequence is ex
 failure, the execution is stopped at the failed job and no subsequent jobs in the sequence
 are executed.
 
-To process MapReduce or Spark programs in sequence, specify
-``addWorkflow()`` in your application::
+To execute MapReduce or Spark programs in the Workflow, you will need to add them in your
+application along with the Workflow. You can optionally add schedule to the Workflow.::
 
   public void configure() {
     ...
-    addWorkflow(new PurchaseHistoryWorkflow());
+    addMapReduce(new MyMapReduce());
+    addMapReduce(new AnotherMapReduce());
+    addSpark(new MySpark());
+    addWorkflow(new MyWorkflow());
+    scheduleWorkflow("FiveHourSchedule", "0 */5 * * *", "MyWorkflow");
+    ...
+  }
 
-You'll then implement the ``Workflow`` interface, which requires the
-``configure()`` method. From within ``configure``, call the
-``addSchedule()`` method to run a WorkFlow job periodically::
+You'll then extend the ``AbstractWorkflow`` class and implement the
+``configure()`` method. From within ``configure``, you can add multiple MapReduce, Spark
+or Custom Action programs to the Workflow. The programs will get executed in a sequence in
+which they are added in the ``configure()`` method.::
 
-  public static class PurchaseHistoryWorkflow implements Workflow {
+  public static class MyWorkflow extends AbstractWorkflow {
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("PurchaseHistoryWorkflow")
-        .setDescription("PurchaseHistoryWorkflow description")
-        .startWith(new PurchaseHistoryBuilder())
-        .last(new PurchaseTrendBuilder())
-        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-                     "0/5 * * * *", Schedule.Action.START))
-        .build();
+    public void configure() {
+        setName("MyWorkflow");
+        setDescription("MyWorkflow description");
+        addMapReduce("MyMapReduce");
+        addSpark("MySpark");
+        addMapReduce("AnotherMapReduce");
+        addAction(new MyAction());
     }
   }
 
-If there is only one MapReduce or Spark program to be run as a part of a WorkFlow,
-use the ``onlyWith()`` method after ``setDescription()`` when building
-the Workflow::
+``MyWorkflow`` will be executed every 5 hours. During each execution of the Workflow - ``MyMapReduce``,
+``MySpark``, ``AnotherMapReduce`` and ``MyAction`` programs will be executed in a sequence.
 
-  public static class PurchaseHistoryWorkflow implements Workflow {
+.. rubric::  Workflow Custom Action
+
+Apart from MapReduce and Spark programs, Workflow can be extended to execute custom actions. For
+defining custom action, you will need to extend the ``AbstractWorkflowAction`` and implement the ``run()`` method.::
+
+  public static class MyAction extends AbstractWorkflowAction {
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
-        .setDescription("PurchaseHistoryWorkflow description")
-        .onlyWith(new PurchaseHistoryBuilder())
-        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-                     "0/5 * * * *", Schedule.Action.START))
-        .build();
+    public void run() {
+      // your code goes here
     }
   }
+
+The custom action then can be added to the Workflow using ``addAction()`` method as shown above.
 
 .. rubric::  Example of Using a Workflow
 
