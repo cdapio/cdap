@@ -29,26 +29,11 @@ import java.util.Map;
  */
 public class StreamWriterHeartbeat {
 
-  /**
-   * Type of information that describes one {@link StreamSize} object.
-   */
-  public enum StreamSizeType {
-    /**
-     * Size sent during Stream writer initialization.
-     */
-    INIT,
-
-    /**
-     * Size sent during regular Stream writer life.
-     */
-    REGULAR
-  }
-
   private final long timestamp;
   private final int writerID;
-  private final Map<String, StreamSize> streamsSizes;
+  private final Map<String, Long> streamsSizes;
 
-  private StreamWriterHeartbeat(long timestamp, int writerID, Map<String, StreamSize> streamsSizes) {
+  private StreamWriterHeartbeat(long timestamp, int writerID, Map<String, Long> streamsSizes) {
     this.timestamp = timestamp;
     this.writerID = writerID;
     this.streamsSizes = ImmutableMap.copyOf(streamsSizes);
@@ -62,7 +47,7 @@ public class StreamWriterHeartbeat {
     return writerID;
   }
 
-  public Map<String, StreamSize> getStreamsSizes() {
+  public Map<String, Long> getStreamsSizes() {
     return streamsSizes;
   }
 
@@ -82,7 +67,7 @@ public class StreamWriterHeartbeat {
 
     private long timestamp;
     private int writerID;
-    private final Map<String, StreamSize> streamSizes;
+    private final Map<String, Long> streamSizes;
 
     public Builder() {
       streamSizes = Maps.newHashMap();
@@ -98,42 +83,13 @@ public class StreamWriterHeartbeat {
       return this;
     }
 
-    public Builder addStreamSize(String streamName, long absoluteDataSize, StreamSizeType streamSizeType) {
-      streamSizes.put(streamName, new StreamSize(absoluteDataSize, streamSizeType));
+    public Builder addStreamSize(String streamName, long absoluteDataSize) {
+      streamSizes.put(streamName, absoluteDataSize);
       return this;
     }
 
     public StreamWriterHeartbeat build() {
       return new StreamWriterHeartbeat(timestamp, writerID, streamSizes);
-    }
-  }
-
-  /**
-   * POJO class describing a stream size for the current writer.
-   */
-  public static final class StreamSize {
-    private final long absoluteDataSize;
-    private final StreamSizeType streamSizeType;
-
-    public StreamSize(long absoluteDataSize, StreamSizeType streamSizeType) {
-      this.absoluteDataSize = absoluteDataSize;
-      this.streamSizeType = streamSizeType;
-    }
-
-    public long getAbsoluteDataSize() {
-      return absoluteDataSize;
-    }
-
-    public StreamSizeType getStreamSizeType() {
-      return streamSizeType;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(StreamWriterHeartbeat.class)
-        .add("absoluteDataSize", absoluteDataSize)
-        .add("streamSizeType", streamSizeType)
-        .toString();
     }
   }
 }
