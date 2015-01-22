@@ -44,7 +44,6 @@ import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
@@ -54,8 +53,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -85,8 +82,6 @@ public class DistributedStreamService extends AbstractStreamService {
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
   private Cancellable coordinationSubscription;
-
-  private ScheduledExecutorService executor;
 
   @Inject
   public DistributedStreamService(CConfiguration cConf,
@@ -133,9 +128,6 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void doShutdown() throws Exception {
     leaderListenerCancellable.cancel();
 
-    if (executor != null) {
-      executor.shutdownNow();
-    }
     heartbeatPublisher.stopAndWait();
 
     if (leaderElection != null) {
@@ -159,12 +151,6 @@ public class DistributedStreamService extends AbstractStreamService {
       sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
     heartbeatPublisher.sendHeartbeat(new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build()));
-  }
-
-  @Override
-  protected ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
-    return executor;
   }
 
   /**

@@ -23,7 +23,10 @@ import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.common.Threads;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,6 +37,8 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
   private final NotificationFeedManager feedManager;
+
+  private ScheduledExecutorService executor;
 
   /**
    * Children classes should implement this method to add logic to the start of this {@link Service}.
@@ -69,6 +74,11 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   @Override
   protected final void shutDown() throws Exception {
     doShutdown();
+
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }
@@ -78,13 +88,13 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
   }
 
-    /**
+  /**
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
     // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
     NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace("default")
+      .setNamespace(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Streams heartbeats feed.")
@@ -95,5 +105,11 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     } catch (NotificationFeedException e) {
       feedManager.createFeed(streamHeartbeatsFeed);
     }
+  }
+
+  @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
+    return executor;
   }
 }

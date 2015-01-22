@@ -56,8 +56,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
-        bind(HeartbeatPublisher.class).to(NoOpHeartbeatPublisher.class).in(Scopes.SINGLETON);
-
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
       }
     };
