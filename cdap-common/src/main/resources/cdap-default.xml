@@ -223,12 +223,23 @@
     <property>
         <name>stream.container.instance.id</name>
         <value>0</value>
+        <description>
+            Instance ID for stream service container.
+            The actual value will be set at runtime by the system automatically.
+        </description>
     </property>
 
     <property>
         <name>stream.file.prefix</name>
-        <value>file.${stream.container.instance.id}</value>
+        <value>file</value>
         <description>Prefix of file name for Stream file</description>
+    </property>
+
+    <property>
+        <name>stream.instance.file.prefix</name>
+        <value>${stream.file.prefix}.${stream.container.instance.id}</value>
+        <description>Prefix of file name for Stream file per writer instance.</description>
+        <final>true</final>
     </property>
 
     <property>
