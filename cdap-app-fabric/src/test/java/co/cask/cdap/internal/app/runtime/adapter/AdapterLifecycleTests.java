@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.adapter;
 import co.cask.cdap.AdapterApp;
 import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -29,7 +28,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricClient;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -105,66 +103,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     JsonObject deployedApp = deployedApps.get(0);
     Assert.assertEquals(adapterType, deployedApp.get("id").getAsString());
 
-    List<ScheduleSpecification> schedules = getSchedules(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME);
-    Assert.assertEquals(1, schedules.size());
-    // Upon adapter create, the workflow schedules should be in a SCHEDULED state
-    for (ScheduleSpecification schedule : schedules) {
-      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
-                                schedule.getSchedule().getName());
-      scheduleStatusCheck(5, url, "SCHEDULED");
-    }
-
-    // suspending the adapter should put the associated schedules into a SUSPENDED state
-    startStopAdapter(namespaceId, adapterName, "stop");
-    for (ScheduleSpecification schedule : schedules) {
-      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
-                                schedule.getSchedule().getName());
-      scheduleStatusCheck(5, url, "SUSPENDED");
-    }
-
-    // resuming the adapter puts the associated schedules back into a SCHEDULED state
-    startStopAdapter(namespaceId, adapterName, "start");
-    for (ScheduleSpecification schedule : schedules) {
-      String url = getStatusUrl(namespaceId, adapterType, AdapterApp.AdapterWorkflow.NAME,
-                                schedule.getSchedule().getName());
-      scheduleStatusCheck(5, url, "SCHEDULED");
-    }
-
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-  }
-
-  @Test
-  public void testMultipleWorkflows() throws Exception {
-    //Testcase with multiple workflows. Ensure all are scheduled and run upon adapter create.
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-    String adapterType = "AppWithMultipleWorkflows";
-    String adapterName = "myStreamConverter";
-
-    ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
-    ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
-    ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
-
-    HttpResponse response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
-                                          sourceProperties, sinkProperties);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    List<ScheduleSpecification> workflowSchedules = Lists.newArrayList();
-    workflowSchedules.addAll(getSchedules(namespaceId, adapterType, AppWithMultipleWorkflows.SomeWorkflow.NAME));
-    Assert.assertEquals(1, workflowSchedules.size());
-    workflowSchedules.addAll(getSchedules(namespaceId, adapterType, AppWithMultipleWorkflows.AnotherWorkflow.NAME));
-    Assert.assertEquals(2, workflowSchedules.size());
-
-    // Upon adapter create, the workflow schedules should be in a SCHEDULED state
-    for (ScheduleSpecification schedule : workflowSchedules) {
-      String workflowName = schedule.getProgram().getProgramName();
-      String url = getStatusUrl(namespaceId, adapterType, workflowName, schedule.getSchedule().getName());
-      scheduleStatusCheck(5, url, "SCHEDULED");
-      scheduleHistoryRuns(120, getRunsUrl(namespaceId, adapterType, workflowName, "completed"), 0);
-    }
   }
 
   @Test
