@@ -232,6 +232,7 @@ public final class Constants {
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String INSTANCE_FILE_PREFIX = "stream.instance.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
     public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
     public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
@@ -547,6 +548,8 @@ public final class Constants {
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
+    // a marker so that we know which tables are created by CDAP
+    public static final String CDAP_NAME = "cdap.name";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
