@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,17 +42,27 @@ import java.util.Map;
 public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
 
   private final HttpServiceHandlerSpecification spec;
-  private final Map<String, String> runtimeArgs;
   private final TransactionContext txContext;
   private final Metrics userMetrics;
+  private final int instanceId;
+  private final int instanceCount;
 
   /**
-   * Instantiates the context with a spec and a array of runtime arguments.
-   *  @param spec the {@link HttpServiceHandlerSpecification} for this context.
-   * @param runtimeArgs the runtime arguments as a list of strings.
+   * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
+   * @param spec spec to create a context for.
+   * @param program program of the context.
+   * @param runId runId of the component.
+   * @param instanceId instanceId of the component.
+   * @param instanceCount total number of instances of the component.
+   * @param runtimeArgs runtimeArgs for the component.
+   * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
+   * @param dsFramework dsFramework to use for getting datasets.
+   * @param conf CConfiguration of the system.
+   * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
+   * @param txClient txClient to do transaction operations.
    */
   public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
-                                 Program program, RunId runId, int instanceId, Arguments runtimeArgs,
+                                 Program program, RunId runId, int instanceId, int instanceCount, Arguments runtimeArgs,
                                  MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
                                  CConfiguration conf, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient) {
@@ -60,7 +70,8 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
     this.spec = spec;
-    this.runtimeArgs = runtimeArgs.asMap();
+    this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
     this.userMetrics =
       new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
@@ -73,6 +84,16 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public HttpServiceHandlerSpecification getSpecification() {
     return spec;
+  }
+
+  @Override
+  public int getInstanceCount() {
+    return instanceCount;
+  }
+
+  @Override
+  public int getInstanceId() {
+    return instanceId;
   }
 
   @Override
