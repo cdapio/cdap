@@ -1,0 +1,23 @@
+<div ncy-breadcrumb></div>
+<table class="table table-striped table-responsive" cask-sortable>
+  <thead ng-class="{'sort-enabled': apps.length>0}">
+    <tr>
+      <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+      <th> Type </th>
+      <th> Description </th>
+      <th> Storage </th>
+      <th> Programs Using </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in datasets | orderBy:sortable.predicate:sortable.reverse">
+      <td ng-bind="data.name">
+
+      </td>
+      <td ng-bind="data.type">  </td>
+      <td ng-bind="data.description">  </td>
+      <td ng-bind="data.storage">  </td>
+      <td ng-bind="data.programsUsing"></td>
+    </tr>
+  <tbody>
+</table>

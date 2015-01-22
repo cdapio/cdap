@@ -3,12 +3,11 @@ angular.module(PKG.name + '.feature.apps')
     var data = new MyDataSource($scope);
 
     data.request({
-      _cdapNsPath: '/apps/',
-      method: 'GET',
-    }, function(res) {
-      $scope.apps = res;
-    });
-
+      _cdapNsPath: '/apps/'
+    })
+      .then(function(apps) {
+        $scope.apps = apps;
+      });
     $scope.onFileSelected = myAppUploader.upload;
 
 

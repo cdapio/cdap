@@ -1,0 +1,26 @@
+<div class="clearfix">
+  <h3>
+    <span> Data </span>
+    <span class="btn-group pull-right">
+      <a ui-sref="datasets.list" class="btn btn-default">
+        <span class="fa fa-bars"> </span>
+        All Datasets
+      </a>
+      <a ui-sref="apps.list" class="btn btn-default" ng-disabled="true">
+        <span class="fa fa-edit"> </span>
+        ETL
+      </a>
+    </span>
+  </h3>
+</div>
+<hr />
+<div class="pre-scrollable">
+<div class="list-group">
+  <a class="list-group-item"
+     ng-repeat="dataset in datasets"
+     ui-sref="dataset.detail.overview({datasetId: dataset.name})">
+    <strong ng-bind="dataset.name">  </strong>
+    <div ng-bind="'Type: ' + (dataset.type)"> </div>
+  </a>
+</div>
+</div>
