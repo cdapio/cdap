@@ -65,7 +65,6 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   @Override
   protected final void startUp() throws Exception {
     createHeartbeatsFeed();
-
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
     initialize();
@@ -88,6 +87,12 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
   }
 
+  @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
+    return executor;
+  }
+
   /**
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
@@ -105,11 +110,5 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     } catch (NotificationFeedException e) {
       feedManager.createFeed(streamHeartbeatsFeed);
     }
-  }
-
-  @Override
-  protected ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
-    return executor;
   }
 }
