@@ -37,7 +37,9 @@ import java.text.DateFormat;
 import java.util.Collections;
 
 /**
- *
+ * This tests that time partitioned file sets and their partitions are correctly registered
+ * in the Hive meta store when created, and also that they are removed from Hive when deleted.
+ * This does not test querying through Hive (it will be covered by an integration test).
  */
 @Category(SlowTests.class)
 public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
