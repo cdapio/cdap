@@ -38,7 +38,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
@@ -54,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -80,7 +78,6 @@ public class DistributedStreamService extends AbstractStreamService {
   private final int instanceId;
 
   private final Set<StreamLeaderListener> leaderListeners;
-  private final Map<String, Long> streamsBaseSizes;
   private final Cancellable leaderListenerCancellable;
 
   private Supplier<Discoverable> discoverableSupplier;
@@ -113,7 +110,6 @@ public class DistributedStreamService extends AbstractStreamService {
     this.streamsHeartbeatsAggregator = streamsHeartbeatsAggregator;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
-    this.streamsBaseSizes = Maps.newHashMap();
     this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
 
     this.leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {

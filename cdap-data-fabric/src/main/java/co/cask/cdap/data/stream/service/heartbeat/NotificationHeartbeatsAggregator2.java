@@ -18,6 +18,8 @@ package co.cask.cdap.data.stream.service.heartbeat;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
+import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.service.NotificationContext;
@@ -46,7 +48,7 @@ public class NotificationHeartbeatsAggregator2 extends AbstractScheduledService 
   private static final Logger LOG = LoggerFactory.getLogger(NotificationHeartbeatsAggregator2.class);
 
   private final NotificationService notificationService;
-  private final Map<String, Map<Integer, StreamWriterHeartbeat.StreamSize>> streamsSizes;
+  private final Map<String, Map<Integer, StreamWriterHeartbeat> streamsSizes;
   private Cancellable heartbeatsSubscription;
 
   public NotificationHeartbeatsAggregator2(NotificationService notificationService) {
@@ -68,7 +70,7 @@ public class NotificationHeartbeatsAggregator2 extends AbstractScheduledService 
 
   @Override
   protected void runOneIteration() throws Exception {
-    for(Map.Entry<String, Map<Integer, StreamWriterHeartbeat.StreamSize>> entry : streamsSizes.entrySet()) {
+    for(Map.Entry<String, Map<Integer, StreamWriterHeartbeat>> entry : streamsSizes.entrySet()) {
       String streamName = entry.getKey();
       int sum = 0;
       for (StreamWriterHeartbeat.StreamSize size : entry.getValue().values()) {
@@ -151,25 +153,25 @@ public class NotificationHeartbeatsAggregator2 extends AbstractScheduledService 
    */
   private final class Aggregator implements Runnable {
 
-    private final Map<Integer, StreamWriterHeartbeat.StreamSize> heartbeats;
+    private final Map<Integer, StreamWriterHeartbeat> heartbeats;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
 
     // This boolean will ensure that an extra Stream notification is sent at CDAP start-up.
     private boolean initNotificationSent;
 
-    protected Aggregator(String streamName) {
+    protected Aggregator(StreamConfig streamConfig) {
       this.heartbeats = Maps.newHashMap();
-      this.streamBaseCount = new AtomicLong(0);
+      this.streamBaseCount = new AtomicLong(StreamUtils.fetchStreamFilesSize(streamConfig));
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace("default")
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamName)
+        .setName(streamConfig.getName())
         .build();
       this.initNotificationSent = false;
     }
 
-    public Map<Integer, StreamWriterHeartbeat.StreamSize> getHeartbeats() {
+    public Map<Integer, StreamWriterHeartbeat> getHeartbeats() {
       return heartbeats;
     }
 
@@ -185,7 +187,7 @@ public class NotificationHeartbeatsAggregator2 extends AbstractScheduledService 
     @Override
     public void run() {
       int sum = 0;
-      for (StreamWriterHeartbeat.StreamSize heartbeat : heartbeats.values()) {
+      for (StreamWriterHeartbeat heartbeat : heartbeats.values()) {
         sum += heartbeat.getAbsoluteDataSize();
       }
 
