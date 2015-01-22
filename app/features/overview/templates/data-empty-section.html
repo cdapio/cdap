@@ -1,14 +1,16 @@
-<div class="col-lg-6">
-  <div class="text-center">
-    <h2>Data</h2>
-    <div> You don't have any data. Add anew! </div>
-    <hr/>
-    <my-file-select
-        data-button-label="Add Data"
-        data-button-icon="fa-plus"
-        data-button-class="btn-lg"
-        data-button-disabled="true"
-        on-file-select="onFileSelected($files)">
-    </my-file-select>
-  </div>
+<div class="clearfix" ng-controller="AppsSectionCtrl">
+  <h3>
+    <span> Data </span>
+    <small> You don't have any Data. Add one! </small>
+  </h3>
+</div>
+<hr />
+<div class="text-center">
+  <my-file-select
+      data-button-label="Add Data"
+      data-button-disabled="true"
+      data-button-icon="fa-plus"
+      data-button-class="btn-lg"
+      on-file-select="onFileSelected($files)">
+  </my-file-select>
 </div>
