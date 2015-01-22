@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services.http;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -38,7 +37,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;

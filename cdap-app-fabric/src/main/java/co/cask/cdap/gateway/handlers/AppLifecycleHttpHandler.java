@@ -344,8 +344,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         adapterService.stopAdapter(namespaceId, adapterId);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].",
-                                           action));
+                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].", action));
         return;
       }
       responder.sendStatus(HttpResponseStatus.OK);

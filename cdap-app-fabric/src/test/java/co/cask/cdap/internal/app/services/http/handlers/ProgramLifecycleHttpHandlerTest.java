@@ -920,23 +920,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return time;
   }
 
-  private List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
-    throws Exception {
-    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
-    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    HttpResponse response = doGet(versionedUrl);
-    String json = EntityUtils.toString(response.getEntity());
-    return new Gson().fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
-  }
-
   private String getStatusUrl(String namespace, String appName, String workflow, String schedule) throws Exception {
     String statusUrl = String.format("apps/%s/workflows/%s/schedules/%s/status", appName, workflow, schedule);
     return getVersionedAPIPath(statusUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-  }
-
-  private String getRunsUrl(String namespace, String appName, String workflow, String status) {
-    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=%s", appName, workflow, status);
-    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
   private int resumeSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
@@ -960,6 +946,21 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     return history.size();
   }
+
+  private String getRunsUrl(String namespace, String appName, String workflow, String status) {
+    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=%s", appName, workflow, status);
+    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
+    throws Exception {
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    return new Gson().fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
+  }
+
   private int deleteQueues(String namespace, String appId, String flow) throws Exception {
     String deleteQueuesUrl = String.format("apps/%s/flows/%s/queues", appId, flow);
     String versionedDeleteUrl = getVersionedAPIPath(deleteQueuesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);

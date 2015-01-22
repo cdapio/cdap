@@ -27,7 +27,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricClient;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -39,7 +38,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -105,30 +103,60 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Class<?> clz = AdapterApp.class;
     String adapterType = "adapterType";
 
-    Attributes attributes = generateAttributes(clz, adapterType);
+    Attributes attributes = generateRequiredAttributes(clz, adapterType);
     setupAdapterJarWithManifestAttributes(clz, attributes);
 
-    // Using a valid manifest results in the adapterTypeInfo being registered
+    // Using a valid manifest (no missing attributes) results in the adapterTypeInfo being registered
     adapterService.registerAdapters();
     Assert.assertNotNull(adapterService.getAdapterTypeInfo(adapterType));
 
-    List<String> requiredAttributes = ImmutableList.of("CDAP-Source-Type", "CDAP-Sink-Type",
-                                                       "CDAP-Adapter-Type", "CDAP-Adapter-Program-Type");
-
     // removing the any of the required attributes from the manifest results in the AdapterTypeInfo not being created.
-    for (int i = 0; i < requiredAttributes.size(); i++) {
-      adapterType = String.format("%s%s", adapterType, i);
-      attributes = generateAttributes(clz, adapterType);
-      Object removed = attributes.remove(new Attributes.Name(requiredAttributes.get(i)));
-      Assert.assertNotNull(removed);
-      setupAdapterJarWithManifestAttributes(clz, attributes);
+    // Missing the CDAP-Source-Type attribute
+    adapterType = "adapterType1";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    setupAdapterJarWithManifestAttributes(clz, attributes);
 
-      adapterService.registerAdapters();
-      Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
-    }
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // Missing the CDAP-Sink-Type attribute
+    adapterType = "adapterType2";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // Missing the CDAP-Adapter-Type attribute
+    adapterType = "adapterType3";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // Missing the CDAP-Adapter-Program-Type attribute
+    adapterType = "adapterType4";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
   }
 
-  private static Attributes generateAttributes(Class<?> clz, String adapterType) {
+  private static Attributes generateRequiredAttributes(Class<?> clz, String adapterType) {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
@@ -153,7 +181,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
-    Attributes attributes = generateAttributes(clz, adapterType);
+    Attributes attributes = generateRequiredAttributes(clz, adapterType);
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
