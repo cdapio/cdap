@@ -27,7 +27,6 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
-  private final StreamWriterSizeManager sizeManager;
 
   /**
    * Children classes should implement this method to add logic to the start of this {@link Service}.
@@ -44,26 +43,21 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
   protected abstract void doShutdown() throws Exception;
 
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                                  StreamFileJanitorService janitorService,
-                                  StreamWriterSizeManager sizeManager) {
+                                  StreamFileJanitorService janitorService) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
-    this.sizeManager = sizeManager;
   }
 
   @Override
   protected final void startUp() throws Exception {
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
-    sizeManager.startAndWait();
-    sizeManager.initialize();
     initialize();
   }
 
   @Override
   protected final void shutDown() throws Exception {
     doShutdown();
-    sizeManager.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }

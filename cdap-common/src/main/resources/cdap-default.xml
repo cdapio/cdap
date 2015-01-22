@@ -221,8 +221,13 @@
     </property>
 
     <property>
+        <name>stream.container.instance.id</name>
+        <value>0</value>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
-        <value>file</value>
+        <value>file.${stream.container.instance.id}</value>
         <description>Prefix of file name for Stream file</description>
     </property>
 
