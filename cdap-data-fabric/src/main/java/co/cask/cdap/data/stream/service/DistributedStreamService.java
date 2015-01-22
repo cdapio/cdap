@@ -33,6 +33,7 @@ import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -72,7 +73,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final Set<StreamLeaderListener> leaderListeners;
-  private final int writerID;
+  private final int instanceId;
 
   private Supplier<Discoverable> discoverableSupplier;
 
@@ -99,7 +100,7 @@ public class DistributedStreamService extends AbstractStreamService {
     this.discoverableSupplier = discoverableSupplier;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.heartbeatPublisher = heartbeatPublisher;
-    this.writerID = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
+    this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
   }
@@ -135,16 +136,12 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void runOneIteration() throws Exception {
-    LOG.trace("Performing heartbeat publishing in Stream service instance {}", writerID);
-    StreamWriterHeartbeat.Builder builder = new StreamWriterHeartbeat.Builder();
+    LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
+    ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      builder.addStreamSize(streamSpec.getName(),
-                            streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
+      sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
-    builder.setWriterID(writerID);
-    builder.setTimestamp(System.currentTimeMillis());
-
-    heartbeatPublisher.sendHeartbeat(builder.build());
+    heartbeatPublisher.sendHeartbeat(new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build()));
   }
 
   @Override
