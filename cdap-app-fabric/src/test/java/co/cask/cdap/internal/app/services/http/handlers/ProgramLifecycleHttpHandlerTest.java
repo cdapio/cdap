@@ -41,6 +41,7 @@ import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -897,6 +898,45 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       throw new IllegalArgumentException("Only GET and POST supported right now.");
     }
     return response;
+  }
+
+  private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/current", app, workflow);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return doGet(versionedUrl).getStatusLine().getStatusCode();
+  }
+
+  private Long getNextScheduledRunTime(String namespace, String app, String workflow, String schedule)
+    throws Exception {
+    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/nextruntime", app, workflow);
+    String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    JsonArray array = readResponse(response, JsonArray.class);
+    JsonObject wfObject = (JsonObject) array.get(0);
+    Assert.assertNotNull(wfObject);
+    String id = wfObject.get("id").getAsString();
+    Long time = wfObject.get("time").getAsLong();
+    Assert.assertTrue(id.contains(schedule));
+    return time;
+  }
+
+  private List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
+    throws Exception {
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    return new Gson().fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
+  }
+
+  private String getStatusUrl(String namespace, String appName, String workflow, String schedule) throws Exception {
+    String statusUrl = String.format("apps/%s/workflows/%s/schedules/%s/status", appName, workflow, schedule);
+    return getVersionedAPIPath(statusUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  private String getRunsUrl(String namespace, String appName, String workflow, String status) {
+    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=%s", appName, workflow, status);
+    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
   private int resumeSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
