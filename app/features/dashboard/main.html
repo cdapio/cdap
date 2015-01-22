@@ -10,7 +10,7 @@
 
   <div
     data-title="{{board.title}}"
-    ng-repeat="board in dashboards"
+    ng-repeat="board in dashboards | orderBy:'tabOrder'"
     bs-pane>
 
     <div class="row" ng-if="dashboards.activeIndex === $index">

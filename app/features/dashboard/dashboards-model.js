@@ -16,6 +16,7 @@ function (Widget, MyDataSource, $timeout) {
       {
         id: p.id,
         title: p.title || 'Dashboard',
+        tabOrder: p.tabOrder || 0,
         columns: []
       }
     );
@@ -156,9 +157,10 @@ function (Widget, MyDataSource, $timeout) {
 
         if(result.length) {
           // recreate saved dashboards
-          angular.forEach(result, function (v) {
+          angular.forEach(result, function (v, k) {
             var p = v.config;
             p.id = v.id;
+            p.tabOrder = k;
             data.push(new Dashboard(p));
           });
 
@@ -199,6 +201,10 @@ function (Widget, MyDataSource, $timeout) {
    * add a new dashboard tab
    */
   Model.prototype.add = function (properties, colCount) {
+
+    // we will want this dashboard to go first in the tabOrder
+    properties.tabOrder = this.data[0].tabOrder-1;
+
     var d = new Dashboard(properties);
 
     // add columns as needed
@@ -216,8 +222,8 @@ function (Widget, MyDataSource, $timeout) {
     });
 
     // newly created tab becomes active
-    var n = this.data.push(d);
-    this.data.activeIndex = n-1;
+    this.data.unshift(d);
+    this.data.activeIndex = 0;
   };
 
 
