@@ -289,7 +289,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     // TODO use accountID as namespace?
     try {
       NotificationFeed streamFeed = new NotificationFeed.Builder()
-        .setNamespace("default")
+        .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(stream)
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",

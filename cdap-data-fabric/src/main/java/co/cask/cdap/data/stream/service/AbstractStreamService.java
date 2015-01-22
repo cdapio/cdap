@@ -31,7 +31,6 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
-  private final StreamWriterSizeManager sizeManager;
   private final NotificationFeedManager feedManager;
 
   /**
@@ -50,30 +49,23 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
 
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
-                                  StreamWriterSizeManager sizeManager,
                                   NotificationFeedManager feedManager) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
-    this.sizeManager = sizeManager;
     this.feedManager = feedManager;
   }
 
   @Override
   protected final void startUp() throws Exception {
     createHeartbeatsFeed();
-
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
-    sizeManager.startAndWait();
-    sizeManager.initialize();
-
     initialize();
   }
 
   @Override
   protected final void shutDown() throws Exception {
     doShutdown();
-    sizeManager.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }
@@ -84,7 +76,7 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
   private void createHeartbeatsFeed() throws NotificationFeedException {
     // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
     NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace("default")
+      .setNamespace(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Streams heartbeats feed.")

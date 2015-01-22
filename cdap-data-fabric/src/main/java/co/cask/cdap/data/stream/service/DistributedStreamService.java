@@ -73,13 +73,12 @@ public class DistributedStreamService extends AbstractStreamService {
   @Inject
   public DistributedStreamService(StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
-                                  StreamWriterSizeManager sizeManager,
                                   ZKClient zkClient,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   StreamMetaStore streamMetaStore,
                                   Supplier<Discoverable> discoverableSupplier,
                                   NotificationFeedManager notificationFeedManager) {
-    super(streamCoordinatorClient, janitorService, sizeManager, notificationFeedManager);
+    super(streamCoordinatorClient, janitorService, notificationFeedManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
