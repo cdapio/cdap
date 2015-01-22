@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
+  private static final Gson GSON = new Gson();
   private final ListeningScheduledExecutorService executor;
 
   protected AbstractExploreClient() {
@@ -401,16 +403,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
             // weirdly enough, in our unit tests, if java6 is used, byte[] fields get changed to array<tinyint>
             // but if java7 is used, byte[] fields get changed to binary...
             // and on top of that it decides to return the byte array as a string... like "[98,111,98]".
+            // this entire thing could use a lot of improvement (CDAP-11)
             if (columnValue instanceof String) {
-              String byteArrAsString = (String) columnValue;
-              // strip brackets. [98,111,98] -> 98,111,98
-              byteArrAsString = byteArrAsString.substring(1, byteArrAsString.length() - 1);
-              String[] bytesAsStrings = byteArrAsString.split(",");
-              byte[] translatedValue = new byte[bytesAsStrings.length];
-              for (int i = 0; i < bytesAsStrings.length; i++) {
-                translatedValue[i] = Byte.parseByte(bytesAsStrings[i]);
-              }
-              columnValue = translatedValue;
+              columnValue = GSON.fromJson((String) columnValue, byte[].class);
             }
           }
           newRow.add(columnValue);
