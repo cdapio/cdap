@@ -86,7 +86,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private ResourceCoordinator resourceCoordinator;
   private Cancellable coordinationSubscription;
 
-  private volatile ScheduledExecutorService executor;
+  private ScheduledExecutorService executor;
 
   @Inject
   public DistributedStreamService(CConfiguration cConf,
