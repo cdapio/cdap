@@ -19,7 +19,6 @@ package co.cask.cdap.data.stream.service.heartbeat;
 import co.cask.cdap.data.stream.service.DistributedStreamService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.util.Map;
 
@@ -30,12 +29,12 @@ import java.util.Map;
 public class StreamWriterHeartbeat {
 
   private final long timestamp;
-  private final int writerID;
+  private final int instanceId;
   private final Map<String, Long> streamsSizes;
 
-  private StreamWriterHeartbeat(long timestamp, int writerID, Map<String, Long> streamsSizes) {
+  public StreamWriterHeartbeat(long timestamp, int instanceId, Map<String, Long> streamsSizes) {
     this.timestamp = timestamp;
-    this.writerID = writerID;
+    this.instanceId = instanceId;
     this.streamsSizes = ImmutableMap.copyOf(streamsSizes);
   }
 
@@ -43,8 +42,8 @@ public class StreamWriterHeartbeat {
     return timestamp;
   }
 
-  public int getWriterID() {
-    return writerID;
+  public int getInstanceId() {
+    return instanceId;
   }
 
   public Map<String, Long> getStreamsSizes() {
@@ -55,41 +54,8 @@ public class StreamWriterHeartbeat {
   public String toString() {
     return Objects.toStringHelper(StreamWriterHeartbeat.class)
       .add("timestamp", timestamp)
-      .add("writerID", writerID)
+      .add("instanceId", instanceId)
       .add("streamsSizes", streamsSizes)
       .toString();
-  }
-
-  /**
-   * Builder of a {@link StreamWriterHeartbeat}.
-   */
-  public static final class Builder {
-
-    private long timestamp;
-    private int writerID;
-    private final Map<String, Long> streamSizes;
-
-    public Builder() {
-      streamSizes = Maps.newHashMap();
-    }
-
-    public Builder setTimestamp(long timestamp) {
-      this.timestamp = timestamp;
-      return this;
-    }
-
-    public Builder setWriterID(int writerID) {
-      this.writerID = writerID;
-      return this;
-    }
-
-    public Builder addStreamSize(String streamName, long absoluteDataSize) {
-      streamSizes.put(streamName, absoluteDataSize);
-      return this;
-    }
-
-    public StreamWriterHeartbeat build() {
-      return new StreamWriterHeartbeat(timestamp, writerID, streamSizes);
-    }
   }
 }

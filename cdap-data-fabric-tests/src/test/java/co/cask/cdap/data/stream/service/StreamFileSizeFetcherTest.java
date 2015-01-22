@@ -38,7 +38,7 @@ import java.io.IOException;
 /**
  *
  */
-public class StreamFileWriterSizeFetcherTest {
+public class StreamFileSizeFetcherTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
@@ -59,7 +59,7 @@ public class StreamFileWriterSizeFetcherTest {
     StreamConfig config = streamAdmin.getConfig(streamName);
 
     try {
-      StreamFileSizeFetcher.fetchSize(config);
+      StreamUtils.fetchStreamFilesSize(config);
       Assert.fail("No stream file created yet");
     } catch (IOException e) {
       // Expected
@@ -82,7 +82,7 @@ public class StreamFileWriterSizeFetcherTest {
 
     writer.close();
 
-    long size = StreamFileSizeFetcher.fetchSize(config);
+    long size = StreamUtils.fetchStreamFilesSize(config);
     Assert.assertTrue(size > 0);
   }
 
