@@ -19,13 +19,14 @@ package co.cask.cdap.data.stream.service;
 import com.google.common.collect.Maps;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Basic implementation of a {@link StreamWriterSizeCollector}.
  */
 public class BasicStreamWriterSizeCollector implements StreamWriterSizeCollector {
 
-  private final ConcurrentMap<String, Long> streamSizes;
+  private final ConcurrentMap<String, AtomicLong> streamSizes;
 
   public BasicStreamWriterSizeCollector() {
     this.streamSizes = Maps.newConcurrentMap();
@@ -33,13 +34,18 @@ public class BasicStreamWriterSizeCollector implements StreamWriterSizeCollector
 
   @Override
   public long getTotalCollected(String streamName) {
-    Long collected = streamSizes.get(streamName);
-    return collected != null ? collected : 0;
+    AtomicLong collected = streamSizes.get(streamName);
+    return collected != null ? collected.get() : 0;
   }
 
   @Override
   public synchronized void received(String streamName, long dataSize) {
-    Long collected = streamSizes.get(streamName);
-    streamSizes.put(streamName, (collected == null) ? dataSize : collected + dataSize);
+    AtomicLong value = streamSizes.get(streamName);
+    if (value == null) {
+      value = streamSizes.putIfAbsent(streamName, new AtomicLong(dataSize));
+    }
+    if (value != null) {
+      value.addAndGet(dataSize);
+    }
   }
 }

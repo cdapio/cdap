@@ -25,15 +25,11 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -42,7 +38,6 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.tephra.TransactionManager;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -75,25 +70,21 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class DFSStreamHeartbeatsTest {
-  private static final String API_KEY = "SampleTestApiKey";
   private static final byte[] TWO_BYTES = new byte[] { 'a', 'b' };
 
-  private static final String HOSTNAME = "127.0.0.1";
+  private static String hostname;
   private static int port;
   private static CConfiguration conf;
 
   private static Injector injector;
   private static StreamHttpService streamHttpService;
   private static StreamService streamService;
-  private static TransactionManager txService;
-  private static DatasetOpExecutor dsOpService;
-  private static DatasetService datasetService;
   private static MockHeartbeatPublisher heartbeatPublisher;
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public final static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -104,15 +95,11 @@ public class DFSStreamHeartbeatsTest {
     conf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     conf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
 
-    conf.set(Constants.Router.ADDRESS, HOSTNAME);
-    conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
       Modules.override(
         new ZKClientModule(),
         new DataFabricModules().getInMemoryModules(),
-        new DataSetsModules().getLocalModule(),
-        new DataSetServiceModules().getInMemoryModule(),
         new ConfigModule(conf, new Configuration()),
         new AuthModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
@@ -131,6 +118,7 @@ public class DFSStreamHeartbeatsTest {
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
 
+          bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(HeartbeatPublisher.class).to(MockHeartbeatPublisher.class).in(Scopes.SINGLETON);
         }
       }));
@@ -138,18 +126,13 @@ public class DFSStreamHeartbeatsTest {
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
 
-    txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
-    dsOpService = injector.getInstance(DatasetOpExecutor.class);
-    dsOpService.startAndWait();
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
     heartbeatPublisher = (MockHeartbeatPublisher) injector.getInstance(HeartbeatPublisher.class);
 
+    hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
   }
 
@@ -157,9 +140,6 @@ public class DFSStreamHeartbeatsTest {
   public static void afterClass() {
     streamService.stopAndWait();
     streamHttpService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    txService.stopAndWait();
     zkClient.stopAndWait();
     zkServer.stopAndWait();
   }
@@ -168,7 +148,6 @@ public class DFSStreamHeartbeatsTest {
     URL url = new URL(location);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
-    urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
     return urlConn;
   }
 
@@ -178,14 +157,14 @@ public class DFSStreamHeartbeatsTest {
     final String streamName = "test_stream";
 
     // Create a new stream.
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", HOSTNAME, port, streamName),
+    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName),
                                         HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
-      urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", HOSTNAME, port, streamName), HttpMethod.POST);
+      urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);
@@ -193,7 +172,7 @@ public class DFSStreamHeartbeatsTest {
       urlConn.disconnect();
     }
 
-    TimeUnit.SECONDS.sleep(Constants.Stream.HEARTBEAT_DELAY + 1);
+    TimeUnit.SECONDS.sleep(Constants.Stream.HEARTBEAT_INTERVAL + 1);
     StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
     Assert.assertNotNull(heartbeat);
     Assert.assertEquals(1, heartbeat.getStreamsSizes().size());

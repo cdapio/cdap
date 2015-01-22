@@ -67,6 +67,6 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
 
   @Override
   protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_DELAY, TimeUnit.SECONDS);
+    return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
   }
 }
