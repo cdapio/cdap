@@ -15,7 +15,7 @@ function validate_env {
   done
 }
 
-# determine version by looking at $COMPONENT_HOME/target/stage-packaging/opt/cdap/$COMPONENT/VERSION
+# Determine version by looking at $COMPONENT_HOME/target/stage-packaging/opt/cdap/$COMPONENT/VERSION
 # and ensuring that all component versions match
 function set_and_check_version {
   local __component=$1
@@ -23,7 +23,6 @@ function set_and_check_version {
   local __version_file="${__component_home}/target/stage-packaging/opt/cdap/${__component}/VERSION"
   if [ -f ${__version_file} ]; then
     local __component_version=`cat ${__version_file}`
-    echo "component: ${__component}, version: ${__component_version}"
     # Check that the VERSION file had some content
     if [ -z "${__component_version}" ]; then
       echo "Component ${__component} has an undefined version, expected in ${__version_file}"
@@ -44,6 +43,7 @@ function set_and_check_version {
   fi
 }
 
+# Copy the CDAP component builds into our staging directory
 function stage_artifacts {
   # Create staging directory
   mkdir -p ${STAGE_DIR}/${PARCEL_ROOT_DIR}
@@ -56,37 +56,37 @@ function stage_artifacts {
   done
 }
 
+# Copy the parcel metadata from the repo into our staging directory
 function stage_parcel_bits {
 
   # Copy the shared default /etc/conf.dist dir
   mkdir -p ${STAGE_DIR}/${PARCEL_ROOT_DIR}/etc/cdap/conf.dist
   cp -fpPR ${DISTRIBUTIONS_HOME}/src/etc/cdap/conf.dist/* ${STAGE_DIR}/${PARCEL_ROOT_DIR}/etc/cdap/conf.dist/.
 
-  # Copy in the parcel-specific meta dir
+  # Copy the parcel-specific meta dir
   local __meta_dir=${DISTRIBUTIONS_HOME}/src/parcel/meta
   cp -fpPR ${__meta_dir} ${STAGE_DIR}/${PARCEL_ROOT_DIR}/.
 
-  # substitute are version
+  # Substitute our version
   sed -i -e "s#{{VERSION}}#${VERSION}#" ${STAGE_DIR}/${PARCEL_ROOT_DIR}/meta/parcel.json
 
 }
 
+# Create the parcel via tar
 function generate_parcel {
-
-  #cd ${TARGET_DIR}
   tar czf ${TARGET_DIR}/${PARCEL_NAME} -C ${STAGE_DIR} ${PARCEL_ROOT_DIR}/ --owner=root --group=root
-
 }
+
+
 
 # Parcel name vars 
 PARCEL_BASE="CDAP"
 PARCEL_SUFFIX="el6"
 
-
 # Components should map to top-level directories: "cdap-${COMPONENT}"
 COMPONENTS="gateway hbase-compat-0.94 hbase-compat-0.96 hbase-compat-0.98 kafka master security web-app"
 
-# Find our script's location and base repo directory
+# Find our location and base repo directory
 # Resolve links: $0 may be a link
 PRG=${0}
 # Need this for relative symlinks.
@@ -106,7 +106,6 @@ REPO_HOME=`pwd -P`
 
 TARGET_DIR=${DISTRIBUTIONS_HOME}/target
 STAGE_DIR=${TARGET_DIR}/parcel
-#mkdir -p ${STAGE_DIR}
 
 validate_env
 
@@ -119,4 +118,3 @@ stage_artifacts
 stage_parcel_bits
 
 generate_parcel
-
