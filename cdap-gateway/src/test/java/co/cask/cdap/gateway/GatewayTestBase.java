@@ -22,7 +22,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -90,7 +89,6 @@ public abstract class GatewayTestBase {
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
   private static MetricsQueryService metrics;
-  private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
@@ -143,11 +141,12 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
-        new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getStandaloneModules()
+        new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
+          install(new StreamServiceRuntimeModule().getStandaloneModules());
+
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
           // AppFabricServiceModule
@@ -175,10 +174,8 @@ public abstract class GatewayTestBase {
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
-    streamHttpService = injector.getInstance(StreamHttpService.class);
     appFabricServer.startAndWait();
     metrics.startAndWait();
-    streamHttpService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -195,7 +192,6 @@ public abstract class GatewayTestBase {
   public static void stopGateway(CConfiguration conf) {
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
-    streamHttpService.stopAndWait();
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();

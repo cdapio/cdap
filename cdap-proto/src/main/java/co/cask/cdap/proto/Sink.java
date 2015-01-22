@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.adapter;
+package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -22,18 +22,18 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Defines adapter source.
+ * Defines an Adapter Sink.
  */
-public final class Source {
+public final class Sink {
 
   /**
-   * Defines the source type.
+   * Defines the Sink Type.
    */
   public enum Type {
     /**
-     * Defines the source type to be Stream.
+     * Defines the sink type to be Dataset
      */
-    STREAM
+    DATASET
   }
 
   private final String name;
@@ -41,27 +41,27 @@ public final class Source {
   private final Map<String, String> properties;
 
   /**
-   * Construct a Source with the given parameters.
+   * Construct a Sink with the given parameters.
    *
-   * @param name  Name of the Source.
-   * @param type  Name of the Source.
-   * @param properties {@Map} of properties associated with the Source.
+   * @param name  Name of the Sink.
+   * @param type  Name of the Sink.
+   * @param properties {@Map} of properties associated with the Sink.
    */
-  public Source(String name, Type type, Map<String, String> properties) {
+  public Sink(String name, Type type, Map<String, String> properties) {
     this.name = name;
     this.type = type;
     this.properties = ImmutableMap.copyOf(properties);
   }
 
   /**
-   * @return name of the Source.
+   * @return name of the Sink.
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return type of the Source.
+   * @return type of the Sink.
    */
   public Type getType() {
     return type;
@@ -84,14 +84,9 @@ public final class Source {
       return false;
     }
 
-    Source source = (Source) o;
+    Sink sink = (Sink) o;
 
-    if (name.equals(source.name) && properties.equals(source.properties) &&
-        type == source.type) {
-      return true;
-    } else {
-      return false;
-    }
+    return (name.equals(sink.name) && properties.equals(sink.properties) &&  type == sink.type);
   }
 
   @Override

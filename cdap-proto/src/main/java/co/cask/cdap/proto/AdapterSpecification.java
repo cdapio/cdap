@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.adapter;
+package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -41,8 +41,8 @@ public final class AdapterSpecification {
    * @param name  Name of the adapter.
    * @param type  Adapter type.
    * @param properties Properties for configuring the adapter.
-   * @param sources {@link List} of {@Source}s used by the adapter.
-   * @param sinks {@link List} of {Sink}s used by the adapter.
+   * @param sources {@link List} of {@link Source}s used by the adapter.
+   * @param sinks {@link List} of {@link Sink}s used by the adapter.
    */
   public AdapterSpecification(String name, String type, Map<String, String> properties, Set<Source> sources,
                               Set<Sink> sinks) {
@@ -99,19 +99,23 @@ public final class AdapterSpecification {
 
     AdapterSpecification that = (AdapterSpecification) o;
 
-    if (name.equals(that.name) &&
-        properties.equals(that.properties) &&
-        sinks.equals(that.sinks) &&
-        sources.equals(that.sources) &&
-        type.equals(that.type)) {
-      return true;
-    } else {
-      return false;
-    }
+    return (name.equals(that.name) && properties.equals(that.properties) && sinks.equals(that.sinks) &&
+        sources.equals(that.sources) && type.equals(that.type));
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(this.name, this.type, this.properties, this.sources, this.sinks);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("type", type)
+      .add("properties", properties)
+      .add("sources", sources)
+      .add("sinks", sinks)
+      .toString();
   }
 }

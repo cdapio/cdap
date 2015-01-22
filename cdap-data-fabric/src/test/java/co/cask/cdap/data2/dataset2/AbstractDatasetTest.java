@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -72,10 +74,13 @@ public class AbstractDatasetTest {
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
     framework.addModule("core", new CoreDatasetsModule());
     framework.addModule("fileSet", new FileSetModule());
+    framework.addModule("tpfs", new TimePartitionedFileSetModule());
   }
 
   @AfterClass
   public static void destroy() throws Exception {
+    framework.deleteModule("tpfs");
+    framework.deleteModule("fileSet");
     framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
@@ -101,7 +106,7 @@ public class AbstractDatasetTest {
   protected static <T extends Dataset> T getInstance(String datasetName)
     throws DatasetManagementException, IOException {
 
-    return getInstance(datasetName, null);
+    return getInstance(datasetName, DatasetDefinition.NO_ARGUMENTS);
   }
 
   protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)

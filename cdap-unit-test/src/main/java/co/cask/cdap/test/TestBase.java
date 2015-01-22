@@ -44,14 +44,13 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamWriterSizeFetcher;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.NoOpStreamWriterSizeCollector;
-import co.cask.cdap.data.stream.service.StreamCoordinator;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamServiceModule;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.StreamWriterSizeFetcher;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -248,17 +247,15 @@ public class TestBase {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new StreamServiceModule() {
+      new AbstractModule() {
         @Override
         protected void configure() {
-          super.configure();
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeFetcher.class).to(InMemoryStreamWriterSizeFetcher.class).in(Scopes.SINGLETON);
           bind(int.class).annotatedWith(Names.named(Constants.Stream.CONTAINER_INSTANCE_ID)).toInstance(0);
-          bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
-          expose(StreamHandler.class);
+          bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },
       new TestMetricsClientModule(),

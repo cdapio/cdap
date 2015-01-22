@@ -32,6 +32,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
@@ -97,6 +98,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new NotificationFeedServiceRuntimeModule().getInMemoryModules());
     install(new ConfigStoreModule().getInMemoryModule());
     install(new StreamAdminModules().getInMemoryModules());
+    install(new StreamServiceRuntimeModule().getInMemoryModules());
   }
 
   private Scheduler createNoopScheduler() {
