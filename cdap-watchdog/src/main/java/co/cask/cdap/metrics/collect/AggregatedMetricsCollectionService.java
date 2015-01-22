@@ -24,6 +24,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -180,8 +181,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     @Override
     public MetricsCollector childCollector(Map<String, String> tags) {
-      ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
-        .putAll(tags).putAll(tags).build();
+      if (tags.isEmpty()) {
+        return this;
+      }
+      // todo: may be warn when duplicate tag is provided? for now ok
+      Map<String, String> allTags = Maps.newHashMap();
+      allTags.putAll(this.tags);
+      allTags.putAll(tags);
       return new MetricsCollectorImpl(allTags);
     }
   }
