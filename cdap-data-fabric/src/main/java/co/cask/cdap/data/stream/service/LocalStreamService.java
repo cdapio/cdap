@@ -19,7 +19,6 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -40,9 +39,8 @@ public class LocalStreamService extends AbstractStreamService {
                             StreamFileJanitorService janitorService,
                             StreamMetaStore streamMetaStore,
                             StreamAdmin streamAdmin,
-                            StreamWriterSizeCollector streamWriterSizeCollector,
-                            NotificationFeedManager notificationFeedManager) {
-    super(streamCoordinatorClient, janitorService, notificationFeedManager);
+                            StreamWriterSizeCollector streamWriterSizeCollector) {
+    super(streamCoordinatorClient, janitorService);
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
