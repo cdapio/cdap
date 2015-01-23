@@ -21,6 +21,7 @@ import co.cask.cdap.data.stream.StreamPropertyListener;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
   private final ConcurrentMap<String, AtomicLong> streamSizes;
   private final List<Cancellable> truncationSubscriptions;
 
+  @Inject
   public BasicStreamWriterSizeCollector(StreamCoordinatorClient streamCoordinatorClient) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.streamSizes = Maps.newConcurrentMap();
