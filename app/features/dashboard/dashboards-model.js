@@ -223,9 +223,8 @@ function (Widget, MyDataSource, $timeout) {
     // save to backend
     d.persist();
 
-    // newly created tab becomes active
+    // insert at beginning of data array
     this.data.unshift(d);
-    this.data.activeIndex = 0;
   };
 
 
