@@ -224,7 +224,7 @@ function (Widget, MyDataSource, $timeout) {
     d.persist();
 
     // newly created tab becomes active
-    this.data.push(d);
+    this.data.unshift(d);
     this.data.activeIndex = 0;
   };
 
