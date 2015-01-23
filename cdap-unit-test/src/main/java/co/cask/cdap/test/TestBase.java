@@ -154,9 +154,9 @@ public class TestBase {
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) {
-    
+  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+                                                        File...bundleEmbeddedJars) {
+    Preconditions.checkState(appFabricClient != null, "Test framework is not yet running");
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
