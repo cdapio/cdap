@@ -34,13 +34,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.ByteOrder;
 import java.util.Map;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handles requests to view {@link CConfiguration}.
  */
-class ConfigHandler extends AbstractHttpHandler {
+public class ConfigHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
 
@@ -53,44 +55,48 @@ class ConfigHandler extends AbstractHttpHandler {
     this.hConf = hConf;
   }
 
-  @Path("/config/cconf.json")
+  @Path("/config/cdap")
   @GET
-  public void cConfJson(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, toMap(cConf));
-  }
-
-  @Path("/config/cconf.xml")
-  @GET
-  public void cConfXml(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    StringWriter stringWriter = new StringWriter();
-    try {
-      cConf.writeXml(stringWriter);
-      ChannelBuffer output = ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, stringWriter.toString(), Charsets.UTF_8);
-      responder.sendContent(HttpResponseStatus.OK, output, "application/xml", null);
-    } catch (IOException e) {
-      LOG.info("Failed to write cConf to XML", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+  public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                        @DefaultValue("json") @QueryParam("format") String format) {
+    if ("json".equals(format)) {
+      responder.sendJson(HttpResponseStatus.OK, toMap(cConf));
+    } else if ("xml".equals(format)) {
+      try {
+        StringWriter stringWriter = new StringWriter();
+        cConf.writeXml(stringWriter);
+        responder.sendContent(HttpResponseStatus.OK, stringWriter2ChannelBuffer(stringWriter), "application/xml", null);
+      } catch (IOException e) {
+        LOG.info("Failed to write cConf to XML", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } else {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
     }
   }
 
-  @Path("/config/hconf.json")
+  @Path("/config/hbase")
   @GET
-  public void hConfJson(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, toMap(hConf));
+  public void configHBase(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                          @DefaultValue("json") @QueryParam("format") String format) {
+    if ("json".equals(format)) {
+      responder.sendJson(HttpResponseStatus.OK, toMap(cConf));
+    } else if ("xml".equals(format)) {
+      try {
+        StringWriter stringWriter = new StringWriter();
+        hConf.writeXml(stringWriter);
+        responder.sendContent(HttpResponseStatus.OK, stringWriter2ChannelBuffer(stringWriter), "application/xml", null);
+      } catch (IOException e) {
+        LOG.info("Failed to write hConf to XML", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } else {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
+    }
   }
 
-  @Path("/config/hconf.xml")
-  @GET
-  public void hConfXml(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    StringWriter stringWriter = new StringWriter();
-    try {
-      hConf.writeXml(stringWriter);
-      ChannelBuffer output = ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, stringWriter.toString(), Charsets.UTF_8);
-      responder.sendContent(HttpResponseStatus.OK, output, "application/xml", null);
-    } catch (IOException e) {
-      LOG.info("Failed to write hConf to XML", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  private ChannelBuffer stringWriter2ChannelBuffer(StringWriter stringWriter) {
+    return ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, stringWriter.toString(), Charsets.UTF_8);
   }
 
   private Map<String, String> toMap(Iterable<Map.Entry<String, String>> configuration) {
