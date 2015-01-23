@@ -28,25 +28,28 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of {@link co.cask.cdap.api.data.DatasetContext} that allows to dynamically load datasets
- * into a started {@link TransactionContext}.
+ * Implementation of {@link DatasetContext} that allows to dynamically load datasets
+ * into a started {@link TransactionContext}. Datasets acquired from this context are distinct from any
+ * Datasets instantiated outside this class.
  */
 public abstract class DynamicDatasetContext implements DatasetContext {
-  private static final Map<String, String> EMPTY_MAP = ImmutableMap.<String, String>of();
+  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
   private final TransactionContext context;
   private final Set<String> allowedDatasets;
   private final DatasetFramework datasetFramework;
   private final ClassLoader classLoader;
   private final Map<String, String> runtimeArguments;
+  private final Set<DatasetCacheKey> txnInProgressDatasets = Sets.newHashSet();
 
   @Nullable
-  protected abstract LoadingCache<Long, Map<String, Dataset>> getDatasetsCache();
+  protected abstract LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache();
 
   /**
    * Get the runtime arguments for a specific dataset. Arguments not in the scope of the dataset are filtered out.
@@ -135,15 +138,16 @@ public abstract class DynamicDatasetContext implements DatasetContext {
       dsArguments.putAll(arguments);
     }
 
+    DatasetCacheKey datasetCacheKey = new DatasetCacheKey(name, dsArguments);
     try {
       Dataset dataset;
       if (getDatasetsCache() != null) {
-        Map<String, Dataset> threadLocalMap = getDatasetsCache().get(Thread.currentThread().getId());
-        dataset = threadLocalMap.get(name);
+        Map<DatasetCacheKey, Dataset> threadLocalMap = getDatasetsCache().get(Thread.currentThread().getId());
+        dataset = threadLocalMap.get(datasetCacheKey);
         if (dataset == null) {
           dataset = datasetFramework.getDataset(name, dsArguments, classLoader);
           if (dataset != null) {
-            threadLocalMap.put(name, dataset);
+            threadLocalMap.put(datasetCacheKey, dataset);
           }
         }
       } else {
@@ -154,8 +158,11 @@ public abstract class DynamicDatasetContext implements DatasetContext {
         throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", name));
       }
 
-      if (dataset instanceof TransactionAware) {
+      // For every instance of a TransactionAware dataset acquired, add it to the
+      // current transaction only if it hasn't been added previously.
+      if (dataset instanceof TransactionAware && !txnInProgressDatasets.contains(datasetCacheKey)) {
         context.addTransactionAware((TransactionAware) dataset);
+        txnInProgressDatasets.add(datasetCacheKey);
       }
 
       return (T) dataset;

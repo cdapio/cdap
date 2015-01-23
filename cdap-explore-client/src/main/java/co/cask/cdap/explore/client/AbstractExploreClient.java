@@ -139,6 +139,19 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
+  public ListenableFuture<Void> dropPartition(final String datasetName, final long time) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDropPartition(datasetName, time);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
   public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
     return getResultsFuture(new HandleProducer() {
       @Override
