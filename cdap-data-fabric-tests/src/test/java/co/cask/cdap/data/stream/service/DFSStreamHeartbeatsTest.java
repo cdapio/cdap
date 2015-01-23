@@ -38,6 +38,7 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -105,6 +106,7 @@ public class DFSStreamHeartbeatsTest {
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
+        new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
         new StreamServiceRuntimeModule().getDistributedModules(),
         new StreamAdminModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
