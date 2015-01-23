@@ -56,7 +56,7 @@ public class LocalStreamService extends AbstractStreamService {
                             StreamWriterSizeCollector streamWriterSizeCollector,
                             NotificationFeedManager notificationFeedManager,
                             NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService, notificationFeedManager);
+    super(streamCoordinatorClient, janitorService);
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;

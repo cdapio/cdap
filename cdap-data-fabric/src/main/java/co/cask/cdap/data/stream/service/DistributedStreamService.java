@@ -91,9 +91,10 @@ public class DistributedStreamService extends AbstractStreamService {
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final NotificationService notificationService;
+  private final NotificationFeedManager feedManager;
+  private final Set<StreamLeaderListener> leaderListeners;
   private final int instanceId;
 
-  private final Set<StreamLeaderListener> leaderListeners;
   private Cancellable leaderListenerCancellable;
 
   private final Map<String, Aggregator> aggregators;
@@ -117,15 +118,16 @@ public class DistributedStreamService extends AbstractStreamService {
                                   Supplier<Discoverable> discoverableSupplier,
                                   StreamWriterSizeCollector streamWriterSizeCollector,
                                   HeartbeatPublisher heartbeatPublisher,
-                                  NotificationFeedManager notificationFeedManager,
+                                  NotificationFeedManager feedManager,
                                   NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService, notificationFeedManager);
+    super(streamCoordinatorClient, janitorService);
     this.zkClient = zkClient;
     this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
     this.discoverableSupplier = discoverableSupplier;
+    this.feedManager = feedManager;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.heartbeatPublisher = heartbeatPublisher;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
@@ -137,6 +139,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
+    createHeartbeatsFeed();
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
     coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
@@ -235,7 +238,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private Cancellable subscribeToHeartbeatsFeed() throws NotificationException {
     final NotificationFeed heartbeatsFeed = new NotificationFeed.Builder()
       .setNamespace("default")
-      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
+      .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
     return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
@@ -278,6 +281,25 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       }
     };
+  }
+
+  /**
+   * Create Notification feed for stream's heartbeats, if it does not already exist.
+   */
+  private void createHeartbeatsFeed() throws NotificationFeedException {
+    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
+    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
+      .setNamespace(Constants.DEFAULT_NAMESPACE)
+      .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
+      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
+      .setDescription("Stream heartbeats feed.")
+      .build();
+
+    try {
+      feedManager.getFeed(streamHeartbeatsFeed);
+    } catch (NotificationFeedException e) {
+      feedManager.createFeed(streamHeartbeatsFeed);
+    }
   }
 
   /**
