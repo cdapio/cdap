@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -27,12 +28,15 @@ import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,6 +49,7 @@ public class LocalStreamService extends AbstractStreamService {
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
+  private final List<Cancellable> truncationSubscriptions;
   private final Map<String, Long> streamsInitCounts;
   private final Map<String, Long> streamsBaseCounts;
   private boolean isInit;
@@ -57,13 +62,14 @@ public class LocalStreamService extends AbstractStreamService {
                             StreamWriterSizeCollector streamWriterSizeCollector,
                             NotificationFeedManager notificationFeedManager,
                             NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService, notificationFeedManager);
+    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector, notificationFeedManager);
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.notificationService = notificationService;
     this.streamsBaseCounts = Maps.newHashMap();
     this.streamsInitCounts = Maps.newHashMap();
+    this.truncationSubscriptions = Lists.newArrayList();
     isInit = true;
   }
 
@@ -74,6 +80,7 @@ public class LocalStreamService extends AbstractStreamService {
       try {
         StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
         filesSize = StreamUtils.fetchStreamFilesSize(config);
+        watchStreamTruncation(streamSpec.getName());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamSpec.getName());
       }
@@ -84,7 +91,9 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void doShutdown() throws Exception {
-    // No-op
+    for (Cancellable subscription : truncationSubscriptions) {
+      subscription.cancel();
+    }
   }
 
   @Override
@@ -97,6 +106,7 @@ public class LocalStreamService extends AbstractStreamService {
         initSize = (long) 0;
         streamsInitCounts.put(streamSpec.getName(), initSize);
         streamsBaseCounts.put(streamSpec.getName(), initSize);
+        watchStreamTruncation(streamSpec.getName());
       }
       long absoluteSize = initSize + streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
 
@@ -110,6 +120,15 @@ public class LocalStreamService extends AbstractStreamService {
       }
     }
     isInit = false;
+  }
+
+  private void watchStreamTruncation(String streamName) {
+    truncationSubscriptions.add(getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+      @Override
+      public void generationChanged(String streamName, int generation) {
+        streamsInitCounts.put(streamName, (long) 0);
+      }
+    }));
   }
 
   private void publishNotification(String streamName, long absoluteSize) {

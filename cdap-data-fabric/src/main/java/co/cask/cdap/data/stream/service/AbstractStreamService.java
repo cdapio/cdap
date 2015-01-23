@@ -37,6 +37,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
   private final NotificationFeedManager feedManager;
+  private final StreamWriterSizeCollector sizeCollector;
 
   private ScheduledExecutorService executor;
 
@@ -54,12 +55,21 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
    */
   protected abstract void doShutdown() throws Exception;
 
+  /**
+   * @return The {@link StreamCoordinatorClient} used by this {@link StreamService}.
+   */
+  protected StreamCoordinatorClient getStreamCoordinatorClient() {
+    return streamCoordinatorClient;
+  }
+
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
+                                  StreamWriterSizeCollector sizeCollector,
                                   NotificationFeedManager feedManager) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
     this.feedManager = feedManager;
+    this.sizeCollector = sizeCollector;
   }
 
   @Override
@@ -67,6 +77,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     createHeartbeatsFeed();
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
+    sizeCollector.startAndWait();
     initialize();
   }
 
@@ -78,6 +89,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
       executor.shutdownNow();
     }
 
+    sizeCollector.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }

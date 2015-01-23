@@ -95,7 +95,7 @@ public class DistributedStreamService extends AbstractStreamService {
                                   HeartbeatPublisher heartbeatPublisher,
                                   NotificationFeedManager notificationFeedManager,
                                   StreamsHeartbeatsAggregator streamsHeartbeatsAggregator) {
-    super(streamCoordinatorClient, janitorService, notificationFeedManager);
+    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector, notificationFeedManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;

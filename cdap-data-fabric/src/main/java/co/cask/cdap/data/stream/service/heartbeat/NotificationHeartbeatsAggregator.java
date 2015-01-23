@@ -18,6 +18,8 @@ package co.cask.cdap.data.stream.service.heartbeat;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -50,13 +52,16 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
 
   private final StreamAdmin streamAdmin;
   private final NotificationService notificationService;
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final Map<String, Aggregator> aggregators;
   private Cancellable heartbeatsSubscription;
 
   @Inject
-  public NotificationHeartbeatsAggregator(StreamAdmin streamAdmin, NotificationService notificationService) {
+  public NotificationHeartbeatsAggregator(StreamAdmin streamAdmin, NotificationService notificationService,
+                                          StreamCoordinatorClient streamCoordinatorClient) {
     this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
+    this.streamCoordinatorClient = streamCoordinatorClient;
     this.aggregators = Maps.newConcurrentMap();
   }
 
@@ -67,6 +72,12 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
 
   @Override
   protected void shutDown() throws Exception {
+    for (Aggregator aggregator : aggregators.values()) {
+      if (aggregator != null) {
+        aggregator.cancel();
+      }
+    }
+
     if (heartbeatsSubscription != null) {
       heartbeatsSubscription.cancel();
     }
@@ -109,7 +120,10 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
     // Remove subscriptions to the heartbeats we used to listen to before the call to that method,
     // but don't anymore
     for (String outdatedStream : existingAggregators) {
-      aggregators.remove(outdatedStream);
+      Aggregator aggregator = aggregators.remove(outdatedStream);
+      if (aggregator != null) {
+        aggregator.cancel();
+      }
     }
   }
 
@@ -142,11 +156,12 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
    * Runnable scheduled to aggregate the sizes of all stream writers. A notification is published
    * if the aggregated size is higher than a threshold.
    */
-  private final class Aggregator {
+  private final class Aggregator implements Cancellable {
 
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
+    private final Cancellable truncationSubscription;
 
     // This boolean will ensure that an extra Stream notification is sent at CDAP start-up.
     private boolean initNotificationSent;
@@ -160,9 +175,21 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
         .setName(streamName)
         .build();
       this.initNotificationSent = false;
+
+      this.truncationSubscription = streamCoordinatorClient.addListener(streamName, new StreamPropertyListener() {
+        @Override
+        public void generationChanged(String streamName, int generation) {
+          reset();
+        }
+      });
     }
 
-    public void reset() {
+    @Override
+    public void cancel() {
+      truncationSubscription.cancel();
+    }
+
+    private void reset() {
       streamWriterSizes.clear();
       streamBaseCount.set(0);
     }
@@ -213,6 +240,5 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
         LOG.warn("Could not publish notification on feed {}", streamFeed.getId(), t);
       }
     }
-
   }
 }
