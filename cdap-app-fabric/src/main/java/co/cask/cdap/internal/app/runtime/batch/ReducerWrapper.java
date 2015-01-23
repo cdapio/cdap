@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -90,16 +91,26 @@ public class ReducerWrapper extends Reducer {
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
 
+      ClassLoader oldClassLoader;
       if (delegate instanceof ProgramLifecycle) {
+        oldClassLoader = ClassLoaders.setContextClassLoader(basicMapReduceContext.getProgram().getClassLoader());
         try {
           ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
         } catch (Exception e) {
           LOG.error("Failed to initialize mapper with " + basicMapReduceContext.toString(), e);
           throw Throwables.propagate(e);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
 
-      delegate.run(flushingContext);
+      oldClassLoader = ClassLoaders.setContextClassLoader(basicMapReduceContext.getProgram().getClassLoader());
+      try {
+        delegate.run(flushingContext);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
+      }
+
       // sleep to allow metrics to be written
       TimeUnit.SECONDS.sleep(2L);
 
@@ -114,11 +125,14 @@ public class ReducerWrapper extends Reducer {
 
 
       if (delegate instanceof ProgramLifecycle) {
+        oldClassLoader = ClassLoaders.setContextClassLoader(basicMapReduceContext.getProgram().getClassLoader());
         try {
           ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
         } catch (Exception e) {
           LOG.error("Error during destroy of mapper", e);
           // Do nothing, try to finish
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
 
