@@ -5,13 +5,18 @@ angular.module(PKG.name + '.commons')
 
     function MetricPickerCtrl ($scope) {
 
+      console.log($stateParams);
+      var ns = [$stateParams.namespace,'namespace'].join(' ');
+
       $scope.available = {
         contexts: [],
+        types: ['system', ns],
         names: []
       };
 
       $scope.metric = {
         context: '',
+        type: ns,
         name: ''
       };
 
@@ -30,13 +35,30 @@ angular.module(PKG.name + '.commons')
 
       link: function (scope, elem, attr, ngModel) {
 
-        function fetchAhead () {
-          var context = scope.metric.context || $stateParams.namespace;
+        function getContext () {
+          var context;
+
+          if(scope.metric.type==='system') {
+            context = 'system';
+          }
+          else {
+            context = $stateParams.namespace;
+          }
 
           if(!context) { // should never happen, except on directive playground
             context = 'default';
             $log.warn('metric-picker using default namespace as context!');
           }
+
+          if(scope.metric.context) {
+            context += '.' + scope.metric.context;
+          }
+
+          return context;
+        }
+
+        function fetchAhead () {
+          var context = getContext();
 
           scope.available.contexts = dSrc.request(
             {
@@ -77,16 +99,11 @@ angular.module(PKG.name + '.commons')
           }
 
           if(newVal.context && newVal.name) {
-            var parts = [
+            ngModel.$setViewValue([
               '/metrics',
-              newVal.type,
-            ];
-            if(newVal.context) {
-              parts.push(newVal.context);
-            }
-            parts.push(newVal.name);
-
-            ngModel.$setViewValue(parts.join('/'));
+              getContext(),
+              newVal.name
+            ].join('/'));
           }
           else {
             if(ngModel.$dirty) {
