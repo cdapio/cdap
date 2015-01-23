@@ -16,4 +16,5 @@ CDAP Developers’ Manual Table of Contents
     Security <security/index>
     Testing and Debugging <testing/index>
     Ingesting Data <ingesting-tools/index>
+    Data Exploration <data-exploration/index>
     Advanced Topics <advanced/index>
