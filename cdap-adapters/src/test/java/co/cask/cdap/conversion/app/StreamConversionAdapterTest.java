@@ -135,8 +135,6 @@ public class StreamConversionAdapterTest extends TestBase {
     Assert.assertEquals("YHOO", records.get(2).get("ticker").toString());
     Assert.assertEquals(1, records.get(2).get("num"));
     Assert.assertEquals(48.53, records.get(2).get("price"));
-
-    appManager.stopAll();
   }
 
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

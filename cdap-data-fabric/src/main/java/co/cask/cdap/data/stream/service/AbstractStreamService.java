@@ -18,20 +18,23 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
-import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.common.Threads;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Stream service meant to run in an HTTP service.
  */
-public abstract class AbstractStreamService extends AbstractIdleService implements StreamService {
+public abstract class AbstractStreamService extends AbstractScheduledService implements StreamService {
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
-  private final NotificationFeedManager feedManager;
+
+  private ScheduledExecutorService executor;
 
   /**
    * Children classes should implement this method to add logic to the start of this {@link Service}.
@@ -48,16 +51,13 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
   protected abstract void doShutdown() throws Exception;
 
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                                  StreamFileJanitorService janitorService,
-                                  NotificationFeedManager feedManager) {
+                                  StreamFileJanitorService janitorService) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
-    this.feedManager = feedManager;
   }
 
   @Override
   protected final void startUp() throws Exception {
-    createHeartbeatsFeed();
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
     initialize();
@@ -66,26 +66,23 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
   @Override
   protected final void shutDown() throws Exception {
     doShutdown();
+
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }
 
-  /**
-   * Create Notification feed for stream's heartbeats, if it does not already exist.
-   */
-  private void createHeartbeatsFeed() throws NotificationFeedException {
-    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
-    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace(Constants.DEFAULT_NAMESPACE)
-      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
-      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-      .setDescription("Streams heartbeats feed.")
-      .build();
+  @Override
+  protected Scheduler scheduler() {
+    return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+  }
 
-    try {
-      feedManager.getFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
-      feedManager.createFeed(streamHeartbeatsFeed);
-    }
+  @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
+    return executor;
   }
 }

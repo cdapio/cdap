@@ -119,14 +119,19 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    // displayName and description could be null
-    String displayName = metadata.getDisplayName();
-    if (displayName == null || displayName.isEmpty()) {
-      displayName = namespaceId;
-    }
-    String description = metadata.getDescription();
-    if (description == null) {
-      description = "";
+    // Handle optional params
+    // displayName defaults to id
+    String displayName = namespaceId;
+    // description defaults to empty
+    String description = "";
+    // override optional params if they are provided in the request
+    if (metadata != null) {
+      if (metadata.getDisplayName() != null) {
+        displayName = metadata.getDisplayName();
+      }
+      if (metadata.getDescription() != null) {
+        description = metadata.getDescription();
+      }
     }
 
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();

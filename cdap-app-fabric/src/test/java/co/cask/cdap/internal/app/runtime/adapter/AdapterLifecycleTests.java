@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
+import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -34,6 +35,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -69,8 +71,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testAdapterLifeCycle() throws Exception {
-    setupAdapters();
-
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterType = "dummyAdapter";
     String adapterName = "myStreamConverter";
@@ -111,8 +111,35 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testInvalidAdapters() throws Exception {
+    //Invalid adapter  tests.
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+
+    ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
+    ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
+    ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
+
+    String adapterName = "myAdapter";
+    String adapterType = "dummyAdapter";
+
+    // Create Adapter without specifying the dataset.class attribute in the sink properties results in an error.
+    HttpResponse httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
+                                              properties, sourceProperties, ImmutableMap.<String, String>of());
+    Assert.assertEquals(400, httpResponse.getStatusLine().getStatusCode());
+    Assert.assertEquals("Dataset class cannot be null", EntityUtils.toString(httpResponse.getEntity()));
+
+    // Create Adapter without specifying the frequency attribute in the adapter properties results in an error.
+    httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
+                                 ImmutableMap.<String, String>of(), sourceProperties, sinkProperties);
+    Assert.assertEquals(400, httpResponse.getStatusLine().getStatusCode());
+    Assert.assertEquals("Frequency of running the adapter is missing from adapter properties. Cannot schedule program.",
+                        EntityUtils.toString(httpResponse.getEntity()));
+  }
+
   private static void setupAdapters() throws IOException {
     setupAdapter(AdapterApp.class, "dummyAdapter");
+    setupAdapter(AppWithMultipleWorkflows.class, "AppWithMultipleWorkflows");
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
@@ -166,6 +193,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private HttpResponse getAdapter(String namespaceId, String adapterId) throws Exception {
     return doGet(String.format("%s/namespaces/%s/adapters/%s",
                                Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
+  }
+
+  private HttpResponse startStopAdapter(String namespaceId, String adapterId, String action) throws Exception {
+    return doPost(String.format("%s/namespaces/%s/adapters/%s/%s",
+                                Constants.Gateway.API_VERSION_3, namespaceId, adapterId, action));
   }
 
   private HttpResponse deleteAdapter(String namespaceId, String adapterId) throws Exception {
