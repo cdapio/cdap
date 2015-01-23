@@ -486,7 +486,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
           NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
                                                            .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setName(Constants.DEFAULT_NAMESPACE)
                                                            .setDescription(Constants.DEFAULT_NAMESPACE).build());
           if (existing != null) {
             LOG.trace("Default namespace already exists.");

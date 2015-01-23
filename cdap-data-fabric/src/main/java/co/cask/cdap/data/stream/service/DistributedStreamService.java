@@ -119,7 +119,7 @@ public class DistributedStreamService extends AbstractStreamService {
                                   HeartbeatPublisher heartbeatPublisher,
                                   NotificationFeedManager feedManager,
                                   NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService);
+    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector);
     this.zkClient = zkClient;
     this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
@@ -157,6 +157,10 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void doShutdown() throws Exception {
+    for (StreamSizeAggregator aggregator : aggregators.values()) {
+      aggregator.cancel();
+    }
+
     if (leaderListenerCancellable != null) {
       leaderListenerCancellable.cancel();
     }
@@ -216,7 +220,10 @@ public class DistributedStreamService extends AbstractStreamService {
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
     // but don't anymore
     for (String outdatedStream : existingAggregators) {
-      aggregators.remove(outdatedStream);
+      StreamSizeAggregator aggregator = aggregators.remove(outdatedStream);
+      if (aggregator != null) {
+        aggregator.cancel();
+      }
     }
   }
 
@@ -229,7 +236,7 @@ public class DistributedStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, int threshold) {
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
 
     // Handle threshold changes
     final Cancellable thresholdSubscription =
@@ -245,10 +252,25 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       });
 
+    // Handle stream truncation, by creating creating a new empty aggregator for the stream
+    // and cancelling the existing one
+    final Cancellable truncationSubscription =
+      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+        @Override
+        public void generationChanged(String streamName, int generation) {
+          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0,
+                                                                                                threshold));
+          if (previousAggregator != null) {
+            previousAggregator.cancel();
+          }
+        }
+      });
+
     StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, threshold, new Cancellable() {
       @Override
       public void cancel() {
         thresholdSubscription.cancel();
+        truncationSubscription.cancel();
       }
     });
     aggregators.put(streamName, newAggregator);
@@ -433,14 +455,14 @@ public class DistributedStreamService extends AbstractStreamService {
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
     private final AtomicInteger streamThresholdMB;
-    private final Cancellable thresholdSubscription;
+    private final Cancellable cancellable;
 
     protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
-                                   Cancellable thresholdSubscription) {
+                                   Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
-      this.thresholdSubscription = thresholdSubscription;
+      this.cancellable = cancellable;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
@@ -450,7 +472,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     @Override
     public void cancel() {
-      thresholdSubscription.cancel();
+      cancellable.cancel();
     }
 
     /**

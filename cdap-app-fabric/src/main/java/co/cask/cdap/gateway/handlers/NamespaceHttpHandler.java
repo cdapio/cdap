@@ -113,21 +113,22 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (isReserved(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("'%s' and '%s' are reserved namespace ids.",
+                           String.format("Cannot create namespace %s. '%s' and '%s' are reserved namespaces.",
+                                         namespaceId,
                                          Constants.DEFAULT_NAMESPACE,
                                          Constants.SYSTEM_NAMESPACE));
       return;
     }
 
     // Handle optional params
-    // displayName defaults to id
-    String displayName = namespaceId;
+    // name defaults to id
+    String name = namespaceId;
     // description defaults to empty
     String description = "";
     // override optional params if they are provided in the request
     if (metadata != null) {
-      if (metadata.getDisplayName() != null) {
-        displayName = metadata.getDisplayName();
+      if (metadata.getName() != null) {
+        name = metadata.getName();
       }
       if (metadata.getDescription() != null) {
         description = metadata.getDescription();
@@ -136,7 +137,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setId(namespaceId)
-      .setDisplayName(displayName)
+      .setName(name)
       .setDescription(description)
       .build();
 
@@ -161,7 +162,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
     if (isReserved(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("'%s', '%s' are reserved namespace ids",
+                           String.format("Cannot delete namespace '%s'. '%s' and '%s' are reserved namespaces.",
+                                         namespace,
                                          Constants.DEFAULT_NAMESPACE,
                                          Constants.SYSTEM_NAMESPACE));
       return;

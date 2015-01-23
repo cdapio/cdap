@@ -24,7 +24,6 @@ import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -50,7 +49,7 @@ public class DescribeNamespaceCommand implements Command {
       new RowMaker<NamespaceMeta>() {
         @Override
         public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getDisplayName(), object.getDescription()};
+          return new Object[] {object.getId(), object.getName(), object.getDescription()};
         }
       }
     ).print(output);
