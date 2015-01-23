@@ -18,6 +18,7 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.HelpCommand;
+import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -46,16 +47,12 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class CLIMain {
 
-  private final CLIConfig cliConfig;
-  private final HelpCommand helpCommand;
   private final CLI cli;
 
   private final Iterable<Command> commands;
-  private final Map<String, Completer> completers;
 
   public CLIMain(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.cliConfig = cliConfig;
-    this.helpCommand = new HelpCommand(new Supplier<Iterable<Command>>() {
+    HelpCommand helpCommand = new HelpCommand(new Supplier<Iterable<Command>>() {
       @Override
       public Iterable<Command> get() {
         return getCommands();
@@ -78,9 +75,11 @@ public class CLIMain {
       connectCommand.tryDefaultConnection(System.out, false);
     }
 
-    this.commands = Iterables.concat(new DefaultCommands(injector).get(),
-                                     ImmutableList.<Command>of(helpCommand));
-    this.completers = new DefaultCompleters(injector).get();
+    this.commands = Iterables.concat(
+      injector.getInstance(DefaultCommands.class),
+      ImmutableList.<Command>of(helpCommand));
+
+    Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(commands, completers);
     cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
@@ -101,7 +100,7 @@ public class CLIMain {
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
 
-    this.cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
+    cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
       public void onConnectionChanged(String newNamespace, URI newURI) {
         cli.getReader().setPrompt("cdap (" + newURI + "//" + newNamespace + ")> ");
