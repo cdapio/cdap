@@ -126,7 +126,7 @@ gulp.task('js:app', function() {
   });
   return gulp.src([
       './app/main.js',
-      './app/features/**/module.js',
+      './app/features/*/module.js',
       './app/**/*.js',
       '!./app/**/*-test.js'
     ])
