@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithMultipleWorkflows;
+import co.cask.cdap.AppWithMultipleScheduledWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorkflow;
@@ -90,7 +90,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
   private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
   private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
-  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleWorkflows";
+  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleScheduledWorkflows";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW = "SomeWorkflow";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
   private static final String APP_WITH_CONCURRENT_WORKFLOW = "ConcurrentWorkflowApp";
@@ -776,7 +776,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
-    HttpResponse response = deploy(AppWithMultipleWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
+    HttpResponse response = deploy(AppWithMultipleScheduledWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -958,9 +958,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
-    List<ScheduleSpecification> schedules = new Gson().fromJson(json,
-                                                   new TypeToken<List<ScheduleSpecification>>() { }.getType());
-    return schedules;
+    return new Gson().fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
   }
 
   private int deleteQueues(String namespace, String appId, String flow) throws Exception {
