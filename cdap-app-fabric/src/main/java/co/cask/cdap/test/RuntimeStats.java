@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 
@@ -136,13 +137,16 @@ public final class RuntimeStats {
       private void doWaitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
         AtomicLong value = counters.get(name);
-        while (timeout > 0 && (value == null || value.get() < count)) {
-          timeoutUnit.sleep(1);
+
+        // Min sleep time is 10ms, max sleep time is 1 seconds
+        long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+        Stopwatch stopwatch = new Stopwatch().start();
+        while ((value == null || value.get() < count) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+          TimeUnit.MILLISECONDS.sleep(sleepMillis);
           value = counters.get(name);
-          timeout--;
         }
 
-        if (timeout == 0 && (value == null || value.get() < count)) {
+        if (value == null || value.get() < count) {
           throw new TimeoutException("Time limit reached.");
         }
       }

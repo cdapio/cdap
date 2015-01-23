@@ -68,7 +68,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
   private static final int MAX_EVENTS_PER_READ = 100;
-  private static final int CHUNK_SIZE = 20;
+  private static final int CHUNK_SIZE = 8192;
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -150,7 +150,8 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
             // If the connect is closed, sendChunk will throw IOException.
             // No need to handle the exception as it will just propagated back to the netty-http library
             // and it will handle it.
-            chunkResponder.sendChunk(buffer);
+            // Need to copy the buffer because the buffer will get reused and send chunk is an async operation
+            chunkResponder.sendChunk(buffer.copy());
             buffer.clear();
           }
         }
@@ -165,6 +166,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
       // Send the last chunk that still has data
       if (buffer.readable()) {
+        // No need to copy the last chunk, since the buffer will not be reused
         chunkResponder.sendChunk(buffer);
       }
       Closeables.closeQuietly(chunkResponder);

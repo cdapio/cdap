@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.adapter.AdapterSpecification;
-import co.cask.cdap.adapter.Sink;
-import co.cask.cdap.adapter.Source;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
@@ -40,10 +37,14 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Schedules;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -59,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -68,7 +70,7 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Service that manages managing lifecycle of Adapters.
+ * Service that manages lifecycle of Adapters.
  */
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
@@ -84,6 +86,7 @@ public class AdapterService extends AbstractIdleService {
   private final Store store;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
   private final String archiveDir;
+
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
@@ -128,10 +131,14 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace namespace to lookup the adapter
    * @param adapterName name of the adapter
    * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
+   * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  @Nullable
-  public AdapterSpecification getAdapter(String namespace, String adapterName) {
-    return store.getAdapter(Id.Namespace.from(namespace), adapterName);
+  public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpecification = store.getAdapter(Id.Namespace.from(namespace), adapterName);
+    if (adapterSpecification == null) {
+      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
+    }
+    return adapterSpecification;
   }
 
   /**
@@ -145,11 +152,30 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Creates the adapter
+   * Retrieves an Iterable of {@link AdapterSpecification} specified by the adapterType in a given namespace.
    *
-   * @param namespaceId namespace
-   * @param adapterSpec instance of {@link AdapterSpecification}
-   * @throws IllegalArgumentException
+   * @param namespace namespace to lookup the adapter
+   * @param adapterType type of requested adapters
+   * @return Iterable of requested {@link AdapterSpecification}
+   */
+  public Collection<AdapterSpecification> getAdapters(String namespace, final String adapterType) {
+    // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
+    // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
+    List<AdapterSpecification> adaptersByType = Lists.newArrayList();
+    Collection<AdapterSpecification> adapters = getAdapters(namespace);
+    for (AdapterSpecification adapterSpec : adapters) {
+      if (adapterSpec.getType().equals(adapterType)) {
+        adaptersByType.add(adapterSpec);
+      }
+    }
+    return adaptersByType;
+  }
+
+  /**
+   * Creates the adapter
+   * @param namespaceId namespace to create the adapter
+   * @param adapterSpec specification of the adapter to create
+   * @throws IllegalArgumentException on errors.
    */
   public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
 
@@ -185,11 +211,7 @@ public class AdapterService extends AbstractIdleService {
    */
   public void removeAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
-    AdapterSpecification adapterSpec = store.getAdapter(namespaceId, adapterName);
-    if (adapterSpec == null) {
-      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
-    }
-
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
     unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
     store.removeAdapter(namespaceId, adapterName);
@@ -197,12 +219,16 @@ public class AdapterService extends AbstractIdleService {
     // TODO: Delete the application if this is the last adapter
   }
 
-  public void stopAdapter(String namespace, String adapterName) {
-    //TODO:
+  public void stopAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
+    unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
   }
 
-  public void startAdapter(String namespace, String adapterName) {
-    //TODO:
+  public void startAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
+    schedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
   }
 
   // Deploys adapter application if it is not already deployed.
@@ -224,8 +250,8 @@ public class AdapterService extends AbstractIdleService {
 
     Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
     DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
-    ApplicationWithPrograms applicationWithPrograms = manager.deploy(Id.Namespace.from(namespaceId),
-                                                                     adapterTypeInfo.getType(), deploymentInfo).get();
+    ApplicationWithPrograms applicationWithPrograms =
+      manager.deploy(Id.Namespace.from(namespaceId), adapterTypeInfo.getType(), deploymentInfo).get();
     return applicationWithPrograms.getSpecification();
   }
 
@@ -254,7 +280,8 @@ public class AdapterService extends AbstractIdleService {
       Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
       for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
         Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
-        deleteSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec.getScheduleName());
+        deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
+                       constructScheduleName(programId, adapterSpec.getName()));
       }
     } else {
       // Only Workflows are supported to be unscheduled in the current implementation
@@ -267,7 +294,9 @@ public class AdapterService extends AbstractIdleService {
   private void addSchedule(Id.Program programId, AdapterSpecification adapterSpec) {
     String cronExpr = Schedules.toCronExpr(adapterSpec.getProperties().get("frequency"));
     Preconditions.checkNotNull(cronExpr, "Frequency of running the adapter is missing. Cannot schedule program");
-    Schedule schedule = new Schedule(adapterSpec.getScheduleName(), adapterSpec.getScheduleDescription(), cronExpr);
+    String adapterName = adapterSpec.getName();
+    Schedule schedule = new Schedule(constructScheduleName(programId, adapterName), getScheduleDescription(adapterName),
+                                     cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programId.getId()),
                                            adapterSpec.getProperties());
@@ -403,5 +432,18 @@ public class AdapterService extends AbstractIdleService {
     private static final String SINK_PROPERTIES = "CDAP-Sink-Properties";
   }
 
+  /**
+   * @return construct a name of a schedule, given a programId and adapterName
+   */
+  public String constructScheduleName(Id.Program programId, String adapterName) {
+    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter
+    return String.format("%s.%s", adapterName, programId.getId());
+  }
 
+  /**
+   * @return description of the schedule, given an adapterName.
+   */
+  public String getScheduleDescription(String adapterName) {
+    return String.format("Schedule for adapter: %s", adapterName);
+  }
 }

@@ -16,65 +16,46 @@
 
 package co.cask.cdap.data.stream.service.heartbeat;
 
-import co.cask.cdap.data.stream.service.StreamCoordinator;
+import co.cask.cdap.data.stream.service.DistributedStreamService;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 
 /**
  * Heartbeat sent by a Stream writer containing the total size of its files, in bytes. The heartbeats
- * concerning one stream are aggregated by the {@link StreamCoordinator} elected leader of the stream.
+ * concerning one stream are aggregated by the {@link DistributedStreamService} elected leader of the stream.
  */
 public class StreamWriterHeartbeat {
 
-  /**
-   * Type of heartbeat, describing at what moment it is sent by a Stream writer.
-   */
-  public enum Type {
-    /**
-     * Heartbeat sent during Stream writer initialization.
-     */
-    INIT,
-
-    /**
-     * Heartbeat sent during regular Stream writer life.
-     */
-    REGULAR
-  }
-
   private final long timestamp;
-  private final long absoluteDataSize;
-  private final int writerID;
-  private final Type type;
+  private final int instanceId;
+  private final Map<String, Long> streamsSizes;
 
-  public StreamWriterHeartbeat(long timestamp, long absoluteDataSize, int writerID, Type type) {
+  public StreamWriterHeartbeat(long timestamp, int instanceId, Map<String, Long> streamsSizes) {
     this.timestamp = timestamp;
-    this.absoluteDataSize = absoluteDataSize;
-    this.writerID = writerID;
-    this.type = type;
+    this.instanceId = instanceId;
+    this.streamsSizes = ImmutableMap.copyOf(streamsSizes);
   }
 
   public long getTimestamp() {
     return timestamp;
   }
 
-  public int getWriterID() {
-    return writerID;
+  public int getInstanceId() {
+    return instanceId;
   }
 
-  public long getAbsoluteDataSize() {
-    return absoluteDataSize;
-  }
-
-  public Type getType() {
-    return type;
+  public Map<String, Long> getStreamsSizes() {
+    return streamsSizes;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(StreamWriterHeartbeat.class)
       .add("timestamp", timestamp)
-      .add("absoluteDataSize", absoluteDataSize)
-      .add("writerID", writerID)
-      .add("type", type)
+      .add("instanceId", instanceId)
+      .add("streamsSizes", streamsSizes)
       .toString();
   }
 }

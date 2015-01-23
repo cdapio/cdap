@@ -128,7 +128,7 @@ public class TestFrameworkTest extends TestBase {
       Assert.assertFalse(scheduleName.isEmpty());
 
       List<RunRecord> history;
-      int workflowRuns = 0;
+      int workflowRuns;
       workFlowHistoryCheck(5, wfmanager, 0);
 
       String status = wfmanager.getSchedule(scheduleName).status();
@@ -445,7 +445,10 @@ public class TestFrameworkTest extends TestBase {
       decodedResult = new Gson().fromJson(result, String.class);
       Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
 
-      procedureManager.stop();
+      result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                             AppWithServices.DATASET_TEST_KEY_STOP_2));
+      decodedResult = new Gson().fromJson(result, String.class);
+      Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP_2, decodedResult);
     } finally {
       applicationManager.stopAll();
     }

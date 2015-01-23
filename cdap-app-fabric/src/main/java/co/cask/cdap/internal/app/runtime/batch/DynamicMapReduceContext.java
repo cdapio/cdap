@@ -26,6 +26,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -58,7 +59,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class DynamicMapReduceContext extends DynamicDatasetContext implements MapReduceContext {
   private static final Logger LOG = LoggerFactory.getLogger(DynamicMapReduceContext.class);
   private final BasicMapReduceContext mapReduceContext;
-  private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
+  private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
 
   public DynamicMapReduceContext(BasicMapReduceContext mapReduceContext,
                                  DatasetFramework datasetFramework,
@@ -71,12 +72,12 @@ public class DynamicMapReduceContext extends DynamicDatasetContext implements Ma
           mapReduceContext.getRuntimeArguments());
     this.mapReduceContext = mapReduceContext;
     this.datasetsCache = CacheBuilder.newBuilder()
-      .removalListener(new RemovalListener<Long, Map<String, Dataset>>() {
+      .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
-        public void onRemoval(RemovalNotification<Long, Map<String, Dataset>> notification) {
+        public void onRemoval(RemovalNotification<Long, Map<DatasetCacheKey, Dataset>> notification) {
           if (notification.getValue() != null) {
-            for (Map.Entry<String, Dataset> entry : notification.getValue().entrySet()) {
+            for (Map.Entry<DatasetCacheKey, Dataset> entry : notification.getValue().entrySet()) {
               try {
                 entry.getValue().close();
               } catch (IOException e) {
@@ -86,10 +87,10 @@ public class DynamicMapReduceContext extends DynamicDatasetContext implements Ma
           }
         }
       })
-      .build(new CacheLoader<Long, Map<String, Dataset>>() {
+      .build(new CacheLoader<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
-        public Map<String, Dataset> load(Long key) throws Exception {
+        public Map<DatasetCacheKey, Dataset> load(Long key) throws Exception {
           return Maps.newHashMap();
         }
       });
@@ -147,7 +148,7 @@ public class DynamicMapReduceContext extends DynamicDatasetContext implements Ma
 
   @Nullable
   @Override
-  protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+  protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
     return datasetsCache;
   }
 

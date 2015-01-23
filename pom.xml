@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>2.7.0-SNAPSHOT</version>
+  <version>2.8.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -92,7 +92,7 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.2.0</cask.common.cli.version>
+    <cask.common.cli.version>0.4.0</cask.common.cli.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>

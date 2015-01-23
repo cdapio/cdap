@@ -25,17 +25,18 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -50,11 +51,10 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A {@link StreamCoordinator} that uses ZooKeeper to elect a leader amongst Stream handlers.ed
+ * Stream service running in a {@link TwillRunnable}.
  */
-public class DistributedStreamCoordinator extends AbstractIdleService implements StreamCoordinator {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamCoordinator.class);
+public class DistributedStreamService extends AbstractStreamService {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamService.class);
 
   private static final String STREAMS_COORDINATOR = "streams.coordinator";
 
@@ -63,30 +63,87 @@ public class DistributedStreamCoordinator extends AbstractIdleService implements
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final Set<StreamLeaderListener> leaderListeners;
+  private Supplier<Discoverable> discoverableSupplier;
 
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
-  private Discoverable handlerDiscoverable;
-  private Cancellable handlerSubscription;
+  private Cancellable coordinationSubscription;
 
   @Inject
-  public DistributedStreamCoordinator(ZKClient zkClient, DiscoveryServiceClient discoveryServiceClient,
-                                      StreamMetaStore streamMetaStore) {
+  public DistributedStreamService(StreamCoordinatorClient streamCoordinatorClient,
+                                  StreamFileJanitorService janitorService,
+                                  ZKClient zkClient,
+                                  DiscoveryServiceClient discoveryServiceClient,
+                                  StreamMetaStore streamMetaStore,
+                                  Supplier<Discoverable> discoverableSupplier) {
+    super(streamCoordinatorClient, janitorService);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
+    this.discoverableSupplier = discoverableSupplier;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
-    this.handlerDiscoverable = null;
     this.leaderListeners = Sets.newHashSet();
   }
 
   @Override
-  protected void startUp() throws Exception {
-    Preconditions.checkNotNull(handlerDiscoverable, "Stream Handler discoverable has not been set");
+  protected void initialize() throws Exception {
     resourceCoordinatorClient.startAndWait();
-    handlerSubscription = resourceCoordinatorClient.subscribe(handlerDiscoverable.getName(),
-                                                              new StreamsLeaderHandler());
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
+                                                                   new StreamsLeaderHandler());
+    performLeaderElection();
+  }
 
+  @Override
+  protected void doShutdown() throws Exception {
+    if (leaderElection != null) {
+      Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
+    }
+
+    if (coordinationSubscription != null) {
+      coordinationSubscription.cancel();
+    }
+
+    if (resourceCoordinatorClient != null) {
+      resourceCoordinatorClient.stopAndWait();
+    }
+  }
+
+  /**
+   * This method is called every time the Stream handler in which this {@link DistributedStreamService}
+   * runs becomes the leader of a set of streams. Prior to this call, the Stream handler might
+   * already have been the leader of some of those streams.
+   *
+   * @param listener {@link StreamLeaderListener} called when this Stream handler becomes leader
+   *                 of a collection of streams
+   * @return A {@link Cancellable} to cancel the watch
+   */
+  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
+    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
+    // is not overridden by user's code implementation of the equal method
+    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
+      @Override
+      public void leaderOf(Set<String> streamNames) {
+        listener.leaderOf(streamNames);
+      }
+    };
+
+    synchronized (this) {
+      leaderListeners.add(wrappedListener);
+    }
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        synchronized (DistributedStreamService.this) {
+          leaderListeners.remove(wrappedListener);
+        }
+      }
+    };
+  }
+
+  /**
+   * Elect one leader among the {@link DistributedStreamService}s running in different Twill runnables.
+   */
+  private void performLeaderElection() {
     // Start the resource coordinator that will map Streams to Stream handlers
     leaderElection = new LeaderElection(
       zkClient, "/election/" + STREAMS_COORDINATOR, new ElectionHandler() {
@@ -130,57 +187,12 @@ public class DistributedStreamCoordinator extends AbstractIdleService implements
     });
   }
 
-  @Override
-  protected void shutDown() throws Exception {
-    // revoke subscription to resource coordinator
-    if (leaderElection != null) {
-      Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
-    }
-
-    if (handlerSubscription != null) {
-      handlerSubscription.cancel();
-    }
-
-    if (resourceCoordinatorClient != null) {
-      resourceCoordinatorClient.stopAndWait();
-    }
-  }
-
-  @Override
-  public void setHandlerDiscoverable(Discoverable discoverable) {
-    handlerDiscoverable = discoverable;
-  }
-
-  @Override
-  public Cancellable addLeaderListener(final StreamLeaderListener listener) {
-    // Create a wrapper around user's listener, to ensure that the cancelling behavior set in this method
-    // is not overridden by user's code implementation of the equal method
-    final StreamLeaderListener wrappedListener = new StreamLeaderListener() {
-      @Override
-      public void leaderOf(Set<String> streamNames) {
-        listener.leaderOf(streamNames);
-      }
-    };
-
-    synchronized (this) {
-      leaderListeners.add(wrappedListener);
-    }
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        synchronized (DistributedStreamCoordinator.this) {
-          leaderListeners.remove(wrappedListener);
-        }
-      }
-    };
-  }
-
   /**
    * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
-  protected void invokeLeaderListeners(Set<String> streamNames) {
+  private void invokeLeaderListeners(Set<String> streamNames) {
     Set<StreamLeaderListener> callbacks;
     synchronized (this) {
       callbacks = ImmutableSet.copyOf(leaderListeners);
@@ -189,13 +201,14 @@ public class DistributedStreamCoordinator extends AbstractIdleService implements
       callback.leaderOf(streamNames);
     }
   }
+
   /**
    * Class that defines the behavior of a leader of a collection of Streams.
    */
   private final class StreamsLeaderHandler extends ResourceHandler {
 
     protected StreamsLeaderHandler() {
-      super(handlerDiscoverable);
+      super(discoverableSupplier.get());
     }
 
     @Override
@@ -214,7 +227,8 @@ public class DistributedStreamCoordinator extends AbstractIdleService implements
     @Override
     public void finished(Throwable failureCause) {
       if (failureCause != null) {
-        LOG.error("Finished with failure for Stream handler instance {}", handlerDiscoverable.getName(), failureCause);
+        LOG.error("Finished with failure for Stream handler instance {}", discoverableSupplier.get().getName(),
+                  failureCause);
       }
     }
   }

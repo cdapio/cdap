@@ -15,11 +15,16 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
+import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.http.HttpHandler;
 import com.google.common.util.concurrent.AbstractService;
+import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 
 /**
  * Defines Guice modules in different runtime environments.
@@ -28,43 +33,44 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return new StreamServiceModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
-        super.configure();
+        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
       }
     };
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new StreamServiceModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamCoordinator.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
-        super.configure();
+        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+        bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
       }
     };
   }
 
   @Override
   public Module getDistributedModules() {
-    return new StreamServiceModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeManager.class).to(NoOpStreamWriterSizeManager.class).in(Scopes.SINGLETON);
-        bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Scopes.SINGLETON);
-        super.configure();
+        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+        bind(StreamService.class).to(DistributedStreamService.class).in(Scopes.SINGLETON);
+
+        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
+                                                                          Names.named(Constants.Stream.STREAM_HANDLER));
+        handlerBinder.addBinding().to(StreamHandler.class);
+        handlerBinder.addBinding().to(StreamFetchHandler.class);
+        handlerBinder.addBinding().to(PingHandler.class);
+
+        bind(StreamHttpService.class).in(Scopes.SINGLETON);
       }
     };
   }
