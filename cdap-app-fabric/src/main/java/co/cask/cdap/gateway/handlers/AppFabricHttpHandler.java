@@ -1231,7 +1231,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * @return list of program records; or null if the stream or dataset does not exist.
+   * @return list of program records, an empty list if no programs were found, or null if the stream or
+   * dataset does not exist
    */
   private List<ProgramRecord> listProgramsByDataAccess(Id.Program programId, ProgramType type,
                                                        Data data, String name) throws Exception {
