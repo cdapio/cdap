@@ -110,7 +110,8 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
                        Constants.Metrics.Tag.STREAM));
     // dataset name
     // note: weird rule, but this is what we had before
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET), Constants.Metrics.Tag.DATASET));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.DATASET));
 
     // service, handler, method
     rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.SERVICE,
