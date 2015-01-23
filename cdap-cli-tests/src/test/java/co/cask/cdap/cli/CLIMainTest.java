@@ -54,6 +54,7 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -341,6 +342,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  @Ignore
   public void testNamespaces() throws Exception {
     final String id = PREFIX + "testNamespace";
     final String displayName = "testDisplayName";

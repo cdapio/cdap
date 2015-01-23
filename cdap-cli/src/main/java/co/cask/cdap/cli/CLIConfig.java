@@ -64,7 +64,7 @@ public class CLIConfig {
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    */
   public CLIConfig(String hostname) {
-    this.currentNamespace = "default";
+    this.currentNamespace = co.cask.cdap.common.conf.Constants.DEFAULT_NAMESPACE;
     this.hostnameProvided = hostname != null && !hostname.isEmpty();
     this.clientConfig = createClientConfig(hostname);
     this.resolver = new FilePathResolver();
