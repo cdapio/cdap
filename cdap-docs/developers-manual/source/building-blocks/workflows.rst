@@ -17,7 +17,9 @@ failure, the execution is stopped at the failed job and no subsequent jobs in th
 are executed.
 
 To execute MapReduce or Spark programs in a Workflow, you will need to add them in your
-application along with the Workflow. You can optionally add a schedule to the Workflow::
+application along with the Workflow. You can optionally add a schedule (such as a
+`crontab schedule <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
+to the Workflow::
 
   public void configure() {
     ...
