@@ -110,7 +110,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
                        Constants.Metrics.Tag.STREAM));
     // dataset name
     // note: weird rule, but this is what we had before
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.DATASET), Constants.Metrics.Tag.DATASET));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET), Constants.Metrics.Tag.DATASET));
 
     // service, handler, method
     rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.SERVICE,
@@ -214,8 +214,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     int index = 0;
     String namespace = metricValue.getTags().get(Constants.Metrics.Tag.NAMESPACE);
     if (namespace == null) {
-      // TODO: Should we add "system" namespace to datasets too? v2 APIs currently add "default" namespace
-      addToContext(builder, Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE, 0);
+      addToContext(builder, Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE, index);
     }
 
     for (String tagName : rule.tagsToPutIntoContext) {

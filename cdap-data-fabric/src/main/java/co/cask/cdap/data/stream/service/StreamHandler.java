@@ -316,8 +316,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     return new StreamMetricsCollectorFactory() {
       @Override
       public StreamMetricsCollector createMetricsCollector(final String streamName) {
+        // TODO: CDAP-After streams are namespaced, the namespaceId should come from the API. Using default for now.
         final MetricsCollector childCollector =
-          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+          metricsCollector.childCollector(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE)
+            .childCollector(Constants.Metrics.Tag.STREAM, streamName);
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -335,8 +337,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   private Map<String, String> getMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+    return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
@@ -409,7 +410,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
-          metricsCollector.increment("collect.async.reject", 1);
+          metricsCollector.childCollector(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE)
+            .increment("collect.async.reject", 1);
           r.run();
         }
       }
