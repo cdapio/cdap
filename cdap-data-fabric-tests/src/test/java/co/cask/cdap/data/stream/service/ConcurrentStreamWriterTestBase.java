@@ -193,7 +193,8 @@ public abstract class ConcurrentStreamWriterTestBase {
 
     StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
     streamMetaStore.addStream(accountId, streamName);
-    StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(streamAdmin);
+    StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(CConfiguration.create(),
+                                                                                          streamAdmin);
     return new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore,
                                       writerFactory, threads, new TestMetricsCollectorFactory());
   }
@@ -320,7 +321,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     @Override
     public StreamConfig getConfig(String streamName) throws IOException {
       Location streamLocation = locationFactory.create(streamName);
-      return new StreamConfig(streamName, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null);
+      return new StreamConfig(streamName, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }
 

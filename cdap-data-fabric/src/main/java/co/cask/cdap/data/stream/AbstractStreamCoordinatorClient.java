@@ -63,13 +63,13 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   // Executor for performing update action asynchronously
   private final Executor updateExecutor;
-  private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
+  private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
 
-  protected AbstractStreamCoordinatorClient(StreamAdmin streamAdmin, CConfiguration cConf) {
-    this.streamAdmin = streamAdmin;
+  protected AbstractStreamCoordinatorClient(CConfiguration cConf, StreamAdmin streamAdmin) {
     this.cConf = cConf;
+    this.streamAdmin = streamAdmin;
 
     propertyStore = Suppliers.memoize(new Supplier<PropertyStore<StreamProperty>>() {
       @Override

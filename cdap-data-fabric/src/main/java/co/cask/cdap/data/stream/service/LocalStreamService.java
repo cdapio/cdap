@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -26,18 +27,16 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Stream service running in local mode.
@@ -45,66 +44,45 @@ import java.util.Map;
 public class LocalStreamService extends AbstractStreamService {
   private static final Logger LOG = LoggerFactory.getLogger(LocalStreamService.class);
 
+  private final CConfiguration cConf;
   private final NotificationService notificationService;
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
-  private final List<Cancellable> thresholdChangeSubscriptions;
-  private final Map<String, Long> streamsInitCounts;
-  private final Map<String, Long> streamsBaseCounts;
-  private final Map<String, Integer> streamsThresholds;
+  private final Map<String, Aggregator> aggregators;
   private boolean isInit;
 
   @Inject
-  public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
+  public LocalStreamService(CConfiguration cConf,
+                            StreamCoordinatorClient streamCoordinatorClient,
                             StreamFileJanitorService janitorService,
                             StreamMetaStore streamMetaStore,
                             StreamAdmin streamAdmin,
                             StreamWriterSizeCollector streamWriterSizeCollector,
-                            NotificationFeedManager notificationFeedManager,
                             NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService, notificationFeedManager);
+    super(streamCoordinatorClient, janitorService);
+    this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.notificationService = notificationService;
-    this.thresholdChangeSubscriptions = Lists.newArrayList();
-    this.streamsBaseCounts = Maps.newHashMap();
-    this.streamsInitCounts = Maps.newHashMap();
-    this.streamsThresholds = Maps.newHashMap();
-    isInit = true;
+    this.aggregators = Maps.newConcurrentMap();
+    this.isInit = true;
   }
 
   @Override
   protected void initialize() throws Exception {
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      try {
-        StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
-        long filesSize = StreamUtils.fetchStreamFilesSize(config);
-        watchStreamThresholdChange(streamSpec.getName());
-        streamsInitCounts.put(streamSpec.getName(), filesSize);
-        streamsBaseCounts.put(streamSpec.getName(), filesSize);
-        streamsThresholds.put(streamSpec.getName(), config.getNotificationThresholdMB());
-      } catch (IOException e) {
-        LOG.error("Could not compute sizes of files for stream {}", streamSpec.getName());
-      }
+      StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
+      long filesSize = StreamUtils.fetchStreamFilesSize(config);
+      aggregators.put(streamSpec.getName(), new Aggregator(streamSpec.getName(), filesSize));
     }
-  }
-
-  private void watchStreamThresholdChange(String streamName) {
-    this.thresholdSubscription =
-      getStreamCoordinatorClient().addListener(streamConfig.getName(), new StreamPropertyListener() {
-        @Override
-        public void thresholdChanged(String streamName, int threshold) {
-          thresholdMB = threshold;
-        }
-      });
   }
 
   @Override
   protected void doShutdown() throws Exception {
-    for (Cancellable subscription : thresholdChangeSubscriptions) {
-      subscription.cancel();
+    for (Cancellable aggregator : aggregators.values()) {
+      aggregator.cancel();
     }
   }
 
@@ -112,40 +90,77 @@ public class LocalStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      Long initSize = streamsInitCounts.get(streamSpec.getName());
-      if (initSize == null) {
+      Aggregator aggregator = aggregators.get(streamSpec.getName());
+      if (aggregator == null) {
         // First time that we see this Stream here
-        initSize = (long) 0;
-        streamsInitCounts.put(streamSpec.getName(), initSize);
-        streamsBaseCounts.put(streamSpec.getName(), initSize);
+        aggregator = new Aggregator(streamSpec.getName(), 0);
+        aggregators.put(streamSpec.getName(), aggregator);
       }
-      long absoluteSize = initSize + streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
-
-      if (isInit || absoluteSize - streamsBaseCounts.get(streamSpec.getName()) >
-        Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD) {
-        try {
-          publishNotification(streamSpec.getName(), absoluteSize);
-        } finally {
-          streamsBaseCounts.put(streamSpec.getName(), absoluteSize);
-        }
-      }
+      aggregator.checkAggregatedSize();
     }
     isInit = false;
   }
 
-  private void publishNotification(String streamName, long absoluteSize) {
-    NotificationFeed streamFeed = new NotificationFeed.Builder()
-      .setNamespace("default")
-      .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-      .setName(streamName)
-      .build();
-    try {
-      notificationService.publish(streamFeed, new StreamSizeNotification(System.currentTimeMillis(), absoluteSize))
-        .get();
-    } catch (NotificationFeedException e) {
-      LOG.warn("Error with notification feed {}", streamFeed, e);
-    } catch (Throwable t) {
-      LOG.warn("Could not publish notification on feed {}", streamFeed.getId(), t);
+  /**
+   * Aggregate the sizes of all stream writers. A notification is published if the aggregated
+   * size is higher than a threshold.
+   */
+  private final class Aggregator implements Cancellable {
+    private final AtomicLong streamInitSize;
+    private final NotificationFeed streamFeed;
+    private final String streamName;
+    private final AtomicLong streamBaseCount;
+    private final AtomicInteger streamThresholdMB;
+    private final Cancellable thresholdChangeSubscription;
+
+    protected Aggregator(String streamName, long baseCount) {
+      this.streamName = streamName;
+      this.streamInitSize = new AtomicLong(baseCount);
+      this.streamBaseCount = new AtomicLong(baseCount);
+      this.streamFeed = new NotificationFeed.Builder()
+        .setNamespace(Constants.DEFAULT_NAMESPACE)
+        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+        .setName(streamName)
+        .build();
+      this.streamThresholdMB = new AtomicInteger(cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD));
+      this.thresholdChangeSubscription =
+        getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+          @Override
+          public void thresholdChanged(String streamName, int threshold) {
+            streamThresholdMB.set(threshold);
+          }
+        });
+    }
+
+    @Override
+    public void cancel() {
+      thresholdChangeSubscription.cancel();
+    }
+
+    /**
+     * Check that the aggregated size of the heartbeats received by all Stream writers is higher than some threshold.
+     * If it is, we publish a notification.
+     */
+    public void checkAggregatedSize() {
+      long sum = streamInitSize.get() + streamWriterSizeCollector.getTotalCollected(streamName);
+      if (isInit || sum - streamBaseCount.get() > streamThresholdMB.get()) {
+        try {
+          publishNotification(sum);
+        } finally {
+          streamBaseCount.set(sum);
+        }
+      }
+    }
+
+    private void publishNotification(long absoluteSize) {
+      try {
+        notificationService.publish(streamFeed, new StreamSizeNotification(System.currentTimeMillis(), absoluteSize))
+          .get();
+      } catch (NotificationFeedException e) {
+        LOG.warn("Error with notification feed {}", streamFeed, e);
+      } catch (Throwable t) {
+        LOG.warn("Could not publish notification on feed {}", streamFeed.getId(), t);
+      }
     }
   }
 }

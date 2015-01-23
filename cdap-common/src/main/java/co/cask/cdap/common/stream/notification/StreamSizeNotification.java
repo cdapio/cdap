@@ -24,19 +24,19 @@ import com.google.common.base.Objects;
  */
 public class StreamSizeNotification {
   private final long timestamp;
-  private final long absoluteSize;
+  private final long size;
 
-  public StreamSizeNotification(long timestamp, long absoluteSize) {
+  public StreamSizeNotification(long timestamp, long size) {
     this.timestamp = timestamp;
-    this.absoluteSize = absoluteSize;
+    this.size = size;
   }
 
   public long getTimestamp() {
     return timestamp;
   }
 
-  public long getAbsoluteSize() {
-    return absoluteSize;
+  public long getSize() {
+    return size;
   }
 
   @Override
@@ -51,19 +51,19 @@ public class StreamSizeNotification {
     StreamSizeNotification that = (StreamSizeNotification) o;
 
     return Objects.equal(this.timestamp, that.timestamp) &&
-      Objects.equal(this.absoluteSize, that.absoluteSize);
+      Objects.equal(this.size, that.size);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(timestamp, absoluteSize);
+    return Objects.hashCode(timestamp, size);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("timestamp", timestamp)
-      .add("absoluteSize", absoluteSize)
+      .add("size", size)
       .toString();
   }
 }

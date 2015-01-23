@@ -288,13 +288,18 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     streamCoordinatorClient.streamCreated(name);
   }
 
+  /**
+   * Create the public {@link NotificationFeed}s that concerns the stream with configuration {@code config}.
+   *
+   * @param config config of the stream to create feeds for
+   */
   private void createStreamFeeds(StreamConfig config) {
     // TODO use accountID as namespace?
     try {
       NotificationFeed streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(config.getName())
+        .setName(String.format("%sSize", config.getName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
                                       config.getName(), config.getNotificationThresholdMB()))
         .build();
