@@ -35,7 +35,7 @@ public final class SQLSchemaParser {
 
   public SQLSchemaParser(String schema) {
     // replace all whitespace with a single space
-    this.schema = schema.trim().replaceAll("\\s+", " ").toLowerCase();
+    this.schema = schema.trim().toLowerCase();
     this.pos = 0;
     this.end = this.schema.length();
     this.recordNum = 1;
@@ -47,17 +47,16 @@ public final class SQLSchemaParser {
       List<Schema.Field> fields = Lists.newArrayList();
 
       while (pos < end) {
-        int nameEnd = schema.indexOf(" ", pos);
-        errorIf(nameEnd < 0, "Expecting whitespace between column name and type");
-        String name = schema.substring(pos, nameEnd);
-        pos = nameEnd + 1;
+        String name = nextToken();
+        expectWhitespace("Expecting whitespace between column name and type");
+        skipWhitespace();
         errorIf(pos >= end, "Unexpected EOF");
         fields.add(Schema.Field.of(name, parseType()));
         // stop if we're at the last field
         if (pos >= end) {
           break;
         }
-        advancePastComma();
+        advancePastComma("Expected a comma separating schema columns");
       }
 
       return Schema.recordOf("rec", fields);
@@ -71,54 +70,48 @@ public final class SQLSchemaParser {
   private Schema parseType() throws IOException {
     // null, boolean, int, long, float, double, bytes, or string
     Schema type;
-    if (schema.startsWith("boolean", pos)) {
-      pos += 7;
+    String typeStr = nextToken();
+    if ("boolean".equals(typeStr)) {
       type = Schema.of(Schema.Type.BOOLEAN);
-    } else if (schema.startsWith("int", pos)) {
-      pos += 3;
+    } else if ("int".equals(typeStr)) {
       type = Schema.of(Schema.Type.INT);
-    } else if (schema.startsWith("long", pos)) {
-      pos += 4;
+    } else if ("long".equals(typeStr)) {
       type = Schema.of(Schema.Type.LONG);
-    } else if (schema.startsWith("float", pos)) {
-      pos += 5;
+    } else if ("float".equals(typeStr)) {
       type = Schema.of(Schema.Type.FLOAT);
-    } else if (schema.startsWith("double", pos)) {
-      pos += 6;
+    } else if ("double".equals(typeStr)) {
       type = Schema.of(Schema.Type.DOUBLE);
-    } else if (schema.startsWith("bytes", pos)) {
-      pos += 5;
+    } else if ("bytes".equals(typeStr)) {
       type = Schema.of(Schema.Type.BYTES);
-    } else if (schema.startsWith("string", pos)) {
-      pos += 6;
+    } else if ("string".equals(typeStr)) {
       type = Schema.of(Schema.Type.STRING);
-    } else if (schema.startsWith("null", pos)) {
-      pos += 4;
+    } else if ("null".equals(typeStr)) {
       type = Schema.of(Schema.Type.NULL);
-    } else if (schema.startsWith("array<", pos)) {
+    } else if ("array".equals(typeStr)) {
       type = parseArray();
-    } else if (schema.startsWith("map<", pos)) {
+    } else if ("map".equals(typeStr)) {
       type = parseMap();
-    } else if (schema.startsWith("record<", pos)) {
+    } else if ("record".equals(typeStr)) {
       type = parseRecord();
-    } else if (schema.startsWith("union<", pos)) {
+    } else if ("union".equals(typeStr)) {
       type = parseUnion();
     } else {
-      throw new IOException("Unknown data type");
+      throw new IOException("Unknown data type " + typeStr);
     }
-    if (schema.startsWith(" not null", pos)) {
-      pos += 9;
+
+    skipWhitespace();
+    if (schema.startsWith("not null", pos)) {
+      pos += 8;
       return type;
     } else {
       return Schema.nullableOf(type);
     }
   }
 
-  // record<col1:type1,col2:type2,...>
+  // <col1:type1,col2:type2,...>
   private Schema parseRecord() throws IOException {
-    // move past the 'record<'
-    advanceBy(7);
-    advancePastOptionalSpace();
+    expectChar('<', "record must be followed with a '<'");
+    skipWhitespace();
     String recordName = "rec" + recordNum;
     recordNum++;
     List<Schema.Field> fields = Lists.newArrayList();
@@ -126,41 +119,38 @@ public final class SQLSchemaParser {
     // keep going until we get to the enclosing '>'
     while (true) {
       // colName:type
-      int colonPos = schema.indexOf(":", pos);
-      errorIf(colonPos < 0, "Expecting a ':' between field name and type");
-      String colName = schema.substring(pos, colonPos);
-      pos = colonPos + 1;
+      String colName = nextToken();
+      errorIf(schema.charAt(pos) != ':', "Expecting a ':' between field name and type");
+      pos++;
       errorIf(pos >= end, "Unexpected EOF");
       fields.add(Schema.Field.of(colName, parseType()));
       // must be at the end or at a comma
       if (tryAdvancePastEndBracket()) {
         break;
       }
-      advancePastComma();
+      advancePastComma("Expected a comma separating record fields");
     }
 
     return Schema.recordOf(recordName, fields);
   }
 
-  // map<type,type>
+  // <type,type>
   private Schema parseMap() throws IOException {
-    // move past the 'map<'
-    advanceBy(4);
-    advancePastOptionalSpace();
+    expectChar('<', "map must be followed by a '<'");
+    skipWhitespace();
     Schema keyType = parseType();
     // key and value must be separated by a comma
-    advancePastComma();
+    advancePastComma("Expected a comma separating map key and value types");
     Schema valueType = parseType();
-    // must end with '>' or ' >'
-    errorIf(!tryAdvancePastEndBracket(), "Expecting an end bracket '>' to enclose the map");
+    skipWhitespace();
+    expectChar('>', "map must end with a '>'");
     return Schema.mapOf(keyType, valueType);
   }
 
-  // union<type,...>
+  // <type,...>
   private Schema parseUnion() throws IOException {
-    // move past the 'union<'
-    advanceBy(6);
-    advancePastOptionalSpace();
+    expectChar('<', "union must be followed by a '<'");
+    skipWhitespace();
     List<Schema> unionTypes = Lists.newArrayList();
 
     // keep going until we see the closing '>'
@@ -169,24 +159,24 @@ public final class SQLSchemaParser {
       if (tryAdvancePastEndBracket()) {
         break;
       }
-      advancePastComma();
+      advancePastComma("Expected a comma separating union types");
     }
 
     return Schema.unionOf(unionTypes);
   }
 
-  // array<type>
+  // <type>
   private Schema parseArray() throws IOException {
-    // move past the 'array<'
-    advanceBy(6);
-    advancePastOptionalSpace();
+    expectChar('<', "array must be followed by a '<'");
+    skipWhitespace();
     Schema componentType = parseType();
-    errorIf(!tryAdvancePastEndBracket(), "Expecting an end bracket '>' to enclose the array");
+    skipWhitespace();
+    expectChar('>', "array must end with a '>'");
     return Schema.arrayOf(componentType);
   }
 
   private boolean tryAdvancePastEndBracket() {
-    advancePastOptionalSpace();
+    skipWhitespace();
     if (schema.charAt(pos) == '>') {
       pos++;
       return true;
@@ -194,29 +184,45 @@ public final class SQLSchemaParser {
     return false;
   }
 
-  private void advancePastOptionalSpace() {
-    if (schema.charAt(pos) == ' ') {
+  private void skipWhitespace() {
+    while (pos < end && Character.isWhitespace(schema.charAt(pos))) {
       pos++;
     }
   }
 
+  // advances forward past the next token and returns the token.
+  // in other words, goes forward until it sees whitespace or ':' or ',' or '<' or '>'.
+  private String nextToken() {
+    char currChar = schema.charAt(pos);
+    int endPos = pos;
+    while (!(endPos == end || Character.isWhitespace(currChar) ||
+      currChar == ':' || currChar == ',' || currChar == '<' || currChar == '>')) {
+      endPos++;
+      currChar = schema.charAt(endPos);
+    }
+    String token = schema.substring(pos, endPos);
+    pos = endPos;
+    return token;
+  }
+
   // move past a comma and optional whitespace.
   // in other words, moves past a ", " or ",".
-  private void advancePastComma() throws IOException {
-    advancePastOptionalSpace();
-    errorIfCharNot(',');
-    advanceBy(1);
-    advancePastOptionalSpace();
+  private void advancePastComma(String errMsg) throws IOException {
+    skipWhitespace();
+    expectChar(',', errMsg);
+    skipWhitespace();
   }
 
-  // advance x characters in the schema and check that we're not at the end
-  private void advanceBy(int x) throws IOException {
-    pos += x;
-    errorIf(pos >= end, "Not expecting EOF");
+  // error if the current character is not what is expected, and move past the character
+  private void expectChar(char c, String errMsg) throws IOException {
+    errorIf(schema.charAt(pos) != c, errMsg);
+    pos++;
   }
 
-  private void errorIfCharNot(char c) throws IOException {
-    errorIf(schema.charAt(pos) != c, "Expected a '" + c + "'");
+  // error if the current character is not whitespace, and move past the whitespace
+  private void expectWhitespace(String errMsg) throws IOException {
+    errorIf(!Character.isWhitespace(schema.charAt(pos)), errMsg);
+    skipWhitespace();
   }
 
   private void errorIf(boolean condition, String errMsg) throws IOException {

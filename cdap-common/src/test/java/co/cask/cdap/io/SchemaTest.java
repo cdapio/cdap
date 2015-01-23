@@ -223,7 +223,7 @@ public class SchemaTest {
 
   @Test
   public void testParseSQLWithWhitespace() throws IOException {
-    String schemaStr = "map_field map< string , int >   not  null,\n" +
+    String schemaStr = "map_field map< string , int >   not null,\n" +
       "arr_field array< record< x:int , y:double >\t> not null";
     Schema expectedSchema = Schema.recordOf(
       "rec",
