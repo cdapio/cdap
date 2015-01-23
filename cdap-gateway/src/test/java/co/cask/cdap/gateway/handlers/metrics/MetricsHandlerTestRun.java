@@ -98,7 +98,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testSearchContext() throws Exception {
     // empty context
-    verifySearchResult("/v3/metrics/search?target=childContext",
+    verifySearchResultContains("/v3/metrics/search?target=childContext",
                        ImmutableList.<String>of("myspace", "system", "yourspace"));
 
     // verify childContext in system context
