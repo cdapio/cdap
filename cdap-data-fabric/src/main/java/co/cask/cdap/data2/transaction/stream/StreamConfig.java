@@ -34,12 +34,12 @@ public final class StreamConfig {
   private final long indexInterval;
   private final long ttl;
   private final FormatSpecification format;
-  private final int notificationThresholdMB;
+  private final Integer notificationThresholdMB;
 
   private final transient Location location;
 
   public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl,
-                      Location location, FormatSpecification format, int notificationThresholdMB) {
+                      Location location, FormatSpecification format, Integer notificationThresholdMB) {
     this.name = name;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
@@ -56,7 +56,7 @@ public final class StreamConfig {
     this.ttl = Long.MAX_VALUE;
     this.location = null;
     this.format = getDefaultFormat();
-    this.notificationThresholdMB = 1000;
+    this.notificationThresholdMB = null;
   }
 
   /**
@@ -105,7 +105,7 @@ public final class StreamConfig {
   /**
    * @return The threshold of data, in MB, that the stream has to ingest for a notification to be sent.
    */
-  public int getNotificationThresholdMB() {
+  public Integer getNotificationThresholdMB() {
     return notificationThresholdMB;
   }
 

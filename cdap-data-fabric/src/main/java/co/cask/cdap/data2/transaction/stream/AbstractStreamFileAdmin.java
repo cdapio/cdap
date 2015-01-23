@@ -360,8 +360,13 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
       StreamConfig.class);
 
+    Integer threshold = config.getNotificationThresholdMB();
+    if (threshold == null) {
+      threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD, 1000);
+    }
+
     return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), streamLocation, config.getFormat(), config.getNotificationThresholdMB());
+                            config.getTTL(), streamLocation, config.getFormat(), threshold);
   }
 
   private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {

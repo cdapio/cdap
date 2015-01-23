@@ -473,6 +473,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       json.addProperty("name", src.getName());
       json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
+      json.addProperty("threshold", src.getThreshold());
       return json;
     }
   }

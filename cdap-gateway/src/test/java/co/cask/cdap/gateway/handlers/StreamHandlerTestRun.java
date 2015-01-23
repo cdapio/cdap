@@ -184,7 +184,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                                        Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
 
-    StreamProperties expected = new StreamProperties("stream_defaults", 2, (new StreamConfig()).getFormat(), 20);
+    StreamProperties expected = new StreamProperties("stream_defaults", 2, (new StreamConfig()).getFormat(), 1000);
     Assert.assertEquals(expected, actual);
   }
 
