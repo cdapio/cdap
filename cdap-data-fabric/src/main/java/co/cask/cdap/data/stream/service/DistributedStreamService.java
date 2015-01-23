@@ -206,7 +206,6 @@ public class DistributedStreamService extends AbstractStreamService {
       try {
         StreamConfig config = streamAdmin.getConfig(streamName);
         long filesSize = StreamUtils.fetchStreamFilesSize(config);
-        // TODO use config to check that the treshold hasn't changed
         createSizeAggregator(streamName, filesSize, config.getNotificationThresholdMB());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
