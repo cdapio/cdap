@@ -123,7 +123,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of("yourspace.WCount1.b.ClassicWordCount.m",
                                                 "yourspace.WCount1.b.ClassicWordCount.r"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m",
-                       ImmutableList.<String>of("task1"));
+                       ImmutableList.<String>of("yourspace.WCount1.b.ClassicWordCount.m.task1"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m.task1",
                        ImmutableList.<String>of());
   }
