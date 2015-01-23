@@ -18,21 +18,28 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.proto.Version;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 
 /**
- * Test for {@link PingClient}.
+ * Test for {@link MetaClient}.
  */
 @Category(XSlowTests.class)
-public class PingClientTestRun extends ClientTestBase {
+public class MetaClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws IOException, UnAuthorizedAccessTokenException {
-    PingClient pingClient = new PingClient(clientConfig);
-    pingClient.ping();
+    MetaClient metaClient = new MetaClient(clientConfig);
+    metaClient.ping();
+    Version version = metaClient.getVersion();
+    String expectedVersion = Resources.toString(Resources.getResource("VERSION"), Charsets.UTF_8).trim();
+    Assert.assertEquals(expectedVersion, version.getVersion());
   }
 }
