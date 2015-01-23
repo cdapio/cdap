@@ -129,8 +129,6 @@ public class PurchaseAppTest extends TestBase {
     UserProfile profileFromPurchaseHistory = history.getUserProfile();
     Assert.assertEquals(profileFromPurchaseHistory.getFirstName(), "joe");
     Assert.assertEquals(profileFromPurchaseHistory.getLastName(), "bernard");
-
-    appManager.stopAll();
   }
 
   private ServiceManager getUserProfileServiceManager(ApplicationManager appManager) throws InterruptedException {

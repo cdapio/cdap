@@ -22,8 +22,8 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamWriter;
-import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(XSlowTests.class)
-public class TestBatchStreamIntegration extends TestBase {
+public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
+
   /**
    * TestsMapReduce that consumes from stream using BytesWritableStreamDecoder
    * @throws Exception
@@ -65,26 +66,20 @@ public class TestBatchStreamIntegration extends TestBase {
   private void submitAndVerifyStreamBatchJob(Class<? extends AbstractApplication> appClass, String streamWriter, String
     mapReduceName, int timeout) throws Exception {
     ApplicationManager applicationManager = deployApplication(appClass);
-    try {
-      StreamWriter writer = applicationManager.getStreamWriter(streamWriter);
-      for (int i = 0; i < 50; i++) {
-        writer.send(String.valueOf(i));
-      }
+    StreamWriter writer = applicationManager.getStreamWriter(streamWriter);
+    for (int i = 0; i < 50; i++) {
+      writer.send(String.valueOf(i));
+    }
 
-      MapReduceManager mapReduceManager = applicationManager.startMapReduce(mapReduceName);
-      mapReduceManager.waitForFinish(timeout, TimeUnit.SECONDS);
+    MapReduceManager mapReduceManager = applicationManager.startMapReduce(mapReduceName);
+    mapReduceManager.waitForFinish(timeout, TimeUnit.SECONDS);
 
-      // The MR job simply turns every stream event body into key/value pairs, with key==value.
-      DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("results");
-      KeyValueTable results = datasetManager.get();
-      for (int i = 0; i < 50; i++) {
-        byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
-        Assert.assertArrayEquals(key, results.read(key));
-      }
-    } finally {
-      applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
+    // The MR job simply turns every stream event body into key/value pairs, with key==value.
+    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("results");
+    KeyValueTable results = datasetManager.get();
+    for (int i = 0; i < 50; i++) {
+      byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
+      Assert.assertArrayEquals(key, results.read(key));
     }
   }
 }

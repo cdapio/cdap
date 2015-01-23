@@ -71,7 +71,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
-import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -95,6 +94,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -109,7 +109,9 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -121,7 +123,10 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -132,10 +137,10 @@ public class TestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  private static int startCount;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
-  private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricClient appFabricClient;
   private static SchedulerService schedulerService;
   private static DatasetFramework datasetFramework;
@@ -147,6 +152,9 @@ public class TestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
+
+  // This list is to record ApplicationManager create inside @Test method
+  private final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -162,24 +170,17 @@ public class TestBase {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
-      Object appInstance = applicationClz.newInstance();
-      ApplicationSpecification appSpec;
-
-      if (appInstance instanceof Application) {
-        Application app = (Application) appInstance;
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-        app.configure(configurer, new ApplicationContext());
-        appSpec = configurer.createSpecification();
-      } else {
-        throw new IllegalArgumentException("Application class does not represent application: "
-                                             + applicationClz.getName());
-      }
+      Application app = applicationClz.newInstance();
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+      app.configure(configurer, new ApplicationContext());
+      ApplicationSpecification appSpec = configurer.createSpecification();
 
       Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
-
-      return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
-                                                                     deployedJar, appSpec);
+      ApplicationManager manager = injector.getInstance(ApplicationManagerFactory.class)
+                                           .create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
+                                                   deployedJar, appSpec);
+      applicationManagers.add(manager);
+      return manager;
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -200,8 +201,27 @@ public class TestBase {
     }
   }
 
+  @Before
+  public void beforeTest() throws Exception {
+    applicationManagers.clear();
+  }
+
+  /**
+   * By default after each test finished, it will stop all apps started during the test.
+   * Sub-classes can override this method to provide different behavior.
+   */
+  @After
+  public void afterTest() throws Exception {
+    for (ApplicationManager manager : applicationManagers) {
+      manager.stopAll();
+    }
+  }
+
   @BeforeClass
   public static void init() throws Exception {
+    if (startCount++ > 0) {
+      return;
+    }
     File localDataDir = tmpFolder.newFolder();
     CConfiguration cConf = CConfiguration.create();
 
@@ -344,6 +364,10 @@ public class TestBase {
 
   @AfterClass
   public static final void finish() {
+    if (--startCount != 0) {
+      return;
+    }
+
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
