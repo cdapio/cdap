@@ -89,6 +89,17 @@ public class ApplicationClient {
   }
 
   /**
+   * Deletes all applications.
+   *
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void deleteAll() throws IOException, UnAuthorizedAccessTokenException {
+    restClient.execute(HttpMethod.DELETE, config.resolveURL("apps"),
+                       config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+  }
+
+  /**
    * Checks if an application exists.
    *
    * @param appId ID of the application to check
