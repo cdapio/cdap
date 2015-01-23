@@ -102,9 +102,9 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of("myspace", "system", "yourspace"));
 
     // verify childContext in system context
-    verifySearchResult("/v3/metrics/search?target=childContext&context=system",
+    verifySearchResultContains("/v3/metrics/search?target=childContext&context=system",
                        ImmutableList.<String>of("system.-"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=system.-",
+    verifySearchResultContains("/v3/metrics/search?target=childContext&context=system.-",
                        ImmutableList.<String>of("system.-.cluster"));
 
     // WordCount is in myspace, WCount in yourspace
