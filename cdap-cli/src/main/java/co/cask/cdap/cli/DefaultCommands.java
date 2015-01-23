@@ -59,6 +59,8 @@ import co.cask.cdap.cli.command.PreferencesCommandSet;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
 import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
+import co.cask.cdap.cli.command.SetStreamFormatCommand;
+import co.cask.cdap.cli.command.SetStreamPropertiesCommand;
 import co.cask.cdap.cli.command.SetStreamTTLCommand;
 import co.cask.cdap.cli.command.StartProgramCommandSet;
 import co.cask.cdap.cli.command.StopProgramCommandSet;
@@ -121,6 +123,8 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .add(injector.getInstance(LoadStreamCommand.class))
       .addAll(injector.getInstance(SetProgramInstancesCommandSet.class).getCommands())
       .add(injector.getInstance(SetStreamTTLCommand.class))
+      .add(injector.getInstance(SetStreamFormatCommand.class))
+      .add(injector.getInstance(SetStreamPropertiesCommand.class))
       .addAll(injector.getInstance(StartProgramCommandSet.class).getCommands())
       .addAll(injector.getInstance(StopProgramCommandSet.class).getCommands())
       .add(injector.getInstance(TruncateDatasetInstanceCommand.class))
