@@ -29,7 +29,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
                       MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
-                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class })
+                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
+                      MetaClient.class })
 public class ClientTestsSuite extends StandaloneTestBase {
 
 }

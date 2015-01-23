@@ -18,7 +18,7 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.client.PingClient;
+import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -116,7 +116,7 @@ public class CLIConfig {
       .setSSLEnabled(connectionInfo.isSSLEnabled())
       .setAccessToken(accessToken)
       .build();
-    PingClient pingClient = new PingClient(clientConfig);
+    MetaClient pingClient = new MetaClient(clientConfig);
     pingClient.ping();
   }
 

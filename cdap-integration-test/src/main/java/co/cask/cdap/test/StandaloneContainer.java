@@ -17,7 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneMain;
-import co.cask.cdap.client.PingClient;
+import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -99,7 +99,7 @@ public class StandaloneContainer {
   }
 
   private static boolean standaloneIsReachable() throws UnAuthorizedAccessTokenException {
-    PingClient pingClient = new PingClient(new ClientConfig.Builder()
+    MetaClient pingClient = new MetaClient(new ClientConfig.Builder()
                                              .setUri(DEFAULT_CONNECTION_URI)
                                              .build());
     try {
