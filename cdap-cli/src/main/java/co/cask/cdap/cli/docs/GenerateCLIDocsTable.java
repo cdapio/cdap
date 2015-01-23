@@ -17,7 +17,7 @@
 package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.DefaultCommands;
+import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.command.HelpCommand;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
