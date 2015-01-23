@@ -20,19 +20,20 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -45,7 +46,7 @@ public class LocalStreamService extends AbstractStreamService {
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
-  private final Map<String, Aggregator> aggregators;
+  private final ConcurrentMap<String, StreamSizeAggregator> aggregators;
   private boolean isInit;
 
   @Inject
@@ -54,9 +55,8 @@ public class LocalStreamService extends AbstractStreamService {
                             StreamMetaStore streamMetaStore,
                             StreamAdmin streamAdmin,
                             StreamWriterSizeCollector streamWriterSizeCollector,
-                            NotificationFeedManager notificationFeedManager,
                             NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService);
+    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector);
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
@@ -70,49 +70,91 @@ public class LocalStreamService extends AbstractStreamService {
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
       StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
       long filesSize = StreamUtils.fetchStreamFilesSize(config);
-      aggregators.put(streamSpec.getName(), new Aggregator(streamSpec.getName(), filesSize));
+      createSizeAggregator(streamSpec.getName(), filesSize);
     }
   }
 
   @Override
   protected void doShutdown() throws Exception {
-    // No-op
+    for (StreamSizeAggregator streamSizeAggregator : aggregators.values()) {
+      streamSizeAggregator.cancel();
+    }
   }
 
   @Override
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      Aggregator aggregator = aggregators.get(streamSpec.getName());
-      if (aggregator == null) {
+      StreamSizeAggregator streamSizeAggregator = aggregators.get(streamSpec.getName());
+      if (streamSizeAggregator == null) {
         // First time that we see this Stream here
-        aggregator = new Aggregator(streamSpec.getName(), 0);
-        aggregators.put(streamSpec.getName(), aggregator);
+        streamSizeAggregator = createSizeAggregator(streamSpec.getName(), 0);
       }
-      aggregator.checkAggregatedSize();
+      streamSizeAggregator.checkAggregatedSize();
     }
     isInit = false;
+  }
+
+  /**
+   * Create a new aggregator for the {@code streamName}, and add it to the existing map of {@link Cancellable}
+   * {@code aggregators}. This method does not cancel previously existing aggregator associated to the
+   * {@code streamName}.
+   *
+   * @param streamName stream name to create a new aggregator for
+   * @param baseCount stream size from which to start aggregating
+   * @return the created {@link StreamSizeAggregator}
+   */
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount) {
+
+    // Handle stream truncation, by creating creating a new empty aggregator for the stream
+    // and cancelling the existing one
+    final Cancellable truncationSubscription =
+      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+        @Override
+        public void generationChanged(String streamName, int generation) {
+          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0));
+          if (previousAggregator != null) {
+            previousAggregator.cancel();
+          }
+        }
+      });
+
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, new Cancellable() {
+      @Override
+      public void cancel() {
+        truncationSubscription.cancel();
+      }
+    });
+    aggregators.put(streamName, newAggregator);
+    return newAggregator;
   }
 
   /**
    * Aggregate the sizes of all stream writers. A notification is published if the aggregated
    * size is higher than a threshold.
    */
-  private final class Aggregator {
+  private final class StreamSizeAggregator implements Cancellable {
     private final AtomicLong streamInitSize;
     private final NotificationFeed streamFeed;
     private final String streamName;
     private final AtomicLong streamBaseCount;
+    private final Cancellable truncationSubscription;
 
-    protected Aggregator(String streamName, long baseCount) {
+    protected StreamSizeAggregator(String streamName, long baseCount, Cancellable truncationSubscription) {
       this.streamName = streamName;
       this.streamInitSize = new AtomicLong(baseCount);
       this.streamBaseCount = new AtomicLong(baseCount);
+      this.truncationSubscription = truncationSubscription;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(streamName)
         .build();
+    }
+
+    @Override
+    public void cancel() {
+      truncationSubscription.cancel();
     }
 
     /**
