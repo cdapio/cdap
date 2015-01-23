@@ -296,7 +296,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       NotificationFeed streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%s.size", stream))
+        .setName(String.format("%sSize", stream))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
                                       stream, Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD))
         .build();

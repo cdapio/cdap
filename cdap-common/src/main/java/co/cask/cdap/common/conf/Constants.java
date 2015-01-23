@@ -597,7 +597,7 @@ public final class Constants {
      */
     public static final class Stream {
       public static final String STREAM_FEED_CATEGORY = "stream";
-      public static final String STREAM_INTERNAL_FEED_CATEGORY = "stream.internal";
+      public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
       public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
 
       /** Default number of bytes received by a stream after which a notification is sent */
