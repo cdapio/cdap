@@ -229,7 +229,7 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private Cancellable subscribeToHeartbeatsFeed() throws NotificationException {
     final NotificationFeed heartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace("default")
+      .setNamespace(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
