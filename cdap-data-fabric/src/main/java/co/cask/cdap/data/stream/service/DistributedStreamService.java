@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
@@ -27,10 +28,13 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
+import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
+import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -52,7 +56,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Stream service running in a {@link TwillRunnable}.
+ * Stream service running in a {@link TwillRunnable}. It is responsible for sending {@link StreamWriterHeartbeat}s
+ * at a fixed rate, describing the sizes of the stream files on which this service writes data, for each stream.
  */
 public class DistributedStreamService extends AbstractStreamService {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamService.class);
@@ -61,9 +66,13 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private final ZKClient zkClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final StreamWriterSizeCollector streamWriterSizeCollector;
+  private final HeartbeatPublisher heartbeatPublisher;
   private final StreamMetaStore streamMetaStore;
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final Set<StreamLeaderListener> leaderListeners;
+  private final int instanceId;
+
   private Supplier<Discoverable> discoverableSupplier;
 
   private LeaderElection leaderElection;
@@ -71,24 +80,31 @@ public class DistributedStreamService extends AbstractStreamService {
   private Cancellable coordinationSubscription;
 
   @Inject
-  public DistributedStreamService(StreamCoordinatorClient streamCoordinatorClient,
+  public DistributedStreamService(CConfiguration cConf,
+                                  StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
                                   ZKClient zkClient,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   StreamMetaStore streamMetaStore,
                                   Supplier<Discoverable> discoverableSupplier,
+                                  StreamWriterSizeCollector streamWriterSizeCollector,
+                                  HeartbeatPublisher heartbeatPublisher,
                                   NotificationFeedManager notificationFeedManager) {
     super(streamCoordinatorClient, janitorService, notificationFeedManager);
     this.zkClient = zkClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamMetaStore = streamMetaStore;
     this.discoverableSupplier = discoverableSupplier;
+    this.streamWriterSizeCollector = streamWriterSizeCollector;
+    this.heartbeatPublisher = heartbeatPublisher;
+    this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
     this.leaderListeners = Sets.newHashSet();
   }
 
   @Override
   protected void initialize() throws Exception {
+    heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
     coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
                                                                    new StreamsLeaderHandler());
@@ -97,6 +113,8 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void doShutdown() throws Exception {
+    heartbeatPublisher.stopAndWait();
+
     if (leaderElection != null) {
       Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
     }
@@ -108,6 +126,16 @@ public class DistributedStreamService extends AbstractStreamService {
     if (resourceCoordinatorClient != null) {
       resourceCoordinatorClient.stopAndWait();
     }
+  }
+
+  @Override
+  protected void runOneIteration() throws Exception {
+    LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
+    ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+      sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
+    }
+    heartbeatPublisher.sendHeartbeat(new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build()));
   }
 
   /**
@@ -190,17 +218,17 @@ public class DistributedStreamService extends AbstractStreamService {
   }
 
   /**
-   * Call all the callbacks that are interested in knowing that this coordinator is the leader of a set of Streams.
+   * Call all the listeners that are interested in knowing that this coordinator is the leader of a set of Streams.
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
   private void invokeLeaderListeners(Set<String> streamNames) {
-    Set<StreamLeaderListener> callbacks;
+    Set<StreamLeaderListener> listeners;
     synchronized (this) {
-      callbacks = ImmutableSet.copyOf(leaderListeners);
+      listeners = ImmutableSet.copyOf(leaderListeners);
     }
-    for (StreamLeaderListener callback : callbacks) {
-      callback.leaderOf(streamNames);
+    for (StreamLeaderListener listener : listeners) {
+      listener.leaderOf(streamNames);
     }
   }
 
