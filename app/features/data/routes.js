@@ -1,10 +1,10 @@
-angular.module(PKG.name + '.feature.datasets')
+angular.module(PKG.name + '.feature.data')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
-      .state('datasets', {
+      .state('data', {
         abstract: true,
         template: '<ui-view/>',
-        url: '/datasets',
+        url: '/data',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
@@ -12,12 +12,12 @@ angular.module(PKG.name + '.feature.datasets')
         parent: 'ns'
       })
 
-      .state('datasets.list', {
+      .state('data.list', {
         url: '',
-        templateUrl: '/assets/features/datasets/templates/list.html',
-        controller: 'CdapDatasetsListController',
+        templateUrl: '/assets/features/data/list.html',
+        controller: 'CdapDataListController',
         ncyBreadcrumb: {
-          label: 'Datasets',
+          label: 'Data',
           parent: 'overview'
         }
       })
