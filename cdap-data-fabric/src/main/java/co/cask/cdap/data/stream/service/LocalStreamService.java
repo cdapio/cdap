@@ -119,12 +119,12 @@ public class LocalStreamService extends AbstractStreamService {
         }
       });
 
-    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount) {
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, new Cancellable() {
       @Override
       public void cancel() {
         truncationSubscription.cancel();
       }
-    };
+    });
     aggregators.put(streamName, newAggregator);
     return newAggregator;
   }
@@ -133,21 +133,28 @@ public class LocalStreamService extends AbstractStreamService {
    * Aggregate the sizes of all stream writers. A notification is published if the aggregated
    * size is higher than a threshold.
    */
-  private abstract class StreamSizeAggregator implements Cancellable {
+  private final class StreamSizeAggregator implements Cancellable {
     private final AtomicLong streamInitSize;
     private final NotificationFeed streamFeed;
     private final String streamName;
     private final AtomicLong streamBaseCount;
+    private final Cancellable truncationSubscription;
 
-    protected StreamSizeAggregator(String streamName, long baseCount) {
+    protected StreamSizeAggregator(String streamName, long baseCount, Cancellable truncationSubscription) {
       this.streamName = streamName;
       this.streamInitSize = new AtomicLong(baseCount);
       this.streamBaseCount = new AtomicLong(baseCount);
+      this.truncationSubscription = truncationSubscription;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(streamName)
         .build();
+    }
+
+    @Override
+    public void cancel() {
+      truncationSubscription.cancel();
     }
 
     /**

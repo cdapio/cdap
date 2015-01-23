@@ -73,7 +73,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
           @Override
           public void generationChanged(String streamName, int generation) {
             // Handle stream truncation by resetting the size aggregated so far
-            streamSizes.replace(streamName, new AtomicLong(0));
+            streamSizes.put(streamName, new AtomicLong(0));
           }
         }));
       }
