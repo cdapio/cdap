@@ -213,15 +213,13 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     MetricsRecordBuilder builder = new MetricsRecordBuilder(runId, metricValue.getName(), metricValue.getTimestamp(),
                                                             metricValue.getValue(), metricValue.getType());
     int index = 0;
-    String namespace = metricValue.getTags().get(Constants.Metrics.Tag.NAMESPACE);
-    if (namespace == null) {
-      addToContext(builder, Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE, index);
-    }
-
     for (String tagName : rule.tagsToPutIntoContext) {
       String tagValue = metricValue.getTags().get(tagName);
       if (tagValue != null) {
         addToContext(builder, tagName, tagValue, index);
+      } else if (tagName.equals(Constants.Metrics.Tag.NAMESPACE)) {
+        // some tag is missing. However, if the missing tag is namespace, then use 'system' namespace.
+        addToContext(builder, Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE, index);
       } else {
         // doesn't fit the rule: some tag is missing
         return null;

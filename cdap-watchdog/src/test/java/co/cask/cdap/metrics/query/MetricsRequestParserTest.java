@@ -362,7 +362,7 @@ public class MetricsRequestParserTest {
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/store.reads?summary=true"));
-    Assert.assertNull(request.getContextPrefix());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, request.getContextPrefix());
     Assert.assertEquals("system.store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
   }
@@ -371,7 +371,7 @@ public class MetricsRequestParserTest {
   public void testStream() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/streams/stream1/collect.events?summary=true"));
-    Assert.assertNull(request.getContextPrefix());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, request.getContextPrefix());
     Assert.assertEquals("system.collect.events", request.getMetricPrefix());
     Assert.assertEquals("stream1", request.getTagPrefix());
   }
