@@ -99,11 +99,11 @@ angular.module(PKG.name + '.commons')
           }
 
           if(newVal.context && newVal.name) {
-            ngModel.$setViewValue([
-              '/metrics',
-              getContext(),
-              newVal.name
-            ].join('/'));
+            ngModel.$setViewValue(
+              '/metrics/search?' +
+              'context=' + encodeURIComponent(getContext()) +
+              'metric=' + encodeURIComponent(newVal.name)
+            );
           }
           else {
             if(ngModel.$dirty) {
