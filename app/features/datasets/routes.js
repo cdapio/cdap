@@ -14,7 +14,7 @@ angular.module(PKG.name + '.feature.datasets')
 
       .state('datasets.list', {
         url: '',
-        templateUrl: '/assets/features/data/datasets/templates/list.html',
+        templateUrl: '/assets/features/datasets/templates/list.html',
         controller: 'CdapDatasetsListController',
         ncyBreadcrumb: {
           label: 'Datasets',
@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.datasets')
         .state('datasets.detail.overview', {
           url: '/overview',
           parent: 'datasets.detail',
-          templateUrl: '/assets/features/data/datasets/templates/detail.html',
+          templateUrl: '/assets/features/datasets/templates/detail.html',
           controller: 'CdapDatasetDetailController',
           ncyBreadcrumb: {
             parent: 'datasets.list',

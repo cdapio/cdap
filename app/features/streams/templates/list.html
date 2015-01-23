@@ -11,7 +11,7 @@
     <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
       <td>
         <a ui-sref="streams.detail.overview({streamId: stream.name})"
-            ng-bind="stream.name | camelCaseFilter">
+            ng-bind="stream.name | caskCapitalizeFilter">
         </a>
       </td>
       <td ng-bind="stream.type">  </td>

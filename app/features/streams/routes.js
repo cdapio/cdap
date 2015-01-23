@@ -14,7 +14,7 @@ angular.module(PKG.name + '.feature.streams')
 
       .state('streams.list', {
         url: '',
-        templateUrl: '/assets/features/data/streams/templates/list.html',
+        templateUrl: '/assets/features/streams/templates/list.html',
         controller: 'CdapStreamsListController',
         ncyBreadcrumb: {
           label: 'Streams',
@@ -30,11 +30,11 @@ angular.module(PKG.name + '.feature.streams')
         .state('streams.detail.overview', {
           url: '/overview',
           parent: 'streams.detail',
-          templateUrl: '/assets/features/data/streams/templates/detail.html',
+          templateUrl: '/assets/features/streams/templates/detail.html',
           controller: 'CdapStreamDetailController',
           ncyBreadcrumb: {
             parent: 'streams.list',
-            label: '{{$state.params.streamId | camelCaseFilter}}'
+            label: '{{$state.params.streamId | caskCapitalizeFilter}}'
           }
         })
           .state('streams.detail.overview.tab', {
