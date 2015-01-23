@@ -64,7 +64,7 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
 
   $scope.addDashboard = function () {
     myDashboardsModel.add({
-      title: 'new dashboard'
+      title: 'dashboard '+Date.now()
     });
 
     $state.go($state.current, {tab: 0}, {reload: true});
