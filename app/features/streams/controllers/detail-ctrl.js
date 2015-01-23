@@ -16,7 +16,6 @@ angular.module(PKG.name + '.feature.streams')
       _cdapPathV2: '/streams/' + $stateParams.streamId
     })
       .then(function(streams) {
-        debugger;
         $scope.stream = streams;
       });
   });

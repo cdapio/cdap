@@ -20,13 +20,13 @@
      ng-repeat="stream in streams track by $index"
      ui-sref="streams.detail.overview({streamId: stream.name})">
     <strong ng-bind="stream.name | camelCaseFilter">  </strong>
-    <div> <i ng-bind="'Type: ' + (stream.type)"></i> </div>
+    <div> <em ng-bind="'Type: ' + (stream.type)"></em> </div>
   </a>
   <a class="list-group-item"
      ng-repeat="dataset in datasets track by $index"
      ui-sref="datasets.detail.overview({datasetId: dataset.name})">
     <strong ng-bind="dataset.name | camelCaseFilter">  </strong>
-    <div> <i ng-bind="'Type: ' + (dataset.type)"></i> </div>
+    <div> <em ng-bind="'Type: ' + (dataset.type)"></em> </div>
   </a>
 </div>
 </div>

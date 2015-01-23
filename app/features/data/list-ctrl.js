@@ -6,23 +6,24 @@ angular.module(PKG.name + '.feature.data')
       _cdapPathV2: '/streams'
     })
       .then(function(res) {
-        res = res.map(function(dataset) {
-          dataset.dataType = "Stream";
-          return dataset;
-        });
-        $scope.dataList = res.concat($scope.dataList);
-
+        $scope.dataList = res
+          .map(function(dataset) {
+            dataset.dataType = "Stream";
+            return dataset;
+          })
+          .concat($scope.dataList);
       });
 
     dataSrc.request({
       _cdapPathV2: '/datasets'
     })
       .then(function(res) {
-        res = res.map(function(stream) {
-          stream.dataType = "Dataset";
-          return stream;
-        });
-        $scope.dataList = res.concat($scope.dataList);
+        $scope.dataList = res
+          .map(function(stream) {
+            stream.dataType = "Dataset";
+            return stream;
+          })
+          .concat($scope.dataList);
       });
 
     $scope.goToDetail = function(data) {
