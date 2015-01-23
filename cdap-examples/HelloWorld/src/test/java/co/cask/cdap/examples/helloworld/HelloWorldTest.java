@@ -80,7 +80,5 @@ public class HelloWorldTest extends TestBase {
       connection.disconnect();
     }
     Assert.assertEquals("Hello 5!", response);
-
-    appManager.stopAll();
   }
 }
