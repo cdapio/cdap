@@ -49,13 +49,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
@@ -68,8 +66,6 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
@@ -97,7 +93,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private Cancellable leaderListenerCancellable;
 
-  private final Map<String, Aggregator> aggregators;
+  private final Map<String, StreamSizeAggregator> aggregators;
   private Cancellable heartbeatsSubscription;
   private boolean isInit;
 
@@ -158,10 +154,6 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void doShutdown() throws Exception {
-    for (Aggregator aggregator : aggregators.values()) {
-      aggregator.stopAndWait();
-    }
-
     if (leaderListenerCancellable != null) {
       leaderListenerCancellable.cancel();
     }
@@ -201,7 +193,7 @@ public class DistributedStreamService extends AbstractStreamService {
    *
    * @param streamNames names of the streams to perform data sizes aggregation on
    */
-  public void aggregate(Set<String> streamNames) {
+  private void aggregate(Set<String> streamNames) {
     Set<String> existingAggregators = Sets.newHashSet(aggregators.keySet());
     for (String streamName : streamNames) {
       if (existingAggregators.remove(streamName)) {
@@ -216,21 +208,21 @@ public class DistributedStreamService extends AbstractStreamService {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
       }
 
-      Aggregator aggregator = new Aggregator(streamName, filesSize);
-      aggregator.startAndWait();
-      aggregators.put(streamName, aggregator);
+      StreamSizeAggregator streamSizeAggregator = new StreamSizeAggregator(streamName, filesSize);
+      aggregators.put(streamName, streamSizeAggregator);
     }
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
     // but don't anymore
     for (String outdatedStream : existingAggregators) {
-      Aggregator aggregator = aggregators.remove(outdatedStream);
-      aggregator.stopAndWait();
+      aggregators.remove(outdatedStream);
     }
   }
 
   /**
-   * Subscribe to the streams heartbeat notification feed.
+   * Subscribe to the streams heartbeat notification feed. One heartbeat contains data for all existing streams,
+   * we filter that to only take into account the streams that this {@link DistributedStreamService} is a leader
+   * of.
    *
    * @return a {@link Cancellable} to cancel the subscription
    * @throws NotificationException if the heartbeat feed does not exist
@@ -250,11 +242,11 @@ public class DistributedStreamService extends AbstractStreamService {
       @Override
       public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
         for (Map.Entry<String, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
-          Aggregator aggregator = aggregators.get(entry.getKey());
-          if (aggregator == null) {
+          StreamSizeAggregator streamSizeAggregator = aggregators.get(entry.getKey());
+          if (streamSizeAggregator == null) {
             continue;
           }
-          aggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
+          streamSizeAggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
         }
       }
     });
@@ -399,14 +391,13 @@ public class DistributedStreamService extends AbstractStreamService {
    * Aggregate the sizes of all stream writers. A notification is published if the aggregated
    * size is higher than a threshold.
    */
-  private final class Aggregator extends AbstractScheduledService {
+  private final class StreamSizeAggregator {
 
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
-    private ScheduledExecutorService executor;
 
-    protected Aggregator(String streamName, long baseCount) {
+    protected StreamSizeAggregator(String streamName, long baseCount) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
       this.streamFeed = new NotificationFeed.Builder()
@@ -435,17 +426,13 @@ public class DistributedStreamService extends AbstractStreamService {
         return;
       }
       streamWriterSizes.put(instanceId, lastSize + nbBytes);
+      checkSendNotification();
     }
 
-    @Override
-    protected void shutDown() throws Exception {
-      if (executor != null) {
-        executor.shutdownNow();
-      }
-    }
-
-    @Override
-    protected void runOneIteration() throws Exception {
+    /**
+     * Check if the current size of data is enough to trigger a notification.
+     */
+    private void checkSendNotification() {
       long sum = 0;
       for (Long size : streamWriterSizes.values()) {
         sum += size;
@@ -458,20 +445,6 @@ public class DistributedStreamService extends AbstractStreamService {
           streamBaseCount.set(sum);
         }
       }
-    }
-
-    @Override
-    protected Scheduler scheduler() {
-      return Scheduler.newFixedRateSchedule(Constants.Notification.Stream.INIT_HEARTBEAT_AGGREGATION_DELAY,
-                                            Constants.Notification.Stream.HEARTBEAT_AGGREGATION_INTERVAL,
-                                            TimeUnit.SECONDS);
-    }
-
-    @Override
-    protected ScheduledExecutorService executor() {
-      executor = Executors.newSingleThreadScheduledExecutor(
-        Threads.createDaemonThreadFactory("stream-heartbeats-aggregator"));
-      return executor;
     }
 
     private void publishNotification(long absoluteSize) {
