@@ -14,10 +14,30 @@ body.state-dashboard {
 
     .nav-tabs {
       margin-bottom: 10px;
+      display: flex;
+
       > li {
-        > a > .caret {
-          visibility: hidden;
+        // flex-grow: 1;
+
+        > a {
+
+          > .ng-binding {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            display: block;
+            margin-right: 6px;
+          }
+
+          > .caret {
+            visibility: hidden;
+            position: absolute;
+            right: 9px;
+            top: 18px;
+          }
+
         }
+
         &.active > a {
           cursor: pointer;
           &:hover {

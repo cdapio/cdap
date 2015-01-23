@@ -9,8 +9,8 @@
   bs-tabs data-template="assets/features/dashboard/partials/tab.html">
 
   <div
-    data-title="{{board.title}}"
-    ng-repeat="board in dashboards | orderBy:'tabOrder'"
+    data-title="{{board.title + ' ' + board.tabOrder}}"
+    ng-repeat="board in dashboards | orderBy:'+tabOrder'"
     bs-pane>
 
     <div class="row" ng-if="dashboards.activeIndex === $index">

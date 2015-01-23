@@ -201,9 +201,15 @@ function (Widget, MyDataSource, $timeout) {
    * add a new dashboard tab
    */
   Model.prototype.add = function (properties, colCount) {
+    properties = properties || {};
 
-    // we will want this dashboard to go first in the tabOrder
-    properties.tabOrder = this.data[0].tabOrder-1;
+    // we will want this dashboard to get the lowest tabOrder value
+    if(this.data.length) {
+      properties.tabOrder = this.data.reduce(function(prev,curr){
+        return Math.min(prev, curr.tabOrder-1);
+      }, 0);
+    }
+    console.log('adding', properties);
 
     var d = new Dashboard(properties);
 
@@ -212,18 +218,19 @@ function (Widget, MyDataSource, $timeout) {
       d.columns.push([]);
     }
 
-    // default widget in first column
-    // FIXME: figure out why asSortable throws an error without $timeout
-    $timeout(function () {
+
+    $timeout((function () {
+      // default widget in first column
       d.columns[0].push(new Widget());
 
       // save to backend
       d.persist();
-    });
 
-    // newly created tab becomes active
-    this.data.unshift(d);
-    this.data.activeIndex = 0;
+      // newly created tab becomes active
+      this.data.push(d);
+      this.data.activeIndex = 0;
+
+    }).bind(this));
   };
 
 
