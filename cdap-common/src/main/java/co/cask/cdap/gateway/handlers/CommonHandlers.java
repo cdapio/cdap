@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,16 +17,16 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.http.HttpHandler;
-import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
 /**
- * Guice module for handlers defined in Gateway.
+ * Adds bindings for common handlers.
  */
-public class GatewayCommonHandlerModule extends AbstractModule {
-  @Override
-  protected void configure() {
-    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
+public class CommonHandlers {
+
+  public static void add(Multibinder<HttpHandler> handlerBinder) {
     handlerBinder.addBinding().to(PingHandler.class);
+    handlerBinder.addBinding().to(ConfigHandler.class);
   }
+
 }

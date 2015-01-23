@@ -13,12 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.metrics.guice;
+package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -26,16 +24,19 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
 /**
- * Metrics Processor Service Module for the MetricsProcessorStatusService
+ * Base module for stream service bindings
  */
-public class MetricsProcessorStatusServiceModule extends PrivateModule {
+public class StreamServiceModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(MetricsProcessorStatusService.class).in(Scopes.SINGLETON);
-    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-      (binder(), HttpHandler.class, Names.named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER));
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
+                                                                      Names.named(Constants.Stream.STREAM_HANDLER));
+    handlerBinder.addBinding().to(StreamHandler.class);
+    handlerBinder.addBinding().to(StreamFetchHandler.class);
     CommonHandlers.add(handlerBinder);
-    expose(MetricsProcessorStatusService.class);
+
+    bind(StreamHttpService.class).in(Scopes.SINGLETON);
+    expose(StreamHttpService.class);
   }
 }
