@@ -91,8 +91,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     // A duplicate create request (or any other create request with the same namespace + adapterName) will result in 409
     response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
                              sourceProperties, sinkProperties);
-    //todo: change this to 409
-    Assert.assertEquals(500, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -143,7 +142,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testInvalidAdapters() throws Exception {
-    //Invalid adapter  tests.
+    //Invalid adapter tests.
     String namespaceId = Constants.DEFAULT_NAMESPACE;
 
     ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
@@ -213,11 +212,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private HttpResponse createAdapter(String namespaceId, String name, String adapterConfig) throws Exception {
     return doPost(String.format("%s/namespaces/%s/adapters/%s",
                                 Constants.Gateway.API_VERSION_3, namespaceId, name), adapterConfig);
-  }
-
-  private HttpResponse startStopAdapter(String namespaceId, String name, String action) throws Exception {
-    return doPost(String.format("%s/namespaces/%s/adapters/%s/%s",
-                                Constants.Gateway.API_VERSION_3, namespaceId, name, action));
   }
 
   private HttpResponse getAdapterStatus(String namespaceId, String name) throws Exception {

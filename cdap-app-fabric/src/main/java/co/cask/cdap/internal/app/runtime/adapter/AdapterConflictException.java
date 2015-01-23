@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Thrown when Adapter conflict occurs.
+ * Thrown when Adapter conflict occurs. For instance, if an adapter 'stop' is requested, but the adapter is already
+ * stopped.
  */
 public class AdapterConflictException extends Exception {
   public AdapterConflictException(String message) {
