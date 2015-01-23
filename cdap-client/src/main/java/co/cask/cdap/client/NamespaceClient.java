@@ -153,10 +153,10 @@ public class NamespaceClient {
       config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
       URL url = config.resolveURL(String.format("namespaces/%s", namespaceMeta.getId()));
       NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-      String displayName = namespaceMeta.getDisplayName();
+      String name = namespaceMeta.getName();
       String description = namespaceMeta.getDescription();
-      if (displayName != null) {
-        builder.setDisplayName(displayName);
+      if (name != null) {
+        builder.setName(name);
       }
       if (description != null) {
         builder.setDescription(description);

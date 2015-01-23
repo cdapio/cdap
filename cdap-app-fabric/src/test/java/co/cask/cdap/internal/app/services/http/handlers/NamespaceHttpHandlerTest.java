@@ -40,16 +40,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final String EMPTY = "";
   private static final String ID_FIELD = "id";
-  private static final String DISPLAY_NAME_FIELD = "displayName";
+  private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
   private static final String ID = "test";
-  private static final String DISPLAY_NAME = "displayTest";
+  private static final String NAME = "display test";
   private static final String DESCRIPTION = "test description";
-  private static final NamespaceMeta METADATA_VALID = new NamespaceMeta.Builder().setDisplayName(DISPLAY_NAME)
+  private static final NamespaceMeta METADATA_VALID = new NamespaceMeta.Builder().setName(NAME)
     .setDescription(DESCRIPTION).build();
   private static final NamespaceMeta METADATA_MISSING_FIELDS = new NamespaceMeta.Builder().build();
   private static final NamespaceMeta METADATA_EMPTY_FIELDS = new NamespaceMeta.Builder()
-    .setDisplayName(EMPTY).setDescription(EMPTY).build();
+    .setName(EMPTY).setDescription(EMPTY).build();
   private static final String METADATA_INVALID_JSON = "invalid";
   private static final String INVALID_ID = "!nv@l*d/";
 
@@ -106,7 +106,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespaces = readListResponse(response);
     Assert.assertEquals(1, namespaces.size());
     Assert.assertEquals(ID, namespaces.get(0).get(ID_FIELD).getAsString());
-    Assert.assertEquals(DISPLAY_NAME, namespaces.get(0).get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespaces.get(0).get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespaces.get(0).get(DESCRIPTION_FIELD).getAsString());
     // cleanup
     response = deleteNamespace(ID);
@@ -125,7 +125,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
     Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(DISPLAY_NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
 
     // create again with the same name
@@ -137,7 +137,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
     Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(DISPLAY_NAME, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
     response = deleteNamespace(ID);
@@ -179,7 +179,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
     Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(ID, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
     response = deleteNamespace(ID);
@@ -193,7 +193,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
     Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(ID, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
     response = deleteNamespace(ID);
@@ -207,7 +207,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
     Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(EMPTY, namespace.get(DISPLAY_NAME_FIELD).getAsString());
+    Assert.assertEquals(EMPTY, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
     response = deleteNamespace(ID);
