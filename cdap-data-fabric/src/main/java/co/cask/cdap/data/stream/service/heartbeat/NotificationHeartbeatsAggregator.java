@@ -18,6 +18,8 @@ package co.cask.cdap.data.stream.service.heartbeat;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -50,13 +52,16 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
 
   private final StreamAdmin streamAdmin;
   private final NotificationService notificationService;
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final Map<String, Aggregator> aggregators;
   private Cancellable heartbeatsSubscription;
 
   @Inject
-  public NotificationHeartbeatsAggregator(StreamAdmin streamAdmin, NotificationService notificationService) {
+  public NotificationHeartbeatsAggregator(StreamAdmin streamAdmin, NotificationService notificationService,
+                                          StreamCoordinatorClient streamCoordinatorClient) {
     this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
+    this.streamCoordinatorClient = streamCoordinatorClient;
     this.aggregators = Maps.newConcurrentMap();
   }
 
@@ -67,6 +72,12 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
 
   @Override
   protected void shutDown() throws Exception {
+    for (Aggregator aggregator : aggregators.values()) {
+      if (aggregator != null) {
+        aggregator.cancel();
+      }
+    }
+
     if (heartbeatsSubscription != null) {
       heartbeatsSubscription.cancel();
     }
@@ -94,22 +105,23 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
         continue;
       }
 
-      long filesSize = 0;
       try {
         StreamConfig config = streamAdmin.getConfig(streamName);
-        filesSize = StreamUtils.fetchStreamFilesSize(config);
+        long filesSize = StreamUtils.fetchStreamFilesSize(config);
+        Aggregator aggregator = new Aggregator(config, filesSize);
+        aggregators.put(streamName, aggregator);
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
       }
-
-      Aggregator aggregator = new Aggregator(streamName, filesSize);
-      aggregators.put(streamName, aggregator);
     }
 
     // Remove subscriptions to the heartbeats we used to listen to before the call to that method,
     // but don't anymore
     for (String outdatedStream : existingAggregators) {
-      aggregators.remove(outdatedStream);
+      Aggregator aggregator = aggregators.remove(outdatedStream);
+      if (aggregator != null) {
+        aggregator.cancel();
+      }
     }
   }
 
@@ -142,24 +154,42 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
    * Runnable scheduled to aggregate the sizes of all stream writers. A notification is published
    * if the aggregated size is higher than a threshold.
    */
-  private final class Aggregator {
+  private final class Aggregator implements Cancellable {
 
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
+    private final Cancellable thresholdSubscription;
 
     // This boolean will ensure that an extra Stream notification is sent at CDAP start-up.
     private boolean initNotificationSent;
 
-    protected Aggregator(String streamName, long baseCount) {
+    private int thresholdMB;
+
+    protected Aggregator(StreamConfig streamConfig, long baseCount) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace("default")
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamName)
+        .setName(streamConfig.getName())
         .build();
       this.initNotificationSent = false;
+      this.thresholdMB = streamConfig.getNotificationThresholdMB();
+
+      // Listen to changes in the threshold
+      this.thresholdSubscription =
+        streamCoordinatorClient.addListener(streamConfig.getName(), new StreamPropertyListener() {
+          @Override
+          public void thresholdChanged(String streamName, int threshold) {
+            thresholdMB = threshold;
+          }
+        });
+    }
+
+    @Override
+    public void cancel() {
+      thresholdSubscription.cancel();
     }
 
     public void reset() {
@@ -193,7 +223,7 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
         sum += size;
       }
 
-      if (!initNotificationSent || sum - streamBaseCount.get() > Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD) {
+      if (!initNotificationSent || sum - streamBaseCount.get() > toB(thresholdMB)) {
         try {
           initNotificationSent = true;
           publishNotification(sum);
@@ -214,5 +244,8 @@ public class NotificationHeartbeatsAggregator extends AbstractScheduledService i
       }
     }
 
+    private long toB(int mb) {
+      return (long) mb * 1024 * 1024;
+    }
   }
 }

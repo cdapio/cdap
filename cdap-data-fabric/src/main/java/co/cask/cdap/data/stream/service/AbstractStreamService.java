@@ -62,6 +62,10 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     this.feedManager = feedManager;
   }
 
+  protected StreamCoordinatorClient getStreamCoordinatorClient() {
+    return streamCoordinatorClient;
+  }
+
   @Override
   protected final void startUp() throws Exception {
     createHeartbeatsFeed();

@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -27,12 +28,15 @@ import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,8 +49,10 @@ public class LocalStreamService extends AbstractStreamService {
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
+  private final List<Cancellable> thresholdChangeSubscriptions;
   private final Map<String, Long> streamsInitCounts;
   private final Map<String, Long> streamsBaseCounts;
+  private final Map<String, Integer> streamsThresholds;
   private boolean isInit;
 
   @Inject
@@ -62,29 +68,44 @@ public class LocalStreamService extends AbstractStreamService {
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.notificationService = notificationService;
+    this.thresholdChangeSubscriptions = Lists.newArrayList();
     this.streamsBaseCounts = Maps.newHashMap();
     this.streamsInitCounts = Maps.newHashMap();
+    this.streamsThresholds = Maps.newHashMap();
     isInit = true;
   }
 
   @Override
   protected void initialize() throws Exception {
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
-      long filesSize = 0;
       try {
         StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
-        filesSize = StreamUtils.fetchStreamFilesSize(config);
+        long filesSize = StreamUtils.fetchStreamFilesSize(config);
+        watchStreamThresholdChange(streamSpec.getName());
+        streamsInitCounts.put(streamSpec.getName(), filesSize);
+        streamsBaseCounts.put(streamSpec.getName(), filesSize);
+        streamsThresholds.put(streamSpec.getName(), config.getNotificationThresholdMB());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamSpec.getName());
       }
-      streamsInitCounts.put(streamSpec.getName(), filesSize);
-      streamsBaseCounts.put(streamSpec.getName(), filesSize);
     }
+  }
+
+  private void watchStreamThresholdChange(String streamName) {
+    this.thresholdSubscription =
+      getStreamCoordinatorClient().addListener(streamConfig.getName(), new StreamPropertyListener() {
+        @Override
+        public void thresholdChanged(String streamName, int threshold) {
+          thresholdMB = threshold;
+        }
+      });
   }
 
   @Override
   protected void doShutdown() throws Exception {
-    // No-op
+    for (Cancellable subscription : thresholdChangeSubscriptions) {
+      subscription.cancel();
+    }
   }
 
   @Override
