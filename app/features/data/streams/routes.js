@@ -31,7 +31,7 @@ angular.module(PKG.name + '.feature.streams')
           url: '/overview',
           parent: 'streams.detail',
           templateUrl: '/assets/features/data/streams/templates/detail.html',
-          controller: 'CdapStreamsDetailController',
+          controller: 'CdapStreamDetailController',
           ncyBreadcrumb: {
             parent: 'streams.list',
             label: '{{$state.params.streamId | camelCaseFilter}}'

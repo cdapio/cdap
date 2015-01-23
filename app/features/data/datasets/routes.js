@@ -31,7 +31,7 @@ angular.module(PKG.name + '.feature.datasets')
           url: '/overview',
           parent: 'datasets.detail',
           templateUrl: '/assets/features/data/datasets/templates/detail.html',
-          controller: 'CdapDatasetsDetailController',
+          controller: 'CdapDatasetDetailController',
           ncyBreadcrumb: {
             parent: 'datasets.list',
             label: '{{$state.params.datasetsId}}'

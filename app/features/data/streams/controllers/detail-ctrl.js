@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamsDetailController', function($scope, MyDataSource, $stateParams) {
+  .controller('CdapStreamDetailController', function($scope, MyDataSource, $stateParams) {
     var dataSrc = new MyDataSource($scope);
     $scope.dropdown = [
       {
@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.streams')
         href: "#"
       }
     ];
-    
+
     dataSrc.request({
       _cdapPathV2: '/streams/' + $stateParams.streamId
     })
