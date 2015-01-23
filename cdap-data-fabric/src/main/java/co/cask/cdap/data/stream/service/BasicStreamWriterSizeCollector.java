@@ -67,8 +67,8 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     AtomicLong value = streamSizes.get(streamName);
     if (value == null) {
       value = streamSizes.putIfAbsent(streamName, new AtomicLong(dataSize));
-      if (value != null) {
-        // This is the first time that we've seen this stream, we subscribe to generation changes
+      if (value == null) {
+        // This is the first time that we've seen this stream, we subscribe to generation changes to track truncation
         truncationSubscriptions.add(streamCoordinatorClient.addListener(streamName, new StreamPropertyListener() {
           @Override
           public void generationChanged(String streamName, int generation) {

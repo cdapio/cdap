@@ -67,6 +67,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
@@ -94,7 +95,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private Cancellable leaderListenerCancellable;
 
-  private final Map<String, StreamSizeAggregator> aggregators;
+  private final ConcurrentMap<String, StreamSizeAggregator> aggregators;
   private Cancellable heartbeatsSubscription;
   private boolean isInit;
 
@@ -212,17 +213,51 @@ public class DistributedStreamService extends AbstractStreamService {
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
       }
-
-      StreamSizeAggregator streamSizeAggregator = new StreamSizeAggregator(streamName, filesSize);
-      aggregators.put(streamName, streamSizeAggregator);
+      createSizeAggregator(streamName, filesSize);
     }
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
     // but don't anymore
     for (String outdatedStream : existingAggregators) {
       StreamSizeAggregator aggregator = aggregators.remove(outdatedStream);
-      aggregator.cancel();
+      if (aggregator != null) {
+        aggregator.cancel();
+      }
     }
+  }
+
+  /**
+   * Create a new aggregator for the {@code streamName}, and add it to the existing map of {@link Cancellable}
+   * {@code aggregators}. This method does not cancel previously existing aggregator associated to the
+   * {@code streamName}.
+   *
+   * @param streamName stream name to create a new aggregator for
+   * @param baseCount stream size from which to start aggregating
+   * @return the created {@link StreamSizeAggregator}
+   */
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount) {
+
+    // Handle stream truncation, by creating creating a new empty aggregator for the stream
+    // and cancelling the existing one
+    final Cancellable truncationSubscription =
+      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+        @Override
+        public void generationChanged(String streamName, int generation) {
+          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0));
+          if (previousAggregator != null) {
+            previousAggregator.cancel();
+          }
+        }
+      });
+
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount) {
+      @Override
+      public void cancel() {
+        truncationSubscription.cancel();
+      }
+    };
+    aggregators.put(streamName, newAggregator);
+    return newAggregator;
   }
 
   /**
@@ -397,12 +432,11 @@ public class DistributedStreamService extends AbstractStreamService {
    * Aggregate the sizes of all stream writers. A notification is published if the aggregated
    * size is higher than a threshold.
    */
-  private final class StreamSizeAggregator implements Cancellable {
+  private abstract class StreamSizeAggregator implements Cancellable {
 
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
-    private final Cancellable truncationSubscription;
 
     protected StreamSizeAggregator(String streamName, long baseCount) {
       this.streamWriterSizes = Maps.newHashMap();
@@ -412,13 +446,6 @@ public class DistributedStreamService extends AbstractStreamService {
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(streamName)
         .build();
-
-      this.truncationSubscription = getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
-        @Override
-        public void generationChanged(String streamName, int generation) {
-          reset();
-        }
-      });
     }
 
     /**
@@ -438,11 +465,6 @@ public class DistributedStreamService extends AbstractStreamService {
       checkSendNotification();
     }
 
-    @Override
-    public void cancel() {
-      truncationSubscription.cancel();
-    }
-
     /**
      * Check if the current size of data is enough to trigger a notification.
      */
@@ -459,11 +481,6 @@ public class DistributedStreamService extends AbstractStreamService {
           streamBaseCount.set(sum);
         }
       }
-    }
-
-    private void reset() {
-      streamWriterSizes.clear();
-      streamBaseCount.set(0);
     }
 
     private void publishNotification(long absoluteSize) {
