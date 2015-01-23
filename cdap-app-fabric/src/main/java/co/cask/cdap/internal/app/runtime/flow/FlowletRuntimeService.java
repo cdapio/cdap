@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.tephra.TransactionExecutor;
@@ -106,7 +107,12 @@ final class FlowletRuntimeService extends AbstractIdleService {
         @Override
         public void apply() throws Exception {
           LOG.info("Initializing flowlet: " + flowletContext);
-          flowlet.initialize(flowletContext);
+          ClassLoader classLoader = ClassLoaders.setContextClassLoader(flowletContext.getProgram().getClassLoader());
+          try {
+            flowlet.initialize(flowletContext);
+          } finally {
+            ClassLoaders.setContextClassLoader(classLoader);
+          }
           LOG.info("Flowlet initialized: " + flowletContext);
         }
       });
@@ -123,7 +129,12 @@ final class FlowletRuntimeService extends AbstractIdleService {
         @Override
         public void apply() throws Exception {
           LOG.info("Destroying flowlet: " + flowletContext);
-          flowlet.destroy();
+          ClassLoader classLoader = ClassLoaders.setContextClassLoader(flowletContext.getProgram().getClassLoader());
+          try {
+            flowlet.destroy();
+          } finally {
+            ClassLoaders.setContextClassLoader(classLoader);
+          }
           LOG.info("Flowlet destroyed: " + flowletContext);
         }
       });

@@ -27,6 +27,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -144,14 +145,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
       WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
       try {
-        action.run();
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+        try {
+          action.run();
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       } catch (Throwable t) {
         LOG.warn("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
         // this will always rethrow
         Throwables.propagateIfPossible(t, Exception.class);
       } finally {
         // Destroy the action.
-        destroy(actionSpec, action);
+        destroy(actionSpec, action, classLoader);
       }
     }
 
@@ -191,6 +197,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
 
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
     try {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
                                                  logicalStartTime, 
@@ -200,6 +207,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
       // this will always rethrow
       Throwables.propagateIfPossible(t, Exception.class);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
 
     return action;
@@ -208,12 +217,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   /**
    * Calls the destroy method on the given WorkflowAction.
    */
-  private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action) {
+  private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action, ClassLoader classLoader) {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
     try {
       action.destroy();
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.destroy(): {}", actionSpec, t);
       // Just log, but not propagate
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 

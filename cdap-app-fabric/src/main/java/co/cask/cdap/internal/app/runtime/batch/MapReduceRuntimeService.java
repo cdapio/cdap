@@ -31,6 +31,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
@@ -221,13 +222,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
             contextConfig.set(context, cConf, tx, programJarCopy.getName());
 
             LOG.info("Submitting MapReduce Job: {}", context);
-            ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(job.getConfiguration().getClassLoader());
+            ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
             try {
               // submits job and returns immediately
               job.submit();
             } finally {
-              Thread.currentThread().setContextClassLoader(oldClassLoader);
+              ClassLoaders.setContextClassLoader(oldClassLoader);
             }
 
             this.job = job;
