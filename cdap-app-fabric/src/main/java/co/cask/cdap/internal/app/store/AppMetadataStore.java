@@ -24,7 +24,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -269,16 +268,16 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public void writeAdapter(Id.Namespace id, AdapterSpecification spec) {
-    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), spec.getName()).build(), spec);
+  public void writeAdapter(Id.Namespace id, AdapterMeta adapterMeta) {
+    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), adapterMeta.getSpec().getName()).build(), adapterMeta);
   }
 
-  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
-    return get(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterSpecification.class);
+  public AdapterMeta getAdapter(Id.Namespace id, String name) {
+    return get(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
   }
 
-  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
-    return list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterSpecification.class);
+  public List<AdapterMeta> getAllAdapters(Id.Namespace id) {
+    return list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterMeta.class);
   }
 
   public void deleteAdapter(Id.Namespace id, String name) {

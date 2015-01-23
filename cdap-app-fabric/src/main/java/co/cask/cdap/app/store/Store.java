@@ -24,7 +24,7 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.internal.app.store.AdapterMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -332,29 +332,29 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter spec to the store. Will overwrite the existing spec.
+   * Adds adapter meta to the store. Will overwrite the existing AdapterMeta.
    *
    * @param id Namespace id
-   * @param adapterSpecification specification of the adapter
+   * @param adapterMeta metadata (including specification) of the adapter
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification);
+  void addAdapter(Id.Namespace id, AdapterMeta adapterMeta);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
    *
    * @param id  Namespace id.
    * @param name Adapter name
-   * @return an instance of {@link AdapterSpecification}.
+   * @return an instance of {@link AdapterMeta}.
    */
-  AdapterSpecification getAdapter(Id.Namespace id, String name);
+  AdapterMeta getAdapter(Id.Namespace id, String name);
 
   /**
    * Fetch all the adapters in a given namespace.
    *
    * @param id Namespace id.
-   * @return {@link Collection} of Adapter Specification.
+   * @return {@link Collection} of Adapter Meta.
    */
-  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
+  Collection<AdapterMeta> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.

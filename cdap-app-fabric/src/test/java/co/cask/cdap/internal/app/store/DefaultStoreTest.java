@@ -758,32 +758,32 @@ public class DefaultStoreTest {
     AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
                                                                      properties, sources, sinks);
 
-    store.addAdapter(namespaceId, specStreamToAvro1);
-    store.addAdapter(namespaceId, specStreamToAvro2);
+    store.addAdapter(namespaceId, new AdapterMeta(specStreamToAvro1, "Started"));
+    store.addAdapter(namespaceId, new AdapterMeta(specStreamToAvro2, "Started"));
 
     // Get non existing spec
-    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "nonExistingAdapter");
+    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "nonExistingAdapter").getSpec();
     Assert.assertNull(retrievedSpec);
 
     //Retrieve specs
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1").getSpec();
     Assert.assertEquals(specStreamToAvro1, retrievedSpec);
     // Remove spec
     store.removeAdapter(namespaceId, "streamToAvro1");
 
     // verify the deleted spec is gone.
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1").getSpec();
     Assert.assertNull(retrievedSpec);
 
     // verify the other adapter still exists
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2").getSpec();
     Assert.assertEquals(specStreamToAvro2, retrievedSpec);
 
     // remove all
     store.removeAllAdapters(namespaceId);
 
     // verify all adapters are gone
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
+    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2").getSpec();
     Assert.assertNull(retrievedSpec);
   }
 }

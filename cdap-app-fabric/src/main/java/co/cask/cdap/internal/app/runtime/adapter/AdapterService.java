@@ -37,6 +37,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Schedules;
+import co.cask.cdap.internal.app.store.AdapterMeta;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -134,11 +135,23 @@ public class AdapterService extends AbstractIdleService {
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
   public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpecification = store.getAdapter(Id.Namespace.from(namespace), adapterName);
-    if (adapterSpecification == null) {
+    return getAdapterMeta(namespace, adapterName).getSpec();
+  }
+
+  /**
+   * Retrieves the {@link AdapterSpecification} specified by the name in a given namespace.
+   *
+   * @param namespace namespace to lookup the adapter
+   * @param adapterName name of the adapter
+   * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
+   * @throws AdapterNotFoundException if the requested adapter is not found
+   */
+  public AdapterMeta getAdapterMeta(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterMeta adapterMeta = store.getAdapter(Id.Namespace.from(namespace), adapterName);
+    if (adapterMeta == null) {
       throw new AdapterNotFoundException(adapterName);
     }
-    return adapterSpecification;
+    return adapterMeta;
   }
 
   /**
@@ -148,7 +161,11 @@ public class AdapterService extends AbstractIdleService {
    * @return {@link Collection} of {@link AdapterSpecification}
    */
   public Collection<AdapterSpecification> getAdapters(String namespace) {
-    return store.getAllAdapters(Id.Namespace.from(namespace));
+    List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
+    for (AdapterMeta adapterMeta : store.getAllAdapters(Id.Namespace.from(namespace))) {
+      adapterSpecs.add(adapterMeta.getSpec());
+    }
+    return adapterSpecs;
   }
 
   /**
@@ -188,7 +205,7 @@ public class AdapterService extends AbstractIdleService {
 
     try {
       String adapterName = adapterSpec.getName();
-      AdapterSpecification existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+      AdapterMeta existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
       if (existingAdapter != null) {
         throw new AdapterAlreadyExistsException(adapterName);
       }
@@ -198,14 +215,8 @@ public class AdapterService extends AbstractIdleService {
       validateSources(adapterName, adapterSpec.getSources());
       createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
-      // If the adapter already exists, remove existing schedule to replace with the new one.
-      AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
-      if (existingSpec != null) {
-        unschedule(namespaceId, appSpec, adapterTypeInfo, existingSpec);
-      }
-
       schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
-      store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
+      store.addAdapter(Id.Namespace.from(namespaceId), new AdapterMeta(adapterSpec, "STARTED"));
 
     } catch (Exception e) {
       throw new RuntimeException("Error deploying adapter application " + e.getMessage());
@@ -229,16 +240,34 @@ public class AdapterService extends AbstractIdleService {
     // TODO: Delete the application if this is the last adapter
   }
 
-  public void stopAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+  public void stopAdapter(String namespace, String adapterName)
+    throws AdapterNotFoundException, AdapterConflictException {
+    AdapterMeta adapterMeta = getAdapterMeta(namespace, adapterName);
+    if ("STOPPED".equals(adapterMeta.getStatus())) {
+      throw new AdapterConflictException("Adapter is already stopped.");
+    }
+
+    AdapterSpecification adapterSpec = adapterMeta.getSpec();
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
     unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+
+    AdapterMeta updatedMeta = AdapterMeta.updateStatus(adapterMeta, "STOPPED");
+    store.addAdapter(Id.Namespace.from(namespace), updatedMeta);
   }
 
-  public void startAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+  public void startAdapter(String namespace, String adapterName)
+    throws AdapterNotFoundException, AdapterConflictException {
+    AdapterMeta adapterMeta = getAdapterMeta(namespace, adapterName);
+    if ("STARTED".equals(adapterMeta.getStatus())) {
+      throw new AdapterConflictException("Adapter is already stopped.");
+    }
+
+    AdapterSpecification adapterSpec = adapterMeta.getSpec();
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
     schedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+
+    AdapterMeta updatedMeta = AdapterMeta.updateStatus(adapterMeta, "STARTED");
+    store.addAdapter(Id.Namespace.from(namespace), updatedMeta);
   }
 
   // Deploys adapter application if it is not already deployed.
