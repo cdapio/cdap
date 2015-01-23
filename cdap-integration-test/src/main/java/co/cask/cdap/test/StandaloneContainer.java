@@ -99,11 +99,11 @@ public class StandaloneContainer {
   }
 
   private static boolean standaloneIsReachable() throws UnAuthorizedAccessTokenException {
-    MetaClient pingClient = new MetaClient(new ClientConfig.Builder()
+    MetaClient metaClient = new MetaClient(new ClientConfig.Builder()
                                              .setUri(DEFAULT_CONNECTION_URI)
                                              .build());
     try {
-      pingClient.ping();
+      metaClient.ping();
       return true;
     } catch (IOException e) {
       return false;

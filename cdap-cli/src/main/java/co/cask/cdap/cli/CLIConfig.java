@@ -140,8 +140,8 @@ public class CLIConfig {
       .setSSLEnabled(connectionInfo.isSSLEnabled())
       .setAccessToken(accessToken)
       .build();
-    MetaClient pingClient = new MetaClient(clientConfig);
-    pingClient.ping();
+    MetaClient metaClient = new MetaClient(clientConfig);
+    metaClient.ping();
   }
 
   private boolean isAuthenticationEnabled(ConnectionInfo connectionInfo) throws IOException {
