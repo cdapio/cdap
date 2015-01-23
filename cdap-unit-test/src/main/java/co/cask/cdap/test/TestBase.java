@@ -16,20 +16,15 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -66,7 +61,6 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
@@ -80,20 +74,15 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
-import co.cask.cdap.test.internal.DefaultId;
 import co.cask.cdap.test.internal.DefaultProcedureClient;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.ProcedureClientFactory;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.cdap.test.internal.TestMetricsCollectionService;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -104,9 +93,7 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -117,10 +104,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.HashMap;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -146,56 +130,39 @@ public class TestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
 
+  private static TestManager testManager;
+
+  protected static TestManager getTestManager() {
+    return testManager;
+  }
+
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
    * must be in the same or children package as the application.
    *
+   * @deprecated Use {@link TestManager#deployApplication(Class, java.io.File...)} from {@link #getTestManager()}.
+   *
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
-  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                        File...bundleEmbeddedJars) {
-    Preconditions.checkState(appFabricClient != null, "Test framework is not yet running");
-    Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
-
-    try {
-      Object appInstance = applicationClz.newInstance();
-      ApplicationSpecification appSpec;
-
-      if (appInstance instanceof Application) {
-        Application app = (Application) appInstance;
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-        app.configure(configurer, new ApplicationContext());
-        appSpec = configurer.createSpecification();
-      } else {
-        throw new IllegalArgumentException("Application class does not represent application: "
-                                             + applicationClz.getName());
-      }
-
-      Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
-
-      return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
-                                                                     deployedJar, appSpec);
-
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  @Deprecated
+  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+                                                 File... bundleEmbeddedJars) {
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    return testManager.deployApplication(applicationClz, bundleEmbeddedJars);
   }
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
    * This method could be called between two unit tests, to make them independent.
+   *
+   * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
    */
+  @Deprecated
   protected void clear() {
-    try {
-      appFabricClient.reset();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    } finally {
-      RuntimeStats.resetAll();
-    }
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    testManager.clear();
   }
 
   @BeforeClass
@@ -272,6 +239,7 @@ public class TestBase {
         }
       }
     );
+
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -297,6 +265,8 @@ public class TestBase {
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
+
+    testManager = new UnitTestManager(injector, appFabricClient, datasetFramework, txSystemClient, discoveryClient);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -377,45 +347,54 @@ public class TestBase {
 
   /**
    * Deploys {@link DatasetModule}.
+   *
+   * @deprecated Use {@link TestManager#deployDatasetModule(String, Class)} ()} from {@link #getTestManager()}.
+   *
    * @param moduleName name of the module
    * @param datasetModule module class
    * @throws Exception
    */
-  @Beta
+  @Deprecated
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetFramework.addModule(moduleName, datasetModule.newInstance());
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    testManager.deployDatasetModule(moduleName, datasetModule);
   }
-
 
   /**
    * Adds an instance of a dataset.
+   *
+   * @deprecated Use {@link TestManager#addDatasetInstance(String, String, DatasetProperties)}
+   * from {@link #getTestManager()}.
+   *
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
    */
-  @Beta
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
 
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    return testManager.addDatasetInstance(datasetTypeName, datasetInstanceName, props);
   }
 
   /**
    * Adds an instance of dataset.
+   *
+   * @deprecated Use {@link TestManager#addDatasetInstance(String, String)} ()} from {@link #getTestManager()}.
+   *
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
-  @Beta
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    return testManager.addDatasetInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
   }
 
   /**
@@ -424,66 +403,18 @@ public class TestBase {
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
-  @Beta
-  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName)
-    throws Exception {
-    @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
-    try {
-      final TransactionContext txContext;
-      // not every dataset is TransactionAware. FileSets for example, are not transactional.
-      if (dataSet instanceof TransactionAware) {
-        TransactionAware txAwareDataset = (TransactionAware) dataSet;
-        txContext = new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
-        txContext.start();
-      } else {
-        txContext = null;
-      }
-      return new DataSetManager<T>() {
-        @Override
-        public T get() {
-          return dataSet;
-        }
-
-        @Override
-        public void flush() {
-          try {
-            if (txContext != null) {
-              txContext.finish();
-              txContext.start();
-            }
-          } catch (TransactionFailureException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  @Deprecated
+  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    return testManager.getDataset(datasetInstanceName);
   }
 
   /**
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
-  @Beta
+  @Deprecated
   protected final Connection getQueryClient() throws Exception {
-
-    // this makes sure the Explore JDBC driver is loaded
-    Class.forName(ExploreDriver.class.getName());
-
-    Discoverable discoverable = new StickyEndpointStrategy(
-      discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
-
-    if (null == discoverable) {
-      throw new IOException("Explore service could not be discovered.");
-    }
-
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String host = address.getHostName();
-    int port = address.getPort();
-
-    String connectString = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, host, port);
-
-    return DriverManager.getConnection(connectString);
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
+    return testManager.getQueryClient();
   }
 }
