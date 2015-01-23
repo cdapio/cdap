@@ -43,7 +43,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
@@ -305,7 +305,7 @@ public class BaseHiveExploreServiceTest {
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
-          handlerBinder.addBinding().to(PingHandler.class);
+          CommonHandlers.add(handlerBinder);
 
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
@@ -348,7 +348,7 @@ public class BaseHiveExploreServiceTest {
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
-          handlerBinder.addBinding().to(PingHandler.class);
+          CommonHandlers.add(handlerBinder);
 
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
