@@ -209,7 +209,6 @@ function (Widget, MyDataSource, $timeout) {
         return Math.min(prev, curr.tabOrder-1);
       }, 0);
     }
-    console.log('adding', properties);
 
     var d = new Dashboard(properties);
 
@@ -218,19 +217,15 @@ function (Widget, MyDataSource, $timeout) {
       d.columns.push([]);
     }
 
+    // default widget in first column
+    d.columns[0].push(new Widget());
 
-    $timeout((function () {
-      // default widget in first column
-      d.columns[0].push(new Widget());
+    // save to backend
+    d.persist();
 
-      // save to backend
-      d.persist();
-
-      // newly created tab becomes active
-      this.data.push(d);
-      this.data.activeIndex = 0;
-
-    }).bind(this));
+    // newly created tab becomes active
+    this.data.push(d);
+    this.data.activeIndex = 0;
   };
 
 

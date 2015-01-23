@@ -66,6 +66,8 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
     myDashboardsModel.add({
       title: 'new dashboard'
     });
+
+    $state.go($state.current, {tab: 0}, {reload: true});
   };
 
   $scope.removeDashboard = function () {

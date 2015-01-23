@@ -9,7 +9,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
     function Widget (opts) {
       opts = opts || {};
-      this.title = opts.title || 'Widget';
+      this.title = opts.title || 'Widget '+Date.now();
       this.type = opts.type || 'welcome';
 
       var m = opts.metric;
