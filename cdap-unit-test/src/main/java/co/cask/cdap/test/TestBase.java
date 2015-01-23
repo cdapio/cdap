@@ -46,8 +46,8 @@ import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
-import co.cask.cdap.data.stream.service.NoOpStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
@@ -251,7 +251,7 @@ public class TestBase {
         protected void configure() {
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-          bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+          bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },

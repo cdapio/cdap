@@ -16,18 +16,35 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+
+import java.util.Map;
 
 /**
  * Stream service running in local mode.
  */
 public class LocalStreamService extends AbstractStreamService {
 
+  private final StreamAdmin streamAdmin;
+  private final StreamWriterSizeCollector streamWriterSizeCollector;
+  private final StreamMetaStore streamMetaStore;
+  private final Map<String, Long> streamsBaseSizes;
+
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                            StreamFileJanitorService janitorService) {
+                            StreamFileJanitorService janitorService,
+                            StreamMetaStore streamMetaStore,
+                            StreamAdmin streamAdmin,
+                            StreamWriterSizeCollector streamWriterSizeCollector) {
     super(streamCoordinatorClient, janitorService);
+    this.streamAdmin = streamAdmin;
+    this.streamMetaStore = streamMetaStore;
+    this.streamWriterSizeCollector = streamWriterSizeCollector;
+    this.streamsBaseSizes = Maps.newHashMap();
   }
 
   @Override
@@ -38,5 +55,17 @@ public class LocalStreamService extends AbstractStreamService {
   @Override
   protected void doShutdown() throws Exception {
     // No-op
+  }
+
+  @Override
+  protected void runOneIteration() throws Exception {
+    // Get stream size - which will be the entire size - and send a notification if the size is big enough
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+      long absoluteSize = streamWriterSizeCollector.getTotalCollected(streamSpec.getName());
+
+      // TODO check that this size is higher than a threshold, and send a notification is so - or if isInit is true too
+      // TODO will come in a later PR
+
+    }
   }
 }
