@@ -441,7 +441,7 @@ public class DistributedStreamService extends AbstractStreamService {
     @Override
     protected Scheduler scheduler() {
       return Scheduler.newFixedRateSchedule(Constants.Notification.Stream.INIT_HEARTBEAT_AGGREGATION_DELAY,
-                                            Constants.Notification.Stream.HEARTBEAT_AGGREGATION_DELAY,
+                                            Constants.Notification.Stream.HEARTBEAT_AGGREGATION_INTERVAL,
                                             TimeUnit.SECONDS);
     }
 

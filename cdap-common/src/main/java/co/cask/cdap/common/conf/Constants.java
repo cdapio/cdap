@@ -604,7 +604,7 @@ public final class Constants {
       public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
 
       public static final int INIT_HEARTBEAT_AGGREGATION_DELAY = 2;
-      public static final int HEARTBEAT_AGGREGATION_DELAY = 5;
+      public static final int HEARTBEAT_AGGREGATION_INTERVAL = 5;
     }
   }
 
