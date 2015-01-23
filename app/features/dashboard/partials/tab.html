@@ -1,4 +1,4 @@
-<ul class="nav" ng-class="$navClass" role="tablist">
+<ul class="nav" ng-class="$navClass" role="tablist" my-tab-limiter>
   <li ng-repeat="$pane in $panes track by $index" ng-class="$index == $panes.$active ? $activeClass + ' dropdown' : ''">
     <a role="tab" data-toggle="tab" ng-click="$index == $panes.$active ? activeTabClick($event) : $setActive($index)" data-index="{{ $index }}" class="dropdown-toggle">
       <span ng-bind-html="$pane.title"></span>
