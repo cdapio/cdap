@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# run this file to create a zippable ./target
-#  directory that should contain everything
+# run this file to create a zippable "target"
+#  directory that will contain everything
 #  needed to run the UI in production
 
 export PWD=`pwd`
