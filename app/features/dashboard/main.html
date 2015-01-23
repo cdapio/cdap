@@ -9,7 +9,7 @@
   bs-tabs data-template="assets/features/dashboard/partials/tab.html">
 
   <div
-    data-title="{{board.title + ' [' + board.tabOrder + ']' }}"
+    data-title="{{board.title}}"
     ng-repeat="board in dashboards | orderBy:'+tabOrder'"
     bs-pane>
 
