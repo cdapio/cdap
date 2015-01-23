@@ -19,7 +19,7 @@ package co.cask.cdap.data.stream.service;
 import com.google.common.util.concurrent.Service;
 
 /**
- * Stream service interface.
+ * Stream service interface, that exists only for Streams on files.
  */
 public interface StreamService extends Service {
 }
