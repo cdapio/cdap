@@ -27,3 +27,11 @@ execute 'initaction-create-hdfs-cdap-dir' do
   user 'hdfs'
   group 'hdfs'
 end
+
+execute 'initaction-create-hdfs-cdap-user-dir' do
+  not_if  "hdfs dfs -test -d /user/#{node['cdap']['cdap_site']['hdfs.user']}", :user => 'hdfs'
+  command "hdfs dfs -mkdir -p /user/#{node['cdap']['cdap_site']['hdfs.user']} && hdfs dfs -chown #{node['cdap']['cdap_site']['hdfs.user']} /user/#{node['cdap']['cdap_site']['hdfs.user']}"
+  timeout 300
+  user 'hdfs'
+  group 'hdfs'
+end
