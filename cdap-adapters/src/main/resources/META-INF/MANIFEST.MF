@@ -1,4 +1,24 @@
-CDAP-Adapter-Type: streamConversion
+CDAP-Adapter-Type: stream-conversion
+CDAP-Adapter-Program-Type: WORKFLOW
+CDAP-Adapter-Properties: {
+ "frequency":"10m",
+ "source.format.name":"string",
+ "source.format.settings":"{}",
+ "source.schema":"{\"type\": \"record\", \"name\": \"stringBody\",
+ \"fields\": [ { \"name\":\"body\", \"type\":\"string\" } ] }"
+ }
 CDAP-Source-Type: STREAM
 CDAP-Sink-Type: DATASET
-CDAP-Scheduled-Program-Type: WORKFLOW
+CDAP-Sink-Properties: {
+ "dataset.class":"co.cask.cdap.api.dataset.lib.TimePartitionedFileSet",
+ "input.format":"org.apache.avro.mapreduce.AvroKeyInputFormat",
+ "output.format":"org.apache.avro.mapreduce.AvroKeyOutputFormat",
+ "explore.enabled":"true",
+ "explore.serde":"org.apache.hadoop.hive.serde2.avro.AvroSerDe",
+ "explore.input.format":"org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
+ "explore.output.format":"org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat",
+ "explore.table.property.avro.schema.literal":"
+ {\"type\": \"record\", \"name\": \"stringBody\", \"fields\": [
+ { \"name\":\"ts\", \"type\":\"long\" },
+ { \"name\":\"body\", \"type\":\"string\" } ] }"
+ }
