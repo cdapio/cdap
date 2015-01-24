@@ -60,7 +60,12 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    cConf = CConfiguration.create();
+    cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
+    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
+    cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
+
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf);
     dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
                           new InMemoryTableModule());
 
@@ -68,11 +73,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
-
-    cConf = CConfiguration.create();
-    cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
 
     LogAppender appender = new KafkaLogAppender(cConf);
     new LogAppenderInitializer(appender).initialize("TestKafkaLogging");

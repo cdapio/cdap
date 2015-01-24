@@ -77,11 +77,11 @@ public class LogCleanupTest {
 
   @Test
   public void testCleanup() throws Exception {
-    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
-                          new InMemoryTableModule());
 
     CConfiguration cConf = CConfiguration.create();
+    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf);
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
+                          new InMemoryTableModule());
 
     Configuration conf = HBaseConfiguration.create();
     CConfigurationUtil.copyTxProperties(cConf, conf);

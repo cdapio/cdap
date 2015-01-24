@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
@@ -63,6 +64,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   private final Map<Id.Namespace, List<String>> nonDefaultTypes = Maps.newHashMap();
   private final Map<Id.DatasetInstance, DatasetSpecification> instances = Maps.newHashMap();
   private final List<Id.Namespace> namespaces = Lists.newArrayList();
+  private final boolean allowDatasetUncheckedUpgrade;
 
   // NOTE: used only for "internal" operations, that doesn't return to client object of custom type
   // NOTE: for getting dataset/admin objects we construct fresh new one using all modules (no dependency management in
@@ -70,22 +72,24 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private Map<Id.Namespace, DatasetDefinitionRegistry> registries = Maps.newLinkedHashMap();
 
-  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
-    this(registryFactory, new HashMap<String, DatasetModule>());
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
+    this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
   }
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                  @Named("defaultDatasetModules") Map<String, ? extends DatasetModule> defaultModules) {
+                                  @Named("defaultDatasetModules") Map<String, ? extends DatasetModule> defaultModules,
+                                  CConfiguration configuration) {
     this.registryFactory = registryFactory;
     this.defaultModules = defaultModules;
+    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
     resetRegistry();
   }
 
   @Override
   public synchronized void addModule(Id.DatasetModule moduleId,
                                      DatasetModule module) throws ModuleConflictException {
-    if (moduleClasses.containsKey(moduleId)) {
+    if (moduleClasses.containsKey(moduleId) && !allowDatasetUncheckedUpgrade) {
       throw new ModuleConflictException("Cannot add module " + moduleId + ": it already exists.");
     }
     add(moduleId, module, false);
@@ -116,7 +120,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public synchronized void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
                                        DatasetProperties props) throws InstanceConflictException, IOException {
-    if (instances.get(datasetInstanceId) != null) {
+    if (!allowDatasetUncheckedUpgrade && instances.get(datasetInstanceId) != null) {
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceId);
     }
 

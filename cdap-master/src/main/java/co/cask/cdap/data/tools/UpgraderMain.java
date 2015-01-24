@@ -290,7 +290,7 @@ public class UpgraderMain {
                                                             DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException, IOException {
     DatasetFramework datasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
+      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory, cConf),
                                      new DefaultDatasetNamespace(cConf));
     addModules(datasetFramework);
     // dataset service
@@ -340,7 +340,7 @@ public class UpgraderMain {
    */
   private DatasetFramework createNonNamespaceDSFramework(DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException {
-    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory);
+    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory, cConf);
     addModules(nonNamespacedFramework);
     return nonNamespacedFramework;
   }
