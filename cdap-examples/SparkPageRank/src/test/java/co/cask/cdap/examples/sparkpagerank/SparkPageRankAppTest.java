@@ -55,7 +55,7 @@ public class SparkPageRankAppTest extends TestBase {
     // Start GoogleTypePR
     ServiceManager transformServiceManager = appManager.startService(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
     // Wait service startup
-    serviceStatusCheck(transformServiceManager, true);
+    transformServiceManager.waitForStatus(true);
 
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
@@ -64,13 +64,11 @@ public class SparkPageRankAppTest extends TestBase {
     // Start CentersService
     ServiceManager serviceManager = appManager.startService(SparkPageRankApp.RANKS_SERVICE_NAME);
     // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+    serviceManager.waitForStatus(true);
 
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
                                              "rank?url=http://example.com/page1"));
     Assert.assertEquals(RANK, response);
-
-    appManager.stopAll();
   }
 
   private String requestService(URL url) throws IOException {
@@ -81,16 +79,5 @@ public class SparkPageRankAppTest extends TestBase {
     } finally {
       conn.disconnect();
     }
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }

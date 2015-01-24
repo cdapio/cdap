@@ -17,7 +17,7 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
@@ -35,7 +35,7 @@ public class MetricsProcessorStatusServiceModule extends PrivateModule {
     bind(MetricsProcessorStatusService.class).in(Scopes.SINGLETON);
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
       (binder(), HttpHandler.class, Names.named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER));
-    handlerBinder.addBinding().to(PingHandler.class);
+    CommonHandlers.add(handlerBinder);
     expose(MetricsProcessorStatusService.class);
   }
 }

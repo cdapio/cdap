@@ -44,9 +44,9 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   private static final String NAMESPACE1 = "testnamespace1";
   private static final String NAMESPACE2 = "testnamespace2";
   private static final NamespaceMeta NAMESPACE1_META = new NamespaceMeta.Builder()
-    .setDisplayName(NAMESPACE1).setDescription(NAMESPACE1).build();
+    .setName(NAMESPACE1).setDescription(NAMESPACE1).build();
   private static final NamespaceMeta NAMESPACE2_META = new NamespaceMeta.Builder()
-    .setDisplayName(NAMESPACE2).setDescription(NAMESPACE2).build();
+    .setName(NAMESPACE2).setDescription(NAMESPACE2).build();
 
   @BeforeClass
   public static void setup() throws Exception {

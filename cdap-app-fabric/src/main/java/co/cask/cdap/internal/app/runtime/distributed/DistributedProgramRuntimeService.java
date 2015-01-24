@@ -29,7 +29,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -349,8 +348,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
-      super(metricsCollectionService.getCollector(MetricsScope.SYSTEM,
-                                                  ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
+      super(metricsCollectionService.getCollector(
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                        Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {

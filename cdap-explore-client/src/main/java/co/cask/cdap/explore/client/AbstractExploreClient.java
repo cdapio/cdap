@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
+  private static final Gson GSON = new Gson();
   private final ListeningScheduledExecutorService executor;
 
   protected AbstractExploreClient() {
@@ -118,6 +120,32 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
         return doDisableExploreStream(streamName);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> addPartition(final String datasetName, final long time, final String path) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doAddPartition(datasetName, time, path);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> dropPartition(final String datasetName, final long time) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDropPartition(datasetName, time);
       }
     });
 
@@ -351,8 +379,8 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         while (rowIterator.hasNext() && schemaIterator.hasNext()) {
           Object columnValue = rowIterator.next();
           ColumnDesc schemaColumn = schemaIterator.next();
-          if (columnValue != null && columnValue instanceof Double
-            && schemaColumn.getType() != null) {
+          String columnType = schemaColumn.getType();
+          if (columnValue != null && columnValue instanceof Double && columnType != null) {
             if (schemaColumn.getType().equals("INT")) {
               columnValue = ((Double) columnValue).intValue();
             } else if (schemaColumn.getType().equals("SMALLINT")) {
@@ -362,7 +390,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
             } else if (schemaColumn.getType().equals("TINYINT")) {
               columnValue = ((Double) columnValue).byteValue();
             }
-          } else if (schemaColumn.getType() != null && schemaColumn.getType().equals("BINARY")) {
+          } else if ("BINARY".equals(columnType)) {
             // A BINARY value is a byte array, which is deserialized by GSon into a list of
             // double objects - here we recreate a byte[] object.
             List<Object> binary;
@@ -383,6 +411,15 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
               ((byte[]) newColumnValue)[i] = ((Double) binary.get(i)).byteValue();
             }
             columnValue = newColumnValue;
+          } else if ("array<tinyint>".equals(columnType)) {
+            // in some versions of hive, a byte[] gets translated to array<tinyint> instead of binary.
+            // weirdly enough, in our unit tests, if java6 is used, byte[] fields get changed to array<tinyint>
+            // but if java7 is used, byte[] fields get changed to binary...
+            // and on top of that it decides to return the byte array as a string... like "[98,111,98]".
+            // this entire thing could use a lot of improvement (CDAP-11)
+            if (columnValue instanceof String) {
+              columnValue = GSON.fromJson((String) columnValue, byte[].class);
+            }
           }
           newRow.add(columnValue);
         }

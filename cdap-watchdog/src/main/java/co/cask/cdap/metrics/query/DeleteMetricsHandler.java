@@ -17,7 +17,6 @@ package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -27,7 +26,6 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -37,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,21 +50,17 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
 
-  private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
+  private final Supplier<AggregatesTable> aggregatesTable;
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
     
-    this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
+    this.aggregatesTable = Suppliers.memoize(new Supplier<AggregatesTable>() {
       @Override
-      public Map<MetricsScope, AggregatesTable> get() {
-        Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
-        for (final MetricsScope scope : MetricsScope.values()) {
-          map.put(scope, metricsTableFactory.createAggregates(scope.name()));
-        }
-        return map;
+      public AggregatesTable get() {
+        return metricsTableFactory.createAggregates();
       }
     });
   }
@@ -87,46 +80,14 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   @DELETE
   public void deleteAllMetrics(HttpRequest request, HttpResponder responder,
                                @QueryParam("prefixEntity") String metricPrefix) throws IOException {
-    try {
-      if (metricPrefix == null) {
-        LOG.debug("Request to delete all metrics");
-      } else {
-        LOG.debug("Request to delete all metrics that begin with entities {}", metricPrefix);
-      }
-      for (MetricsScope scope : MetricsScope.values()) {
-        deleteTableEntries(scope, null, metricPrefix, null);
-      }
-      responder.sendString(HttpResponseStatus.OK, "OK");
-    } catch (OperationException e) {
-      LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting all metrics");
-    }
+    handleDelete(request, responder, metricPrefix);
   }
 
   @DELETE
   @Path("/{scope}")
   public void deleteScope(HttpRequest request, HttpResponder responder,
-                          @PathParam("scope") String scope,
                           @QueryParam("prefixEntity") String metricPrefix) throws IOException {
-    try {
-      if (metricPrefix == null) {
-        LOG.debug("Request to delete all metrics in scope {} ", scope);
-      } else {
-        LOG.debug("Request to delete all metrics that begin with entities {} in scope {}", metricPrefix, scope);
-      }
-      MetricsScope metricsScope = null;
-      try {
-        metricsScope = MetricsScope.valueOf(scope.toUpperCase());
-      } catch (IllegalArgumentException e) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "scope " + scope + " not found.");
-        return;
-      }
-      deleteTableEntries(metricsScope, null, metricPrefix, null);
-      responder.sendString(HttpResponseStatus.OK, "OK");
-    } catch (OperationException e) {
-      LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting " + scope + " metrics");
-    }
+    handleDelete(request, responder, metricPrefix);
   }
 
   // ex: /system/apps/appX, /system/streams/streamX, /system/dataset/datasetX
@@ -183,10 +144,12 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
       MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
       MetricsRequestContext metricsRequestContext = MetricsRequestParser.parseContext(uri.getPath(), requestBuilder);
       this.validatePathElements(request, metricsRequestContext);
+      requestBuilder.setMetricPrefix(metricPrefix);
       MetricsRequest metricsRequest = requestBuilder.build();
 
-      deleteTableEntries(metricsRequest.getScope(), metricsRequest.getContextPrefix(),
-                         metricPrefix, metricsRequest.getTagPrefix());
+      deleteTableEntries(metricsRequest.getContextPrefix(),
+                         metricsRequest.getMetricPrefix(),
+                         metricsRequest.getTagPrefix());
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -200,9 +163,9 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     }
   }
 
-  private void deleteTableEntries(MetricsScope scope, String contextPrefix,
+  private void deleteTableEntries(String contextPrefix,
                                   String metricPrefix, String tag) throws OperationException {
-    AggregatesTable aggTable = aggregatesTables.get().get(scope);
+    AggregatesTable aggTable = aggregatesTable.get();
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
       aggTable.clear();

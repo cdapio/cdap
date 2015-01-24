@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _install:
 
@@ -400,19 +400,30 @@ Kerberos principal it is authenticated as.
 
 In order to configure CDAP Master for Kerberos authentication:
 
-- Create a Kerberos principal for the user running CDAP Master.
-- Install the ``k5start`` package on the servers where CDAP Master is installed.  This is used
-  to obtain Kerberos credentials for CDAP Master on startup.
-- Generate a keytab file for the CDAP Master Kerberos principal and place the file in
-  ``/etc/security/keytabs/cdap.keytab`` on all the CDAP Master hosts.  The file should
+- Create a Kerberos principal for the user running CDAP Master.  The principal name should be in
+  the form ``username/hostname@REALM``, creating a separate principal for each host where the CDAP Master
+  will run.  This prevents simultaneous login attempts from multiple hosts from being mistaken for
+  a replay attack by the Kerberos KDC.
+- Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
+  ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The file should
   be readable only by the user running the CDAP Master process.
-- Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
+- Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
+  ``<cdap-principal>`` when adding these two properties::
 
-   CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
-   CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
+    <property>
+      <name>cdap.master.kerberos.keytab</name>
+      <value>/etc/security/keytabs/cdap.keytab</value>
+      <description>The full path to the Kerberos keytab file containing the CDAP Master's
+      credentials.</description>
+    </property>
+    <property>
+      <name>cdap.master.kerberos.principal</name>
+      <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
+      <description>The Kerberos principal name that should be used to login the CDAP Master
+      process. The string "_HOST" will be substituted with the local hostname.</description>
+    </property>
 
-- When CDAP Master is started via the init script, it will now start using ``k5start``, which will
-  first login using the configured keytab file and principal.
+- When CDAP Master is started, it will login using the configured keytab file and principal.
 
 .. _install-ulimit:
 

@@ -29,7 +29,7 @@ import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
@@ -99,7 +99,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExplorePingHandler.class);
       handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
-      handlerBinder.addBinding().to(PingHandler.class);
+      CommonHandlers.add(handlerBinder);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);
       expose(ExploreExecutorService.class);

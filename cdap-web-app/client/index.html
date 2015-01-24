@@ -1085,13 +1085,14 @@
             {{#each elements.Action}}
             <div class="batch-item" {{bindAttr id="divId"}} {{action loadAction this}} style="cursor: pointer;">
               <div class="batch-icon batch-map">
+                {{programType}}
                 <div class="info-window">
                   {{#if running}}
                     <div class="window-icon running"></div>
                   {{else}}
                     <div class="window-icon"></div>
                   {{/if}}
-                  <div class="batch-phase">{{name}}</div>
+                  <div class="batch-phase">{{programName}}</div>
                 </div>
               </div>
             </div>
@@ -1154,7 +1155,7 @@
       </ul>
       <h1>
         <span>Mapreduce</span>
-        <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}
+        <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.programName}}
         </span>
       </h1>
     </div>

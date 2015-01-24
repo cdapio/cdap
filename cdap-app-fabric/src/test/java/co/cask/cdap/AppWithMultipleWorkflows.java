@@ -33,21 +33,16 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new SomeWorkflow());
     addWorkflow(new AnotherWorkflow());
-    scheduleWorkflow("SomeSchedule1", "0 4 * * *", "SomeWorkflow");
-    scheduleWorkflow("SomeSchedule2", "0 5 * * *", "SomeWorkflow");
-    scheduleWorkflow("AnotherSchedule1", "0 6 * * *", "AnotherWorkflow");
-    scheduleWorkflow("AnotherSchedule2", "0 7 * * *", "AnotherWorkflow");
-    scheduleWorkflow("AnotherSchedule3", "0 8 * * *", "AnotherWorkflow");
   }
 
   /**
    * Some Workflow
    */
   public static class SomeWorkflow extends AbstractWorkflow {
-
+    public static final String NAME = "SampleWorkflow";
     @Override
     public void configure() {
-      setName("SampleWorkflow");
+      setName(NAME);
       setDescription("SampleWorkflow description");
       addAction(new SomeDummyAction());
     }
@@ -69,10 +64,10 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
    * Another Workflow
    */
   public static class AnotherWorkflow extends AbstractWorkflow {
-
+    public static final String NAME = "AnotherWorkflow";
     @Override
     public void configure() {
-      setName("AnotherWorkflow");
+      setName(NAME);
       setDescription("AnotherWorkflow description");
       addAction(new AnotherDummyAction());
     }

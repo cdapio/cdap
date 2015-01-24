@@ -58,7 +58,7 @@ public class TimeSeriesCleanupTest {
 
   @Test
   public void testDeleteBefore() throws OperationException {
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("deleteTimeRange", 1);
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;

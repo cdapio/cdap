@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
@@ -111,8 +110,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
         continue;
       }
       MetricsCollector collector =
-        metricsService.getCollector(MetricsScope.SYSTEM,
-                                    ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
+        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       collector.increment("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
     }

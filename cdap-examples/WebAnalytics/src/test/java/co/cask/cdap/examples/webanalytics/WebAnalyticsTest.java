@@ -16,8 +16,6 @@
 
 package co.cask.cdap.examples.webanalytics;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
@@ -41,37 +39,32 @@ public class WebAnalyticsTest extends TestBase {
   public void testWebAnalytics() throws Exception {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WebAnalytics.class);
+    // Start the Flow
+    appManager.startFlow("WebAnalyticsFlow");
+
+    // Send events to the Stream
+    StreamWriter writer = appManager.getStreamWriter("log");
+    BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/access.log"),
+                                                                     "UTF-8"));
+    int lines = 0;
     try {
-      // Start the Flow
-      appManager.startFlow("WebAnalyticsFlow");
-
-      // Send events to the Stream
-      StreamWriter writer = appManager.getStreamWriter("log");
-      BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/access.log"),
-                                                                       "UTF-8"));
-      int lines = 0;
-      try {
-        String line = reader.readLine();
-        while (line != null) {
-          writer.send(line);
-          lines++;
-          line = reader.readLine();
-        }
-      } finally {
-        reader.close();
+      String line = reader.readLine();
+      while (line != null) {
+        writer.send(line);
+        lines++;
+        line = reader.readLine();
       }
-
-      // Wait for the flow to process all data
-      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WebAnalytics",
-                                                                     "WebAnalyticsFlow", "UniqueVisitor");
-      flowletMetrics.waitForProcessed(lines, 10, TimeUnit.SECONDS);
-
-      // Verify the unique count
-      UniqueVisitCount uniqueVisitCount = appManager.<UniqueVisitCount>getDataSet("UniqueVisitCount").get();
-      Assert.assertEquals(3L, uniqueVisitCount.getCount("192.168.12.72"));
-
     } finally {
-      appManager.stopAll();
+      reader.close();
     }
+
+    // Wait for the flow to process all data
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WebAnalytics",
+                                                                   "WebAnalyticsFlow", "UniqueVisitor");
+    flowletMetrics.waitForProcessed(lines, 10, TimeUnit.SECONDS);
+
+    // Verify the unique count
+    UniqueVisitCount uniqueVisitCount = appManager.<UniqueVisitCount>getDataSet("UniqueVisitCount").get();
+    Assert.assertEquals(3L, uniqueVisitCount.getCount("192.168.12.72"));
   }
 }

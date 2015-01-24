@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -50,13 +51,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final PreferencesStore preferencesStore;
+  private final DashboardStore dashboardStore;
 
   @Inject
   public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                              PreferencesStore preferencesStore) {
+                              PreferencesStore preferencesStore, DashboardStore dashboardStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.preferencesStore = preferencesStore;
+    this.dashboardStore = dashboardStore;
   }
 
   @GET
@@ -110,25 +113,31 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (isReserved(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("'%s' and '%s' are reserved namespace ids.",
+                           String.format("Cannot create namespace %s. '%s' and '%s' are reserved namespaces.",
+                                         namespaceId,
                                          Constants.DEFAULT_NAMESPACE,
                                          Constants.SYSTEM_NAMESPACE));
       return;
     }
 
-    // displayName and description could be null
-    String displayName = metadata.getDisplayName();
-    if (displayName == null || displayName.isEmpty()) {
-      displayName = namespaceId;
-    }
-    String description = metadata.getDescription();
-    if (description == null) {
-      description = "";
+    // Handle optional params
+    // name defaults to id
+    String name = namespaceId;
+    // description defaults to empty
+    String description = "";
+    // override optional params if they are provided in the request
+    if (metadata != null) {
+      if (metadata.getName() != null) {
+        name = metadata.getName();
+      }
+      if (metadata.getDescription() != null) {
+        description = metadata.getDescription();
+      }
     }
 
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setId(namespaceId)
-      .setDisplayName(displayName)
+      .setName(name)
       .setDescription(description)
       .build();
 
@@ -153,7 +162,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
     if (isReserved(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("'%s', '%s' are reserved namespace ids",
+                           String.format("Cannot delete namespace '%s'. '%s' and '%s' are reserved namespaces.",
+                                         namespace,
                                          Constants.DEFAULT_NAMESPACE,
                                          Constants.SYSTEM_NAMESPACE));
       return;
@@ -162,6 +172,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       // Delete Preferences associated with this namespace
       preferencesStore.deleteProperties(namespace);
+
+      // Delete all dashboards associated with this namespace
+      dashboardStore.delete(namespace);
 
       // Store#deleteNamespace already checks for existence
       NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);

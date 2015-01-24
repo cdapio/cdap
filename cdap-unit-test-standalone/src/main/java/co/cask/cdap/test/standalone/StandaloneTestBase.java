@@ -36,6 +36,7 @@ public class StandaloneTestBase {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  protected static CConfiguration configuration;
 
   private static StandaloneMain standaloneMain;
   /**
@@ -49,11 +50,13 @@ public class StandaloneTestBase {
     testStackIndex++;
     if (standaloneMain == null) {
       try {
-        CConfiguration cConf = CConfiguration.create();
-        cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+        if (configuration == null) {
+          configuration = CConfiguration.create();
+        }
+        configuration.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
         // Start without UI
-        standaloneMain = StandaloneMain.create(null, cConf, new Configuration());
+        standaloneMain = StandaloneMain.create(null, configuration, new Configuration());
         standaloneMain.startUp();
       } catch (Exception e) {
         LOG.error("Failed to start standalone", e);

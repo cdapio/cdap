@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -221,9 +221,31 @@
     </property>
 
     <property>
+        <name>stream.container.instance.id</name>
+        <value>0</value>
+        <description>
+            Instance ID for stream service container.
+            The actual value will be set at runtime by the system automatically.
+        </description>
+    </property>
+
+    <property>
+        <name>stream.notification.threshold</name>
+        <value>1000</value>
+        <description>Size of data, in MB, to be ingested by a Stream before a notification is published</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for Stream file</description>
+    </property>
+
+    <property>
+        <name>stream.instance.file.prefix</name>
+        <value>${stream.file.prefix}.${stream.container.instance.id}</value>
+        <description>Prefix of file name for Stream file per writer instance.</description>
+        <final>true</final>
     </property>
 
     <property>
@@ -278,6 +300,12 @@
       <name>stream.async.queue.size</name>
       <value>100</value>
       <description>Queue size per async worker thread for queuing up async write request</description>
+    </property>
+
+    <property>
+      <name>stream.batch.buffer.threshold</name>
+      <value>1048576</value>
+      <description>Bytes retained in-memory before writing to a new stream file</description>
     </property>
 
     <!--
@@ -532,6 +560,12 @@
         <name>app.output.dir</name>
         <value>/programs</value>
         <description>Directory where all archives are stored</description>
+    </property>
+
+    <property>
+      <name>app.adapter.dir</name>
+      <value>/opt/cdap/master/plugins</value>
+      <description>Directory where all archives for adapters are stored</description>
     </property>
 
     <property>
@@ -1074,6 +1108,28 @@
       <description>Security realm used for authentication</description>
   </property>
 
+  <!--
+      Security configurations for Kerberos authentication
+  -->
+  <property>
+    <name>cdap.master.kerberos.keytab</name>
+    <value></value>
+    <description>The full path to the Kerberos keytab file containing the CDAP Master's
+    credentials.</description>
+  </property>
+
+  <property>
+    <name>cdap.master.kerberos.principal</name>
+    <value></value>
+    <description>
+      Example: "cdap/_HOST@EXAMPLE.COM".
+      The Kerberos principal name that should be used to login the CDAP Master process.
+      The principal name should be in the form "user/hostname@REALM".  If the hostname portion
+      contains the string "_HOST", it will be substituted with the local hostname.
+    </description>
+  </property>
+
+
   <!-- Configuration for enabling SSL -->
 
   <property>
@@ -1087,5 +1143,6 @@
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
+
 
 </configuration>

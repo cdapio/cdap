@@ -18,6 +18,7 @@ package co.cask.cdap.notifications.service;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.tephra.TransactionContext;
@@ -55,7 +56,7 @@ public final class BasicNotificationContext implements NotificationContext {
           runnable.run(new DynamicDatasetContext(context, dsFramework, context.getClass().getClassLoader()) {
             @Nullable
             @Override
-            protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+            protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
               return null;
             }
           });

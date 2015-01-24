@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -48,12 +49,15 @@ public class AggregateMetricsByTag {
     extends Mapper<byte[], TimeseriesTable.Entry, BytesWritable, LongWritable>
     implements ProgramLifecycle<MapReduceContext> {
 
+    private Metrics metrics;
+
     @UseDataSet("counters")
     private Table counters;
 
     private Table countersFromContext;
 
     public void map(byte[] key, TimeseriesTable.Entry value, Context context) throws IOException, InterruptedException {
+      metrics.count("in.map", 1);
       for (byte[] tag : value.getTags()) {
         long val = Bytes.toLong(value.getValue());
         if (55L == val) {
@@ -63,15 +67,18 @@ public class AggregateMetricsByTag {
       }
       counters.increment(new Increment("mapper", "records", 1L));
       countersFromContext.increment(new Increment("mapper", "records", 1L));
+      metrics.count("in.map", 2);
     }
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
+      metrics.gauge("in.map.setup", 1);
       LOG.info("in mapper: setup()");
       long mappersCount = counters.incrementAndGet(new Increment("mapper", "count", 1L)).getLong("count", 0);
       Assert.assertEquals(mappersCount, countersFromContext.incrementAndGet(new Increment("mapper", "count", 1L))
                                                                                                   .getLong("count", 0));
       LOG.info("mappers started so far: " + mappersCount);
+      metrics.gauge("in.map.setup", 1);
     }
 
     @Override
@@ -92,6 +99,8 @@ public class AggregateMetricsByTag {
     extends Reducer<BytesWritable, LongWritable, byte[], TimeseriesTable.Entry>
     implements ProgramLifecycle<MapReduceContext> {
 
+    private Metrics metrics;
+
     @UseDataSet("counters")
     private Table counters;
 
@@ -99,6 +108,8 @@ public class AggregateMetricsByTag {
 
     public void reduce(BytesWritable key, Iterable<LongWritable> values, Context context)
       throws IOException, InterruptedException {
+
+      metrics.count("in.reduce", 1);
       long sum = 0;
       for (LongWritable val : values) {
         sum += val.get();
@@ -107,15 +118,18 @@ public class AggregateMetricsByTag {
       }
       byte[] tag = key.copyBytes();
       context.write(tag, new TimeseriesTable.Entry(BY_TAGS, Bytes.toBytes(sum), System.currentTimeMillis(), tag));
+      metrics.count("in.reduce", 1);
     }
 
     @Override
     protected void setup(Reducer.Context context) throws IOException, InterruptedException {
+      metrics.gauge("in.reduce.setup", 1);
       LOG.info("in reducer: setup()");
       long reducersCount = counters.incrementAndGet(new Increment("reducer", "count", 1L)).getLong("count", 0);
       Assert.assertEquals(reducersCount, countersFromContext.incrementAndGet(new Increment("reducer", "count", 1L))
                                                                                                   .getLong("count", 0));
       LOG.info("reducers started so far: " + reducersCount);
+      metrics.gauge("in.reduce.setup", 1);
     }
 
     @Override

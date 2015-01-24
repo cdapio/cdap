@@ -16,9 +16,11 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 
@@ -49,35 +51,36 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    String prefix = String.format("%s.f.%s.%s", applicationId, flowId, flowletId);
-    String inputName = String.format("%s.process.tuples.read", prefix);
-    String processedName = String.format("%s.process.events.processed", prefix);
-    String exceptionName = String.format("%s.process.errors", prefix);
+    String prefix = String.format("%s.%s.f.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
+    String inputName = String.format("%s.system.process.tuples.read", prefix);
+    String processedName = String.format("%s.system.process.events.processed", prefix);
+    String exceptionName = String.format("%s.system.process.errors", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    String prefix = String.format("%s.p.%s", applicationId, procedureId);
-    String inputName = String.format("%s.query.requests", prefix);
-    String processedName = String.format("%s.query.processed", prefix);
-    String exceptionName = String.format("%s.query.failures", prefix);
+    String prefix = String.format("%s.%s.p.%s", Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
+    String inputName = String.format("%s.system.query.requests", prefix);
+    String processedName = String.format("%s.system.query.processed", prefix);
+    String exceptionName = String.format("%s.system.query.failures", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
-    String inputName = String.format("%s.requests.count", prefix);
-    String processedName = String.format("%s.response.successful.count", prefix);
-    String exceptionName = String.format("%s.response.server.error.count", prefix);
+    String prefix = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
+                                  TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
+    String inputName = String.format("%s.system.requests.count", prefix);
+    String processedName = String.format("%s.system.response.successful.count", prefix);
+    String exceptionName = String.format("%s.system.response.server.error.count", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
   public static long getSparkMetrics(String applicationId, String procedureId, String keyEnding) {
-    String keyStarting = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
-                                       procedureId);
+    String keyStarting = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
+                                       TypeId.getMetricContextId(ProgramType.SPARK), procedureId);
     String inputName = getMetricsKey(keyStarting, keyEnding);
     AtomicLong input = counters.get(inputName);
     return input == null ? 0 : input.get();
@@ -134,13 +137,16 @@ public final class RuntimeStats {
       private void doWaitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
         AtomicLong value = counters.get(name);
-        while (timeout > 0 && (value == null || value.get() < count)) {
-          timeoutUnit.sleep(1);
+
+        // Min sleep time is 10ms, max sleep time is 1 seconds
+        long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+        Stopwatch stopwatch = new Stopwatch().start();
+        while ((value == null || value.get() < count) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+          TimeUnit.MILLISECONDS.sleep(sleepMillis);
           value = counters.get(name);
-          timeout--;
         }
 
-        if (timeout == 0 && (value == null || value.get() < count)) {
+        if (value == null || value.get() < count) {
           throw new TimeoutException("Time limit reached.");
         }
       }

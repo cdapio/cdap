@@ -25,7 +25,7 @@ define(['core/lib/date', 'core/models/program'],
 
   var EXPECTED_FIELDS = [
     'divId',
-    'name',
+    'programName',
     'description',
     'datasets',
     'inputDataSet',

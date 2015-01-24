@@ -69,7 +69,7 @@ public class WordCountTest extends TestBase {
     ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
 
     // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+    serviceManager.waitForStatus(true);
 
     // First verify global statistics
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "stats"));
@@ -89,10 +89,6 @@ public class WordCountTest extends TestBase {
     Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
     Assert.assertEquals(2.0, assocs.get("hello"), 0.000001);
     Assert.assertTrue(assocs.containsKey("hello"));
-
-    appManager.stopAll();
-    TimeUnit.SECONDS.sleep(1);
-    clear();
   }
 
   private String requestService(URL url) throws IOException {
@@ -103,16 +99,5 @@ public class WordCountTest extends TestBase {
     } finally {
       conn.disconnect();
     }
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }

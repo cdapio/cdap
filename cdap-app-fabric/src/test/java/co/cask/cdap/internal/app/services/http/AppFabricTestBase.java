@@ -22,20 +22,23 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.test.internal.AppFabricClient;
+import co.cask.cdap.test.internal.TempFolder;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -55,12 +58,14 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.utils.Dependencies;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -100,9 +105,14 @@ public abstract class AppFabricTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
+  private static StreamCoordinatorClient streamCoordinatorClient;
+  private static final TempFolder TEMP_FOLDER = new TempFolder();
+  private static final String adapterFolder = "adapter";
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
+    File adapterDir = TEMP_FOLDER.newFolder(adapterFolder);
+
     CConfiguration conf = CConfiguration.create();
 
     conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
@@ -110,8 +120,10 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
+
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -129,15 +141,19 @@ public abstract class AppFabricTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() {
+    streamCoordinatorClient.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
+    TEMP_FOLDER.delete();
   }
 
   protected static Injector getInjector() {
@@ -358,7 +374,23 @@ public abstract class AppFabricTestBase {
     return versionedApiBuilder.toString();
   }
 
-  protected void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+  protected List<JsonObject> getAppList(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
+    Type typeToken = new TypeToken<JsonObject>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  protected List<Map<String, String>> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
     int trial = 0;
     int workflowRuns = 0;
     List<Map<String, String>> history;
@@ -371,11 +403,12 @@ public abstract class AppFabricTestBase {
       history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
       workflowRuns = history.size();
       if (workflowRuns > expected) {
-        return;
+        return history;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(workflowRuns > expected);
+    return Lists.newArrayList();
   }
 
   protected void scheduleStatusCheck(int retries, String url, String expected) throws Exception {
@@ -396,5 +429,18 @@ public abstract class AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertEquals(expected, status);
+  }
+
+  protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {
+    int trial = 0;
+    HttpResponse response = null;
+    while (trial++ < retries) {
+      response = doDelete(deleteUrl);
+      if (200 == response.getStatusLine().getStatusCode()) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expectedReturnCode, response.getStatusLine().getStatusCode());
   }
 }

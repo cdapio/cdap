@@ -16,8 +16,8 @@
 package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -26,7 +26,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     setupMetrics();
   }
 
@@ -61,7 +61,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
           node("procedure", "RCounts"))));
 
     JsonObject reads = new JsonObject();
-    reads.addProperty("metric", "reads");
+    reads.addProperty("metric", "system.reads");
     reads.add("contexts", readContexts);
     expected.add(reads);
 
@@ -86,7 +86,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
           node("flow", "WordCounter", children(
             node("flowlet", "splitter"))))));
     JsonObject expectedReads = new JsonObject();
-    expectedReads.addProperty("metric", "reads");
+    expectedReads.addProperty("metric", "system.reads");
     expectedReads.add("contexts", contexts);
     expected.add(expectedReads);
     expected.add(expectedWrites());
@@ -122,41 +122,36 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doDelete("/v2/metrics");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getFlowletContext("WordCount", "WordCounter", "splitter"));
+      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
+                                                       "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getFlowletContext("WCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WordCounter",
+                                                                 "splitter"));
     collector.increment("reads", 1);
-    collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getFlowletContext("WCount", "WCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WCounter",
+                                                                 "splitter"));
     collector.increment("reads", 1);
-    collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getFlowletContext("WCount", "WCounter", "counter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WCounter",
+                                                                 "counter"));
     collector.increment("reads", 1);
-    collector =
-      collectionService.getCollector(MetricsScope.USER,
-                                     getProcedureContext("WCount", "RCounts"));
+    collector = collectionService.getCollector(getProcedureContext(Constants.DEFAULT_NAMESPACE, "WCount", "RCounts"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getMapReduceTaskContext("WCount", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Mapper));
+    collector = collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
+                                                                       "ClassicWordCount",
+                                                                       MapReduceMetrics.TaskType.Mapper, "run1", "t1"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getMapReduceTaskContext("WCount", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Reducer));
+    collector = collectionService.getCollector(
+      getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount", "ClassicWordCount",
+                              MapReduceMetrics.TaskType.Reducer, "run1", "t2"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext("WordCount", "WordCounter", "splitter"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                                 "WordCounter", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(MetricsScope.USER,
-                                               getFlowletContext("WordCount", "WordCounter", "collector"));
+    collector = collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount",
+                                                                 "WordCounter", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
@@ -173,7 +168,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
             node("flowlet", "splitter"))))));
 
     JsonObject writes = new JsonObject();
-    writes.addProperty("metric", "writes");
+    writes.addProperty("metric", "system.writes");
     writes.add("contexts", writeContexts);
     return writes;
   }

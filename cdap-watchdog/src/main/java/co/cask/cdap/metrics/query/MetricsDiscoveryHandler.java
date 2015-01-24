@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.AggregatesScanResult;
@@ -48,8 +47,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
 /**
- * Class for handling requests for aggregate application metrics of the
- * {@link co.cask.cdap.common.metrics.MetricsScope#USER} scope.
+ * Class for handling requests for aggregate application metrics.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
 //todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
@@ -57,12 +55,8 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
-  private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
+  private final Supplier<AggregatesTable> aggregatesTable;
 
-  // just user metrics for now.  Can add system metrics when there is a unified way to query for them
-  // currently you query differently depending on the metric, and some metrics you can query for in the
-  // BatchMetricsHandler are computed in the handler and are not stored in the table.
-  private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
     PROCEDURES("p"),
@@ -130,14 +124,10 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   public MetricsDiscoveryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
     super(authenticator);
 
-    this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
+    this.aggregatesTable = Suppliers.memoize(new Supplier<AggregatesTable>() {
       @Override
-      public Map<MetricsScope, AggregatesTable> get() {
-        Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
-        for (MetricsScope scope : MetricsScope.values()) {
-          map.put(scope, metricsTableFactory.createAggregates(scope.name()));
-        }
-        return map;
+      public AggregatesTable get() {
+        return metricsTableFactory.createAggregates();
       }
     });
   }
@@ -208,6 +198,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
         MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();
+        builder.setNamespaceId(Constants.DEFAULT_NAMESPACE);
         MetricsRequestParser.parseSubContext(pathParts, builder);
         MetricsRequestContext metricsRequestContext = builder.build();
         contextPrefix = metricsRequestContext.getContextPrefix();
@@ -222,16 +213,15 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
     }
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-    for (AggregatesTable table : aggregatesTables.get().values()) {
-      AggregatesScanner scanner = table.scanRowsOnly(contextPrefix, metricPrefix);
+    AggregatesTable table = aggregatesTable.get();
+    AggregatesScanner scanner = table.scanRowsOnly(contextPrefix, metricPrefix);
 
-      // scanning through all metric rows in the aggregates table
-      // row has context plus metric info
-      // each metric can show up in multiple contexts
-      while (scanner.hasNext()) {
-        AggregatesScanResult result = scanner.next();
-        addContext(result.getContext(), result.getMetric(), metricContextsMap);
-      }
+    // scanning through all metric rows in the aggregates table
+    // row has context plus metric info
+    // each metric can show up in multiple contexts
+    while (scanner.hasNext()) {
+      AggregatesScanResult result = scanner.next();
+      addContext(result.getContext(), result.getMetric(), metricContextsMap);
     }
 
     // return the metrics sorted by metric name so it can directly be displayed to the user.
@@ -276,6 +266,12 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
    */
   private void addContext(String context, String metric, Map<String, ContextNode> metricContextsMap) {
     Iterator<String> contextParts = Splitter.on('.').split(context).iterator();
+    if (!contextParts.hasNext()) {
+      return;
+    }
+    // get namespaceId as the first part, but ignore it since we do not need namespace in v2 APIs.
+    // Adding to output when its not needed may impact UI so ignoring it.
+    contextParts.next();
     if (!contextParts.hasNext()) {
       return;
     }

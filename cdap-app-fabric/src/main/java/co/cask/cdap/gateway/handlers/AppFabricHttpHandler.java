@@ -30,11 +30,11 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -137,6 +137,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final PreferencesStore preferencesStore;
 
+  private final ConsoleSettingsStore consoleSettingsStore;
+
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -147,7 +149,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                              PreferencesStore preferencesStore) {
+                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -161,6 +163,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.preferencesStore = preferencesStore;
+    this.consoleSettingsStore = consoleSettingsStore;
   }
 
   /**
@@ -1186,12 +1189,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, "", "");
-      String list = listProgramsByDataAccess(programId, type, data, name);
-      if (list.isEmpty()) {
+      List<ProgramRecord> programRecords = listProgramsByDataAccess(programId, type, data, name);
+      if (programRecords == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        responder.sendJson(HttpResponseStatus.OK, programRecords);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1201,8 +1203,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String listProgramsByDataAccess(Id.Program programId, ProgramType type, Data data,
-                                          String name) throws Exception {
+  /**
+   * @return list of program records, an empty list if no programs were found, or null if the stream or
+   * dataset does not exist
+   */
+  private List<ProgramRecord> listProgramsByDataAccess(Id.Program programId, ProgramType type,
+                                                       Data data, String name) throws Exception {
+    // search all apps for programs that use this
     List<ProgramRecord> result = Lists.newArrayList();
     Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
       new Id.Namespace(programId.getNamespaceId()));
@@ -1230,8 +1237,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
     }
-    return GSON.toJson(result);
-
+    if (!result.isEmpty()) {
+      return result;
+    }
+    // if no programs were found, check whether the data exists, return [] if yes, null if not
+    boolean exists = false;
+    if (data == Data.DATASET) {
+      exists = dsFramework.hasInstance(name);
+    } else if (data == Data.STREAM) {
+      exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
+    }
+    return exists ? result : null;
   }
 
   private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
@@ -1294,6 +1310,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // remove preferences stored at instance level
       preferencesStore.deleteProperties();
+
+      // remove all data in consolesettings
+      consoleSettingsStore.delete();
 
       dsFramework.deleteAllInstances();
       dsFramework.deleteAllModules();

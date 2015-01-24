@@ -42,12 +42,15 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamServiceModule;
+import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -68,12 +71,12 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
-import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -105,7 +108,9 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -118,6 +123,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -128,10 +134,10 @@ public class TestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  private static int startCount;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
-  private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricClient appFabricClient;
   private static SchedulerService schedulerService;
   private static DatasetFramework datasetFramework;
@@ -142,6 +148,10 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static StreamCoordinatorClient streamCoordinatorClient;
+
+  // This list is to record ApplicationManager create inside @Test method
+  private final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -157,24 +167,17 @@ public class TestBase {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
-      Object appInstance = applicationClz.newInstance();
-      ApplicationSpecification appSpec;
-
-      if (appInstance instanceof Application) {
-        Application app = (Application) appInstance;
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-        app.configure(configurer, new ApplicationContext());
-        appSpec = configurer.createSpecification();
-      } else {
-        throw new IllegalArgumentException("Application class does not represent application: "
-                                             + applicationClz.getName());
-      }
+      Application app = applicationClz.newInstance();
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+      app.configure(configurer, new ApplicationContext());
+      ApplicationSpecification appSpec = configurer.createSpecification();
 
       Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
-
-      return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
-                                                                     deployedJar, appSpec);
+      ApplicationManager manager = injector.getInstance(ApplicationManagerFactory.class)
+                                           .create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
+                                                   deployedJar, appSpec);
+      applicationManagers.add(manager);
+      return manager;
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -195,8 +198,27 @@ public class TestBase {
     }
   }
 
+  @Before
+  public void beforeTest() throws Exception {
+    applicationManagers.clear();
+  }
+
+  /**
+   * By default after each test finished, it will stop all apps started during the test.
+   * Sub-classes can override this method to provide different behavior.
+   */
+  @After
+  public void afterTest() throws Exception {
+    for (ApplicationManager manager : applicationManagers) {
+      manager.stopAll();
+    }
+  }
+
   @BeforeClass
   public static void init() throws Exception {
+    if (startCount++ > 0) {
+      return;
+    }
     File localDataDir = tmpFolder.newFolder();
     CConfiguration cConf = CConfiguration.create();
 
@@ -241,13 +263,13 @@ public class TestBase {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new StreamServiceModule() {
+      new AbstractModule() {
         @Override
         protected void configure() {
-          super.configure();
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-          expose(StreamHandler.class);
+          bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+          bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },
       new TestMetricsClientModule(),
@@ -256,17 +278,15 @@ public class TestBase {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          install(new FactoryModuleBuilder()
-                    .implement(ApplicationManager.class, DefaultApplicationManager.class)
+          install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
-          install(new FactoryModuleBuilder()
-                    .implement(StreamWriter.class, DefaultStreamWriter.class)
+          install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
-          install(new FactoryModuleBuilder()
-                    .implement(ProcedureClient.class, DefaultProcedureClient.class)
+          install(new FactoryModuleBuilder().implement(ProcedureClient.class, DefaultProcedureClient.class)
                     .build(ProcedureClientFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
@@ -297,6 +317,8 @@ public class TestBase {
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -339,6 +361,11 @@ public class TestBase {
 
   @AfterClass
   public static final void finish() {
+    if (--startCount != 0) {
+      return;
+    }
+
+    streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();
@@ -430,10 +457,15 @@ public class TestBase {
     @SuppressWarnings("unchecked")
     final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
     try {
-      TransactionAware txAwareDataset = (TransactionAware) dataSet;
-      final TransactionContext txContext =
-        new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
-      txContext.start();
+      final TransactionContext txContext;
+      // not every dataset is TransactionAware. FileSets for example, are not transactional.
+      if (dataSet instanceof TransactionAware) {
+        TransactionAware txAwareDataset = (TransactionAware) dataSet;
+        txContext = new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
+        txContext.start();
+      } else {
+        txContext = null;
+      }
       return new DataSetManager<T>() {
         @Override
         public T get() {
@@ -443,8 +475,10 @@ public class TestBase {
         @Override
         public void flush() {
           try {
-            txContext.finish();
-            txContext.start();
+            if (txContext != null) {
+              txContext.finish();
+              txContext.start();
+            }
           } catch (TransactionFailureException e) {
             throw Throwables.propagate(e);
           }

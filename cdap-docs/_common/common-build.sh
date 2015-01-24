@@ -118,7 +118,6 @@ function usage() {
   echo "    javadocs       Clean build of javadocs ($API module only) for SDK and website"
   echo "    javadocs-full  Clean build of javadocs for all modules"
   echo "    license-pdfs   Clean build of License Dependency PDFs"
-  echo "    zip            Zips docs into $ZIP"
   echo ""
   echo "    check-includes Check if included files have changed from source"
   echo "    depends        Build Site listing dependencies"
@@ -196,56 +195,20 @@ function copy_license_pdfs() {
   cp $SCRIPT_PATH/$LICENSES_PDF/* .
 }
 
-function make_zip_html() {
-  version
-  ZIP_FILE_NAME="$PROJECT-docs-$PROJECT_VERSION.zip"
-  cd $SCRIPT_PATH/$BUILD
-  zip -qr $ZIP_FILE_NAME $HTML/*
-}
-
 function make_zip() {
-# This creates a zip that unpacks to the same name
   version
   if [ "x$1" == "x" ]; then
     ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION"
   else
     ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
-  fi  
-  cd $SCRIPT_PATH/$BUILD
-  mkdir $ZIP_DIR_NAME
-  mv $HTML $ZIP_DIR_NAME/en
-  # Add a redirect index.html file
-  echo "$REDIRECT_EN_HTML" > $ZIP_DIR_NAME/index.html
-  zip -qr $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/*
-}
-
-function make_zip_localized() {
-  _make_zip_localized $1
-  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
-}
-
-function make_zip_localized_web() {
-  _make_zip_localized $1
-  # Add JSON file
-  build_json $SCRIPT_PATH/$BUILD/$PROJECT_VERSION
-  cd $SCRIPT_PATH/$BUILD
-  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
-}
-
-function _make_zip_localized() {
-  version
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
+  fi
   cd $SCRIPT_PATH/$BUILD
   mkdir $PROJECT_VERSION
   mv $HTML $PROJECT_VERSION/en
   # Add a redirect index.html file
   echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
-}
-
-function build_json() {
-  cd $SCRIPT_PATH/$BUILD/$SOURCE
-  JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
-  echo `python -c 'import conf; conf.print_json_versions();'` > $1/$JSON_FILE
+  # Zip everything
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/* --exclude .DS_Store
 }
 
 function build_extras() {
@@ -353,24 +316,49 @@ function version() {
 
 function display_version() {
   version
+  echo ""
   echo "PROJECT_PATH: $PROJECT_PATH"
   echo "PROJECT_VERSION: $PROJECT_VERSION"
   echo "GIT_BRANCH: $GIT_BRANCH"
+  echo ""
 }
 
 function rewrite() {
-  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
+  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4
+  # or if $4=="", substitutes text in-place in file $1, replacing text $2 with text $3
+  # or if $3 & $4=="", substitutes text in-place in file $1, using sed command $2
   cd $SCRIPT_PATH
   local rewrite_source=$1
-  local rewrite_target=$2
-  local sub_string=$3
-  local new_sub_string=$4  
   echo "Re-writing"
   echo "    $rewrite_source"
-  echo "  to"
-  echo "    $rewrite_target"
-  echo "  $sub_string -> $new_sub_string "
-  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
+  if [ "x$3" == "x" ]; then
+    local sub_string=$2
+    echo "  $sub_string"
+    if [ "$(uname)" == "Darwin" ]; then
+      sed -i '.bak' "$sub_string" $rewrite_source
+      rm $rewrite_source.bak
+    else
+      sed -i "$sub_string" $rewrite_source
+    fi
+  elif [ "x$4" == "x" ]; then
+    local sub_string=$2
+    local new_sub_string=$3
+    echo "  $sub_string -> $new_sub_string "
+    if [ "$(uname)" == "Darwin" ]; then
+      sed -i '.bak' "s|$sub_string|$new_sub_string|g" $rewrite_source
+      rm $rewrite_source.bak
+    else
+      sed -i "s|$sub_string|$new_sub_string|g" $rewrite_source
+    fi
+  else
+    local rewrite_target=$2
+    local sub_string=$3
+    local new_sub_string=$4
+    echo "  to"
+    echo "    $rewrite_target"
+    echo "  $sub_string -> $new_sub_string "
+    sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
+  fi
 }
 
 function run_command() {
@@ -390,7 +378,6 @@ function run_command() {
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           display_version; exit 1;;
-    zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
   esac
 }

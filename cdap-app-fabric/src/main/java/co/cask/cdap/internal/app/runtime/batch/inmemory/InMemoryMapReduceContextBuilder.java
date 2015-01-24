@@ -27,10 +27,12 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -82,7 +84,9 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getNoopModules(),
       new LoggingModules().getInMemoryModules(),
-      new StreamAdminModules().getInMemoryModules()
+      new StreamAdminModules().getInMemoryModules(),
+      new ExploreClientModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -101,7 +105,9 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new LoggingModules().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new ExploreClientModule(),
+      new StreamAdminModules().getStandaloneModules(),
+      new NotificationFeedServiceRuntimeModule().getStandaloneModules()
     );
     return Guice.createInjector(standaloneModules);
   }

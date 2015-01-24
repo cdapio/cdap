@@ -135,13 +135,13 @@ final class MetricsRequestParser {
 
     MetricsRequestContext metricsRequestContext;
     if (strippedPath.startsWith("/system/cluster")) {
-      builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
+      builder.setContextPrefix(String.format("%s.%s", Constants.SYSTEM_NAMESPACE, CLUSTER_METRICS_CONTEXT));
       builder.setScope(MetricsScope.SYSTEM);
-      metricsRequestContext = new MetricsRequestContext.Builder().build();
+      metricsRequestContext = new MetricsRequestContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build();
     } else if (strippedPath.startsWith("/system/transactions")) {
-      builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
+      builder.setContextPrefix(String.format("%s.%s", Constants.SYSTEM_NAMESPACE, TRANSACTION_METRICS_CONTEXT));
       builder.setScope(MetricsScope.SYSTEM);
-      metricsRequestContext = new MetricsRequestContext.Builder().build();
+      metricsRequestContext = new MetricsRequestContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
@@ -157,6 +157,11 @@ final class MetricsRequestParser {
   static MetricsRequestContext parseContext(String path, MetricsRequestBuilder builder) throws MetricsPathException {
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();
     MetricsRequestContext.Builder contextBuilder = new MetricsRequestContext.Builder();
+
+    // everything
+    if (!pathParts.hasNext()) {
+      return contextBuilder.build();
+    }
 
     // scope is the first part of the path
     String scopeStr = pathParts.next();
@@ -181,20 +186,26 @@ final class MetricsRequestParser {
       throw new MetricsPathException("invalid type: " + pathTypeStr);
     }
 
+    // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+
     switch (pathType) {
       case APPS:
+        contextBuilder.setNamespaceId(namespaceId);
         parseSubContext(pathParts, contextBuilder);
         break;
       case STREAMS:
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'streams' must be followed by a stream name");
         }
+        contextBuilder.setNamespaceId(namespaceId);
         contextBuilder.setTag(MetricsRequestContext.TagType.STREAM, urlDecode(pathParts.next()));
         break;
       case DATASETS:
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'datasets' must be followed by a dataset name");
         }
+        contextBuilder.setNamespaceId(namespaceId);
         contextBuilder.setTag(MetricsRequestContext.TagType.DATASET, urlDecode(pathParts.next()));
         // path can be /metric/scope/datasets/{dataset}/apps/...
         if (pathParts.hasNext()) {
@@ -208,6 +219,7 @@ final class MetricsRequestParser {
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'services must be followed by a service name");
         }
+        contextBuilder.setNamespaceId(Constants.SYSTEM_NAMESPACE);
         parseSubContext(pathParts, contextBuilder);
         break;
     }
@@ -361,9 +373,9 @@ final class MetricsRequestParser {
   }
 
   /**
-   * From the query string determine the query type and related parameters.
+   * From the query string determine the query type, time range and related parameters.
    */
-  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
+  public static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
     // Extracts the query type.

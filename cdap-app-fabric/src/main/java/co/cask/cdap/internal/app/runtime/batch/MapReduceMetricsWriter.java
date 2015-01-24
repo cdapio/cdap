@@ -16,12 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.metrics.transport.MetricType;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
+import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -48,16 +46,16 @@ public class MapReduceMetricsWriter {
 
   private final Job jobConf;
   private final BasicMapReduceContext context;
-  private final Table<MetricsScope, String, Integer> previousMapStats;
-  private final Table<MetricsScope, String, Integer> previousReduceStats;
-  private final Table<MetricsScope, String, Integer> previousDatasetStats;
+  private final MetricsCollector mapperMetrics;
+  private final MetricsCollector reducerMetrics;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.context = context;
-    this.previousMapStats = HashBasedTable.create();
-    this.previousReduceStats = HashBasedTable.create();
-    this.previousDatasetStats = HashBasedTable.create();
+    this.mapperMetrics = context.getProgramMetrics().childCollector(Constants.Metrics.Tag.MR_TASK_TYPE,
+                                                                    MapReduceMetrics.TaskType.Mapper.getId());
+    this.reducerMetrics = context.getProgramMetrics().childCollector(Constants.Metrics.Tag.MR_TASK_TYPE,
+                                                                    MapReduceMetrics.TaskType.Reducer.getId());
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -80,19 +78,16 @@ public class MapReduceMetricsWriter {
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
     int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
-    // mapred counters are running counters whereas our metrics timeseries and aggregates make more
-    // sense as incremental numbers.  So we want to subtract the current counter value from the previous before
-    // emitting to the metrics system.
     long mapInputRecords = getTaskCounter(TaskCounter.MAP_INPUT_RECORDS);
     long mapOutputRecords = getTaskCounter(TaskCounter.MAP_OUTPUT_RECORDS);
     long mapOutputBytes = getTaskCounter(TaskCounter.MAP_OUTPUT_BYTES);
 
-    context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge(METRIC_INPUT_RECORDS, mapInputRecords);
-    context.getSystemMapperMetrics().gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
-    context.getSystemMapperMetrics().gauge(METRIC_BYTES, mapOutputBytes);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
+    mapperMetrics.gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
+    mapperMetrics.gauge(METRIC_INPUT_RECORDS, mapInputRecords);
+    mapperMetrics.gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
+    mapperMetrics.gauge(METRIC_BYTES, mapOutputBytes);
+    mapperMetrics.gauge(METRIC_USED_CONTAINERS, runningMappers);
+    mapperMetrics.gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
     LOG.trace("Reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
               (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
@@ -103,11 +98,11 @@ public class MapReduceMetricsWriter {
     long reduceInputRecords = getTaskCounter(TaskCounter.REDUCE_INPUT_RECORDS);
     long reduceOutputRecords = getTaskCounter(TaskCounter.REDUCE_OUTPUT_RECORDS);
 
-    context.getSystemReducerMetrics().gauge(METRIC_COMPLETION, (long) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
-    context.getSystemReducerMetrics().gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
+    reducerMetrics.gauge(METRIC_COMPLETION, (long) (reduceProgress * 100));
+    reducerMetrics.gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
+    reducerMetrics.gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
+    reducerMetrics.gauge(METRIC_USED_CONTAINERS, runningReducers);
+    reducerMetrics.gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
     LOG.trace("Reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
               (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
@@ -119,90 +114,17 @@ public class MapReduceMetricsWriter {
     Counters counters = jobConf.getCounters();
     for (String group : counters.getGroupNames()) {
       if (group.startsWith("cdap.")) {
-        String[] parts = group.split("\\.");
-        MetricType metricType = MetricType.valueOf(parts[parts.length - 2]);
-        String scopePart = parts[parts.length - 1];
-        // last one should be scope
-        MetricsScope scope;
-        try {
-          scope = MetricsScope.valueOf(scopePart);
-        } catch (IllegalArgumentException e) {
-          // SHOULD NEVER happen, simply skip if happens
-          continue;
-        }
 
-        //TODO: Refactor to support any context
-        String programPart = parts[1];
-        if (programPart.equals("mapper")) {
-          reportSystemStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
-                            previousMapStats, metricType);
-        } else if (programPart.equals("reducer")) {
-          reportSystemStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
-                            previousReduceStats, metricType);
+        Map<String, String> tags = MapReduceCounterCollectionService.parseTags(group);
+        // todo: use some caching?
+        MetricsCollector collector = context.getProgramMetrics().childCollector(tags);
+
+        // Note: all mapreduce metrics are reported as gauges due to how mapreduce counters work;
+        //       we may later emit metrics right from the tasks into the metrics system to overcome this limitation
+        for (Counter counter : counters.getGroup(group)) {
+          collector.gauge(counter.getName(), counter.getValue());
         }
       }
-    }
-  }
-
-  // convenience function to set the table value to the given value and return the difference between the given value
-  // and the previous table value, where the previous value is 0 if there was no entry in the table to begin with.
-  private int calcDiffAndSetTableValue(Table<MetricsScope, String, Integer> table,
-                                       MetricsScope scope, String key, long value) {
-    Integer previous = table.get(scope, key);
-    previous = (previous == null) ? 0 : previous;
-    table.put(scope, key, (int) value);
-    return (int) value - previous;
-  }
-
-  private void reportSystemStats(Iterable<Counter> counters, MetricsCollector collector, MetricsScope scope,
-                                 Table<MetricsScope, String, Integer> previousStats,  MetricType type) {
-    if (type == MetricType.GAUGE) {
-      reportGaugeSystemStats(counters, collector);
-    } else {
-      reportIncrementSystemStats(counters, collector, scope, previousStats);
-    }
-  }
-
-
-  private void reportIncrementSystemStats(Iterable<Counter> counters, MetricsCollector collector, MetricsScope scope,
-                                          Table<MetricsScope, String, Integer> previousStats) {
-
-    // we don't want to overcount the untagged version of the metric.  For example.  If "metric":"store.bytes"
-    // comes in with "tag":"dataset1" and value 10, we will also have another counter for just the metric without the
-    // tag, also with value 10.  If we increment both of them with their values, the final count sent off to the metrics
-    // system for the untagged metric will be 20 instead of 10.  So we need to keep track of the sum of the tagged
-    // values so that we can adjust accordingly.
-    Map<String, Integer> metricTagValues = Maps.newHashMap();
-    Map<String, Integer> metricUntaggedValues = Maps.newHashMap();
-
-    for (Counter counter : counters) {
-
-      // mapred counters are running counters whereas our metrics timeseries and aggregates make more
-      // sense as incremental numbers.  So we want to subtract the current counter value from the previous before
-      // emitting to the metrics system.
-      int emitValue = calcDiffAndSetTableValue(previousStats, scope, counter.getName(), counter.getValue());
-
-      // "<metric>" or "<metric>,<tag>" if tag is present
-      String[] parts = counter.getName().split(",", 2);
-      String metric = parts[0];
-      metricUntaggedValues.put(metric, emitValue);
-    }
-
-    // emit adjusted counts for the untagged metrics.
-    for (Map.Entry<String, Integer> untaggedEntry : metricUntaggedValues.entrySet()) {
-      String metric = untaggedEntry.getKey();
-      int tagValueSum = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
-      int adjustedValue = untaggedEntry.getValue() - tagValueSum;
-      collector.increment(metric, adjustedValue);
-    }
-  }
-
-  private void reportGaugeSystemStats(Iterable<Counter> counters, MetricsCollector collector) {
-    for (Counter counter : counters) {
-      // "<metric>" or "<metric>,<tag>" if tag is present
-      String[] parts = counter.getName().split(",", 2);
-      String metric = parts[0];
-      collector.gauge(metric, counter.getValue());
     }
   }
 

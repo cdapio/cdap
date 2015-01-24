@@ -37,8 +37,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
@@ -51,8 +49,14 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -60,7 +64,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -69,8 +72,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Files;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -112,11 +113,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
   /**
-   * Json serializer.
-   */
-  private static final Gson GSON = new Gson();
-
-  /**
    * Timeout to get response from metrics system.
    */
   private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
@@ -131,7 +127,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final CConfiguration configuration;
 
-  private final ManagerFactory<Location, ApplicationWithPrograms> managerFactory;
+  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
 
   /**
    * App fabric output directory.
@@ -168,13 +164,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final PreferencesStore preferencesStore;
 
+  private final AdapterService adapterService;
+
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                 ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
+                                 ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore) {
+                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
+                                 AdapterService adapterService) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -188,6 +187,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
+    this.adapterService = adapterService;
   }
 
   /**
@@ -255,7 +255,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appId) {
     try {
-      Id.Program id = Id.Program.from(namespaceId, appId, "");
+      Id.Application id = Id.Application.from(namespaceId, appId);
+
+      // Deletion of a particular application is not allowed if that application is used by an adapter
+      if (adapterService.getAdapterTypeInfo(appId) != null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("An adapter type exists with with the name: %s", appId));
+        return;
+      }
+
       AppFabricServiceStatus appStatus = removeApplication(id);
       LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
       responder.sendString(appStatus.getCode(), appStatus.getMessage());
@@ -289,6 +297,120 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Retrieves all adapters in a given namespace.
+   */
+  @GET
+  @Path("/adapters")
+  public void listAdapters(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) {
+    if (!namespaceExists(namespaceId)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Namespace '%s' does not exist.", namespaceId));
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
+  }
+
+  /**
+   * Retrieves an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-name}")
+  public void getAdapter(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("adapter-name") String adapterName) {
+    try {
+      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Starts/stops an adapter
+   */
+  @POST
+  @Path("/adapters/{adapterId}/{action}")
+  public void startStopAdapter(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapterId") String adapterId,
+                               @PathParam("action") String action) {
+    try {
+      if ("start".equals(action)) {
+        adapterService.startAdapter(namespaceId, adapterId);
+      } else if ("stop".equals(action)) {
+        adapterService.stopAdapter(namespaceId, adapterId);
+      } else {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].", action));
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Deletes an adapter
+   */
+  @DELETE
+  @Path("/adapters/{adapter-name}")
+  public void deleteAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-name") String adapterName) {
+    try {
+      adapterService.removeAdapter(namespaceId, adapterName);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Create an adapter.
+   */
+  @PUT
+  @Path("/adapters/{adapter-name}")
+  public void createAdapter(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-name") String adapterName) {
+
+    try {
+      if (!namespaceExists(namespaceId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
+        return;
+      }
+
+      AdapterConfig config = parseBody(request, AdapterConfig.class);
+      if (config == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
+        return;
+      }
+
+      // Validate the adapter
+      String adapterType = config.getType();
+      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
+      if (adapterTypeInfo == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
+        return;
+      }
+
+      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo.getSourceType(),
+                                                       adapterTypeInfo.getSinkType());
+      adapterService.createAdapter(namespaceId, spec);
+      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable th) {
+      LOG.error("Failed to deploy adapter", th);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
+    }
+  }
+
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
@@ -312,34 +434,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    final Location archiveDir = locationFactory.create(this.archiveDir).append(namespaceId);
-    final Location archive = archiveDir.append(archiveName);
+    final Location archive = locationFactory.create(this.archiveDir).append(namespaceId).append(archiveName);
 
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          Locations.mkdirsIfNotExists(archiveDir);
-
-          // Copy uploaded content to a temporary location
-          Location tmpLocation = archive.getTempFile(".tmp");
-          try {
-            LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
-            Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
-
-            // Finally, move archive to final location
-            if (tmpLocation.renameTo(archive) == null) {
-              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                  tmpLocation.toURI(), archive.toURI()));
-            }
-          } catch (IOException e) {
-            // In case copy to temporary file failed, or rename failed
-            tmpLocation.delete();
-            throw e;
-          }
-
-          deploy(namespaceId, appId, archive);
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          deploy(namespaceId, appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
           LOG.error("Deploy failure", e);
@@ -350,11 +453,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final String namespaceId, final String appId, Location archive) throws Exception {
+  private void deploy(final String namespaceId, final String appId, DeploymentInfo deploymentInfo) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
-      Location archiveLocation = archive;
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+
+      Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
           deleteHandler(programId, type);
@@ -362,7 +465,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
 
       ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, archiveLocation).get();
+        manager.deploy(id, appId, deploymentInfo).get();
       ApplicationSpecification specification = applicationWithPrograms.getSpecification();
       setupSchedules(namespaceId, specification);
     } catch (Throwable e) {
@@ -383,7 +486,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
           NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
                                                            .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setName(Constants.DEFAULT_NAMESPACE)
                                                            .setDescription(Constants.DEFAULT_NAMESPACE).build());
           if (existing != null) {
             LOG.trace("Default namespace already exists.");
@@ -472,7 +575,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       Id.Namespace accId = Id.Namespace.from(namespaceId);
-      List<ApplicationRecord> result = Lists.newArrayList();
+      List<ApplicationRecord> appRecords = Lists.newArrayList();
       List<ApplicationSpecification> specList;
       if (appId == null) {
         specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
@@ -486,18 +589,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       for (ApplicationSpecification appSpec : specList) {
-        result.add(makeAppRecord(appSpec));
+        appRecords.add(makeAppRecord(appSpec));
       }
 
-      String json;
       if (appId == null) {
-        json = GSON.toJson(result);
+        responder.sendJson(HttpResponseStatus.OK, appRecords);
       } else {
-        json = GSON.toJson(result.get(0));
+        responder.sendJson(HttpResponseStatus.OK, appRecords.get(0));
       }
-
-      responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
     } catch (SecurityException e) {
       LOG.debug("Security Exception while retrieving app details: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -529,16 +628,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     //All Apps are STOPPED, delete them
     for (ApplicationSpecification appSpec : allSpecs) {
-      Id.Program id = Id.Program.from(identifier.getId(), appSpec.getName() , "");
+      Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
       removeApplication(id);
     }
     return AppFabricServiceStatus.OK;
   }
 
-  private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
-    Id.Namespace namespaceId = Id.Namespace.from(identifier.getNamespaceId());
-    final Id.Application appId = Id.Application.from(namespaceId, identifier.getApplicationId());
-
+  private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
     boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
       @Override
@@ -562,7 +658,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
-    deleteMetrics(identifier.getNamespaceId(), identifier.getApplicationId());
+    deleteMetrics(appId.getNamespaceId(), appId.getId());
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId);
@@ -589,9 +685,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
       }
 
-      queueAdmin.dropAllForFlow(identifier.getNamespaceId(),
-                                identifier.getApplicationId(),
-                                flowSpecification.getName());
+      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
 
@@ -624,16 +718,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Can't find Metrics endpoint");
     }
 
-    for (MetricsScope scope : MetricsScope.values()) {
-      for (ApplicationSpecification application : applications) {
-        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                   discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.API_VERSION_2,
-                                   scope.name().toLowerCase(),
-                                   application.getName());
-        sendMetricsDelete(url);
-      }
+    for (ApplicationSpecification application : applications) {
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.API_VERSION_2,
+                                 "ignored",
+                                 application.getName());
+      sendMetricsDelete(url);
     }
 
     if (applicationId == null) {

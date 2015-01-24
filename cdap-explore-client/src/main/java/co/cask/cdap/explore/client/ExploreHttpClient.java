@@ -105,6 +105,25 @@ abstract class ExploreHttpClient implements Explore {
                                  getDetails(response));
   }
 
+  protected QueryHandle doAddPartition(String datasetName, long time, String path) throws ExploreException {
+    HttpResponse response = doPut(String.format("data/explore/datasets/%s/partitions/%d", datasetName, time),
+                                  GSON.toJson(ImmutableMap.of("path", path)), null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot add partition with time " + time + "to dataset " + datasetName +
+                                 ". Reason: " + getDetails(response));
+  }
+
+  protected QueryHandle doDropPartition(String datasetName, long time) throws ExploreException {
+    HttpResponse response = doDelete(String.format("data/explore/datasets/%s/partitions/%d", datasetName, time));
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot drop partition with time " + time + "from dataset " + datasetName +
+                                 ". Reason: " + getDetails(response));
+  }
+
   protected QueryHandle doEnableExploreDataset(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("data/explore/datasets/%s/enable", datasetInstance), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -335,6 +354,10 @@ abstract class ExploreHttpClient implements Explore {
 
   private HttpResponse doPost(String resource, String body, Map<String, String> headers) throws ExploreException {
     return doRequest(resource, "POST", headers, body);
+  }
+
+  private HttpResponse doPut(String resource, String body, Map<String, String> headers) throws ExploreException {
+    return doRequest(resource, "PUT", headers, body);
   }
 
   private HttpResponse doDelete(String resource) throws ExploreException {
