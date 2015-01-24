@@ -21,6 +21,7 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.AdapterApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.exception.AdapterNotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.AdapterConfig;
@@ -28,12 +29,13 @@ import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricClient;
+import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -55,21 +57,28 @@ public class AdapterClientTestRun extends ClientTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterClientTestRun.class);
 
   private AdapterClient adapterClient;
-  private File adapterDir;
+
+  @BeforeClass
+  public static void setUpClass() throws Exception {
+    if (START_LOCAL_STANDALONE) {
+      File adapterDir = TMP_FOLDER.newFolder("adapter");
+      configuration = CConfiguration.create();
+      configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+      setupAdapters(adapterDir);
+
+      StandaloneTestBase.setUpClass();
+    }
+  }
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
-    adapterDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
     adapterClient = new AdapterClient(clientConfig);
   }
 
   @Test
-  @Ignore //https://issues.cask.co/browse/CDAP-1221
   public void testAdapters() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
-    setupAdapters();
-
     List<AdapterSpecification> initialList = adapterClient.list(namespaceId);
     Assert.assertEquals(0, initialList.size());
 
@@ -108,11 +117,11 @@ public class AdapterClientTestRun extends ClientTestBase {
     Assert.assertEquals(0, finalList.size());
   }
 
-  private void setupAdapters() throws IOException {
-    setupAdapter(AdapterApp.class, "dummyAdapter");
+  private static void setupAdapters(File adapterDir) throws IOException {
+    setupAdapter(adapterDir, AdapterApp.class, "dummyAdapter");
   }
 
-  private void setupAdapter(Class<?> clz, String adapterType) throws IOException {
+  private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
 
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());

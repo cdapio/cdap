@@ -651,7 +651,8 @@ public abstract class StreamDataFileTestBase {
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
-    final StreamConfig config = new StreamConfig(streamName, partitionDuration, 10000, Long.MAX_VALUE, location, null);
+    final StreamConfig config = new StreamConfig(streamName, partitionDuration, 10000, Long.MAX_VALUE,
+                                                 location, null, 1000);
 
     // Create a thread that will write 10 event per second
     final AtomicInteger eventsWritten = new AtomicInteger();

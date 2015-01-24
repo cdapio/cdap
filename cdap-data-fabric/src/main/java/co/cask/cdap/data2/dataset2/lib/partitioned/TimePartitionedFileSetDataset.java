@@ -87,17 +87,29 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
         try {
           exploreFacade.addPartition(getName(), time, files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
-          throw new DataSetException("Unable to add partition to explore table.", e);
+          throw new DataSetException(String.format(
+            "Unable to add partition for time %d with path %s to explore table.", time, path), e);
         }
       }
     }
   }
 
   @Override
-  public void removePartition(long time) {
+  public void dropPartition(long time) {
     final byte[] rowkey = Bytes.toBytes(time);
     partitions.delete(rowkey);
-    // TODO remove this partition from Hive
+
+    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+      ExploreFacade exploreFacade = exploreFacadeProvider.get();
+      if (exploreFacade != null) {
+        try {
+          exploreFacade.dropPartition(getName(), time);
+        } catch (Exception e) {
+          throw new DataSetException(String.format(
+            "Unable to drop partition for time %d from explore table.", time), e);
+        }
+      }
+    }
   }
 
   @Override

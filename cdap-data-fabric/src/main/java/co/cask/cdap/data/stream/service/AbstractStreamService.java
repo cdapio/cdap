@@ -16,17 +16,26 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.common.Threads;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Stream service meant to run in an HTTP service.
  */
-public abstract class AbstractStreamService extends AbstractIdleService implements StreamService {
+public abstract class AbstractStreamService extends AbstractScheduledService implements StreamService {
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
+  private final StreamWriterSizeCollector sizeCollector;
+
+  private ScheduledExecutorService executor;
 
   /**
    * Children classes should implement this method to add logic to the start of this {@link Service}.
@@ -42,23 +51,50 @@ public abstract class AbstractStreamService extends AbstractIdleService implemen
    */
   protected abstract void doShutdown() throws Exception;
 
+  /**
+   * @return The {@link StreamCoordinatorClient} used by this {@link StreamService}.
+   */
+  protected StreamCoordinatorClient getStreamCoordinatorClient() {
+    return streamCoordinatorClient;
+  }
+
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
-                                  StreamFileJanitorService janitorService) {
+                                  StreamFileJanitorService janitorService,
+                                  StreamWriterSizeCollector sizeCollector) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
+    this.sizeCollector = sizeCollector;
   }
 
   @Override
   protected final void startUp() throws Exception {
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
+    sizeCollector.startAndWait();
     initialize();
   }
 
   @Override
   protected final void shutDown() throws Exception {
     doShutdown();
+
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+
+    sizeCollector.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
+  }
+
+  @Override
+  protected Scheduler scheduler() {
+    return Scheduler.newFixedRateSchedule(0, Constants.Stream.HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+  }
+
+  @Override
+  protected ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
+    return executor;
   }
 }

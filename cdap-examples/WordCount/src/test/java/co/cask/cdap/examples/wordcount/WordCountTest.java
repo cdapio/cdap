@@ -89,10 +89,6 @@ public class WordCountTest extends TestBase {
     Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
     Assert.assertEquals(2.0, assocs.get("hello"), 0.000001);
     Assert.assertTrue(assocs.containsKey("hello"));
-
-    appManager.stopAll();
-    TimeUnit.SECONDS.sleep(1);
-    clear();
   }
 
   private String requestService(URL url) throws IOException {

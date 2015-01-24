@@ -46,7 +46,7 @@ public class ListNamespacesCommand implements Command {
       new RowMaker<NamespaceMeta>() {
         @Override
         public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getDisplayName(), object.getDescription()};
+          return new Object[] {object.getId(), object.getName(), object.getDescription()};
         }
       }
     ).print(output);
