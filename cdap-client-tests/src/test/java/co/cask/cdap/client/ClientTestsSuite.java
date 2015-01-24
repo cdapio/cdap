@@ -30,8 +30,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
                       MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
                       QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
-                      PingClientTestRun.class, /*AdapterClientTestRun.class, */NamespaceClientTestRun.class,
-                      PreferencesClientTestRun.class })
+                      PingClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class })
 public class ClientTestsSuite extends StandaloneTestBase {
 
 }

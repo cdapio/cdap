@@ -51,6 +51,11 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     clientConfig = new ClientConfig.Builder().setHostname(HOSTNAME).setPort(PORT).build();
   }
 
+  @Override
+  protected ClientConfig getClientConfig() {
+    return clientConfig;
+  }
+
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
     for (ProgramRecord actualProgramRecord : actual) {
