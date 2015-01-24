@@ -262,7 +262,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // Deletion of a particular application is not allowed if that application is used by an adapter
       if (adapterService.getAdapterTypeInfo(appId) != null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("An adapter type exists with with the name: %s", appId));
+                             String.format("Cannot delete Application %s." +
+                                             " An AdapterType exists with a conflicting name.", appId));
+
         return;
       }
 

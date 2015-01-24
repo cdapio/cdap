@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.proto.ApplicationDeployScope;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.Location;
@@ -42,15 +43,18 @@ public final class ApplicationDeployable implements Closeable {
   private final CConfiguration cConf;
   private final Id.Application id;
   private final ApplicationSpecification specification;
+  private final ApplicationDeployScope applicationDeployScope;
   private final Location location;
   private File unpackDir;
   private ClassLoader classLoader;
 
   public ApplicationDeployable(CConfiguration cConf, Id.Application id,
-                               ApplicationSpecification specification, Location location) {
+                               ApplicationSpecification specification, ApplicationDeployScope applicationDeployScope,
+                               Location location) {
     this.cConf = cConf;
     this.id = id;
     this.specification = specification;
+    this.applicationDeployScope = applicationDeployScope;
     this.location = location;
   }
 
@@ -60,6 +64,10 @@ public final class ApplicationDeployable implements Closeable {
 
   public ApplicationSpecification getSpecification() {
     return specification;
+  }
+
+  public ApplicationDeployScope getApplicationDeployScope() {
+    return applicationDeployScope;
   }
 
   public Location getLocation() {

@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Schedules;
 import co.cask.cdap.internal.app.store.AdapterMeta;
 import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.ApplicationDeployScope;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
@@ -101,12 +102,12 @@ public class AdapterService extends AbstractIdleService {
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
     archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
+    this.adapterTypeInfos = Maps.newHashMap();
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting AdapterService");
-    this.adapterTypeInfos = Maps.newHashMap();
     registerAdapters();
   }
 
@@ -300,7 +301,8 @@ public class AdapterService extends AbstractIdleService {
       });
 
       Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
-      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
+      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
+                                                         ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(Id.Namespace.from(namespaceId), adapterTypeInfo.getType(), deploymentInfo).get();
       return applicationWithPrograms.getSpecification();
