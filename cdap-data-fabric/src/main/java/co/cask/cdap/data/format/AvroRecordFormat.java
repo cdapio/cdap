@@ -44,7 +44,6 @@ public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
   @Override
   public GenericRecord read(ByteBuffer input) {
     try {
-      // TODO: CDAP-1199 look at reusing decoder and generic record
       return datumReader.read(null, decoderFactory.binaryDecoder(Bytes.toBytes(input), binaryDecoder));
     } catch (IOException e) {
       throw new UnexpectedFormatException("Unable to decode the stream body as avro.", e);
