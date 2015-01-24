@@ -58,4 +58,14 @@ public abstract class StreamPropertyListener {
   public void ttlDeleted(String streamName) {
     // Default no-op
   }
+
+  /**
+   * Invoked when the stream Notification threshold property is changed.
+   *
+   * @param streamName Name of the stream
+   * @param threshold Notification threshold of the stream
+   */
+  public void thresholdChanged(String streamName, int threshold) {
+    // Default no-op
+  }
 }

@@ -17,32 +17,45 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 
 import java.util.List;
 
 /**
- * No-op implementation of the {@link StreamMetaStore}. Used for testing.
+ * In-memory implementation of the {@link StreamMetaStore}. Used for testing.
  */
-public class NoOpStreamMetaStore implements StreamMetaStore {
+public class InMemoryStreamMetaStore implements StreamMetaStore {
+
+  private final Multimap<String, String> streams;
+
+  public InMemoryStreamMetaStore() {
+    this.streams = Multimaps.synchronizedMultimap(HashMultimap.<String, String>create());
+  }
 
   @Override
   public void addStream(String accountId, String streamName) throws Exception {
-    // No-op
+    streams.put(accountId, streamName);
   }
 
   @Override
   public void removeStream(String accountId, String streamName) throws Exception {
-    // No-op
+    streams.remove(accountId, streamName);
   }
 
   @Override
   public boolean streamExists(String accountId, String streamName) throws Exception {
-    return true;
+    return streams.containsEntry(accountId, streamName);
   }
 
   @Override
-  public List<StreamSpecification> listStreams() throws Exception {
-    return ImmutableList.of();
+  public synchronized List<StreamSpecification> listStreams() throws Exception {
+    ImmutableList.Builder<StreamSpecification> builder = ImmutableList.builder();
+    for (String stream : streams.values()) {
+      builder.add(new StreamSpecification.Builder().setName(stream).create());
+    }
+    return builder.build();
   }
 }

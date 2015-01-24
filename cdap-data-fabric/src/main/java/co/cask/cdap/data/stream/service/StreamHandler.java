@@ -165,7 +165,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(stream);
       StreamProperties streamProperties =
-        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat());
+        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat(),
+                             streamConfig.getNotificationThresholdMB());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -399,8 +400,19 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
+    // if no threshold is given, use the existing threshold.
+    Integer newThreshold = properties.getThreshold();
+    if (newThreshold == null) {
+      newThreshold = currConfig.getNotificationThresholdMB();
+    } else {
+      if (newThreshold <= 0) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
+        return null;
+      }
+    }
+
     return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
-                            newTTL, currConfig.getLocation(), newFormatSpec);
+                            newTTL, currConfig.getLocation(), newFormatSpec, newThreshold);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -461,6 +473,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       json.addProperty("name", src.getName());
       json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
+      json.addProperty("threshold", src.getThreshold());
       return json;
     }
   }

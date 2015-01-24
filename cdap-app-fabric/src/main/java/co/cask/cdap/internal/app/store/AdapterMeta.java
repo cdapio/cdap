@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.proto.AdapterSpecification;
 
 /**
@@ -23,14 +24,14 @@ import co.cask.cdap.proto.AdapterSpecification;
  */
 public class AdapterMeta {
   private final AdapterSpecification spec;
-  private final String status;
+  private final AdapterStatus status;
 
-  public AdapterMeta(AdapterSpecification spec, String status) {
+  public AdapterMeta(AdapterSpecification spec, AdapterStatus status) {
     this.spec = spec;
     this.status = status;
   }
 
-  public static AdapterMeta updateStatus(AdapterMeta original, String newStatus) {
+  public static AdapterMeta updateStatus(AdapterMeta original, AdapterStatus newStatus) {
     return new AdapterMeta(original.spec, newStatus);
   }
 
@@ -38,7 +39,7 @@ public class AdapterMeta {
     return spec;
   }
 
-  public String getStatus() {
+  public AdapterStatus getStatus() {
     return status;
   }
 

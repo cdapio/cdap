@@ -28,7 +28,7 @@ import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -40,6 +40,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
@@ -53,6 +55,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -138,6 +141,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         protected void configure() {
           try {
             bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
           } catch (IOException e) {
             throw Throwables.propagate(e);
           }
@@ -147,7 +151,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       .with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+          bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
         }
       })
     );

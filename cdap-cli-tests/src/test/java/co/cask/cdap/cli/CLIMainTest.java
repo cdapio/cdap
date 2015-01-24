@@ -288,10 +288,10 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
-    propMap.put("key", "instance");
+    propMap.put("key", "new instance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences 'key=instance k1=v1'"),
+    testCommandOutputContains(cli, String.format("set instance preferences 'key=new instance, k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get instance preferences", propMap);
     testPreferencesOutput(cli, "get instance resolved preferences", propMap);
@@ -309,19 +309,48 @@ public class CLIMainTest extends StandaloneTestBase {
     testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
     testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
+
+    File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "Not a file");
+    testCommandOutputContains(cli, "load instance preferences " + file.getParentFile().getAbsolutePath() + " json",
+                              "Not a file");
+    // Generate a file to load
+    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key':'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
+    propMap.clear();
+    propMap.put("key", "somevalue");
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+
+    //Try invalid Json
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.txt");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key:'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
   }
 
   @Test
   public void testNamespaces() throws Exception {
     final String id = PREFIX + "testNamespace";
-    final String displayName = "testDisplayName";
+    final String name = "testDisplayName";
     final String description = "testDescription";
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setId("default").setDisplayName("default").setDescription("default").build();
+      .setId("default").setName("default").setDescription("default").build();
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
@@ -333,11 +362,11 @@ public class CLIMainTest extends StandaloneTestBase {
                               String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s %s %s", id, displayName, description);
+    String command = String.format("create namespace %s %s %s", id, name, description);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", id));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setId(id).setDisplayName(displayName).setDescription(description).build();
+      .setId(id).setName(name).setDescription(description).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -351,12 +380,12 @@ public class CLIMainTest extends StandaloneTestBase {
     command = String.format("create namespace %s", id);
     testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", id));
 
-    // create a namespace with default displayName and description
+    // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", defaultFields));
 
     NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
-      .setId(defaultFields).setDisplayName(defaultFields).setDescription("").build();
+      .setId(defaultFields).setName(defaultFields).setDescription("").build();
     // test that there are 3 namespaces including default
     expectedNamespaces = Lists.newArrayList(defaultNs, namespaceDefaultFields, expected);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -488,7 +517,7 @@ public class CLIMainTest extends StandaloneTestBase {
       new RowMaker<NamespaceMeta>() {
         @Override
         public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getDisplayName(), object.getDescription()};
+          return new Object[] {object.getId(), object.getName(), object.getDescription()};
         }
       }
     ).print(printStream);
