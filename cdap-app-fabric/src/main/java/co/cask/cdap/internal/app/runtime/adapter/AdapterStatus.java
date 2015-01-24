@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.adapter;
 /**
  * Possible status of an Adapter
  */
-public class AdapterStatus {
-  public static final String STARTED = "STARTED";
-  public static final String STOPPED = "STOPPED";
+public enum AdapterStatus {
+  STARTED, STOPPED
 }

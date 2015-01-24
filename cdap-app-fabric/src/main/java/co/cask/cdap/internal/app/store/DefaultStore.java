@@ -814,20 +814,20 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public String getAdapterStatus(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, String>() {
+  public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
       @Override
-      public String apply(AppMds mds) throws Exception {
+      public AdapterStatus apply(AppMds mds) throws Exception {
         return mds.apps.getAdapterStatus(id, name);
       }
     });
   }
 
   @Override
-  public String setAdapterStatus(final Id.Namespace id, final String name, final String status) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, String>() {
+  public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name, final AdapterStatus status) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
       @Override
-      public String apply(AppMds mds) throws Exception {
+      public AdapterStatus apply(AppMds mds) throws Exception {
         return mds.apps.setAdapterStatus(id, name, status);
       }
     });

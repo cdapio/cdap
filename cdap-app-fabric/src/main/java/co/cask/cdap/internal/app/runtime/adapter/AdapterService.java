@@ -149,8 +149,8 @@ public class AdapterService extends AbstractIdleService {
    * @return requested Adapter's status
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public String getAdapterStatus(String namespace, String adapterName) throws AdapterNotFoundException {
-    String adapterStatus = store.getAdapterStatus(Id.Namespace.from(namespace), adapterName);
+  public AdapterStatus getAdapterStatus(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterStatus adapterStatus = store.getAdapterStatus(Id.Namespace.from(namespace), adapterName);
     if (adapterStatus == null) {
       throw new AdapterNotFoundException(adapterName);
     }
@@ -165,8 +165,8 @@ public class AdapterService extends AbstractIdleService {
    * @return specified Adapter's previous status
    * @throws AdapterNotFoundException if the specified adapter is not found
    */
-  public String setAdapterStatus(String namespace, String adapterName, String status) throws AdapterNotFoundException {
-    String existingStatus = store.setAdapterStatus(Id.Namespace.from(namespace), adapterName, status);
+  public AdapterStatus setAdapterStatus(String namespace, String adapterName, AdapterStatus status) throws AdapterNotFoundException {
+    AdapterStatus existingStatus = store.setAdapterStatus(Id.Namespace.from(namespace), adapterName, status);
     if (existingStatus == null) {
       throw new AdapterNotFoundException(adapterName);
     }
@@ -251,7 +251,7 @@ public class AdapterService extends AbstractIdleService {
   // Suspends all schedules for this adapter
   public void stopAdapter(String namespace, String adapterName)
     throws AdapterNotFoundException, InvalidAdapterOperationException {
-    String adapterStatus = getAdapterStatus(namespace, adapterName);
+    AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STOPPED.equals(adapterStatus)) {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
@@ -275,9 +275,9 @@ public class AdapterService extends AbstractIdleService {
   // Resumes all schedules for this adapter
   public void startAdapter(String namespace, String adapterName)
     throws AdapterNotFoundException, InvalidAdapterOperationException {
-    String adapterStatus = getAdapterStatus(namespace, adapterName);
+    AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
-      throw new InvalidAdapterOperationException("Adapter is already stopped.");
+      throw new InvalidAdapterOperationException("Adapter is already started.");
     }
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);

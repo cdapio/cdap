@@ -357,7 +357,7 @@ public interface Store {
    * @param name Adapter name
    * @return status of specified adapter.
    */
-  String getAdapterStatus(Id.Namespace id, String name);
+  AdapterStatus getAdapterStatus(Id.Namespace id, String name);
 
   /**
    * Set the status for an adapter identified by the name in a give namespace.
@@ -367,7 +367,7 @@ public interface Store {
    * @param status Status to set
    * @return previous status of adapter, or null if specified adapter is not found.
    */
-  String setAdapterStatus(Id.Namespace id, String name, String status);
+  AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status);
 
   /**
    * Fetch all the adapters in a given namespace.

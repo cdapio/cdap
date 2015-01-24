@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -269,7 +270,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec, String adapterStatus) {
+  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec, AdapterStatus adapterStatus) {
     write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
           new AdapterMeta(adapterSpec, adapterStatus));
   }
@@ -279,17 +280,17 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
 
-  public String getAdapterStatus(Id.Namespace id, String name) {
+  public AdapterStatus getAdapterStatus(Id.Namespace id, String name) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getStatus();
   }
 
-  public String setAdapterStatus(Id.Namespace id, String name, String status) {
+  public AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     if (adapterMeta == null) {
       return null;
     }
-    String previousStatus = adapterMeta.getStatus();
+    AdapterStatus previousStatus = adapterMeta.getStatus();
     writeAdapter(id, adapterMeta.getSpec(), status);
     return previousStatus;
   }
