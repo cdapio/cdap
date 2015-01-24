@@ -95,8 +95,7 @@ public class ApplicationClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void deleteAll() throws IOException, UnAuthorizedAccessTokenException {
-    restClient.execute(HttpMethod.DELETE, config.resolveURL("apps"),
-                       config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    restClient.execute(HttpMethod.DELETE, config.resolveURL("apps"), config.getAccessToken());
   }
 
   /**

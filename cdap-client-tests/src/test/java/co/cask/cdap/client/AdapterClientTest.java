@@ -122,6 +122,7 @@ public class AdapterClientTest extends ClientTestBase {
     Assert.assertEquals(0, finalList.size());
 
     applicationClient.deleteAll();
+    applicationClient.waitForDeleted("dummyAdapter", 30, TimeUnit.SECONDS);
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {

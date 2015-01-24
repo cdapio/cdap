@@ -16,11 +16,13 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.DatasetNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -31,9 +33,11 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link ApplicationClient}.
@@ -108,5 +112,29 @@ public class ApplicationClientTestRun extends ClientTestBase {
     } catch (DatasetModuleNotFoundException e) {
       // NO-OP
     }
+  }
+
+  @Test
+  public void testDeleteAll() throws IOException,
+    UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
+    Assert.assertEquals(0, appClient.list().size());
+
+    // deploy first app
+    LOG.info("Deploying first app");
+    appClient.deploy(createAppJarFile(FakeApp.class));
+    appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
+    Assert.assertEquals(1, appClient.list().size());
+
+    // deploy second app
+    LOG.info("Deploying second app");
+    appClient.deploy(createAppJarFile(AppReturnsArgs.class));
+    appClient.waitForDeployed(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
+    Assert.assertEquals(2, appClient.list().size());
+
+    appClient.deleteAll();
+    appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
+    appClient.waitForDeleted(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
+
+    Assert.assertEquals(0, appClient.list().size());
   }
 }
