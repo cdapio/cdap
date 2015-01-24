@@ -152,8 +152,9 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
 
     // Users can not delete adapter applications
-    response = doDelete(getVersionedAPIPath(String.format("apps/%s", adapterType), Constants.Gateway.API_VERSION_3_TOKEN,
-                                                         Constants.DEFAULT_NAMESPACE));
+    response = doDelete(getVersionedAPIPath(String.format("apps/%s", adapterType),
+                                            Constants.Gateway.API_VERSION_3_TOKEN,
+                                            Constants.DEFAULT_NAMESPACE));
     responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
                       responseString.contains("An AdapterType exists with a conflicting name."));
