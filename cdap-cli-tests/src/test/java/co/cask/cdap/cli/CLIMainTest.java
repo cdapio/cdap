@@ -130,6 +130,11 @@ public class CLIMainTest extends StandaloneTestBase {
     }
   }
 
+  @Override
+  public void tearDownStandalone() throws Exception {
+    // NO-OP
+  }
+
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
