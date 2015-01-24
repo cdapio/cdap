@@ -94,6 +94,7 @@ public class DataSetServiceModules {
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
         expose(DatasetService.class);
@@ -136,6 +137,7 @@ public class DataSetServiceModules {
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
@@ -180,6 +182,7 @@ public class DataSetServiceModules {
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)

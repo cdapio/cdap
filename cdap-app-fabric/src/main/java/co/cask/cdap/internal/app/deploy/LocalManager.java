@@ -40,6 +40,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -63,6 +64,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final ProgramTerminator programTerminator;
 
   private final DatasetFramework datasetFramework;
+  private final DatasetFramework inMemoryDatasetFramework;
 
 
   @Inject
@@ -70,7 +72,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
                       LocationFactory locationFactory, StoreFactory storeFactory,
                       StreamConsumerFactory streamConsumerFactory,
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework datasetFramework,
+                      DatasetFramework datasetFramework, @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                       @Assisted ProgramTerminator programTerminator) {
 
     this.configuration = configuration;
@@ -84,6 +86,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.inMemoryDatasetFramework = inMemoryDatasetFramework;
   }
 
   @Override
@@ -91,8 +94,8 @@ public class LocalManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
     pipeline.addLast(new VerificationStage(datasetFramework));
-    pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));

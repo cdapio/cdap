@@ -142,7 +142,7 @@ public class EntityTableTest {
                                                }
                                              });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), cConf);
     dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
   }
 

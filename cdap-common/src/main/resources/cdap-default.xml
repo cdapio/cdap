@@ -861,6 +861,15 @@
         </description>
     </property>
 
+    <property>
+      <name>dataset.unchecked.upgrade</name>
+      <value>false</value>
+      <description>
+        By default, any changes made to existing datasets are not deployed when an app is redeployed.
+        Setting this value to true allows the dataset changes to be deployed upon app redeployment.
+      </description>
+    </property>
+
     <!---
          Web App Settings
      -->

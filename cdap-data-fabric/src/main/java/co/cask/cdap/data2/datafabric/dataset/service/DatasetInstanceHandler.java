@@ -75,8 +75,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final DatasetExploreFacade datasetExploreFacade;
-
-  private final CConfiguration conf;
+  private final boolean allowDatasetUncheckedUpgrade;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
@@ -86,7 +85,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.datasetExploreFacade = datasetExploreFacade;
-    this.conf = conf;
+    this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   @GET
@@ -121,7 +120,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
              name, creationProperties.getTypeName(), creationProperties.getProperties());
 
     DatasetSpecification existing = instanceManager.get(name);
-    if (existing != null) {
+    if (existing != null && !allowDatasetUncheckedUpgrade) {
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
       LOG.warn(message);

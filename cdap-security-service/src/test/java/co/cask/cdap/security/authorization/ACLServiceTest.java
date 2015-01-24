@@ -24,6 +24,7 @@ import co.cask.cdap.api.security.EntityType;
 import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.api.security.Principal;
 import co.cask.cdap.api.security.PrincipalType;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
@@ -63,7 +64,8 @@ public class ACLServiceTest {
       "metricsTable-memory", new InMemoryMetricsTableModule(),
       "core", new CoreDatasetsModule(),
       "acl", new ACLTableModule());
-    DatasetFramework datasetFramework = new InMemoryDatasetFramework(datasetDefinitionRegistry, defaultModules);
+    DatasetFramework datasetFramework = new InMemoryDatasetFramework(datasetDefinitionRegistry, defaultModules,
+                                                                     CConfiguration.create());
 
     ACLService aclService = new ACLService(datasetFramework, (DiscoveryService) discoveryService, discoveryService);
     aclService.startAndWait();
