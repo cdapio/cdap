@@ -36,25 +36,26 @@ angular.module(PKG.name + '.commons')
       link: function (scope, elem, attr, ngModel) {
 
         function getContext () {
-          var context;
+          var output;
 
           if(scope.metric.type==='system') {
-            context = 'system';
+            output = 'system';
           }
           else {
-            context = $stateParams.namespace;
-          }
+            output = $stateParams.namespace;
 
-          if(!context) { // should never happen, except on directive playground
-            context = 'default';
-            $log.warn('metric-picker using default namespace as context!');
+            if(!output) { // should never happen, except on directive playground
+              output = 'default';
+              $log.warn('metric-picker using default namespace as context!');
+            }
+
           }
 
           if(scope.metric.context) {
-            context += '.' + scope.metric.context;
+            output += '.' + scope.metric.context;
           }
 
-          return context;
+          return output;
         }
 
         function fetchAhead () {
