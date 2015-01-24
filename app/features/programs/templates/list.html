@@ -13,7 +13,8 @@
     <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
       <td >
         <a ng-bind="program.name"
-            >
+            href=""
+           ng-click="goToDetail(program.id)">
         </a>
       </td>
       <td ng-bind="program.description">  </td>
