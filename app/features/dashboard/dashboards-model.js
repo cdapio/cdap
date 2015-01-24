@@ -16,7 +16,6 @@ function (Widget, MyDataSource, $timeout) {
       {
         id: p.id,
         title: p.title || 'Dashboard',
-        tabOrder: p.tabOrder || 0,
         columns: []
       }
     );
@@ -157,10 +156,9 @@ function (Widget, MyDataSource, $timeout) {
 
         if(result.length) {
           // recreate saved dashboards
-          angular.forEach(result, function (v, k) {
+          angular.forEach(result, function (v) {
             var p = v.config;
             p.id = v.id;
-            p.tabOrder = k;
             data.push(new Dashboard(p));
           });
 
@@ -201,15 +199,6 @@ function (Widget, MyDataSource, $timeout) {
    * add a new dashboard tab
    */
   Model.prototype.add = function (properties, colCount) {
-    properties = properties || {};
-
-    // we will want this dashboard to get the lowest tabOrder value
-    if(this.data.length) {
-      properties.tabOrder = this.data.reduce(function(prev,curr){
-        return Math.min(prev, curr.tabOrder-1);
-      }, 0);
-    }
-
     var d = new Dashboard(properties);
 
     // add columns as needed
