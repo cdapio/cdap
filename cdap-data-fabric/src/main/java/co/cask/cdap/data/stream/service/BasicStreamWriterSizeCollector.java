@@ -16,20 +16,44 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.StreamPropertyListener;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Basic implementation of a {@link StreamWriterSizeCollector}.
  */
-public class BasicStreamWriterSizeCollector implements StreamWriterSizeCollector {
+public class BasicStreamWriterSizeCollector extends AbstractIdleService implements StreamWriterSizeCollector {
 
+  private final StreamCoordinatorClient streamCoordinatorClient;
   private final ConcurrentMap<String, AtomicLong> streamSizes;
+  private final List<Cancellable> truncationSubscriptions;
 
-  public BasicStreamWriterSizeCollector() {
+  @Inject
+  public BasicStreamWriterSizeCollector(StreamCoordinatorClient streamCoordinatorClient) {
+    this.streamCoordinatorClient = streamCoordinatorClient;
     this.streamSizes = Maps.newConcurrentMap();
+    this.truncationSubscriptions = Lists.newArrayList();
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // No-op
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    for (Cancellable subscription : truncationSubscriptions) {
+      subscription.cancel();
+    }
   }
 
   @Override
@@ -43,6 +67,16 @@ public class BasicStreamWriterSizeCollector implements StreamWriterSizeCollector
     AtomicLong value = streamSizes.get(streamName);
     if (value == null) {
       value = streamSizes.putIfAbsent(streamName, new AtomicLong(dataSize));
+      if (value == null) {
+        // This is the first time that we've seen this stream, we subscribe to generation changes to track truncation
+        truncationSubscriptions.add(streamCoordinatorClient.addListener(streamName, new StreamPropertyListener() {
+          @Override
+          public void generationChanged(String streamName, int generation) {
+            // Handle stream truncation by resetting the size aggregated so far
+            streamSizes.put(streamName, new AtomicLong(0));
+          }
+        }));
+      }
     }
     if (value != null) {
       value.addAndGet(dataSize);

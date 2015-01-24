@@ -18,9 +18,6 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
-import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Threads;
@@ -36,7 +33,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamFileJanitorService janitorService;
-  private final NotificationFeedManager feedManager;
+  private final StreamWriterSizeCollector sizeCollector;
 
   private ScheduledExecutorService executor;
 
@@ -54,19 +51,26 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
    */
   protected abstract void doShutdown() throws Exception;
 
+  /**
+   * @return The {@link StreamCoordinatorClient} used by this {@link StreamService}.
+   */
+  protected StreamCoordinatorClient getStreamCoordinatorClient() {
+    return streamCoordinatorClient;
+  }
+
   protected AbstractStreamService(StreamCoordinatorClient streamCoordinatorClient,
                                   StreamFileJanitorService janitorService,
-                                  NotificationFeedManager feedManager) {
+                                  StreamWriterSizeCollector sizeCollector) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.janitorService = janitorService;
-    this.feedManager = feedManager;
+    this.sizeCollector = sizeCollector;
   }
 
   @Override
   protected final void startUp() throws Exception {
-    createHeartbeatsFeed();
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
+    sizeCollector.startAndWait();
     initialize();
   }
 
@@ -78,6 +82,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
       executor.shutdownNow();
     }
 
+    sizeCollector.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }
@@ -91,24 +96,5 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   protected ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("heartbeats-scheduler"));
     return executor;
-  }
-
-  /**
-   * Create Notification feed for stream's heartbeats, if it does not already exist.
-   */
-  private void createHeartbeatsFeed() throws NotificationFeedException {
-    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
-    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace(Constants.DEFAULT_NAMESPACE)
-      .setCategory(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_CATEGORY)
-      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-      .setDescription("Streams heartbeats feed.")
-      .build();
-
-    try {
-      feedManager.getFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
-      feedManager.createFeed(streamHeartbeatsFeed);
-    }
   }
 }

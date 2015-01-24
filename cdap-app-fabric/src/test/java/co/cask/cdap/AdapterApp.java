@@ -36,9 +36,10 @@ public class AdapterApp extends AbstractApplication {
   }
 
   public static class AdapterWorkflow extends AbstractWorkflow {
+    public static final String NAME = "AdapterWorkflow";
     @Override
     protected void configure() {
-      setName("AdapterWorkflow");
+      setName(NAME);
       setDescription("Workflow to test Adapter");
       addMapReduce(DummyMapReduceJob.NAME);
     }

@@ -19,7 +19,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamWriter;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
@@ -35,9 +35,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test reading from a stream with map reduce.
+ * Test reading from a stream with map reduce with schema in stream
  */
-public class TestMapReduceStreamInput extends TestBase {
+public class MapReduceStreamInputTestRun extends TestFrameworkTestBase {
 
   @Test
   public void test() throws Exception {
@@ -55,20 +55,14 @@ public class TestMapReduceStreamInput extends TestBase {
     streamWriter.send(createEvent(schema, "AAPL", 1000, 284.13f));
     float aaplTotal = 5 * 300.0f + 3 * 298.34f + 50 * 305.23f + 1000 * 284.13f;
 
-    try {
-      MapReduceManager mrManager = applicationManager.startMapReduce("BodyTracker");
-      mrManager.waitForFinish(180, TimeUnit.SECONDS);
+    MapReduceManager mrManager = applicationManager.startMapReduce("BodyTracker");
+    mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
-      KeyValueTable pricesDS = (KeyValueTable) getDataset("prices").get();
-      float yhooVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("YHOO")));
-      float aaplVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("AAPL")));
-      Assert.assertTrue(Math.abs(yhooTotal - yhooVal) < 0.0000001);
-      Assert.assertTrue(Math.abs(aaplTotal - aaplVal) < 0.0000001);
-    } finally {
-      applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
-    }
+    KeyValueTable pricesDS = (KeyValueTable) getDataset("prices").get();
+    float yhooVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("YHOO")));
+    float aaplVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("AAPL")));
+    Assert.assertTrue(Math.abs(yhooTotal - yhooVal) < 0.0000001);
+    Assert.assertTrue(Math.abs(aaplTotal - aaplVal) < 0.0000001);
   }
 
   private byte[] createEvent(Schema schema, String ticker, int count, float price) throws IOException {

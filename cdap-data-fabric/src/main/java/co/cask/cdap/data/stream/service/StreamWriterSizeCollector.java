@@ -16,10 +16,12 @@
 
 package co.cask.cdap.data.stream.service;
 
+import com.google.common.util.concurrent.Service;
+
 /**
  * Keep track of the sizes of the files written by one {@link StreamHandler}.
  */
-public interface StreamWriterSizeCollector {
+public interface StreamWriterSizeCollector extends Service {
 
   // TODO have one implementation of this
 

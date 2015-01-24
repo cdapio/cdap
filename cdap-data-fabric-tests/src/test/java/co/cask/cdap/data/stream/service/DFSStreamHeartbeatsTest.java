@@ -25,6 +25,8 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -39,6 +41,7 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFa
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -106,7 +109,12 @@ public class DFSStreamHeartbeatsTest {
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
+        new DataSetServiceModules().getInMemoryModule(),
+        new DataSetsModules().getLocalModule(),
         new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+        new NotificationServiceRuntimeModule().getInMemoryModules(),
+        // We need the distributed modules here to get the distributed stream service, which is the only one
+        // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),
         new StreamAdminModules().getInMemoryModules()).with(new AbstractModule() {
         @Override

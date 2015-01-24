@@ -21,8 +21,8 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
-import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,31 +34,25 @@ import java.util.concurrent.TimeUnit;
  * Test Spark program integration with Streams
  */
 @Category(XSlowTests.class)
-public class TestSparkStreamIntegration extends TestBase {
+public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testSparkWithStream() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkStreamIntegrationApp.class);
-    try {
-      StreamWriter writer = applicationManager.getStreamWriter("testStream");
-      for (int i = 0; i < 50; i++) {
-        writer.send(String.valueOf(i));
-      }
+    StreamWriter writer = applicationManager.getStreamWriter("testStream");
+    for (int i = 0; i < 50; i++) {
+      writer.send(String.valueOf(i));
+    }
 
-      SparkManager sparkManager = applicationManager.startSpark("SparkStreamProgram");
-      sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    SparkManager sparkManager = applicationManager.startSpark("SparkStreamProgram");
+    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
-      // The Spark job simply turns every stream event body into key/value pairs, with key==value.
-      DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");
-      KeyValueTable results = datasetManager.get();
-      for (int i = 0; i < 50; i++) {
-        byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
-        Assert.assertArrayEquals(key, results.read(key));
-      }
-    } finally {
-      applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
+    // The Spark job simply turns every stream event body into key/value pairs, with key==value.
+    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");
+    KeyValueTable results = datasetManager.get();
+    for (int i = 0; i < 50; i++) {
+      byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
+      Assert.assertArrayEquals(key, results.read(key));
     }
   }
 }

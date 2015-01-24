@@ -19,8 +19,8 @@ package co.cask.cdap.spark.metrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -31,24 +31,18 @@ import java.util.concurrent.TimeUnit;
  * Test Spark program metrics.
  */
 @Category(XSlowTests.class)
-public class TestSparkMetricsIntegration extends TestBase {
+public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
   public static final String METRICS_KEY = ".BlockManager.memory.remainingMem_MB";
 
   @Test
   public void testSparkMetrics() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkMetricsIntegrationApp.class);
-    try {
-      SparkManager sparkManager = applicationManager.startSpark(TestSparkMetricsIntegrationApp.APP_SPARK_NAME);
-      sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    SparkManager sparkManager = applicationManager.startSpark(TestSparkMetricsIntegrationApp.APP_SPARK_NAME);
+    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
-      Assert.assertTrue(RuntimeStats.getSparkMetrics(TestSparkMetricsIntegrationApp.APP_NAME,
-                                                     TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0);
-      //TODO: Add test to check user metrics once the support is added: CDAP-765
-    } finally {
-      applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
-    }
+    Assert.assertTrue(RuntimeStats.getSparkMetrics(TestSparkMetricsIntegrationApp.APP_NAME,
+                                                   TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0);
+    //TODO: Add test to check user metrics once the support is added: CDAP-765
   }
 }
