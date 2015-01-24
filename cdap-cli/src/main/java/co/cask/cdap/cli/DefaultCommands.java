@@ -19,9 +19,11 @@ package co.cask.cdap.cli;
 import co.cask.cdap.cli.command.CallProcedureCommand;
 import co.cask.cdap.cli.command.CallServiceCommand;
 import co.cask.cdap.cli.command.ConnectCommand;
+import co.cask.cdap.cli.command.CreateAdapterCommand;
 import co.cask.cdap.cli.command.CreateDatasetInstanceCommand;
 import co.cask.cdap.cli.command.CreateNamespaceCommand;
 import co.cask.cdap.cli.command.CreateStreamCommand;
+import co.cask.cdap.cli.command.DeleteAdapterCommand;
 import co.cask.cdap.cli.command.DeleteAppCommand;
 import co.cask.cdap.cli.command.DeleteDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DeleteDatasetModuleCommand;
@@ -43,6 +45,7 @@ import co.cask.cdap.cli.command.GetProgramRuntimeArgsCommandSet;
 import co.cask.cdap.cli.command.GetProgramStatusCommandSet;
 import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
 import co.cask.cdap.cli.command.GetStreamEventsCommand;
+import co.cask.cdap.cli.command.ListAdaptersCommand;
 import co.cask.cdap.cli.command.ListAllProgramsCommand;
 import co.cask.cdap.cli.command.ListAppsCommand;
 import co.cask.cdap.cli.command.ListDatasetInstancesCommand;
@@ -51,6 +54,7 @@ import co.cask.cdap.cli.command.ListDatasetTypesCommand;
 import co.cask.cdap.cli.command.ListNamespacesCommand;
 import co.cask.cdap.cli.command.ListProgramsCommandSet;
 import co.cask.cdap.cli.command.ListStreamsCommand;
+import co.cask.cdap.cli.command.LoadStreamCommand;
 import co.cask.cdap.cli.command.PreferencesCommandSet;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
 import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
@@ -60,6 +64,7 @@ import co.cask.cdap.cli.command.StartProgramCommandSet;
 import co.cask.cdap.cli.command.StopProgramCommandSet;
 import co.cask.cdap.cli.command.TruncateDatasetInstanceCommand;
 import co.cask.cdap.cli.command.TruncateStreamCommand;
+import co.cask.cdap.cli.command.UseNamespaceCommand;
 import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.common.cli.Command;
 import com.google.common.base.Supplier;
@@ -81,6 +86,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
     this.commands = ImmutableList.<Command>builder()
       .add(injector.getInstance(VersionCommand.class))
       .add(injector.getInstance(ExitCommand.class))
+      .add(injector.getInstance(UseNamespaceCommand.class))
       .add(injector.getInstance(CallProcedureCommand.class))
       .add(injector.getInstance(ConnectCommand.class))
       .add(injector.getInstance(CreateDatasetInstanceCommand.class))
@@ -112,6 +118,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .addAll(injector.getInstance(ListProgramsCommandSet.class).getCommands())
       .add(injector.getInstance(ListStreamsCommand.class))
       .add(injector.getInstance(SendStreamEventCommand.class))
+      .add(injector.getInstance(LoadStreamCommand.class))
       .addAll(injector.getInstance(SetProgramInstancesCommandSet.class).getCommands())
       .add(injector.getInstance(SetStreamTTLCommand.class))
       .addAll(injector.getInstance(StartProgramCommandSet.class).getCommands())
@@ -120,10 +127,15 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .add(injector.getInstance(TruncateStreamCommand.class))
       .add(injector.getInstance(CallServiceCommand.class))
       .add(injector.getInstance(GetServiceEndpointsCommand.class))
+      // namespaces
       .add(injector.getInstance(CreateNamespaceCommand.class))
       .add(injector.getInstance(ListNamespacesCommand.class))
       .add(injector.getInstance(DescribeNamespaceCommand.class))
       .add(injector.getInstance(DeleteNamespaceCommand.class))
+      // adapters
+      .add(injector.getInstance(ListAdaptersCommand.class))
+      .add(injector.getInstance(CreateAdapterCommand.class))
+      .add(injector.getInstance(DeleteAdapterCommand.class))
       .build();
   }
 

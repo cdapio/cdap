@@ -26,6 +26,9 @@ import java.util.Set;
  */
 public enum ElementType {
 
+  ADAPTER("Adapter", "Adapters", "adapter", "adapters",
+          null, null, ArgumentName.ADAPTER),
+
   INSTANCE("Instance", "Instance", "instance", "instance",
            null, null, ArgumentName.INSTANCE, Capability.PREFERENCES),
 

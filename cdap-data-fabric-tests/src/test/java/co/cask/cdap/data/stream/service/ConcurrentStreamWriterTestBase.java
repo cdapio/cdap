@@ -20,11 +20,10 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
-import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamDataFileReader;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
 import co.cask.cdap.data.stream.StreamFileTestUtils;
@@ -51,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -75,11 +73,13 @@ public abstract class ConcurrentStreamWriterTestBase {
   @Test
   public void testConcurrentWrite() throws Exception {
     final String streamName = "testConcurrentWrite";
+    String accountId = "account";
     StreamAdmin streamAdmin = new TestStreamAdmin(getLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = 20;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
-    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, streamAdmin, threads, fileWriterFactory);
+    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, accountId, streamAdmin, threads,
+                                                                   fileWriterFactory);
 
     // Starts 20 threads to write events through stream writer, each thread write 1000 events
     final int msgPerThread = 1000;
@@ -88,11 +88,11 @@ public abstract class ConcurrentStreamWriterTestBase {
     ExecutorService executor = Executors.newFixedThreadPool(threads);
     // Half of the threads write events one by one, the other half writes in batch of size 10
     for (int i = 0; i < threads / 2; i++) {
-      executor.execute(createWriterTask("account", streamName, streamWriter,
+      executor.execute(createWriterTask(accountId, streamName, streamWriter,
                                         i, msgPerThread, 1, startLatch, completion));
     }
     for (int i = threads / 2; i < threads; i++) {
-      executor.execute(createWriterTask("account", streamName, streamWriter,
+      executor.execute(createWriterTask(accountId, streamName, streamWriter,
                                         i, msgPerThread, 10, startLatch, completion));
     }
     startLatch.countDown();
@@ -119,11 +119,13 @@ public abstract class ConcurrentStreamWriterTestBase {
   @Test
   public void testConcurrentAppendFile() throws Exception {
     final String streamName = "testConcurrentFile";
+    String accountId = "account";
     StreamAdmin streamAdmin = new TestStreamAdmin(getLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = 20;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
-    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, streamAdmin, threads, fileWriterFactory);
+    final ConcurrentStreamWriter streamWriter = createStreamWriter(streamName, accountId, streamAdmin, threads,
+                                                                   fileWriterFactory);
 
     int msgCount = 10000;
     LocationFactory locationFactory = getLocationFactory();
@@ -140,11 +142,11 @@ public abstract class ConcurrentStreamWriterTestBase {
     final CountDownLatch completion = new CountDownLatch(threads);
     ExecutorService executor = Executors.newFixedThreadPool(threads);
     for (int i = 0; i < threads / 2; i++) {
-      executor.execute(createAppendFileTask("account", streamName, streamWriter,
+      executor.execute(createAppendFileTask(accountId, streamName, streamWriter,
                                             fileInfos.get(i), startLatch, completion));
     }
     for (int i = threads / 2; i < threads; i++) {
-      executor.execute(createWriterTask("account", streamName, streamWriter, i, msgCount, 50, startLatch, completion));
+      executor.execute(createWriterTask(accountId, streamName, streamWriter, i, msgCount, 50, startLatch, completion));
     }
 
     startLatch.countDown();
@@ -183,15 +185,18 @@ public abstract class ConcurrentStreamWriterTestBase {
     return true;
   }
 
-  private ConcurrentStreamWriter createStreamWriter(String streamName, StreamAdmin streamAdmin, int threads,
-                                                    StreamFileWriterFactory writerFactory) throws IOException {
+  private ConcurrentStreamWriter createStreamWriter(String streamName, String accountId, StreamAdmin streamAdmin,
+                                                    int threads, StreamFileWriterFactory writerFactory)
+    throws Exception {
     StreamConfig streamConfig = streamAdmin.getConfig(streamName);
     streamConfig.getLocation().mkdirs();
 
-    StreamMetaStore streamMetaStore = new NoOpStreamMetaStore();
-    StreamCoordinator streamCoordinator = new InMemoryStreamCoordinator(streamAdmin, streamMetaStore);
-    return new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore,
-                                      writerFactory, threads, new TestMetricsCollector());
+    StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
+    streamMetaStore.addStream(accountId, streamName);
+    StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(CConfiguration.create(),
+                                                                                          streamAdmin);
+    return new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore,
+                                      writerFactory, threads, new TestMetricsCollectorFactory());
   }
 
   private Runnable createWriterTask(final String accountId, final String streamName,
@@ -316,30 +321,19 @@ public abstract class ConcurrentStreamWriterTestBase {
     @Override
     public StreamConfig getConfig(String streamName) throws IOException {
       Location streamLocation = locationFactory.create(streamName);
-      return new StreamConfig(streamName, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null);
+      return new StreamConfig(streamName, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }
 
-  private static final class TestMetricsCollector implements MetricsCollector {
-
+  private static final class TestMetricsCollectorFactory implements StreamMetricsCollectorFactory {
     @Override
-    public void increment(String metricName, long value) {
-
-    }
-
-    @Override
-    public void gauge(String metricName, long value) {
-
-    }
-
-    @Override
-    public MetricsCollector childCollector(Map<String, String> tags) {
-      return this;
-    }
-
-    @Override
-    public MetricsCollector childCollector(String tagName, String tagValue) {
-      return this;
+    public StreamMetricsCollector createMetricsCollector(String streamName) {
+      return new StreamMetricsCollector() {
+        @Override
+        public void emitMetrics(long bytesWritten, long eventsWritten) {
+          // No-op
+        }
+      };
     }
   }
 }

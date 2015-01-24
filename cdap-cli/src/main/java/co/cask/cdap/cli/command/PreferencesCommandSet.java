@@ -44,6 +44,7 @@ public class PreferencesCommandSet extends CommandSet<Command> {
         commands.add(new GetResolvedPreferencesCommand(elementType, client, cliConfig));
         commands.add(new SetPreferencesCommand(elementType, client, cliConfig));
         commands.add(new DeletePreferencesCommand(elementType, client, cliConfig));
+        commands.add(new LoadPreferencesCommand(elementType, client, cliConfig));
       }
     }
     return commands;

@@ -72,6 +72,7 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     ApplicationSpecification specification = input.getSpecification();
     Id.Application appId = input.getId();
 
+    // TODO: add a check against system applications (adapters, for instance).
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());

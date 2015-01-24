@@ -371,12 +371,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
-      String specification = programSpecificationToString(id, type);
-      if (specification == null || specification.isEmpty()) {
+      ProgramSpecification specification = getProgramSpecification(id, type);
+      if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        responder.sendJson(HttpResponseStatus.OK, specification);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1218,8 +1217,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (runtimeInfo == null) {
         if (type != ProgramType.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
-          String spec = programSpecificationToString(id, type);
-          if (spec == null || spec.isEmpty()) {
+          ProgramSpecification spec = getProgramSpecification(id, type);
+          if (spec == null) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           } else {
@@ -1282,18 +1281,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       return null;
     }
-  }
-
-  /**
-   * Returns {@link ProgramSpecification} as a JSON string if the program exists.
-   * If the program does not exist, it returns an empty string.
-   */
-  private String programSpecificationToString(Id.Program id, ProgramType type) throws Exception {
-    ProgramSpecification programSpec = getProgramSpecification(id, type);
-    if (programSpec == null) {
-      return "";
-    }
-    return GSON.toJson(programSpec);
   }
 
   @Nullable

@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
@@ -42,7 +43,7 @@ import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
 import com.google.inject.Module;
@@ -70,6 +71,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
+    INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
     INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
   }
 
@@ -84,6 +86,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("aclTable", new ACLTableModule());
         defaultModules.put("fileSet", new FileSetModule());
+        defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -100,8 +103,8 @@ public class DataSetServiceModules {
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        CommonHandlers.add(handlerBinder);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
 
@@ -125,6 +128,7 @@ public class DataSetServiceModules {
         defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
+        defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -146,8 +150,8 @@ public class DataSetServiceModules {
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        CommonHandlers.add(handlerBinder);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
@@ -169,6 +173,7 @@ public class DataSetServiceModules {
         defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
+        defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -192,8 +197,8 @@ public class DataSetServiceModules {
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        CommonHandlers.add(handlerBinder);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);

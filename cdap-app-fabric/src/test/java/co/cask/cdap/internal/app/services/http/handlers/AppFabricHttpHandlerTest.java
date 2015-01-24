@@ -578,6 +578,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertTrue(o.isEmpty());
 
+      // verify flows by non-existent stream
+      response = doGet("/v2/streams/nosuch/flows");
+      Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
       // verify flows by stream
       response = doGet("/v2/streams/text/flows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -595,6 +599,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
                                                    "WordCountFlow", "description", "Flow for counting words")));
+
+      // verify flows by dataset not used by any flow
+      response = doGet("/v2/datasets/input/flows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertTrue(o.isEmpty());
 
       // verify one dataset
       response = doGet("/v2/datasets/mydataset");
@@ -978,7 +989,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
-    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed", 0);
+    scheduleHistoryRuns(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed", 0);
 
     //Check suspend status
     String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
@@ -1018,7 +1029,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPost(scheduleResume);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed",
+    scheduleHistoryRuns(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed",
                          workflowRunsAfterSuspend);
 
     //check scheduled state

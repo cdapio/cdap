@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.data.format.SingleStringRecordFormat;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
@@ -33,16 +34,18 @@ public final class StreamConfig {
   private final long indexInterval;
   private final long ttl;
   private final FormatSpecification format;
+  private final Integer notificationThresholdMB;
 
   private final transient Location location;
 
   public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl,
-                      Location location, FormatSpecification format) {
+                      Location location, FormatSpecification format, Integer notificationThresholdMB) {
     this.name = name;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
     this.ttl = ttl;
     this.location = location;
+    this.notificationThresholdMB = notificationThresholdMB;
     this.format = format == null ? getDefaultFormat() : format;
   }
 
@@ -53,6 +56,7 @@ public final class StreamConfig {
     this.ttl = Long.MAX_VALUE;
     this.location = null;
     this.format = getDefaultFormat();
+    this.notificationThresholdMB = null;
   }
 
   /**
@@ -98,10 +102,17 @@ public final class StreamConfig {
     return format;
   }
 
+  /**
+   * @return The threshold of data, in MB, that the stream has to ingest for a notification to be sent.
+   */
+  public Integer getNotificationThresholdMB() {
+    return notificationThresholdMB;
+  }
+
   private static FormatSpecification getDefaultFormat() {
     return new FormatSpecification(
       SingleStringRecordFormat.class.getCanonicalName(),
-      new SingleStringRecordFormat().getSchema(),
+      Schema.recordOf("stringBody", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
       Collections.<String, String>emptyMap());
   }
 
@@ -114,6 +125,7 @@ public final class StreamConfig {
       .add("ttl", ttl)
       .add("location", location.toURI())
       .add("format", format)
+      .add("notificationThresholdMB", notificationThresholdMB)
       .toString();
   }
 }

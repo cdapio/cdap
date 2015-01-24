@@ -17,7 +17,7 @@
 package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
@@ -34,7 +34,7 @@ public class LogSaverStatusServiceModule extends PrivateModule {
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
       (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER));
-    handlerBinder.addBinding().to(PingHandler.class);
+    CommonHandlers.add(handlerBinder);
     bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
     expose(LogSaverStatusService.class);
   }

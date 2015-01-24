@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -84,6 +84,7 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
+    public static final String ADAPTER_DIR = "app.adapter.dir";
 
     /**
      * Defaults.
@@ -231,8 +232,11 @@ public final class Constants {
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String INSTANCE_FILE_PREFIX = "stream.instance.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
     public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
+    public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
+    public static final String NOTIFICATION_THRESHOLD = "stream.notification.threshold";
 
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";
@@ -269,6 +273,9 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
     /* End constants used by stream */
+
+    // Period in seconds between two heartbeats in a stream service
+    public static final int HEARTBEAT_INTERVAL = 2;
   }
 
   /**
@@ -381,6 +388,9 @@ public final class Constants {
       public static final String FLOWLET = "flt";
       public static final String FLOWLET_QUEUE = "flq";
       public static final String CLUSTER_METRICS = "cls";
+      public static final String NAMESPACE = "ns";
+      // who emitted: user vs system (scope is historical name)
+      public static final String SCOPE = "scp";
     }
   }
 
@@ -542,6 +552,8 @@ public final class Constants {
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
+    // a marker so that we know which tables are created by CDAP
+    public static final String CDAP_NAME = "cdap.name";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
@@ -581,7 +593,20 @@ public final class Constants {
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
 
-    public static final String KAFKA_DELEGATE_NOTIFICATION_SERVICE = "kafka.delegate.notification.service";
+    /**
+     * Notifications in Streams constants.
+     */
+    public static final class Stream {
+      public static final String STREAM_FEED_CATEGORY = "stream";
+      public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
+      public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
+
+      /** Default number of bytes received by a stream after which a notification is sent */
+      public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
+
+      public static final int INIT_HEARTBEAT_AGGREGATION_DELAY = 2;
+      public static final int HEARTBEAT_AGGREGATION_INTERVAL = 5;
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

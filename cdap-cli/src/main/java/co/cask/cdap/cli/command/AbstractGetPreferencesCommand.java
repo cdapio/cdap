@@ -21,21 +21,20 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.Arguments;
-import com.google.gson.Gson;
+import com.google.common.base.Joiner;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
  * Abstract Class for getting preferences for instance, namespace, application, program.
  */
 public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand {
-  private static final Gson GSON = new Gson();
-
   private final PreferencesClient client;
   private final ElementType type;
   private final boolean resolved;
+  private final CLIConfig cliConfig;
 
   protected AbstractGetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig,
                                           boolean resolved) {
@@ -43,6 +42,11 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
     this.type = type;
     this.client = client;
     this.resolved = resolved;
+    this.cliConfig = cliConfig;
+  }
+
+  private String joinMapEntries(Map<String, String> map) {
+    return Joiner.on(String.format("%n")).join(map.entrySet().iterator());
   }
 
   @Override
@@ -57,83 +61,76 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 0) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getInstancePreferences()));
+        printStream.print(joinMapEntries(client.getInstancePreferences()));
         break;
 
       case NAMESPACE:
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getNamespacePreferences(programIdParts[0], resolved)));
+        printStream.print(joinMapEntries(client.getNamespacePreferences(programIdParts[0], resolved)));
         break;
 
       case APP:
-        // todo : change this to 2 when namespace id is part of the argument.
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                         resolved)));
+        printStream.print(joinMapEntries(client.getApplicationPreferences(cliConfig.getCurrentNamespace(),
+                                                                          programIdParts[0], resolved)));
         break;
 
       case FLOW:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                     type.getPluralName(), programIdParts[1],
-                                                                     resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
+                                                                      programIdParts[0], type.getPluralName(),
+                                                                      programIdParts[1], resolved)));
         break;
 
       case PROCEDURE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                     type.getPluralName(), programIdParts[1],
-                                                                     resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
+                                                                      programIdParts[0], type.getPluralName(),
+                                                                      programIdParts[1], resolved)));
         break;
 
       case MAPREDUCE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                     type.getPluralName(), programIdParts[1],
-                                                                     resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
+                                                                      programIdParts[0], type.getPluralName(),
+                                                                      programIdParts[1], resolved)));
         break;
 
       case WORKFLOW:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                     type.getPluralName(), programIdParts[1],
-                                                                     resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
+                                                                      programIdParts[0], type.getPluralName(),
+                                                                      programIdParts[1], resolved)));
         break;
 
       case SERVICE:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                     type.getPluralName(), programIdParts[1],
-                                                                     resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
+                                                                      programIdParts[0], type.getPluralName(),
+                                                                      programIdParts[1], resolved)));
         break;
 
       case SPARK:
-        // todo : change this to 3 when namespace id is part of the argument.
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.println(GSON.toJson(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, programIdParts[0],
-                                                                     type.getPluralName(), programIdParts[1],
-                                                                     resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
+                                                                      programIdParts[0], type.getPluralName(),
+                                                                      programIdParts[1], resolved)));
         break;
 
       default:

@@ -63,7 +63,7 @@ class SparkMetricsReporter extends ScheduledReporter {
       for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
         // for some cases the gauge value is Integer so a typical casting fails. Hence, first cast to Number and then
         // get the value as a long
-        SparkProgramWrapper.getBasicSparkContext().getMetricsCollector(MetricsScope.SYSTEM).gauge(
+        SparkProgramWrapper.getBasicSparkContext().getProgramMetrics().gauge(
           entry.getKey(), ((Number) entry.getValue().getValue()).longValue());
       }
     }

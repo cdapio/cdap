@@ -59,6 +59,7 @@ public abstract class AbstractMapReduceContextBuilder {
    */
   public BasicMapReduceContext build(MapReduceMetrics.TaskType type,
                                      String runId,
+                                     String taskId,
                                      long logicalStartTime,
                                      String workflowBatch,
                                      Arguments runtimeArguments,
@@ -95,7 +96,7 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, type, RunIds.fromString(runId),
+      new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId,
                                 runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
                                 workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, configuration);

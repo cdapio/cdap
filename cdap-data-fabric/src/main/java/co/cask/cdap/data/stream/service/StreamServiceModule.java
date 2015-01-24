@@ -16,7 +16,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -34,7 +34,7 @@ public class StreamServiceModule extends PrivateModule {
                                                                       Names.named(Constants.Stream.STREAM_HANDLER));
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(StreamFetchHandler.class);
-    handlerBinder.addBinding().to(PingHandler.class);
+    CommonHandlers.add(handlerBinder);
 
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);

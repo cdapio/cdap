@@ -19,7 +19,6 @@ package co.cask.cdap.common.hooks;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.http.AbstractHandlerHook;
 import co.cask.http.HandlerInfo;
 import co.cask.http.HttpResponder;
@@ -57,7 +56,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         .build(new CacheLoader<Map<String, String>, MetricsCollector>() {
           @Override
           public MetricsCollector load(Map<String, String> key) throws Exception {
-            return metricsCollectionService.getCollector(MetricsScope.SYSTEM, key);
+            return metricsCollectionService.getCollector(key);
           }
         });
     } else {
@@ -112,6 +111,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   private Map<String, String> createContext(HandlerInfo handlerInfo) {
     // todo: really inefficient to call this on the intense data flow path
     return ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
       Constants.Metrics.Tag.SERVICE, serviceName,
       Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
       Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());

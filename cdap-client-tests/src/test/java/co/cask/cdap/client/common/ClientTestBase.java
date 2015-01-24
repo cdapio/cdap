@@ -40,6 +40,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public abstract class ClientTestBase extends StandaloneTestBase {
+  protected static final boolean START_LOCAL_STANDALONE = true;
   protected static final String HOSTNAME = "localhost";
   protected static final int PORT = 10000;
 

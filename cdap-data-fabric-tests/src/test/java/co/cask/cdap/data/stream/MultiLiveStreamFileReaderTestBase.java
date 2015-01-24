@@ -50,7 +50,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
     location.mkdirs();
 
     // Create a stream with 1 partition.
-    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null);
+    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null, 1000);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     List<FileWriter<StreamEvent>> writers = Lists.newArrayList();
@@ -130,7 +130,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
     location.mkdirs();
 
     // Create a stream with 1 partition.
-    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null);
+    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null, 1000);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     for (int i = 0; i < 5; i++) {

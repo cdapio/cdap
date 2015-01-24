@@ -74,6 +74,16 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<Void> addPartition(String datasetName, long time, String path) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> dropPartition(String datasetName, long time) {
+    return null;
+  }
+
+  @Override
   public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),

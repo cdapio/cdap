@@ -16,10 +16,11 @@
 package co.cask.cdap.data2.transaction.stream.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.stream.StreamCoordinator;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -30,8 +31,10 @@ import org.apache.twill.filesystem.LocationFactory;
 public final class HBaseStreamFileAdmin extends AbstractStreamFileAdmin {
 
   @Inject
-  HBaseStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator streamCoordinator,
-                       StreamConsumerStateStoreFactory stateStoreFactory, HBaseStreamAdmin oldStreamAdmin) {
-    super(locationFactory, cConf, streamCoordinator, stateStoreFactory, oldStreamAdmin);
+  HBaseStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
+                       StreamCoordinatorClient streamCoordinatorClient,
+                       StreamConsumerStateStoreFactory stateStoreFactory,
+                       NotificationFeedManager notificationFeedManager, HBaseStreamAdmin oldStreamAdmin) {
+    super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, notificationFeedManager, oldStreamAdmin);
   }
 }

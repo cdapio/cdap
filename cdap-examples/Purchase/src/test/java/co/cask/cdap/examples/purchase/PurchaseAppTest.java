@@ -68,7 +68,7 @@ public class PurchaseAppTest extends TestBase {
       flowManager.stop();
     }
 
-    ServiceManager userProfileServiceManager = getServiceManager(appManager);
+    ServiceManager userProfileServiceManager = getUserProfileServiceManager(appManager);
 
     // Add customer's profile information
     URL userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
@@ -110,7 +110,7 @@ public class PurchaseAppTest extends TestBase {
     ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
     // Wait for service startup
-    serviceStatusCheck(purchaseHistoryServiceManager, true);
+    purchaseHistoryServiceManager.waitForStatus(true);
 
     // Test service to retrieve a customer's purchase history
     URL url = new URL(purchaseHistoryServiceManager.getServiceURL(15, TimeUnit.SECONDS), "history/joe");
@@ -129,27 +129,14 @@ public class PurchaseAppTest extends TestBase {
     UserProfile profileFromPurchaseHistory = history.getUserProfile();
     Assert.assertEquals(profileFromPurchaseHistory.getFirstName(), "joe");
     Assert.assertEquals(profileFromPurchaseHistory.getLastName(), "bernard");
-
-    appManager.stopAll();
   }
 
-  private ServiceManager getServiceManager(ApplicationManager appManager) throws InterruptedException {
+  private ServiceManager getUserProfileServiceManager(ApplicationManager appManager) throws InterruptedException {
     // Start UserProfileService
     ServiceManager userProfileServiceManager = appManager.startService(UserProfileServiceHandler.SERVICE_NAME);
 
     // Wait for service startup
-    serviceStatusCheck(userProfileServiceManager, true);
+    userProfileServiceManager.waitForStatus(true);
     return userProfileServiceManager;
-  }
-
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < 5) {
-      if (serviceManger.isRunning() == running) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }
