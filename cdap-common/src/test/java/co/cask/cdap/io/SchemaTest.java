@@ -152,10 +152,10 @@ public class SchemaTest {
       "float_field float NOT NULL, " +
       "double_field double NOT NULL, " +
       "bytes_field bytes not null, " +
-      "string_field string not null, " +
       "array_field array<string> not null, " +
       "map_field map<string,int> not null, " +
-      "record_field record<x:int,y:double>";
+      "record_field record<x:int,y:double>, " +
+      "string_field string";
     Schema expected = Schema.recordOf(
       "rec",
       Schema.Field.of("bool_field", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
@@ -164,7 +164,6 @@ public class SchemaTest {
       Schema.Field.of("float_field", Schema.of(Schema.Type.FLOAT)),
       Schema.Field.of("double_field", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("bytes_field", Schema.of(Schema.Type.BYTES)),
-      Schema.Field.of("string_field", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("array_field", Schema.arrayOf(Schema.nullableOf(Schema.of(Schema.Type.STRING)))),
       Schema.Field.of("map_field", Schema.mapOf(
         Schema.nullableOf(Schema.of(Schema.Type.STRING)),
@@ -172,7 +171,8 @@ public class SchemaTest {
       Schema.Field.of("record_field", Schema.nullableOf(Schema.recordOf(
         "rec1",
         Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-        Schema.Field.of("y", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))))))
+        Schema.Field.of("y", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE)))))),
+      Schema.Field.of("string_field", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
     );
     Assert.assertEquals(expected, Schema.parseSQL(schemaStr));
   }
