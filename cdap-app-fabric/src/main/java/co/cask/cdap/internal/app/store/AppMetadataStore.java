@@ -275,16 +275,20 @@ public class AppMetadataStore extends MetadataStoreDataset {
           new AdapterMeta(adapterSpec, adapterStatus));
   }
 
+
+  @Nullable
   public AdapterSpecification getAdapter(Id.Namespace id, String name) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
 
+  @Nullable
   public AdapterStatus getAdapterStatus(Id.Namespace id, String name) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getStatus();
   }
 
+  @Nullable
   public AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     if (adapterMeta == null) {

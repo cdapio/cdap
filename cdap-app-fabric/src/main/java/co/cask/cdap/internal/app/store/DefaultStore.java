@@ -803,6 +803,8 @@ public class DefaultStore implements Store {
     });
   }
 
+
+  @Nullable
   @Override
   public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
@@ -813,6 +815,8 @@ public class DefaultStore implements Store {
     });
   }
 
+
+  @Nullable
   @Override
   public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
@@ -823,6 +827,7 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Nullable
   @Override
   public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name, final AdapterStatus status) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {

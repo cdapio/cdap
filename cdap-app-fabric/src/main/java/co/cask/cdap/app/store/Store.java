@@ -348,6 +348,7 @@ public interface Store {
    * @param name Adapter name
    * @return an instance of {@link AdapterSpecification}.
    */
+  @Nullable
   AdapterSpecification getAdapter(Id.Namespace id, String name);
 
   /**
@@ -357,6 +358,7 @@ public interface Store {
    * @param name Adapter name
    * @return status of specified adapter.
    */
+  @Nullable
   AdapterStatus getAdapterStatus(Id.Namespace id, String name);
 
   /**
@@ -367,6 +369,7 @@ public interface Store {
    * @param status Status to set
    * @return previous status of adapter, or null if specified adapter is not found.
    */
+  @Nullable
   AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status);
 
   /**
