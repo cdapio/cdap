@@ -148,7 +148,7 @@ function (Widget, MyDataSource, $timeout) {
 
     this.data = data;
 
-    dSrc.request(
+    this.$promise = dSrc.request(
       {
         method: 'GET',
         _cdapNsPath: API_PATH

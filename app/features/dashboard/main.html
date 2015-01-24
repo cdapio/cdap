@@ -10,33 +10,39 @@
 
   <div
     data-title="{{board.title}}"
-    ng-repeat="board in dashboards | orderBy:'+tabOrder'"
+    ng-repeat="board in dashboards | orderBy:+$index"
     bs-pane>
 
-    <div class="row" ng-if="dashboards.activeIndex === $index">
-
-      <div ng-class="'col-sm-'+(12/board.columns.length)"
-        ng-repeat="column in board.columns"
-        ng-model="column"
-        as-sortable="dragdrop">
-
-        <div class="panel"
-          ng-class="wdgt.getClassName()"
-          ng-repeat="wdgt in column"
-          as-sortable-item>
-
-          <div class="panel-heading"
-            ng-include="'/assets/features/dashboard/partials/wdgt-head.html'"
-            as-sortable-item-handle></div>
-
-          <div class="panel-body"
-            ng-include="wdgt.getPartial()"
-            ></div>
-
-        </div>
-      </div>
-
-    </div>
+      <p>
+        Board=<code>{{board.id}}</code>
+        $index=<code>{{$index}}</code>
+      </p>
 
   </div>
+</div>
+
+
+<div class="row">
+
+  <div ng-class="'col-sm-'+(12/currentBoard.columns.length)"
+    ng-repeat="column in currentBoard.columns"
+    ng-model="column"
+    as-sortable="dragdrop">
+
+    <div class="panel"
+      ng-class="wdgt.getClassName()"
+      ng-repeat="wdgt in column"
+      as-sortable-item>
+
+      <div class="panel-heading"
+        ng-include="'/assets/features/dashboard/partials/wdgt-head.html'"
+        as-sortable-item-handle></div>
+
+      <div class="panel-body"
+        ng-include="wdgt.getPartial()"
+        ></div>
+
+    </div>
+  </div>
+
 </div>
