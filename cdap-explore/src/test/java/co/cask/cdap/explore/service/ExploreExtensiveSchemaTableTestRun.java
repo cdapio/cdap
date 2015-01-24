@@ -194,10 +194,28 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                ),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList(
-                   "foo", 1, 1.23, 2.45, (long) 1000, (byte) 100, true, (short) 8, "[10,11]", "[1.67,2.89]",
-                   "[10.56,8.78]", "[101,201]", new byte[] { 106, 110 }, "[true,false]", "[50,51]",
-                   "[\"foo\",\"bar\"]", "[10,20]", "[10.45,20.98]", "[10.99,20.9]", "[654,2897]", "[22,23]",
-                   "[true,true]", "[76,39]", "[\"foo2\",\"bar2\"]", "{\"foo3\":51}", "{3.55:51.98}", "{890:45}",
+                   // scalars
+                   "foo", 1, 1.23, 2.45, (long) 1000, (byte) 100, true, (short) 8,
+                   // arrays
+                   "[10,11]",
+                   "[1.67,2.89]",
+                   "[10.56,8.78]",
+                   "[101,201]",
+                   new byte[] { 106, 110 },
+                   "[true,false]",
+                   "[50,51]",
+                   "[\"foo\",\"bar\"]",
+                   // lists
+                   "[10,20]",
+                   "[10.45,20.98]",
+                   "[10.99,20.9]",
+                   "[654,2897]",
+                   new byte[] { 22, 23 },
+                   "[true,true]",
+                   "[76,39]",
+                   "[\"foo2\",\"bar2\"]",
+                   // maps
+                   "{\"foo3\":51}", "{3.55:51.98}", "{890:45}",
                    "{true:27}", "{\"s\":\"foo\",\"i\":2}", "[{\"s\":\"bar\",\"i\":3},{\"s\":\"foobar\",\"i\":4}]",
                    "[{\"s\":\"foobar2\",\"i\":3}]", "{\"key\":{\"s\":\"foobar3\",\"i\":9}}"
                  )))

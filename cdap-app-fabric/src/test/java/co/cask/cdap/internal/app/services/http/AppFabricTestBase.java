@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -104,6 +105,7 @@ public abstract class AppFabricTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
+  private static StreamCoordinatorClient streamCoordinatorClient;
   private static final TempFolder TEMP_FOLDER = new TempFolder();
   private static final String adapterFolder = "adapter";
 
@@ -139,10 +141,13 @@ public abstract class AppFabricTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() {
+    streamCoordinatorClient.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
@@ -284,8 +289,6 @@ public abstract class AppFabricTestBase {
     throws Exception {
     return deploy(application, apiVersion, namespace, null);
   }
-
-
 
   /**
    * Deploys an application with (optionally) a defined app name

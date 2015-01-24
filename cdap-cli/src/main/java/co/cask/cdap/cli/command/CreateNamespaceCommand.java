@@ -42,10 +42,10 @@ public class CreateNamespaceCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String id = arguments.get(ArgumentName.NAMESPACE_ID.toString());
-    String displayName = arguments.get(ArgumentName.NAMESPACE_DISPLAY_NAME.toString(), id);
+    String name = arguments.get(ArgumentName.NAMESPACE_DISPLAY_NAME.toString(), id);
     String description = arguments.get(ArgumentName.NAMESPACE_DESCRIPTION.toString(), "");
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(id).setDisplayName(displayName).setDescription(description);
+    builder.setId(id).setName(name).setDescription(description);
     namespaceClient.create(builder.build());
 
     output.println(String.format(SUCCESS_MSG, id));

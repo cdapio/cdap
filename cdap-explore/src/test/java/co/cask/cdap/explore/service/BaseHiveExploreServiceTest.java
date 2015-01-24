@@ -46,6 +46,9 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -298,9 +301,12 @@ public class BaseHiveExploreServiceTest {
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
           handlerBinder.addBinding().to(StreamHandler.class);
@@ -341,9 +347,12 @@ public class BaseHiveExploreServiceTest {
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
+      new NotificationServiceRuntimeModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
           handlerBinder.addBinding().to(StreamHandler.class);
