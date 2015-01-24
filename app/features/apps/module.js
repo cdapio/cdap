@@ -1,4 +1,3 @@
 angular.module(PKG.name + '.feature.apps', [
-  PKG.name+'.commons',
-  PKG.name+'.feature.home'
+  PKG.name + '.feature.programs'
 ]);

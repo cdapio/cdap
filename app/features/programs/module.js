@@ -1,4 +1,3 @@
 angular.module(PKG.name + '.feature.programs', [
-  PKG.name+'.commons',
-  PKG.name+'.feature.apps'
+  PKG.name + '.feature.mapreduce'
 ]);
