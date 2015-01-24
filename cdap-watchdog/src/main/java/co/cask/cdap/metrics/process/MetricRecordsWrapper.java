@@ -60,62 +60,52 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     // however requires the reverse order, to avoid emitting duplicate metrics records. todo: define duplicate
     // So, in the end we reverse the list;
     List<Rule> rules = Lists.newLinkedList();
-    // namespace
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE)));
     // <cluster metrics>, e.g. storage used
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.CLUSTER_METRICS)));
-    // namespace, app, prg type, prg name
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM)));
-    // namespace, app, prg type, prg name, instance id
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                        Constants.Metrics.Tag.INSTANCE_ID)));
-    // namespace, app, prg type, prg name, flowlet name, tag: queue name (for flowlet only)
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                        Constants.Metrics.Tag.FLOWLET),
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.CLUSTER_METRICS)));
+    // app, prg type, prg name
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM)));
+    // app, prg type, prg name, instance id
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.INSTANCE_ID)));
+    // app, prg type, prg name, flowlet name, tag: queue name (for flowlet only)
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.FLOWLET),
                        Constants.Metrics.Tag.FLOWLET_QUEUE));
-    // namespace, app, prg type, prg name, flowlet name, instance id (for flowlet only)
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                        Constants.Metrics.Tag.FLOWLET,
+    // app, prg type, prg name, flowlet name, instance id (for flowlet only)
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.FLOWLET,
                                         Constants.Metrics.Tag.INSTANCE_ID)));
-    // namespace, app, prg type, prg name, mr task type (for mr task only) - map and reduce report progress overall
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                        Constants.Metrics.Tag.MR_TASK_TYPE)));
-    // namespace, app, prg type, prg name, mr task type, task id (for mr task only)
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                        Constants.Metrics.Tag.MR_TASK_TYPE, Constants.Metrics.Tag.INSTANCE_ID)));
-    // namespace, app, prg type, prg name, service runnable (for service only)
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                        Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                        Constants.Metrics.Tag.SERVICE_RUNNABLE)));
+    // app, prg type, prg name, mr task type (for mr task only) - map and reduce report progress overall
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.MR_TASK_TYPE)));
+    // app, prg type, prg name, mr task type, task id (for mr task only)
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.MR_TASK_TYPE,
+                                        Constants.Metrics.Tag.INSTANCE_ID)));
+    // app, prg type, prg name, service runnable (for service only)
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                        Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.SERVICE_RUNNABLE)));
     // component
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.COMPONENT)));
     // component, handler
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                                        Constants.Metrics.Tag.HANDLER)));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER)));
     // component, handler, method
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                                        Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD)));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER,
+                                        Constants.Metrics.Tag.METHOD)));
     // component, handler, instance id
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                                        Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.INSTANCE_ID)));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER,
+                                        Constants.Metrics.Tag.INSTANCE_ID)));
     // component, handler, instance id, tag: stream
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                                        Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.INSTANCE_ID),
-                       Constants.Metrics.Tag.STREAM));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER,
+                                        Constants.Metrics.Tag.INSTANCE_ID), Constants.Metrics.Tag.STREAM));
     // dataset name
     // note: weird rule, but this is what we had before
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
-                       Constants.Metrics.Tag.DATASET));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.DATASET), Constants.Metrics.Tag.DATASET));
 
     // service, handler, method
-    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.SERVICE,
-                                        Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD)));
+    rules.add(new Rule(ImmutableList.of(Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.HANDLER,
+                                        Constants.Metrics.Tag.METHOD)));
 
     Collections.reverse(rules);
 
@@ -212,14 +202,18 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     runId = runId == null ? "0" : runId;
     MetricsRecordBuilder builder = new MetricsRecordBuilder(runId, metricValue.getName(), metricValue.getTimestamp(),
                                                             metricValue.getValue(), metricValue.getType());
+    String namespace = metricValue.getTags().get(Constants.Metrics.Tag.NAMESPACE);
+    namespace = namespace == null ? Constants.SYSTEM_NAMESPACE : namespace;
+
     int index = 0;
+    addToContext(builder, Constants.Metrics.Tag.NAMESPACE, namespace, index);
     for (String tagName : rule.tagsToPutIntoContext) {
       String tagValue = metricValue.getTags().get(tagName);
+      if (tagName.equals(Constants.Metrics.Tag.NAMESPACE)) {
+        System.out.println("tagname = " + tagName + "; tagvalue = " + tagValue);
+      }
       if (tagValue != null) {
         addToContext(builder, tagName, tagValue, index);
-      } else if (tagName.equals(Constants.Metrics.Tag.NAMESPACE)) {
-        // some tag is missing. However, if the missing tag is namespace, then use 'system' namespace.
-        addToContext(builder, Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE, index);
       } else {
         // doesn't fit the rule: some tag is missing
         return null;
@@ -243,6 +237,7 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
   }
 
   private void addToContext(MetricsRecordBuilder builder, String tagName, String tagValue, int index) {
+    //System.out.println("tagname = " + tagName + "; tagvalue = " + tagValue);
     if (Constants.Metrics.Tag.DATASET.equals(tagName) && index == 0) {
       // special handling for dataset context metrics - legacy
       builder.appendContext("-.dataset");
