@@ -24,7 +24,9 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.internal.app.store.AdapterMeta;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -332,29 +334,48 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter meta to the store. Will overwrite the existing AdapterMeta.
+   * Adds adapter spec to the store, with status = {@link AdapterStatus.STARTED}. Will overwrite the existing spec.
    *
    * @param id Namespace id
-   * @param adapterMeta metadata (including specification) of the adapter
+   * @param adapterSpec adapter specification of the adapter being added
    */
-  void addAdapter(Id.Namespace id, AdapterMeta adapterMeta);
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
    *
    * @param id  Namespace id.
    * @param name Adapter name
-   * @return an instance of {@link AdapterMeta}.
+   * @return an instance of {@link AdapterSpecification}.
    */
-  AdapterMeta getAdapter(Id.Namespace id, String name);
+  AdapterSpecification getAdapter(Id.Namespace id, String name);
+
+  /**
+   * Fetch the status for an adapter identified by the name in a give namespace.
+   *
+   * @param id  Namespace id.
+   * @param name Adapter name
+   * @return status of specified adapter.
+   */
+  String getAdapterStatus(Id.Namespace id, String name);
+
+  /**
+   * Set the status for an adapter identified by the name in a give namespace.
+   *
+   * @param id  Namespace id.
+   * @param name Adapter name
+   * @param status Status to set
+   * @return previous status of adapter, or null if specified adapter is not found.
+   */
+  String setAdapterStatus(Id.Namespace id, String name, String status);
 
   /**
    * Fetch all the adapters in a given namespace.
    *
    * @param id Namespace id.
-   * @return {@link Collection} of Adapter Meta.
+   * @return {@link Collection} of Adapter Specifications.
    */
-  Collection<AdapterMeta> getAllAdapters(Id.Namespace id);
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.

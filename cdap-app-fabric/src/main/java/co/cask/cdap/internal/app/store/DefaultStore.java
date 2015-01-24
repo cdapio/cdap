@@ -48,7 +48,9 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -791,31 +793,51 @@ public class DefaultStore implements Store {
 
 
   @Override
-  public void addAdapter(final Id.Namespace id, final AdapterMeta adapterMeta) {
+  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeAdapter(id, adapterMeta);
+        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STARTED);
         return null;
       }
     });
   }
 
   @Override
-  public AdapterMeta getAdapter(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterMeta>() {
+  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
       @Override
-      public AdapterMeta apply(AppMds mds) throws Exception {
+      public AdapterSpecification apply(AppMds mds) throws Exception {
         return mds.apps.getAdapter(id, name);
       }
     });
   }
 
   @Override
-  public Collection<AdapterMeta> getAllAdapters(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterMeta>>() {
+  public String getAdapterStatus(final Id.Namespace id, final String name) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, String>() {
       @Override
-      public Collection<AdapterMeta> apply(AppMds mds) throws Exception {
+      public String apply(AppMds mds) throws Exception {
+        return mds.apps.getAdapterStatus(id, name);
+      }
+    });
+  }
+
+  @Override
+  public String setAdapterStatus(final Id.Namespace id, final String name, final String status) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, String>() {
+      @Override
+      public String apply(AppMds mds) throws Exception {
+        return mds.apps.setAdapterStatus(id, name, status);
+      }
+    });
+  }
+
+  @Override
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
+      @Override
+      public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
         return mds.apps.getAllAdapters(id);
       }
     });

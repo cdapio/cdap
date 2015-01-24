@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -268,16 +269,42 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public void writeAdapter(Id.Namespace id, AdapterMeta adapterMeta) {
-    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), adapterMeta.getSpec().getName()).build(), adapterMeta);
+  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec, String adapterStatus) {
+    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
+          new AdapterMeta(adapterSpec, adapterStatus));
   }
 
-  public AdapterMeta getAdapter(Id.Namespace id, String name) {
+  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
+    AdapterMeta adapterMeta = getAdapterMeta(id, name);
+    return adapterMeta == null ?  null : adapterMeta.getSpec();
+  }
+
+  public String getAdapterStatus(Id.Namespace id, String name) {
+    AdapterMeta adapterMeta = getAdapterMeta(id, name);
+    return adapterMeta == null ?  null : adapterMeta.getStatus();
+  }
+
+  public String setAdapterStatus(Id.Namespace id, String name, String status) {
+    AdapterMeta adapterMeta = getAdapterMeta(id, name);
+    if (adapterMeta == null) {
+      return null;
+    }
+    String previousStatus = adapterMeta.getStatus();
+    writeAdapter(id, adapterMeta.getSpec(), status);
+    return previousStatus;
+  }
+
+  private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
     return get(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
   }
 
-  public List<AdapterMeta> getAllAdapters(Id.Namespace id) {
-    return list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterMeta.class);
+  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
+    List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
+    List<AdapterMeta> adapterMetas = list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterMeta.class);
+    for (AdapterMeta adapterMeta : adapterMetas) {
+      adapterSpecs.add(adapterMeta.getSpec());
+    }
+    return adapterSpecs;
   }
 
   public void deleteAdapter(Id.Namespace id, String name) {
