@@ -51,7 +51,7 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterConflictException;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
@@ -352,7 +352,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (AdapterConflictException e) {
+    } catch (InvalidAdapterOperationException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     }
   }

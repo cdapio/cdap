@@ -250,10 +250,10 @@ public class AdapterService extends AbstractIdleService {
 
   // Suspends all schedules for this adapter
   public void stopAdapter(String namespace, String adapterName)
-    throws AdapterNotFoundException, AdapterConflictException {
+    throws AdapterNotFoundException, InvalidAdapterOperationException {
     String adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STOPPED.equals(adapterStatus)) {
-      throw new AdapterConflictException("Adapter is already stopped.");
+      throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
@@ -274,10 +274,10 @@ public class AdapterService extends AbstractIdleService {
 
   // Resumes all schedules for this adapter
   public void startAdapter(String namespace, String adapterName)
-    throws AdapterNotFoundException, AdapterConflictException {
+    throws AdapterNotFoundException, InvalidAdapterOperationException {
     String adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
-      throw new AdapterConflictException("Adapter is already stopped.");
+      throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
