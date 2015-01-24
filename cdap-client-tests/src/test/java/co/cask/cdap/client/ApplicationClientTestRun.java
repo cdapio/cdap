@@ -22,10 +22,10 @@ import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.DatasetNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,11 +33,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link ApplicationClient}.
@@ -57,6 +55,24 @@ public class ApplicationClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     datasetClient = new DatasetClient(clientConfig);
     datasetModuleClient = new DatasetModuleClient(clientConfig);
+  }
+
+  @After
+  public void cleanup() throws Throwable {
+    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
+    // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
+
+    try {
+      datasetClient.delete(FakeApp.DS_NAME);
+    } catch (DatasetNotFoundException e) {
+      // NO-OP
+    }
+
+    try {
+      datasetModuleClient.delete(FakeDatasetModule.NAME);
+    } catch (DatasetModuleNotFoundException e) {
+      // NO-OP
+    }
   }
 
   @Test
@@ -97,26 +113,10 @@ public class ApplicationClientTestRun extends ClientTestBase {
     appClient.delete(FakeApp.NAME);
     appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
     Assert.assertEquals(0, appClient.list().size());
-
-    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
-    // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instancei
-
-    try {
-      datasetClient.delete(FakeApp.DS_NAME);
-    } catch (DatasetNotFoundException e) {
-      // NO-OP
-    }
-
-    try {
-      datasetModuleClient.delete(FakeDatasetModule.NAME);
-    } catch (DatasetModuleNotFoundException e) {
-      // NO-OP
-    }
   }
 
   @Test
-  public void testDeleteAll() throws IOException,
-    UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
+  public void testDeleteAll() throws Exception {
     Assert.assertEquals(0, appClient.list().size());
 
     // deploy first app
