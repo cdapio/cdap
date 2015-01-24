@@ -50,6 +50,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -328,7 +329,7 @@ public class StandaloneMain {
 
     //Run dataset service on random port
     List<Module> modules = createPersistentModules(cConf, hConf, webAppPath);
-    // TODO: Setup plugins directory in configuration.
+
     return new StandaloneMain(modules, cConf, webAppPath);
   }
 
@@ -373,6 +374,7 @@ public class StandaloneMain {
       new ServiceStoreModules().getStandaloneModule(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
+      new NotificationServiceRuntimeModule().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules()
     );
   }

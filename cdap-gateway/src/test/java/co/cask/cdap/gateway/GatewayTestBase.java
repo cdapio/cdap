@@ -36,6 +36,8 @@ import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -92,6 +94,7 @@ public abstract class GatewayTestBase {
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+  private static NotificationService notificationService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -141,6 +144,7 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
+        new NotificationServiceRuntimeModule().getInMemoryModules(),
         new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
@@ -176,6 +180,8 @@ public abstract class GatewayTestBase {
     metrics = injector.getInstance(MetricsQueryService.class);
     appFabricServer.startAndWait();
     metrics.startAndWait();
+    notificationService = injector.getInstance(NotificationService.class);
+    notificationService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -190,6 +196,7 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
+    notificationService.stopAndWait();
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
     router.stopAndWait();

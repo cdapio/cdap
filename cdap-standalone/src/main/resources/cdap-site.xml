@@ -111,6 +111,15 @@
     </property>
 
     <!--
+        Adapter Jar directory
+    -->
+    <property>
+      <name>app.adapter.dir</name>
+      <value>data/plugins</value>
+      <description>Directory where all archives for adapters are stored</description>
+    </property>
+
+    <!--
         Frontend Configuration
     -->
     <property>

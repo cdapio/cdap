@@ -43,7 +43,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsSuccess() throws Exception {
-    String context = Constants.Service.APP_FABRIC_HTTP + ".PingHandler.ping";
+    String context = Constants.SYSTEM_NAMESPACE + "." + Constants.Service.APP_FABRIC_HTTP + ".PingHandler.ping";
     long received = mockMetricsCollectionService.getMetrics(context, "request.received");
     long successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
     long clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
@@ -60,7 +60,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String context = Constants.Stream.STREAM_HANDLER + ".StreamHandler.getInfo";
+    String context = Constants.SYSTEM_NAMESPACE + "." + Constants.Stream.STREAM_HANDLER + ".StreamHandler.getInfo";
     long received = mockMetricsCollectionService.getMetrics(context, "request.received");
     long successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
     long clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");

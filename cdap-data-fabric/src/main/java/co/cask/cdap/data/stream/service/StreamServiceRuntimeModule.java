@@ -17,14 +17,20 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
+import co.cask.cdap.data.stream.service.heartbeat.NoOpHeartbeatPublisher;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.AbstractModule;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Defines Guice modules in different runtime environments.
@@ -38,7 +44,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       protected void configure() {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -49,7 +55,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
       }
     };
@@ -61,7 +67,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
-        bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+        bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(DistributedStreamService.class).in(Scopes.SINGLETON);
 
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
@@ -70,7 +76,10 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(StreamFetchHandler.class);
         CommonHandlers.add(handlerBinder);
 
+        bind(HeartbeatPublisher.class).to(NoOpHeartbeatPublisher.class).in(Scopes.SINGLETON);
+
         bind(StreamHttpService.class).in(Scopes.SINGLETON);
+        bind(Key.get(new TypeLiteral<Supplier<Discoverable>>() { })).to(StreamHttpService.class);
       }
     };
   }

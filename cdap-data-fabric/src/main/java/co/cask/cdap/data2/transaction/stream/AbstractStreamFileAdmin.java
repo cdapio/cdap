@@ -25,6 +25,9 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.notifications.feeds.NotificationFeedException;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -64,6 +67,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
+  private final NotificationFeedManager notificationFeedManager;
 
   // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
   // TODO: Remove usage of this when no longer needed
@@ -72,8 +76,10 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
                                     StreamCoordinatorClient streamCoordinatorClient,
                                     StreamConsumerStateStoreFactory stateStoreFactory,
+                                    NotificationFeedManager notificationFeedManager,
                                     StreamAdmin oldStreamAdmin) {
     this.cConf = cConf;
+    this.notificationFeedManager = notificationFeedManager;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
@@ -269,11 +275,38 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                                                cConf.get(Constants.Stream.INDEX_INTERVAL)));
     long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
                                                      cConf.get(Constants.Stream.TTL)));
+    int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
+                                                            cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation,
+                                           null, threshold);
     saveConfig(config);
 
+    // Create the notification feeds linked to that stream
+    createStreamFeeds(config);
+
     streamCoordinatorClient.streamCreated(name);
+  }
+
+  /**
+   * Create the public {@link NotificationFeed}s that concerns the stream with configuration {@code config}.
+   *
+   * @param config config of the stream to create feeds for
+   */
+  private void createStreamFeeds(StreamConfig config) {
+    // TODO use accountID as namespace?
+    try {
+      NotificationFeed streamFeed = new NotificationFeed.Builder()
+        .setNamespace(Constants.DEFAULT_NAMESPACE)
+        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+        .setName(String.format("%sSize", config.getName()))
+        .setDescription(String.format("Size updates feed for Stream %s every %dMB",
+                                      config.getName(), config.getNotificationThresholdMB()))
+        .build();
+      notificationFeedManager.createFeed(streamFeed);
+    } catch (NotificationFeedException e) {
+      LOG.error("Cannot create feed for Stream {}", config.getName(), e);
+    }
   }
 
   @Override
@@ -327,8 +360,13 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
       StreamConfig.class);
 
+    Integer threshold = config.getNotificationThresholdMB();
+    if (threshold == null) {
+      threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD, 1000);
+    }
+
     return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), streamLocation, config.getFormat());
+                            config.getTTL(), streamLocation, config.getFormat(), threshold);
   }
 
   private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {

@@ -14,14 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.data.stream.service.heartbeat;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 
 /**
- * No-op implementation of a {@link StreamWriterSizeCollector}.
+ * Publishes {@link StreamWriterHeartbeat}s.
  */
-public class NoOpStreamWriterSizeCollector implements StreamWriterSizeCollector {
-  @Override
-  public void received(String streamName, long dataSize) {
-    // No-op
-  }
+public interface HeartbeatPublisher extends Service {
+
+  /**
+   * Publish one heartbeat.
+   *
+   * @param heartbeat heartbeat to publish
+   * @return a {@link ListenableFuture} describing the state of publishing. The {@link ListenableFuture#get} method
+   * will return the published heartbeat.
+   */
+  ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat);
 }
