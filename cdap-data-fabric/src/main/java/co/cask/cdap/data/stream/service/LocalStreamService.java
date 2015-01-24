@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -70,7 +71,7 @@ public class LocalStreamService extends AbstractStreamService {
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
       StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
       long filesSize = StreamUtils.fetchStreamFilesSize(config);
-      createSizeAggregator(streamSpec.getName(), filesSize);
+      createSizeAggregator(streamSpec.getName(), filesSize, config.getNotificationThresholdMB());
     }
   }
 
@@ -88,7 +89,8 @@ public class LocalStreamService extends AbstractStreamService {
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamSpec.getName());
       if (streamSizeAggregator == null) {
         // First time that we see this Stream here
-        streamSizeAggregator = createSizeAggregator(streamSpec.getName(), 0);
+        StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
+        streamSizeAggregator = createSizeAggregator(streamSpec.getName(), 0, config.getNotificationThresholdMB());
       }
       streamSizeAggregator.checkAggregatedSize();
     }
@@ -104,7 +106,21 @@ public class LocalStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount) {
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
+
+    // Handle threshold changes
+    final Cancellable thresholdSubscription =
+      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+        @Override
+        public void thresholdChanged(String streamName, int threshold) {
+          StreamSizeAggregator aggregator = aggregators.get(streamName);
+          if (aggregator == null) {
+            LOG.warn("StreamSizeAggregator should not be null for stream {}", streamName);
+            return;
+          }
+          aggregator.setStreamThresholdMB(threshold);
+        }
+      });
 
     // Handle stream truncation, by creating creating a new empty aggregator for the stream
     // and cancelling the existing one
@@ -112,16 +128,18 @@ public class LocalStreamService extends AbstractStreamService {
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void generationChanged(String streamName, int generation) {
-          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0));
+          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0,
+                                                                                                threshold));
           if (previousAggregator != null) {
             previousAggregator.cancel();
           }
         }
       });
 
-    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, new Cancellable() {
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, threshold, new Cancellable() {
       @Override
       public void cancel() {
+        thresholdSubscription.cancel();
         truncationSubscription.cancel();
       }
     });
@@ -138,23 +156,35 @@ public class LocalStreamService extends AbstractStreamService {
     private final NotificationFeed streamFeed;
     private final String streamName;
     private final AtomicLong streamBaseCount;
-    private final Cancellable truncationSubscription;
+    private final AtomicInteger streamThresholdMB;
+    private final Cancellable cancellable;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, Cancellable truncationSubscription) {
+    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
+                                   Cancellable cancellable) {
       this.streamName = streamName;
       this.streamInitSize = new AtomicLong(baseCount);
       this.streamBaseCount = new AtomicLong(baseCount);
-      this.truncationSubscription = truncationSubscription;
+      this.cancellable = cancellable;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(streamName)
         .build();
+      this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
     }
 
     @Override
     public void cancel() {
-      truncationSubscription.cancel();
+      cancellable.cancel();
+    }
+
+    /**
+     * Set the notification threshold for the stream that this {@link StreamSizeAggregator} is linked to.
+     *
+     * @param newThreshold new notification threshold, in megabytes
+     */
+    public void setStreamThresholdMB(int newThreshold) {
+      streamThresholdMB.set(newThreshold);
     }
 
     /**
@@ -163,7 +193,7 @@ public class LocalStreamService extends AbstractStreamService {
      */
     public void checkAggregatedSize() {
       long sum = streamInitSize.get() + streamWriterSizeCollector.getTotalCollected(streamName);
-      if (isInit || sum - streamBaseCount.get() > Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD) {
+      if (isInit || sum - streamBaseCount.get() > streamThresholdMB.get()) {
         try {
           publishNotification(sum);
         } finally {

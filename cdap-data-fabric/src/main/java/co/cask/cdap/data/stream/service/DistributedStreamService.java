@@ -69,6 +69,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 
@@ -206,14 +207,14 @@ public class DistributedStreamService extends AbstractStreamService {
         continue;
       }
 
-      long filesSize = 0;
       try {
         StreamConfig config = streamAdmin.getConfig(streamName);
-        filesSize = StreamUtils.fetchStreamFilesSize(config);
+        long filesSize = StreamUtils.fetchStreamFilesSize(config);
+        createSizeAggregator(streamName, filesSize, config.getNotificationThresholdMB());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
+        Throwables.propagate(e);
       }
-      createSizeAggregator(streamName, filesSize);
     }
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
@@ -235,7 +236,21 @@ public class DistributedStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount) {
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
+
+    // Handle threshold changes
+    final Cancellable thresholdSubscription =
+      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+        @Override
+        public void thresholdChanged(String streamName, int threshold) {
+          StreamSizeAggregator aggregator = aggregators.get(streamName);
+          if (aggregator == null) {
+            LOG.warn("StreamSizeAggregator should not be null for stream {}", streamName);
+            return;
+          }
+          aggregator.setStreamThresholdMB(threshold);
+        }
+      });
 
     // Handle stream truncation, by creating creating a new empty aggregator for the stream
     // and cancelling the existing one
@@ -243,16 +258,18 @@ public class DistributedStreamService extends AbstractStreamService {
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void generationChanged(String streamName, int generation) {
-          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0));
+          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0,
+                                                                                                threshold));
           if (previousAggregator != null) {
             previousAggregator.cancel();
           }
         }
       });
 
-    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, new Cancellable() {
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, threshold, new Cancellable() {
       @Override
       public void cancel() {
+        thresholdSubscription.cancel();
         truncationSubscription.cancel();
       }
     });
@@ -437,12 +454,15 @@ public class DistributedStreamService extends AbstractStreamService {
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
-    private final Cancellable truncationSubscription;
+    private final AtomicInteger streamThresholdMB;
+    private final Cancellable cancellable;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, Cancellable truncationSubscription) {
+    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
+                                   Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
-      this.truncationSubscription = truncationSubscription;
+      this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
+      this.cancellable = cancellable;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
@@ -452,7 +472,16 @@ public class DistributedStreamService extends AbstractStreamService {
 
     @Override
     public void cancel() {
-      truncationSubscription.cancel();
+      cancellable.cancel();
+    }
+
+    /**
+     * Set the notification threshold for the stream that this {@link StreamSizeAggregator} is linked to.
+     *
+     * @param newThreshold new notification threshold, in megabytes
+     */
+    public void setStreamThresholdMB(int newThreshold) {
+      streamThresholdMB.set(newThreshold);
     }
 
     /**
@@ -481,7 +510,7 @@ public class DistributedStreamService extends AbstractStreamService {
         sum += size;
       }
 
-      if (isInit || sum - streamBaseCount.get() > Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD) {
+      if (isInit || sum - streamBaseCount.get() > streamThresholdMB.get()) {
         try {
           publishNotification(sum);
         } finally {
