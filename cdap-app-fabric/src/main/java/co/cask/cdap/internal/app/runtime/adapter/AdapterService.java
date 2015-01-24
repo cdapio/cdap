@@ -165,7 +165,8 @@ public class AdapterService extends AbstractIdleService {
    * @return specified Adapter's previous status
    * @throws AdapterNotFoundException if the specified adapter is not found
    */
-  public AdapterStatus setAdapterStatus(String namespace, String adapterName, AdapterStatus status) throws AdapterNotFoundException {
+  public AdapterStatus setAdapterStatus(String namespace, String adapterName, AdapterStatus status)
+    throws AdapterNotFoundException {
     AdapterStatus existingStatus = store.setAdapterStatus(Id.Namespace.from(namespace), adapterName, status);
     if (existingStatus == null) {
       throw new AdapterNotFoundException(adapterName);

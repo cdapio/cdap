@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Thrown when an invalid adapter action occurs. For instance, if an adapter 'stop' is requested, but the adapter is already
- * stopped.
+ * Thrown when an invalid adapter action occurs. For instance, if an adapter 'stop' is requested, but the adapter is
+ * already stopped.
  */
 public class InvalidAdapterOperationException extends Exception {
   public InvalidAdapterOperationException(String message) {
