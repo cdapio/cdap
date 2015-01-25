@@ -23,10 +23,12 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -37,12 +39,12 @@ public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
   private org.apache.avro.Schema avroSchema;
   private DecoderFactory decoderFactory = DecoderFactory.get();
   private DatumReader<GenericRecord> datumReader;
+  private BinaryDecoder binaryDecoder;
 
   @Override
   public GenericRecord read(ByteBuffer input) {
     try {
-      // TODO: CDAP-1199 look at reusing decoder and generic record
-      return datumReader.read(null, decoderFactory.binaryDecoder(Bytes.toBytes(input), null));
+      return datumReader.read(null, decoderFactory.binaryDecoder(Bytes.toBytes(input), binaryDecoder));
     } catch (IOException e) {
       throw new UnexpectedFormatException("Unable to decode the stream body as avro.", e);
     }
@@ -68,5 +70,6 @@ public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
   @Override
   protected void configure(Map<String, String> settings) {
     datumReader = new GenericDatumReader<GenericRecord>(avroSchema);
+    binaryDecoder = decoderFactory.binaryDecoder((InputStream) null, null);
   }
 }
