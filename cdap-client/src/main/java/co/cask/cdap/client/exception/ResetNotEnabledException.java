@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test.exception;
+package co.cask.cdap.client.exception;
 
 /**
  * Thrown when reset is not enabled for the CDAP instance.
