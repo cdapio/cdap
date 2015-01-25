@@ -51,6 +51,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -128,6 +129,12 @@ public class CLIMainTest extends StandaloneTestBase {
     if (START_LOCAL_STANDALONE) {
       StandaloneTestBase.tearDownClass();
     }
+  }
+
+  @After
+  @Override
+  public void tearDownStandalone() throws Exception {
+    // NO-OP
   }
 
   @Test

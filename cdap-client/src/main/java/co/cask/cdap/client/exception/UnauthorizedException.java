@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test.exception;
+package co.cask.cdap.client.exception;
 
 /**
  * Thrown when a user is not authorized to perform an operation.

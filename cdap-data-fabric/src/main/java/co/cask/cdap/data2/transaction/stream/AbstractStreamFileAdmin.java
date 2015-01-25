@@ -275,34 +275,37 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                                                cConf.get(Constants.Stream.INDEX_INTERVAL)));
     long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
                                                      cConf.get(Constants.Stream.TTL)));
+    int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
+                                                            cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation,
+                                           null, threshold);
     saveConfig(config);
 
     // Create the notification feeds linked to that stream
-    createStreamFeeds(name);
+    createStreamFeeds(config);
 
     streamCoordinatorClient.streamCreated(name);
   }
 
   /**
-   * Create the public {@link NotificationFeed}s that concerns the {@code stream}.
+   * Create the public {@link NotificationFeed}s that concerns the stream with configuration {@code config}.
    *
-   * @param stream stream to create feeds for
+   * @param config config of the stream to create feeds for
    */
-  private void createStreamFeeds(String stream) {
+  private void createStreamFeeds(StreamConfig config) {
     // TODO use accountID as namespace?
     try {
       NotificationFeed streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", stream))
+        .setName(String.format("%sSize", config.getName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
-                                      stream, Constants.Notification.Stream.DEFAULT_DATA_THRESHOLD))
+                                      config.getName(), config.getNotificationThresholdMB()))
         .build();
       notificationFeedManager.createFeed(streamFeed);
     } catch (NotificationFeedException e) {
-      LOG.error("Cannot create feed for Stream {}", stream, e);
+      LOG.error("Cannot create feed for Stream {}", config.getName(), e);
     }
   }
 
@@ -357,8 +360,13 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
       StreamConfig.class);
 
+    Integer threshold = config.getNotificationThresholdMB();
+    if (threshold == null) {
+      threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD, 1000);
+    }
+
     return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), streamLocation, config.getFormat());
+                            config.getTTL(), streamLocation, config.getFormat(), threshold);
   }
 
   private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {

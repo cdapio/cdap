@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
@@ -31,8 +32,8 @@ import com.google.inject.Singleton;
 public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordinatorClient {
 
   @Inject
-  public InMemoryStreamCoordinatorClient(StreamAdmin streamAdmin) {
-    super(streamAdmin);
+  public InMemoryStreamCoordinatorClient(CConfiguration cConf, StreamAdmin streamAdmin) {
+    super(cConf, streamAdmin);
   }
 
   @Override
