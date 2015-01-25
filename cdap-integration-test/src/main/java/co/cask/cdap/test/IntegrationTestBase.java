@@ -236,7 +236,8 @@ public class IntegrationTestBase {
       }
     });
 
-    Assert.assertFalse("Must have no user datasets, but found the following user datasets: " + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
+    Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
+                         + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
   }
 
   private void assertNoApps() throws Exception {

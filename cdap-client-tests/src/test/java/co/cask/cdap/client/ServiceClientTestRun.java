@@ -60,7 +60,7 @@ public class ServiceClientTestRun extends ClientTestBase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() throws Throwable {
     programClient.stop(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
   }
