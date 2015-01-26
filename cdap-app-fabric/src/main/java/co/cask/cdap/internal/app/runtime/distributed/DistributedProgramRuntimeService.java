@@ -348,7 +348,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
-      super(metricsCollectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
+      super(metricsCollectionService.getCollector(
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                        Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {

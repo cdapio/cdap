@@ -17,7 +17,7 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.logging.gateway.handlers.LogHandlerV2;
 import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
@@ -54,6 +54,6 @@ public class MetricsHandlerModule extends PrivateModule {
     handlerBinder.addBinding().to(MetricsQueryHandler.class);
     handlerBinder.addBinding().to(LogHandlerV2.class);
     handlerBinder.addBinding().to(LogHandler.class);
-    handlerBinder.addBinding().to(PingHandler.class);
+    CommonHandlers.add(handlerBinder);
   }
 }

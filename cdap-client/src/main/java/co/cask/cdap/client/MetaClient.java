@@ -19,21 +19,24 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 
 import java.io.IOException;
 import javax.inject.Inject;
 
 /**
- * Provides ways to ping CDAP instances.
+ * Provides ways to interact with CDAP.
  */
-public class PingClient {
+public class MetaClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
 
   @Inject
-  public PingClient(ClientConfig config) {
+  public MetaClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }
@@ -42,4 +45,8 @@ public class PingClient {
     restClient.execute(HttpMethod.GET, config.resolveURL("ping"), config.getAccessToken());
   }
 
+  public Version getVersion() throws IOException, UnAuthorizedAccessTokenException {
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
+    return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
+  }
 }

@@ -149,6 +149,8 @@ public class AggregatedMetricsCollectionServiceTest {
     } else if (tags.size() == 7) {
       // flowlet collector
       Assert.assertEquals(15L, metricValue.getValue());
+    } else {
+      Assert.fail("Unexpected number of tags while verifying counter metrics value - " + tags.size());
     }
   }
 
@@ -161,6 +163,8 @@ public class AggregatedMetricsCollectionServiceTest {
     } else if (tags.size() == 7) {
       // flowlet collector
       Assert.assertEquals((long) Integer.MAX_VALUE, metricValue.getValue());
+    } else {
+      Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
     }
   }
 }

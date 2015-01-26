@@ -26,11 +26,13 @@ public final class StreamProperties {
   private final String name;
   private final Long ttl;
   private final FormatSpecification format;
+  private final Integer threshold;
 
-  public StreamProperties(String name, long ttl, FormatSpecification format) {
+  public StreamProperties(String name, long ttl, FormatSpecification format, int threshold) {
     this.name = name;
     this.ttl = ttl;
     this.format = format;
+    this.threshold = threshold;
   }
 
   /**
@@ -54,6 +56,14 @@ public final class StreamProperties {
     return format;
   }
 
+  /**
+   *
+   * @return The threshold of the stream
+   */
+  public Integer getThreshold() {
+    return threshold;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -67,12 +77,13 @@ public final class StreamProperties {
 
     return Objects.equal(name, that.name) &&
       Objects.equal(ttl, that.ttl) &&
-      Objects.equal(format, that.format);
+      Objects.equal(format, that.format) &
+      Objects.equal(threshold, that.threshold);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, ttl, format);
+    return Objects.hashCode(name, ttl, format, threshold);
   }
 
   @Override
@@ -81,6 +92,7 @@ public final class StreamProperties {
       .add("name", name)
       .add("ttl", ttl)
       .add("format", format)
+      .add("threshold", threshold)
       .toString();
   }
 }

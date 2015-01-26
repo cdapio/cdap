@@ -51,11 +51,11 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete adapter instance <%s>", ArgumentName.DATASET);
+    return String.format("delete adapter <%s>", ArgumentName.ADAPTER);
   }
 
   @Override
   public String getDescription() {
-    return "Deletes a " + ElementType.DATASET.getPrettyName();
+    return "Deletes a " + ElementType.ADAPTER.getPrettyName();
   }
 }

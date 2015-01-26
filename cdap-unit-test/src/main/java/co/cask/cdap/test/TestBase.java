@@ -41,8 +41,8 @@ import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
-import co.cask.cdap.data.stream.service.NoOpStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
@@ -65,12 +65,12 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
-import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -83,6 +83,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -95,7 +96,9 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -105,6 +108,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.util.List;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -115,10 +119,10 @@ public class TestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  private static int startCount;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
-  private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricClient appFabricClient;
   private static SchedulerService schedulerService;
   private static DatasetFramework datasetFramework;
@@ -129,6 +133,10 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static StreamCoordinatorClient streamCoordinatorClient;
+
+  // This list is to record ApplicationManager create inside @Test method
+  private final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   private static TestManager testManager;
 
@@ -150,7 +158,9 @@ public class TestBase {
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File... bundleEmbeddedJars) {
     Preconditions.checkState(testManager != null, "Test framework is not yet running");
-    return testManager.deployApplication(applicationClz, bundleEmbeddedJars);
+    ApplicationManager applicationManager = testManager.deployApplication(applicationClz, bundleEmbeddedJars);
+    applicationManagers.add(applicationManager);
+    return applicationManager;
   }
 
   /**
@@ -165,8 +175,27 @@ public class TestBase {
     testManager.clear();
   }
 
+  @Before
+  public void beforeTest() throws Exception {
+    applicationManagers.clear();
+  }
+
+  /**
+   * By default after each test finished, it will stop all apps started during the test.
+   * Sub-classes can override this method to provide different behavior.
+   */
+  @After
+  public void afterTest() throws Exception {
+    for (ApplicationManager manager : applicationManagers) {
+      manager.stopAll();
+    }
+  }
+
   @BeforeClass
   public static void init() throws Exception {
+    if (startCount++ > 0) {
+      return;
+    }
     File localDataDir = tmpFolder.newFolder();
     CConfiguration cConf = CConfiguration.create();
 
@@ -216,7 +245,7 @@ public class TestBase {
         protected void configure() {
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-          bind(StreamWriterSizeCollector.class).to(NoOpStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+          bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },
@@ -226,6 +255,7 @@ public class TestBase {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -265,7 +295,8 @@ public class TestBase {
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
-
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
     testManager = new UnitTestManager(injector, appFabricClient, datasetFramework, txSystemClient, discoveryClient);
   }
 
@@ -309,6 +340,11 @@ public class TestBase {
 
   @AfterClass
   public static final void finish() {
+    if (--startCount != 0) {
+      return;
+    }
+
+    streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();

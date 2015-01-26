@@ -85,24 +85,16 @@ public class UnitTestManager implements TestManager {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
-      Object appInstance = applicationClz.newInstance();
-      ApplicationSpecification appSpec;
-
-      if (appInstance instanceof Application) {
-        Application app = (Application) appInstance;
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-        app.configure(configurer, new ApplicationContext());
-        appSpec = configurer.createSpecification();
-      } else {
-        throw new IllegalArgumentException("Application class does not represent application: "
-                                             + applicationClz.getName());
-      }
+      Application app = applicationClz.newInstance();
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+      app.configure(configurer, new ApplicationContext());
+      ApplicationSpecification appSpec = configurer.createSpecification();
 
       Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
-
-      return
-        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
-                                                                     deployedJar, appSpec);
+      ApplicationManager manager = injector.getInstance(ApplicationManagerFactory.class)
+        .create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
+                deployedJar, appSpec);
+      return manager;
 
     } catch (Exception e) {
       throw Throwables.propagate(e);

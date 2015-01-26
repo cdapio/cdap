@@ -22,13 +22,16 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.AbstractModule;
@@ -55,6 +58,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   private static TransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -70,7 +74,8 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
         .with(new AbstractModule() {
           @Override
           protected void configure() {
-            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         })
     );
@@ -81,12 +86,15 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
 
     txManager.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
   }
 

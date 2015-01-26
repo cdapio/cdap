@@ -1,0 +1,8 @@
+{
+  "cdap-conf": {
+    "destination": "/etc/cdap/conf",
+    "source": "etc/cdap/conf.dist",
+    "priority": 10,
+    "isDirectory": true
+  }
+}

@@ -50,7 +50,9 @@ public class StandaloneTestBase {
     testStackIndex++;
     if (standaloneMain == null) {
       try {
-        configuration = CConfiguration.create();
+        if (configuration == null) {
+          configuration = CConfiguration.create();
+        }
         configuration.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
         // Start without UI

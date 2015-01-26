@@ -14,19 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package co.cask.cdap.proto;
 
-import co.cask.cdap.test.XSlowTests;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+/**
+ * Represents the current software version.
+ */
+public class Version {
 
-@Category(XSlowTests.class)
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-  DummyBaseTestRun.class,
-  DummyBaseCloneTestRun.class
-})
-public class DummyAppTestsSuite {
+  private final String version;
 
+  public Version(String version) {
+    this.version = version;
+  }
+
+  public String getVersion() {
+    return version;
+  }
 }
