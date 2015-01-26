@@ -65,12 +65,12 @@ public class ConsoleSettingsHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void putProperty(Map<String, String> props, int expectedStatus) throws Exception {
-    HttpResponse response = doPut("/v3/configuration/usersettings", GSON.toJson(props));
+    HttpResponse response = doPut("/v3/configuration/consolesettings", GSON.toJson(props));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   private JsonElement getProperty(int expectedStatus) throws Exception {
-    HttpResponse response = doGet("/v3/configuration/usersettings");
+    HttpResponse response = doGet("/v3/configuration/consolesettings");
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
     if (expectedStatus == HttpResponseStatus.OK.code()) {
       String jsonData = EntityUtils.toString(response.getEntity());
@@ -80,7 +80,7 @@ public class ConsoleSettingsHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void deleteProperty(int expectedStatus) throws Exception {
-    HttpResponse response = doDelete("/v3/configuration/usersettings");
+    HttpResponse response = doDelete("/v3/configuration/consolesettings");
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 }

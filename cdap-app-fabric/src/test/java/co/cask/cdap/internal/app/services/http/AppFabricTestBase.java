@@ -195,7 +195,6 @@ public abstract class AppFabricTestBase {
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
-
       get.setHeader(AUTH_HEADER);
     }
     return client.execute(get);
