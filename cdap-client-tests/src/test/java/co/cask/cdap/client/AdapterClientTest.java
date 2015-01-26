@@ -50,13 +50,17 @@ import java.util.jar.Manifest;
 
 /**
  * Test for {@link AdapterClient}.
+ * This can not be a apart of ClientTestsSuite, because it needs to do some setup before cdap is started. All test cases
+ * in ClientTestsSuite share the same CDAP instance, and so may not have an opportunity to perform a setup step before
+ * CDAP startup.
  */
 @Category(XSlowTests.class)
-public class AdapterClientTestRun extends ClientTestBase {
+public class AdapterClientTest extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AdapterClientTestRun.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AdapterClientTest.class);
 
   private AdapterClient adapterClient;
+  private ApplicationClient applicationClient;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -74,6 +78,7 @@ public class AdapterClientTestRun extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
     adapterClient = new AdapterClient(clientConfig);
+    applicationClient = new ApplicationClient(clientConfig);
   }
 
   @Test
@@ -115,6 +120,9 @@ public class AdapterClientTestRun extends ClientTestBase {
 
     List<AdapterSpecification> finalList = adapterClient.list(namespaceId);
     Assert.assertEquals(0, finalList.size());
+
+    applicationClient.deleteAll();
+    applicationClient.waitForDeleted("dummyAdapter", 30, TimeUnit.SECONDS);
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {

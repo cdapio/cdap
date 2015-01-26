@@ -16,10 +16,22 @@
 
 package co.cask.cdap.data.stream.service;
 
+import com.google.common.util.concurrent.Service;
+
 /**
  * Keep track of the sizes of the files written by one {@link StreamHandler}.
  */
-public interface StreamWriterSizeCollector {
+public interface StreamWriterSizeCollector extends Service {
+
+  // TODO have one implementation of this
+
+  /**
+   * Get the total amount of bytes collected for the stream {@code streamName} so far.
+   *
+   * @param streamName stream name to get the total amount of data collected for
+   * @return the total amount of bytes collected for the stream {@code streamName} so far
+   */
+  long getTotalCollected(String streamName);
 
   /**
    * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream

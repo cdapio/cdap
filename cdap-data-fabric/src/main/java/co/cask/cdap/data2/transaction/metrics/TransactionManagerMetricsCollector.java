@@ -31,7 +31,9 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService service) {
-    this.metricsCollector = service.getCollector(ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, "transactions"));
+    this.metricsCollector = service.getCollector(
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                      Constants.Metrics.Tag.COMPONENT, "transactions"));
   }
 
   // todo: change TxMetricsCollector in Tephra

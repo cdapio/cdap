@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.client.exception;
 
 /**
- * No-op implementation of a {@link StreamWriterSizeCollector}.
+ * Thrown when there was an error in resetting the CDAP instance.
  */
-public class NoOpStreamWriterSizeCollector implements StreamWriterSizeCollector {
-  @Override
-  public void received(String streamName, long dataSize) {
-    // No-op
+public class ResetFailureException extends Exception {
+
+  public ResetFailureException(String message) {
+    super(message);
   }
 }

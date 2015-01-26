@@ -77,6 +77,13 @@ public class AdapterServiceTests extends AppFabricTestBase {
     // Create Adapter
     adapterService.createAdapter(namespaceId, adapterSpecification);
 
+    try {
+      // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
+      adapterService.createAdapter(namespaceId, adapterSpecification);
+      Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
+    } catch (AdapterAlreadyExistsException expected) {
+    }
+
     AdapterSpecification actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
     Assert.assertEquals(adapterSpecification, actualAdapterSpec);
@@ -98,14 +105,65 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertTrue(adapters.isEmpty());
   }
 
+  @Test
+  public void testInvalidJars() throws Exception {
+    Class<?> clz = AdapterApp.class;
+    String adapterType = "adapterType";
 
-  // TODO: Negative tests for deploying adapters
+    Attributes attributes = generateRequiredAttributes(clz, adapterType);
+    setupAdapterJarWithManifestAttributes(clz, attributes);
 
-  private static void setupAdapters() throws IOException {
-    setupAdapter(AdapterApp.class, "dummyAdapter");
+    // Using a valid manifest (no missing attributes) results in the adapterTypeInfo being registered
+    adapterService.registerAdapters();
+    Assert.assertNotNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // removing the any of the required attributes from the manifest results in the AdapterTypeInfo not being created.
+    // Missing the CDAP-Source-Type attribute
+    adapterType = "adapterType1";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // Missing the CDAP-Sink-Type attribute
+    adapterType = "adapterType2";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // Missing the CDAP-Adapter-Type attribute
+    adapterType = "adapterType3";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
+
+    // Missing the CDAP-Adapter-Program-Type attribute
+    adapterType = "adapterType4";
+    attributes = new Attributes();
+    attributes.putValue("CDAP-Source-Type", "STREAM");
+    attributes.putValue("CDAP-Sink-Type", "DATASET");
+    attributes.putValue("CDAP-Adapter-Type", adapterType);
+    setupAdapterJarWithManifestAttributes(clz, attributes);
+
+    adapterService.registerAdapters();
+    Assert.assertNull(adapterService.getAdapterTypeInfo(adapterType));
   }
 
-  private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
+  private static Attributes generateRequiredAttributes(Class<?> clz, String adapterType) {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
@@ -113,6 +171,24 @@ public class AdapterServiceTests extends AppFabricTestBase {
     attributes.putValue("CDAP-Sink-Type", "DATASET");
     attributes.putValue("CDAP-Adapter-Type", adapterType);
     attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
+    return attributes;
+  }
+
+
+  private void setupAdapterJarWithManifestAttributes(Class<?> clz, Attributes attributes) throws IOException {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().putAll(attributes);
+    File adapterJar = AppFabricClient.createDeploymentJar(locationFactory, clz, manifest);
+    File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
+    Files.copy(adapterJar, destination);
+  }
+
+  private static void setupAdapters() throws IOException {
+    setupAdapter(AdapterApp.class, "dummyAdapter");
+  }
+
+  private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
+    Attributes attributes = generateRequiredAttributes(clz, adapterType);
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);

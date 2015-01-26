@@ -236,6 +236,7 @@ public final class Constants {
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
     public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
     public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
+    public static final String NOTIFICATION_THRESHOLD = "stream.notification.threshold";
 
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";
@@ -272,6 +273,9 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
     /* End constants used by stream */
+
+    // Period in seconds between two heartbeats in a stream service
+    public static final int HEARTBEAT_INTERVAL = 2;
   }
 
   /**
@@ -593,12 +597,15 @@ public final class Constants {
      * Notifications in Streams constants.
      */
     public static final class Stream {
-      public static final String STREAM_HEARTBEAT_FEED_CATEGORY = "streamHeartbeats";
-      public static final String STREAM_HEARTBEAT_FEED_NAME = "streamHeartbeats";
-      public static final String STREAM_FEED_CATEGORY = "streams";
+      public static final String STREAM_FEED_CATEGORY = "stream";
+      public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
+      public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
 
       /** Default number of bytes received by a stream after which a notification is sent */
       public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
+
+      public static final int INIT_HEARTBEAT_AGGREGATION_DELAY = 2;
+      public static final int HEARTBEAT_AGGREGATION_INTERVAL = 5;
     }
   }
 

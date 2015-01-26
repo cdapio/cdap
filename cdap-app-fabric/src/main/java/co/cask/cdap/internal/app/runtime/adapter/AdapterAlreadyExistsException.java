@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.test.XSlowTests;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-
-@Category(XSlowTests.class)
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-  DummyBaseTestRun.class,
-  DummyBaseCloneTestRun.class
-})
-public class DummyAppTestsSuite {
-
+/**
+ * Thrown when Adapter creation is requested, but an adapter already exists.
+ */
+public class AdapterAlreadyExistsException extends Exception {
+  public AdapterAlreadyExistsException(String adapterName) {
+    super(String.format("Adapter %s already exists.", adapterName));
+  }
 }

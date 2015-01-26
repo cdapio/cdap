@@ -1217,7 +1217,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, "", "");
       List<ProgramRecord> programRecords = listProgramsByDataAccess(programId, type, data, name);
-      if (programRecords.isEmpty()) {
+      if (programRecords == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         responder.sendJson(HttpResponseStatus.OK, programRecords);
@@ -1230,8 +1230,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * @return list of program records, an empty list if no programs were found, or null if the stream or
+   * dataset does not exist
+   */
   private List<ProgramRecord> listProgramsByDataAccess(Id.Program programId, ProgramType type,
                                                        Data data, String name) throws Exception {
+    // search all apps for programs that use this
     List<ProgramRecord> result = Lists.newArrayList();
     Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
       new Id.Namespace(programId.getNamespaceId()));
@@ -1259,7 +1264,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
     }
-    return result;
+    if (!result.isEmpty()) {
+      return result;
+    }
+    // if no programs were found, check whether the data exists, return [] if yes, null if not
+    boolean exists = false;
+    if (data == Data.DATASET) {
+      exists = dsFramework.hasInstance(name);
+    } else if (data == Data.STREAM) {
+      exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
+    }
+    return exists ? result : null;
   }
 
   private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {

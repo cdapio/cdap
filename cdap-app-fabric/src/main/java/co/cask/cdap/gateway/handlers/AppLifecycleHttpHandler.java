@@ -50,9 +50,11 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.AdapterConfig;
@@ -62,6 +64,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
@@ -69,8 +73,10 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -94,6 +100,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -316,10 +323,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Retrieves an adapter
    */
   @GET
-  @Path("/adapters/{adapter-name}")
+  @Path("/adapters/{adapter-id}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-name") String adapterName) {
+                         @PathParam("adapter-id") String adapterName) {
     try {
       AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
@@ -332,10 +339,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts/stops an adapter
    */
   @POST
-  @Path("/adapters/{adapterId}/{action}")
+  @Path("/adapters/{adapter-id}/{action}")
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapterId") String adapterId,
+                               @PathParam("adapter-id") String adapterId,
                                @PathParam("action") String action) {
     try {
       if ("start".equals(action)) {
@@ -350,6 +357,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (InvalidAdapterOperationException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    }
+  }
+
+  /**
+   * Retrieves the status of an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-id}/status")
+  public void getAdapterStatus(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapter-id") String adapterId) {
+    try {
+      responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
   }
 
@@ -357,10 +381,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes an adapter
    */
   @DELETE
-  @Path("/adapters/{adapter-name}")
+  @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) {
     try {
       adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -372,11 +396,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Create an adapter.
    */
-  @PUT
-  @Path("/adapters/{adapter-name}")
+  @POST
+  @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) {
 
     try {
       if (!namespaceExists(namespaceId)) {
@@ -399,16 +423,37 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo.getSourceType(),
-                                                       adapterTypeInfo.getSinkType());
+      AdapterSpecification spec = convertToSpec(adapterName, config, adapterTypeInfo);
       adapterService.createAdapter(namespaceId, spec);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (AdapterAlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (Throwable th) {
       LOG.error("Failed to deploy adapter", th);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
+  }
+
+  private AdapterSpecification convertToSpec(String name, AdapterConfig config, AdapterTypeInfo typeInfo) {
+    Map<String, String> sourceProperties = Maps.newHashMap(typeInfo.getDefaultSourceProperties());
+    if (config.source.properties != null) {
+      sourceProperties.putAll(config.source.properties);
+    }
+    Set<Source> sources = ImmutableSet.of(
+      new Source(config.source.name, typeInfo.getSourceType(), sourceProperties));
+    Map<String, String> sinkProperties = Maps.newHashMap(typeInfo.getDefaultSinkProperties());
+    if (config.sink.properties != null) {
+      sinkProperties.putAll(config.sink.properties);
+    }
+    Set<Sink> sinks = ImmutableSet.of(
+      new Sink(config.sink.name, typeInfo.getSinkType(), sinkProperties));
+    Map<String, String> adapterProperties = Maps.newHashMap(typeInfo.getDefaultAdapterProperties());
+    if (config.properties != null) {
+      adapterProperties.putAll(config.properties);
+    }
+    return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
@@ -486,7 +531,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
           NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
                                                            .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setName(Constants.DEFAULT_NAMESPACE)
                                                            .setDescription(Constants.DEFAULT_NAMESPACE).build());
           if (existing != null) {
             LOG.trace("Default namespace already exists.");
