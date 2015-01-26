@@ -10,7 +10,7 @@ angular
       PKG.name+'.feature.dashboard',
       PKG.name+'.feature.apps',
       PKG.name+'.feature.programs',
-      PKG.name+'.feature.datasets',
+      PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.foo'
     ]).name,
@@ -43,7 +43,7 @@ angular
       'mgcrea.ngStrap.popover',
       'mgcrea.ngStrap.dropdown',
       'mgcrea.ngStrap.typeahead',
-      // 'mgcrea.ngStrap.select',
+      'mgcrea.ngStrap.select',
       'mgcrea.ngStrap.collapse',
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',

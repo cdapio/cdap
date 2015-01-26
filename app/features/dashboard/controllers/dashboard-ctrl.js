@@ -7,6 +7,9 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
 
   $scope.dashboards = myDashboardsModel.data;
 
+  myDashboardsModel.$promise.then(function() {
+    $scope.currentBoard = myDashboardsModel.current();
+  });
 
   /**
    * handle tab navigation
@@ -21,6 +24,7 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
       tab = 0;
     }
     $scope.dashboards.activeIndex = tab;
+    $scope.currentBoard = myDashboardsModel.current();
   });
 
 
@@ -64,8 +68,10 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
 
   $scope.addDashboard = function () {
     myDashboardsModel.add({
-      title: 'new dashboard'
+      title: 'dashboard '+Date.now()
     });
+
+    $state.go($state.current, {tab: 0}, {reload: true});
   };
 
   $scope.removeDashboard = function () {

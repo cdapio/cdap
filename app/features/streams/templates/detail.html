@@ -1,0 +1,16 @@
+<div ncy-breadcrumb></div>
+<div class="row">
+  <div class="col-lg-6">
+    <h3>
+      <span ng-bind="stream.name | caskCapitalizeFilter"></span>
+      <small ng-bind="'Type: ' + stream.type"> </small>
+    </h3>
+  </div>
+  <div class="col-lg-6 text-right">
+    <span class="btn-group h3">
+      <a class="btn btn-default" data-animation="am-flip-x" bs-dropdown="dropdown">
+        Action <span class="caret"></span>
+      </a>
+    </span>
+  </div>
+</div>
