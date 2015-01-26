@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.proto.ApplicationDeployScope;
 import org.apache.twill.filesystem.Location;
 import java.io.File;
 

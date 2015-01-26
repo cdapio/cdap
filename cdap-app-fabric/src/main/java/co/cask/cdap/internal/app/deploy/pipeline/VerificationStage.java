@@ -36,7 +36,6 @@ import co.cask.cdap.internal.app.verification.FlowVerification;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
 import co.cask.cdap.internal.app.verification.StreamVerification;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.ApplicationDeployScope;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;

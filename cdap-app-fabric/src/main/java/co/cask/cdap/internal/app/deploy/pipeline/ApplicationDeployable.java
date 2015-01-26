@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.proto.ApplicationDeployScope;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.Location;

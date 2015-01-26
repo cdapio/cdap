@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package co.cask.cdap.internal.app.deploy.pipeline;
 
 /**
- *
+ * Represents the scope of an application undergoing deployment.
  */
 public enum ApplicationDeployScope {
   USER, SYSTEM
