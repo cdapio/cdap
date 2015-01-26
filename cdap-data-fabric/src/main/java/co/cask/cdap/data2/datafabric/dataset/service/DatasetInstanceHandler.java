@@ -136,6 +136,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
+      exploreFacade.disableExploreDataset(name);
       exploreFacade.enableExploreDataset(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
