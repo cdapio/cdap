@@ -18,7 +18,29 @@ angular.module(PKG.name + '.feature.datasets')
         controller: 'CdapDatasetsListController',
         ncyBreadcrumb: {
           label: 'Datasets',
-          parent: 'overview'
+          parent: 'data.list'
         }
       })
+
+      .state('datasets.detail', {
+        url: '/:datasetId',
+        abstract: true,
+        template: '<ui-view/>'
+      })
+        .state('datasets.detail.overview', {
+          url: '/overview',
+          parent: 'datasets.detail',
+          templateUrl: '/assets/features/datasets/templates/detail.html',
+          controller: 'CdapDatasetDetailController',
+          ncyBreadcrumb: {
+            parent: 'datasets.list',
+            label: '{{$state.params.datasetsId}}'
+          }
+        })
+          .state('datasets.detail.overview.tab', {
+            url: '/:tab',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          });
   });

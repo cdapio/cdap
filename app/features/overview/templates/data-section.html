@@ -1,26 +1,36 @@
-<div class="clearfix">
-  <h3>
-    <span> Data </span>
-    <span class="btn-group pull-right">
-      <a ui-sref="datasets.list" class="btn btn-default">
+<div class="row">
+  <div class="col-lg-6">
+    <h3>
+      <span> Data </span>
+    </h3>
+  </div>
+  <div class="col-lg-6 text-right">
+    <span class="btn-group h3">
+      <a ui-sref="data.list" class="btn btn-default">
         <span class="fa fa-bars"> </span>
-        All Datasets
+        All Data
       </a>
       <a ui-sref="apps.list" class="btn btn-default" ng-disabled="true">
         <span class="fa fa-edit"> </span>
         ETL
       </a>
     </span>
-  </h3>
+  </div>
 </div>
 <hr />
 <div class="pre-scrollable">
 <div class="list-group">
   <a class="list-group-item"
-     ng-repeat="dataset in datasets"
-     ui-sref="dataset.detail.overview({datasetId: dataset.name})">
-    <strong ng-bind="dataset.name">  </strong>
-    <div ng-bind="'Type: ' + (dataset.type)"> </div>
+     ng-repeat="stream in streams track by $index"
+     ui-sref="streams.detail.overview({streamId: stream.name})">
+    <strong ng-bind="stream.name | caskCapitalizeFilter">  </strong>
+    <div> <em ng-bind="'Type: ' + (stream.type)"></em> </div>
+  </a>
+  <a class="list-group-item"
+     ng-repeat="dataset in datasets track by $index"
+     ui-sref="datasets.detail.overview({datasetId: dataset.name})">
+    <strong ng-bind="dataset.name | caskCapitalizeFilter">  </strong>
+    <div> <em ng-bind="'Type: ' + (dataset.type)"></em> </div>
   </a>
 </div>
 </div>
