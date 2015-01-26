@@ -68,7 +68,11 @@ angular.module(PKG.name + '.commons')
                 '&context=' + encodeURIComponent(context)
             },
             function (res) {
-              scope.available.contexts = res;
+              scope.available.contexts = res.map(function(d){
+                var a = d.split('.');
+                a.shift(); // remove the first element
+                return a.join('.');
+              });
             }
           );
 
@@ -107,7 +111,7 @@ angular.module(PKG.name + '.commons')
 
           if(newVal.context && newVal.name) {
             ngModel.$setViewValue(
-              '/metrics/search?' +
+              '/metrics/query?' +
               'context=' + encodeURIComponent(getContext()) +
               'metric=' + encodeURIComponent(newVal.name)
             );
