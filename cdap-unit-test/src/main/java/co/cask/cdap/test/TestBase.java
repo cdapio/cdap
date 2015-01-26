@@ -141,6 +141,7 @@ public class TestBase {
   private static TestManager testManager;
 
   protected static TestManager getTestManager() {
+    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager;
   }
 

@@ -81,7 +81,6 @@ public class UnitTestManager implements TestManager {
   @Override
   public ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
-    Preconditions.checkState(appFabricClient != null, "Test framework is not yet running");
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
