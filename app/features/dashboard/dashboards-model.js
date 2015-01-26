@@ -147,7 +147,7 @@ function (Widget, MyDataSource, $timeout) {
 
     this.data = data;
 
-    dSrc.request(
+    this.$promise = dSrc.request(
       {
         method: 'GET',
         _cdapNsPath: API_PATH
@@ -207,17 +207,13 @@ function (Widget, MyDataSource, $timeout) {
     }
 
     // default widget in first column
-    // FIXME: figure out why asSortable throws an error without $timeout
-    $timeout(function () {
-      d.columns[0].push(new Widget());
+    d.columns[0].push(new Widget());
 
-      // save to backend
-      d.persist();
-    });
+    // save to backend
+    d.persist();
 
-    // newly created tab becomes active
-    var n = this.data.push(d);
-    this.data.activeIndex = n-1;
+    // insert at beginning of data array
+    this.data.unshift(d);
   };
 
 
