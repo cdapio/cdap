@@ -31,7 +31,7 @@ public class ApplicationMeta {
   private final String id;
   private final ApplicationSpecification spec;
   private final String archiveLocation;
-  // NOTE: we need lastDeployTs since not all (e.g. persiting app jar) covered with tx,
+  // NOTE: we need lastDeployTs since not all (e.g. persisting app jar) covered with tx,
   //       and currently we use it resolve some races :(
   private final long lastUpdateTs;
 

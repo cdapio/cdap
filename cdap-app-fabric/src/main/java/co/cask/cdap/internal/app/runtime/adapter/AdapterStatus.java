@@ -17,10 +17,8 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Thrown when Adapter is not found.
+ * Possible status of an Adapter
  */
-public class AdapterNotFoundException extends Exception {
-  public AdapterNotFoundException(String adapterName) {
-    super(String.format("Adapter %s not found.", adapterName));
-  }
+public enum AdapterStatus {
+  STARTED, STOPPED
 }
