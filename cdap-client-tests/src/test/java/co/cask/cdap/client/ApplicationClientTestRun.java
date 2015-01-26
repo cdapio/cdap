@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -24,6 +25,7 @@ import co.cask.cdap.client.exception.DatasetNotFoundException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +55,24 @@ public class ApplicationClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     datasetClient = new DatasetClient(clientConfig);
     datasetModuleClient = new DatasetModuleClient(clientConfig);
+  }
+
+  @After
+  public void cleanup() throws Throwable {
+    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
+    // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
+
+    try {
+      datasetClient.delete(FakeApp.DS_NAME);
+    } catch (DatasetNotFoundException e) {
+      // NO-OP
+    }
+
+    try {
+      datasetModuleClient.delete(FakeDatasetModule.NAME);
+    } catch (DatasetModuleNotFoundException e) {
+      // NO-OP
+    }
   }
 
   @Test
@@ -93,20 +113,28 @@ public class ApplicationClientTestRun extends ClientTestBase {
     appClient.delete(FakeApp.NAME);
     appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
     Assert.assertEquals(0, appClient.list().size());
+  }
 
-    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
-    // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instancei
+  @Test
+  public void testDeleteAll() throws Exception {
+    Assert.assertEquals(0, appClient.list().size());
 
-    try {
-      datasetClient.delete(FakeApp.DS_NAME);
-    } catch (DatasetNotFoundException e) {
-      // NO-OP
-    }
+    // deploy first app
+    LOG.info("Deploying first app");
+    appClient.deploy(createAppJarFile(FakeApp.class));
+    appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
+    Assert.assertEquals(1, appClient.list().size());
 
-    try {
-      datasetModuleClient.delete(FakeDatasetModule.NAME);
-    } catch (DatasetModuleNotFoundException e) {
-      // NO-OP
-    }
+    // deploy second app
+    LOG.info("Deploying second app");
+    appClient.deploy(createAppJarFile(AppReturnsArgs.class));
+    appClient.waitForDeployed(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
+    Assert.assertEquals(2, appClient.list().size());
+
+    appClient.deleteAll();
+    appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
+    appClient.waitForDeleted(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
+
+    Assert.assertEquals(0, appClient.list().size());
   }
 }
