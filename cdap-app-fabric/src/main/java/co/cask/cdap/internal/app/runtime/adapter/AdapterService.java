@@ -29,8 +29,12 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -93,7 +97,8 @@ public class AdapterService extends AbstractIdleService {
                         StreamAdmin streamAdmin, StoreFactory storeFactory, LocationFactory locationFactory,
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory) {
     this.configuration = configuration;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
+                                                           new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
