@@ -36,7 +36,10 @@ import java.net.URLClassLoader;
 import java.util.Enumeration;
 
 /**
- * Used to load a {@link ExploreServiceTwillRunnable} using {@link CustomResourcesClassLoader}.
+ * Used to load a {@link ExploreServiceTwillRunnable} using {@link CustomResourcesClassLoader}. This gives precedence 
+ * to config files bundled with the application over config files in the classpath used to start the application.
+ * This is required as on some clusters the classpath used to start a container contains a stripped down version of 
+ * Hadoop config files.
  */
 public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreCustomClassLoaderTwillRunnable.class);

@@ -18,8 +18,8 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.data.runtime.main.ExploreCustomClassLoaderTwillRunnable.CustomResourcesClassLoader;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
