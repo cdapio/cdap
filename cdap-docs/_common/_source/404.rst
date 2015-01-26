@@ -10,8 +10,9 @@
 
 .. _404:
 
-.. image:: _images/cask_404.png
-   :width: 8in
+.. image:: _images/cask_404_75pc.png
+   :width: 720px
+   :height: 428px
    :align: center
 
 ==================================================
