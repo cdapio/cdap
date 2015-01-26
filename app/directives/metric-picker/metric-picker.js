@@ -61,19 +61,25 @@ angular.module(PKG.name + '.commons')
         function fetchAhead () {
           var context = getContext();
 
-          scope.available.contexts = dSrc.request(
+          dSrc.request(
             {
               method: 'POST',
               _cdapPath: '/metrics/search?target=childContext' +
                 '&context=' + encodeURIComponent(context)
+            },
+            function (res) {
+              scope.available.contexts = res;
             }
           );
 
-          scope.available.names = dSrc.request(
+          dSrc.request(
             {
               method: 'POST',
               _cdapPath: '/metrics/search?target=metric' +
                 '&context=' + encodeURIComponent(context)
+            },
+            function (res) {
+              scope.available.names = res;
             }
           );
 
