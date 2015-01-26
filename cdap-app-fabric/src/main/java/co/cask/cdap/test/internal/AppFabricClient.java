@@ -190,14 +190,19 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
-  public String scheduleStatus(String appId, String schedId) {
+  public String scheduleStatus(String appId, String schedId, int expectedResponseCode) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/schedules/%s/status", appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.getStatus(request, responder, appId, "schedules", schedId);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get workflow schedules status failed");
-    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-    return json.get("status");
+    verifyResponse(HttpResponseStatus.valueOf(expectedResponseCode), responder.getStatus(),
+                   "Get schedules status failed");
+    if (HttpResponseStatus.NOT_FOUND.getCode() == expectedResponseCode) {
+      return "NOT_FOUND";
+    } else {
+      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+      return json.get("status");
+    }
   }
 
   private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {

@@ -307,8 +307,8 @@ public class DefaultApplicationManager implements ApplicationManager {
           }
 
           @Override
-          public String status() {
-            return appFabricClient.scheduleStatus(applicationId, schedName);
+          public String status(int expectedCode) {
+            return appFabricClient.scheduleStatus(applicationId, schedName, expectedCode);
           }
         };
       }

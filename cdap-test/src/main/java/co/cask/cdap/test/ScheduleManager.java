@@ -33,5 +33,5 @@ public interface ScheduleManager {
   /**
    * returns the status of the workflow schedule
    */
-  public String status();
+  public String status(int expectedCode);
 }
