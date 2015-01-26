@@ -32,8 +32,8 @@ to the Workflow::
   }
 
 You'll then extend the ``AbstractWorkflow`` class and implement the
-``configure()`` method. Inside ``configure``, you can add multiple MapReduce, Spark, or Custom Action
-programs to the Workflow. The programs will be executed in the order they are specified in the ``configure``
+``configure()`` method. Inside ``configure``, you can add multiple MapReduce, Spark programs or custom actions
+to the Workflow. The programs will be executed in the order they are specified in the ``configure``
 method::
 
   public static class MyWorkflow extends AbstractWorkflow {
@@ -50,12 +50,12 @@ method::
   }
 
 In this example, the ``MyWorkflow`` will be executed every 5 hours. During each execution of the Workflow,
-the ``MyMapReduce``, ``MySpark``, ``AnotherMapReduce``, and ``MyAction`` programs will be executed in order.
+the ``MyMapReduce``, ``MySpark``, and ``AnotherMapReduce`` programs and the ``MyAction`` custom action will be executed in order.
 
 .. rubric::  Workflow Custom Action
 
 In addition to MapReduce and Spark programs, Workflow can also execute custom actions. Custom actions are
-implemented in Java and can perform tasks such as make a REST call to an external system. To define
+implemented in Java and can perform tasks such as sending an email. To define
 custom action, you will need to extend the ``AbstractWorkflowAction`` and implement the ``run()`` method::
 
   public static class MyAction extends AbstractWorkflowAction {
