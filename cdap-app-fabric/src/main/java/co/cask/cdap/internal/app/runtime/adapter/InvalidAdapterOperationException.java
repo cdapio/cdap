@@ -17,10 +17,11 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Thrown when Adapter is not found.
+ * Thrown when an invalid adapter action occurs. For instance, if an adapter 'stop' is requested, but the adapter is
+ * already stopped.
  */
-public class AdapterNotFoundException extends Exception {
-  public AdapterNotFoundException(String adapterName) {
-    super(String.format("Adapter %s not found.", adapterName));
+public class InvalidAdapterOperationException extends Exception {
+  public InvalidAdapterOperationException(String message) {
+    super(message);
   }
 }

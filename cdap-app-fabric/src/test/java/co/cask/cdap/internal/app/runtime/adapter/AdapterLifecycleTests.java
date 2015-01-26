@@ -88,6 +88,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
                                           sourceProperties, sinkProperties);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // A duplicate create request (or any other create request with the same namespace + adapterName) will result in 409
+    response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
+                             sourceProperties, sinkProperties);
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
@@ -104,6 +109,30 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     JsonObject deployedApp = deployedApps.get(0);
     Assert.assertEquals(adapterType, deployedApp.get("id").getAsString());
 
+    response = getAdapterStatus(namespaceId, adapterName);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String status = readResponse(response, String.class);
+    Assert.assertEquals("STARTED", status);
+
+    response = startStopAdapter(namespaceId, adapterName, "stop");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = getAdapterStatus(namespaceId, adapterName);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    status = readResponse(response, String.class);
+    Assert.assertEquals("STOPPED", status);
+
+    response = startStopAdapter(namespaceId, adapterName, "stop");
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+
+    response = startStopAdapter(namespaceId, adapterName, "start");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = getAdapterStatus(namespaceId, adapterName);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    status = readResponse(response, String.class);
+    Assert.assertEquals("STARTED", status);
+
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -113,7 +142,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testInvalidAdapters() throws Exception {
-    //Invalid adapter  tests.
+    //Invalid adapter tests.
     String namespaceId = Constants.DEFAULT_NAMESPACE;
 
     ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
@@ -181,8 +210,13 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   private HttpResponse createAdapter(String namespaceId, String name, String adapterConfig) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/adapters/%s",
-                               Constants.Gateway.API_VERSION_3, namespaceId, name), adapterConfig);
+    return doPost(String.format("%s/namespaces/%s/adapters/%s",
+                                Constants.Gateway.API_VERSION_3, namespaceId, name), adapterConfig);
+  }
+
+  private HttpResponse getAdapterStatus(String namespaceId, String name) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/adapters/%s/status",
+                               Constants.Gateway.API_VERSION_3, namespaceId, name));
   }
 
   private HttpResponse listAdapters(String namespaceId) throws Exception {
