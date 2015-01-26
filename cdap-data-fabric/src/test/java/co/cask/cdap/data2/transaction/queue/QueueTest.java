@@ -69,7 +69,7 @@ public abstract class QueueTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
-  private static final int ROUNDS = 1000;
+  private static final int ROUNDS = 100;
   private static final long TIMEOUT_MS = 2 * 60 * 1000L;
 
   protected static TransactionSystemClient txSystemClient;
@@ -239,7 +239,7 @@ public abstract class QueueTest {
   @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "batchhash");
-    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50);
+    enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 10);
   }
 
   @Test(timeout = TIMEOUT_MS)
@@ -830,7 +830,6 @@ public abstract class QueueTest {
 
     startBarrier.await();
     completeLatch.await();
-    TimeUnit.SECONDS.sleep(2);
 
     Assert.assertEquals(expectedSum, valueSum.get());
 

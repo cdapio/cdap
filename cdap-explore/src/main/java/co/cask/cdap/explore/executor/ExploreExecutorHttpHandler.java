@@ -376,7 +376,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     Schema schema = Schema.recordOf("streamEvent", fields);
     String hiveSchema = SchemaConverter.toHiveSchema(schema);
     String tableName = getStreamTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
                            "LOCATION \"%s\"" +
                            "TBLPROPERTIES ('%s'='%s')",
@@ -390,7 +390,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Dataset\" " +
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")" +
                            "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
@@ -445,7 +445,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     //   TBLPROPERTIES ('avro.schema.literal'='...');
 
     return String.format(
-      "CREATE EXTERNAL TABLE %s %s ROW FORMAT SERDE '%s' " +
+      "CREATE EXTERNAL TABLE IF NOT EXISTS %s %s ROW FORMAT SERDE '%s' " +
         "STORED AS INPUTFORMAT '%s' OUTPUTFORMAT '%s' LOCATION '%s' %s",
       tableName, partitioned, serde, inputFormat, outputFormat, baseLocation.toURI().toString(), tblProperties);
   }
