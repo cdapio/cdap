@@ -225,6 +225,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("runnable-type") String runnableType,
                         @PathParam("runnable-id") String runnableId) {
+
+    if (runnableType.equals("schedules")) {
+      getScheduleStatus(responder, appId, namespaceId, runnableId);
+      return;
+    }
+
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
       ProgramType type = ProgramType.valueOfCategoryName(runnableType);
@@ -244,14 +250,50 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName) {
+    try {
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+      if (appSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
+        return;
+      }
+
+      ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+      if (scheduleSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Schedule: " + scheduleName + " not found");
+        return;
+      }
+
+      String programName = scheduleSpec.getProgram().getProgramName();
+      Id.Program programId = Id.Program.from(namespaceId, appId, programName);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
+                                                         scheduleName).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+
+
   @POST
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
-  public void startStopDebugProgram(HttpRequest request, HttpResponder responder,
+  public void takeActionOnProgram(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
                                     @PathParam("runnable-type") String runnableType,
                                     @PathParam("runnable-id") String runnableId,
                                     @PathParam("action") String action) {
+    if (runnableType.equals("schedules")) {
+      suspendResumeSchedule(responder, namespaceId, appId, runnableId, action);
+      return;
+    }
+
     if (!isValidAction(action)) {
       responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
       return;
@@ -263,6 +305,62 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
     startStopProgram(request, responder, namespaceId, appId, programType, runnableId, action);
+  }
+
+  private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,
+                                     String action) {
+    try {
+
+      if (!action.equals("suspend") && !action.equals("resume")) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schedule can only be suspended or resumed.");
+        return;
+      }
+
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+      if (appSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
+        return;
+      }
+
+      ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+      if (scheduleSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Schedule: " + scheduleName + " not found");
+        return;
+      }
+
+      String programName = scheduleSpec.getProgram().getProgramName();
+      Id.Program programId = Id.Program.from(namespaceId, appId, programName);
+      Scheduler.ScheduleState state = scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
+                                                              scheduleName);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          if (action.equals("suspend")) {
+            scheduler.suspendSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
+            responder.sendJson(HttpResponseStatus.OK, "OK");
+          } else {
+            // attempt to resume already resumed schedule
+            responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
+          }
+          break;
+        case SUSPENDED:
+          if (action.equals("suspend")) {
+            // attempt to suspend already suspended schedule
+            responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
+          } else {
+            scheduler.resumeSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
+            responder.sendJson(HttpResponseStatus.OK, "OK");
+          }
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -841,93 +939,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     responder.sendJson(HttpResponseStatus.OK, specList);
-  }
-
-  /**
-   * Get schedule state.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/status")
-  public void getScheduleState(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                               @PathParam("workflow-id") String workflowId,
-                               @PathParam("schedule-name") String scheduleName) {
-    try {
-      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
-      JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW,
-                                                         scheduleName).toString());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Suspend a workflow schedule.
-   */
-  @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/suspend")
-  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
-                                      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                      @PathParam("workflow-id") String workflowId,
-                                      @PathParam("schedule-name") String scheduleName) {
-    try {
-      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
-      Scheduler.ScheduleState state = scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW, scheduleName);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW, scheduleName);
-          responder.sendJson(HttpResponseStatus.OK, "OK");
-          break;
-        case SUSPENDED:
-          responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Resume a workflow schedule.
-   */
-  @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-name}/resume")
-  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                     @PathParam("workflow-id") String workflowId,
-                                     @PathParam("schedule-name") String scheduleName) {
-    try {
-      Id.Program programId = Id.Program.from(namespaceId, appId, workflowId);
-      Scheduler.ScheduleState state = scheduler.scheduleState(programId, SchedulableProgramType.WORKFLOW, scheduleName);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
-          break;
-        case SUSPENDED:
-          scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW, scheduleName);
-          responder.sendJson(HttpResponseStatus.OK, "OK");
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
   }
 
   /**

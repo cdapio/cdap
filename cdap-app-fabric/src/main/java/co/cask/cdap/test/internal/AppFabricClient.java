@@ -174,27 +174,27 @@ public class AppFabricClient {
     return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });
   }
 
-  public void suspend(String appId, String wflowId, String schedId) {
+  public void suspend(String appId, String scheduleName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/suspend", appId, wflowId, schedId);
+    String uri = String.format("/v2/apps/%s/schedules/%s/suspend", appId, scheduleName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowScheduleSuspend(request, responder, appId, wflowId, schedId);
+    httpHandler.suspendSchedule(request, responder, appId, scheduleName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
   }
 
-  public void resume(String appId, String wflowId, String schedId) {
+  public void resume(String appId, String schedName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/resume", appId, wflowId, schedId);
+    String uri = String.format("/v2/apps/%s/schedules/%s/resume", appId, schedName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowScheduleResume(request, responder, appId, wflowId, schedId);
+    httpHandler.resumeSchedule(request, responder, appId, schedName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
-  public String scheduleStatus(String appId, String wflowId, String schedId) {
+  public String scheduleStatus(String appId, String schedId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/status", appId, wflowId, schedId);
+    String uri = String.format("/v2/apps/%s/schedules/%s/status", appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.getScheduleState(request, responder, appId, wflowId, schedId);
+    httpHandler.getStatus(request, responder, appId, "schedules", schedId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get workflow schedules status failed");
     Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");

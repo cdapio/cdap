@@ -298,17 +298,17 @@ public class DefaultApplicationManager implements ApplicationManager {
         return new ScheduleManager() {
           @Override
           public void suspend() {
-            appFabricClient.suspend(applicationId, workflowName, schedName);
+            appFabricClient.suspend(applicationId, schedName);
           }
 
           @Override
           public void resume() {
-            appFabricClient.resume(applicationId, workflowName, schedName);
+            appFabricClient.resume(applicationId, schedName);
           }
 
           @Override
           public String status() {
-            return appFabricClient.scheduleStatus(applicationId, workflowName, schedName);
+            return appFabricClient.scheduleStatus(applicationId, schedName);
           }
         };
       }

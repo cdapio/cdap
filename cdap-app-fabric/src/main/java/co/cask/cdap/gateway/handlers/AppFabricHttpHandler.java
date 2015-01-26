@@ -328,7 +328,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                       appId, runnableType, runnableId, "start");
   }
 
@@ -341,7 +341,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                       appId, runnableType, runnableId, "debug");
   }
 
@@ -354,7 +354,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-id") final String appId,
                           @PathParam("runnable-type") final String runnableType,
                           @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
                                                       appId, runnableType, runnableId, "stop");
   }
 
@@ -647,7 +647,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                                     appId, workflowId);
   }
 
-  //TODO [SAGAR]: CDAP-1155: Implement API to get ScheduleSpecification given schedule name
   /**
    * Returns the schedule ids for a given workflow.
    */
@@ -661,42 +660,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Get schedule state.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
-  public void getScheduleState(HttpRequest request, HttpResponder responder,
-                               @PathParam("app-id") String appId,
-                               @PathParam("workflow-id") String workflowId,
-                               @PathParam("schedule-id") String scheduleId) {
-    programLifecycleHttpHandler.getScheduleState(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                 appId, workflowId, scheduleId);
-  }
-
-  /**
-   * Suspend a workflow schedule.
+   * Suspend a schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
-  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/schedules/{schedule-name}/suspend")
+  public void suspendSchedule(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
-                                      @PathParam("workflow-id") String workflowId,
-                                      @PathParam("schedule-id") String scheduleId) {
-    programLifecycleHttpHandler.workflowScheduleSuspend(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                        appId, workflowId, scheduleId);
+                                      @PathParam("schedule-name") String scheduleName) {
+    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                        appId, "schedules", scheduleName, "suspend");
   }
 
   /**
-   * Resume a workflow schedule.
+   * Resume a schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
-  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/schedules/{schedule-name}/resume")
+  public void resumeSchedule(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") String appId,
-                                     @PathParam("workflow-id") String workflowId,
-                                     @PathParam("schedule-id") String scheduleId) {
-    programLifecycleHttpHandler.workflowScheduleResume(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                       appId, workflowId, scheduleId);
+                                     @PathParam("schedule-name") String scheduleName) {
+    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                       appId, "schedules", scheduleName, "resume");
   }
 
   /**
