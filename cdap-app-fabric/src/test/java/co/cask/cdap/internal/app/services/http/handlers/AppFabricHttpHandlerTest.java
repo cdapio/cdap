@@ -350,6 +350,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testChangeFlowletStreamInput() throws Exception {
     deploy(MultiStreamApp.class);
 
+    // non-existing stream
+    Assert.assertEquals(404,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "notfound"));
+
     Assert.assertEquals(200,
                         changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream2"));
     // stream1 is no longer a connection

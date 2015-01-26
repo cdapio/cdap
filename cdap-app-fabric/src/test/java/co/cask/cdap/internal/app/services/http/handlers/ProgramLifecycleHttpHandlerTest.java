@@ -617,8 +617,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // change stream input in the wrong namespace
-    Assert.assertEquals(400, changeFLowletStreamConnection(TEST_NAMESPACE2, appId, flowId, flowletId, "stream1",
+    Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE2, appId, flowId, flowletId, "stream1",
                                                            "stream2"));
+    // change stream input to a non-existing stream in the right namespace
+    Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream1",
+                                                           "notfound"));
 
     Assert.assertEquals(200, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream1",
                                                            "stream2"));
