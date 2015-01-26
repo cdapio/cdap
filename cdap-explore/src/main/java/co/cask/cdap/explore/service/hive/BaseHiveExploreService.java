@@ -29,6 +29,7 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetAccessor;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
@@ -172,6 +173,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     this.txClient = txClient;
     ContextManager.saveContext(datasetFramework);
+    DatasetAccessor.setRunContext(DatasetAccessor.RunContext.EXPLORE_SERVICE);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 

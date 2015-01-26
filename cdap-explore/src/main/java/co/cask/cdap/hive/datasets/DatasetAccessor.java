@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.NullJobConfException;
@@ -41,9 +42,23 @@ import javax.annotation.Nullable;
  * Helps in instantiating a dataset.
  */
 public class DatasetAccessor {
-
+  /**
+   * Indicates whether {@link DatasetAccessor} is being run from {@link ExploreService}, or from a Hive query. 
+   */
+  public enum RunContext {
+    EXPLORE_SERVICE,
+    QUERY
+  }
+  
   // TODO: this will go away when dataset manager does not return datasets having classloader conflict - CDAP-10
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
+
+  // By default the run context is assumed to be Query.
+  private static RunContext runContext = RunContext.QUERY;
+  
+  public static void setRunContext(RunContext runContext) {
+    DatasetAccessor.runContext = runContext;
+  }
 
   /**
    * Returns a RecordScannable dataset. The returned object will have to be closed by the caller.
@@ -93,7 +108,9 @@ public class DatasetAccessor {
    */
   public static void checkRecordWritable(Configuration conf) throws IOException {
     RecordWritable recordWritable = instantiateWritable(conf, null);
-    recordWritable.close();
+    if (recordWritable != null) {
+      recordWritable.close();
+    }
   }
 
   /**
@@ -146,6 +163,7 @@ public class DatasetAccessor {
     Dataset dataset = instantiate(conf, datasetName);
 
     if (!(dataset instanceof RecordWritable)) {
+      dataset.close();
       throw new IOException(
         String.format("Dataset %s does not implement RecordWritable, and hence cannot be written to in Hive.",
                       datasetName != null ? datasetName : conf.get(Constants.Explore.DATASET_NAME)));
@@ -164,7 +182,7 @@ public class DatasetAccessor {
     return dataset;
   }
 
-  private static Dataset instantiate(@Nullable Configuration conf, String dsName)
+  private static Dataset instantiate(Configuration conf, @Nullable String dsName)
     throws IOException {
     ContextManager.Context context = ContextManager.getContext(conf);
     String datasetName = dsName != null ? dsName : conf.get(Constants.Explore.DATASET_NAME);
@@ -175,24 +193,34 @@ public class DatasetAccessor {
 
     try {
       DatasetFramework framework = context.getDatasetFramework();
-
-      ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
-      Dataset dataset;
-      if (classLoader == null) {
-        if (conf == null) {
-          throw new NullJobConfException();
-        }
-        classLoader = conf.getClassLoader();
-        dataset = firstLoad(framework, datasetName, classLoader);
-      } else {
-        dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
+      
+      // Do not cache the Dataset classloader if running as part of Explore Service.
+      if (runContext == RunContext.EXPLORE_SERVICE) {
+        return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       }
-      return dataset;
+
+      return cacheLoad(conf, datasetName, framework);
     } catch (DatasetManagementException e) {
       throw new IOException(e);
     } finally {
       context.close();
     }
+  }
+  
+  private static Dataset cacheLoad(Configuration conf, String datasetName, DatasetFramework framework) 
+    throws IOException, DatasetManagementException {
+    ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
+    Dataset dataset;
+    if (classLoader == null) {
+      if (conf == null) {
+        throw new NullJobConfException();
+      }
+      classLoader = conf.getClassLoader();
+      dataset = firstLoad(framework, datasetName, classLoader);
+    } else {
+      dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
+    }
+    return dataset;
   }
 
   private static synchronized Dataset firstLoad(DatasetFramework framework, String datasetName, ClassLoader classLoader)
