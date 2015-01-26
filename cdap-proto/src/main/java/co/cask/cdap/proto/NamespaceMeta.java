@@ -23,12 +23,12 @@ import com.google.common.base.Objects;
  */
 public final class NamespaceMeta {
   private final String id;
-  private final String displayName;
+  private final String name;
   private final String description;
 
-  private NamespaceMeta(String id, String displayName, String description) {
+  private NamespaceMeta(String id, String name, String description) {
     this.id = id;
-    this.displayName = displayName;
+    this.name = name;
     this.description = description;
   }
 
@@ -36,8 +36,8 @@ public final class NamespaceMeta {
     return id;
   }
 
-  public String getDisplayName() {
-    return displayName;
+  public String getName() {
+    return name;
   }
 
   public String getDescription() {
@@ -49,7 +49,7 @@ public final class NamespaceMeta {
    */
   public static final class Builder {
     private String id;
-    private String displayName;
+    private String name;
     private String description;
 
     public Builder setId(final String id) {
@@ -57,8 +57,8 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setDisplayName(final String displayName) {
-      this.displayName = displayName;
+    public Builder setName(final String name) {
+      this.name = name;
       return this;
     }
 
@@ -68,7 +68,7 @@ public final class NamespaceMeta {
     }
 
     public NamespaceMeta build() {
-      return new NamespaceMeta(id, displayName, description);
+      return new NamespaceMeta(id, name, description);
     }
   }
 
@@ -76,7 +76,7 @@ public final class NamespaceMeta {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("id", id)
-      .add("displayName", displayName)
+      .add("name", name)
       .add("description", description)
       .toString();
   }

@@ -50,9 +50,11 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.AdapterConfig;
@@ -316,10 +318,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Retrieves an adapter
    */
   @GET
-  @Path("/adapters/{adapter-name}")
+  @Path("/adapters/{adapter-id}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-name") String adapterName) {
+                         @PathParam("adapter-id") String adapterName) {
     try {
       AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
@@ -332,10 +334,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts/stops an adapter
    */
   @POST
-  @Path("/adapters/{adapterId}/{action}")
+  @Path("/adapters/{adapter-id}/{action}")
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapterId") String adapterId,
+                               @PathParam("adapter-id") String adapterId,
                                @PathParam("action") String action) {
     try {
       if ("start".equals(action)) {
@@ -350,6 +352,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (InvalidAdapterOperationException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    }
+  }
+
+  /**
+   * Retrieves the status of an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-id}/status")
+  public void getAdapterStatus(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapter-id") String adapterId) {
+    try {
+      responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
   }
 
@@ -357,10 +376,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes an adapter
    */
   @DELETE
-  @Path("/adapters/{adapter-name}")
+  @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) {
     try {
       adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -372,11 +391,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Create an adapter.
    */
-  @PUT
-  @Path("/adapters/{adapter-name}")
+  @POST
+  @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) {
 
     try {
       if (!namespaceExists(namespaceId)) {
@@ -405,6 +424,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (AdapterAlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (Throwable th) {
       LOG.error("Failed to deploy adapter", th);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
@@ -486,7 +507,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
           NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
                                                            .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setName(Constants.DEFAULT_NAMESPACE)
                                                            .setDescription(Constants.DEFAULT_NAMESPACE).build());
           if (existing != null) {
             LOG.trace("Default namespace already exists.");

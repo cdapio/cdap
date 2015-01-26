@@ -69,8 +69,6 @@ public class SparkPageRankAppTest extends TestBase {
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
                                              "rank?url=http://example.com/page1"));
     Assert.assertEquals(RANK, response);
-
-    appManager.stopAll();
   }
 
   private String requestService(URL url) throws IOException {

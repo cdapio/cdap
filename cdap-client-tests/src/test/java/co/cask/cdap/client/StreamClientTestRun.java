@@ -190,7 +190,9 @@ public class StreamClientTestRun extends ClientTestBase {
     Assert.assertEquals(msgCount, events.size());
 
     for (int i = 0; i < msgCount; i++) {
-      Assert.assertEquals("Event " + i, Bytes.toString(events.get(i).getBody()));
+      StreamEvent event = events.get(i);
+      Assert.assertEquals("Event " + i, Bytes.toString(event.getBody()));
+      Assert.assertEquals("text/plain", event.getHeaders().get("content.type"));
     }
   }
 }

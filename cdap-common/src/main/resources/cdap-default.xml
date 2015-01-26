@@ -230,6 +230,12 @@
     </property>
 
     <property>
+        <name>stream.notification.threshold</name>
+        <value>1000</value>
+        <description>Size of data, in MB, to be ingested by a Stream before a notification is published</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for Stream file</description>

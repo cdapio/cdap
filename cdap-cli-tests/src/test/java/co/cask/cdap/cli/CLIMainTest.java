@@ -51,6 +51,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -128,6 +129,12 @@ public class CLIMainTest extends StandaloneTestBase {
     if (START_LOCAL_STANDALONE) {
       StandaloneTestBase.tearDownClass();
     }
+  }
+
+  @After
+  @Override
+  public void tearDownStandalone() throws Exception {
+    // NO-OP
   }
 
   @Test
@@ -343,14 +350,14 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   public void testNamespaces() throws Exception {
     final String id = PREFIX + "testNamespace";
-    final String displayName = "testDisplayName";
+    final String name = "testDisplayName";
     final String description = "testDescription";
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setId("default").setDisplayName("default").setDescription("default").build();
+      .setId("default").setName("default").setDescription("default").build();
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
@@ -362,11 +369,11 @@ public class CLIMainTest extends StandaloneTestBase {
                               String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s %s %s", id, displayName, description);
+    String command = String.format("create namespace %s %s %s", id, name, description);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", id));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setId(id).setDisplayName(displayName).setDescription(description).build();
+      .setId(id).setName(name).setDescription(description).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -380,12 +387,12 @@ public class CLIMainTest extends StandaloneTestBase {
     command = String.format("create namespace %s", id);
     testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", id));
 
-    // create a namespace with default displayName and description
+    // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", defaultFields));
 
     NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
-      .setId(defaultFields).setDisplayName(defaultFields).setDescription("").build();
+      .setId(defaultFields).setName(defaultFields).setDescription("").build();
     // test that there are 3 namespaces including default
     expectedNamespaces = Lists.newArrayList(defaultNs, namespaceDefaultFields, expected);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -517,7 +524,7 @@ public class CLIMainTest extends StandaloneTestBase {
       new RowMaker<NamespaceMeta>() {
         @Override
         public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getDisplayName(), object.getDescription()};
+          return new Object[] {object.getId(), object.getName(), object.getDescription()};
         }
       }
     ).print(printStream);
