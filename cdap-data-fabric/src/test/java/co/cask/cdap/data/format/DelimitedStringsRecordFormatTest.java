@@ -55,6 +55,18 @@ public class DelimitedStringsRecordFormatTest {
   }
 
   @Test
+  public void testArrayOfNullableStringsSchema() throws UnsupportedTypeException {
+    Schema schema = Schema.recordOf(
+      "event",
+      Schema.Field.of("arr", Schema.arrayOf(Schema.nullableOf(Schema.of(Schema.Type.STRING)))));
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
+    FormatSpecification formatSpec =
+      new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
+                              schema, Collections.<String, String>emptyMap());
+    format.initialize(formatSpec);
+  }
+
+  @Test
   public void testNullableFieldsAllowedInSchema() throws UnsupportedTypeException {
     Schema schema = Schema.recordOf(
       "event",
