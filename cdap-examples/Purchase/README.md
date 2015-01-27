@@ -25,7 +25,7 @@ Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, a
   instead of waiting you can manually or programmatically execute the
   PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
   will return a "not found" error.
-- For more information, see http://docs.cask.co/cdap/current/examples.
+- For more information, see http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html.
 
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.

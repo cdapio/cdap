@@ -59,11 +59,10 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
   - You can use SQL to formulate ad-hoc queries over the history Dataset. This is done by
     a series of ``curl`` calls, as described in the RESTful API section of the Developer Guide.
 
-- Note: Because by default the PurchaseHistoryWorkFlow process doesn't run until 4:00 A.M.,
-  you'll have to wait until the next day (or manually or programmatically execute the
-  PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
-  will return a "not found" error.
-- For more information, see http://cask.co/docs/cdap/current/en/examples/.
+  - Note: Because by default the PurchaseHistoryWorkFlow process doesn't run until 4:00 A.M.,
+    you'll have to wait until the next day (or manually or programmatically execute the
+    PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
+    will return a "not found" error.
 
 ## SparkKMeans
 
