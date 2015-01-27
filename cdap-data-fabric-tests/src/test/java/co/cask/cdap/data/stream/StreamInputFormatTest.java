@@ -23,7 +23,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.data.format.SingleStringRecordFormat;
+import co.cask.cdap.data.format.TextRecordFormat;
 import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
@@ -339,7 +339,7 @@ public class StreamInputFormatTest {
     writer.close();
 
     FormatSpecification formatSpec =
-      new FormatSpecification(SingleStringRecordFormat.class.getName(),
+      new FormatSpecification(TextRecordFormat.class.getName(),
                               Schema.recordOf("event", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
                               Collections.<String, String>emptyMap());
     Configuration conf = new Configuration();

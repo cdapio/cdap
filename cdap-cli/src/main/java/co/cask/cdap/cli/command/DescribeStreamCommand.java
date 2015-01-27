@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -49,12 +50,13 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
     StreamProperties config = streamClient.getConfig(streamId);
 
     new AsciiTable<StreamProperties>(
-      new String[] { "name", "ttl"},
+      new String[] { "name", "ttl", "format", "schema" },
       Lists.newArrayList(config),
       new RowMaker<StreamProperties>() {
         @Override
         public Object[] makeRow(StreamProperties object) {
-          return new Object[] { object.getName(), object.getTTL() };
+          FormatSpecification format = object.getFormat();
+          return new Object[] { object.getName(), object.getTTL(), format.getName(), format.getSchema().toString() };
         }
       }
     ).print(output);

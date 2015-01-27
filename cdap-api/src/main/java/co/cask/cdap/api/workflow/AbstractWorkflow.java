@@ -20,6 +20,22 @@ import java.util.Map;
 
 /**
  * Provides a default implementation of {@link Workflow} methods for easy extension.
+ *
+ * <p>
+ * Example of configuring a workflow:
+ *
+ *  <pre>
+ *    <code>
+ *      {@literal @}Override
+ *      public void configure() {
+ *        setName("PurchaseHistoryWorkflow");
+ *        setDescription("PurchaseHistoryWorkflow description");
+ *        addMapReduce("PurchaseHistoryBuilder");
+ *      }
+ *    </code>
+ *  </pre>
+ *
+ * See the Purchase example application.
  */
 public abstract class AbstractWorkflow implements Workflow {
 
