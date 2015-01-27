@@ -17,11 +17,15 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.gson.Gson;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -32,18 +36,21 @@ import java.nio.charset.Charset;
 /**
  * Implementation of {@link HttpServiceResponder} which delegates calls to
  * the HttpServiceResponder's methods to the matching methods for a {@link HttpResponder}.
+ * Responses are buffered until execute() is called. This allows you to send the correct response upon
+ * transaction failures, and not always delegating to the user responses.
  */
-final class DefaultHttpServiceResponder implements HttpServiceResponder {
-
+public final class DefaultHttpServiceResponder implements HttpServiceResponder {
+  private static final Gson GSON = new Gson();
   private final HttpResponder responder;
   private final MetricsCollector metricsCollector;
+  private BufferedResponse bufferedResponse;
 
   /**
    * Instantiates the class from a {@link HttpResponder}
    *
    * @param responder the responder which will be bound to
    */
-  DefaultHttpServiceResponder(HttpResponder responder, MetricsCollector metricsCollector) {
+  public DefaultHttpServiceResponder(HttpResponder responder, MetricsCollector metricsCollector) {
     this.responder = responder;
     this.metricsCollector = metricsCollector;
   }
@@ -55,8 +62,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendJson(Object object) {
-    responder.sendJson(HttpResponseStatus.OK, object);
-    emitMetrics(HttpResponseStatus.OK.getCode());
+    sendJson(HttpResponseStatus.OK.getCode(), object);
   }
 
   /**
@@ -67,8 +73,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendJson(int status, Object object) {
-    responder.sendJson(HttpResponseStatus.valueOf(status), object);
-    emitMetrics(status);
+    sendString(status, GSON.toJson(object), Charsets.UTF_8);
   }
 
    /**
@@ -81,8 +86,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendJson(int status, Object object, Type type, Gson gson) {
-    responder.sendJson(HttpResponseStatus.valueOf(status), object, type, gson);
-    emitMetrics(status);
+    send(status, Charsets.UTF_8.encode(gson.toJson(object, type)), "application/json", null);
   }
 
   /**
@@ -92,8 +96,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendString(String data) {
-    responder.sendString(HttpResponseStatus.OK, data);
-    emitMetrics(HttpResponseStatus.OK.getCode());
+    sendString(HttpResponseStatus.OK.getCode(), data, Charsets.UTF_8);
   }
 
   /**
@@ -105,9 +108,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendString(int status, String data, Charset charset) {
-    responder.sendContent(HttpResponseStatus.valueOf(status), ChannelBuffers.wrappedBuffer(charset.encode(data)),
-                          "text/plain; charset=" + charset.name(), ImmutableMultimap.<String, String>of());
-    emitMetrics(status);
+    send(status, charset.encode(data), "text/plain; charset=" + charset.name(), null);
   }
 
   /**
@@ -117,8 +118,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendStatus(int status) {
-    responder.sendStatus(HttpResponseStatus.valueOf(status));
-    emitMetrics(status);
+    sendStatus(status, null);
   }
 
   /**
@@ -129,8 +129,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendStatus(int status, Multimap<String, String> headers) {
-    responder.sendStatus(HttpResponseStatus.valueOf(status), headers);
-    emitMetrics(status);
+    send(status, null, null, headers);
   }
 
   /**
@@ -141,8 +140,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendError(int status, String errorMessage) {
-    responder.sendError(HttpResponseStatus.valueOf(status), errorMessage);
-    emitMetrics(status);
+    sendString(status, errorMessage, Charsets.UTF_8);
   }
 
   /**
@@ -154,10 +152,20 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
    * @param headers the headers to be sent back
    */
   @Override
-  public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
-    responder.sendContent(HttpResponseStatus.valueOf(status),
-                          ChannelBuffers.wrappedBuffer(content), contentType, headers);
-    emitMetrics(status);
+  public void send(final int status, ByteBuffer content, final String contentType, Multimap<String, String> headers) {
+    bufferedResponse = new BufferedResponse(status, content, contentType, headers);
+  }
+
+  /**
+   * Calls to other responder methods in this class only cache the response to be sent. The response is actually
+   * sent only when this method is called.
+   */
+  public void execute() {
+    Preconditions.checkState(bufferedResponse != null,
+                             "Can not call execute before one of the other responder methods are called.");
+    responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()), bufferedResponse.getChannelBuffer(),
+                          bufferedResponse.getContentType(), bufferedResponse.getHeaders());
+    emitMetrics(bufferedResponse.getStatus());
   }
 
   private void emitMetrics(int status) {
@@ -182,5 +190,37 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
 
     metricsCollector.increment(builder.toString(), 1);
     metricsCollector.increment("requests.count", 1);
+  }
+
+  private static final class BufferedResponse {
+
+    private final int status;
+    private final ChannelBuffer channelBuffer;
+    private final String contentType;
+    private final Multimap<String, String> headers;
+
+    private BufferedResponse(int status, ByteBuffer content,
+                             String contentType, Multimap<String, String> headers) {
+      this.status = status;
+      this.channelBuffer = content == null ? null : ChannelBuffers.wrappedBuffer(ByteBuffers.copy(content));
+      this.contentType = contentType;
+      this.headers = headers == null ? null : Multimaps.unmodifiableMultimap(headers);
+    }
+
+    public int getStatus() {
+      return status;
+    }
+
+    public ChannelBuffer getChannelBuffer() {
+      return channelBuffer;
+    }
+
+    public String getContentType() {
+      return contentType;
+    }
+
+    public Multimap<String, String> getHeaders() {
+      return headers;
+    }
   }
 }
