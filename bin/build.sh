@@ -4,7 +4,6 @@
 #  directory that will contain everything
 #  needed to run the UI in production
 
-PWD=`pwd`
 UI_PATH=$(cd $(dirname ${BASH_SOURCE[0]})/.. && pwd)
 TARGET_PATH=${1:-${UI_PATH}/target}
 
@@ -49,5 +48,4 @@ cd ${TARGET_PATH}
 npm install --production &>/dev/null
 
 echo "└┄ All done!"
-cd ${PWD}
 echo
