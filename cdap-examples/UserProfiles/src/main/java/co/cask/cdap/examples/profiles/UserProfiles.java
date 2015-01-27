@@ -18,7 +18,6 @@ package co.cask.cdap.examples.profiles;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Tables;
@@ -39,9 +38,7 @@ public class UserProfiles extends AbstractApplication {
     addFlow(new ActivityFlow());
     addService(new UserProfileService());
     createDataset("counters", KeyValueTable.class);
-    createDataset("profiles", "table",
-                  Tables.tableProperties(ConflictDetection.COLUMN,  // column level
-                                         -1,                        // no time-to-live
-                                         DatasetProperties.EMPTY)); // no extra properties
+    // create the profiles table with column-level conflict detection
+    Tables.createTable(getConfigurer(), "profiles", ConflictDetection.COLUMN);
   }
 }
