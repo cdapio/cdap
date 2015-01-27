@@ -18,11 +18,16 @@ package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
@@ -38,6 +43,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -76,6 +82,11 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
     // Create Adapter
     adapterService.createAdapter(namespaceId, adapterSpecification);
+    PreferencesStore preferencesStore = getInjector().getInstance(PreferencesStore.class);
+    Map<String, String> prop = preferencesStore.getResolvedProperties(namespaceId,
+                                                                             adapterSpecification.getType());
+    Assert.assertTrue(prop.containsKey(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
+    Assert.assertTrue(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED).equals("true"));
 
     try {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
