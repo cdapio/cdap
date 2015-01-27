@@ -1,14 +1,14 @@
-<li ng-repeat="menu in model">
-  <a ui-sref="{{menu.state || 'home'}}" ng-show="menu.children.length == 0">
-    <div ng-bind="menu.label"> </div>
+<li ng-repeat="menu in model"
+    data-start-collapsed="0"
+    bs-collapse>
+  <a ui-sref="{{menu.state || 'home'}}"
+     ng-show="menu.children.length == 0"
+     ng-bind="menu.label">
   </a>
-  <div ng-show="menu.children.length > 0"
-        class="menu-title"
-        ng-click="showSubMenu=!showSubMenu">
-    <span ng-class="showSubMenu ? 'fa fa-caret-down': 'fa fa-caret-right'"> </span>
-    <span ng-bind="menu.label"> </span>
-  </div>
-  <ul ng-show="showSubMenu">
+  <a ng-show="menu.children.length > 0">
+    <span ng-bind="menu.label" bs-collapse-toggle></span>
+  </a>
+  <ul bs-collapse-target>
     <my-tree-view data-model="menu.children"> </my-tree-view>
   </ul>
 </li>

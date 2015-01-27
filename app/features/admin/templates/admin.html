@@ -1,32 +1,35 @@
-
 <div class="row">
   <div class="col-sm-3">
-    <ul class="sidebar">
-      <li>
+
+    <ul class="list-group list-unstyled">
+      <li class="list-group-item">
         <a ui-sref="admin.system">
-          <div> System Configuration </div>
+          System Configuration
         </a>
       </li>
-      <li>
+      <li class="list-group-item">
         <a ui-sref="admin.security">
-          <div>Security Configuration </div>
+          Security Configuration
         </a>
       </li>
-      <li>
+      <li class="list-group-item">
         <a ui-sref="admin.namespace.create">
-          <div>Create Namespace </div>
+          Create Namespace
         </a>
       </li>
-      <li>
-        <div class="menu-title"
-              ng-click="showSubMenu=!showSubMenu">
-          <a> Namespaces </a>
-        </div>
+      <li
+        class="list-group-item"
+        data-start-collapsed="1"
+        bs-collapse>
+        <a bs-collapse-toggle>
+          Namespaces
+        </a>
+        <ul class="list-unstyled" bs-collapse-target>
+          <my-tree-view data-model="nsList"></my-tree-view>
+        </ul>
       </li>
-      <ul ng-show="showSubMenu">
-        <my-tree-view data-model="nsList"></my-tree-view>
-      </ul>
     </ul>
+
   </div>
   <div class="col-sm-9">
     <div ui-view></div>
