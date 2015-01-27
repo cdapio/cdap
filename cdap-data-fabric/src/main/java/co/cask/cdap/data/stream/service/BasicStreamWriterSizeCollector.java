@@ -84,6 +84,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     if (value != null) {
       value.addAndGet(dataSize);
     }
-    LOG.trace("Received data for stream {}: {}B. Total size is now {}", streamName, dataSize, value.get());
+    LOG.trace("Received data for stream {}: {}B. Total size is now {}", streamName, dataSize,
+              value == null ? dataSize : value.get());
   }
 }
