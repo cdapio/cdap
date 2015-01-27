@@ -32,33 +32,24 @@ import java.util.List;
 
 public class CustomResourcesClassLoaderTest {
   private static final String configFilename = "custom-config/test-resource.xml";
-  private static final String configFilename1 = "custom-config/test-resource-1.xml";
   private static final String customConfDir = "custom-resource-classloader";
   
   @Test
   public void testGetResource() throws Exception {
     URL regularUrl = getClass().getClassLoader().getResource(configFilename);
     Assert.assertEquals("regular-classloader", getValue(regularUrl));
-    URL regularUrl1 = getClass().getClassLoader().getResource(configFilename1);
-    Assert.assertEquals("regular-classloader-1", getValue(regularUrl1));
 
     URL customUrl = getCustomClassLoader().getResource(configFilename);
     Assert.assertEquals("custom-classloader", getValue(customUrl));
-    URL customUrl1 = getCustomClassLoader().getResource(configFilename1);
-    Assert.assertEquals("regular-classloader-1", getValue(customUrl1));
   }
 
   @Test
   public void testGetResourceAsStream() throws Exception {
     InputStream regularStream = getClass().getClassLoader().getResourceAsStream(configFilename);
     Assert.assertEquals("regular-classloader", getValue(regularStream));
-    InputStream regularStream1 = getClass().getClassLoader().getResourceAsStream(configFilename1);
-    Assert.assertEquals("regular-classloader-1", getValue(regularStream1));
 
     InputStream customStream = getCustomClassLoader().getResourceAsStream(configFilename);
     Assert.assertEquals("custom-classloader", getValue(customStream));
-    InputStream customStream1 = getCustomClassLoader().getResourceAsStream(configFilename1);
-    Assert.assertEquals("regular-classloader-1", getValue(customStream1));
   }
   
   @Test
@@ -70,7 +61,7 @@ public class CustomResourcesClassLoaderTest {
 
     Assert.assertEquals(ImmutableList.of(regularUrl), 
                         enumerationToList(getClass().getClassLoader().getResources(configFilename)));
-    Assert.assertEquals(ImmutableList.of(customUrl, regularUrl),
+    Assert.assertEquals(ImmutableList.of(customUrl),
                         enumerationToList(getCustomClassLoader().getResources(configFilename)));
   }
   
