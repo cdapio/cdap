@@ -28,6 +28,8 @@ import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
@@ -53,10 +55,12 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
+  private final AdapterService adapterService;
 
-  public VerificationStage(DatasetFramework dsFramework) {
+  public VerificationStage(DatasetFramework dsFramework, AdapterService adapterService) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.dsFramework = dsFramework;
+    this.adapterService = adapterService;
   }
 
   /**
@@ -72,7 +76,14 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     ApplicationSpecification specification = input.getSpecification();
     Id.Application appId = input.getId();
 
-    // TODO: add a check against system applications (adapters, for instance).
+    if (ApplicationDeployScope.USER.equals(input.getApplicationDeployScope())) {
+      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(appId.getId());
+      if (adapterTypeInfo != null) {
+        throw new RuntimeException
+          (String.format("Cannot deploy Application %s. An AdapterType exists with a conflicting name.", appId));
+      }
+    }
+
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());

@@ -14,13 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.internal.app.deploy.pipeline;
 
 /**
- * Thrown when Adapter is not found.
+ * Represents the scope of an application undergoing deployment.
  */
-public class AdapterNotFoundException extends Exception {
-  public AdapterNotFoundException(String adapterName) {
-    super(String.format("Adapter %s not found.", adapterName));
-  }
+public enum ApplicationDeployScope {
+  USER, SYSTEM
 }

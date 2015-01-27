@@ -14,13 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.client.exception;
 
 /**
- * Thrown when Adapter is not found.
+ * Thrown when reset is not enabled for the CDAP instance.
  */
-public class AdapterNotFoundException extends Exception {
-  public AdapterNotFoundException(String adapterName) {
-    super(String.format("Adapter %s not found.", adapterName));
-  }
+public class ResetNotEnabledException extends Exception {
+
 }
