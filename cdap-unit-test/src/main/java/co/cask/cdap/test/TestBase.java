@@ -159,7 +159,6 @@ public class TestBase {
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File... bundleEmbeddedJars) {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     ApplicationManager applicationManager = testManager.deployApplication(applicationClz, bundleEmbeddedJars);
     applicationManagers.add(applicationManager);
     return applicationManager;
@@ -174,7 +173,6 @@ public class TestBase {
   @Deprecated
   protected void clear() {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     testManager.clear();
   }
 
@@ -397,7 +395,6 @@ public class TestBase {
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     testManager.deployDatasetModule(moduleName, datasetModule);
   }
 
@@ -417,7 +414,6 @@ public class TestBase {
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager.addDatasetInstance(datasetTypeName, datasetInstanceName, props);
   }
 
@@ -434,7 +430,6 @@ public class TestBase {
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager.addDatasetInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
   }
 
@@ -447,7 +442,6 @@ public class TestBase {
   @Deprecated
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager.getDataset(datasetInstanceName);
   }
 
@@ -457,7 +451,6 @@ public class TestBase {
   @Deprecated
   protected final Connection getQueryClient() throws Exception {
     TestManager testManager = getTestManager();
-    Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager.getQueryClient();
   }
 }
