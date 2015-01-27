@@ -51,9 +51,11 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -128,6 +130,12 @@ public class CLIMainTest extends StandaloneTestBase {
     if (START_LOCAL_STANDALONE) {
       StandaloneTestBase.tearDownClass();
     }
+  }
+
+  @After
+  @Override
+  public void tearDownStandalone() throws Exception {
+    // NO-OP
   }
 
   @Test
@@ -341,6 +349,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  @Ignore
   public void testNamespaces() throws Exception {
     final String id = PREFIX + "testNamespace";
     final String name = "testDisplayName";

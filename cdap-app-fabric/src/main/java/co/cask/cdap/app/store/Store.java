@@ -24,6 +24,8 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
+import co.cask.cdap.internal.app.store.AdapterMeta;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -332,12 +334,12 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter spec to the store. Will overwrite the existing spec.
+   * Adds adapter spec to the store, with status = {@link AdapterStatus.STARTED}. Will overwrite the existing spec.
    *
    * @param id Namespace id
-   * @param adapterSpecification specification of the adapter
+   * @param adapterSpec adapter specification of the adapter being added
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpecification);
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
@@ -346,13 +348,35 @@ public interface Store {
    * @param name Adapter name
    * @return an instance of {@link AdapterSpecification}.
    */
+  @Nullable
   AdapterSpecification getAdapter(Id.Namespace id, String name);
+
+  /**
+   * Fetch the status for an adapter identified by the name in a give namespace.
+   *
+   * @param id  Namespace id.
+   * @param name Adapter name
+   * @return status of specified adapter.
+   */
+  @Nullable
+  AdapterStatus getAdapterStatus(Id.Namespace id, String name);
+
+  /**
+   * Set the status for an adapter identified by the name in a give namespace.
+   *
+   * @param id  Namespace id.
+   * @param name Adapter name
+   * @param status Status to set
+   * @return previous status of adapter, or null if specified adapter is not found.
+   */
+  @Nullable
+  AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status);
 
   /**
    * Fetch all the adapters in a given namespace.
    *
    * @param id Namespace id.
-   * @return {@link Collection} of Adapter Specification.
+   * @return {@link Collection} of Adapter Specifications.
    */
   Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 

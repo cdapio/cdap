@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.test.exception;
+package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Thrown when there was an error in resetting the CDAP instance.
+ * Thrown when an invalid adapter action occurs. For instance, if an adapter 'stop' is requested, but the adapter is
+ * already stopped.
  */
-public class ResetFailureException extends Exception {
-
-  public ResetFailureException(String message) {
+public class InvalidAdapterOperationException extends Exception {
+  public InvalidAdapterOperationException(String message) {
     super(message);
   }
 }

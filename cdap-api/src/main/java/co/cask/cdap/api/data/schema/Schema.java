@@ -17,6 +17,7 @@
 package co.cask.cdap.api.data.schema;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.internal.io.SQLSchemaParser;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -124,7 +125,7 @@ public final class Schema {
    * @return the json representation parsed into a schema object
    * @throws IOException if there was an exception parsing the schema
    */
-  public static Schema parse(String schemaJson) throws IOException {
+  public static Schema parseJson(String schemaJson) throws IOException {
     return schemaTypeAdapter.fromJson(schemaJson);
   }
 
@@ -135,8 +136,50 @@ public final class Schema {
    * @return the parsed schema object
    * @throws IOException if there was an exception parsing the schema
    */
-  public static Schema parse(Reader reader) throws IOException {
+  public static Schema parseJson(Reader reader) throws IOException {
     return schemaTypeAdapter.fromJson(reader);
+  }
+
+  /**
+   * Parse the given sql-like schema representation into a schema object. Input is expected to be a comma
+   * separated list of names and types, where the type is a primitive type, array, map, record, or union.
+   * The input will be parsed in a case insensitive manner.
+   *
+   * <pre>
+   * {@code
+   * column_name data_type, ...
+   *
+   * data_type : primitive_type
+   * | array_type
+   * | map_type
+   * | record_type
+   * | union_type
+   * [ not null ]
+   *
+   * primitive_type: boolean
+   * | int
+   * | long
+   * | float
+   * | double
+   * | bytes
+   * | string
+   *
+   * array_type: array<data_type>
+   *
+   * map_type: map<data_type, data_type>
+   *
+   * record_type: record<field_name:data_type, ...>
+   *
+   * union_type: union<data_type, data_type, ...>
+   * }
+   * </pre>
+   *
+   * @param schemaString the schema to parse
+   * @return the parsed schema object
+   * @throws IOException if there was an exception parsing the schema
+   */
+  public static Schema parseSQL(String schemaString) throws IOException {
+    return new SQLSchemaParser(schemaString).parse();
   }
 
   /**
@@ -149,6 +192,18 @@ public final class Schema {
   public static Schema of(Type type) {
     Preconditions.checkArgument(type.isSimpleType(), "Type %s is not a simple type.", type);
     return new Schema(type, null, null, null, null, null, null, null);
+  }
+
+  /**
+   * Creates a nullable {@link Schema} for the given schema, which is a union of the given schema with the null type.
+   * The type given must not be the null type.
+   *
+   * @param schema Schema to union with the null type.
+   * @return A nullable version of the given {@link Schema}.
+   */
+  public static Schema nullableOf(Schema schema) {
+    Preconditions.checkArgument(schema.type != Type.NULL, "Given schema must not be the null type.");
+    return Schema.unionOf(schema, Schema.of(Type.NULL));
   }
 
   /**

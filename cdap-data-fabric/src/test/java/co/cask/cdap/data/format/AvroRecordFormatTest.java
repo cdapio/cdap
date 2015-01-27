@@ -33,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
@@ -41,6 +42,24 @@ import java.util.Map;
  *
  */
 public class AvroRecordFormatTest {
+
+  @Test
+  public void testMultipleReads() throws Exception {
+    Schema schema = Schema.recordOf("record", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
+    FormatSpecification formatSpecification =
+      new FormatSpecification(Formats.AVRO, schema, Collections.<String, String>emptyMap());
+
+    org.apache.avro.Schema avroSchema = convertSchema(schema);
+    RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
+
+    GenericRecord record = new GenericRecordBuilder(avroSchema).set("x", 5).build();
+    GenericRecord actual = format.read(toBytes(record));
+    Assert.assertEquals(5, actual.get("x"));
+
+    record = new GenericRecordBuilder(avroSchema).set("x", 10).build();
+    actual = format.read(toBytes(record));
+    Assert.assertEquals(10, actual.get("x"));
+  }
 
   @Test
   public void testFlatRecord() throws Exception {
@@ -77,18 +96,9 @@ public class AvroRecordFormatTest {
       .set("nullable", null)
       .build();
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(avroSchema);
-
-    writer.write(record, encoder);
-    encoder.flush();
-    out.close();
-    byte[] serializedRecord = out.toByteArray();
-
     RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
-    GenericRecord actual = format.read(ByteBuffer.wrap(serializedRecord));
+    GenericRecord actual = format.read(toBytes(record));
     Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
     Assert.assertEquals(Long.MAX_VALUE, actual.get("long"));
     Assert.assertFalse((Boolean) actual.get("boolean"));
@@ -119,15 +129,6 @@ public class AvroRecordFormatTest {
       .set("record", new GenericRecordBuilder(avroInnerSchema).set("int", 5).set("double", 3.14159).build())
       .build();
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(avroSchema);
-
-    writer.write(record, encoder);
-    encoder.flush();
-    out.close();
-    byte[] serializedRecord = out.toByteArray();
-
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO,
       schema,
@@ -135,7 +136,7 @@ public class AvroRecordFormatTest {
     );
     RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
-    GenericRecord actual = format.read(ByteBuffer.wrap(serializedRecord));
+    GenericRecord actual = format.read(toBytes(record));
     Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
     GenericRecord actualInner = (GenericRecord) actual.get("record");
     Assert.assertEquals(5, actualInner.get("int"));
@@ -152,5 +153,16 @@ public class AvroRecordFormatTest {
     for (Map.Entry<Object, Object> entry : actual.entrySet()) {
       Assert.assertEquals(expected.get(entry.getKey().toString()), entry.getValue());
     }
+  }
+
+  private ByteBuffer toBytes(GenericRecord record) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(record.getSchema());
+    writer.write(record, encoder);
+    encoder.flush();
+    out.close();
+    byte[] serializedRecord = out.toByteArray();
+    return ByteBuffer.wrap(serializedRecord);
   }
 }
