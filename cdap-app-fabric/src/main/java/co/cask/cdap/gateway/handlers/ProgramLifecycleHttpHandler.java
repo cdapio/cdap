@@ -695,7 +695,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       StreamSpecification stream = store.getStream(Id.Namespace.from(namespaceId), streamId);
       if (stream == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream specified with streamId param does not exist");
         return;
       }
 

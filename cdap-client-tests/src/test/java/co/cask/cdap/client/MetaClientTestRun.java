@@ -38,6 +38,7 @@ public class MetaClientTestRun extends ClientTestBase {
   public void testAll() throws IOException, UnAuthorizedAccessTokenException {
     MetaClient metaClient = new MetaClient(clientConfig);
     metaClient.ping();
+
     Version version = metaClient.getVersion();
     String expectedVersion = Resources.toString(Resources.getResource("VERSION"), Charsets.UTF_8).trim();
     Assert.assertEquals(expectedVersion, version.getVersion());

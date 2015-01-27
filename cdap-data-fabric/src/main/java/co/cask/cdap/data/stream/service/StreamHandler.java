@@ -449,17 +449,27 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
+  /**
+   * Same as calling {@link #getHeaders(HttpRequest, String, ImmutableMap.Builder)} with a new builder.
+   */
   private Map<String, String> getHeaders(HttpRequest request, String stream) {
-    // build a new event from the request, start with the headers
-    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+    return getHeaders(request, stream, ImmutableMap.<String, String>builder());
+  }
+
+  /**
+   * Extracts event headers from the HTTP request. Only HTTP headers that are prefixed with "{@code <stream-name>.}"
+   * will be included. The result will be stored in an Immutable map built by the given builder.
+   */
+  private Map<String, String> getHeaders(HttpRequest request, String stream,
+                                         ImmutableMap.Builder<String, String> builder) {
     // and transfer all other headers that are to be preserved
     String prefix = stream + ".";
     for (Map.Entry<String, String> header : request.getHeaders()) {
       if (header.getKey().startsWith(prefix)) {
-        headers.put(header.getKey().substring(prefix.length()), header.getValue());
+        builder.put(header.getKey().substring(prefix.length()), header.getValue());
       }
     }
-    return headers.build();
+    return builder.build();
   }
 
   /**
@@ -468,12 +478,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private ContentWriterFactory createContentWriterFactory(String accountId,
                                                           String stream, HttpRequest request) throws IOException {
     long contentLength = HttpHeaders.getContentLength(request, -1L);
+    String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
+
+    // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
+    Map<String, String> headers = getHeaders(request, stream,
+                                             ImmutableMap.<String, String>builder().put("content.type", contentType));
+
     if (contentLength >= 0 && contentLength <= batchBufferThreshold) {
-      return new BufferedContentWriterFactory(accountId, stream, streamWriter, getHeaders(request, stream));
+      return new BufferedContentWriterFactory(accountId, stream, streamWriter, headers);
     }
 
     StreamConfig config = streamAdmin.getConfig(stream);
-    return new FileContentWriterFactory(accountId, config, streamWriter, getHeaders(request, stream));
+    return new FileContentWriterFactory(accountId, config, streamWriter, headers);
   }
 
   /**
