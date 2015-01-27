@@ -42,6 +42,7 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -188,7 +189,9 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    Collection<StreamSpecification> specifications =
+      streamMetaStore.listStreams().get(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE).build());
+    for (StreamSpecification streamSpec : specifications) {
       sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
     heartbeatPublisher.sendHeartbeat(new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build()));
@@ -374,7 +377,9 @@ public class DistributedStreamService extends AbstractStreamService {
               // Create one requirement for the resource coordinator for all the streams.
               // One stream is identified by one partition
               ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-              for (StreamSpecification spec : streamMetaStore.listStreams()) {
+              Collection<StreamSpecification> specifications = streamMetaStore.listStreams().get(
+                  new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE).build());
+              for (StreamSpecification spec : specifications) {
                 LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
                           spec.getName());
                 builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));

@@ -17,12 +17,16 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
-import java.util.List;
+import java.util.Collection;
+import javax.annotation.Nullable;
 
 /**
  * In-memory implementation of the {@link StreamMetaStore}. Used for testing.
@@ -51,10 +55,18 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public synchronized List<StreamSpecification> listStreams() throws Exception {
-    ImmutableList.Builder<StreamSpecification> builder = ImmutableList.builder();
-    for (String stream : streams.values()) {
-      builder.add(new StreamSpecification.Builder().setName(stream).create());
+  public synchronized Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
+    ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+    for (String accountId : streams.keySet()) {
+      Collection<String> streamNames = streams.get(accountId);
+      builder.putAll(new NamespaceMeta.Builder().setId(accountId).build(),
+                     Collections2.transform(streamNames, new Function<String, StreamSpecification>() {
+                       @Nullable
+                       @Override
+                       public StreamSpecification apply(String input) {
+                         return new StreamSpecification.Builder().setName(input).create();
+                       }
+                     }));
     }
     return builder.build();
   }

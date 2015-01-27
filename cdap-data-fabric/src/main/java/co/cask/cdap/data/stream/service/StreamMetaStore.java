@@ -16,8 +16,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-
-import java.util.List;
+import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.collect.Multimap;
 
 /**
  * A temporary place for hosting MDS access logic for streams.
@@ -42,7 +42,7 @@ public interface StreamMetaStore {
   boolean streamExists(String accountId, String streamName) throws Exception;
 
   /**
-   * List all stream specifications.
+   * List all stream specifications with their associated {@link NamespaceMeta}.
    */
-  List<StreamSpecification> listStreams() throws Exception;
+  Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception;
 }

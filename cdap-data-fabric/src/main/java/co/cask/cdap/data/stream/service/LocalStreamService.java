@@ -27,12 +27,14 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,7 +70,9 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    Collection<StreamSpecification> specifications =
+      streamMetaStore.listStreams().get(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE).build());
+    for (StreamSpecification streamSpec : specifications) {
       StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
       long filesSize = StreamUtils.fetchStreamFilesSize(config);
       createSizeAggregator(streamSpec.getName(), filesSize, config.getNotificationThresholdMB());
@@ -85,7 +89,9 @@ public class LocalStreamService extends AbstractStreamService {
   @Override
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    Collection<StreamSpecification> specifications =
+      streamMetaStore.listStreams().get(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE).build());
+    for (StreamSpecification streamSpec : specifications) {
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamSpec.getName());
       if (streamSizeAggregator == null) {
         // First time that we see this Stream here
