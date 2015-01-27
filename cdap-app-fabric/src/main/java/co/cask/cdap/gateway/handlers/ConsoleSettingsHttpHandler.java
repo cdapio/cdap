@@ -62,11 +62,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   @Path("/")
   @GET
   public void get(HttpRequest request, HttpResponder responder) throws Exception {
-    String userId = SecurityRequestContext.getUserId();
-    if (userId == null) {
-      // will be null in unsecure mode.
-      userId = "";
-    }
+    String userId = SecurityRequestContext.getUserId().or("");
     Config userConfig;
     try {
       userConfig = store.get(userId);
@@ -86,10 +82,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   @Path("/")
   @DELETE
   public void delete(HttpRequest request, HttpResponder responder) throws Exception {
-    String userId = SecurityRequestContext.getUserId();
-    if (userId == null) {
-      userId = "";
-    }
+    String userId = SecurityRequestContext.getUserId().or("");
     try {
       store.delete(userId);
     } catch (ConfigNotFoundException e) {
@@ -112,10 +105,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
     //Config Properties : Map (Key = CONFIG_PROPERTY, Value = Serialized JSON string of properties)
     //User Settings configurations are stored under empty NAMESPACE.
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
-    String userId = SecurityRequestContext.getUserId();
-    if (userId == null) {
-      userId = "";
-    }
+    String userId = SecurityRequestContext.getUserId().or("");
     Config userConfig = new Config(userId, propMap);
     store.put(userConfig);
     responder.sendStatus(HttpResponseStatus.OK);
