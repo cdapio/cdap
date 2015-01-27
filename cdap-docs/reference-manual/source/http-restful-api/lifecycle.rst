@@ -566,7 +566,7 @@ Example
      - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
    * - Returns
      - ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-              ``"program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+       ``"program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
    * - 
      - 
    * - HTTP Method
