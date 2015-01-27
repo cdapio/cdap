@@ -43,7 +43,7 @@ different terminals, run the following concurrently:
 - ``bin/update-login.sh`` to randomly update the time of last login for users; and
 - ``bin/send-events.sh`` to generate random user activity events and send them to the stream.
 
-If both scripts are running at the same, then some user profiles will be updated at the same by the
+If both scripts are running at the same time, then some user profiles will be updated at the same by the
 service and by the flow. With row-level conflict detection, you would see transaction conflicts in
 the logs. But because the ``profiles`` table uses column level conflict detection, these conflicts
 are avoided.
