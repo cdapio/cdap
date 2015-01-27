@@ -158,7 +158,7 @@ public class DatasetAccessor {
     txAware.startTx(tx);
   }
 
-  private static RecordWritable instantiateWritable(@Nullable Configuration conf, String datasetName)
+  private static RecordWritable instantiateWritable(Configuration conf, @Nullable String datasetName)
     throws IOException {
     Dataset dataset = instantiate(conf, datasetName);
 
@@ -196,7 +196,7 @@ public class DatasetAccessor {
       
       // Do not cache the Dataset classloader if running as part of Explore Service.
       if (runContext == RunContext.EXPLORE_SERVICE) {
-        return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+        return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, conf.getClassLoader());
       }
 
       return cacheLoad(conf, datasetName, framework);

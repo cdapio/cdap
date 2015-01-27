@@ -32,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.schema.SchemaConverter;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.QueryHandle;
@@ -283,6 +284,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (deleteStatement == null) {
         // This is not an error: whether the dataset is explorable may not be known where this call originates from.
         LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
+      
+      // If table does not exist, nothing to be done
+      try {
+        exploreService.getTableInfo(null, getHiveTableName(datasetName));
+      } catch (TableNotFoundException e) {
+        // Ignore exception, since this means table was not found.
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
