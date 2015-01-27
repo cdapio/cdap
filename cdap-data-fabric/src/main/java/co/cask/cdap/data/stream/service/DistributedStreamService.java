@@ -529,7 +529,7 @@ public class DistributedStreamService extends AbstractStreamService {
         sum += size;
       }
 
-      if (isInit || sum - streamBaseCount.get() > streamThresholdMB.get()) {
+      if (isInit || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
@@ -538,6 +538,10 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       }
       isInit = false;
+    }
+
+    private long toBytes(int mb) {
+      return ((long) mb) * 1024 * 1024;
     }
 
     private void publishNotification(long absoluteSize) {
