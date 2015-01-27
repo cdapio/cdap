@@ -145,7 +145,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
       WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
       try {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
         try {
           action.run();
         } finally {
@@ -157,7 +157,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         Throwables.propagateIfPossible(t, Exception.class);
       } finally {
         // Destroy the action.
-        destroy(actionSpec, action, classLoader);
+        destroy(actionSpec, action);
       }
     }
 
@@ -197,7 +197,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
 
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
     try {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
                                                  logicalStartTime, 
@@ -217,8 +217,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   /**
    * Calls the destroy method on the given WorkflowAction.
    */
-  private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action, ClassLoader classLoader) {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+  private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action) {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
     try {
       action.destroy();
     } catch (Throwable t) {
