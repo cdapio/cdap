@@ -48,12 +48,23 @@ service and by the flow. With row-level conflict detection, you would see transa
 the logs. But because the ``profiles`` table uses column level conflict detection, these conflicts
 are avoided.
 
-Note: If you are interested to see the behavior with row-level conflict detection, you can change
+If you are interested to see the behavior with row-level conflict detection, you can change
 the dataset creation statement at the bottom of``UserProfiles.java`` to use ``ConflictDetection.ROW``
-and run the same steps as above. You should see transaction conflicts in the logs.
+and run the same steps as above. You should see transaction conflicts in the logs. For example, such
+a conflict would shows as:
 
-For more information, see http://docs.cask.co/cdap/current/examples.
+```
+2015-01-26 21:00:20,084 - ERROR [FlowletProcessDriver-updater-0-executor:c.c.c.i.a.r.f.FlowletProcessDriver@279] - Transaction operation failed: Conflict detected for transaction 1422334820080000000.
+co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1422334820080000000.
+	at co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:166) ~[tephra-core-0.3.4.jar:na]
+	at co.cask.tephra.TransactionContext.finish(TransactionContext.java:78) ~[tephra-core-0.3.4.jar:na]
+```
 
+Note that in order to see this happen, you need to delete the ``profiles`` dataset before redeploying
+the application, to force its recreation with the new properties.
+
+For more information on running CDAP examples, see
+http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html.
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 
