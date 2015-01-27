@@ -11,7 +11,7 @@ TARGET_PATH=${1:-${UI_PATH}/target}
 read -p "Blow away ${TARGET_PATH} and build in it (y/n)? " choice
 case "$choice" in
   y|Y ) echo "OK, building CDAP 3.0 user interface!";;
-  * ) exit 0;
+  * ) echo "You must enter Y or y to build!" && exit 0;
 esac
 
 echo "┌─────────────────────────────────────────────────────────────────"
