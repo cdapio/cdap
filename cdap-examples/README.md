@@ -26,7 +26,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - For each number *i*, generates i%10000, i%1000, i%100, i%10.
 - Increments the counter for each number.
 
-## FileExample
+## FileSetExample
 
 - Illustrates how to use the FileSet dataset in applications.
 - Uses a Service that uploads files in—or downloads files to—a FileSet.
@@ -68,12 +68,16 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 ## SparkKMeans
 
 - An application that demonstrates streaming text analysis using a Spark program.
-  It calculates the centers of points from an input stream using the KMeans Clustering method.  
+- It calculates the centers of points from an input stream using the KMeans Clustering method.
 
 ## SparkPageRank
 
 - An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
+
+## UserProfiles
+
+- An application that demonstrates column-level conflict detection.
 
 ## WebAnalytics
 
