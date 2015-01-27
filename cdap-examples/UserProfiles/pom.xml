@@ -27,7 +27,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>UserProfiles</artifactId>
-  <name>User Profiles</name>
+  <name>User Profiles App</name>
   <packaging>jar</packaging>
 
   <properties>

@@ -17,8 +17,8 @@
 package co.cask.cdap.examples.profiles;
 
 /**
- * The profile of a user. It contains the user id, name and email address,
- * as well the last login time and the time of his last activity.
+ * The profile of a user. It contains the user id, name, email address,
+ * last login time, and time of their last activity.
  */
 public class Profile {
 
@@ -41,7 +41,8 @@ public class Profile {
   }
 
   /**
-   * Used when a user is created for the first time. He has no login or activity date.
+   * Used when a user is created for the first time.
+   * At that time, the user has had no login or activity.
    */
   public Profile(String id, String name, String email) {
     this(id, name, email, null, null);

@@ -39,7 +39,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * A service that allows to create and modify user profiles.
+ * A service for creating and modifying user profiles.
  */
 public class UserProfileService extends AbstractService {
 
@@ -48,7 +48,7 @@ public class UserProfileService extends AbstractService {
   @Override
   protected void configure() {
     setName("UserProfileService");
-    setDescription("A service tocreate and modify user profiles");
+    setDescription("A service for creating and modifying user profiles");
     addHandler(new UserProfileServiceHandler());
   }
 

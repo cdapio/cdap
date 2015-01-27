@@ -25,8 +25,9 @@ import co.cask.cdap.api.dataset.table.Tables;
 
 /**
  * Demonstrates the use of column-level conflict detection by example of managing user profiles,
- * where attributes like name and email address avn be updated without conflicting with updates
- * to the last active time of the user.
+ * where individual attributes such as name and email address can be updated without conflicting
+ * with updates to other attributes such as the last active time of the user. This is achieved
+ * by setting the conflict resolution level of the "profiles" table to COLUMN.
  */
 public class UserProfiles extends AbstractApplication {
 
@@ -34,9 +35,9 @@ public class UserProfiles extends AbstractApplication {
   public void configure() {
     setName("UserProfiles");
     setDescription("Demonstrates the use of column-level conflict detection.");
-    addService(new UserProfileService());
-    addFlow(new ActivityFlow());
     addStream(new Stream("events"));
+    addFlow(new ActivityFlow());
+    addService(new UserProfileService());
     createDataset("counters", KeyValueTable.class);
     createDataset("profiles", "table",
                   Tables.tableProperties(ConflictDetection.COLUMN,  // column level
