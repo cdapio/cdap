@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
@@ -168,9 +169,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                     HOSTNAME, port), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     // don't give the schema to make sure a default gets used
-    FormatSpecification formatSpecification =
-      new FormatSpecification(TextRecordFormat.class.getCanonicalName(),
-                              null, null);
+    FormatSpecification formatSpecification = new FormatSpecification(Formats.TEXT, null, null);
     StreamProperties streamProperties = new StreamProperties("stream_defaults", 2, formatSpecification, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
@@ -184,7 +183,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                                        Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
 
-    StreamProperties expected = new StreamProperties("stream_defaults", 2, (new StreamConfig()).getFormat(), 1000);
+    StreamProperties expected = new StreamProperties("stream_defaults", 2, new StreamConfig().getFormat(), 1000);
     Assert.assertEquals(expected, actual);
   }
 
