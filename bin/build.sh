@@ -45,8 +45,7 @@ cp -r dist/ ${TARGET_PATH}/dist
 
 echo "├┄ installing production npm dependencies..."
 cd ${TARGET_PATH}
-echo
 npm install --production &>/dev/null || die "installing production npm dependencies"
-echo
+
 echo "└┄ All done!"
 echo
