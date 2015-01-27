@@ -28,17 +28,13 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.CompoundEnumeration;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Enumeration;
 
 /**
- * Used to load a {@link ExploreServiceTwillRunnable} using {@link CustomResourcesClassLoader}. This gives precedence 
- * to config files bundled with the application over config files in the classpath used to start the application.
+ * Used to load a {@link ExploreServiceTwillRunnable} using {@link CustomResourcesClassLoader}. This loads
+ * config files bundled with the application and not config files in the classpath used to start the application.
  * This is required as on some clusters the classpath used to start a container contains a stripped down version of 
  * Hadoop config files.
  */
@@ -73,8 +69,7 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
       customClassLoader = getClass().getClassLoader();
     }
     
-    ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoaders.setContextClassLoader(customClassLoader);
+    ClassLoader previousClassLoader = ClassLoaders.setContextClassLoader(customClassLoader);
 
     try {
       @SuppressWarnings("unchecked") 
@@ -91,8 +86,7 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void handleCommand(Command command) throws Exception {
-    ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoaders.setContextClassLoader(customClassLoader);
+    ClassLoader previousClassLoader = ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.handleCommand(command);
     } finally {
@@ -102,8 +96,7 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void stop() {
-    ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoaders.setContextClassLoader(customClassLoader);
+    ClassLoader previousClassLoader = ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.stop();
     } finally {
@@ -113,8 +106,7 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void destroy() {
-    ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoaders.setContextClassLoader(customClassLoader);
+    ClassLoader previousClassLoader = ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.destroy();
     } finally {
@@ -124,8 +116,7 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void run() {
-    ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoaders.setContextClassLoader(customClassLoader);
+    ClassLoader previousClassLoader = ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.run();
     } finally {
@@ -138,43 +129,18 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
    */
   @VisibleForTesting
   static class CustomResourcesClassLoader extends URLClassLoader {
-    private final ClassLoader parent;
+    private final ClassLoader twillClassLoader;
 
-    public CustomResourcesClassLoader(URL[] urls, ClassLoader parent) {
+    public CustomResourcesClassLoader(URL[] urls, ClassLoader twillClassLoader) {
       super(urls, ClassLoader.getSystemClassLoader().getParent());
-      this.parent = parent;
-    }
-
-    @Override
-    public URL getResource(String s) {
-      URL url = super.findResource(s);
-      if (url != null) {
-        return url;
-      }
-      return parent.getResource(s);
-    }
-
-    @Override
-    public Enumeration<URL> getResources(String s) throws IOException {
-      Enumeration<URL> resources = super.findResources(s);
-      return resources == null ? parent.getResources(s) :
-        new CompoundEnumeration<URL>(new Enumeration[] {resources, parent.getResources(s)});
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String s) {
-      InputStream in = super.getResourceAsStream(s);
-      if (in != null) {
-        return in;
-      }
-      return parent.getResourceAsStream(s);
+      this.twillClassLoader = twillClassLoader;
     }
 
     @Override
     public Class<?> loadClass(String s) throws ClassNotFoundException {
       // Load all Twill API classes from parent classloader, since they are already loaded by parent classloader.
       if (s.startsWith("org.apache.twill.api.")) {
-        return parent.loadClass(s);
+        return twillClassLoader.loadClass(s);
       }
 
       return super.loadClass(s);
