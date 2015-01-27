@@ -72,7 +72,7 @@ public class ActivityFlow implements Flow {
 
     @UseDataSet("counters")
     private KeyValueTable counters;
-UPS
+
     @ProcessInput
     public void process(Event event) {
       counters.increment(Bytes.toBytes(event.getUrl()), 1L);
