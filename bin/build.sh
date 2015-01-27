@@ -38,7 +38,6 @@ gulp distribute &>/dev/null || die "running \"gulp distribute\""
 
 echo "├┄ copying relevant files to the target..."
 cp package.json ${TARGET_PATH}
-cp bower.json ${TARGET_PATH}
 cp server.js ${TARGET_PATH}
 cp -r server/ ${TARGET_PATH}/server
 cp -r dist/ ${TARGET_PATH}/dist
