@@ -23,6 +23,7 @@ script=`basename $0`
 auth_token=
 auth_file="$HOME/.cdap.accesstoken"
 verbose=false
+delete=false
 
 function get_auth_token() {
   if [ -f $auth_file ]; then
@@ -36,6 +37,7 @@ function usage() {
   echo ""
   echo "  Options"
   echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
+  echo "    --delete    Delete the users instead of adding them"
   echo "    --verbose   Print some information"
   echo "    --help      This help message"
   echo ""
@@ -48,6 +50,7 @@ do
   case "$1" in
     --host) shift; gateway="$1"; shift;;
     --verbose) shift; verbose=true;;
+    --delete) shift; delete=true;;
     *)  usage; exit 1
    esac
 done
@@ -61,12 +64,22 @@ lines=`cat "$bin"/../resources/users.txt`
 for line in $lines
 do
   userid=`echo $line | awk -F\" '{ print $4 }'`
-  if [ $verbose == "true" ]; then
-    echo Creating user id: $userid
+  if [ $delete == "true" ]; then
+    if [ $verbose == "true" ]; then
+      echo Deleting user id: $userid
+    fi
+    status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X DELETE \
+      http://$gateway:10000/v2/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
+    expected=200;
+  else
+    if [ $verbose == "true" ]; then
+      echo Creating user id: $userid
+    fi
+    status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT -d "$line" \
+      http://$gateway:10000/v2/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
+    expected=201;
   fi
-  status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT -d "$line" \
-    http://$gateway:10000/v2/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
-  if [ $status -ne 201 ]; then
+  if [ $status -ne $expected ]; then
     echo "Failed to send data."
     if [ $status == 401 ]; then
       if [ "x$auth_token" == "x" ]; then
