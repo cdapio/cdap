@@ -16,8 +16,11 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.InstantiatorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
@@ -29,8 +32,6 @@ import sun.misc.CompoundEnumeration;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
@@ -45,16 +46,17 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
   private static final Logger LOG = LoggerFactory.getLogger(ExploreCustomClassLoaderTwillRunnable.class);
   private static final String CLASS_NAME = ExploreServiceTwillRunnable.class.getName();
   
+  private final TwillRunnableSpecification twillRunnableSpecification;
   private TwillRunnable twillRunnable;
   private ClassLoader customClassLoader;
 
-  public ExploreCustomClassLoaderTwillRunnable(AbstractTwillRunnable twillRunnable) {
-    this.twillRunnable = twillRunnable;
+  public ExploreCustomClassLoaderTwillRunnable(TwillRunnableSpecification twillRunnableSpecification) {
+    this.twillRunnableSpecification = twillRunnableSpecification;
   }
 
   @Override
   public TwillRunnableSpecification configure() {
-    return twillRunnable.configure();
+    return twillRunnableSpecification;
   }
 
   @Override
@@ -72,73 +74,65 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
     }
     
     ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(customClassLoader);
+    ClassLoaders.setContextClassLoader(customClassLoader);
 
     try {
       @SuppressWarnings("unchecked") 
       Class<? extends TwillRunnable> twillRunnableClass = 
         (Class<? extends TwillRunnable>) customClassLoader.loadClass(CLASS_NAME);
-      twillRunnable = newInstance(twillRunnableClass);
+      twillRunnable = new InstantiatorFactory(false).get(TypeToken.of(twillRunnableClass)).create();
       twillRunnable.initialize(context);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
-      Thread.currentThread().setContextClassLoader(previousClassLoader);
+      ClassLoaders.setContextClassLoader(previousClassLoader);
     }
   }
 
   @Override
   public void handleCommand(Command command) throws Exception {
     ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(customClassLoader);
+    ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.handleCommand(command);
     } finally {
-      Thread.currentThread().setContextClassLoader(previousClassLoader);
+      ClassLoaders.setContextClassLoader(previousClassLoader);
     }
   }
 
   @Override
   public void stop() {
     ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(customClassLoader);
+    ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.stop();
     } finally {
-      Thread.currentThread().setContextClassLoader(previousClassLoader);
+      ClassLoaders.setContextClassLoader(previousClassLoader);
     }
   }
 
   @Override
   public void destroy() {
     ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(customClassLoader);
+    ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.destroy();
     } finally {
-      Thread.currentThread().setContextClassLoader(previousClassLoader);
+      ClassLoaders.setContextClassLoader(previousClassLoader);
     }
   }
 
   @Override
   public void run() {
     ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(customClassLoader);
+    ClassLoaders.setContextClassLoader(customClassLoader);
     try {
       twillRunnable.run();
     } finally {
-      Thread.currentThread().setContextClassLoader(previousClassLoader);
+      ClassLoaders.setContextClassLoader(previousClassLoader);
     }
   }
 
-  @VisibleForTesting
-  static TwillRunnable newInstance(Class<? extends TwillRunnable> twillRunnableClass)
-    throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-    Constructor<? extends TwillRunnable> constructor = 
-      twillRunnableClass.getConstructor(String.class, String.class, String.class);
-    return constructor.newInstance(null, null, null);
-  }
-  
   /**
    * A custom {@link ClassLoader} used to load config files bundled with a {@link TwillRunnable}.
    */
