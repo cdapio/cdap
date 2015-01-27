@@ -98,7 +98,6 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private final ConcurrentMap<String, StreamSizeAggregator> aggregators;
   private Cancellable heartbeatsSubscription;
-  private boolean isInit;
 
   private Supplier<Discoverable> discoverableSupplier;
 
@@ -133,7 +132,6 @@ public class DistributedStreamService extends AbstractStreamService {
     this.leaderListeners = Sets.newHashSet();
     this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.aggregators = Maps.newConcurrentMap();
-    this.isInit = true;
   }
 
   @Override
@@ -191,7 +189,9 @@ public class DistributedStreamService extends AbstractStreamService {
     for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
       sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
-    heartbeatPublisher.sendHeartbeat(new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build()));
+    StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
+    LOG.trace("Publishing heartbeat {}", heartbeat);
+    heartbeatPublisher.sendHeartbeat(heartbeat);
   }
 
   /**
@@ -210,6 +210,7 @@ public class DistributedStreamService extends AbstractStreamService {
       try {
         StreamConfig config = streamAdmin.getConfig(streamName);
         long filesSize = StreamUtils.fetchStreamFilesSize(config);
+        LOG.debug("Size of the files already present for stream {}: {}", streamName, filesSize);
         createSizeAggregator(streamName, filesSize, config.getNotificationThresholdMB());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
@@ -237,7 +238,7 @@ public class DistributedStreamService extends AbstractStreamService {
    * @return the created {@link StreamSizeAggregator}
    */
   private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
-
+    LOG.debug("Creating size aggregator for stream {}", streamName);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
@@ -258,8 +259,13 @@ public class DistributedStreamService extends AbstractStreamService {
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void generationChanged(String streamName, int generation) {
-          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0,
-                                                                                                threshold));
+          int currentThresold = threshold;
+          StreamSizeAggregator currentAggregator = aggregators.get(streamName);
+          if (currentAggregator != null) {
+            currentThresold = currentAggregator.getStreamThresholdMB();
+          }
+          Cancellable previousAggregator =
+            aggregators.replace(streamName, createSizeAggregator(streamName, 0, currentThresold));
           if (previousAggregator != null) {
             previousAggregator.cancel();
           }
@@ -291,6 +297,7 @@ public class DistributedStreamService extends AbstractStreamService {
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
+    LOG.trace("Subscribing to stream heartbeats notification feed");
     return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
       @Override
       public Type getNotificationFeedType() {
@@ -299,9 +306,11 @@ public class DistributedStreamService extends AbstractStreamService {
 
       @Override
       public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
+        LOG.trace("Received heartbeat {}", heartbeat);
         for (Map.Entry<String, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
           StreamSizeAggregator streamSizeAggregator = aggregators.get(entry.getKey());
           if (streamSizeAggregator == null) {
+            LOG.trace("Aggregator for stream {} is null", entry.getKey());
             continue;
           }
           streamSizeAggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
@@ -397,14 +406,16 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       }
     });
+    leaderElection.start();
   }
 
   /**
-   * Call all the listeners that are interested in knowing that this coordinator is the leader of a set of Streams.
+   * Call all the listeners that are interested in knowing that this Stream writer is the leader of a set of Streams.
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
   private void invokeLeaderListeners(Set<String> streamNames) {
+    LOG.debug("Stream writer is the leader of streams: {}", streamNames);
     Set<StreamLeaderListener> listeners;
     synchronized (this) {
       listeners = ImmutableSet.copyOf(leaderListeners);
@@ -425,6 +436,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
+      LOG.debug("Stream leader requirement has changed");
       Set<String> streamNames =
         ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, String>() {
           @Nullable
@@ -454,15 +466,19 @@ public class DistributedStreamService extends AbstractStreamService {
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
+    private final AtomicLong countFromFiles;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
+    private boolean isInit;
 
     protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
                                    Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
+      this.countFromFiles = new AtomicLong(baseCount);
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
+      this.isInit = true;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
@@ -485,6 +501,13 @@ public class DistributedStreamService extends AbstractStreamService {
     }
 
     /**
+     * @return the current notification threshold for the stream that this {@link StreamSizeAggregator} is linked to
+     */
+    public int getStreamThresholdMB() {
+      return streamThresholdMB.get();
+    }
+
+    /**
      * Notify this aggregator that a certain number of bytes have been received from the stream writer with instance
      * {@code instanceId}.
      *
@@ -492,12 +515,8 @@ public class DistributedStreamService extends AbstractStreamService {
      * @param nbBytes number of bytes of data received
      */
     public void bytesReceived(int instanceId, long nbBytes) {
-      Long lastSize = streamWriterSizes.get(instanceId);
-      if (lastSize == null) {
-        streamWriterSizes.put(instanceId, nbBytes);
-        return;
-      }
-      streamWriterSizes.put(instanceId, lastSize + nbBytes);
+      LOG.trace("Bytes received from instanceId {}: {}B", instanceId, nbBytes);
+      streamWriterSizes.put(instanceId, nbBytes);
       checkSendNotification();
     }
 
@@ -505,7 +524,7 @@ public class DistributedStreamService extends AbstractStreamService {
      * Check if the current size of data is enough to trigger a notification.
      */
     private void checkSendNotification() {
-      long sum = 0;
+      long sum = countFromFiles.get();
       for (Long size : streamWriterSizes.values()) {
         sum += size;
       }
@@ -515,8 +534,10 @@ public class DistributedStreamService extends AbstractStreamService {
           publishNotification(sum);
         } finally {
           streamBaseCount.set(sum);
+          countFromFiles.set(0);
         }
       }
+      isInit = false;
     }
 
     private void publishNotification(long absoluteSize) {
