@@ -44,7 +44,7 @@ public interface TestManager {
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
    * This method could be called between two unit tests, to make them independent.
    */
-  void clear();
+  void clear() throws Exception;
 
   /**
    * Deploys {@link DatasetModule}.
@@ -64,7 +64,8 @@ public interface TestManager {
    * @param <T> type of the dataset admin
    */
   @Beta
-  <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName, DatasetProperties props) throws Exception;
+  <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName,
+                                                DatasetProperties props) throws Exception;
 
   /**
    * Adds an instance of dataset.

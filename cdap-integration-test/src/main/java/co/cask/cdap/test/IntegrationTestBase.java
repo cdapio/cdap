@@ -17,9 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.ProgramClient;
@@ -37,19 +35,18 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.cdap.test.internal.AppFabricClient;
-import co.cask.cdap.test.remote.RemoteApplicationManager;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,8 +78,25 @@ public class IntegrationTestBase {
    */
   private static final String ACCESS_TOKEN = System.getProperty("accessToken", "");
 
-  private File tempDir;
-  private LocalLocationFactory locationFactory;
+  private static File tempDir;
+  private static LocalLocationFactory locationFactory;
+  private static IntegrationTestManager testManager;
+
+  @BeforeClass
+  public static void beforeClass() {
+    tempDir = Files.createTempDir();
+    locationFactory = new LocalLocationFactory(tempDir);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    try {
+      DirUtils.deleteDirectoryContents(tempDir);
+    } catch (IOException e) {
+      LOG.warn("Failed to delete temp directory: " + tempDir.getAbsolutePath(), e);
+    }
+
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -107,24 +121,11 @@ public class IntegrationTestBase {
         }
       }
     }
-
-    tempDir = Files.createTempDir();
-    locationFactory = new LocalLocationFactory(tempDir);
   }
 
   @After
   public void tearDown() throws Exception {
-    try {
-      DirUtils.deleteDirectoryContents(tempDir);
-    } catch (IOException e) {
-      LOG.warn("Failed to delete temp directory: " + tempDir.getAbsolutePath(), e);
-    }
-
-    // stop all programs
-    IntegrationTestClient integrationTestClient = getIntegrationTestClient();
-    integrationTestClient.stopAll();
-    integrationTestClient.resetUnrecoverably();
-
+    getTestManager().clear();
     assertNoApps();
     assertNoUserDatasets();
     // TODO: check metrics, streams, etc.
@@ -134,7 +135,11 @@ public class IntegrationTestBase {
     }
   }
 
-  protected ClientConfig getClientConfig() {
+  protected static TestManager getTestManager() {
+    return new IntegrationTestManager(getClientConfig(), locationFactory);
+  }
+
+  protected static ClientConfig getClientConfig() {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     if (INSTANCE_URI.isEmpty()) {
       builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
@@ -176,25 +181,7 @@ public class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    File appJarFile = null;
-    try {
-      appJarFile = createAppJarFile(applicationClz, bundleEmbeddedJars);
-      getApplicationClient().deploy(appJarFile);
-
-      Application application = applicationClz.newInstance();
-      DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
-      application.configure(configurer, new ApplicationContext());
-      String applicationId = configurer.createSpecification().getName();
-      return new RemoteApplicationManager(applicationId, getClientConfig());
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    } finally {
-      if (appJarFile != null && !appJarFile.delete()) {
-        LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
-      }
-    }
+    return getTestManager().deployApplication(applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
@@ -249,10 +236,6 @@ public class IntegrationTestBase {
 
     Assert.assertEquals("Must have no deployed apps, but found the following apps: "
                         + Joiner.on(", ").join(applicationIds), 0, applicationRecords.size());
-  }
-
-  private File createAppJarFile(Class<?> cls, File[] bundleEmbeddedJars) throws IOException {
-    return AppFabricClient.createDeploymentJar(locationFactory, cls, bundleEmbeddedJars);
   }
 
   private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
