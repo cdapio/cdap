@@ -5,9 +5,9 @@
      ng-show="menu.children.length == 0"
      ng-bind="menu.label">
   </a>
-  <div ng-show="menu.children.length > 0">
+  <a ng-show="menu.children.length > 0">
     <span ng-bind="menu.label" bs-collapse-toggle></span>
-  </div>
+  </a>
   <ul bs-collapse-target>
     <my-tree-view data-model="menu.children"> </my-tree-view>
   </ul>
