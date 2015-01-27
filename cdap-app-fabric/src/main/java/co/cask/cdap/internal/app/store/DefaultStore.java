@@ -48,6 +48,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
@@ -792,22 +793,47 @@ public class DefaultStore implements Store {
 
 
   @Override
-  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpecification) {
+  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeAdapter(id, adapterSpecification);
+        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STARTED);
         return null;
       }
     });
   }
 
+
+  @Nullable
   @Override
   public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
       @Override
       public AdapterSpecification apply(AppMds mds) throws Exception {
         return mds.apps.getAdapter(id, name);
+      }
+    });
+  }
+
+
+  @Nullable
+  @Override
+  public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
+      @Override
+      public AdapterStatus apply(AppMds mds) throws Exception {
+        return mds.apps.getAdapterStatus(id, name);
+      }
+    });
+  }
+
+  @Nullable
+  @Override
+  public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name, final AdapterStatus status) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
+      @Override
+      public AdapterStatus apply(AppMds mds) throws Exception {
+        return mds.apps.setAdapterStatus(id, name, status);
       }
     });
   }

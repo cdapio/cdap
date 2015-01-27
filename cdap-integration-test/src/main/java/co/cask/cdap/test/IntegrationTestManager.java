@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
@@ -42,16 +44,18 @@ public class IntegrationTestManager implements TestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
 
-  private final IntegrationTestClient integrationTestClient;
+  private final MetaClient metaClient;
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
   private final LocationFactory locationFactory;
+  private final ProgramClient programClient;
 
   public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
     this.locationFactory = locationFactory;
-    this.integrationTestClient = new IntegrationTestClient(clientConfig);
+    this.metaClient = new MetaClient(clientConfig);
     this.applicationClient = new ApplicationClient(clientConfig);
+    this.programClient = new ProgramClient(clientConfig);
   }
 
   @Override
@@ -77,9 +81,8 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public void clear() throws Exception {
-    // stop all programs
-    integrationTestClient.stopAll();
-    integrationTestClient.resetUnrecoverably();
+    programClient.stopAll();
+    metaClient.resetUnrecoverably();
   }
 
   @Override

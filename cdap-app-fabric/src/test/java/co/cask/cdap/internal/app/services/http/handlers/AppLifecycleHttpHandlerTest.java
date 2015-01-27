@@ -22,13 +22,9 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.NamespaceMeta;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
@@ -37,23 +33,6 @@ import java.util.List;
  * Tests for {@link AppLifecycleHttpHandler}
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
-  private static final Gson GSON = new Gson();
-  private static final String TEST_NAMESPACE1 = "testnamespace1";
-  private static final String TEST_NAMESPACE2 = "testnamespace2";
-  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
-    .setName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
-  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
-    .setName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
-
-  @BeforeClass
-  public static void setup() throws Exception {
-    HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
-                                  GSON.toJson(TEST_NAMESPACE_META1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
-                     GSON.toJson(TEST_NAMESPACE_META2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-  }
 
   /**
    * Tests deploying an application in a non-existing non-default namespace.
@@ -113,11 +92,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
-    //make sure testnamespace1 has 1 app
+    //verify testnamespace1 has 1 app
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
     Assert.assertEquals(1, apps.size());
 
-    //make sure testnamespace2 has 1 app
+    //verify testnamespace2 has 1 app
     apps = getAppList(TEST_NAMESPACE2);
     Assert.assertEquals(1, apps.size());
 
@@ -144,22 +123,27 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDelete() throws Exception {
-    //Delete an invalid app
+    // Delete an non-existing app
     HttpResponse response = doDelete(getVersionedAPIPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN,
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    //TODO: Enable these verifications after their v3 APIs are implemented.
-    //getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
-    //waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
-    //Try to delete an App while its flow is running
-    //response = doDelete("/v2/apps/WordCountApp");
-    //Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "start");
+    waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "RUNNING");
+    // Try to delete an App while its flow is running
+    response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+                                            TEST_NAMESPACE1));
+    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
 
-    //TODO: Enable these verifications after their v3 APIs are implemented.
-    // getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
-    // waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "stop");
+    waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "STOPPED");
+
+    // Delete the app in the wrong namespace
+    response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+                                            TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
     //Delete the App after stopping the flow
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
@@ -167,14 +151,5 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    HttpResponse response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
-                                                   TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

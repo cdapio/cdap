@@ -16,10 +16,12 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -125,7 +127,6 @@ public class IntegrationTestBase {
 
   @After
   public void tearDown() throws Exception {
-    getTestManager().clear();
     assertNoApps();
     assertNoUserDatasets();
     // TODO: check metrics, streams, etc.
@@ -159,6 +160,10 @@ public class IntegrationTestBase {
     return builder.build();
   }
 
+  protected MetaClient getMetaClient() {
+    return new MetaClient(getClientConfig());
+  }
+
   protected ApplicationClient getApplicationClient() {
     return new ApplicationClient(getClientConfig());
   }
@@ -173,10 +178,6 @@ public class IntegrationTestBase {
 
   protected DatasetClient getDatasetClient() {
     return new DatasetClient(getClientConfig());
-  }
-
-  protected IntegrationTestClient getIntegrationTestClient() {
-    return new IntegrationTestClient(getClientConfig());
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
@@ -223,7 +224,7 @@ public class IntegrationTestBase {
     });
 
     Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
-                       + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
+                         + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
   }
 
   private void assertNoApps() throws Exception {
