@@ -211,7 +211,7 @@ public class DistributedStreamService extends AbstractStreamService {
         StreamConfig config = streamAdmin.getConfig(streamName);
         long filesSize = StreamUtils.fetchStreamFilesSize(config);
         LOG.debug("Size of the files already present for stream {}: {}", streamName, filesSize);
-        createSizeAggregator(streamName, filesSize, config.getNotificationThresholdMB());
+        createSizeAggregator(streamName, filesSize, new AtomicInteger(config.getNotificationThresholdMB()));
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
         Throwables.propagate(e);
@@ -237,7 +237,7 @@ public class DistributedStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final AtomicInteger threshold) {
     LOG.debug("Creating size aggregator for stream {}", streamName);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
@@ -259,7 +259,7 @@ public class DistributedStreamService extends AbstractStreamService {
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void generationChanged(String streamName, int generation) {
-          int currentThresold = threshold;
+          AtomicInteger currentThresold = threshold;
           StreamSizeAggregator currentAggregator = aggregators.get(streamName);
           if (currentAggregator != null) {
             currentThresold = currentAggregator.getStreamThresholdMB();
@@ -471,12 +471,12 @@ public class DistributedStreamService extends AbstractStreamService {
     private final Cancellable cancellable;
     private boolean isInit;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
+    protected StreamSizeAggregator(String streamName, long baseCount, AtomicInteger streamThresholdMB,
                                    Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
       this.countFromFiles = new AtomicLong(baseCount);
-      this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
+      this.streamThresholdMB = streamThresholdMB;
       this.cancellable = cancellable;
       this.isInit = true;
       this.streamFeed = new NotificationFeed.Builder()
@@ -503,8 +503,8 @@ public class DistributedStreamService extends AbstractStreamService {
     /**
      * @return the current notification threshold for the stream that this {@link StreamSizeAggregator} is linked to
      */
-    public int getStreamThresholdMB() {
-      return streamThresholdMB.get();
+    public AtomicInteger getStreamThresholdMB() {
+      return streamThresholdMB;
     }
 
     /**
