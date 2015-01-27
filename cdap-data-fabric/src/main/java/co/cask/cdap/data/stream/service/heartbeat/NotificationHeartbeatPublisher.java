@@ -24,8 +24,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
-import java.io.IOException;
-
 /**
  * Implementation of {@link HeartbeatPublisher} that publishes {@link StreamWriterHeartbeat} as notification using
  * the {@link NotificationService}.
@@ -56,11 +54,11 @@ public class NotificationHeartbeatPublisher extends AbstractIdleService implemen
   }
 
   @Override
-  public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) throws IOException {
+  public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) {
     try {
       return notificationService.publish(heartbeatFeed, heartbeat);
     } catch (NotificationException e) {
-      throw new IOException(e);
+      throw new IllegalArgumentException("Streams' heartbeat notification feed has not been created", e);
     }
   }
 }

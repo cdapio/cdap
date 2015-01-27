@@ -19,8 +19,6 @@ package co.cask.cdap.data.stream.service.heartbeat;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
-import java.io.IOException;
-
 /**
  * Publishes {@link StreamWriterHeartbeat}s.
  */
@@ -32,7 +30,6 @@ public interface HeartbeatPublisher extends Service {
    * @param heartbeat heartbeat to publish
    * @return a {@link ListenableFuture} describing the state of publishing. The {@link ListenableFuture#get} method
    * will return the published heartbeat.
-   * @throws IOException when the {@code heartbeat}
    */
-  ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) throws IOException;
+  ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat);
 }
