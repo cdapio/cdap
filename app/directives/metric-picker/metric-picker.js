@@ -111,9 +111,9 @@ angular.module(PKG.name + '.commons')
 
           if(newVal.context && newVal.name) {
             ngModel.$setViewValue(
-              '/metrics/query?' +
-              'context=' + encodeURIComponent(getContext()) +
-              'metric=' + encodeURIComponent(newVal.name)
+              '/metrics/query' +
+              '?context=' + encodeURIComponent(getContext()) +
+              '&metric=' + encodeURIComponent(newVal.name)
             );
           }
           else {
