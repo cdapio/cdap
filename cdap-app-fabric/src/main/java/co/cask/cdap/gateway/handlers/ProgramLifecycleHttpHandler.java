@@ -216,25 +216,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,spark,procedures,services}.
+   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,procedures,services,schedules}.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
+  @Path("/apps/{app-id}/{type}/{id}/status")
   public void getStatus(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") String appId,
-                        @PathParam("runnable-type") String runnableType,
-                        @PathParam("runnable-id") String runnableId) {
+                        @PathParam("type") String type,
+                        @PathParam("id") String id) {
 
-    if (runnableType.equals("schedules")) {
-      getScheduleStatus(responder, appId, namespaceId, runnableId);
+    if (type.equals("schedules")) {
+      getScheduleStatus(responder, appId, namespaceId, id);
       return;
     }
 
     try {
-      Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
-      ProgramType type = ProgramType.valueOfCategoryName(runnableType);
-      StatusMap statusMap = getStatus(id, type);
+      Id.Program program = Id.Program.from(namespaceId, appId, id);
+      ProgramType programType = ProgramType.valueOfCategoryName(type);
+      StatusMap statusMap = getStatus(program, programType);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
         responder.sendString(HttpResponseStatus.valueOf(statusMap.getStatusCode()), statusMap.getError());
@@ -278,19 +278,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-
-
-
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
-  public void takeActionOnProgram(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
-                                    @PathParam("runnable-type") String runnableType,
-                                    @PathParam("runnable-id") String runnableId,
-                                    @PathParam("action") String action) {
-    if (runnableType.equals("schedules")) {
-      suspendResumeSchedule(responder, namespaceId, appId, runnableId, action);
+  @Path("/apps/{app-id}/{type}/{id}/{action}")
+  public void performAction(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId,
+                            @PathParam("type") String type,
+                            @PathParam("id") String id,
+                            @PathParam("action") String action) {
+    if (type.equals("schedules")) {
+      suspendResumeSchedule(responder, namespaceId, appId, id, action);
       return;
     }
 
@@ -299,12 +296,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    ProgramType programType = ProgramType.valueOfCategoryName(runnableType);
+    ProgramType programType = ProgramType.valueOfCategoryName(type);
     if ("debug".equals(action) && !isDebugAllowed(programType)) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
-    startStopProgram(request, responder, namespaceId, appId, programType, runnableId, action);
+    startStopProgram(request, responder, namespaceId, appId, programType, id, action);
   }
 
   private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,

@@ -244,16 +244,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,spark,procedures,services}.
+   * Returns status of a type specified by {flows,workflows,mapreduce,spark,procedures,services,schedules}.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
+  @Path("/apps/{app-id}/{type}/{id}/status")
   public void getStatus(final HttpRequest request, final HttpResponder responder,
                         @PathParam("app-id") final String appId,
-                        @PathParam("runnable-type") final String runnableType,
-                        @PathParam("runnable-id") final String runnableId) {
+                        @PathParam("type") final String type,
+                        @PathParam("id") final String id) {
     programLifecycleHttpHandler.getStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                          runnableType, runnableId);
+                                          type, id);
   }
 
   /**
@@ -323,39 +323,39 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts a program.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/start")
+  @Path("/apps/{app-id}/{type}/{id}/start")
   public void startProgram(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
-                           @PathParam("runnable-type") final String runnableType,
-                           @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, runnableType, runnableId, "start");
+                           @PathParam("type") final String type,
+                           @PathParam("id") final String id) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, type, id, "start");
   }
 
   /**
    * Starts a program with debugging enabled.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/debug")
+  @Path("/apps/{app-id}/{type}/{id}/debug")
   public void debugProgram(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
-                           @PathParam("runnable-type") final String runnableType,
-                           @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, runnableType, runnableId, "debug");
+                           @PathParam("type") final String type,
+                           @PathParam("id") final String id) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, type, id, "debug");
   }
 
   /**
    * Stops a program.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/stop")
+  @Path("/apps/{app-id}/{type}/{id}/stop")
   public void stopProgram(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, runnableType, runnableId, "stop");
+                          @PathParam("type") final String type,
+                          @PathParam("id") final String id) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, type, id, "stop");
   }
 
   /**
@@ -667,8 +667,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void suspendSchedule(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("schedule-name") String scheduleName) {
-    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                        appId, "schedules", scheduleName, "suspend");
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, "schedules", scheduleName, "suspend");
   }
 
   /**
@@ -679,8 +679,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void resumeSchedule(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") String appId,
                                      @PathParam("schedule-name") String scheduleName) {
-    programLifecycleHttpHandler.takeActionOnProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                       appId, "schedules", scheduleName, "resume");
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, "schedules", scheduleName, "resume");
   }
 
   /**

@@ -536,7 +536,7 @@ For Workflows, you can also retrieve:
 
     GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
-Schedule can be suspended or resumed:
+Schedules can be suspended or resumed:
 
 - to suspend a schedule::
 
@@ -565,7 +565,8 @@ Example
    * - Description
      - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
    * - Returns
-     - ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},"program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+     - ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
+              ``"program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
    * - 
      - 
    * - HTTP Method
