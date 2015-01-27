@@ -1,1 +1,3 @@
-angular.module(PKG.name + '.feature.datasets', []);
+angular.module(PKG.name + '.feature.datasets', [
+  PKG.name + '.commons'
+]);

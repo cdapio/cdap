@@ -1,1 +1,3 @@
-angular.module(PKG.name + '.feature.streams', []);
+angular.module(PKG.name + '.feature.streams', [
+  PKG.name + '.commons'
+]);

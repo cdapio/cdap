@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.programs')
-  .controller('ProgramsListController', function($scope, $stateParams, MyDataSource) {
+  .controller('ProgramsListController', function($scope, $state, $stateParams, MyDataSource) {
     var datasrc = new MyDataSource($scope),
         basePath = '/apps/' + $stateParams.appId + '/' + $stateParams.programType;
 
@@ -28,6 +28,12 @@ angular.module(PKG.name + '.feature.programs')
         }
       );
     }
+
+    $scope.goToDetail = function(programId) {
+      $state.go($stateParams.programType + '.detail', {
+        programId: programId
+      })
+    };
 
     $scope.doProgram = function(programId, action) {
       datasrc.request(
