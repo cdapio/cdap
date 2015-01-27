@@ -209,9 +209,6 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
     addToContext(builder, Constants.Metrics.Tag.NAMESPACE, namespace, index);
     for (String tagName : rule.tagsToPutIntoContext) {
       String tagValue = metricValue.getTags().get(tagName);
-      if (tagName.equals(Constants.Metrics.Tag.NAMESPACE)) {
-        System.out.println("tagname = " + tagName + "; tagvalue = " + tagValue);
-      }
       if (tagValue != null) {
         addToContext(builder, tagName, tagValue, index);
       } else {
@@ -237,7 +234,6 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
   }
 
   private void addToContext(MetricsRecordBuilder builder, String tagName, String tagValue, int index) {
-    //System.out.println("tagname = " + tagName + "; tagvalue = " + tagValue);
     if (Constants.Metrics.Tag.DATASET.equals(tagName) && index == 0) {
       // special handling for dataset context metrics - legacy
       builder.appendContext("-.dataset");

@@ -94,17 +94,17 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testNamespacesValidFlows() throws Exception {
-    // no namespaces initially
+    // get initial namespace list
     HttpResponse response = listAllNamespaces();
     assertResponseCode(200, response);
     List<JsonObject> namespaces = readListResponse(response);
-    Assert.assertEquals(0, namespaces.size());
+    int initialSize = namespaces.size();
     // create and verify
     response = createNamespace(METADATA_VALID, ID);
     assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
-    Assert.assertEquals(1, namespaces.size());
+    Assert.assertEquals(initialSize + 1, namespaces.size());
     Assert.assertEquals(ID, namespaces.get(0).get(ID_FIELD).getAsString());
     Assert.assertEquals(NAME, namespaces.get(0).get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespaces.get(0).get(DESCRIPTION_FIELD).getAsString());
@@ -113,7 +113,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
-    Assert.assertEquals(0, namespaces.size());
+    Assert.assertEquals(initialSize, namespaces.size());
   }
 
   @Test

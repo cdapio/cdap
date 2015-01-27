@@ -14,11 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.test.exception;
+package co.cask.cdap.client.exception;
 
 /**
- * Thrown when reset is not enabled for the CDAP instance.
+ * Thrown when there was an error in resetting the CDAP instance.
  */
-public class ResetNotEnabledException extends Exception {
+public class ResetFailureException extends Exception {
 
+  public ResetFailureException(String message) {
+    super(message);
+  }
 }

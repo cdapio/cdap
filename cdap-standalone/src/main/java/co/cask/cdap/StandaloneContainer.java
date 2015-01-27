@@ -14,15 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package co.cask.cdap;
 
-import co.cask.cdap.StandaloneMain;
-import co.cask.cdap.client.MetaClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -84,8 +84,7 @@ public class StandaloneContainer {
     }
   }
 
-  private static void waitForStandalone(long timeoutMs) throws UnAuthorizedAccessTokenException,
-    InterruptedException, TimeoutException {
+  private static void waitForStandalone(long timeoutMs) throws InterruptedException, TimeoutException, IOException {
 
     long startTime = System.currentTimeMillis();
     while (System.currentTimeMillis() - startTime < timeoutMs) {
@@ -98,16 +97,10 @@ public class StandaloneContainer {
     throw new TimeoutException();
   }
 
-  private static boolean standaloneIsReachable() throws UnAuthorizedAccessTokenException {
-    MetaClient metaClient = new MetaClient(new ClientConfig.Builder()
-                                             .setUri(DEFAULT_CONNECTION_URI)
-                                             .build());
-    try {
-      metaClient.ping();
-      return true;
-    } catch (IOException e) {
-      return false;
-    }
+  private static boolean standaloneIsReachable() throws IOException {
+    HttpRequest request = HttpRequest.get(DEFAULT_CONNECTION_URI.resolve("/ping").toURL()).build();
+    HttpResponse response = HttpRequests.execute(request);
+    return response.getResponseCode() == HttpURLConnection.HTTP_OK;
   }
 
   public static void stop() throws Exception {
