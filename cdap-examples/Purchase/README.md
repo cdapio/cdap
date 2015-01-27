@@ -29,7 +29,6 @@ Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, a
 For more information on running CDAP examples, see
 http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html.
 
-
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 
 Copyright © 2014 Cask Data, Inc.
