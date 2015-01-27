@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.annotation.Batch;
-import co.cask.cdap.api.annotation.DisableTransaction;
 import co.cask.cdap.api.annotation.HashPartition;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.RoundRobin;
@@ -194,12 +193,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
       FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletName);
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", flowletName);
 
-      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
-      if (disableTransaction) {
-        LOG.info("Transaction is disable for flowlet {}.{}.{}",
-                 program.getApplicationId(), program.getId().getId(), flowletName);
-      }
-
       Class<?> clz = Class.forName(flowletDef.getFlowletSpec().getClassName(), true,
                                    program.getClassLoader());
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
@@ -215,9 +208,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                dsFramework, configuration);
 
       // Creates tx related objects
-      DataFabricFacade dataFabricFacade = disableTransaction ?
-        dataFabricFacadeFactory.createNoTransaction(program, flowletContext.getDatasetInstantiator())
-        : dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
+      DataFabricFacade dataFabricFacade =
+        dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -255,10 +247,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
       FlowletRuntimeService driver = new FlowletRuntimeService(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade, serviceHook);
-
-      if (disableTransaction) {
-        LOG.info("Transaction disabled for flowlet {}", flowletContext);
-      }
 
       FlowletProgramController controller = new FlowletProgramController(program.getName(), flowletName,
                                                                          flowletContext, driver, consumerSuppliers);
