@@ -82,7 +82,6 @@ public class IntegrationTestBase {
 
   private static File tempDir;
   private static LocalLocationFactory locationFactory;
-  private static IntegrationTestManager testManager;
 
   @BeforeClass
   public static void beforeClass() {
@@ -127,6 +126,7 @@ public class IntegrationTestBase {
 
   @After
   public void tearDown() throws Exception {
+    getTestManager().clear();
     assertNoApps();
     assertNoUserDatasets();
     // TODO: check metrics, streams, etc.
