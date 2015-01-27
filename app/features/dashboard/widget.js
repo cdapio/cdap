@@ -18,7 +18,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
         dataSrc.request(
           {
-            _cdapPathV2: m
+            _cdapPath: m,
+            method: 'POST'
           },
           (function (result) {
             this.data = result.data;
