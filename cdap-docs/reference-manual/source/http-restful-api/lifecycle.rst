@@ -549,7 +549,7 @@ Schedules can be suspended or resumed:
 Example
 .......
 .. list-table::
-   :widths: 20 80
+   :widths: 10 90
    :stub-columns: 1
 
    * - HTTP Method
