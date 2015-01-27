@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Tables;
 
 /**
- * Demonstrates the use of column-level conflict detection by example of managing user profiles,
+ * Demonstrates the use of column-level conflict detection by the example of managing user profiles,
  * where individual attributes such as name and email address can be updated without conflicting
  * with updates to other attributes such as the last active time of the user. This is achieved
  * by setting the conflict resolution level of the "profiles" table to COLUMN.

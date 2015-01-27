@@ -131,7 +131,7 @@ public class UserProfileService extends AbstractService {
 
       String address = Charsets.UTF_8.decode(request.getContent()).toString();
       if (!address.contains("@")) {
-        responder.sendError(400, "Invalid eMail address.");
+        responder.sendError(400, "Invalid email address.");
         return;
       }
       Row row = profiles.get(new Get(userId));
