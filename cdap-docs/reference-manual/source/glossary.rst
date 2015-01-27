@@ -72,7 +72,19 @@ Glossary
       
    CDAP
       The Cask Data Application Platform; refers to both the platform, and an installed instance of it.
-      
+
+   Standalone CDAP
+      A version of the Cask Data Application Platform, supplied as a downloadable SDK,
+      that runs on a single machine in a single Java Virtual Machine (JVM). It provides
+      all of the CDAP APIs without requiring a Hadoop cluster, using alternative,
+      fully-functional implementations of CDAP features. For example, application
+      containers are implemented as Java threads instead of YARN containers.
+
+   Distributed CDAP
+      A version of the Cask Data Application Platform, supplied as either Yum ``.rpm`` or
+      APT ``.deb`` packages, that runs on a :term:`Hadoop` cluster. Packages are available
+      for *Ubuntu 12* and *CentOS 6*.
+
    Hadoop
       Refers to the `Apache™ Hadoop® <http://hadoop.apache.org>`__ project, which describes
       itself as:
