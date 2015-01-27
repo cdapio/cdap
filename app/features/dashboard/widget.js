@@ -33,7 +33,7 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     Widget.prototype.getClassName = function () {
-      return 'panel-default widget-' + this.type;
+      return 'panel-default widget widget-' + this.type;
     };
 
     return Widget;
