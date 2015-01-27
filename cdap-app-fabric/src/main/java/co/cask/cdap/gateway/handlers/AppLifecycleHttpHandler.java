@@ -64,6 +64,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
@@ -71,8 +73,10 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -96,6 +100,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -262,7 +267,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // Deletion of a particular application is not allowed if that application is used by an adapter
       if (adapterService.getAdapterTypeInfo(appId) != null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("An adapter type exists with with the name: %s", appId));
+                             String.format("Cannot delete Application %s." +
+                                             " An AdapterType exists with a conflicting name.", appId));
+
         return;
       }
 
@@ -418,8 +425,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo.getSourceType(),
-                                                       adapterTypeInfo.getSinkType());
+      AdapterSpecification spec = convertToSpec(adapterName, config, adapterTypeInfo);
       adapterService.createAdapter(namespaceId, spec);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
@@ -430,6 +436,26 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Failed to deploy adapter", th);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
+  }
+
+  private AdapterSpecification convertToSpec(String name, AdapterConfig config, AdapterTypeInfo typeInfo) {
+    Map<String, String> sourceProperties = Maps.newHashMap(typeInfo.getDefaultSourceProperties());
+    if (config.source.properties != null) {
+      sourceProperties.putAll(config.source.properties);
+    }
+    Set<Source> sources = ImmutableSet.of(
+      new Source(config.source.name, typeInfo.getSourceType(), sourceProperties));
+    Map<String, String> sinkProperties = Maps.newHashMap(typeInfo.getDefaultSinkProperties());
+    if (config.sink.properties != null) {
+      sinkProperties.putAll(config.sink.properties);
+    }
+    Set<Sink> sinks = ImmutableSet.of(
+      new Sink(config.sink.name, typeInfo.getSinkType(), sinkProperties));
+    Map<String, String> adapterProperties = Maps.newHashMap(typeInfo.getDefaultAdapterProperties());
+    if (config.properties != null) {
+      adapterProperties.putAll(config.properties);
+    }
+    return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,

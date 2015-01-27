@@ -138,8 +138,123 @@ public class SchemaTest {
   }
 
   @Test
-  public void testParse() throws IOException, UnsupportedTypeException {
+  public void testParseJson() throws IOException, UnsupportedTypeException {
     Schema schema = new ReflectionSchemaGenerator().generate(Node.class);
-    Assert.assertEquals(schema, Schema.parse(schema.toString()));
+    Assert.assertEquals(schema, Schema.parseJson(schema.toString()));
+  }
+
+  @Test
+  public void testParseFlatSQL() throws IOException {
+    // simple, non-nested types
+    String schemaStr = "bool_field boolean, " +
+      "int_field int not null, " +
+      "long_field long not null, " +
+      "float_field float NOT NULL, " +
+      "double_field double NOT NULL, " +
+      "bytes_field bytes not null, " +
+      "array_field array<string> not null, " +
+      "map_field map<string,int> not null, " +
+      "record_field record<x:int,y:double>, " +
+      "string_field string";
+    Schema expected = Schema.recordOf(
+      "rec",
+      Schema.Field.of("bool_field", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
+      Schema.Field.of("int_field", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("long_field", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("float_field", Schema.of(Schema.Type.FLOAT)),
+      Schema.Field.of("double_field", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("bytes_field", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("array_field", Schema.arrayOf(Schema.nullableOf(Schema.of(Schema.Type.STRING)))),
+      Schema.Field.of("map_field", Schema.mapOf(
+        Schema.nullableOf(Schema.of(Schema.Type.STRING)),
+        Schema.nullableOf(Schema.of(Schema.Type.INT)))),
+      Schema.Field.of("record_field", Schema.nullableOf(Schema.recordOf(
+        "rec1",
+        Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("y", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE)))))),
+      Schema.Field.of("string_field", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
+    );
+    Assert.assertEquals(expected, Schema.parseSQL(schemaStr));
+  }
+
+  @Test
+  public void testNestedSQL() throws IOException {
+    Schema expected = Schema.recordOf(
+      "rec",
+      Schema.Field.of(
+        "x",
+        Schema.mapOf(
+          Schema.recordOf("rec1",
+                          // String x
+                          Schema.Field.of("x", Schema.of(Schema.Type.STRING)),
+                          // String[] y
+                          Schema.Field.of("y", Schema.arrayOf(Schema.of(Schema.Type.STRING))),
+                          // Map<byte[],double> z
+                          Schema.Field.of("z", Schema.mapOf(Schema.of(Schema.Type.BYTES),
+                                                            Schema.of(Schema.Type.DOUBLE)))),
+          Schema.arrayOf(Schema.recordOf(
+            "rec2",
+            Schema.Field.of("x",
+                            // Map<array<byte[]>, Map<boolean,byte[]> x
+                            Schema.mapOf(Schema.arrayOf(Schema.of(Schema.Type.BYTES)),
+                                         Schema.mapOf(Schema.of(Schema.Type.BOOLEAN),
+                                                      Schema.of(Schema.Type.BYTES)))
+          )))
+        )),
+      Schema.Field.of("y", Schema.of(Schema.Type.INT)));
+    String schemaStr =
+      "x map<" +
+        "record<" +
+          "x:string not null," +
+          "y:array<string not null> not null," +
+          "z:map<bytes not null,double not null> not null" +
+        "> not null," +
+        "array<" +
+          "record<" +
+            "x:map<" +
+              "array<bytes not null> not null," +
+              "map<boolean not null,bytes not null> not null" +
+            "> not null" +
+          "> not null" +
+        "> not null" +
+      "> not null, y int not null";
+    Assert.assertEquals(expected, Schema.parseSQL(schemaStr));
+  }
+
+  @Test
+  public void testParseSQLWithWhitespace() throws IOException {
+    String schemaStr = "map_field map< string , int >   not null,\n" +
+      "arr_field array< record< x:int , y:double >\t> not null";
+    Schema expectedSchema = Schema.recordOf(
+      "rec",
+      Schema.Field.of("map_field", Schema.mapOf(
+        Schema.nullableOf(Schema.of(Schema.Type.STRING)), Schema.nullableOf(Schema.of(Schema.Type.INT)))),
+      Schema.Field.of("arr_field",
+                      Schema.arrayOf(Schema.nullableOf(
+                        Schema.recordOf("rec1",
+                                        Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                                        Schema.Field.of("y", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE)))))))
+    );
+    Assert.assertEquals(expectedSchema, Schema.parseSQL(schemaStr));
+  }
+
+  @Test
+  public void testInvalidSQL() {
+    verifyThrowsException("int x");
+    verifyThrowsException("x map<int, int");
+    verifyThrowsException("x array<string");
+    verifyThrowsException("x bool");
+    verifyThrowsException("x integer");
+    verifyThrowsException("x record<y int>");
+    verifyThrowsException("x array<>");
+  }
+
+  private void verifyThrowsException(String toParse) {
+    try {
+      Schema.parseSQL(toParse);
+      Assert.fail();
+    } catch (IOException e) {
+      // expected
+    }
   }
 }

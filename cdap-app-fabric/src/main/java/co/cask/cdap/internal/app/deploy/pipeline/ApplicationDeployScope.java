@@ -14,14 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.format;
+package co.cask.cdap.internal.app.deploy.pipeline;
 
 /**
- * Names of {@link RecordFormat RecordFormats} built into the platform.
+ * Represents the scope of an application undergoing deployment.
  */
-public final class Formats {
-  public static final String AVRO = "avro";
-  public static final String CSV = "csv";
-  public static final String TSV = "tsv";
-  public static final String TEXT = "text";
+public enum ApplicationDeployScope {
+  USER, SYSTEM
 }

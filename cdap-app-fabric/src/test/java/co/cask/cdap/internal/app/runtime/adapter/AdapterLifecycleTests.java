@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
-import co.cask.cdap.AppWithMultipleWorkflows;
+import co.cask.cdap.AppWithServices;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -59,6 +59,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private static File adapterDir;
   private static AdapterService adapterService;
 
+  private static final String adapterType = "dummyAdapter";
+
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
@@ -72,7 +74,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
-    String adapterType = "dummyAdapter";
     String adapterName = "myStreamConverter";
 
     ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
@@ -111,7 +112,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
     response = getAdapterStatus(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String status = readResponse(response, String.class);
+    String status = readResponse(response);
     Assert.assertEquals("STARTED", status);
 
     response = startStopAdapter(namespaceId, adapterName, "stop");
@@ -119,7 +120,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
     response = getAdapterStatus(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    status = readResponse(response, String.class);
+    status = readResponse(response);
     Assert.assertEquals("STOPPED", status);
 
     response = startStopAdapter(namespaceId, adapterName, "stop");
@@ -130,7 +131,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
     response = getAdapterStatus(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    status = readResponse(response, String.class);
+    status = readResponse(response);
     Assert.assertEquals("STARTED", status);
 
     response = deleteAdapter(namespaceId, adapterName);
@@ -138,6 +139,26 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testRestrictUserApps() throws Exception {
+    // Testing that users can not deploy an application
+    HttpResponse response = deploy(AppWithServices.class, adapterType);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    String responseString = readResponse(response);
+    Assert.assertTrue(String.format("Response String: %s", responseString),
+                      responseString.contains("An AdapterType exists with a conflicting name."));
+
+
+    // Users can not delete adapter applications
+    response = doDelete(getVersionedAPIPath(String.format("apps/%s", adapterType),
+                                            Constants.Gateway.API_VERSION_3_TOKEN,
+                                            Constants.DEFAULT_NAMESPACE));
+    responseString = readResponse(response);
+    Assert.assertTrue(String.format("Response String: %s", responseString),
+                      responseString.contains("An AdapterType exists with a conflicting name."));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -150,7 +171,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
 
     String adapterName = "myAdapter";
-    String adapterType = "dummyAdapter";
 
     // Create Adapter without specifying the dataset.class attribute in the sink properties results in an error.
     HttpResponse httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
@@ -167,8 +187,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   private static void setupAdapters() throws IOException {
-    setupAdapter(AdapterApp.class, "dummyAdapter");
-    setupAdapter(AppWithMultipleWorkflows.class, "AppWithMultipleWorkflows");
+    setupAdapter(AdapterApp.class, adapterType);
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {

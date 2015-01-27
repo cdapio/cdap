@@ -48,7 +48,8 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
-    pgmStage.process(new ApplicationDeployable(configuration, DefaultId.APPLICATION, newSpec, appArchive));
+    pgmStage.process(new ApplicationDeployable(configuration, DefaultId.APPLICATION, newSpec,
+                                               ApplicationDeployScope.USER, appArchive));
     Assert.assertTrue(true);
   }
 

@@ -33,7 +33,7 @@ public final class RecordFormats {
   // We may eventually want this mapping to be derived from the config.
   private static final Map<String, Class<? extends RecordFormat>> NAME_CLASS_MAP =
     ImmutableMap.<String, Class<? extends RecordFormat>>builder()
-      .put(Formats.STRING, SingleStringRecordFormat.class)
+      .put(Formats.TEXT, TextRecordFormat.class)
       .put(Formats.CSV, DelimitedStringsRecordFormat.class)
       .put(Formats.TSV, DelimitedStringsRecordFormat.class)
       .put(Formats.AVRO, AvroRecordFormat.class)

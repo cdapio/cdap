@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Stream record format that interprets the entire body as a single string.
  */
-public class SingleStringRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
+public class TextRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   private Charset charset = Charsets.UTF_8;
   private String fieldName = "body";
