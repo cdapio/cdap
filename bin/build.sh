@@ -6,8 +6,7 @@
 
 PWD=`pwd`
 UI_PATH=$(cd $(dirname ${BASH_SOURCE[0]})/.. && pwd)
-DEFAULT_TARGET_PATH="${UI_PATH}/target"
-TARGET_PATH=${1-$DEFAULT_TARGET_PATH}
+TARGET_PATH=${1:-${UI_PATH}/target}
 
 read -p "Blow away ${TARGET_PATH} and build in it (y/n)? " choice
 case "$choice" in
