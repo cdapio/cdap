@@ -10,9 +10,9 @@ profile are updated in different ways:
 - The time of the last activity is updated by a flow that processes
   events whenever it encounters an event from that user.
 
-Features introduced: Column-Level Conflict Resolution.
+Features introduced: Column-Level Conflict Detection.
 
-This application uses a table with conflict resolution at the column level.
+This application uses a table with conflict detection at the column level.
 A conflict occurs if two transactions (for example, a flowlet's process method
 and a service handler) that overlap in time modify the same data in a table.
 Such a conflict is detected at the time that the transactions are committed,
