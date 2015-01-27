@@ -35,20 +35,22 @@
     function will automatically search for all of the words. Pages
     containing fewer words won't appear in the result list.{% endtrans %}
  -->
-From here you can search the documentation. 
-</p>
-<p>
-To perform a local <strong>Quick Search</strong>, enter your search word(s) into the box below and
-click <strong>"Search"</strong>. <i>Quick Search</i> is a local keyword search; not as comprehensive as
-an external search engine, but fast and often sufficiently accurate. Note that the Search function will automatically search for all of the
-words. Pages containing fewer words won't appear in the result list.
+  From here you can search the documentation. 
+  </p>
+  <p>
+  To perform a local <strong>Quick Search</strong>, enter your search word(s) into the box below and
+  click <strong>"Search"</strong>: 
   </p>
   <form name="searchQ" action="" method="get">
     <input maxlength="256" size="40" type="text" name="q" value="" />
     <input type="submit" value="{{ _('search') }}" />
     <span id="search-progress" style="padding-left: 10px"></span>
   </form>
-  
+  <p>
+  <i>Quick Search</i> is a local keyword search; not as comprehensive as
+  an external search engine, but fast and often sufficiently accurate. Note that the Search function will automatically search for all of the
+  words. Pages containing fewer words won't appear in the result list.
+  </p>
   <p>
   You can search—using Google—the site for either <strong>this documentation release</strong> or <strong>all documentation releases</strong>:
   </p>
@@ -61,14 +63,10 @@ words. Pages containing fewer words won't appear in the result list.
     <input type="hidden" name="ie" value="ISO-8859-1" /> 
     <input type="hidden" name="q" value="" /> 
     <input type="submit" value="Search this release using Google" name="btnG" 
-      style="font-size:75%;" onclick="javascript: form.q.value=document.searchQ.q.value + ' site:docs.cask.co/cdap/{{ version }}+OR+site:docs.cask.co/cdap/{{ release }}';"/> 
+      style="font-size:75%;" onclick="javascript: form.q.value=document.searchQ.q.value + ' site:docs.cask.co/cdap/{{ version }} OR site:docs.cask.co/cdap/{{ release }}';"/> 
   </form>
   </td>
   <td>
-<!-- 
-  </p>
-  <p>
- -->
   <form id="searchG2" action="http://www.google.com/search" name="searchbox" method="get" target="_blank"/> 
     <input type="hidden" name="hl" value="en" /> 
     <input type="hidden" name="ie" value="ISO-8859-1" /> 
@@ -80,7 +78,6 @@ words. Pages containing fewer words won't appear in the result list.
   </tr>
   </table>
   </p>
-
   {% if search_performed %}
     <h2>{{ _('Search Results') }}</h2>
     {% if not search_results %}
