@@ -81,30 +81,51 @@ Here are some rules to follow for Flows, Flowlets, Services, and Procedures:
 Keeping these guidelines in mind will help you write more efficient and faster-performing
 code.
 
+Levels of Conflict Detection
+----------------------------
 
-The Need for Disabling Transactions
------------------------------------
 Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees
 are useful in several applications where data accuracy is critical—examples include billing
 applications and computing click-through rates.
 
-However, some applications—such as trending—might not need it. Applications that do not
-strictly require accuracy can trade off accuracy against increased throughput by taking
-advantage of not having to write/read all the data in a transaction.
+However, transaction are not for free: The transaction system must track all the writes
+made by all transactions, and it must check transactions for conflicts before committing them.
+Also, if conflicts are frequent, then they impact performance, because the failed transactions
+have to be rolled back and reattempted.
 
-Disabling Transactions
-----------------------
-Transactions can be disabled for a Flow by annotating the Flow class with the
-``@DisableTransaction`` annotation::
+In some scenarios, you may want to fine-tune the way that a dataset participates in
+transactions:
 
-  @DisableTransaction
-  class MyExampleFlow implements Flow {
-    ...
-  }
+- Some applications—such as trending—might not need transactions for all writes, because
+  small inaccuracies have little effect on trends with great momentum. Applications that
+  do not strictly require accuracy can trade it for increased throughput by disabling
+  transactions for some datasets.
+- Some applications perform concurrent updates to the same row of a table, but typically
+  those updates do not strictly conflict with each other because they are on different
+  columns of the row. In this case it can make sense to increase the precision of conflict
+  detection by tracking changes at the column level instead of the row level.
 
-While this may speed up performance, if—for example—a Flowlet fails, the system would not
-be able to roll back to its previous state. You will need to judge whether the increase in
-performance offsets the increased risk of inaccurate data.
+Both of these can be achieved by specifying a conflict detection level when the table is
+created. Ffor example, in your application's ``configure()`` method::
+
+    Tables.createTable(getConfigurer(), "myTable", ConflictDetection.COLUMN);
+
+You have the following options:
+
+- ``ConflictDetection.NONE`` to disable transactions for the table. None of the writes
+  performed on this table will participate in conflict detection. However, all writes
+  will still be rolled back in case of a transaction failure (the transaction may fail
+  for other reasons than a conflict on this table).
+- ``ConflictDetection.ROW`` to track writes at the row level. This means that two
+  concurrent transactions will cause a conflict if they write to the same row of the table,
+  even if the writes are for different columns. This is the default.
+- ``ConflictDetection.COLUMN`` to increase the precision of the conflict detection to
+  the column level: Two concurrent transactions can write to the same row without conflict,
+  as long as they write to disjoint sets of columns. This will increase the overhead for
+  each transaction, because the transaction system must track writes with greater detail.
+  But it can also greatly reduce the number of transaction conflicts, leading to improved
+  overall application throughput. See the :ref:`UserProfile example <examples-user-profiles>`
+  for a sample use case.
 
 Transactions in MapReduce
 -------------------------
