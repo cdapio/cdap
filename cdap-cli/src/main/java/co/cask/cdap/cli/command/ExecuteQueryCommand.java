@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class ExecuteQueryCommand extends AbstractAuthCommand {
 
-  private static final long TIMEOUT_MS = 30000;
+  private static final long TIMEOUT_SEC = 3600;
   private final QueryClient queryClient;
 
   @Inject
@@ -62,7 +62,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
 
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
     try {
-      ExploreExecutionResult executionResult = future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      ExploreExecutionResult executionResult = future.get(TIMEOUT_SEC, TimeUnit.SECONDS);
       if (!executionResult.canContainResults()) {
         output.println("SQL statement does not output any result.");
         executionResult.close();
@@ -101,7 +101,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
     } catch (CancellationException e) {
       throw new RuntimeException("Query has been cancelled on ListenableFuture object.");
     } catch (TimeoutException e) {
-      output.println("Couldn't obtain results after " + TIMEOUT_MS + "ms.");
+      output.println("Couldn't obtain results after " + TIMEOUT_SEC + "ms.");
     }
 
   }
