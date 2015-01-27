@@ -15,7 +15,6 @@ case ${choice} in
   * ) echo "You must enter Y or y to build!" && exit 0;
 esac
 
-echo "┌─────────────────────────────────────────────────────────────────"
 echo "├┄ deleting and recreating target path..."
 [ -d ${TARGET_PATH} ] && rm -rf ${TARGET_PATH}
 mkdir -p ${TARGET_PATH}
