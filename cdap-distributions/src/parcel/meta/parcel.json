@@ -3,7 +3,7 @@
   "name": "CDAP",
   "version": "{{VERSION}}",
   "setActiveSymlink": true,
-  "depends": "CDH (>= 5.0)",
+  "depends": "CDH (>= 5.2)",
   "replaces": "",
   "conflicts": "",
   "provides": [
