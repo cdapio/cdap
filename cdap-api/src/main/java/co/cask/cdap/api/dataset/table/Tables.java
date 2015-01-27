@@ -98,6 +98,6 @@ public final class Tables {
       .add(OrderedTable.PROPERTY_TTL, ttl)
       .addAll(props.getProperties())
       .build();
-
   }
+
 }
