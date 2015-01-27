@@ -55,7 +55,7 @@ public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<Structu
     for (Schema.Field field : schema.getFields()) {
       Schema fieldSchema = field.getSchema();
       String fieldName = field.getName();
-      if (fieldSchema.getType() == Schema.Type.ARRAY) {
+      if (isStringArray(fieldSchema)) {
         builder.set(fieldName, Lists.newArrayList(bodyFields).toArray(new String[0]));
       } else {
         String val = bodyFields.hasNext() ? bodyFields.next() : null;
@@ -97,8 +97,18 @@ public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<Structu
     }
   }
 
+  // check that it's an array of strings or array of nullable strings. the array itself can also be nullable.
   private boolean isStringArray(Schema schema) {
-    return (schema.getType() == Schema.Type.ARRAY && schema.getComponentSchema().getType() == Schema.Type.STRING);
+    Schema arrSchema = schema.isNullable() ? schema.getNonNullable() : schema;
+    if (arrSchema.getType() == Schema.Type.ARRAY) {
+      Schema componentSchema = arrSchema.getComponentSchema();
+      if (componentSchema.isNullable()) {
+        return componentSchema.getNonNullable().getType() == Schema.Type.STRING;
+      } else {
+        return componentSchema.getType() == Schema.Type.STRING;
+      }
+    }
+    return false;
   }
 
   @Override
