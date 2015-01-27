@@ -8,7 +8,7 @@
   <a ng-show="menu.children.length > 0">
     <span ng-bind="menu.label" bs-collapse-toggle></span>
   </a>
-  <ul bs-collapse-target>
+  <ul class="list-unstyled" bs-collapse-target>
     <my-tree-view data-model="menu.children"> </my-tree-view>
   </ul>
 </li>

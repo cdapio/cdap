@@ -6,11 +6,22 @@ angular.module(PKG.name + '.feature.admin')
         $scope.nsList = list.map(generateNsObject);
       });
 
+    // wether or not to show submenus
+    $scope.submenu = {
+      system: false,
+      security: false
+    };
+
     function generateNsObject(item) {
       return {
         state: '',
         label: item.displayName,
         children: [
+          {
+            state: 'admin.namespace.detail.metadata({nsadmin: "' + item.id +'" })',
+            label: 'Metadata',
+            children: []
+          },
           {
             state: 'admin.namespace.detail.settings({nsadmin: "' + item.id +'" })',
             label: 'Settings',

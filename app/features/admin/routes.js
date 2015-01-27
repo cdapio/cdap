@@ -23,6 +23,11 @@ angular.module(PKG.name + '.feature.admin')
           templateUrl: '/assets/features/admin/templates/system.html'
         })
 
+          .state('admin.system.instance', {
+            url: '/instance',
+            templateUrl: '/assets/features/admin/templates/instance.html'
+          })
+
         .state('admin.security', {
           url: '/security',
           templateUrl: '/assets/features/admin/templates/security.html'
@@ -43,6 +48,11 @@ angular.module(PKG.name + '.feature.admin')
             url: '/detail/:nsadmin',
             templateUrl: '/assets/features/admin/templates/namespace.html'
           })
+
+            .state('admin.namespace.detail.metadata', {
+              url: '/metadata',
+              templateUrl: '/assets/features/admin/templates/namespace/metadata.html'
+            })
 
             .state('admin.namespace.detail.settings', {
               url: '/settings',
