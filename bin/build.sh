@@ -17,7 +17,7 @@ esac
 echo "┌─────────────────────────────────────────────────────────────────"
 echo "├┄ deleting and recreating target path..."
 [ -d ${TARGET_PATH} ] && rm -rf ${TARGET_PATH}
-mkdir ${TARGET_PATH}
+mkdir -p ${TARGET_PATH}
 
 echo "├┄ ensuring global dependencies are present..."
 npm install -g bower gulp &>/dev/null
