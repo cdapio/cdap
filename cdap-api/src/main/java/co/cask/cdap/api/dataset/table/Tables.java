@@ -26,7 +26,7 @@ public final class Tables {
   private Tables() {}
 
   /**
-   * Indicates that a Table has no time-to-live (TTL).
+   * Indicates that a Table has no (that is, unlimited) time-to-live (TTL).
    */
   public static final int NO_TTL = -1;
 
