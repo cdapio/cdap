@@ -59,7 +59,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String query = arguments.get(ArgumentName.QUERY.toString());
-    long timeOutMins = arguments.getLong(ArgumentName.END_TIME.toString(), TIMEOUT_MINS);
+    long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), TIMEOUT_MINS);
 
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
     try {
@@ -109,7 +109,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("execute <%s> [<%s>]", ArgumentName.QUERY, ArgumentName.END_TIME);
+    return String.format("execute <%s> [<%s>]", ArgumentName.QUERY, ArgumentName.TIMEOUT);
   }
 
   @Override

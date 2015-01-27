@@ -48,6 +48,7 @@ public enum ArgumentName {
   NUM_INSTANCES("num-instances"),
   START_TIME("start-time"),
   END_TIME("end-time"),
+  TIMEOUT("timeout"),
   LIMIT("limit"),
   RUN_STATUS("status"),
   APP_JAR_FILE("app-jar-file"),
