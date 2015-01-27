@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ function get_auth_token() {
 }
 
 function usage() {
-  echo "Tool for deleting users from the profiles table."
+  echo "Tool for sending random events to the activity flow."
   echo "Usage: $script [--host <hostname>]"
   echo ""
   echo "  Options"
