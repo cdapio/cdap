@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CallServiceCommand;
 import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
 import co.cask.common.cli.Command;
@@ -27,7 +29,7 @@ import com.google.inject.Injector;
 /**
  * Service commands.
  */
-public class ServiceCommands extends CommandSet<Command> {
+public class ServiceCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public ServiceCommands(Injector injector) {
@@ -36,5 +38,10 @@ public class ServiceCommands extends CommandSet<Command> {
         .add(injector.getInstance(CallServiceCommand.class))
         .add(injector.getInstance(GetServiceEndpointsCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.SERVICES.getName();
   }
 }

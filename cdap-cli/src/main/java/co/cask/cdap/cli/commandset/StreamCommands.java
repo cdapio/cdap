@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CreateStreamCommand;
 import co.cask.cdap.cli.command.DescribeStreamCommand;
 import co.cask.cdap.cli.command.GetStreamEventsCommand;
@@ -35,7 +37,7 @@ import com.google.inject.Injector;
 /**
  * Stream commands.
  */
-public class StreamCommands extends CommandSet<Command> {
+public class StreamCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public StreamCommands(Injector injector) {
@@ -52,5 +54,10 @@ public class StreamCommands extends CommandSet<Command> {
         .add(injector.getInstance(SetStreamPropertiesCommand.class))
         .add(injector.getInstance(TruncateStreamCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.STREAMS.getName();
   }
 }

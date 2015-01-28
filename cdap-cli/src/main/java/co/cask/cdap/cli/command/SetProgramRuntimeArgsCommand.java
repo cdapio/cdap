@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
@@ -31,7 +32,7 @@ import java.util.Map;
 /**
  * Sets the runtime arguments of a program.
  */
-public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
+public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand implements Categorized {
 
   private static final Gson GSON = new Gson();
 
@@ -66,5 +67,10 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   public String getDescription() {
     return "Sets the runtime arguments of a " + elementType.getPrettyName() + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
+  }
+
+  @Override
+  public String getCategory() {
+    return elementType.getCommandCategory().getName();
   }
 }

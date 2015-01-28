@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -29,7 +30,7 @@ import java.io.PrintStream;
 /**
  * Sets the instances of a program.
  */
-public class SetProgramInstancesCommand extends AbstractAuthCommand {
+public class SetProgramInstancesCommand extends AbstractAuthCommand implements Categorized {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
@@ -91,5 +92,10 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Sets the instances of a " + elementType.getPrettyName();
+  }
+
+  @Override
+  public String getCategory() {
+    return elementType.getCommandCategory().getName();
   }
 }

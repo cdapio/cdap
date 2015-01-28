@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.ExitCommand;
 import co.cask.cdap.cli.command.VersionCommand;
@@ -30,7 +32,7 @@ import java.util.List;
 /**
  * Preference commands.
  */
-public class BasicCommands extends CommandSet<Command> {
+public class BasicCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public BasicCommands(Injector injector) {
@@ -40,5 +42,10 @@ public class BasicCommands extends CommandSet<Command> {
         .add(injector.getInstance(ExitCommand.class))
         .add(injector.getInstance(ConnectCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.GENERAL.getName();
   }
 }

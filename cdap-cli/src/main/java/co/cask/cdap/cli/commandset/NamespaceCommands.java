@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CreateNamespaceCommand;
 import co.cask.cdap.cli.command.DeleteNamespaceCommand;
 import co.cask.cdap.cli.command.DescribeNamespaceCommand;
@@ -30,7 +32,7 @@ import com.google.inject.Injector;
 /**
  * Namespace commands.
  */
-public class NamespaceCommands extends CommandSet<Command> {
+public class NamespaceCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public NamespaceCommands(Injector injector) {
@@ -42,5 +44,10 @@ public class NamespaceCommands extends CommandSet<Command> {
         .add(injector.getInstance(DescribeNamespaceCommand.class))
         .add(injector.getInstance(DeleteNamespaceCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.NAMESPACES.getName();
   }
 }

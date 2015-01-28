@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.DeleteAppCommand;
 import co.cask.cdap.cli.command.DeployAppCommand;
 import co.cask.cdap.cli.command.DescribeAppCommand;
@@ -29,7 +31,7 @@ import com.google.inject.Injector;
 /**
  * Application commands.
  */
-public class ApplicationCommands extends CommandSet<Command> {
+public class ApplicationCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public ApplicationCommands(Injector injector) {
@@ -40,5 +42,10 @@ public class ApplicationCommands extends CommandSet<Command> {
         .add(injector.getInstance(DeployAppCommand.class))
         .add(injector.getInstance(DescribeAppCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.APPS.getName();
   }
 }

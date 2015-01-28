@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -33,7 +35,7 @@ import java.util.Map;
  * Calls a procedure.
  */
 @Deprecated
-public class CallProcedureCommand extends AbstractAuthCommand {
+public class CallProcedureCommand extends AbstractAuthCommand implements Categorized {
 
   private final ProcedureClient procedureClient;
 
@@ -75,5 +77,10 @@ public class CallProcedureCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Calls a " + ElementType.PROCEDURE.getPrettyName();
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.PROCEDURES.getName();
   }
 }

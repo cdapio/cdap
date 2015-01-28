@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -33,7 +34,7 @@ import java.util.List;
 /**
  * Gets the run records of a program.
  */
-public class GetProgramRunsCommand extends AbstractCommand {
+public class GetProgramRunsCommand extends AbstractCommand implements Categorized {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
@@ -95,5 +96,10 @@ public class GetProgramRunsCommand extends AbstractCommand {
   @Override
   public String getDescription() {
     return "Gets the run history of a " + elementType.getPrettyName();
+  }
+
+  @Override
+  public String getCategory() {
+    return elementType.getCommandCategory().getName();
   }
 }
