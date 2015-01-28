@@ -110,12 +110,15 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           }
         }
         // Remove all process states and group states for each stream
-        String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
+        String namespace = String.format("%s.%s.%s",
+                                         programId.getNamespaceId(),
+                                         programId.getApplicationId(),
+                                         programId.getId());
         for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
           streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
         }
 
-        queueAdmin.dropAllForFlow(programId.getApplicationId(), programId.getId());
+        queueAdmin.dropAllForFlow(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         deletedFlows.add(programId.getId());
       }
     }

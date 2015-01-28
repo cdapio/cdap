@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.queue;
 
+import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,32 +28,35 @@ public class QueueNameTest {
   @Test
   public void testQueueNameForFlowlet() {
     // create a queue name
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "out");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
 
     // verify all parts are correct
     Assert.assertTrue(queueName.isQueue());
     Assert.assertFalse(queueName.isStream());
-    Assert.assertEquals("app", queueName.getFirstComponent());
-    Assert.assertEquals("flow", queueName.getSecondComponent());
-    Assert.assertEquals("flowlet", queueName.getThirdComponent());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, queueName.getFirstComponent());
+    Assert.assertEquals("app", queueName.getSecondComponent());
+    Assert.assertEquals("flow", queueName.getThirdComponent());
+    Assert.assertEquals("flowlet", queueName.getFourthComponent());
     Assert.assertEquals("out", queueName.getSimpleName());
 
     // convert to URI and back, verify again
     queueName = QueueName.from(queueName.toURI());
     Assert.assertTrue(queueName.isQueue());
     Assert.assertFalse(queueName.isStream());
-    Assert.assertEquals("app", queueName.getFirstComponent());
-    Assert.assertEquals("flow", queueName.getSecondComponent());
-    Assert.assertEquals("flowlet", queueName.getThirdComponent());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, queueName.getFirstComponent());
+    Assert.assertEquals("app", queueName.getSecondComponent());
+    Assert.assertEquals("flow", queueName.getThirdComponent());
+    Assert.assertEquals("flowlet", queueName.getFourthComponent());
     Assert.assertEquals("out", queueName.getSimpleName());
 
     // convert to bytes and back, verify again
     queueName = QueueName.from(queueName.toBytes());
     Assert.assertTrue(queueName.isQueue());
     Assert.assertFalse(queueName.isStream());
-    Assert.assertEquals("app", queueName.getFirstComponent());
-    Assert.assertEquals("flow", queueName.getSecondComponent());
-    Assert.assertEquals("flowlet", queueName.getThirdComponent());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, queueName.getFirstComponent());
+    Assert.assertEquals("app", queueName.getSecondComponent());
+    Assert.assertEquals("flow", queueName.getThirdComponent());
+    Assert.assertEquals("flowlet", queueName.getFourthComponent());
     Assert.assertEquals("out", queueName.getSimpleName());
   }
 
@@ -74,8 +78,8 @@ public class QueueNameTest {
     Assert.assertFalse(queueName.isQueue());
     Assert.assertTrue(queueName.isStream());
     Assert.assertEquals(streamName, queueName.getFirstComponent());
-    Assert.assertNull(queueName.getSecondComponent());
     Assert.assertNull(queueName.getThirdComponent());
+    Assert.assertNull(queueName.getFourthComponent());
     Assert.assertEquals(streamName, queueName.getSimpleName());
 
     // convert to URI and back, verify again
@@ -83,8 +87,8 @@ public class QueueNameTest {
     Assert.assertFalse(queueName.isQueue());
     Assert.assertTrue(queueName.isStream());
     Assert.assertEquals(streamName, queueName.getFirstComponent());
-    Assert.assertNull(queueName.getSecondComponent());
     Assert.assertNull(queueName.getThirdComponent());
+    Assert.assertNull(queueName.getFourthComponent());
     Assert.assertEquals(streamName, queueName.getSimpleName());
 
     // convert to bytes and back, verify again
@@ -92,8 +96,8 @@ public class QueueNameTest {
     Assert.assertFalse(queueName.isQueue());
     Assert.assertTrue(queueName.isStream());
     Assert.assertEquals(streamName, queueName.getFirstComponent());
-    Assert.assertNull(queueName.getSecondComponent());
     Assert.assertNull(queueName.getThirdComponent());
+    Assert.assertNull(queueName.getFourthComponent());
     Assert.assertEquals(streamName, queueName.getSimpleName());
   }
 }

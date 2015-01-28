@@ -836,7 +836,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } else if (status.getStatus().equals("RUNNING")) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
-        queueAdmin.dropAllForFlow(appId, flowId);
+        queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
         // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
         deleteProcessMetricsForFlow(appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);

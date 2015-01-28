@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,13 +35,13 @@ public interface QueueAdmin extends EntityAdmin {
    * Deletes all queues for a flow, for example if the flow is deleted.
    * todo: make this independent of the concept of a flow
    */
-  void dropAllForFlow(String app, String flow) throws Exception;
+  void dropAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
    * Clears all queues for a flow, for example if the flow is upgraded and old .
    * todo: make this independent of the concept of a flow
    */
-  void clearAllForFlow(String app, String flow) throws Exception;
+  void clearAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
    * Sets the number of consumer instances for the given consumer group in a queue.

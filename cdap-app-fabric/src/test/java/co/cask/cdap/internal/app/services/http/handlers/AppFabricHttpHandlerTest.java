@@ -32,6 +32,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -1159,7 +1160,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   private  QueueName getQueueName(String name) {
     // i.e. flow and flowlet are constants: should be good enough
-    return QueueName.fromFlowlet("app1", "flow1", "flowlet1", name);
+    return QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app1", "flow1", "flowlet1", name);
   }
 
   /**

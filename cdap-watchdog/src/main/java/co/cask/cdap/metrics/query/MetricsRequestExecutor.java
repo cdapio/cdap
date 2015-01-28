@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -196,12 +196,11 @@ public class MetricsRequestExecutor {
       if (queueName.isStream()) {
         streamNames.add(queueName.getSimpleName());
       } else if (queueName.isQueue()) {
-        // TODO: After CDAP-1167 is fixed, namespace should be the first component of the queueName.
         String context = String.format("%s.%s.f.%s.%s",
-                                       Constants.DEFAULT_NAMESPACE,
-                                       queueName.getFirstComponent(), // the app
-                                       queueName.getSecondComponent(), // the flow
-                                       queueName.getThirdComponent()); // the flowlet
+                                       queueName.getFirstComponent(), // the namespace
+                                       queueName.getSecondComponent(), // the app
+                                       queueName.getThirdComponent(), // the flow
+                                       queueName.getFourthComponent()); // the flowlet
         queueNameContexts.add(new ImmutablePair<String, String>(queueName.getSimpleName(), context));
       } else {
         LOG.warn("unknown type of queue name {} ", queueName.toString());
