@@ -18,7 +18,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
-import co.cask.cdap.data.stream.service.heartbeat.NoOpHeartbeatPublisher;
+import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatPublisher;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
@@ -76,7 +76,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(StreamFetchHandler.class);
         handlerBinder.addBinding().to(PingHandler.class);
 
-        bind(HeartbeatPublisher.class).to(NoOpHeartbeatPublisher.class).in(Scopes.SINGLETON);
+        bind(HeartbeatPublisher.class).to(NotificationHeartbeatPublisher.class).in(Scopes.SINGLETON);
 
         bind(StreamHttpService.class).in(Scopes.SINGLETON);
         bind(Key.get(new TypeLiteral<Supplier<Discoverable>>() { })).to(StreamHttpService.class);

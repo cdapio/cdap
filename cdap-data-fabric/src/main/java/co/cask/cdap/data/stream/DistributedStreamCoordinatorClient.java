@@ -32,6 +32,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.zookeeper.ZKClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -42,6 +44,7 @@ import javax.annotation.Nullable;
  */
 @Singleton
 public final class DistributedStreamCoordinatorClient extends AbstractStreamCoordinatorClient {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedStreamCoordinatorClient.class);
 
   private final ResourceCoordinatorClient resourceCoordinatorClient;
   private final ZKClient zkClient;
@@ -78,6 +81,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
         @Nullable
         @Override
         public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
+          LOG.debug("Modifying requirement to add stream {} as a resource", streamName);
           Set<ResourceRequirement.Partition> partitions;
           if (existingRequirement != null) {
             partitions = existingRequirement.getPartitions();
