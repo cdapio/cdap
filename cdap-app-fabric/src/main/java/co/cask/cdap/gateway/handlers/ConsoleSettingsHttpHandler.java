@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigNotFoundException;
 import co.cask.cdap.config.ConsoleSettingsStore;
@@ -40,9 +41,9 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
- * User Settings HTTP Handler.
+ * Console Settings HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/configuration/usersettings")
+@Path(Constants.Gateway.API_VERSION_3 + "/configuration/consolesettings")
 public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
@@ -61,7 +62,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   @Path("/")
   @GET
   public void get(HttpRequest request, HttpResponder responder) throws Exception {
-    String userId = getAuthenticatedAccountId(request);
+    String userId = SecurityRequestContext.getUserId().or("");
     Config userConfig;
     try {
       userConfig = store.get(userId);
@@ -81,7 +82,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   @Path("/")
   @DELETE
   public void delete(HttpRequest request, HttpResponder responder) throws Exception {
-    String userId = getAuthenticatedAccountId(request);
+    String userId = SecurityRequestContext.getUserId().or("");
     try {
       store.delete(userId);
     } catch (ConfigNotFoundException e) {
@@ -104,7 +105,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
     //Config Properties : Map (Key = CONFIG_PROPERTY, Value = Serialized JSON string of properties)
     //User Settings configurations are stored under empty NAMESPACE.
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
-    String userId = getAuthenticatedAccountId(request);
+    String userId = SecurityRequestContext.getUserId().or("");
     Config userConfig = new Config(userId, propMap);
     store.put(userConfig);
     responder.sendStatus(HttpResponseStatus.OK);

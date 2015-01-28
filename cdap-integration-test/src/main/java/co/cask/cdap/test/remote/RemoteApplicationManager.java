@@ -230,7 +230,7 @@ public class RemoteApplicationManager implements ApplicationManager {
           }
 
           @Override
-          public String status() {
+          public String status(int expectedCode) {
             throw new UnsupportedOperationException("TODO");
           }
         };

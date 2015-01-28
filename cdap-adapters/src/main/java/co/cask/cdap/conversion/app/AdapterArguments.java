@@ -46,10 +46,10 @@ public class AdapterArguments {
   public static final String SINK_NAME = "sink.name";
   public static final String SOURCE_NAME = "source.name";
   // keys for source level args
-  public static final String FORMAT_NAME = "format.name";
-  public static final String FORMAT_SETTINGS = "format.settings";
+  public static final String FORMAT_NAME = "source.format.name";
+  public static final String FORMAT_SETTINGS = "source.format.settings";
+  public static final String SCHEMA = "source.schema";
   public static final String HEADERS = "headers";
-  public static final String SCHEMA = "schema";
 
   // required args
   private final Resources mapperResources;
@@ -62,23 +62,20 @@ public class AdapterArguments {
   private final long frequency;
 
   public AdapterArguments(Map<String, String> runtimeArgs) throws IOException {
-    // get adapter level args
-    Map<String, String> adapterArgs = GSON.fromJson(getRequired(runtimeArgs, "adapter.properties"), MAP_TYPE);
-    this.sourceName = getRequired(adapterArgs, SOURCE_NAME);
-    this.sinkName = getRequired(adapterArgs, SINK_NAME);
-    this.frequency = parseFrequency(getRequired(adapterArgs, FREQUENCY));
-    int mapperMemoryMB = get(adapterArgs, MAPPER_MEMORY, 512);
-    int mapperVirtualCores = get(adapterArgs, MAPPER_VCORES, 1);
+    this.sourceName = getRequired(runtimeArgs, SOURCE_NAME);
+    this.sinkName = getRequired(runtimeArgs, SINK_NAME);
+    this.frequency = parseFrequency(getRequired(runtimeArgs, FREQUENCY));
+    int mapperMemoryMB = get(runtimeArgs, MAPPER_MEMORY, 512);
+    int mapperVirtualCores = get(runtimeArgs, MAPPER_VCORES, 1);
     this.mapperResources = new Resources(mapperMemoryMB, mapperVirtualCores);
 
     // get source level args
-    Map<String, String> sourceArgs = GSON.fromJson(getRequired(runtimeArgs, "source.properties"), MAP_TYPE);
-    String formatName = getRequired(sourceArgs, FORMAT_NAME);
-    Map<String, String> formatSettings = GSON.fromJson(get(sourceArgs, FORMAT_SETTINGS, "{}"), MAP_TYPE);
-    String schemaStr = getRequired(sourceArgs, SCHEMA);
+    String formatName = getRequired(runtimeArgs, FORMAT_NAME);
+    Map<String, String> formatSettings = GSON.fromJson(get(runtimeArgs, FORMAT_SETTINGS, "{}"), MAP_TYPE);
+    String schemaStr = getRequired(runtimeArgs, SCHEMA);
     co.cask.cdap.api.data.schema.Schema bodySchema = co.cask.cdap.api.data.schema.Schema.parseJson(schemaStr);
     this.sourceFormatSpec = new FormatSpecification(formatName, bodySchema, formatSettings);
-    this.headersStr = sourceArgs.get(HEADERS);
+    this.headersStr = runtimeArgs.get(HEADERS);
     this.headers = Sets.newHashSet();
     if (headersStr != null) {
       for (String header : headersStr.split(",")) {

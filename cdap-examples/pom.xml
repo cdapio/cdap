@@ -38,6 +38,7 @@
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>UserProfiles</module>
     <module>WebAnalytics</module>
   </modules>
 
