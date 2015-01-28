@@ -1,19 +1,18 @@
 angular.module(PKG.name + '.services')
 
-  .factory('mySettings', function (MyPrefStore) {
-    return new MyPrefStore('consolesettings');
+  .factory('mySettings', function (MyConfigStore) {
+    return new MyConfigStore('consolesettings');
   })
 
-  .factory('MyPrefStore', function MyPrefStoreFactory($q, MyDataSource) {
+  .factory('MyConfigStore', function MyConfigStoreFactory($q, MyDataSource) {
 
     var data = new MyDataSource();
 
-    function MyPrefStore (type) {
-      // the cdap path for this preference type
-      this.endpoint = '/preferences/'+type;
+    function MyConfigStore (type) {
+      this.endpoint = '/configuration/'+type;
 
       // our cache of the server-side data
-      this.preferences = {};
+      this.data = {};
 
       // flag so we dont fire off multiple similar queries
       this.pending = null;
@@ -25,16 +24,16 @@ angular.module(PKG.name + '.services')
      * @param {mixed} value
      * @return {promise} resolved with the response from server
      */
-    MyPrefStore.prototype.set = function (key, value) {
+    MyConfigStore.prototype.set = function (key, value) {
       var deferred = $q.defer();
 
-      this.preferences[key] = value;
+      this.data[key] = value;
 
       data.request(
         {
           method: 'PUT',
           _cdapPath: this.endpoint,
-          body: this.preferences
+          body: this.data
         },
         deferred.resolve
       );
@@ -49,9 +48,9 @@ angular.module(PKG.name + '.services')
      * @param {boolean} force true to bypass cache
      * @return {promise} resolved with the value
      */
-    MyPrefStore.prototype.get = function (key, force) {
-      if (!force && this.preferences[key]) {
-        return $q.when(this.preferences[key]);
+    MyConfigStore.prototype.get = function (key, force) {
+      if (!force && this.data[key]) {
+        return $q.when(this.data[key]);
       }
 
       var self = this;
@@ -59,7 +58,7 @@ angular.module(PKG.name + '.services')
       if (this.pending) {
         var deferred = $q.defer();
         this.pending.promise.then(function () {
-          deferred.resolve(self.preferences[key]);
+          deferred.resolve(self.data[key]);
         });
         return deferred.promise;
       }
@@ -72,7 +71,7 @@ angular.module(PKG.name + '.services')
           _cdapPath: this.endpoint
         },
         function (res) {
-          self.preferences = res;
+          self.data = res;
           self.pending.resolve(res[key]);
         }
       );
@@ -86,5 +85,5 @@ angular.module(PKG.name + '.services')
       return promise;
     };
 
-    return MyPrefStore;
+    return MyConfigStore;
   });
