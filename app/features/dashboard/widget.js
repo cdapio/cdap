@@ -11,27 +11,28 @@ angular.module(PKG.name+'.feature.dashboard')
       opts = opts || {};
       this.title = opts.title || 'Widget';
       this.type = opts.type || 'welcome';
-
-      var m = opts.metric;
-
-      if(m) {
-        this.metric = m;
-
-        dataSrc.request(
-          {
-            _cdapPath: '/metrics/query' +
-              '?context=' + encodeURIComponent(m.context) +
-              '&metric=' + encodeURIComponent(m.metric) +
-              '&start=now-60s&end=now',
-
-            method: 'POST'
-          },
-          (function (result) {
-            this.data = result.data;
-          }).bind(this)
-        );
-      }
+      this.metric = opts.metric || false;
     }
+
+    Widget.prototype.fetchData = function () {
+      if(!this.metric) {
+        return;
+      }
+      dataSrc.request(
+        {
+          _cdapPath: '/metrics/query' +
+            '?context=' + encodeURIComponent(this.metric.context) +
+            '&metric=' + encodeURIComponent(this.metric.name) +
+            '&start=now-60s&end=now',
+
+          method: 'POST'
+        },
+        (function (result) {
+          this.data = result.data;
+        }).bind(this)
+      );
+    };
+
 
     Widget.prototype.getPartial = function () {
       return '/assets/features/dashboard/widgets/' + this.type + '.html';
@@ -46,6 +47,8 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('WidgetTimeseriesCtrl', function ($scope) {
+
+    $scope.wdgt.fetchData();
 
     $scope.$watch('wdgt.data', function (newVal) {
       if(angular.isArray(newVal)) {
@@ -62,7 +65,6 @@ angular.module(PKG.name+'.feature.dashboard')
           }
         ];
 
-        $scope.latestValue = newVal[newVal.length-1].value || "none";
       }
 
     });
