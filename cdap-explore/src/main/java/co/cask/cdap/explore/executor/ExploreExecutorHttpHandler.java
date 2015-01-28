@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
@@ -156,6 +157,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         // call originates from.
         LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
                   RecordWritable.class.getName());
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
+      
+      // If table does not exist, nothing to be done
+      try {
+        exploreService.getTableInfo(null, getHiveTableName(datasetName));
+      } catch (TableNotFoundException e) {
+        // Ignore exception, since this means table was not found.
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
