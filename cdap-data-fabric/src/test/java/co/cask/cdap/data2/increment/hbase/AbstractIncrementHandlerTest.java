@@ -366,7 +366,7 @@ public abstract class AbstractIncrementHandlerTest {
         Assert.assertEquals((now - i - 1) * IncrementHandlerState.MAX_TS_PER_MS, cell.getTimestamp());
       }
 
-      // verify that when summing we return the correct sum
+      // verify that when summing during flush we return the correct sum
 
       // run a flush, verify that all cells are included in the summed value
       region.flush();

@@ -73,6 +73,8 @@ public class IncrementHandlerState {
   }
 
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tableName, Configuration conf) {
+    // Table name is in the format "prefix.(system|user).tablename"
+    // We need the prefix in order to find the ConfigurationTable to read CDAP configuration
     String[] parts = tableName.split("\\.", 2);
     String tableNamespace = "";
     if (parts.length > 0) {
