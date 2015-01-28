@@ -64,7 +64,7 @@ CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
 COMPONENT_HOME="$CDAP_HOME"/"$PKGNAME"; export COMPONENT_HOME
 COMPONENT_BIN="$COMPONENT_HOME"/bin
 
-# Load component comman.sh 
+# Load component common.sh 
 source $COMPONENT_BIN/common.sh
 
 # Load component common environment file too
@@ -74,6 +74,11 @@ source $COMPONENT_BIN/common-env.sh
 SERVICE_ENVIRONMENT_FILE="$COMPONENT_HOME"/conf/"$APP"-env.sh
 if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
  . "$SERVICE_ENVIRONMENT_FILE"
+fi
+
+# Load user-modifiable configuration
+if [ -f "${CDAP_CONF}/cdap-env.sh" ]; then
+ . "${CDAP_CONF}/cdap-env.sh"
 fi
 
 # Set Log location
