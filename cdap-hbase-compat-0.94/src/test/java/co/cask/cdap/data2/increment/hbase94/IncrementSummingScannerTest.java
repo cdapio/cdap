@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.increment.hbase94;
 
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
+import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -200,7 +201,7 @@ public class IncrementSummingScannerTest {
       assertEquals(2, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(3L, Bytes.toLong(cell.getValue(), IncrementHandler.DELTA_MAGIC_PREFIX.length, 8));
+      assertEquals(3L, Bytes.toLong(cell.getValue(), IncrementHandlerState.DELTA_MAGIC_PREFIX.length, 8));
       // next cell should be the delete
       cell = results.get(1);
       assertTrue(KeyValue.isDelete(cell.getType()));
@@ -400,7 +401,7 @@ public class IncrementSummingScannerTest {
 
     for (int i = 0; i < upperVisBound.length; i++) {
       scanner = new IncrementSummingScanner(region, batch, scanner,
-          ScanType.MINOR_COMPACT, upperVisBound[i]);
+          ScanType.MINOR_COMPACT, upperVisBound[i], -1);
     }
     scanner = new IncrementSummingScanner(region, batch, scanner, ScanType.USER_SCAN);
     // init with false if loop will execute zero times

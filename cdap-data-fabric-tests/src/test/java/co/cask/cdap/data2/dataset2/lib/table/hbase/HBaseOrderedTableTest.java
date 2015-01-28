@@ -21,11 +21,13 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
+import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -135,7 +137,8 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
     Assert.assertArrayEquals(b("val2"), table.get(b("row2"), b("col2")));
 
     // test a table with no TTL
-    DatasetProperties props2 = DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, String.valueOf(-1)).build();
+    DatasetProperties props2 = DatasetProperties.builder()
+      .add(OrderedTable.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
     getTableAdmin("nottl", props2).create();
     HBaseOrderedTable table2 = new HBaseOrderedTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration(),
                                                      false);
@@ -214,7 +217,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
       table.increment(row, col, 10);
       table.commitTx();
       // verify that value was written as a delta value
-      final byte[] expectedValue = Bytes.add(IncrementHandler.DELTA_MAGIC_PREFIX, Bytes.toBytes(10L));
+      final byte[] expectedValue = Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, Bytes.toBytes(10L));
       final AtomicBoolean foundValue = new AtomicBoolean();
       testHBase.forEachRegion(Bytes.toBytes(enabledTableName), new Function<HRegion, Object>() {
         @Nullable

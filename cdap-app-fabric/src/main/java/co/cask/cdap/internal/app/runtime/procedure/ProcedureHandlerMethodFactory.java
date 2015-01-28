@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.procedure;
 
-import co.cask.cdap.api.annotation.DisableTransaction;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
@@ -70,11 +69,8 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   @Override
   public HandlerMethod create() {
     try {
-      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
       BasicProcedureContext context = contextFactory.create();
-      DataFabricFacade dataFabricFacade = disableTransaction ?
-        dataFabricFacadeFactory.createNoTransaction(program, context.getDatasetInstantiator()) :
-        dataFabricFacadeFactory.create(program, context.getDatasetInstantiator());
+      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program, context.getDatasetInstantiator());
       ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, context);
       handlerMethod.init();
 
@@ -118,7 +114,7 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       try {
         TimeUnit.SECONDS.sleep(CLEANUP_SECONDS);
       } catch (InterruptedException e) {
-        // It's triggered by stop
+        // It's triggered by stop; ignore and continue
         continue;
       }
     }

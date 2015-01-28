@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.command.CreateAdapterCommand;
+import co.cask.cdap.cli.command.CreateStreamConversionAdapterCommand;
 import co.cask.cdap.cli.command.DeleteAdapterCommand;
 import co.cask.cdap.cli.command.ListAdaptersCommand;
 import co.cask.common.cli.Command;
@@ -37,6 +38,7 @@ public class AdapterCommands extends CommandSet<Command> {
         .add(injector.getInstance(ListAdaptersCommand.class))
         .add(injector.getInstance(CreateAdapterCommand.class))
         .add(injector.getInstance(DeleteAdapterCommand.class))
+        .add(injector.getInstance(CreateStreamConversionAdapterCommand.class))
         .build());
   }
 }

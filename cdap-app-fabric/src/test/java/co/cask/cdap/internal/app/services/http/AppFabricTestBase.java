@@ -195,7 +195,6 @@ public abstract class AppFabricTestBase {
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
-
       get.setHeader(AUTH_HEADER);
     }
     return client.execute(get);
@@ -431,6 +430,10 @@ public abstract class AppFabricTestBase {
     HttpResponse response;
     while (trial++ < retries) {
       response = doGet(url);
+      if (expected.equals("NOT_FOUND")) {
+        Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+        return;
+      }
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
       output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
