@@ -54,10 +54,8 @@ only detected if both transactions modify the same column of the same row.
 This is more precise, but it requires more book-keeping in the transaction
 system and thus can impact performance.
 
-
-
 UserProfileService
---------------
+------------------
 
 
 Building and Starting
