@@ -73,6 +73,11 @@ public class StreamHandlerTestRun extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
+    // try to POST info to the non-existent stream
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/non_existent_stream", HOSTNAME, port), HttpMethod.POST);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+    
     // Now, create the new stream.
     urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", HOSTNAME, port), HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
