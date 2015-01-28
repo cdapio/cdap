@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.tephra.TxConstants;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -87,7 +88,8 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
     long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
-      columnDescriptor.setTimeToLive((int) TimeUnit.MILLISECONDS.toSeconds(ttlMillis));
+      // the IncrementHandler coprocessor reads this value and performs TTL
+      columnDescriptor.setValue(TxConstants.PROPERTY_TTL, Long.toString(ttlMillis));
     }
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);

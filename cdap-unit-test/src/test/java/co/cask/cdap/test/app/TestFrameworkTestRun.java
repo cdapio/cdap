@@ -116,7 +116,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     int workflowRuns;
     workFlowHistoryCheck(5, wfmanager, 0);
 
-    String status = wfmanager.getSchedule(scheduleName).status();
+    String status = wfmanager.getSchedule(scheduleName).status(200);
     Assert.assertEquals("SCHEDULED", status);
 
     wfmanager.getSchedule(scheduleName).suspend();
@@ -139,10 +139,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
 
     //check scheduled state
-    Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status());
+    Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status(200));
 
     //check status of non-existent schedule
-    Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status());
+    Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status(404));
 
     //suspend the schedule
     wfmanager.getSchedule(scheduleName).suspend();
@@ -171,7 +171,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     int trial = 0;
     String status = null;
     while (trial++ < retries) {
-      status = wfmanager.getSchedule(scheduleId).status();
+      status = wfmanager.getSchedule(scheduleId).status(200);
       if (status.equals(expected)) {
         return;
       }

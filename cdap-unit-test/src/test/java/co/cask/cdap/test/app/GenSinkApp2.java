@@ -17,7 +17,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.Batch;
-import co.cask.cdap.api.annotation.DisableTransaction;
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
@@ -48,7 +47,6 @@ public final class GenSinkApp2 extends AbstractApplication {
   /**
    *
    */
-  @DisableTransaction
   public static final class GenSinkFlow implements Flow {
 
     @Override

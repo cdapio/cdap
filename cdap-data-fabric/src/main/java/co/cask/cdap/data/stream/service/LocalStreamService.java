@@ -106,7 +106,7 @@ public class LocalStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, int threshold) {
 
     // Handle threshold changes
     final Cancellable thresholdSubscription =
@@ -114,9 +114,9 @@ public class LocalStreamService extends AbstractStreamService {
         @Override
         public void thresholdChanged(String streamName, int threshold) {
           StreamSizeAggregator aggregator = aggregators.get(streamName);
-          if (aggregator == null) {
-            LOG.warn("StreamSizeAggregator should not be null for stream {}", streamName);
-            return;
+          while (aggregator == null) {
+            Thread.yield();
+            aggregator = aggregators.get(streamName);
           }
           aggregator.setStreamThresholdMB(threshold);
         }
@@ -128,11 +128,12 @@ public class LocalStreamService extends AbstractStreamService {
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void generationChanged(String streamName, int generation) {
-          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0,
-                                                                                                threshold));
-          if (previousAggregator != null) {
-            previousAggregator.cancel();
+          StreamSizeAggregator aggregator = aggregators.get(streamName);
+          while (aggregator == null) {
+            Thread.yield();
+            aggregator = aggregators.get(streamName);
           }
+          aggregator.resetCount();
         }
       });
 
@@ -159,8 +160,7 @@ public class LocalStreamService extends AbstractStreamService {
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
-                                   Cancellable cancellable) {
+    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamName = streamName;
       this.streamInitSize = new AtomicLong(baseCount);
       this.streamBaseCount = new AtomicLong(baseCount);
@@ -176,6 +176,14 @@ public class LocalStreamService extends AbstractStreamService {
     @Override
     public void cancel() {
       cancellable.cancel();
+    }
+
+    /**
+     * Reset the counts of this {@link StreamSizeAggregator} to zero.
+     */
+    public void resetCount() {
+      streamBaseCount.set(0);
+      streamInitSize.set(0);
     }
 
     /**
