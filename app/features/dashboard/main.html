@@ -42,6 +42,11 @@
         ng-include="wdgt.getPartial()"
         ></div>
 
+      <div class="panel-footer"
+        ng-show="wdgt.metric"
+        ng-include="'/assets/features/dashboard/partials/wdgt-foot.html'"
+        ></div>
+
     </div>
   </div>
 
