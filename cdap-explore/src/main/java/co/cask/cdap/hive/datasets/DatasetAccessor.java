@@ -23,13 +23,16 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.NullJobConfException;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.proto.QueryHandle;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 
@@ -42,23 +45,18 @@ import javax.annotation.Nullable;
  * Helps in instantiating a dataset.
  */
 public class DatasetAccessor {
-  /**
-   * Indicates whether {@link DatasetAccessor} is being run from {@link ExploreService}, or from a Hive query. 
-   */
-  public enum RunContext {
-    EXPLORE_SERVICE,
-    QUERY
-  }
-  
-  // TODO: this will go away when dataset manager does not return datasets having classloader conflict - CDAP-10
-  private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
 
-  // By default the run context is assumed to be Query.
-  private static RunContext runContext = RunContext.QUERY;
-  
-  public static void setRunContext(RunContext runContext) {
-    DatasetAccessor.runContext = runContext;
-  }
+  // TODO: this will go away when dataset manager does not return datasets having classloader conflict - CDAP-10
+  // Map of queryHandle -> datasetName -> classloader
+  private static final LoadingCache<QueryHandle, Map<String, ClassLoader>> DATASET_CLASSLOADER_MAP =
+    CacheBuilder.newBuilder().build(
+      new CacheLoader<QueryHandle, Map<String, ClassLoader>>() {
+        @Override
+        public Map<String, ClassLoader> load(QueryHandle key) throws Exception {
+          return Maps.newConcurrentMap();
+        }
+      }
+    );
 
   /**
    * Returns a RecordScannable dataset. The returned object will have to be closed by the caller.
@@ -73,7 +71,7 @@ public class DatasetAccessor {
     if (!(dataset instanceof RecordScannable)) {
       throw new IOException(
         String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
-                      conf.get(Constants.Explore.DATASET_NAME)));
+                      getDatasetName(conf)));
     }
 
     RecordScannable recordScannable = (RecordScannable) dataset;
@@ -130,7 +128,7 @@ public class DatasetAccessor {
       }
       throw new IOException(
         String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
-                      conf.get(Constants.Explore.DATASET_NAME)));
+                      getDatasetName(conf)));
     } finally {
       dataset.close();
     }
@@ -153,12 +151,27 @@ public class DatasetAccessor {
     }
   }
 
+  /**
+   * Release Dataset resources associated with a query.
+   * @param queryHandle query handle.
+   */
+  public static void closeQuery(QueryHandle queryHandle) {
+    DATASET_CLASSLOADER_MAP.invalidate(queryHandle);
+  }
+
+  /**
+   * Release Dataset resources associated with all queries till now.
+   */
+  public static void closeAllQueries() {
+    DATASET_CLASSLOADER_MAP.invalidateAll();
+  }
+
   private static void startTransaction(Configuration conf, TransactionAware txAware) throws IOException {
     Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
     txAware.startTx(tx);
   }
 
-  private static RecordWritable instantiateWritable(Configuration conf, @Nullable String datasetName)
+  private static RecordWritable instantiateWritable(@Nullable Configuration conf, String datasetName)
     throws IOException {
     Dataset dataset = instantiate(conf, datasetName);
 
@@ -166,7 +179,7 @@ public class DatasetAccessor {
       dataset.close();
       throw new IOException(
         String.format("Dataset %s does not implement RecordWritable, and hence cannot be written to in Hive.",
-                      datasetName != null ? datasetName : conf.get(Constants.Explore.DATASET_NAME)));
+                      datasetName != null ? datasetName : getDatasetName(conf)));
     }
     return (RecordWritable) dataset;
   }
@@ -177,29 +190,46 @@ public class DatasetAccessor {
     if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
       throw new IOException(
         String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
-                      conf.get(Constants.Explore.DATASET_NAME)));
+                      getDatasetName(conf)));
     }
     return dataset;
   }
 
-  private static Dataset instantiate(Configuration conf, @Nullable String dsName)
+  private static Dataset instantiate(@Nullable Configuration conf, String dsName)
     throws IOException {
     ContextManager.Context context = ContextManager.getContext(conf);
-    String datasetName = dsName != null ? dsName : conf.get(Constants.Explore.DATASET_NAME);
+    if (context == null) {
+      throw new NullJobConfException();
+    }
+    
+    String datasetName = dsName != null ? dsName : getDatasetName(conf);
 
     if (datasetName == null) {
       throw new IOException("Dataset name property could not be found.");
     }
-
+    
     try {
       DatasetFramework framework = context.getDatasetFramework();
-      
-      // Do not cache the Dataset classloader if running as part of Explore Service.
-      if (runContext == RunContext.EXPLORE_SERVICE) {
-        return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, conf.getClassLoader());
+
+      if (conf == null) {
+        return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       }
 
-      return cacheLoad(conf, datasetName, framework);
+      String queryId = conf.get(Constants.Explore.QUERY_ID);
+      if (queryId == null) {
+        throw new IOException("QueryId property could not be found");
+      }
+      
+      QueryHandle queryHandle = QueryHandle.fromId(queryId);
+      ClassLoader classLoader = DATASET_CLASSLOADER_MAP.getUnchecked(queryHandle).get(datasetName);
+      Dataset dataset;
+      if (classLoader == null) {
+        classLoader = conf.getClassLoader();
+        dataset = firstLoad(framework, queryHandle, datasetName, classLoader);
+      } else {
+        dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
+      }
+      return dataset;
     } catch (DatasetManagementException e) {
       throw new IOException(e);
     } finally {
@@ -207,25 +237,15 @@ public class DatasetAccessor {
     }
   }
   
-  private static Dataset cacheLoad(Configuration conf, String datasetName, DatasetFramework framework) 
-    throws IOException, DatasetManagementException {
-    ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
-    Dataset dataset;
-    if (classLoader == null) {
-      if (conf == null) {
-        throw new NullJobConfException();
-      }
-      classLoader = conf.getClassLoader();
-      dataset = firstLoad(framework, datasetName, classLoader);
-    } else {
-      dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
-    }
-    return dataset;
+  private static String getDatasetName(@Nullable Configuration conf) {
+    return conf == null ? null : conf.get(Constants.Explore.DATASET_NAME);
   }
 
-  private static synchronized Dataset firstLoad(DatasetFramework framework, String datasetName, ClassLoader classLoader)
+  private static synchronized Dataset firstLoad(DatasetFramework framework, QueryHandle queryHandle, 
+                                                String datasetName, ClassLoader classLoader)
+    
     throws DatasetManagementException, IOException {
-    ClassLoader datasetClassLoader = DATASET_CLASSLOADERS.get(datasetName);
+    ClassLoader datasetClassLoader = DATASET_CLASSLOADER_MAP.getUnchecked(queryHandle).get(datasetName);
     if (datasetClassLoader != null) {
       // Some other call in parallel may have already loaded it, so use the same classlaoder
       return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, datasetClassLoader);
@@ -234,7 +254,7 @@ public class DatasetAccessor {
     // No classloader for dataset exists, load the dataset and save the classloader.
     Dataset dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
     if (dataset != null) {
-      DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
+      DATASET_CLASSLOADER_MAP.getUnchecked(queryHandle).put(datasetName, dataset.getClass().getClassLoader());
     }
     return dataset;
   }

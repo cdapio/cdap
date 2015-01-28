@@ -129,23 +129,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
+    disableExplore(name);
+    
     if (!createDatasetInstance(creationProperties, name, responder, "create")) {
       return;
     }
+    
+    enableExplore(name, creationProperties);
 
-    // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-8
-    try {
-      exploreFacade.disableExploreDataset(name);
-      exploreFacade.enableExploreDataset(name);
-    } catch (Exception e) {
-      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, creationProperties.getProperties(), e.getMessage());
-      LOG.error(msg, e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-      //return;
-    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -178,23 +169,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
+    disableExplore(name);
+    
     if (!createDatasetInstance(creationProperties, name, responder, "update")) {
       return;
     }
-    // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-8
 
-    try {
-      exploreFacade.disableExploreDataset(name);
-      exploreFacade.enableExploreDataset(name);
-    } catch (Exception e) {
-      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, creationProperties.getProperties(), e.getMessage());
-      LOG.error(msg, e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-      //return;
-    }
+    enableExplore(name, creationProperties);
+    
     //caling admin upgrade, after updating specification
     executeAdmin(request, responder, name, "upgrade");
   }
@@ -313,18 +295,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private boolean dropDataset(DatasetSpecification spec) throws Exception {
     String name = spec.getName();
 
-    // First disable ad-hoc exploration of dataset
-    // Note: today explore disable is not transactional with dataset delete - CDAP-8
-    try {
-      exploreFacade.disableExploreDataset(name);
-    } catch (ExploreException e) {
-      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
-                                 name, e.getMessage());
-      LOG.error(msg, e);
-      // TODO: at this time we want to still drop dataset even if it cannot be disabled for exploration
-//      throw e;
-    }
-
+    disableExplore(name);
+    
     if (!instanceManager.delete(name)) {
       return false;
     }
@@ -332,7 +304,37 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
     return true;
   }
+  
+  private void disableExplore(String name) {
+    // Disable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - CDAP-8
+    try {
+      exploreFacade.disableExploreDataset(name);
+    } catch (Exception e) {
+      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
+                                 name, e.getMessage());
+      LOG.error(msg, e);
+      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //return;
+    }
+  }
 
+  private void enableExplore(String name, DatasetInstanceConfiguration creationProperties) {
+    // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - CDAP-8
+    try {
+      exploreFacade.enableExploreDataset(name);
+    } catch (Exception e) {
+      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                 name, creationProperties.getProperties(), e.getMessage());
+      LOG.error(msg, e);
+      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //return;
+    }
+  }
+  
   /**
    * Adapter for {@link co.cask.cdap.api.dataset.DatasetSpecification}
    */
