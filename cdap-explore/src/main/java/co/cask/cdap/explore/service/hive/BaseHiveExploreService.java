@@ -658,7 +658,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       // Fetch results from Hive
       LOG.trace("Getting results for handle {}", handle);
-      List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
+      OperationHandle opHandle = getOperationHandle(handle);
+      List<QueryResult> results = fetchNextResults(opHandle, size);
       QueryStatus status = getStatus(handle);
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
@@ -681,17 +682,29 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
         Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
 
         ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-        for (TRow tRow : tRowSet.getRows()) {
-          List<Object> cols = Lists.newArrayList();
-          for (TColumnValue tColumnValue : tRow.getColVals()) {
-            cols.add(tColumnToObject(tColumnValue));
+        // if it's the interface
+        if (rowSet instanceof Iterable) {
+          for (Object[] row : (Iterable<Object[]>) rowSet) {
+            List<Object> cols = Lists.newArrayList();
+            for (int i = 0; i < row.length; i++) {
+              cols.add(row[i]);
+            }
+            rowsBuilder.add(new QueryResult(cols));
           }
-          rowsBuilder.add(new QueryResult(cols));
+        } else {
+          // otherwise do nasty thrift stuff
+          Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+          Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+          TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
+          for (TRow tRow : tRowSet.getRows()) {
+            List<Object> cols = Lists.newArrayList();
+            for (TColumnValue tColumnValue : tRow.getColVals()) {
+              cols.add(tColumnToObject(tColumnValue));
+            }
+            rowsBuilder.add(new QueryResult(cols));
+          }
         }
         return rowsBuilder.build();
       } else {
