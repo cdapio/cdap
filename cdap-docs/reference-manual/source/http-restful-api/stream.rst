@@ -139,7 +139,7 @@ types are supported:
    * - ``text/<sub-type>``
      - Text content with one line per event; the ``<sub-type>`` can be anything
    * - ``avro/binary``
-     - Avro Object Container File format; each Avro record in the file becomes one event in the stream
+     - Avro Object Container File format; each Avro record in the file becomes a single event in the stream
 
 HTTP Responses
 ..............
