@@ -18,7 +18,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
         dataSrc.request(
           {
-            _cdapPathV2: m
+            _cdapPath: m,
+            method: 'POST'
           },
           (function (result) {
             this.data = result.data;
@@ -32,7 +33,7 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     Widget.prototype.getClassName = function () {
-      return 'panel-default widget-' + this.type;
+      return 'panel-default widget widget-' + this.type;
     };
 
     return Widget;
