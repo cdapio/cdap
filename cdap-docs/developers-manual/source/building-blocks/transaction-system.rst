@@ -88,12 +88,12 @@ Transactions providing ACID (atomicity, consistency, isolation, and durability) 
 are useful in several applications where data accuracy is critical—examples include billing
 applications and computing click-through rates.
 
-However, transaction are not for free: The transaction system must track all the writes
+However, transaction are not for free: the transaction system must track all the writes
 made by all transactions, and it must check transactions for conflicts before committing them.
-Also, if conflicts are frequent, then they impact performance, because the failed transactions
+If conflicts are frequent, they will impact performance because the failed transactions
 have to be rolled back and reattempted.
 
-In some scenarios, you may want to fine-tune the way that a dataset participates in
+In some scenarios, you may want to fine-tune the manner in which a dataset participates in
 transactions:
 
 - Some applications—such as trending—might not need transactions for all writes, because
@@ -106,11 +106,11 @@ transactions:
   detection by tracking changes at the column level instead of the row level.
 
 Both of these can be achieved by specifying a conflict detection level when the table is
-created. Ffor example, in your application's ``configure()`` method::
+created. For example, in your application's ``configure()`` method::
 
     Tables.createTable(getConfigurer(), "myTable", ConflictDetection.COLUMN);
 
-You have the following options:
+You have these options:
 
 - ``ConflictDetection.NONE`` to disable transactions for the table. None of the writes
   performed on this table will participate in conflict detection. However, all writes
@@ -124,7 +124,9 @@ You have the following options:
   as long as they write to disjoint sets of columns. This will increase the overhead for
   each transaction, because the transaction system must track writes with greater detail.
   But it can also greatly reduce the number of transaction conflicts, leading to improved
-  overall application throughput. See the :ref:`UserProfile example <examples-user-profiles>`
+  overall application throughput.
+
+  See the :ref:`UserProfile example <examples-user-profiles>`
   for a sample use case.
 
 Transactions in MapReduce
