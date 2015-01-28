@@ -7,5 +7,5 @@ angular.module(PKG.name + '.feature.streams')
     })
       .then(function(res) {
         $scope.streams = res;
-      })
-  })
+      });
+  });
