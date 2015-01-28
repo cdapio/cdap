@@ -122,12 +122,24 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
+  public List<StreamSpecification> listStreams(final String accountId) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, List<StreamSpecification>>() {
+      @Override
+      public List<StreamSpecification> apply(StreamMds mds) throws Exception {
+        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, accountId).build(),
+                                StreamSpecification.class);
+      }
+    });
+  }
+
+  @Override
   public Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
     return txnl.executeUnchecked(
       new TransactionExecutor.Function<StreamMds, Multimap<NamespaceMeta, StreamSpecification>>() {
         @Override
         public Multimap<NamespaceMeta, StreamSpecification> apply(StreamMds mds) throws Exception {
           ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+          // TODO use only one HBase row scanner to perform the below query - [CDAP-1285]
           List<NamespaceMeta> namespaces =
             mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE).build(), NamespaceMeta.class);
           for (NamespaceMeta meta : namespaces) {
