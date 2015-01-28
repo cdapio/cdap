@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -89,7 +88,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendJson(int status, Object object, Type type, Gson gson) {
-    send(status, Charsets.UTF_8.encode(gson.toJson(object, type)), "application/json", null);
+    send(status, Charsets.UTF_8.encode(gson.toJson(object, type)), "application/json", null, false);
   }
 
   /**
@@ -111,7 +110,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendString(int status, String data, Charset charset) {
-    send(status, charset.encode(data), "text/plain; charset=" + charset.name(), null);
+    send(status, charset.encode(data), "text/plain; charset=" + charset.name(), null, false);
   }
 
   /**
@@ -132,7 +131,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendStatus(int status, Multimap<String, String> headers) {
-    send(status, null, null, headers);
+    send(status, null, null, headers, false);
   }
 
   /**
@@ -156,10 +155,21 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
+    send(status, content, contentType, headers, true);
+  }
+
+  private void send(int status, ByteBuffer content, String contentType,
+                    Multimap<String, String> headers, boolean copy) {
     if (bufferedResponse != null) {
       LOG.warn("Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
     }
-    bufferedResponse = new BufferedResponse(status, content, contentType, headers);
+
+    ChannelBuffer channelBuffer = null;
+    if (content != null) {
+      channelBuffer = copy ? ChannelBuffers.copiedBuffer(content) : ChannelBuffers.wrappedBuffer(content);
+    }
+
+    bufferedResponse = new BufferedResponse(status, channelBuffer, contentType, headers);
   }
 
   /**
@@ -168,7 +178,8 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    */
   public void setTransactionFailureResponse() {
     ByteBuffer buffer = Charsets.UTF_8.encode("Transaction failure when committing changes. Aborted transaction.");
-    bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), buffer,
+    bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
+                                            ChannelBuffers.wrappedBuffer(buffer),
                                             "text/plain; charset=" + Charsets.UTF_8.name(), null);
   }
 
@@ -215,10 +226,10 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     private final String contentType;
     private final Multimap<String, String> headers;
 
-    private BufferedResponse(int status, ByteBuffer content,
+    private BufferedResponse(int status, ChannelBuffer channelBuffer,
                              String contentType, Multimap<String, String> headers) {
       this.status = status;
-      this.channelBuffer = content == null ? null : ChannelBuffers.wrappedBuffer(ByteBuffers.copy(content));
+      this.channelBuffer = channelBuffer;
       this.contentType = contentType;
       this.headers = headers == null ? null : Multimaps.unmodifiableMultimap(headers);
     }
