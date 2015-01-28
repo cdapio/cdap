@@ -10,11 +10,11 @@ function ($scope, caskFocusManager, myDashboardsModel, Widget) {
   $scope.model = new Widget();
 
   $scope.widgetTypes = [
-    { name: 'Welcome',               type: 'welcome' },
-    { name: 'Histogram (bar)',       type: 'bar' },
     { name: 'Timeseries (line)',     type: 'line' },
+    { name: 'Histogram (bar)',       type: 'bar' },
     { name: 'Timeseries (area)',     type: 'area' },
     { name: 'Pie Chart',             type: 'pie' },
+    // { name: 'Welcome',               type: 'welcome' },
     { name: 'Debug',                 type: 'json' }
   ];
 

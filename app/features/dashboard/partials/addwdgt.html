@@ -14,16 +14,6 @@
         <div class="modal-body">
 
           <div class="form-group">
-            <label for="addWdgtName" class="col-xs-3 control-label">Widget Name</label>
-            <div class="col-xs-9">
-              <input id="addWdgtName" type="text" name="name" class="form-control"
-                placeholder="Name"
-                cask-focus="addWdgtName"
-                ng-model="model.title" required/>
-            </div>
-          </div>
-
-          <div class="form-group">
             <label for="addWdgtType" class="col-xs-3 control-label">Type</label>
             <div class="col-xs-9">
               <select id="addWdgtType" name="type" class="form-control"
@@ -33,7 +23,7 @@
             </div>
           </div>
 
-          <div class="form-group" ng-if="model.type !== widgetTypes[0].type">
+          <div class="form-group">
             <label class="col-xs-3 control-label">Metric</label>
             <div class="col-xs-9">
 
@@ -42,6 +32,16 @@
                 required
               ></my-metric-picker>
 
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="addWdgtName" class="col-xs-3 control-label">Widget Name</label>
+            <div class="col-xs-9">
+              <input id="addWdgtName" type="text" name="name" class="form-control"
+                placeholder="Name"
+                cask-focus="addWdgtName"
+                ng-model="model.title" required/>
             </div>
           </div>
 

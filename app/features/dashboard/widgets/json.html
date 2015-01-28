@@ -1,10 +1,9 @@
 <div ng-controller="WidgetTimeseriesCtrl">
 
-  <pre ng-bind="wdgt | json"></pre>
-
   <textarea
     class="form-control"
     ng-bind="chartHistory[0].values | json"
+    rows="20"
   readonly></textarea>
 
 </div>
