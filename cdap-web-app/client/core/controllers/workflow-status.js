@@ -267,7 +267,6 @@ define(['helpers/plumber'], function (Plumber) {
       var total = this.get('schedules.length');
 
       this.get('elements.Schedule').forEach(function (schedule, index) {
-        console.log("schedule id is ", schedule);
         self.HTTP.rpc(context, 'schedules', schedule.id.schedule.name, 'resume', function () {
           if (!--total) {
             self.set('suspended', false);
@@ -284,7 +283,6 @@ define(['helpers/plumber'], function (Plumber) {
       var total = this.get('schedules.length');
 
       this.get('elements.Schedule').forEach(function (schedule, index) {
-        console.log("schedule id is ", schedule);
         self.HTTP.rpc(context, 'schedules', schedule.id.schedule.name, 'suspend', function () {
           if (!--total) {
             self.set('suspended', true);
