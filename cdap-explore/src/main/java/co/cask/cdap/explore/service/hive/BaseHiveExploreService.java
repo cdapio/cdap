@@ -646,31 +646,23 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws ExploreException, HandleNotFoundException, SQLException {
     startAndWait();
 
-    LOG.error("ashau - getting next {} results for handle {}.", size, handle.getHandle());
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
-      LOG.error("ashau - handle inactive!");
       // Operation has been made inactive, so all results should have been fetched already - return empty list.
       LOG.trace("Returning empty result for inactive handle {}", handle);
       return ImmutableList.of();
     }
 
-    LOG.error("ashau - getting lock.");
     Lock nextLock = getOperationInfo(handle).getNextLock();
     nextLock.lock();
-    LOG.error("ashau - got lock.");
     try {
       // Fetch results from Hive
       LOG.trace("Getting results for handle {}", handle);
-      LOG.error("ashau - fetching results for handle {}", handle.getHandle());
       OperationHandle opHandle = getOperationHandle(handle);
-      LOG.error("ashau - opHandle = {}.", opHandle);
       List<QueryResult> results = fetchNextResults(opHandle, size);
       QueryStatus status = getStatus(handle);
-      LOG.error("ashau - query status = {}", status.getStatus());
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
-        LOG.error("ashau - timing out aggressively");
         timeoutAggresively(handle, getResultSchema(handle), status);
       }
       return results;
@@ -686,7 +678,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
 
     try {
-      LOG.error("ashau - checking if op handle has a result set.");
       if (operationHandle.hasResultSet()) {
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
@@ -708,10 +699,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
           Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
           TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
           for (TRow tRow : tRowSet.getRows()) {
-            LOG.error("ashau - TRow {}", tRow);
             List<Object> cols = Lists.newArrayList();
             for (TColumnValue tColumnValue : tRow.getColVals()) {
-              LOG.error("ashau - TColumnValue {}", tColumnValue);
               cols.add(tColumnToObject(tColumnValue));
             }
             rowsBuilder.add(new QueryResult(cols));
