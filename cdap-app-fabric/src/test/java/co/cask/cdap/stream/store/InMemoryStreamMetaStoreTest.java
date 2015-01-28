@@ -14,7 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.stream.store;
+
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 
 /**
  * Test the {@link InMemoryStreamMetaStore}.
@@ -27,6 +30,11 @@ public class InMemoryStreamMetaStoreTest extends StreamMetaStoreTestBase {
 
   @Override
   protected void createNamespace(String namespaceId) {
+    // No-op
+  }
+
+  @Override
+  protected void deleteNamespace(String namespaceId) {
     // No-op
   }
 }

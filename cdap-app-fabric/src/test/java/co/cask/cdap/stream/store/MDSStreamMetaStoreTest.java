@@ -14,22 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.service;
+package co.cask.cdap.stream.store;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -37,6 +41,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -59,7 +64,6 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
       new DataSetServiceModules().getInMemoryModule(),
       new DataSetsModules().getLocalModule(),
       new DataFabricModules().getInMemoryModules(),
-      new TransactionMetricsModule(),
       new ExploreClientModule(),
       new AuthModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
@@ -68,6 +72,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
         @Override
         protected void configure() {
           bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Singleton.class);
         }
       }
     );
@@ -98,5 +103,9 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
     store.createNamespace(new NamespaceMeta.Builder().setId(namespaceId).build());
   }
 
+  @Override
+  protected void deleteNamespace(String namespaceId) {
+    store.deleteNamespace(new Id.Namespace(namespaceId));
+  }
 
 }
