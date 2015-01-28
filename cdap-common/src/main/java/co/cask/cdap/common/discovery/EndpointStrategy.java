@@ -18,6 +18,7 @@ package co.cask.cdap.common.discovery;
 import org.apache.twill.discovery.Discoverable;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * This class helps picking up an endpoint from a list of Discoverable.
@@ -28,6 +29,7 @@ public interface EndpointStrategy {
    * Picks a {@link Discoverable} using its strategy.
    * @return A {@link Discoverable} based on the strategy or {@code null} if no endpoint can be found.
    */
+  @Nullable
   Discoverable pick();
 
   /**
@@ -38,5 +40,6 @@ public interface EndpointStrategy {
    * @return A {@link Discoverable} based on the strategy or {@code null} if no endpoint can be found after
    *         the given timeout passed.
    */
+  @Nullable
   Discoverable pick(long timeout, TimeUnit timeoutUnit);
 }

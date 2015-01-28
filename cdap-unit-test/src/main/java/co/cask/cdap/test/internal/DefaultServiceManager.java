@@ -116,6 +116,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
     return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
   }
 
+  @Nullable
   private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceName) {
     if (discoverable == null) {
       return null;
