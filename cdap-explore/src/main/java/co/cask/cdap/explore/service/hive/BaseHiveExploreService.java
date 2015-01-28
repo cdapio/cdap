@@ -44,6 +44,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
@@ -72,6 +73,9 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
+import org.apache.hive.service.cli.thrift.TColumnValue;
+import org.apache.hive.service.cli.thrift.TRow;
+import org.apache.hive.service.cli.thrift.TRowSet;
 import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -85,6 +89,8 @@ import java.io.Reader;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -640,23 +646,31 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws ExploreException, HandleNotFoundException, SQLException {
     startAndWait();
 
+    LOG.error("ashau - getting next {} results for handle {}.", size, handle.getHandle());
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
+      LOG.error("ashau - handle inactive!");
       // Operation has been made inactive, so all results should have been fetched already - return empty list.
       LOG.trace("Returning empty result for inactive handle {}", handle);
       return ImmutableList.of();
     }
 
+    LOG.error("ashau - getting lock.");
     Lock nextLock = getOperationInfo(handle).getNextLock();
     nextLock.lock();
+    LOG.error("ashau - got lock.");
     try {
       // Fetch results from Hive
       LOG.trace("Getting results for handle {}", handle);
+      LOG.error("ashau - fetching results for handle {}", handle.getHandle());
       OperationHandle opHandle = getOperationHandle(handle);
+      LOG.error("ashau - opHandle = {}.", opHandle);
       List<QueryResult> results = fetchNextResults(opHandle, size);
       QueryStatus status = getStatus(handle);
+      LOG.error("ashau - query status = {}", status.getStatus());
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
+        LOG.error("ashau - timing out aggressively");
         timeoutAggresively(handle, getResultSchema(handle), status);
       }
       return results;
@@ -671,19 +685,50 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     startAndWait();
 
-    if (operationHandle.hasResultSet()) {
-      ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-      Iterable<Object[]> rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-      for (Object[] row : rowSet) {
-        List<Object> cols = Lists.newArrayList();
-        for (int i = 0; i < row.length; i++) {
-          cols.add(row[i]);
+    try {
+      LOG.error("ashau - checking if op handle has a result set.");
+      if (operationHandle.hasResultSet()) {
+        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
+        // so that the compiler does not make assumption on the return type of fetchResults
+        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+
+        ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
+        // if it's the interface
+        if (rowSet instanceof Iterable) {
+          for (Object[] row : (Iterable<Object[]>) rowSet) {
+            List<Object> cols = Lists.newArrayList();
+            for (int i = 0; i < row.length; i++) {
+              cols.add(row[i]);
+            }
+            rowsBuilder.add(new QueryResult(cols));
+          }
+        } else {
+          // otherwise do nasty thrift stuff
+          Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+          Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+          TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
+          for (TRow tRow : tRowSet.getRows()) {
+            LOG.error("ashau - TRow {}", tRow);
+            List<Object> cols = Lists.newArrayList();
+            for (TColumnValue tColumnValue : tRow.getColVals()) {
+              LOG.error("ashau - TColumnValue {}", tColumnValue);
+              cols.add(tColumnToObject(tColumnValue));
+            }
+            rowsBuilder.add(new QueryResult(cols));
+          }
         }
-        rowsBuilder.add(new QueryResult(cols));
+        return rowsBuilder.build();
+      } else {
+        return Collections.emptyList();
       }
-      return rowsBuilder.build();
-    } else {
-      return Collections.emptyList();
+    } catch (ClassNotFoundException e) {
+      throw Throwables.propagate(e);
+    } catch (NoSuchMethodException e) {
+      throw Throwables.propagate(e);
+    } catch (InvocationTargetException e) {
+      throw Throwables.propagate(e);
+    } catch (IllegalAccessException e) {
+      throw Throwables.propagate(e);
     }
   }
 
@@ -997,6 +1042,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw e;
     }
     throw new ExploreException(e);
+  }
+
+  protected Object tColumnToObject(TColumnValue tColumnValue) throws ExploreException {
+    if (tColumnValue.isSetBoolVal()) {
+      return tColumnValue.getBoolVal().isValue();
+    } else if (tColumnValue.isSetByteVal()) {
+      return tColumnValue.getByteVal().getValue();
+    } else if (tColumnValue.isSetDoubleVal()) {
+      return tColumnValue.getDoubleVal().getValue();
+    } else if (tColumnValue.isSetI16Val()) {
+      return tColumnValue.getI16Val().getValue();
+    } else if (tColumnValue.isSetI32Val()) {
+      return tColumnValue.getI32Val().getValue();
+    } else if (tColumnValue.isSetI64Val()) {
+      return tColumnValue.getI64Val().getValue();
+    } else if (tColumnValue.isSetStringVal()) {
+      return tColumnValue.getStringVal().getValue();
+    }
+    throw new ExploreException("Unknown column value encountered: " + tColumnValue);
   }
 
   /**
