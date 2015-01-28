@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class ExecuteQueryCommand extends AbstractAuthCommand {
 
-  private static final long TIMEOUT_MS = 30000;
+  private static final long TIMEOUT_MINS = TimeUnit.HOURS.toMinutes(1);
   private final QueryClient queryClient;
 
   @Inject
@@ -59,10 +59,11 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String query = arguments.get(ArgumentName.QUERY.toString());
+    long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), TIMEOUT_MINS);
 
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
     try {
-      ExploreExecutionResult executionResult = future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      ExploreExecutionResult executionResult = future.get(timeOutMins, TimeUnit.MINUTES);
       if (!executionResult.canContainResults()) {
         output.println("SQL statement does not output any result.");
         executionResult.close();
@@ -101,18 +102,18 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
     } catch (CancellationException e) {
       throw new RuntimeException("Query has been cancelled on ListenableFuture object.");
     } catch (TimeoutException e) {
-      output.println("Couldn't obtain results after " + TIMEOUT_MS + "ms.");
+      output.println("Couldn't obtain results after " + timeOutMins + "mins.");
     }
 
   }
 
   @Override
   public String getPattern() {
-    return String.format("execute <%s>", ArgumentName.QUERY);
+    return String.format("execute <%s> [<%s>]", ArgumentName.QUERY, ArgumentName.TIMEOUT);
   }
 
   @Override
   public String getDescription() {
-    return "Executes a " + ElementType.QUERY.getPrettyName();
+    return "Executes a " + ElementType.QUERY.getPrettyName() + " with optional timeout (default = 60) in minutes";
   }
 }
