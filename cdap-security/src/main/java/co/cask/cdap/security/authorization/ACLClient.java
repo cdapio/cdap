@@ -21,7 +21,6 @@ import co.cask.cdap.api.security.EntityId;
 import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -33,6 +32,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -58,12 +58,11 @@ public class ACLClient {
     this.baseURI = new Supplier<URI>() {
       @Override
       public URI get() {
-        Iterable<Discoverable> serviceDiscovered = discoveryServiceClient.discover(Constants.Service.ACL);
-        TimeLimitEndpointStrategy strategy = new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(serviceDiscovered), 5, TimeUnit.SECONDS);
-        Preconditions.checkNotNull(strategy.pick(), "No discoverable endpoint found for ACLService");
+        ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.ACL);
+        Discoverable endpoint = new RandomEndpointStrategy(discovered).pick(5, TimeUnit.SECONDS);
+        Preconditions.checkNotNull(endpoint, "No discoverable endpoint found for ACLService");
 
-        InetSocketAddress socketAddress = strategy.pick().getSocketAddress();
+        InetSocketAddress socketAddress = endpoint.getSocketAddress();
         try {
           // TODO: support https by checking router ssl enabled from Configuration
           String url = String.format("http://%s:%d", socketAddress.getAddress().getHostName(), socketAddress.getPort());

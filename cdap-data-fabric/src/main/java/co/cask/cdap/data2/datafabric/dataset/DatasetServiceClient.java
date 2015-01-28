@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -71,9 +70,7 @@ class DatasetServiceClient {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
-          1L, TimeUnit.SECONDS);
+        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
       }
     });
   }
@@ -291,7 +288,7 @@ class DatasetServiceClient {
   }
 
   private String resolve(String resource) throws DatasetManagementException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick();
+    Discoverable discoverable = endpointStrategySupplier.get().pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new DatasetManagementException("Cannot discover dataset service");
     }
