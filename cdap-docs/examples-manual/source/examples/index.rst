@@ -63,6 +63,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Web Analytics<web-analytics>`
     - An application to generate statistics and to provide insights about web usage through the analysis
       of web traffic.
+  * - :doc:`User Profiles<user-profiles>`
+    - An application that demonstrates column-level conflict detection using the example of updating of
+      user profiles in a Dataset.
 
 
 .. rubric:: What's Next
