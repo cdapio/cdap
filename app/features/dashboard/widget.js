@@ -13,12 +13,13 @@ angular.module(PKG.name+'.feature.dashboard')
       this.type = opts.type || 'welcome';
 
       var m = opts.metric;
+
       if(m) {
         this.metric = m;
 
         dataSrc.request(
           {
-            _cdapPath: m,
+            _cdapPath: m + '&start=now-60s&end=now',
             method: 'POST'
           },
           (function (result) {
