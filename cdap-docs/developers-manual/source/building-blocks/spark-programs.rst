@@ -156,7 +156,7 @@ It’s possible to read parts of a Stream by specifying start and end timestamps
     sc.readFromStream(streamName, vClass, startTime, endTime);
 
 You can read custom objects from a Stream by providing a decoderType extended from
-`StreamEventDecoder <../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
+`StreamEventDecoder <../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
 
     sc.readFromStream(streamName, vClass, startTime, endTime, decoderType);
 
@@ -217,7 +217,7 @@ You can also emit custom user metrics from the worker nodes of your Spark Progra
     
 Spark in Workflows
 ------------------
-Spark programs in CDAP can also be added to a :ref:`Workflow <workflow>`, similar to a :ref:`MapReduce <mapreduce>`.
+Spark programs in CDAP can also be added to a :ref:`Workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
 
 .. rubric::  Examples of Using Spark Programs
 

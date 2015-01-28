@@ -28,9 +28,9 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.8"
+VERSION = "0.0.9"
 
-COPYRIGHT_YEAR = "2014"
+COPYRIGHT_YEAR = "2015"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 

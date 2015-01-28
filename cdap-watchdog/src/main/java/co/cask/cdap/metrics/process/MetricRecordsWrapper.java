@@ -172,7 +172,9 @@ public class MetricRecordsWrapper implements Iterator<MetricsRecord> {
 
   private boolean contains(List<Rule> rules, Rule rule) {
     for (Rule candidate : rules) {
-      return contains(candidate, rule);
+      if (contains(candidate, rule)) {
+        return true;
+      }
     }
     return false;
   }

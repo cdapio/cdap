@@ -311,6 +311,7 @@ function version() {
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
+  GIT_BRANCH_TYPE="${branch[0]}"
   GIT_BRANCH="${branch[1]}"
 }
 
@@ -319,6 +320,7 @@ function display_version() {
   echo ""
   echo "PROJECT_PATH: $PROJECT_PATH"
   echo "PROJECT_VERSION: $PROJECT_VERSION"
+  echo "GIT_BRANCH_TYPE: $GIT_BRANCH_TYPE"
   echo "GIT_BRANCH: $GIT_BRANCH"
   echo ""
 }

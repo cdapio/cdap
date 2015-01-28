@@ -66,7 +66,9 @@ An event can be sent to a Stream by sending an HTTP POST method to the URL of th
 
   POST <base-url>/streams/<stream-id>
 
-In cases where it is acceptable to have some events lost, events can be transmitted asynchronously to a Stream with higher throughput by sending an HTTP POST method to the ``async`` URL::
+In cases where it is acceptable to have some events lost, events can be transmitted
+asynchronously to a Stream with higher throughput by sending an HTTP POST method to the
+``async`` URL::
 
   POST <base-url>/streams/<stream-id>/async
 
@@ -118,6 +120,69 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 - If the request contains any headers prefixed with the *stream-id*,
   the *stream-id* prefix is stripped from the header name and
   the header is added to the event.
+
+Sending Events to a Stream in Batch
+-----------------------------------
+Multiple events can be sent to a Stream in batch by sending an HTTP POST method to the URL of the Stream::
+
+  POST <base-url>/streams/<stream-id>/batch
+
+The ``Content-Type`` header must be specified to describe the data type in the POST body. Currently, these
+types are supported:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Content-Type
+     - Description
+   * - ``text/<sub-type>``
+     - Text content with one line per event; the ``<sub-type>`` can be anything
+   * - ``avro/binary``
+     - Avro Object Container File format; each Avro record in the file becomes a single event in the stream
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - All events were successfully received and persisted
+   * - ``404 Not Found``
+     - The Stream does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/streams/mystream/batch``
+   * - Content type header
+     - ``Content-type: text/csv``
+   * - POST body
+     - A comma-separated record per line::
+     
+        1,Sam,Smith,18
+        2,Max,Johnson,28
+        3,Bill,Jones,20
+        
+   * - Description
+     - Writes three comma-separated events to the Stream named *mystream*
+
+Comments
+........
+You can pass headers that apply to all events as HTTP headers by prefixing them with the *stream-id*::
+
+  <stream-id>.<property>:<string-value>
+
+After receiving the request, if the request contains any headers prefixed with the *stream-id*,
+the *stream-id* prefix is stripped from the header name and the header is added to each event sent
+in the request body.
 
 Reading Events from a Stream
 ----------------------------

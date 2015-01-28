@@ -33,9 +33,27 @@ File paths can either be absolute paths or, in the case of
 
 .. _enabling-security:
 
-Enabling Security
------------------
-To enable security in CDAP, add these properties to ``cdap-site.xml``:
+
+Enabling Security (Standalone CDAP)
+-----------------------------------
+
+To enable security in :term:`Standalone CDAP <standalone cdap>`, add these properties to ``cdap-site.xml``:
+
+================================================= ===================== =====================================================
+Property                                          Value                 Notes
+================================================= ===================== =====================================================
+``security.enabled``                              ``true``
+``security.auth.server.bind.address``             ``<hostname>``
+================================================= ===================== =====================================================
+
+Client Authentication then needs to be configured, as described below under
+:ref:`Configuring Authentication Mechanisms <installation-configuring-authentication-mechanisms>`. 
+With Standalone CDAP, the simplest is :ref:`Basic Authentication <installation-basic-authentication>`.
+
+
+Enabling Security (Distributed CDAP)
+------------------------------------
+To enable security in :term:`Distributed CDAP <distributed cdap>`, add these properties to ``cdap-site.xml``:
 
 ================================================= ===================== =====================================================
 Property                                          Value                 Notes
@@ -212,6 +230,8 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
 
 You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
+.. _installation-configuring-authentication-mechanisms:
+
 Configuring Authentication Mechanisms
 -------------------------------------
 CDAP provides several ways to authenticate a client’s identity:
@@ -239,8 +259,9 @@ The realm file is of the following format::
 
   username: password[,rolename ...]
 
-Note that it is not advisable to use this method of authentication. In production, we recommend using any of the
-other methods described below.
+In Standalone CDAP, the realm file can be specified as ``conf/realmfile`` and placed with
+the ``cdap-site.xml`` file. Note that it is not advisable to use this method of
+authentication. In production, we recommend using any of the other methods described below.
 
 .. _installation-ldap-authentication:
 
