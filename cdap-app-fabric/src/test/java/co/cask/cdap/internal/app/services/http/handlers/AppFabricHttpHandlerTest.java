@@ -996,11 +996,11 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     scheduleHistoryRuns(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed", 0);
 
     //Check suspend status
-    String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
+    String scheduleStatus = String.format("/v2/apps/AppWithSchedule/schedules/%s/status",
                                           scheduleName);
     scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
 
-    String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
+    String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/schedules/%s/suspend",
                                            scheduleName);
 
     response = doPost(scheduleSuspend);
@@ -1027,21 +1027,20 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    String scheduleResume = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/resume",
+    String scheduleResume = String.format("/v2/apps/AppWithSchedule/schedules/%s/resume",
                                           scheduleName);
 
     response = doPost(scheduleResume);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     scheduleHistoryRuns(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed",
-                         workflowRunsAfterSuspend);
+                        workflowRunsAfterSuspend);
 
     //check scheduled state
     scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
 
     //Check status of a non existing schedule
-    String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
-                                            "invalidId");
+    String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/schedules/%s/status", "invalidId");
 
     scheduleStatusCheck(5, notFoundSchedule, "NOT_FOUND");
 

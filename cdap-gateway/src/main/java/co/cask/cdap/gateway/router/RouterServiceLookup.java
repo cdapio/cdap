@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.utils.Networks;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
@@ -180,7 +179,7 @@ public class RouterServiceLookup {
     LOG.debug("Looking up service name {}", discoverName);
 
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverName));
-    if (new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick() == null) {
+    if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
       LOG.debug("Discoverable endpoint {} not found", discoverName);
     }
     return endpointStrategy;

@@ -35,7 +35,6 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
@@ -84,6 +83,7 @@ import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -756,9 +756,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         (new Id.Application(new Id.Namespace(namespaceId), applicationId));
       applications.add(spec);
     }
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(DISCOVERY_TIMEOUT_SECONDS,
+                                                                            TimeUnit.SECONDS);
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");

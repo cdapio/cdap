@@ -47,6 +47,16 @@ public interface StreamCoordinatorClient extends Service {
   ListenableFuture<Long> changeTTL(StreamConfig streamConfig, long ttl);
 
   /**
+   * Changes the notification threshold of the given stream.
+   *
+   * @param streamConfig stream configuration
+   * @param threshold the new notification threshold
+   * @return A future that will be completed when the update of threshold is done. The future result will carry
+   *         the threshold updated by this method.
+   */
+  ListenableFuture<Integer> changeThreshold(StreamConfig streamConfig, int threshold);
+
+  /**
    * Receives event for changes in stream properties.
    *
    * @param listener listener to get called when there is change in stream properties.

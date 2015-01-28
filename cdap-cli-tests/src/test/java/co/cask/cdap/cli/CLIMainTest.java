@@ -293,6 +293,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  @Ignore
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();

@@ -18,7 +18,6 @@ package co.cask.cdap.conversion.app;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
@@ -70,8 +69,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setMapOutputKeyClass(AvroKey.class);
     job.setMapOutputValueClass(NullWritable.class);
 
-    Map<String, String> runtimeArgs = context.getRuntimeArguments();
-    AdapterArguments adapterArguments = new AdapterArguments(runtimeArgs);
+    AdapterArguments adapterArguments = new AdapterArguments(context.getRuntimeArguments());
     sinkName = adapterArguments.getSinkName();
     partitionTime = context.getLogicalStartTime();
 

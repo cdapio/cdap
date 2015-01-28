@@ -170,7 +170,7 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
-                  <excludeArtifactIds>hadoop-hdfs,zkclient,servlet-api</excludeArtifactIds>
+                  <excludeArtifactIds>zkclient,servlet-api</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>

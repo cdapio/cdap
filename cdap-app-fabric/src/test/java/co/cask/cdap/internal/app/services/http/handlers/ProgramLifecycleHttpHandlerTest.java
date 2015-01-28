@@ -697,7 +697,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     for (ScheduleSpecification spec : schedules) {
       Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
-                                               CONCURRENT_WORKFLOW_NAME, spec.getSchedule().getName()));
+                                               spec.getSchedule().getName()));
     }
 
     // delete the application
@@ -752,12 +752,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleHistoryRuns(5, runsUrl, 0);
 
     //Check schedule status
-    String statusUrl = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
-                                    scheduleName);
+    String statusUrl = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName);
     scheduleStatusCheck(5, statusUrl, "SCHEDULED");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
-                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleName));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
     //check paused state
     scheduleStatusCheck(5, statusUrl, "SUSPENDED");
 
@@ -771,8 +769,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     int workflowRunsAfterSuspend = getRuns(runsUrl);
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
-                                            APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleName));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
 
     scheduleHistoryRuns(5, runsUrl, workflowRunsAfterSuspend);
 
@@ -780,15 +777,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleStatusCheck(5, statusUrl, "SCHEDULED");
 
     //Check status of a non existing schedule
-    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
-                                  "invalid");
+    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, "invalid");
     scheduleStatusCheck(5, invalid, "NOT_FOUND");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
-                                             APP_WITH_SCHEDULE_WORKFLOW_NAME, scheduleName));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
 
     //check paused state
     scheduleStatusCheck(5, statusUrl, "SUSPENDED");
+
+    //Schedule operations using invalid namespace
+    String inValidNamespaceUrl = getStatusUrl(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName);
+    scheduleStatusCheck(5, inValidNamespaceUrl, "NOT_FOUND");
+    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
+    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
   }
@@ -997,20 +998,20 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return time;
   }
 
-  private String getStatusUrl(String namespace, String appName, String workflow, String schedule) throws Exception {
-    String statusUrl = String.format("apps/%s/workflows/%s/schedules/%s/status", appName, workflow, schedule);
+  private String getStatusUrl(String namespace, String appName, String schedule) throws Exception {
+    String statusUrl = String.format("apps/%s/schedules/%s/status", appName, schedule);
     return getVersionedAPIPath(statusUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
-  private int resumeSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
-    String scheduleResume = String.format("apps/%s/workflows/%s/schedules/%s/resume", appName, workflow, schedule);
+  private int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
+    String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
     HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
                                                        namespace));
     return response.getStatusLine().getStatusCode();
   }
 
-  private int suspendSchedule(String namespace, String appName, String workflow, String schedule) throws Exception {
-    String scheduleSuspend = String.format("apps/%s/workflows/%s/schedules/%s/suspend", appName, workflow, schedule);
+  private int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
+    String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
     String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
                                                            namespace);
     HttpResponse response = doPost(versionedScheduledSuspend);

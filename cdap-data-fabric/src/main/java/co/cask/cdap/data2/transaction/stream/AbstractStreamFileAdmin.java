@@ -227,14 +227,20 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Location streamLocation = config.getLocation();
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", config.getName());
 
-    // Check only TTL or format is changed, as only TTL or format changes are supported.
+    // Check only TTL, format or threshold is changed, as only TTL, format or threshold changes are supported.
     StreamConfig originalConfig = loadConfig(streamLocation);
     Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
-                                "Configuration update for stream '%s' was not valid (can only update ttl or format)",
+                                "Configuration update for stream '%s' was not valid " +
+                                  "(can only update ttl, format or threshold)",
                                 config.getName());
 
     if (originalConfig.getTTL() != config.getTTL()) {
+      // This call will also save the config
       streamCoordinatorClient.changeTTL(originalConfig, config.getTTL());
+    }
+    if (originalConfig.getNotificationThresholdMB() != config.getNotificationThresholdMB()) {
+      // This call will also save the config
+      streamCoordinatorClient.changeThreshold(originalConfig, config.getNotificationThresholdMB());
     }
     if (!originalConfig.getFormat().equals(config.getFormat())) {
       saveConfig(config);
@@ -362,7 +368,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     Integer threshold = config.getNotificationThresholdMB();
     if (threshold == null) {
-      threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD, 1000);
+      threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
     }
 
     return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),

@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.common.http.HttpRequest;
@@ -57,9 +56,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(
-            discoveryClient.discover(Constants.Service.DATASET_EXECUTOR)), 2L, TimeUnit.SECONDS);
+        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
       }
     });
   }
@@ -115,7 +112,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   private URL resolve(String path) throws MalformedURLException {
-    Discoverable endpoint = endpointStrategySupplier.get().pick();
+    Discoverable endpoint = endpointStrategySupplier.get().pick(2L, TimeUnit.SECONDS);
     if (endpoint == null) {
       throw new IllegalStateException("No endpoint for " + Constants.Service.DATASET_EXECUTOR);
     }

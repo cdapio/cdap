@@ -16,8 +16,8 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.data.format.SingleStringRecordFormat;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
@@ -111,7 +111,7 @@ public final class StreamConfig {
 
   private static FormatSpecification getDefaultFormat() {
     return new FormatSpecification(
-      SingleStringRecordFormat.class.getCanonicalName(),
+      Formats.TEXT,
       Schema.recordOf("stringBody", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
       Collections.<String, String>emptyMap());
   }
