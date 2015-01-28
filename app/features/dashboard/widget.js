@@ -19,7 +19,11 @@ angular.module(PKG.name+'.feature.dashboard')
 
         dataSrc.request(
           {
-            _cdapPath: m + '&start=now-60s&end=now',
+            _cdapPath: '/metrics/query' +
+              '?context=' + encodeURIComponent(m.context) +
+              '&metric=' + encodeURIComponent(m.metric) +
+              '&start=now-60s&end=now',
+
             method: 'POST'
           },
           (function (result) {
@@ -48,7 +52,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
         $scope.chartHistory = [
           {
-            label: $scope.wdgt.metric,
+            label: $scope.wdgt.metric.name,
             values: newVal.map(function (o) {
               return {
                 x: o.time,
@@ -58,6 +62,7 @@ angular.module(PKG.name+'.feature.dashboard')
           }
         ];
 
+        $scope.latestValue = newVal[newVal.length-1].value || "none";
       }
 
     });

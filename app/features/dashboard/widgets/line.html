@@ -6,8 +6,11 @@
     chart-ticks="{ bottom: 3 }"
   ></epoch-line>
 
-  <p class="small text-center">
-    <code ng-bind="wdgt.metric"></code>
+
+  <pre>{{wdgt.metric | json}}</pre>
+
+  <p ng-show="latestValue">
+    Latest Value: <span class="badge">{{latestValue}}</span>
   </p>
 
 </div>
