@@ -64,7 +64,7 @@ CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
 COMPONENT_HOME="$CDAP_HOME"/"$PKGNAME"; export COMPONENT_HOME
 COMPONENT_BIN="$COMPONENT_HOME"/bin
 
-# Load component common.sh 
+# Load component common.sh
 source $COMPONENT_BIN/common.sh
 
 # Load component common environment file too

@@ -272,8 +272,8 @@ class DatasetServiceClient {
   }
 
   private HttpRequest.Builder processBuilder(HttpRequest.Builder builder) {
-    if (SecurityRequestContext.getUserId() != null) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId());
+    if (SecurityRequestContext.getUserId().isPresent()) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId().get());
     }
     return builder;
   }

@@ -167,6 +167,46 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
+  public ListenableFuture<Integer> changeThreshold(final StreamConfig streamConfig, final int newThreshold) {
+    return Futures.transform(propertyStore.get().update(streamConfig.getName(), new PropertyUpdater<StreamProperty>() {
+      @Override
+      public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
+        final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
+        updateExecutor.execute(new Runnable() {
+
+          @Override
+          public void run() {
+            try {
+              int currentGeneration = (property == null) ?
+                StreamUtils.getGeneration(streamConfig) :
+                property.getGeneration();
+              long currentTTL = (property == null) ?
+                streamConfig.getTTL() :
+                property.getTTL();
+
+              StreamConfig newConfig = new StreamConfig(streamConfig.getName(), streamConfig.getPartitionDuration(),
+                                                        streamConfig.getIndexInterval(), currentTTL,
+                                                        streamConfig.getLocation(),
+                                                        streamConfig.getFormat(),
+                                                        newThreshold);
+              saveConfig(newConfig);
+              resultFuture.set(new StreamProperty(currentGeneration, currentTTL, newThreshold));
+            } catch (IOException e) {
+              resultFuture.setException(e);
+            }
+          }
+        });
+        return resultFuture;
+      }
+    }), new Function<StreamProperty, Integer>() {
+      @Override
+      public Integer apply(StreamProperty property) {
+        return property.getThreshold();
+      }
+    });
+  }
+
+  @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
     return propertyStore.get().addChangeListener(streamName,
                                                  new StreamPropertyChangeListener(streamAdmin, streamName, listener));
@@ -290,7 +330,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
       } catch (Exception e) {
         // It's ok if the stream config is not yet available (meaning no data has ever been writen to the stream yet.
         this.currentProperty = new StreamProperty(0, Long.MAX_VALUE,
-                                                  cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD, 1000));
+                                                  cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD));
       }
     }
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
@@ -23,6 +24,7 @@ import co.cask.cdap.client.exception.StreamNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -60,7 +62,8 @@ import javax.ws.rs.core.HttpHeaders;
  */
 public class StreamClient {
 
-  private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
+  private static final Gson GSON = StreamEventTypeAdapter.register(
+    new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())).create();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -86,7 +89,33 @@ public class StreamClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new StreamNotFoundException(streamId);
     }
-    return ObjectResponse.fromJsonBody(response, StreamProperties.class).getResponseObject();
+    return GSON.fromJson(response.getResponseBodyAsString(Charsets.UTF_8), StreamProperties.class);
+  }
+
+  /**
+   * Sets properties of a stream.
+   *
+   * @param streamId ID of the stream
+   * @param properties properties to set
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the client is unauthorized
+   * @throws BadRequestException if the request is bad
+   * @throws StreamNotFoundException if the stream was not found
+   */
+  public void setStreamProperties(String streamId, StreamProperties properties) throws IOException,
+    UnAuthorizedAccessTokenException, BadRequestException, StreamNotFoundException {
+    URL url = config.resolveURL(String.format("streams/%s/config", streamId));
+
+    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND,
+                                               HttpURLConnection.HTTP_BAD_REQUEST);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException("Bad request: " + response.getResponseBodyAsString());
+    }
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new StreamNotFoundException(streamId);
+    }
   }
 
   /**

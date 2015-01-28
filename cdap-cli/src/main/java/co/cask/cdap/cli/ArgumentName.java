@@ -59,6 +59,10 @@ public enum ArgumentName {
   ENDPOINT("endpoint"),
   HEADERS("headers"),
   HTTP_BODY("body"),
+  FORMAT("format"),
+  SCHEMA("schema"),
+  SETTINGS("settings"),
+  FREQUENCY("frequency"),
 
   NAMESPACE_ID("namespace-id"),
   NAMESPACE_DISPLAY_NAME("namespace-display-name"),

@@ -23,5 +23,5 @@ public final class Formats {
   public static final String AVRO = "avro";
   public static final String CSV = "csv";
   public static final String TSV = "tsv";
-  public static final String STRING = "string";
+  public static final String TEXT = "text";
 }
