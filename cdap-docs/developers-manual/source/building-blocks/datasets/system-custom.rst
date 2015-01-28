@@ -108,8 +108,7 @@ Dataset with multiple partitions, you can use::
     DatasetProperties.builder()
                      .add("conflict.level", "NONE")      
                      .add("hbase.splits", new Gson().toJson(new byte[][]{{1},{2},{3},{4},{5}})
-                     .build()
-  );
+                     .build());
 
 Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 
