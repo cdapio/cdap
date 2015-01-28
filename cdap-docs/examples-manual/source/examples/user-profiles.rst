@@ -9,7 +9,7 @@
 User Profiles
 =============
 
-A Cask Data Application Platform (CDAP) Example demonstrating column-level conflict
+A Cask Data Application Platform (CDAP) example demonstrating column-level conflict
 detection in Datasets using the example of managing user profiles in a Table.
 
 Overview
@@ -31,7 +31,7 @@ Introducing a Feature: Column-Level Conflict Detection
 ======================================================
 
 As in the other :ref:`examples,<examples-index>` the components
-of the Application are tied together by the class ``UserProfiles``:
+of the Application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
@@ -52,7 +52,7 @@ columns.
 Specifying a conflict detection level of ``COLUMN`` means that a conflict is
 only detected if both transactions modify the same column of the same row.
 This is more precise, but it requires more book-keeping in the transaction
-system and can thus impact performance.
+system and thus can impact performance.
 
 
 
