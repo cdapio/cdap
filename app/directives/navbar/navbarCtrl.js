@@ -17,11 +17,13 @@ angular.module(PKG.name + '.commons')
       $scope.namespaces = [];
     });
 
-    $scope.$on('$stateChangeSuccess', function(event, toState) {
+    $scope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState) {
       $scope.highlightTab = toState.data && toState.data.highlightTab;
       // This is required when user creates a new namespace in admin section.
       // As of now $dropdown doesn't have broadcast event for click.
-      updateNamespaceList();
+      if (fromState.name === "admin.namespace.create") {
+        updateNamespaceList();
+      }
     });
 
     $scope.doSearch = function () {
