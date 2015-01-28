@@ -26,7 +26,7 @@ angular.module(PKG.name + '.services')
             if(!res.length) {
               res = [{
                 id: 'default',
-                displayName: 'default'
+                name: 'default'
               }];
             }
 
@@ -45,7 +45,7 @@ angular.module(PKG.name + '.services')
       var ns = this.namespaceList.filter(function(namespace) {
         return namespace.id === id;
       });
-      return ns[0].displayName || id;
+      return ns[0].name || id;
     };
 
   });
