@@ -21,7 +21,9 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -35,48 +37,53 @@ public abstract class StreamMetaStoreTestBase {
 
   protected abstract void deleteNamespace(String namespaceId);
 
+  @Before
+  public void beforeTests() throws Exception {
+    createNamespace("foo");
+    createNamespace("foo1");
+    createNamespace("foo2");
+  }
+
+  @After
+  public void afterTests() throws Exception {
+    deleteNamespace("foo");
+    deleteNamespace("foo1");
+    deleteNamespace("foo2");
+  }
+
   @Test
   public void testStreamMetastore() throws Exception {
     StreamMetaStore streamMetaStore = getStreamMetaStore();
 
-    createNamespace("foo");
-    createNamespace("foo1");
-    createNamespace("foo2");
-    try {
-      streamMetaStore.addStream("foo", "bar");
-      Assert.assertTrue(streamMetaStore.streamExists("foo", "bar"));
-      Assert.assertFalse(streamMetaStore.streamExists("foofoo", "bar"));
+    streamMetaStore.addStream("foo", "bar");
+    Assert.assertTrue(streamMetaStore.streamExists("foo", "bar"));
+    Assert.assertFalse(streamMetaStore.streamExists("foofoo", "bar"));
 
-      streamMetaStore.removeStream("foo", "bar");
-      Assert.assertFalse(streamMetaStore.streamExists("foo", "bar"));
+    streamMetaStore.removeStream("foo", "bar");
+    Assert.assertFalse(streamMetaStore.streamExists("foo", "bar"));
 
-      streamMetaStore.addStream("foo1", "bar");
-      streamMetaStore.addStream("foo2", "bar");
-      Assert.assertEquals(ImmutableList.of(
-        new StreamSpecification.Builder().setName("bar").create()), streamMetaStore.listStreams("foo1"));
-      Assert.assertEquals(
-        ImmutableMultimap.builder()
-          .put(new NamespaceMeta.Builder().setId("foo1").build(),
-               new StreamSpecification.Builder().setName("bar").create())
-          .put(new NamespaceMeta.Builder().setId("foo2").build(),
-               new StreamSpecification.Builder().setName("bar").create())
-          .build(),
-        streamMetaStore.listStreams());
+    streamMetaStore.addStream("foo1", "bar");
+    streamMetaStore.addStream("foo2", "bar");
+    Assert.assertEquals(ImmutableList.of(
+      new StreamSpecification.Builder().setName("bar").create()), streamMetaStore.listStreams("foo1"));
+    Assert.assertEquals(
+      ImmutableMultimap.builder()
+        .put(new NamespaceMeta.Builder().setId("foo1").build(),
+             new StreamSpecification.Builder().setName("bar").create())
+        .put(new NamespaceMeta.Builder().setId("foo2").build(),
+             new StreamSpecification.Builder().setName("bar").create())
+        .build(),
+      streamMetaStore.listStreams());
 
-      streamMetaStore.removeStream("foo2", "bar");
-      Assert.assertFalse(streamMetaStore.streamExists("foo2", "bar"));
-      Assert.assertEquals(
-        ImmutableMultimap.builder()
-          .put(new NamespaceMeta.Builder().setId("foo1").build(),
-               new StreamSpecification.Builder().setName("bar").create())
-          .build(),
-        streamMetaStore.listStreams());
+    streamMetaStore.removeStream("foo2", "bar");
+    Assert.assertFalse(streamMetaStore.streamExists("foo2", "bar"));
+    Assert.assertEquals(
+      ImmutableMultimap.builder()
+        .put(new NamespaceMeta.Builder().setId("foo1").build(),
+             new StreamSpecification.Builder().setName("bar").create())
+        .build(),
+      streamMetaStore.listStreams());
 
-      streamMetaStore.removeStream("foo1", "bar");
-    } finally {
-      deleteNamespace("foo");
-      deleteNamespace("foo1");
-      deleteNamespace("foo2");
-    }
+    streamMetaStore.removeStream("foo1", "bar");
   }
 }
