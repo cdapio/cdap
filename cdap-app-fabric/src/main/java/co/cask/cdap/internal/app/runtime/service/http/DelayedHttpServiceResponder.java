@@ -28,6 +28,8 @@ import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -36,10 +38,11 @@ import java.nio.charset.Charset;
 /**
  * Implementation of {@link HttpServiceResponder} which delegates calls to
  * the HttpServiceResponder's methods to the matching methods for a {@link HttpResponder}.
- * Responses are buffered until execute() is called. This allows you to send the correct response upon
- * transaction failures, and not always delegating to the user responses.
+ * A response is buffered until execute() is called. This allows you to send the correct response upon
+ * a transaction failure, and to not always delegating to the user response.
  */
-public final class DefaultHttpServiceResponder implements HttpServiceResponder {
+public final class DelayedHttpServiceResponder implements HttpServiceResponder {
+  private static final Logger LOG = LoggerFactory.getLogger(DelayedHttpServiceResponder.class);
   private static final Gson GSON = new Gson();
   private final HttpResponder responder;
   private final MetricsCollector metricsCollector;
@@ -50,7 +53,7 @@ public final class DefaultHttpServiceResponder implements HttpServiceResponder {
    *
    * @param responder the responder which will be bound to
    */
-  public DefaultHttpServiceResponder(HttpResponder responder, MetricsCollector metricsCollector) {
+  public DelayedHttpServiceResponder(HttpResponder responder, MetricsCollector metricsCollector) {
     this.responder = responder;
     this.metricsCollector = metricsCollector;
   }
@@ -73,7 +76,7 @@ public final class DefaultHttpServiceResponder implements HttpServiceResponder {
    */
   @Override
   public void sendJson(int status, Object object) {
-    sendString(status, GSON.toJson(object), Charsets.UTF_8);
+    sendJson(status, object, object.getClass(), GSON);
   }
 
    /**
@@ -152,8 +155,21 @@ public final class DefaultHttpServiceResponder implements HttpServiceResponder {
    * @param headers the headers to be sent back
    */
   @Override
-  public void send(final int status, ByteBuffer content, final String contentType, Multimap<String, String> headers) {
+  public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
+    if (bufferedResponse != null) {
+      LOG.warn("Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
+    }
     bufferedResponse = new BufferedResponse(status, content, contentType, headers);
+  }
+
+  /**
+   * Since calling one of the send methods multiple times logs a warning, upon transaction failures this
+   * method is called to allow setting the failure response without an additional warning.
+   */
+  public void setTransactionFailureResponse() {
+    ByteBuffer buffer = Charsets.UTF_8.encode("Transaction failure when committing changes. Aborted transaction.");
+    bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), buffer,
+                                            "text/plain; charset=" + Charsets.UTF_8.name(), null);
   }
 
   /**
