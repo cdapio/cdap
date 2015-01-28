@@ -85,9 +85,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     PreferencesStore preferencesStore = getInjector().getInstance(PreferencesStore.class);
     Map<String, String> prop = preferencesStore.getResolvedProperties(namespaceId,
                                                                              adapterSpecification.getType());
-    Assert.assertTrue(prop.containsKey(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
-    Assert.assertTrue(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED).equals("true"));
-
+    Assert.assertTrue(Boolean.parseBoolean(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED)));
     try {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
       adapterService.createAdapter(namespaceId, adapterSpecification);
