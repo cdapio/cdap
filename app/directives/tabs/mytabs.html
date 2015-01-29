@@ -1,5 +1,5 @@
 <div ng-model="tabs.activeTab" bs-tabs>
-  <fieldset data-title="{{tab.title}}" ng-repeat="tab in tabs" bs-pane>
+  <section data-title="{{tab.title}}" ng-repeat="tab in tabs" bs-pane>
     <div ng-include="tab.partial" ></div>
-  </fieldset>
+  </section>
 </div>
