@@ -57,7 +57,8 @@ Service Handlers
 ``ServiceHandler``\s are used to handle and serve HTTP requests.
 
 You add handlers to your Service by calling the ``addHandler`` method in the Service's
-``configure`` method, as shown above.
+``configure`` method, as shown above. Only handler classes that are declared public,
+with public methods for endpoints, will be exposed by the Service.
 
 To use a Dataset within a handler, specify the Dataset by calling the ``useDataset``
 method in the Service's ``configure`` method and include the ``@UseDataSet`` annotation in
