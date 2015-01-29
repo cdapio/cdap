@@ -368,7 +368,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
       @Override
       public void apply(MapReduceContext context) throws Exception {
-        mapReduce.beforeSubmit(context);
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+        try {
+          mapReduce.beforeSubmit(context);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       }
     }, "beforeSubmit()");
   }
@@ -380,7 +385,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
       @Override
       public void apply(MapReduceContext context) throws Exception {
-        mapReduce.onFinish(succeeded, context);
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+        try {
+          mapReduce.onFinish(succeeded, context);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       }
     }, "onFinish()");
   }
