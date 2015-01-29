@@ -85,7 +85,7 @@ public class TimePartitionedFileSetDefinition extends AbstractDatasetDefinition<
     if (FileSetArguments.getOutputPath(arguments) == null) {
       Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(arguments);
       if (time != null) {
-        String path = String.format("%tF/%tR.%d", time, time, time);
+        String path = String.format("%tF/%tH-%tM.%d", time, time, time, time);
         arguments = Maps.newHashMap(arguments);
         FileSetArguments.setOutputPath(arguments, path);
       }
