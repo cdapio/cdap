@@ -8,7 +8,7 @@
 Schedules
 ============================================
 
-**Schedules** are used to execute :ref:`Workflows <workflows>` on a recurring basis. You can add a schedule (such as a
+**Schedules** are used to execute :ref:`Workflows <workflows>` on a recurring basis. You can add a Schedule (such as a
 `crontab schedule <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
 to the Workflow::
 
@@ -16,7 +16,7 @@ to the Workflow::
 
 The ``MyWorkflow`` will then be executed every 5 hours.
 
-Optionally, you can specify the properties for the schedule::
+Optionally, you can specify the properties for the Schedule::
 
     ...
     Map<String, String> scheduleProperties = Maps.newHashMap();
@@ -26,5 +26,5 @@ Optionally, you can specify the properties for the schedule::
     scheduleWorkflow("FiveHourSchedule", "0 */5 * * *", "MyWorkflow", scheduleProperties);
     ...
 
-Every time ``FiveHourSchedule`` triggers, it passes the ``scheduleProperties`` as runtime arguments to the ``MyWorkflow``.
-The properties specified by the schedule can be overridden by the workflow's runtime arguments.
+Every time the ``FiveHourSchedule`` triggers, it passes the ``scheduleProperties`` as runtime arguments to the ``MyWorkflow``.
+The properties specified by the Schedule can be overridden by the Workflow's runtime arguments, with the Workflow's having precedence.
