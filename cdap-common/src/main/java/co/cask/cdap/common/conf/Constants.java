@@ -156,6 +156,8 @@ public final class Constants {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
 
+    public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
+
     /**
      * DatasetManager service configuration.
      */
@@ -492,6 +494,7 @@ public final class Constants {
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
+    public static final String QUERY_ID = "explore.query.id";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
 

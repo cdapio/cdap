@@ -146,7 +146,22 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      Dataset dataset;
+      try {
+        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      } catch (Exception e) {
+        String className = isClassNotFoundException(e);
+        if (className == null) {
+          throw e;
+        }
+        LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
+                   "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
+                   "guide for more information.", datasetName, className, className, datasetName);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;

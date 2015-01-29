@@ -76,7 +76,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                                }
                                              });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), conf);
     dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
   }
 
