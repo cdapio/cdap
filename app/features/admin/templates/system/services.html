@@ -10,7 +10,7 @@
     <tr ng-repeat="service in services | orderBy:sortable.predicate:sortable.reverse">
         <td>
             <a ng-bind="service.name"
-               ui-sref="admin.system.services.detail"
+               ui-sref="admin.system.services.detail({serviceName:service.name})"
               ></a>
         </td>
         <td ng-bind="service.status"></td>

@@ -32,14 +32,17 @@ angular.module(PKG.name + '.feature.admin')
             templateUrl: '/assets/features/admin/templates/system/instance.html',
             controller: 'AdminInstanceController'
           })
+
           .state('admin.system.services', {
             url: '/services',
             templateUrl: '/assets/features/admin/templates/system/services.html',
             controller: 'AdminServicesController'
           })
             .state('admin.system.services.detail', {
-              url: '/detail',
-              templateUrl: '/assets/features/admin/templates/system/service-detail.html'
+              parent: 'admin.system',
+              url: '/services/detail/:serviceName',
+              templateUrl: '/assets/features/admin/templates/system/service-detail.html',
+              controller: 'AdminServiceDetailController'
             })
 
           .state('admin.system.notifications', {
