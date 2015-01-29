@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -144,7 +145,7 @@ public class DelimitedStringsRecordFormatTest {
     DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
     format.initialize(null);
     String body = "userX,actionY,itemZ";
-    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
     String[] actual = output.get("body");
     String[] expected = body.split(",");
     Assert.assertTrue(Arrays.equals(expected, actual));
@@ -158,7 +159,7 @@ public class DelimitedStringsRecordFormatTest {
                                                        ImmutableMap.of(DelimitedStringsRecordFormat.DELIMITER, " "));
     format.initialize(spec);
     String body = "userX actionY itemZ";
-    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
     String[] actual = output.get("body");
     String[] expected = body.split(" ");
     Assert.assertArrayEquals(expected, actual);
@@ -167,10 +168,10 @@ public class DelimitedStringsRecordFormatTest {
   @Test
   public void testCSV() throws Exception {
     FormatSpecification spec = new FormatSpecification(Formats.CSV, null, Collections.<String, String>emptyMap());
-    RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
+    RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
 
     String body = "userX,actionY,itemZ";
-    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
     String[] actual = output.get("body");
     String[] expected = body.split(",");
     Assert.assertArrayEquals(expected, actual);
@@ -179,10 +180,10 @@ public class DelimitedStringsRecordFormatTest {
   @Test
   public void testTSV() throws Exception {
     FormatSpecification spec = new FormatSpecification(Formats.TSV, null, Collections.<String, String>emptyMap());
-    RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
+    RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
 
     String body = "userX\tactionY\titemZ";
-    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
     String[] actual = output.get("body");
     String[] expected = body.split("\t");
     Assert.assertArrayEquals(expected, actual);
@@ -224,7 +225,7 @@ public class DelimitedStringsRecordFormatTest {
       .append(arrayVal[2])
       .toString();
 
-    StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(body)));
+    StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
     Assert.assertEquals(booleanVal, output.get("f1"));
     Assert.assertEquals(intVal, output.get("f2"));
     Assert.assertEquals(floatVal, output.get("f3"));
@@ -234,7 +235,7 @@ public class DelimitedStringsRecordFormatTest {
     Assert.assertArrayEquals(arrayVal, (String[]) output.get("f7"));
 
     // now try with null fields.
-    output = format.read(ByteBuffer.wrap(Bytes.toBytes("true,,3.14159,,,hello world,extra1")));
+    output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes("true,,3.14159,,,hello world,extra1"))));
     Assert.assertTrue((Boolean) output.get("f1"));
     Assert.assertNull(output.get("f2"));
     Assert.assertTrue(Math.abs(3.14159 - (Float) output.get("f3")) < 0.000001);

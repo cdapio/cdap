@@ -17,14 +17,15 @@
 package co.cask.cdap.data.format;
 
 import co.cask.cdap.api.data.format.RecordFormat;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 import java.nio.ByteBuffer;
 
 /**
- * Format for a record contained in a ByteBuffer.
+ * Format for a record contained in a {@link StreamEvent}.
  *
  * @param <T> type of object to read the byte buffer as.
  */
-public abstract class ByteBufferRecordFormat<T> extends RecordFormat<ByteBuffer, T> {
+public abstract class StreamEventRecordFormat<T> extends RecordFormat<StreamEvent, T> {
 
 }

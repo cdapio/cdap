@@ -16,10 +16,11 @@
 
 package co.cask.cdap.data.format;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.common.io.ByteBufferInputStream;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -29,22 +30,22 @@ import org.apache.avro.io.DecoderFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
  * Stream record format that interprets the body as avro encoded binary data.
  */
-public class AvroRecordFormat extends ByteBufferRecordFormat<GenericRecord> {
+public class AvroRecordFormat extends StreamEventRecordFormat<GenericRecord> {
   private org.apache.avro.Schema avroSchema;
   private DecoderFactory decoderFactory = DecoderFactory.get();
   private DatumReader<GenericRecord> datumReader;
   private BinaryDecoder binaryDecoder;
 
   @Override
-  public GenericRecord read(ByteBuffer input) {
+  public GenericRecord read(StreamEvent event) {
     try {
-      return datumReader.read(null, decoderFactory.binaryDecoder(Bytes.toBytes(input), binaryDecoder));
+      return datumReader.read(null, decoderFactory.binaryDecoder(new ByteBufferInputStream(event.getBody()),
+                                                                 binaryDecoder));
     } catch (IOException e) {
       throw new UnexpectedFormatException("Unable to decode the stream body as avro.", e);
     }
