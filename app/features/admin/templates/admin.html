@@ -55,11 +55,7 @@
           </li>
         </ul>
       </li>
-      <li class="list-group-item">
-        <a ui-sref="admin.namespace.create">
-          Create Namespace
-        </a>
-      </li>
+
       <li
         class="list-group-item"
         data-start-collapsed="1"
@@ -68,6 +64,11 @@
           Namespaces
         </a>
         <ul class="list-unstyled" bs-collapse-target>
+          <li>
+            <a ui-sref="admin.namespace.create">
+              Create Namespace
+            </a>
+          </li>
           <my-tree-view data-model="nsList"></my-tree-view>
         </ul>
       </li>

@@ -11,7 +11,6 @@ angular.module(PKG.name + '.feature.admin')
       system: false,
       security: false
     };
-
     function generateNsObject(item) {
       return {
         state: '',

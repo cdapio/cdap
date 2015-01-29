@@ -1,0 +1,45 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content" >
+
+      <form name="createNotification" class="form-horizontal" novalidate>
+
+        <div class="modal-header">
+          <button type="button" class="close" ng-click="$hide()">&times;</button>
+          <h4 class="modal-title">Create Notifications</h4>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="form-group">
+            <label for="selectentity" class="col-xs-3 control-label">Widget Name</label>
+            <div class="col-xs-9">
+              <input id="selectentity" type="text" name="name" class="form-control"
+                placeholder="Entity Type"
+                cask-focus="selectentity"
+                ng-model="model.title" required/>
+
+              <input type="text" name="name" class="form-control"
+                placeholder="search"/>
+            </div>
+
+          </div>
+
+
+
+
+
+        </div>
+
+        <div class="modal-footer text-right">
+          <button type="submit"
+            ng-disabled="createNotification.$invalid"
+            class="btn btn-primary"
+          >Create</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>

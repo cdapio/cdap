@@ -1,10 +1,9 @@
 <h2> {{$stateParams.nsadmin}}: Applications </h2>
 
-<a class="btn btn-default pull-right">Add App</a>
-<div class="clearfix"></div>
-<div class="pull-right">
-    <a class="btn btn-default">Previous</a>
-    <a class="btn btn-default">Next</a>
+<div class="btn-group">
+    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Add App</button>
+    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
+    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button>
 </div>
 
 <table class="table">

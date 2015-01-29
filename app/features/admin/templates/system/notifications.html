@@ -1,3 +1,15 @@
 <div>
-  <h3> Services </h3>
+  <h3> Notifications </h3>
+  <a ui-sref="admin.system.notifications.add" class="btn btn-default">Create Notification</a>
+
+  <form>
+    <div class="form-group">
+        <label><input type="checkbox" />Enable</label>
+    </div>
+    <div class="form-group">
+        Expire after
+        <input type="text" placeholder="24"/>
+        <button type="button" class="btn btn-default" bs-dropdown="dropdown">Hours <span class="caret"></span></button>
+    </div>
+  </form>
 </div>

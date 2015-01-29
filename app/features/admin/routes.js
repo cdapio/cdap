@@ -24,14 +24,66 @@ angular.module(PKG.name + '.feature.admin')
         })
 
           .state('admin.system.instance', {
-            url: '/instance',
-            templateUrl: '/assets/features/admin/templates/instance.html'
+            parent: 'admin',
+            url: '/system/instance',
+            templateUrl: '/assets/features/admin/templates/system/instance.html',
+            controller: 'InstanceController'
           })
-
+          .state('admin.system.services', {
+            parent: 'admin',
+            url: '/system/services',
+            templateUrl: '/assets/features/admin/templates/system/services.html',
+            controller: 'ServicesController'
+          })
+          .state('admin.system.notifications', {
+            parent: 'admin',
+            url: '/system/notifications',
+            templateUrl: '/assets/features/admin/templates/system/notifications.html'
+          })
+            .state('admin.system.notifications.add', {
+              onEnter: function ($state, $modal) {
+                $modal({
+                  template: '/assets/features/admin/templates/partials/create-notif.html'
+                }).$promise.then(function () {
+                  $state.go('^', $state.params);
+                });
+              }
+            })
         .state('admin.security', {
           url: '/security',
           templateUrl: '/assets/features/admin/templates/security.html'
         })
+
+          .state('admin.security.permissions', {
+            parent: 'admin',
+            url: '/security/permissions',
+            templateUrl: '/assets/features/admin/templates/security/permissions.html'
+          })
+          .state('admin.security.tokens', {
+            parent: 'admin',
+            url: '/security/tokens',
+            templateUrl: '/assets/features/admin/templates/security/tokens.html'
+          })
+            .state('admin.security.tokens.revoke', {
+              onEnter: function ($state, $modal) {
+                $modal({
+                  template: '/assets/features/admin/templates/partials/revoke-tokens.html'
+                }).$promise.then(function () {
+                  $state.go('^', $state.params);
+                });
+              }
+            })
+          .state('admin.security.reports', {
+            parent: 'admin',
+            url: '/security/reports',
+            templateUrl: '/assets/features/admin/templates/security/reports.html'
+          })
+          .state('admin.security.logs', {
+            parent: 'admin',
+            url: '/security/logs',
+            templateUrl: '/assets/features/admin/templates/security/logs.html',
+            controller: 'AuditLogsController'
+          })
 
         .state('admin.namespace', {
           abstract: true,
@@ -66,12 +118,14 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.datatypes', {
               url: '/datatypes',
-              templateUrl: '/assets/features/admin/templates/namespace/datatypes.html'
+              templateUrl: '/assets/features/admin/templates/namespace/datatypes.html',
+              controller: 'DatatypesController'
             })
 
             .state('admin.namespace.detail.datasets', {
               url: '/datasets',
-              templateUrl: '/assets/features/admin/templates/namespace/datasets.html'
+              templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
+              controller: 'DatasetsController'
             })
 
             .state('admin.namespace.detail.apps', {
