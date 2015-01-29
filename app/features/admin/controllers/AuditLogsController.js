@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AuditLogsController', function ($scope) {
+  .controller('AdminAuditLogsController', function ($scope) {
     $scope.logs = [{
       dateTime: '01/28/2015',
       version: '1.0',

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('DatasetsController', function ($scope) {
+  .controller('AdminDatasetsController', function ($scope) {
     $scope.datasets = [{
       name: 'STU',
       type: 'Stream',

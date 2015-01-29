@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.admin')
             parent: 'admin',
             url: '/system/instance',
             templateUrl: '/assets/features/admin/templates/system/instance.html',
-            controller: 'InstanceController'
+            controller: 'AdminInstanceController'
           })
           .state('admin.system.services', {
             parent: 'admin',
@@ -87,7 +87,7 @@ angular.module(PKG.name + '.feature.admin')
             parent: 'admin',
             url: '/security/logs',
             templateUrl: '/assets/features/admin/templates/security/logs.html',
-            controller: 'AuditLogsController'
+            controller: 'AdminAuditLogsController'
           })
 
         .state('admin.namespace', {
@@ -98,7 +98,7 @@ angular.module(PKG.name + '.feature.admin')
           .state('admin.namespace.create', {
             url: '/create',
             templateUrl: '/assets/features/admin/templates/namespace/create.html',
-            controller: 'NamespaceCreateController'
+            controller: 'AdminNamespaceCreateController'
           })
 
           .state('admin.namespace.detail', {
@@ -124,13 +124,13 @@ angular.module(PKG.name + '.feature.admin')
             .state('admin.namespace.detail.datatypes', {
               url: '/datatypes',
               templateUrl: '/assets/features/admin/templates/namespace/datatypes.html',
-              controller: 'DatatypesController'
+              controller: 'AdminDatatypesController'
             })
 
             .state('admin.namespace.detail.datasets', {
               url: '/datasets',
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
-              controller: 'DatasetsController'
+              controller: 'AdminDatasetsController'
             })
 
             .state('admin.namespace.detail.apps', {

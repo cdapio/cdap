@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('DatatypesController', function ($scope) {
+  .controller('AdminDatatypesController', function ($scope) {
     $scope.datatypes = [{
       name: 'counter',
       className: 'core',
