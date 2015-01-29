@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -145,9 +147,24 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
             // no-op
             break;
           default:
-            throw new RuntimeException(String.format("Unknown Program '%s', Program Type '%s' in the Workflow.",
+            throw new RuntimeException(String.format("Unknown Program '%s' in the Workflow.",
                                                      program.getProgramName()));
         }
+      }
+    }
+
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      ScheduleProgramInfo program = entry.getValue().getProgram();
+      switch (program.getProgramType()) {
+        case WORKFLOW:
+          if (!specification.getWorkflows().containsKey(program.getProgramName())) {
+            throw new RuntimeException(String.format("Workflow '%s' is not configured with the Application.",
+                                                     program.getProgramName()));
+          }
+          break;
+        default:
+          throw new RuntimeException(String.format("Program '%s' with Program Type '%s' cannot be scheduled.",
+                                                   program.getProgramName(), program.getProgramType()));
       }
     }
 
