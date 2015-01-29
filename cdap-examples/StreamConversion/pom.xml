@@ -24,12 +24,12 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>Convert</artifactId>
+  <artifactId>StreamConversion</artifactId>
   <name>Stream Conversion</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.conversion.StreamConversionApp</app.main.class>
+    <app.main.class>co.cask.cdap.examples.streamconversion.StreamConversionApp</app.main.class>
   </properties>
 
   <dependencies>
