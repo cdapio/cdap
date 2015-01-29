@@ -58,6 +58,6 @@ public class DatasetCommands extends CommandSet<Command> implements Categorized 
 
   @Override
   public String getCategory() {
-    return CommandCategory.DATASETS.getName();
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

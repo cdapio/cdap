@@ -18,7 +18,6 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -30,7 +29,7 @@ import java.io.PrintStream;
 /**
  * Gets the logs of a program.
  */
-public class GetProgramLogsCommand extends AbstractAuthCommand implements Categorized {
+public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
@@ -78,10 +77,5 @@ public class GetProgramLogsCommand extends AbstractAuthCommand implements Catego
   @Override
   public String getDescription() {
     return "Gets the logs of a " + elementType.getPrettyName();
-  }
-
-  @Override
-  public String getCategory() {
-    return elementType.getCommandCategory().getName();
   }
 }

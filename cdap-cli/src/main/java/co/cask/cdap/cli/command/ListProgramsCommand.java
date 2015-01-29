@@ -17,7 +17,6 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
@@ -33,7 +32,7 @@ import java.util.List;
 /**
  * Lists all programs of a certain type.
  */
-public class ListProgramsCommand extends AbstractAuthCommand implements Categorized {
+public class ListProgramsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
   private final ProgramType programType;
@@ -66,11 +65,6 @@ public class ListProgramsCommand extends AbstractAuthCommand implements Categori
   @Override
   public String getDescription() {
     return "Lists " + getElementType().getPluralPrettyName();
-  }
-
-  @Override
-  public String getCategory() {
-    return getElementType().getCommandCategory().getName();
   }
 
   private ElementType getElementType() {

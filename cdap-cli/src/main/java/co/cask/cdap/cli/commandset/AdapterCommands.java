@@ -46,6 +46,6 @@ public class AdapterCommands extends CommandSet<Command> implements Categorized 
 
   @Override
   public String getCategory() {
-    return CommandCategory.ADAPTERS.getName();
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

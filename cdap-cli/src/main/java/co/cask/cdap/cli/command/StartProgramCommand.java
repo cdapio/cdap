@@ -18,7 +18,6 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -33,7 +32,7 @@ import java.util.Map;
 /**
  * Starts a program.
  */
-public class StartProgramCommand extends AbstractAuthCommand implements Categorized {
+public class StartProgramCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
 
@@ -83,10 +82,5 @@ public class StartProgramCommand extends AbstractAuthCommand implements Categori
   public String getDescription() {
     return "Starts a " + elementType.getPrettyName() + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
-  }
-
-  @Override
-  public String getCategory() {
-    return elementType.getCommandCategory().getName();
   }
 }

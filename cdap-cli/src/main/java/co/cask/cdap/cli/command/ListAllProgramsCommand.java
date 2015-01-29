@@ -80,6 +80,6 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getCategory() {
-    return CommandCategory.PROGRAMS.getName();
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

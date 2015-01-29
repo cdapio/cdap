@@ -81,6 +81,6 @@ public class CallProcedureCommand extends AbstractAuthCommand implements Categor
 
   @Override
   public String getCategory() {
-    return CommandCategory.PROCEDURES.getName();
+    return CommandCategory.DATA_EGRESS.getName();
   }
 }

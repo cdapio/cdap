@@ -47,17 +47,17 @@ public class StreamCommands extends CommandSet<Command> implements Categorized {
         .add(injector.getInstance(DescribeStreamCommand.class))
         .add(injector.getInstance(GetStreamEventsCommand.class))
         .add(injector.getInstance(ListStreamsCommand.class))
-        .add(injector.getInstance(SendStreamEventCommand.class))
-        .add(injector.getInstance(LoadStreamCommand.class))
         .add(injector.getInstance(SetStreamTTLCommand.class))
         .add(injector.getInstance(SetStreamFormatCommand.class))
         .add(injector.getInstance(SetStreamPropertiesCommand.class))
         .add(injector.getInstance(TruncateStreamCommand.class))
+        .add(injector.getInstance(SendStreamEventCommand.class))
+        .add(injector.getInstance(LoadStreamCommand.class))
         .build());
   }
 
   @Override
   public String getCategory() {
-    return CommandCategory.STREAMS.getName();
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

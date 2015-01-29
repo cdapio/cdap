@@ -20,17 +20,10 @@ package co.cask.cdap.cli;
  * Various categories.
  */
 public enum CommandCategory {
-  GENERAL("General"), APPS("Applications"), STREAMS("Streams"), DATASETS("Datasets"),
-  EXPLORE("Explore"), PREFERENCES("Preferences"),
-  NAMESPACES("Namespaces"), ADAPTERS("Adapters"), PROGRAMS("Programs"),
-  FLOWS("Flows"), WORKFLOWS("Workflows"), MAPREDUCE("MapReduce"), SPARK("Spark"),
-  SERVICES("Services"), PROCEDURES("Procedures");
-
-  private static CommandCategory[] exposedValues = new CommandCategory[] {
-    // NAMESPACES
-    GENERAL, APPS, STREAMS, DATASETS, EXPLORE, ADAPTERS, PREFERENCES, PROGRAMS,
-    FLOWS, WORKFLOWS, MAPREDUCE, SPARK, SERVICES, PROCEDURES
-  };
+  GENERAL("General"),
+  LIFECYCLE("Lifecycle"),
+  DATA_INGRESS("Data Ingress"),
+  DATA_EGRESS("Data Egress");
 
   final String name;
 
@@ -44,14 +37,10 @@ public enum CommandCategory {
 
   public static CommandCategory valueOfNameIgnoreCase(String name) {
     for (CommandCategory commandCategory : CommandCategory.values()) {
-      if (name.equalsIgnoreCase(commandCategory.getName())) {
+      if (name.equalsIgnoreCase(commandCategory.name())) {
         return commandCategory;
       }
     }
     throw new IllegalArgumentException("Invalid command category: " + name);
-  }
-
-  public static CommandCategory[] exposedValues() {
-    return exposedValues;
   }
 }

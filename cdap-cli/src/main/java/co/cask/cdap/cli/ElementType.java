@@ -27,77 +27,77 @@ import java.util.Set;
 public enum ElementType {
 
   ADAPTER("Adapter", "Adapters", "adapter", "adapters",
-          null, null, ArgumentName.ADAPTER, CommandCategory.ADAPTERS),
+          null, null, ArgumentName.ADAPTER),
 
   INSTANCE("Instance", "Instance", "instance", "instance",
-           null, null, ArgumentName.INSTANCE, CommandCategory.PREFERENCES, Capability.PREFERENCES),
+           null, null, ArgumentName.INSTANCE, Capability.PREFERENCES),
 
   NAMESPACE("Namespace", "Namespaces", "namespace", "namespaces",
-            null, null, ArgumentName.NAMESPACE_ID, CommandCategory.NAMESPACES, Capability.PREFERENCES),
+            null, null, ArgumentName.NAMESPACE_ID, Capability.PREFERENCES),
 
   APP("application", "applications", "app", "apps",
-      null, null, ArgumentName.APP, CommandCategory.APPS, Capability.LIST, Capability.PREFERENCES),
+      null, null, ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
   DATASET("Dataset", "Datasets", "dataset", "datasets",
-          null, null, ArgumentName.DATASET, CommandCategory.DATASETS, Capability.LIST),
+          null, null, ArgumentName.DATASET, Capability.LIST),
 
   DATASET_MODULE("Dataset module", "Dataset modules", "dataset module", "dataset modules",
-                 null, null, ArgumentName.DATASET_MODULE, CommandCategory.DATASETS, Capability.LIST),
+                 null, null, ArgumentName.DATASET_MODULE, Capability.LIST),
 
   DATASET_TYPE("Dataset type", "Dataset types", "dataset type", "dataset types",
-               null, null, ArgumentName.DATASET_TYPE, CommandCategory.DATASETS, Capability.LIST),
+               null, null, ArgumentName.DATASET_TYPE, Capability.LIST),
 
   QUERY("Dataset query", "Dataset queries", "dataset query", "dataset queries",
-        null, null, ArgumentName.QUERY, CommandCategory.EXPLORE),
+        null, null, ArgumentName.QUERY),
 
   STREAM("Stream", "Streams", "stream", "streams",
-         null, null, ArgumentName.STREAM, CommandCategory.STREAMS, Capability.LIST),
+         null, null, ArgumentName.STREAM, Capability.LIST),
 
   PROGRAM("program", "programs", "program", "programs",
-          null, null, ArgumentName.PROGRAM, CommandCategory.PROGRAMS),
+          null, null, ArgumentName.PROGRAM),
 
   FLOW("Flow", "Flows", "flow", "flows",
        ProgramType.FLOW, null,
-       ArgumentName.FLOW, CommandCategory.FLOWS,
+       ArgumentName.FLOW,
        Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START_STOP,
        Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   WORKFLOW("Workflow", "Workflows", "workflow", "workflows",
            ProgramType.WORKFLOW, null,
-           ArgumentName.WORKFLOW, CommandCategory.WORKFLOWS,
+           ArgumentName.WORKFLOW,
            Capability.RUNS, Capability.STATUS, Capability.START_STOP,
            Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   FLOWLET("Flowlet", "Flowlets", "flowlet", "flowlets",
           null, ProgramType.FLOW,
-          ArgumentName.FLOWLET, CommandCategory.FLOWS,
+          ArgumentName.FLOWLET,
           Capability.SCALE),
 
   PROCEDURE("Procedure", "Procedures", "procedure", "procedures",
             ProgramType.PROCEDURE, null,
-            ArgumentName.PROCEDURE, CommandCategory.PROCEDURES,
+            ArgumentName.PROCEDURE,
             Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
             Capability.START_STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   SERVICE("Service", "Services", "service", "services",
           ProgramType.SERVICE, null,
-          ArgumentName.SERVICE, CommandCategory.SERVICES,
+          ArgumentName.SERVICE,
           Capability.START_STOP, Capability.STATUS, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
            null, ProgramType.SERVICE,
-           ArgumentName.RUNNABLE, CommandCategory.SERVICES,
+           ArgumentName.RUNNABLE,
            Capability.SCALE, Capability.RUNS, Capability.LOGS),
 
   MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce program", "mapreduce programs",
             ProgramType.MAPREDUCE, null,
-            ArgumentName.MAPREDUCE, CommandCategory.MAPREDUCE,
+            ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   SPARK("Spark Program", "Spark Programs", "spark program", "spark programs",
             ProgramType.SPARK, null,
-            ArgumentName.SPARK, CommandCategory.SPARK,
+            ArgumentName.SPARK,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES);
 
@@ -109,11 +109,10 @@ public enum ElementType {
   private final Set<Capability> capabilities;
   private final String prettyName;
   private final ArgumentName argumentName;
-  private final CommandCategory commandCategory;
 
   ElementType(String prettyName, String pluralPrettyName, String name, String pluralName,
               ProgramType programType, ProgramType parentType, ArgumentName argumentName,
-              CommandCategory commandCategory, Capability... capabilities) {
+              Capability... capabilities) {
     this.prettyName = prettyName;
     this.pluralPrettyName = pluralPrettyName;
     this.name = name;
@@ -121,7 +120,6 @@ public enum ElementType {
     this.programType = programType;
     this.parentType = parentType;
     this.argumentName = argumentName;
-    this.commandCategory = commandCategory;
     this.capabilities = Sets.newHashSet(capabilities);
   }
 
@@ -200,10 +198,6 @@ public enum ElementType {
 
   public boolean hasPreferences() {
     return capabilities.contains(Capability.PREFERENCES);
-  }
-
-  public CommandCategory getCommandCategory() {
-    return commandCategory;
   }
 
   private enum Capability {

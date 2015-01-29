@@ -78,7 +78,7 @@ public class HelpCommand implements Command {
       output.println();
 
       Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL);
-      for (CommandCategory category : CommandCategory.exposedValues()) {
+      for (CommandCategory category : CommandCategory.values()) {
         List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
         if (commandList.isEmpty()) {
           continue;

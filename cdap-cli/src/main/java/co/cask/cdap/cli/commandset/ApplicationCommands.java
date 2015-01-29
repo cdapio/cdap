@@ -46,6 +46,6 @@ public class ApplicationCommands extends CommandSet<Command> implements Categori
 
   @Override
   public String getCategory() {
-    return CommandCategory.APPS.getName();
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

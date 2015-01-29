@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -48,7 +50,7 @@ import java.util.Map;
 /**
  * Call an endpoint of a {@link Service}.
  */
-public class CallServiceCommand extends AbstractCommand {
+public class CallServiceCommand extends AbstractCommand implements Categorized {
   private static final Gson GSON = new Gson();
 
 
@@ -134,5 +136,10 @@ public class CallServiceCommand extends AbstractCommand {
       builder.put(key, StringUtils.arrayToString(value.toArray(new String[value.size()])));
     }
     return formatHeader(builder.build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.DATA_EGRESS.getName();
   }
 }
