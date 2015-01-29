@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class WorkflowAppWithErrorRuns  extends AbstractApplication {
+public class WorkflowAppWithErrorRuns extends AbstractApplication {
 
   @Override
   public void configure() {
