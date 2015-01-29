@@ -15,8 +15,8 @@
 # the License.
 
 # Parcel name vars 
-PARCEL_BASE="CDAP"
-PARCEL_SUFFIX="el6"
+PARCEL_BASE=${PARCEL_BASE:-CDAP}
+PARCEL_SUFFIX=${PARCEL_SUFFIX:-el6}
 
 # Components should map to top-level directories: "cdap-${COMPONENT}"
 COMPONENTS="gateway hbase-compat-0.94 hbase-compat-0.96 hbase-compat-0.98 kafka master security web-app"
@@ -132,18 +132,22 @@ function generate_parcel {
 
 # Scp the parcel somewhere, optional
 function scp_parcel {
-  if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_PATH}" ]; then
-    die "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_IDENTITY"
+  if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_BASE_PATH}" ]; then
+    die "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_BASE_PATH"
   fi
-  echo "Copying ${TARGET_DIR}/${PARCEL_NAME} to remote host ${PARCEL_SCP_HOST}"
-  scp ${PARCEL_SCP_IDENTITY} ${TARGET_DIR}/${PARCEL_NAME} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST}:${PARCEL_SCP_PATH}
+  echo "Copying ${TARGET_DIR}/${PARCEL_NAME} to remote host"
+  scp ${PARCEL_SCP_OPTIONS} ${TARGET_DIR}/${PARCEL_NAME} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST}:${PARCEL_SCP_BASE_PATH}/cdap/${VERSION}
   local __ret=$?
   if [ $__ret -ne 0 ]; then
-    die "Scp unsuccessful"
-  fi 
+    die "SCP unsuccessful"
+  else
+    echo "SCP successful"
+  fi
 }
 
 # Do stuff
+
+echo "Starting Parcel Build"
 
 validate_env
 
