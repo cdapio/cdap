@@ -136,6 +136,7 @@ angular.module(PKG.name+'.services')
         callback: function (result) {
           if(!once) {
             once = true;
+            /*jshint -W030 */
             cb && cb.apply(this, arguments);
             deferred.resolve(result);
           }
