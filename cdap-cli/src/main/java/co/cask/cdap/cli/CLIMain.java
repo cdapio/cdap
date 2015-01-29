@@ -18,6 +18,7 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.HelpCommand;
+import co.cask.cdap.cli.command.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.client.config.ClientConfig;
@@ -53,13 +54,6 @@ public class CLIMain {
   private final Iterable<CommandSet<Command>> commands;
 
   public CLIMain(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    HelpCommand helpCommand = new HelpCommand(new Supplier<Iterable<CommandSet<Command>>>() {
-      @Override
-      public Iterable<CommandSet<Command>> get() {
-        return getCommands();
-      }
-    }, cliConfig);
-
     Injector injector = Guice.createInjector(
       new AbstractModule() {
         @Override
@@ -78,7 +72,10 @@ public class CLIMain {
 
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
-      new CommandSet<Command>(ImmutableList.<Command>of(helpCommand)));
+      new CommandSet<Command>(ImmutableList.<Command>of(
+        new HelpCommand(getCommandsSupplier(), cliConfig),
+        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
+      )));
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
@@ -113,8 +110,13 @@ public class CLIMain {
     return this.cli;
   }
 
-  private Iterable<CommandSet<Command>> getCommands() {
-    return this.commands;
+  private Supplier<Iterable<CommandSet<Command>>> getCommandsSupplier() {
+    return new Supplier<Iterable<CommandSet<Command>>>() {
+      @Override
+      public Iterable<CommandSet<Command>> get() {
+        return commands;
+      }
+    };
   }
 
   public static void main(String[] args) throws Exception {

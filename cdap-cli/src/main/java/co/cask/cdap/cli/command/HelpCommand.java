@@ -25,9 +25,12 @@ import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
@@ -41,7 +44,7 @@ import java.util.List;
  */
 public class HelpCommand implements Command {
 
-  private static final int COL_WIDTH = 80;
+  static final int COL_WIDTH = 80;
 
   private final Supplier<Iterable<CommandSet<Command>>> commands;
   private final CLIConfig config;
@@ -57,7 +60,8 @@ public class HelpCommand implements Command {
 
     if (arguments.hasArgument(ArgumentName.COMMAND_CATEGORY.getName())) {
       // help with one category
-      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL);
+      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
+                                                                         Predicates.<Command>alwaysTrue());
       String commandCategoryInput = arguments.get(ArgumentName.COMMAND_CATEGORY.getName());
       CommandCategory category = CommandCategory.valueOfNameIgnoreCase(commandCategoryInput);
 
@@ -77,7 +81,8 @@ public class HelpCommand implements Command {
       output.println("Available commands:");
       output.println();
 
-      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL);
+      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
+                                                                         Predicates.<Command>alwaysTrue());
       for (CommandCategory category : CommandCategory.values()) {
         List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
         if (commandList.isEmpty()) {
@@ -89,7 +94,7 @@ public class HelpCommand implements Command {
     }
   }
 
-  private void printCommands(PrintStream output, String category, List<Command> commandList) {
+  protected void printCommands(PrintStream output, String category, List<Command> commandList) {
     Collections.sort(commandList, new Comparator<Command>() {
       @Override
       public int compare(Command command, Command command2) {
@@ -107,29 +112,30 @@ public class HelpCommand implements Command {
     }
   }
 
-  private Multimap<String, Command> categorizeCommands(Iterable<CommandSet<Command>> commandSets,
-                                                       CommandCategory defaultCategory) {
+  protected Multimap<String, Command> categorizeCommands(Iterable<CommandSet<Command>> commandSets,
+                                                         CommandCategory defaultCategory, Predicate<Command> filter) {
     Multimap<String, Command> result = HashMultimap.create();
     for (CommandSet<Command> commandSet : commandSets) {
-      populate(result, commandSet, getCategory(commandSet), defaultCategory);
+      populate(result, commandSet, getCategory(commandSet), defaultCategory, filter);
     }
     return result;
   }
 
   /**
-   * Recursive helper for {@link #categorizeCommands(Iterable, CommandCategory)}.
+   * Recursive helper for {@link #categorizeCommands(Iterable, CommandCategory, Predicate)}.
    */
   private void populate(Multimap<String, Command> result, CommandSet<Command> commandSet,
-                        Optional<String> parentCategory, CommandCategory defaultCategory) {
+                        Optional<String> parentCategory, CommandCategory defaultCategory,
+                        Predicate<Command> filter) {
 
-    for (Command childCommand : commandSet.getCommands()) {
+    for (Command childCommand : Iterables.filter(commandSet.getCommands(), filter)) {
       Optional<String> commandCategory = getCategory(childCommand).or(parentCategory);
       result.put(commandCategory.or(defaultCategory.getName()), childCommand);
     }
 
     for (CommandSet<Command> childCommandSet : commandSet.getCommandSets()) {
       Optional<String> commandCategory = getCategory(childCommandSet).or(parentCategory);
-      populate(result, childCommandSet, commandCategory, defaultCategory);
+      populate(result, childCommandSet, commandCategory, defaultCategory, filter);
     }
   }
 

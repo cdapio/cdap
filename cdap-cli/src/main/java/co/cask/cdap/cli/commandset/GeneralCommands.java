@@ -30,12 +30,12 @@ import com.google.inject.Injector;
 import java.util.List;
 
 /**
- * Preference commands.
+ * General commands.
  */
-public class BasicCommands extends CommandSet<Command> implements Categorized {
+public class GeneralCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
-  public BasicCommands(Injector injector) {
+  public GeneralCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
         .add(injector.getInstance(VersionCommand.class))
