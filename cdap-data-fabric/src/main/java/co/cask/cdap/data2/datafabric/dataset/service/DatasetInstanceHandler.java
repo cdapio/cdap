@@ -129,7 +129,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    disableExplore(name);
+    // Disable explore if the table already existed
+    if (existing != null) {
+      disableExplore(name);
+    }
     
     if (!createDatasetInstance(creationProperties, name, responder, "create")) {
       return;
