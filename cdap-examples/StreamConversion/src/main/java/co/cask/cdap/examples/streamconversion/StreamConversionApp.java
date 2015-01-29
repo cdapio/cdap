@@ -22,9 +22,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
@@ -33,16 +30,14 @@ import org.apache.avro.mapreduce.AvroKeyOutputFormat;
  * periodic stream conversion.
  */
 public class StreamConversionApp extends AbstractApplication {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
+
+  static final String SCHEMA_STRING = Schema.recordOf(
+    "streamEvent",
+    Schema.Field.of("time", Schema.of(Schema.Type.LONG)),
+    Schema.Field.of("body", Schema.of(Schema.Type.STRING))).toString();
 
   @Override
   public void configure() {
-    Schema schema = Schema.recordOf(
-      "streamEvent",
-      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
     addStream(new Stream("events"));
     addMapReduce(new StreamConversionMapReduce());
     addWorkflow(new StreamConversionWorkflow());
@@ -55,13 +50,13 @@ public class StreamConversionApp extends AbstractApplication {
       .setBasePath("/converted")
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-      .setOutputProperty("schema", schema.toString())
-        // properties for explore (to create a partitioned hive table)
+      .setOutputProperty("schema", SCHEMA_STRING)
+      // properties for explore (to create a partitioned hive table)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", GSON.toJson(schema))
+      .setTableProperty("avro.schema.literal", SCHEMA_STRING)
       .build());
   }
 }

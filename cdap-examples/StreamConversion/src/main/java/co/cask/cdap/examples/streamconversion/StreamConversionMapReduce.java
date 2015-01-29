@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -48,10 +47,9 @@ import java.util.concurrent.TimeUnit;
  * in avro format.
  */
 public class StreamConversionMapReduce extends AbstractMapReduce {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamConversionMapReduce.class);
 
-  public static final String SCHEMA_KEY = "cdap.stream.conversion.output.schema";
-  public static final String MAPPER_MEMORY = "cdap.stream.conversion.mapper.memorymb";
+  private static final Logger LOG = LoggerFactory.getLogger(StreamConversionMapReduce.class);
+  private static final Schema SCHEMA = new Schema.Parser().parse(StreamConversionApp.SCHEMA_STRING);
 
   private final Map<String, String> dsArguments = Maps.newHashMap();
 
@@ -68,32 +66,19 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setNumReduceTasks(0);
     job.setMapOutputKeyClass(AvroKey.class);
     job.setMapOutputValueClass(NullWritable.class);
+    AvroJob.setOutputKeySchema(job, SCHEMA);
 
-    Map<String, String> runtimeArgs = context.getRuntimeArguments();
-
-    // we will read <interval.minutes> of events from the stream, ending at <logical.time>
-    // (default: 5 minutes up to logical start time of the job).
+    // read 5 minutes of events from the stream, ending at the logical start time of this run
     long logicalTime = context.getLogicalStartTime();
-    long intervalLength = TimeUnit.MINUTES.toMillis(5);;
+    StreamBatchReadable.useStreamInput(context, "events", logicalTime - TimeUnit.MINUTES.toMillis(5), logicalTime);
 
-    // configure the stream input format
-    StreamBatchReadable.useStreamInput(context, "events", logicalTime - intervalLength, logicalTime);
-
-    // configure the output dataset
+    // each run writes its output to a partition with the logical start time.
     TimePartitionedFileSetArguments.setOutputPartitionTime(dsArguments, logicalTime);
     TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
+    context.setOutput("converted", partitionedFileSet);
 
-    // this schema is our schema, which is slightly different than avro's schema in terms of the types it supports.
-    // Incompatibilities will surface here and cause the job to fail.
-    String schemaStr = partitionedFileSet.getOutputFormatConfiguration().get("schema");
-    job.getConfiguration().set(SCHEMA_KEY, schemaStr);
-    Schema schema = new Schema.Parser().parse(schemaStr);
-    AvroJob.setOutputKeySchema(job, schema);
-
-    // each job will output to a partition with its logical start time.
     LOG.info("Output location for new partition is: {}",
              partitionedFileSet.getUnderlyingFileSet().getOutputLocation().toURI().toString());
-    context.setOutput("converted", partitionedFileSet);
   }
 
   @Override
@@ -101,13 +86,11 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     if (succeeded) {
       // TODO this should be done by the output committer (CDAP-1227)
       TimePartitionedFileSet converted = context.getDataset("converted", dsArguments);
-
       String outputPath = FileSetArguments.getOutputPath(converted.getUnderlyingFileSet().getRuntimeArguments());
-      Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(converted.getRuntimeArguments());
-      Preconditions.checkNotNull(time, "Output partition time is null.");
+      Long partitionTime = context.getLogicalStartTime();
 
-      LOG.info("Adding partition for time {} with path {} to dataset '{}'", time, outputPath, "converted");
-      converted.addPartition(time, outputPath);
+      LOG.info("Adding partition for time {} with path {} to dataset '{}'", partitionTime, outputPath, "converted");
+      converted.addPartition(partitionTime, outputPath);
     }
   }
 
@@ -116,18 +99,12 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
    */
   public static class StreamConversionMapper extends
     Mapper<LongWritable, StreamEvent, AvroKey<GenericRecord>, NullWritable> {
-    private Schema schema;
-
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-      schema = new Schema.Parser().parse(context.getConfiguration().get(SCHEMA_KEY));
-    }
 
     @Override
     public void map(LongWritable timestamp, StreamEvent streamEvent, Context context)
       throws IOException, InterruptedException {
-      GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
-        .set("ts", streamEvent.getTimestamp())
+      GenericRecordBuilder recordBuilder = new GenericRecordBuilder(SCHEMA)
+        .set("time", streamEvent.getTimestamp())
         .set("body", Bytes.toString(streamEvent.getBody()));
       GenericRecord record = recordBuilder.build();
       context.write(new AvroKey<GenericRecord>(record), NullWritable.get());
