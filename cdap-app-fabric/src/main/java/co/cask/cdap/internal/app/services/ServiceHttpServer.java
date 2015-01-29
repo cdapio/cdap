@@ -91,8 +91,8 @@ public class ServiceHttpServer extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(String host, Program program, ServiceSpecification spec,
-                           RunId runId, AtomicInteger instanceCount, ServiceAnnouncer serviceAnnouncer,
+  public ServiceHttpServer(String host, Program program, ServiceSpecification spec, RunId runId,
+                           AtomicInteger instanceCount, ServiceAnnouncer serviceAnnouncer,
                            BasicHttpServiceContextFactory contextFactory,
                            MetricsCollectionService metricsCollectionService,
                            DataFabricFacadeFactory dataFabricFacadeFactory) {

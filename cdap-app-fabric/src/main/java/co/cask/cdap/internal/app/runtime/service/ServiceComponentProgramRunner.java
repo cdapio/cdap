@@ -129,8 +129,8 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
     return controller;
   }
 
-  private BasicHttpServiceContextFactory createHttpServiceContextFactory(final Program program,
-                                                                         final RunId runId, final int instanceId,
+  private BasicHttpServiceContextFactory createHttpServiceContextFactory(final Program program, final RunId runId,
+                                                                         final int instanceId,
                                                                          final AtomicInteger instanceCount,
                                                                          final Arguments arguments) {
     return new BasicHttpServiceContextFactory() {
