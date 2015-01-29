@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.Constants;
+import co.cask.cdap.cli.util.StringStyler;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -102,7 +103,7 @@ public class HelpCommand implements Command {
       }
     });
 
-    output.println(category);
+    output.println(StringStyler.bold(category));
     output.println();
 
     for (Command command : commandList) {
