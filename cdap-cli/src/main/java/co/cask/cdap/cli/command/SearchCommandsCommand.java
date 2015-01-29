@@ -47,9 +47,13 @@ public class SearchCommandsCommand extends HelpCommand {
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String originalQuery = arguments.get(ArgumentName.QUERY.getName());
     String queryString = originalQuery;
-    if (!queryString.contains("\\S") && !queryString.contains("^")) {
-      // no full-match
-      queryString = ".*?" + queryString + ".*?";
+
+    if (!queryString.startsWith("^")) {
+      queryString = "^.*?" + queryString;
+    }
+
+    if (!queryString.endsWith("$")) {
+      queryString = queryString + ".+?$";
     }
 
     final String query = queryString;
