@@ -1,9 +1,9 @@
 angular.module(PKG.name + '.commons')
-  .directive('myTab', function() {
+  .directive('myTabs', function() {
     return {
       restrict: 'EA',
       scope: true,
-      controller: 'myTabCtrl',
+      controller: 'myTabsCtrl',
       templateUrl: 'tabs/mytabs.html'
     };
   });

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('myTabCtrl', function($scope, $state) {
+  .controller('myTabsCtrl', function($scope, $state) {
     $scope.tabs = $scope.tabs.map(function (t){
       return {
         title: t,

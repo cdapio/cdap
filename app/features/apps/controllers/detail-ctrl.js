@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.apps')
-  .controller('CdapAppDetailController', function CdapAppDetail($scope, $state, MyDataSource) {
+  .controller('CdapAppDetailController', function CdapAppDetail($scope, $state) {
     $scope.tabs = [
       'Status',
       'Data',
