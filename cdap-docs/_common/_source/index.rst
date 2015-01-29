@@ -106,6 +106,12 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |faq|_ Answers to questions you might have about CDAP
 
 
+.. |search| replace:: **Search:**
+.. _search: search.html
+
+- |search|_ Search this documentation using *Quick Search*
+
+
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
 

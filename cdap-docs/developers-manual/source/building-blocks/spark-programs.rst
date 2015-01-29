@@ -151,7 +151,7 @@ It’s possible to read parts of a Stream by specifying start and end timestamps
     sc.readFromStream(streamName, vClass, startTime, endTime);
 
 You can read custom objects from a Stream by providing a decoderType extended from
-`StreamEventDecoder <../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
+`StreamEventDecoder <../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
 
     sc.readFromStream(streamName, vClass, startTime, endTime, decoderType);
 
