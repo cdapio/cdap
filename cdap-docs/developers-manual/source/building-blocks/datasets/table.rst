@@ -207,3 +207,16 @@ When you want to delete all the columns of a row and you know all of them,
 passing all of them will make the deletion faster. Deleting all the columns of a row will
 also delete the entire row, as the underlying implementation of a Table is a 
 `columnar store. <http://en.wikipedia.org/wiki/Column-oriented_DBMS>`__
+
+.. _table-datasets-pre-splitting:
+
+Pre-Splitting a Table into Multiple Regions
+===========================================
+
+To create a Dataset pre-split into multiple regions, where the underlying storage is HBase,
+you can use::
+
+  createDataset("frequentCustomers", KeyValueTable.class,
+    DatasetProperties.builder()
+                     .add("hbase.splits", new Gson().toJson(new byte[][]{{1},{2},{3},{4},{5}})
+                     .build());
