@@ -23,6 +23,21 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
+=============================================================
+
+
+CDAP Bug Fixes
+--------------
+
+
+.. _known-issues-261:
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.6.0. <#known-issues-260>`_
+
+
 `Release 2.6.0 <http://docs.cask.co/cdap/2.6.0/index.html>`__
 =============================================================
 
