@@ -23,7 +23,7 @@ that periodically runs the Workflow defined in the StreamConversion application.
 Custom adapters can be added to CDAP, though the feature is experimental and will
 likely change and improve in future releases.
 
-Stream Conversion Adapter
+Stream-conversion Adapter
 =========================
 A stream-conversion Adapter regularly reads data from a source Stream and writes
 it to a ``TimePartitionedFileSet`` as Avro files. You may want to use this Adapter if you
@@ -37,27 +37,27 @@ event, as well as nullable string fields for any headers given in the adapter pr
 
 Stream conversion Adapters require these properties:
 
-  - ``frequency``: Defines how often the Adapter should run, as a number followed by a letter.
-    For example, 5m means the Adapter will run every five minutes, and 2h means the Adapter
-    will run every two hours. For minutes, the number given must be an even divisor of an hour.
-    For example, 30m is valid, but 13m is not because an hour does not evenly divide into 13 minute chunks.
-    Similarly, for hours, the number given must be an even divisor of a day.
-    For example, 3h is valid, but 7h is not.
-  - ``source.name``: The name of the Stream to read from.
-  - ``source.format.name``: The name of the format of the Stream body.
-  - ``source.format.settings``: Settings of the format as a JSON Object of string to string.
-  - ``source.schema``: The schema of the Stream body.
-  - ``sink.name``: The name of the ``TimePartitionedFileSet`` to write to.
+- ``frequency``: Defines how often the Adapter should run, as a number followed by a letter.
+  For example, 5m means the Adapter will run every five minutes, and 2h means the Adapter
+  will run every two hours. For minutes, the number given must be an even divisor of an hour.
+  For example, 30m is valid, but 13m is not because an hour does not evenly divide into 13 minute chunks.
+  Similarly, for hours, the number given must be an even divisor of a day.
+  For example, 3h is valid, but 7h is not.
+- ``source.name``: The name of the Stream to read from.
+- ``source.format.name``: The name of the format of the Stream body.
+- ``source.format.settings``: Settings of the format as a JSON Object of string to string.
+- ``source.schema``: The schema of the Stream body.
+- ``sink.name``: The name of the ``TimePartitionedFileSet`` to write to.
 
 These Adapter properties are optional:
 
-  - ``mapper.resources.memory.mb``: Amount of memory each mapper of the Mapreduce program should use.
-  - ``mapper.resources.vcores``: Number of virtual cores each mapper of the Mapreduce program should use.
-  - ``headers``: Any stream headers that should be included in the output.
+- ``mapper.resources.memory.mb``: Amount of memory each mapper of the Mapreduce program should use.
+- ``mapper.resources.vcores``: Number of virtual cores each mapper of the Mapreduce program should use.
+- ``headers``: Any stream headers that should be included in the output.
 
 This sink property is required:
 
-  - ``explore.table.property.avro.schema.literal``: The output schema including timestamp and headers. 
+- ``explore.table.property.avro.schema.literal``: The output schema including timestamp and headers. 
 
 Each time the Adapter is run, it will read stream events from a time range, write to the fileset, and add those
 files as a partition. The time range is calculated based on the frequency of the Adapter and the logical
@@ -111,21 +111,21 @@ Adapter types are CDAP Applications that contain a special manifest file and are
 in an adapter plugins directory. If you wish to write a custom Adapter type, make sure
 your manifest file contains these properties:
 
-  - ``CDAP-Adapter-Type``: Name by which your adapter type will be referenced.
-  - ``CDAP-Adapter-Program-Type``: Schedulable program type of your adapter.
-    Currently, only WORKFLOW is supported.
-  - ``CDAP-Adapter-Properties``: Default properties to use for your adapter, formatted
-    as a JSON Object of strings to strings. Properties set when creating an Adapter
-    will be applied on top of the default properties.
-    Adapter properties are passed to the Adapter program as runtime arguments.
-  - ``CDAP-Source-Type``: The source type. Currently only STREAM is supported.
-  - ``CDAP-Sink-Type``: The sink type. Currently only DATASET is supported.
-  - ``CDAP-Sink-Properties``: Default properties to use for sinks created when an
-    Adapter is created, formatted as a JSON Object of strings to strings. Sink properties
-    set when creating an Adapter will be applied on top of the default properties.
-    When an Adapter is created, if the sink given does not already exist it will be
-    created with the sink properties. The dataset.class properties must be present
-    for dataset sinks.
+- ``CDAP-Adapter-Type``: Name by which your adapter type will be referenced.
+- ``CDAP-Adapter-Program-Type``: Schedulable program type of your adapter.
+  Currently, only ``WORKFLOW`` is supported.
+- ``CDAP-Adapter-Properties``: Default properties to use for your adapter, formatted
+  as a JSON Object of strings to strings. Properties set when creating an Adapter
+  will be applied on top of the default properties.
+  Adapter properties are passed to the Adapter program as runtime arguments.
+- ``CDAP-Source-Type``: The source type. Currently only ``STREAM`` is supported.
+- ``CDAP-Sink-Type``: The sink type. Currently only ``DATASET`` is supported.
+- ``CDAP-Sink-Properties``: Default properties to use for sinks created when an
+  Adapter is created, formatted as a JSON Object of strings to strings. Sink properties
+  set when creating an Adapter will be applied on top of the default properties.
+  When an Adapter is created, if the sink given does not already exist it will be
+  created with the sink properties. The dataset.class properties must be present
+  for dataset sinks.
 
 You can look at the cdap-adapters module in the CDAP project as an example.
 Once you have built your application jar, you must place it in the directory specified
@@ -138,7 +138,7 @@ and improvement in future releases. For example, much of the information placed
 in the manifest file will likely be exposed for programmatic manipulation.
 When creating a custom adapter, keep in mind the following limitations:
 
-  * The RESTful API for adapters only supports a single source and single sink. 
-  * Adapter properties are passed to Adapter programs as runtime arguments.
-    Source and Sink properties are not passed.
-  * Only Workflows can be scheduled by the Adapter framework.
+- The RESTful API for adapters only supports a single source and single sink. 
+- Adapter properties are passed to Adapter programs as runtime arguments.
+  Source and Sink properties are not passed.
+- Only Workflows can be scheduled by the Adapter framework.
