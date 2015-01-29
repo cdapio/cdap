@@ -2,14 +2,27 @@
 
 body.state-dashboard {
 
-  .widget-json {
-    textarea {
-      font-family: monospace;
-      font-size: 10px;
-      background-color: white;
-      height: 300px;
+  .widget {
+
+    .panel-body {
+      overflow-x: scroll;
+    }
+
+    .panel-footer dl {
+      margin: 0;
+      dt,dd {
+        float: left;
+      }
+      dt {
+        clear: left;
+        min-width: 70px;
+        &:after {
+          content: ':\00a0';
+        }
+      }
     }
   }
+
 
 
 }

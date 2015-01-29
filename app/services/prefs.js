@@ -1,9 +1,8 @@
 angular.module(PKG.name + '.services')
 
-  .factory('myUiSettings', function (MyPrefStore) {
-    return new MyPrefStore('uisettings');
+  .factory('mySettings', function (MyPrefStore) {
+    return new MyPrefStore('consolesettings');
   })
-
 
   .factory('MyPrefStore', function MyPrefStoreFactory($q, MyDataSource) {
 
@@ -27,7 +26,6 @@ angular.module(PKG.name + '.services')
      * @return {promise} resolved with the response from server
      */
     MyPrefStore.prototype.set = function (key, value) {
-
       var deferred = $q.defer();
 
       this.preferences[key] = value;
@@ -35,8 +33,8 @@ angular.module(PKG.name + '.services')
       data.request(
         {
           method: 'PUT',
-          _cdapPath: this.endpoint + '/properties/' + key,
-          body: value
+          _cdapPath: this.endpoint,
+          body: this.preferences
         },
         deferred.resolve
       );

@@ -23,6 +23,6 @@ angular.module(PKG.name + '.feature.apps')
         });
         // FIXME: Have to avoid $timeout here. Un-necessary.
         $timeout($state.reload);
-      })
-    }
+      });
+    };
   });

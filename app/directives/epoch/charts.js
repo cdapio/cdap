@@ -55,9 +55,8 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
         }
       });
     }
-    else {
-      render();
-    }
+
+    render();
 
     if(type.indexOf('time.')===0) {
       $scope.$watch('stream', function (newVal) {

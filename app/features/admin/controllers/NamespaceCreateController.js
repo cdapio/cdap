@@ -1,8 +1,7 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, MyDataSource) {
+  .controller('NamespaceCreateController', function ($scope, $alert, MyDataSource, myNamespace) {
     $scope.model = {
       name: '',
-      displayName: '',
       description: ''
     };
     var myDataSrc = new MyDataSource($scope);
@@ -12,16 +11,19 @@ angular.module(PKG.name + '.feature.admin')
         _cdapPath: '/namespaces/' + $scope.model.id,
         body: {
           id: $scope.model.id,
-          displayName: $scope.model.displayName,
+          name: $scope.model.name,
           description: $scope.model.description
         }
-      },
-      function(res) {
-        $alert({
-          title: 'Success!',
-          content: 'Namespace Created!',
-          type: 'success'
+      })
+        .then(function(res) {
+          $alert({
+            title: 'Success!',
+            content: 'Namespace Created!',
+            type: 'success'
+          });
+          // Only place where we force fetch the namespace list
+          // This is required as we need to update the list with the newly created namespace.
+          myNamespace.getList(true);
         });
-      });
     };
   });

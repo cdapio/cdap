@@ -4,7 +4,7 @@
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
 
-function myNavbarDirective (MYAUTH_EVENT, $state, $dropdown, $alert, myAuth, caskTheme, MY_CONFIG, myNamespace) {
+function myNavbarDirective ($dropdown, myAuth, caskTheme, MY_CONFIG) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
@@ -12,7 +12,7 @@ function myNavbarDirective (MYAUTH_EVENT, $state, $dropdown, $alert, myAuth, cas
     link: function (scope, element, attrs) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
-      
+
       // namespace dropdown
       $dropdown(angular.element(toggles[0]), {
         template: 'navbar/namespace.html',

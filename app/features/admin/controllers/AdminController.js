@@ -14,7 +14,7 @@ angular.module(PKG.name + '.feature.admin')
     function generateNsObject(item) {
       return {
         state: '',
-        label: item.displayName,
+        label: item.name,
         children: [
           {
             state: 'admin.namespace.detail.metadata({nsadmin: "' + item.id +'" })',

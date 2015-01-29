@@ -47,6 +47,6 @@ function ($scope, MyDataSource, $state) {
     if (angular.isArray(res) && res.length) {
       $scope.streams = res;
     }
-  })
+  });
 
 });

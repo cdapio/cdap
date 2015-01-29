@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function (Widget, MyDataSource, $timeout) {
+function (Widget, MyDataSource) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
