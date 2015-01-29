@@ -127,9 +127,9 @@ You can now wait for the Workflow to run, after which you can query the partitio
   +============================================+
   | partition: STRING                          |
   +============================================+
-  | year=2015/month=0/day=28/hour=17/minute=30 |
-  | year=2015/month=0/day=28/hour=17/minute=35 |
-  | year=2015/month=0/day=28/hour=17/minute=40 |
+  | year=2015/month=1/day=28/hour=17/minute=30 |
+  | year=2015/month=1/day=28/hour=17/minute=35 |
+  | year=2015/month=1/day=28/hour=17/minute=40 |
   +============================================+
 
 Note that in the Hive meta store, the partitions are registered with multiple dimensions rather
@@ -151,7 +151,7 @@ You can also query the data in the dataset. For example, to find the five most f
 Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
 of the query. For example, to run the same query for only the month of January, use the query::
 
-  select count(*) as count, body from cdap_user_converted where month=0 group by body order by count desc limit 5
+  select count(*) as count, body from cdap_user_converted where month=1 group by body order by count desc limit 5
 
 Stopping the Application
 ------------------------
