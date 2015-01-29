@@ -71,6 +71,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    LoggingContextAccessor.setLoggingContext(flowletContext.getLoggingContext());
     if (flowletProcessDriver != null) {
       stopService(flowletProcessDriver);
     }
