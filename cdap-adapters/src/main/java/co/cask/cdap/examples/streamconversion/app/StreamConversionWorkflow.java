@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.conversion.app;
+package co.cask.cdap.examples.streamconversion.app;
 
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;

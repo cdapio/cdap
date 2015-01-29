@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.conversion.avro;
+package co.cask.cdap.examples.streamconversion.avro;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.conversion;
+package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
@@ -70,28 +70,11 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setMapOutputValueClass(NullWritable.class);
 
     Map<String, String> runtimeArgs = context.getRuntimeArguments();
-    // set memory if present in runtime args
-
-    // TODO: move this capability into the framework.
-    String mapperMemoryMBStr = runtimeArgs.get(MAPPER_MEMORY);
-    if (mapperMemoryMBStr != null) {
-      int mapperMemoryMB = Integer.parseInt(mapperMemoryMBStr);
-      job.getConfiguration().setInt(Job.MAP_MEMORY_MB, mapperMemoryMB);
-      // Also set the Xmx to be smaller than the container memory.
-      job.getConfiguration().set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperMemoryMB * 0.8) + "m");
-    }
 
     // we will read <interval.minutes> of events from the stream, ending at <logical.time>
     // (default: 5 minutes up to logical start time of the job).
     long logicalTime = context.getLogicalStartTime();
     long intervalLength = TimeUnit.MINUTES.toMillis(5);;
-
-    if (runtimeArgs.containsKey("logical.time")) {
-      logicalTime = Long.parseLong(runtimeArgs.get("logical.time"));
-    }
-    if (runtimeArgs.containsKey("interval.minutes")) {
-      intervalLength = Long.parseLong(runtimeArgs.get("interval.minutes"));
-    }
 
     // configure the stream input format
     StreamBatchReadable.useStreamInput(context, "events", logicalTime - intervalLength, logicalTime);
@@ -116,7 +99,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
-      // TODO this should be done by TPFS's output format instead
+      // TODO this should be done by the output committer (CDAP-1227)
       TimePartitionedFileSet converted = context.getDataset("converted", dsArguments);
 
       String outputPath = FileSetArguments.getOutputPath(converted.getUnderlyingFileSet().getRuntimeArguments());
@@ -143,7 +126,6 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     @Override
     public void map(LongWritable timestamp, StreamEvent streamEvent, Context context)
       throws IOException, InterruptedException {
-      // TODO: replace with stream event -> avro record conversion
       GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
         .set("ts", streamEvent.getTimestamp())
         .set("body", Bytes.toString(streamEvent.getBody()));
