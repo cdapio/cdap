@@ -14,49 +14,49 @@
  * the License.
  */
 
-package co.cask.cdap.conversion;
+package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import co.cask.cdap.api.schedule.Schedule;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
 /**
- *
+ * An application that illustrates the use of time-partitioned file sets by the example of
+ * periodic stream conversion.
  */
 public class StreamConversionApp extends AbstractApplication {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
+
+  static final String SCHEMA_STRING = Schema.recordOf(
+    "streamEvent",
+    Schema.Field.of("time", Schema.of(Schema.Type.LONG)),
+    Schema.Field.of("body", Schema.of(Schema.Type.STRING))).toString();
 
   @Override
   public void configure() {
-    Schema schema = Schema.recordOf(
-      "streamEvent",
-      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
     addStream(new Stream("events"));
     addMapReduce(new StreamConversionMapReduce());
-    // this should not be in the app.  But there is no way to pass in the name of the dataset at runtime...
-    // do this to get an outline of the app in place then change it after the framework can support runtime datasets.
+    addWorkflow(new StreamConversionWorkflow());
+    scheduleWorkflow(new Schedule("every5min", "runs every 5 minutes", "*/5 * * * *"),
+                     "StreamConversionWorkflow");
+
+    // create the time-partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()
       // properties for file set
       .setBasePath("/converted")
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-      .setOutputProperty("schema", schema.toString())
-      // properties for partitioned hive table
+      .setOutputProperty("schema", SCHEMA_STRING)
+        // properties for explore (to create a partitioned hive table)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", GSON.toJson(schema))
+      .setTableProperty("avro.schema.literal", SCHEMA_STRING)
       .build());
   }
 }
