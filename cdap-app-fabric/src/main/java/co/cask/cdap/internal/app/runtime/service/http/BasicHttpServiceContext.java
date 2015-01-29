@@ -34,6 +34,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Default implementation of HttpServiceContext which simply stores and retrieves the
@@ -45,7 +46,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   private final TransactionContext txContext;
   private final Metrics userMetrics;
   private final int instanceId;
-  private final int instanceCount;
+  private final AtomicInteger instanceCount;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -62,10 +63,10 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param txClient txClient to do transaction operations.
    */
   public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
-                                 Program program, RunId runId, int instanceId, int instanceCount, Arguments runtimeArgs,
-                                 MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
-                                 CConfiguration conf, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient) {
+                                 Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
+                                 Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
+                                 DatasetFramework dsFramework, CConfiguration conf,
+                                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
           dsFramework, conf, discoveryServiceClient);
@@ -88,7 +89,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
 
   @Override
   public int getInstanceCount() {
-    return instanceCount;
+    return instanceCount.get();
   }
 
   @Override

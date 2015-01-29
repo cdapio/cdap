@@ -20,8 +20,6 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -29,7 +27,6 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
@@ -45,7 +42,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -56,7 +52,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +65,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A guava Service which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}s.
@@ -83,50 +79,33 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final Map<Reference<? extends Supplier<HandlerContextPair>>, HandlerContextPair> handlerReferences;
   private final ReferenceQueue<Supplier<HandlerContextPair>> handlerReferenceQueue;
 
-  private final CConfiguration cConf;
   private final String host;
   private final Program program;
   private final ServiceSpecification spec;
   private final ServiceAnnouncer serviceAnnouncer;
+  private final BasicHttpServiceContextFactory contextFactory;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final MetricsCollectionService metricsCollectionService;
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private final TransactionSystemClient transactionSystemClient;
-  private final DatasetFramework datasetFramework;
-  private final RunId runId;
-  private final Arguments arguments;
-  private final int instanceId;
-  private volatile int instanceCount;
-  private volatile BasicHttpServiceContextFactory contextFactory;
+  private final AtomicInteger instanceCount;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(CConfiguration cConf, String host, Program program, ServiceSpecification spec,
-                           RunId runId, int instanceId, int instanceCount, Arguments userArguments,
-                           ServiceAnnouncer serviceAnnouncer, TransactionSystemClient transactionSystemClient,
-                           DataFabricFacadeFactory dataFabricFacadeFactory, DatasetFramework datasetFramework,
-                           DiscoveryServiceClient discoveryServiceClient,
-                           MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+  public ServiceHttpServer(String host, Program program, ServiceSpecification spec,
+                           RunId runId, AtomicInteger instanceCount, ServiceAnnouncer serviceAnnouncer,
+                           BasicHttpServiceContextFactory contextFactory,
+                           MetricsCollectionService metricsCollectionService,
+                           DataFabricFacadeFactory dataFabricFacadeFactory) {
     this.host = host;
     this.program = program;
     this.spec = spec;
-    this.runId = runId;
-    this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.arguments = userArguments;
     this.serviceAnnouncer = serviceAnnouncer;
-    this.transactionSystemClient = transactionSystemClient;
+    this.contextFactory = contextFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
-    this.discoveryServiceClient = discoveryServiceClient;
 
     this.handlerReferences = Maps.newConcurrentMap();
     this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
-    this.contextFactory = createHttpServiceContextFactory();
 
     constructNettyHttpService(runId, metricsCollectionService);
   }
@@ -207,19 +186,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   }
 
   public void setInstanceCount(int instanceCount) {
-    this.instanceCount = instanceCount;
-    this.contextFactory = createHttpServiceContextFactory();
-  }
-
-  private BasicHttpServiceContextFactory createHttpServiceContextFactory() {
-    return new BasicHttpServiceContextFactory() {
-      @Override
-      public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, arguments,
-                                           metricsCollectionService, datasetFramework, cConf,
-                                           discoveryServiceClient, transactionSystemClient);
-      }
-    };
+    this.instanceCount.set(instanceCount);
   }
 
   private String getServiceName(Id.Program programId) {

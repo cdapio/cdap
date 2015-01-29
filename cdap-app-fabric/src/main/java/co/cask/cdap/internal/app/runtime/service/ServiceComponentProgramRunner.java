@@ -18,8 +18,10 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -29,6 +31,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
+import co.cask.cdap.internal.app.services.BasicHttpServiceContextFactory;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.internal.app.services.ServiceWorkerDriver;
 import co.cask.cdap.proto.ProgramType;
@@ -40,6 +44,8 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
@@ -100,10 +106,11 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
       Preconditions.checkArgument(host != null, "No hostname is provided");
 
-      component = new ServiceHttpServer(cConf, host, program, spec, runId,
-                                        instanceId, instanceCount, options.getUserArguments(), serviceAnnouncer,
-                                        txClient, dataFabricFacadeFactory, datasetFramework,
-                                        discoveryServiceClient, metricsCollectionService);
+      AtomicInteger atomicInstanceCount = new AtomicInteger(instanceCount);
+      component = new ServiceHttpServer(host, program, spec, runId, atomicInstanceCount, serviceAnnouncer,
+                                        createHttpServiceContextFactory(program, runId, instanceId, atomicInstanceCount,
+                                                                        options.getUserArguments()),
+                                        metricsCollectionService, dataFabricFacadeFactory);
     } else {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());
@@ -120,5 +127,19 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       new ServiceComponentProgramControllerAdapter(component, componentName, runId);
     component.start();
     return controller;
+  }
+
+  private BasicHttpServiceContextFactory createHttpServiceContextFactory(final Program program,
+                                                                         final RunId runId, final int instanceId,
+                                                                         final AtomicInteger instanceCount,
+                                                                         final Arguments arguments) {
+    return new BasicHttpServiceContextFactory() {
+      @Override
+      public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
+        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, arguments,
+                                           metricsCollectionService, datasetFramework, cConf,
+                                           discoveryServiceClient, txClient);
+      }
+    };
   }
 }
