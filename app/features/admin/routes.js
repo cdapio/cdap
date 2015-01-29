@@ -19,19 +19,21 @@ angular.module(PKG.name + '.feature.admin')
         })
 
         .state('admin.system', {
+          abstract: true,
           url: '/system',
-          templateUrl: '/assets/features/admin/templates/system.html'
+          template: '<ui-view/>'
         })
-
+          .state('admin.system.overview', {
+            url: '',
+            templateUrl: '/assets/features/admin/templates/system.html'
+          })
           .state('admin.system.instance', {
-            parent: 'admin',
-            url: '/system/instance',
+            url: '/instance',
             templateUrl: '/assets/features/admin/templates/system/instance.html',
             controller: 'AdminInstanceController'
           })
           .state('admin.system.services', {
-            parent: 'admin',
-            url: '/system/services',
+            url: '/services',
             templateUrl: '/assets/features/admin/templates/system/services.html',
             controller: 'AdminServicesController'
           })
@@ -41,32 +43,25 @@ angular.module(PKG.name + '.feature.admin')
             })
 
           .state('admin.system.notifications', {
-            parent: 'admin',
-            url: '/system/notifications',
+            url: '/notifications',
             templateUrl: '/assets/features/admin/templates/system/notifications.html'
           })
-            .state('admin.system.notifications.add', {
-              onEnter: function ($state, $modal) {
-                $modal({
-                  template: '/assets/features/admin/templates/partials/create-notif.html'
-                }).$promise.then(function () {
-                  $state.go('^', $state.params);
-                });
-              }
-            })
-        .state('admin.security', {
-          url: '/security',
-          templateUrl: '/assets/features/admin/templates/security.html'
-        })
 
+        .state('admin.security', {
+          abstract: true,
+          url: '/security',
+          template: '<ui-view/>'
+        })
+          .state('admin.security.overview', {
+            url: '',
+            templateUrl: '/assets/features/admin/templates/security.html'
+          })
           .state('admin.security.permissions', {
-            parent: 'admin',
-            url: '/security/permissions',
+            url: '/permissions',
             templateUrl: '/assets/features/admin/templates/security/permissions.html'
           })
           .state('admin.security.tokens', {
-            parent: 'admin',
-            url: '/security/tokens',
+            url: '/tokens',
             templateUrl: '/assets/features/admin/templates/security/tokens.html'
           })
             .state('admin.security.tokens.revoke', {
@@ -78,14 +73,8 @@ angular.module(PKG.name + '.feature.admin')
                 });
               }
             })
-          .state('admin.security.reports', {
-            parent: 'admin',
-            url: '/security/reports',
-            templateUrl: '/assets/features/admin/templates/security/reports.html'
-          })
           .state('admin.security.logs', {
-            parent: 'admin',
-            url: '/security/logs',
+            url: '/logs',
             templateUrl: '/assets/features/admin/templates/security/logs.html',
             controller: 'AdminAuditLogsController'
           })
