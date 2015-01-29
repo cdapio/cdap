@@ -7,9 +7,9 @@
 
 .. _examples-index:
 
-============================================
+========
 Examples
-============================================
+========
 
 .. toctree::
    :maxdepth: 1
@@ -22,8 +22,8 @@ Examples
    Purchase <purchase>
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
-   Web Analytics <web-analytics>
    Stream Conversion <stream-conversion>
+   Web Analytics <web-analytics>
 
 In addition to the :ref:`Getting Started's <getting-started-index>` 
 :ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
