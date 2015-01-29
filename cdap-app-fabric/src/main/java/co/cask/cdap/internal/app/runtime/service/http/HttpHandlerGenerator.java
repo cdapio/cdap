@@ -27,7 +27,6 @@ import co.cask.cdap.internal.asm.Signatures;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
@@ -57,7 +56,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -485,12 +483,13 @@ final class HttpHandlerGenerator {
      *   public void handle(HttpRequest request, HttpResponder responder, ...) {
      *     T handler = getHandler();
      *     TransactionContext txContext = getTransactionContext();
+     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
      *     try {
      *       txContext.start();
      *       try {
      *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
      *         try {
-     *           handler.handle(wrapRequest(request), wrapResponder(responder), ...);
+     *           handler.handle(wrapRequest(request), wrappedResponder, ...);
      *         } finally {
      *           ClassLoaders.setContextClassLoader(classLoader);
      *         }
@@ -501,8 +500,9 @@ final class HttpHandlerGenerator {
      *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
-     *        wrapResponder(responder).sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+     *        wrappedResponder.setTransactionFailureResponse();
      *     }
+     *     wrappedResponder.execute();
      *   }
      * }
      * </pre>
@@ -513,6 +513,7 @@ final class HttpHandlerGenerator {
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
       Type loggerType = Type.getType(Logger.class);
       Type throwableType = Type.getType(Throwable.class);
+      Type delayedHttpServiceResponderType = Type.getType(DelayedHttpServiceResponder.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
@@ -542,6 +543,14 @@ final class HttpHandlerGenerator {
                        Methods.getMethod(TransactionContext.class, "getTransactionContext"));
       mg.storeLocal(txContext, txContextType);
 
+      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
+      int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
+      mg.loadThis();
+      mg.loadArg(1);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+      mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
+
       // try {  // Outer try for transaction failure
       mg.mark(txTryBegin);
 
@@ -552,8 +561,8 @@ final class HttpHandlerGenerator {
       // try { // Inner try for user handler failure
       mg.mark(handlerTryBegin);
 
-      // this.getHandler(wrapRequest(request), wrapResponder(responder), ...);
-      generateInvokeDelegate(mg, handler, method);
+      // this.getHandler(wrapRequest(request), wrappedResponder, ...);
+      generateInvokeDelegate(mg, handler, method, wrappedResponder);
 
       // } // end of inner try
       mg.mark(handlerTryEnd);
@@ -603,18 +612,15 @@ final class HttpHandlerGenerator {
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
-      // wrapResponder(responder).sendString(500, transactionErrorMessage, Charsets.UTF_8);
-      mg.loadThis();
-      mg.loadArg(1);
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
-      mg.visitLdcInsn(500);
-      mg.visitLdcInsn("Transaction failure when committing changes. Aborted transaction.");
-      mg.getStatic(Type.getType(Charsets.class), "UTF_8", Type.getType(Charset.class));
-      mg.invokeInterface(Type.getType(HttpServiceResponder.class),
-                         Methods.getMethod(void.class, "sendString", int.class, String.class, Charset.class));
+      // wrappedResponder.setTransactionFailureResponse();
+      mg.loadLocal(wrappedResponder);
+      mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse"));
 
       mg.mark(txFinish);
+
+      // wrappedResponder.execute()
+      mg.loadLocal(wrappedResponder);
+      mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
 
       mg.returnValue();
       mg.endMethod();
@@ -624,7 +630,7 @@ final class HttpHandlerGenerator {
      * Generates the code block for setting context ClassLoader, calling user handler method
      * and resetting context ClassLoader.
      */
-    private void generateInvokeDelegate(GeneratorAdapter mg, int handler, Method method) {
+    private void generateInvokeDelegate(GeneratorAdapter mg, int handler, Method method, int responder) {
       Type classLoaderType = Type.getType(ClassLoader.class);
       Type handlerType = Type.getType(delegateType.getRawType());
 
@@ -654,7 +660,7 @@ final class HttpHandlerGenerator {
       // try {
       mg.mark(contextTryBegin);
 
-      // handler.method(wrapRequest(request), wrapResponder(responder), ...);
+      // handler.method(wrapRequest(request), responder, ...);
       mg.loadLocal(handler);
 
       mg.loadThis();
@@ -662,10 +668,7 @@ final class HttpHandlerGenerator {
       mg.invokeVirtual(classType,
                        Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
 
-      mg.loadThis();
-      mg.loadArg(1);
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+      mg.loadLocal(responder);
 
       for (int i = 2; i < method.getArgumentTypes().length; i++) {
         mg.loadArg(i);
