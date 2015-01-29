@@ -106,7 +106,7 @@ Dataset with multiple partitions, you can use::
 
   createDataset("frequentCustomers", KeyValueTable.class,
     DatasetProperties.builder()
-                     .add("conflict.level", "NONE")      
+                     .add("ttl", "3600")      
                      .add("hbase.splits", new Gson().toJson(new byte[][]{{1},{2},{3},{4},{5}})
                      .build());
 
