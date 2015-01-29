@@ -416,11 +416,12 @@ public abstract class QueueTest {
 
   @Test
   public void testDropAllForNamespace() throws Exception {
+    // deliberately used namespace names 'namespace' and 'namespace1' to test correct prefix matching
     // create 4 queues
-    QueueName myQueue1 = QueueName.fromFlowlet("myspace", "myapp1", "myflow1", "myflowlet1", "myout1");
-    QueueName myQueue2 = QueueName.fromFlowlet("myspace", "myapp2", "myflow2", "myflowlet2", "myout2");
-    QueueName yourQueue1 = QueueName.fromFlowlet("yourspace", "yourapp1", "yourflow1", "yourflowlet1", "yourout1");
-    QueueName yourQueue2 = QueueName.fromFlowlet("yourspace", "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
+    QueueName myQueue1 = QueueName.fromFlowlet("namespace", "myapp1", "myflow1", "myflowlet1", "myout1");
+    QueueName myQueue2 = QueueName.fromFlowlet("namespace", "myapp2", "myflow2", "myflowlet2", "myout2");
+    QueueName yourQueue1 = QueueName.fromFlowlet("namespace1", "yourapp1", "yourflow1", "yourflowlet1", "yourout1");
+    QueueName yourQueue2 = QueueName.fromFlowlet("namespace1", "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
 
     String myQueueName1 = myQueue1.toString();
     String myQueueName2 = myQueue2.toString();
@@ -445,25 +446,25 @@ public abstract class QueueTest {
     // verify that the consumer config exists
     verifyConsumerConfigExists(myQueue1, myQueue2, yourQueue1, yourQueue2);
 
-    // drop queues in namespace 'myspace'
-    queueAdmin.dropAllInNamespace("myspace");
+    // drop queues in namespace 'namespace'
+    queueAdmin.dropAllInNamespace("namespace");
 
-    // verify queues in 'myspace' are dropped
+    // verify queues in 'namespace' are dropped
     Assert.assertFalse(queueAdmin.exists(myQueueName1) || queueAdmin.exists(myQueueName2));
     // also verify that consumer config of all queues in 'myspace' is deleted
     verifyConsumerConfigIsDeleted(myQueue1, myQueue2);
 
-    // but the ones in 'yourspace' still exist
+    // but the ones in 'namespace1' still exist
     Assert.assertTrue(queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
-    // consumer config for queues in 'yourspace' should also still exist
+    // consumer config for queues in 'namespace1' should also still exist
     verifyConsumerConfigExists(yourQueue1, yourQueue2);
 
-    // drop queues in 'yourspace'
-    queueAdmin.dropAllInNamespace("yourspace");
+    // drop queues in 'namespace1'
+    queueAdmin.dropAllInNamespace("namespace1");
 
-    // verify queues in 'yourspace' are dropped
+    // verify queues in 'namespace1' are dropped
     Assert.assertFalse(queueAdmin.exists(yourQueueName1) || queueAdmin.exists(yourQueueName2));
-    // verify that the consumer config of all queues in 'yourspace' is deleted
+    // verify that the consumer config of all queues in 'namespace1' is deleted
     verifyConsumerConfigIsDeleted(yourQueue1, yourQueue2);
   }
 

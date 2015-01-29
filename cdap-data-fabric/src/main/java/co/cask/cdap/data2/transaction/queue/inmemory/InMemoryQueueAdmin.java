@@ -80,7 +80,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-    queueService.resetQueuesWithPrefix("queue:///" + namespaceId);
+    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespace(namespaceId));
   }
 
   @Override

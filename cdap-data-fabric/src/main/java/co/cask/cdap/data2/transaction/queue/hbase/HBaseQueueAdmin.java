@@ -427,7 +427,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-    dropTablesWithPrefix(tableNamePrefix + "." + namespaceId);
+    // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
+    dropTablesWithPrefix(String.format("%s.%s.", tableNamePrefix, namespaceId));
     deleteConsumerConfigurations(namespaceId);
   }
 

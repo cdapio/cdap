@@ -223,7 +223,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-    dropAllTablesWithPrefix(tableNamePrefix + "." + namespaceId);
+    dropAllTablesWithPrefix(String.format("%s.%s.", tableNamePrefix, namespaceId));
   }
 
   @Override
