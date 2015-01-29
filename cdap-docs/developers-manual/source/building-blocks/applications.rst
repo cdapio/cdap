@@ -15,7 +15,7 @@ to—the data virtualization layer in CDAP.
 
 **Application virtualizations** include *Programs,* *Services,* and *Procedures.*
 
-Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce Jobs <mapreduce-jobs>`,
+Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce Programs <mapreduce-programs>`,
 :doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
 data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to serve data.
 

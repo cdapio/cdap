@@ -141,11 +141,17 @@ function build_docs_outer_level() {
   copy_html reference-manual
   copy_html examples-manual
 
-  # Rewrite 404 file
-  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$PROJECT_VERSION/en/_static"
-  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$PROJECT_VERSION/en/_images"
-  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$PROJECT_VERSION/en/|g"
-  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$PROJECT_VERSION/en/search.html"
+  local project_dir
+  # Rewrite 404 file, using branch if not a release
+  if [ "x$GIT_BRANCH_TYPE" == "xfeature" ]; then
+    project_dir=$PROJECT_VERSION-$GIT_BRANCH
+  else
+    project_dir=$PROJECT_VERSION
+  fi
+  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$project_dir/en/_static"
+  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$project_dir/en/_images"
+  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$project_dir/en/|g"
+  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$project_dir/en/search.html"
 }
 
 ################################################## current
