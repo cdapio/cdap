@@ -14,7 +14,7 @@ Examples
 .. toctree::
    :maxdepth: 1
    :titlesonly:
-   
+
    Hello World <hello-world>
    Word Count <word-count>
    File Sets <fileset>
@@ -23,7 +23,7 @@ Examples
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
    Web Analytics <web-analytics>
-
+   Stream Conversion <stream-conversion>
 
 In addition to the :ref:`Getting Started's <getting-started-index>` 
 :ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
@@ -60,6 +60,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Spark Page Rank<spark-page-rank>`
     - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
       of URLs from an input stream.
+  * - :doc:`Stream Conversion<stream-conversion>`
+    - An application that demonstrates the use of time partitioned file sets.
+      It periodically converts a stream into partitions of a file set, which can be read by SQL queries.
   * - :doc:`Web Analytics<web-analytics>`
     - An application to generate statistics and to provide insights about web usage through the analysis
       of web traffic.
