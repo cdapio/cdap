@@ -199,7 +199,7 @@ public class Main {
 
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
+      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory, cConf),
                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
     datasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
     datasetFramework.addModule("core", new CoreDatasetsModule());

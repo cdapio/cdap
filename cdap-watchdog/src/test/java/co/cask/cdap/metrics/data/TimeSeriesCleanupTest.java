@@ -149,7 +149,7 @@ public class TimeSeriesCleanupTest {
         }
       });
     DatasetFramework dsFramework =
-      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), cConf);
     dsFramework.addModule("metrics-leveldb", new InMemoryMetricsTableModule());
     tableFactory = new DefaultMetricsTableFactory(cConf, dsFramework);
   }

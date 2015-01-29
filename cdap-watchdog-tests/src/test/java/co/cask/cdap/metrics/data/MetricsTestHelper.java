@@ -68,7 +68,7 @@ public class MetricsTestHelper {
                                              });
 
     DatasetFramework dsFramework =
-      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), cConf);
     dsFramework.addModule("metricsTable-leveldb", new LevelDBMetricsTableModule());
     return new DefaultMetricsTableFactory(cConf, dsFramework);
   }
@@ -98,7 +98,7 @@ public class MetricsTestHelper {
                                              });
 
     DatasetFramework dsFramework =
-      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), cConf);
     dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
     return new DefaultMetricsTableFactory(cConf, dsFramework);
   }

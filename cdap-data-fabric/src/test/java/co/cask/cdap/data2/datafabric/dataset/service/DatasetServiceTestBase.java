@@ -127,13 +127,14 @@ public abstract class DatasetServiceTestBase {
     MDSDatasetsRegistry mdsDatasetsRegistry =
       new MDSDatasetsRegistry(txSystemClient,
                               new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
+                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES, cConf),
+                                                           cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
+                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
                                                         Collections.<String, DatasetModule>emptyMap()),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),

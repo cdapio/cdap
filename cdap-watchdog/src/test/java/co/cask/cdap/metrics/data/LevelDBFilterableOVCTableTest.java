@@ -217,7 +217,8 @@ public class LevelDBFilterableOVCTableTest {
         }
       });
     DatasetFramework dsFramework =
-      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class),
+                                   injector.getInstance(CConfiguration.class));
     dsFramework.addModule("metrics-leveldb", new InMemoryMetricsTableModule());
     tableFactory = new DefaultMetricsTableFactory(cConf, dsFramework);
   }

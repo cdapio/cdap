@@ -65,9 +65,6 @@ public class TestFileLogging {
 
   @BeforeClass
   public static void setUpContext() throws Exception {
-    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
-
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
@@ -76,9 +73,12 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
 
-
     Configuration conf = HBaseConfiguration.create();
     CConfigurationUtil.copyTxProperties(cConf, conf);
+
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf);
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
     TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);

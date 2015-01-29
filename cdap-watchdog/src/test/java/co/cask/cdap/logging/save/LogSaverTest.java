@@ -104,8 +104,6 @@ public class LogSaverTest extends KafkaTestBase {
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
-    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
 
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
     LOG.info("Log base dir {}", logBaseDir);
@@ -123,6 +121,9 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "100");
     cConf.set(LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS, "2");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
+
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf);
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
 
     Configuration conf = HBaseConfiguration.create();
     CConfigurationUtil.copyTxProperties(cConf, conf);
