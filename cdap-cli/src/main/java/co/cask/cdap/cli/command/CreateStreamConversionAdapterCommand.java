@@ -132,15 +132,15 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
       .append(ElementType.ADAPTER.getPrettyName())
       .append(" that periodically reads from a stream and writes to a time partitioned fileset.")
       .append(ArgumentName.FREQUENCY)
-      .append("is a number followed by a 'm', 'h', or 'd' for minute, hour, or day.")
+      .append(" is a number followed by a 'm', 'h', or 'd' for minute, hour, or day.")
       .append(ArgumentName.FORMAT)
-      .append("is the name of the stream format, such as 'text', 'avro', 'csv', or 'tsv'.")
+      .append(" is the name of the stream format, such as 'text', 'avro', 'csv', or 'tsv'.")
       .append(ArgumentName.SCHEMA)
-      .append("is a sql-like schema of comma separated column name followed by column type.")
+      .append(" is a sql-like schema of comma separated column name followed by column type.")
       .append(ArgumentName.HEADERS)
-      .append("is a comma separated list of stream headers to include in the output schema.")
+      .append(" is a comma separated list of stream headers to include in the output schema.")
       .append(ArgumentName.DATASET)
-      .append("is the name of the time partitioned file set to write to.")
+      .append(" is the name of the time partitioned file set to write to.")
       .toString();
   }
 }
