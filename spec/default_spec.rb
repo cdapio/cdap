@@ -54,6 +54,5 @@ describe 'cdap::default' do
       link = chef_run.link('/var/log/cdap')
       expect(link).to link_to('/test/logs/cdap')
     end
-
   end
 end
