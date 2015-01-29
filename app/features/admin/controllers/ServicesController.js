@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('ServicesController', function ($scope) {
+  .controller('AdminServicesController', function ($scope) {
     $scope.services = [{
       name: 'appfabric',
       status: 'active',
