@@ -73,6 +73,23 @@ public final class NamespaceMeta {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    return id.equals(((NamespaceMeta) o).id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("id", id)

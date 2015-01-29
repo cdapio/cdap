@@ -186,7 +186,7 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
       sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
     StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
@@ -382,7 +382,7 @@ public class DistributedStreamService extends AbstractStreamService {
               // Create one requirement for the resource coordinator for all the streams.
               // One stream is identified by one partition
               ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-              for (StreamSpecification spec : streamMetaStore.listStreams()) {
+              for (StreamSpecification spec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
                 LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
                           spec.getName());
                 builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
