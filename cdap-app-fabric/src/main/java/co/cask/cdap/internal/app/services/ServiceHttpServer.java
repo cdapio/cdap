@@ -88,7 +88,6 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final Program program;
   private final ServiceSpecification spec;
   private final ServiceAnnouncer serviceAnnouncer;
-  private BasicHttpServiceContextFactory contextFactory;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -97,6 +96,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final RunId runId;
   private final Arguments arguments;
   private final int instanceId;
+  private volatile BasicHttpServiceContextFactory contextFactory;
   private int instanceCount;
 
   private NettyHttpService service;
