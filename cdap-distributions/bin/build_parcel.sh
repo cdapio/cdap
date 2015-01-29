@@ -135,6 +135,8 @@ function scp_parcel {
   if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_BASE_PATH}" ]; then
     die "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_BASE_PATH"
   fi
+  echo "Creating remote directory"
+  ssh ${PARCEL_SCP_OPTIONS} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST} mkdir -p ${PARCEL_SCP_BASE_PATH}/cdap/${VERSION}
   echo "Copying ${TARGET_DIR}/${PARCEL_NAME} to remote host"
   scp ${PARCEL_SCP_OPTIONS} ${TARGET_DIR}/${PARCEL_NAME} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST}:${PARCEL_SCP_BASE_PATH}/cdap/${VERSION}
   local __ret=$?
