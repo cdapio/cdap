@@ -26,7 +26,7 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
 /**
- * An application that illustrates the use of time partitioned file sets by the example of
+ * An application that illustrates the use of time-partitioned file sets by the example of
  * periodic stream conversion.
  */
 public class StreamConversionApp extends AbstractApplication {
@@ -44,7 +44,7 @@ public class StreamConversionApp extends AbstractApplication {
     scheduleWorkflow(new Schedule("every5min", "runs every 5 minutes", "*/5 * * * *"),
                      "StreamConversionWorkflow");
 
-    // create the time partitioned file set, configure it to work with MapReduce and with Explore
+    // create the time-partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()
       // properties for file set
       .setBasePath("/converted")

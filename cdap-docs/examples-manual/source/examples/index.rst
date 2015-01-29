@@ -61,7 +61,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
       of URLs from an input stream.
   * - :doc:`Stream Conversion<stream-conversion>`
-    - An application that demonstrates the use of time partitioned file sets.
+    - An application that demonstrates the use of time-partitioned file sets.
       It periodically converts a stream into partitions of a file set, which can be read by SQL queries.
   * - :doc:`Web Analytics<web-analytics>`
     - An application to generate statistics and to provide insights about web usage through the analysis

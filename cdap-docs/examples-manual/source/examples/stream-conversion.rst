@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
 .. _examples-stream-conversion:
 
-==========
-Word Count
-==========
+=================
+Stream Conversion
+=================
 
 A Cask Data Application Platform (CDAP) Example demonstrating Time-Partitioned File Sets.
 
@@ -18,17 +18,17 @@ This application receives simple events through a stream, and periodically conve
 partitions of a time-partitioned file set. These partitions can be queried with SQL. These are the
 components of the application:
 
-  - The ``events`` stream receives simple events, where each event body is a number.
-  - The ``converted`` dataset is a time-partitioned file set in Avro format.
-  - The ``StreamConversionMapReduce`` reads the last 5 minutes of events from the stream and writes them to a
-    new partition in the ``converted`` dataset.
-  - The ``StreamConversionWorkflow`` is scheduled every 5 minutes and only runs the
-    ``StreamConversionMapReduce``.
+- The ``events`` stream receives simple events, where each event body is a number.
+- The ``converted`` dataset is a time-partitioned file set in Avro format.
+- The ``StreamConversionMapReduce`` reads the last five minutes of events from the
+  stream and writes them to a new partition in the ``converted`` dataset.
+- The ``StreamConversionWorkflow`` is scheduled every five minutes and only runs the
+  ``StreamConversionMapReduce``.
 
 Let's look at some of these components, and then run the Application and see the results.
 
-The Word Count Application
---------------------------
+The Stream Conversion Application
+---------------------------------
 
 As in the other :ref:`examples,<examples-index>` the components
 of the Application are tied together by the class ``StreamConversionApp``:
@@ -44,19 +44,19 @@ The interesting part is the creation of the dataset ``converted``:
 - The properties are divided in two sections:
 
   - The first set of properties configures the underlying FileSet, as documented in the
-    :ref:`FileSet,<datasets-fileset>` section.
+    :ref:`FileSet <datasets-fileset>` section.
   - The second set of properties configures how the dataset is queryable with SQL. Here we can enable the
-    dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: A SerDe,
-    and input and an output format, and an additional table property, namely the schema, for the Avro SerDe.
+    dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: The Avro
+    SerDe, an input and an output format, and an additional table property, namely the schema for the Avro SerDe.
 
 The MapReduce Program
 ---------------------
 
-In its ``beforeSubmit`` method, it determines its logical start time, and configures the ``events`` stream as its
-input and the ``converted`` dataset as its output:
+In its ``beforeSubmit`` method, the ``StreamConversionMapReduce`` determines its logical start time,
+and it configures the ``events`` stream as its input and the ``converted`` dataset as its output:
 
-- This is a map-only MapReduce program, in other words, it has no reducers and the mappers directly write
-  the output, which is in Avro format::
+- This is a map-only MapReduce program; in other words, it has no reducers,
+  and the mappers write directly to the output in Avro format::
 
     Job job = context.getHadoopJob();
     job.setMapperClass(StreamConversionMapper.class);
@@ -65,13 +65,13 @@ input and the ``converted`` dataset as its output:
     job.setMapOutputValueClass(NullWritable.class);
     AvroJob.setOutputKeySchema(job, SCHEMA);
 
-- Based on the logical start time, determine the range of events to read from the stream::
+- Based on the logical start time, the MapReduce determines the range of events to read from the stream::
 
     // read 5 minutes of events from the stream, ending at the logical start time of this run
     long logicalTime = context.getLogicalStartTime();
     StreamBatchReadable.useStreamInput(context, "events", logicalTime - TimeUnit.MINUTES.toMillis(5), logicalTime);
 
-- Each run writes its output to a partition with the logical start time::
+- Each MapReduce run writes its output to a partition with the logical start time::
 
     TimePartitionedFileSetArguments.setOutputPartitionTime(dsArguments, logicalTime);
     TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
@@ -82,16 +82,16 @@ input and the ``converted`` dataset as its output:
     LOG.info("Output location for new partition is: {}",
              partitionedFileSet.getUnderlyingFileSet().getOutputLocation().toURI().toString());
 
-The Mapper itself is straight-forward: For each event, it emits an Avro record:
+The Mapper itself is straight-forward: for each event, it emits an Avro record:
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
      :lines: 104-111
 
-In the ``afterSubmit`` method of the MapReduce program, if the run succeeded, the output file is
-registered as a new partition in the ``converted`` dataset. Note that this is due to a gap in the
-implementation of ``TimePartitionedFileSet``, which should add the partition in the output committer
-of its output format. This will be addressed in future CDAP releases:
+In the ``afterSubmit`` method of the MapReduce program, if the run succeeds, the output file is
+registered as a new partition in the ``converted`` dataset. This is due to a limitation in the
+implementation of ``TimePartitionedFileSet``; itself should add the partition in the output
+committer of its output format (this will be addressed in a future CDAP release):
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
@@ -114,14 +114,14 @@ Running CDAP Applications
 Running the Example
 ===================
 
-The ``StreamConversionWorkflow`` will run automatically every 5 minutes based on its schedule.
+The ``StreamConversionWorkflow`` will run automatically every five minutes based on its schedule.
 To give it some data, you can use the provided script to send events to the stream, for example,
-to send 10000 events at a rate of roughly 2 per second::
+to send 10000 events at a rate of roughly two per second::
 
   bin/send-events.sh --events 10000 --delay 0.5
 
-You can now wait for the workflow to run, after which you can query the partitions in the
-``converted`` dataset, for example::
+You can now wait for the Workflow to run, after which you can query the partitions in the
+``converted`` dataset::
 
   $ cdap-cli.sh execute \"show partitions cdap_user_converted\"
   +============================================+

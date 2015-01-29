@@ -76,7 +76,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## StreamConversion
 
-- An application that illustrates the use of time partitioned file sets.
+- An application that illustrates the use of time-partitioned file sets.
 - It periodically converts a stream into partitions of a file set, which can be read by SQL queries.
 
 ## UserProfiles
