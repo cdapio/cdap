@@ -24,6 +24,7 @@ see the :ref:`configuration-security` section.
      - Default Value
      - Description
    * - ``app.adapter.dir``
+     - ``/opt/cdap/master/plugins``
      - Directory where all archives for adapters are stored
    * - ``app.bind.address``
      - ``127.0.0.1``

@@ -3,6 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 .. _advanced-adapters:
+
 ================
 Adapters (Beta)
 ================
