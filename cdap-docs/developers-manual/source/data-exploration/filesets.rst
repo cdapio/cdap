@@ -42,13 +42,12 @@ In fact, the create table statement that will be generated for the table above i
     user string,
     item_id int,
     price double)
-  ROW FORMAT SERDE org.apache.hadoop.hive.serde2.avro.AvroSerDe
-  STORED AS INPUTFORMAT org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat
-  OUTPUTFORMAT org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat
-  LOCATION hdfs://<namenode>/cdap/mylocation
+  ROW FORMAT SERDE "org.apache.hadoop.hive.serde2.avro.AvroSerDe"
+  STORED AS INPUTFORMAT "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"
+  OUTPUTFORMAT "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"
+  LOCATION "/cdap/mylocation"
   TBLPROPERTIES (
-    cdap.name=cdap.user.myfiles,
-    avro.schema.literal="{\"type\": \"record\", \"name\": \"stringBody\", \"fields\": [{ \"name\":\"ts\", \"type\":\"long\" }, { \"name\":\"body\", \"type\":\"string\" } ] }"
+    "avro.schema.literal"="{\"type\": \"record\", \"name\": \"stringBody\", \"fields\": [{ \"name\":\"ts\", \"type\":\"long\" }, { \"name\":\"body\", \"type\":\"string\" } ] }"
   );
 
 Please see the `Hive Language Manual
