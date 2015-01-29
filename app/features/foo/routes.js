@@ -18,7 +18,7 @@ angular.module(PKG.name+'.feature.foo')
         controller: function ($scope, mySettings) {
           $scope.model = mySettings.get('test');
           $scope.doSave = function () {
-            alert('hello');
+            mySettings.set('test', $scope.model);
           };
         }
       });
