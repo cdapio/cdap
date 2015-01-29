@@ -16,7 +16,9 @@ angular.module(PKG.name+'.feature.foo')
         url: '/test/settings',
         templateUrl: '/assets/features/foo/settings.html',
         controller: function ($scope, mySettings) {
-          $scope.model = mySettings.get('test');
+          mySettings.get('test').then(function (result){
+            $scope.model = result;
+          });
           $scope.doSave = function () {
             mySettings.set('test', $scope.model);
           };

@@ -71,8 +71,8 @@ angular.module(PKG.name + '.services')
           _cdapPath: this.endpoint
         },
         function (res) {
-          self.data = res;
-          self.pending.resolve(res[key]);
+          self.data = res.property;
+          self.pending.resolve(self.data[key]);
         }
       );
 
