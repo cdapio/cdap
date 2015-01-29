@@ -6,11 +6,31 @@ angular.module(PKG.name + '.feature.admin')
         $scope.nsList = list.map(generateNsObject);
       });
 
+    // whether or not to show submenus
+    $scope.submenu = {
+      system: false,
+      security: false
+    };
+
+    $scope.$on('$stateChangeSuccess', function() {
+
+        $scope.submenu.security = $state.is('admin.security') || $state.includes('admin.security.**');
+        $scope.submenu.system = $state.is('admin.system') || $state.includes('admin.system.**');
+
+
+    });
+
+
     function generateNsObject(item) {
       return {
         state: '',
         label: item.name,
         children: [
+          {
+            state: 'admin.namespace.detail.metadata({nsadmin: "' + item.id +'" })',
+            label: 'Metadata',
+            children: []
+          },
           {
             state: 'admin.namespace.detail.settings({nsadmin: "' + item.id +'" })',
             label: 'Settings',

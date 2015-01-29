@@ -1,1 +1,24 @@
-<h2> {{$stateParams.nsadmin}} -> Apps </h2>
+<h2> {{$stateParams.nsadmin}}: Applications </h2>
+
+<div class="btn-group">
+    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Add App</button>
+    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
+    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button>
+</div>
+
+<table class="table">
+    <thead>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Type</th>
+        <th>Description</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Sample App</td>
+            <td>0.0</td>
+            <td>Standard</td>
+            <td>Nothing fancy</td>
+        </tr>
+    </tbody>
+</table>
