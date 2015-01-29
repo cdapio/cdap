@@ -115,7 +115,7 @@ Running the Example
 ===================
 
 The ``StreamConversionWorkflow`` will run automatically every five minutes based on its schedule.
-To give it some data, you can use the provided script to send events to the stream, for example,
+To give it some data, you can use a provided script to send events to the stream, for example,
 to send 10000 events at a rate of roughly two per second::
 
   bin/send-events.sh --events 10000 --delay 0.5
