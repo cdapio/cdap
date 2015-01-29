@@ -6,11 +6,21 @@ angular.module(PKG.name + '.feature.admin')
         $scope.nsList = list.map(generateNsObject);
       });
 
-    // wether or not to show submenus
+    // whether or not to show submenus
     $scope.submenu = {
       system: false,
       security: false
     };
+
+    $scope.$on('$stateChangeSuccess', function() {
+
+        $scope.submenu.security = $state.is('admin.security') || $state.includes('admin.security.**');
+        $scope.submenu.system = $state.is('admin.system') || $state.includes('admin.system.**');
+
+
+    });
+
+
     function generateNsObject(item) {
       return {
         state: '',
