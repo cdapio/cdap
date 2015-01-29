@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.streamconversion.app;
+package co.cask.cdap.conversion.app;
 
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;

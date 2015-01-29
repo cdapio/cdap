@@ -51,7 +51,7 @@ public class StreamConversionApp extends AbstractApplication {
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
       .setOutputProperty("schema", SCHEMA_STRING)
-      // properties for explore (to create a partitioned hive table)
+        // properties for explore (to create a partitioned hive table)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")

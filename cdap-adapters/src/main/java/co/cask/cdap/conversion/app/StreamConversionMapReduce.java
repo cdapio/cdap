@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.streamconversion.app;
+package co.cask.cdap.conversion.app;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
-import co.cask.cdap.examples.streamconversion.avro.Converter;
+import co.cask.cdap.conversion.avro.Converter;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
