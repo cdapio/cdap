@@ -117,7 +117,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.9.0</netty.http.version>
+    <netty.http.version>0.10.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -1526,6 +1526,7 @@
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
         <package.depends>--depends cdap</package.depends>
         <package.dirs>opt etc</package.dirs>
       </properties>
@@ -1567,7 +1568,7 @@
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm,org.apache.spark</excludeGroupIds>
-                    <excludeArtifactIds>hive-exec</excludeArtifactIds>
+                    <excludeArtifactIds>hive-exec,cdap-adapters</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
                     <includeScope>compile</includeScope>

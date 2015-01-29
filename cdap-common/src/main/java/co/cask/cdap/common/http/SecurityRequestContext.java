@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.common.http;
 
+import com.google.common.base.Optional;
+
 /**
  * RequestContext that maintains a ThreadLocal with references to {@code AccessTokenIdentifier}.
  */
@@ -27,8 +29,8 @@ public final class SecurityRequestContext {
   /**
    * @return the userId set on the current thread
    */
-  public static String getUserId() {
-    return userId.get();
+  public static Optional<String> getUserId() {
+    return Optional.fromNullable(userId.get());
   }
 
   /**

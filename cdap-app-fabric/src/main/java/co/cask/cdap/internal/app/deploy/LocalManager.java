@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.VerificationStage;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;
@@ -68,6 +69,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
 
+  private final AdapterService adapterService;
   private final ProgramTerminator programTerminator;
 
 
@@ -79,6 +81,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework datasetFramework,
                       StreamAdmin streamAdmin, ExploreFacade exploreFacade,
+                      AdapterService adapterService,
                       @Assisted ProgramTerminator programTerminator) {
 
     this.configuration = configuration;
@@ -95,13 +98,14 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    this.adapterService = adapterService;
   }
 
   @Override
   public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
-    pipeline.addLast(new VerificationStage(datasetFramework));
+    pipeline.addLast(new VerificationStage(datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new CreateStreamsStage(streamAdmin, exploreFacade, exploreEnabled));

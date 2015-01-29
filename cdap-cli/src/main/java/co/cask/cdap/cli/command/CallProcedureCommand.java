@@ -32,6 +32,7 @@ import java.util.Map;
 /**
  * Calls a procedure.
  */
+@Deprecated
 public class CallProcedureCommand extends AbstractAuthCommand {
 
   private final ProcedureClient procedureClient;

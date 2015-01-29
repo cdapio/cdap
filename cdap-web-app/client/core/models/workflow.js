@@ -31,6 +31,14 @@ define(['core/models/program'], function (Program) {
 
     }.property('app', 'name'),
 
+    /**
+     * Gets context for schedules.
+     * @return {String} schedule context.
+     */
+    schedulesContext: function () {
+      return this.interpolate('apps/{parent}');      
+    }.property('app', 'name'),
+
     interpolate: function (path) {
 
       return path.replace(/\{parent\}/, this.get('app'))

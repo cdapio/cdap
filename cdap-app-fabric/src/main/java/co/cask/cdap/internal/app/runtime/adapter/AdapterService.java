@@ -29,12 +29,19 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
+import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Schedules;
 import co.cask.cdap.proto.AdapterSpecification;
@@ -44,6 +51,7 @@ import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -84,6 +92,7 @@ public class AdapterService extends AbstractIdleService {
   private final StreamAdmin streamAdmin;
   private final Scheduler scheduler;
   private final Store store;
+  private final PreferencesStore preferencesStore;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
   private final String archiveDir;
 
@@ -91,21 +100,24 @@ public class AdapterService extends AbstractIdleService {
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
                         StreamAdmin streamAdmin, StoreFactory storeFactory, LocationFactory locationFactory,
-                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory) {
+                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
+                        PreferencesStore preferencesStore) {
     this.configuration = configuration;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
+                                                           new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
     archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
+    this.adapterTypeInfos = Maps.newHashMap();
+    this.preferencesStore = preferencesStore;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting AdapterService");
-    this.adapterTypeInfos = Maps.newHashMap();
     registerAdapters();
   }
 
@@ -134,11 +146,44 @@ public class AdapterService extends AbstractIdleService {
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
   public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpecification = store.getAdapter(Id.Namespace.from(namespace), adapterName);
-    if (adapterSpecification == null) {
-      throw new AdapterNotFoundException(String.format("Adapter %s not found.", adapterName));
+    AdapterSpecification adapterSpec = store.getAdapter(Id.Namespace.from(namespace), adapterName);
+    if (adapterSpec == null) {
+      throw new AdapterNotFoundException(adapterName);
     }
-    return adapterSpecification;
+    return adapterSpec;
+  }
+
+  /**
+   * Retrieves the status of an Adapter specified by the name in a given namespace.
+   *
+   * @param namespace namespace to lookup the adapter
+   * @param adapterName name of the adapter
+   * @return requested Adapter's status
+   * @throws AdapterNotFoundException if the requested adapter is not found
+   */
+  public AdapterStatus getAdapterStatus(String namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterStatus adapterStatus = store.getAdapterStatus(Id.Namespace.from(namespace), adapterName);
+    if (adapterStatus == null) {
+      throw new AdapterNotFoundException(adapterName);
+    }
+    return adapterStatus;
+  }
+
+  /**
+   * Sets the status of an Adapter specified by the name in a given namespace.
+   *
+   * @param namespace namespace of the adapter
+   * @param adapterName name of the adapter
+   * @return specified Adapter's previous status
+   * @throws AdapterNotFoundException if the specified adapter is not found
+   */
+  public AdapterStatus setAdapterStatus(String namespace, String adapterName, AdapterStatus status)
+    throws AdapterNotFoundException {
+    AdapterStatus existingStatus = store.setAdapterStatus(Id.Namespace.from(namespace), adapterName, status);
+    if (existingStatus == null) {
+      throw new AdapterNotFoundException(adapterName);
+    }
+    return existingStatus;
   }
 
   /**
@@ -175,23 +220,28 @@ public class AdapterService extends AbstractIdleService {
    * Creates the adapter
    * @param namespaceId namespace to create the adapter
    * @param adapterSpec specification of the adapter to create
-   * @throws IllegalArgumentException on errors.
+   * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
+   * @throws IllegalArgumentException on other input errors.
    */
-  public void createAdapter(String namespaceId, AdapterSpecification adapterSpec) throws IllegalArgumentException {
+  public void createAdapter(String namespaceId, AdapterSpecification adapterSpec)
+    throws IllegalArgumentException, AdapterAlreadyExistsException {
+
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
-    Preconditions.checkNotNull(adapterTypeInfo, "Adapter type %s not found", adapterSpec.getType());
+    Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
+
+    String adapterName = adapterSpec.getName();
+    AdapterSpecification existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+    if (existingAdapter != null) {
+      throw new AdapterAlreadyExistsException(adapterName);
+    }
 
     ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
-    validateSources(adapterSpec.getName(), adapterSpec.getSources());
+    validateSources(adapterName, adapterSpec.getSources());
     createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
-    // If the adapter already exists, remove existing schedule to replace with the new one.
-    AdapterSpecification existingSpec = store.getAdapter(Id.Namespace.from(namespaceId), adapterSpec.getName());
-    if (existingSpec != null) {
-      unschedule(namespaceId, appSpec, adapterTypeInfo, existingSpec);
-    }
-
+    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
+    preferencesStore.setProperties(namespaceId, appSpec.getName(), properties);
     schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
     store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
   }
@@ -214,7 +264,13 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Suspends all schedules for this adapter
-  public void stopAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  public void stopAdapter(String namespace, String adapterName)
+    throws AdapterNotFoundException, InvalidAdapterOperationException {
+    AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    if (AdapterStatus.STOPPED.equals(adapterStatus)) {
+      throw new InvalidAdapterOperationException("Adapter is already stopped.");
+    }
+
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
@@ -227,10 +283,18 @@ public class AdapterService extends AbstractIdleService {
       scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
                                 constructScheduleName(programId, adapterName));
     }
+
+    setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
   }
 
   // Resumes all schedules for this adapter
-  public void startAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  public void startAdapter(String namespace, String adapterName)
+    throws AdapterNotFoundException, InvalidAdapterOperationException {
+    AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    if (AdapterStatus.STARTED.equals(adapterStatus)) {
+      throw new InvalidAdapterOperationException("Adapter is already started.");
+    }
+
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
@@ -243,6 +307,8 @@ public class AdapterService extends AbstractIdleService {
       scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
                                constructScheduleName(programId, adapterName));
     }
+
+    setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
   // Deploys adapter application if it is not already deployed.
@@ -262,7 +328,8 @@ public class AdapterService extends AbstractIdleService {
       });
 
       Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
-      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination);
+      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
+                                                         ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(Id.Namespace.from(namespaceId), adapterTypeInfo.getType(), deploymentInfo).get();
       return applicationWithPrograms.getSpecification();

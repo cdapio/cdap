@@ -762,18 +762,18 @@ public class DefaultStoreTest {
     store.addAdapter(namespaceId, specStreamToAvro2);
 
     // Get non existing spec
-    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "nonExistingAdapter");
-    Assert.assertNull(retrievedSpec);
+    AdapterSpecification retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
+    Assert.assertNull(retrievedAdapter);
 
     //Retrieve specs
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
+    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
     Assert.assertEquals(specStreamToAvro1, retrievedSpec);
     // Remove spec
     store.removeAdapter(namespaceId, "streamToAvro1");
 
     // verify the deleted spec is gone.
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
-    Assert.assertNull(retrievedSpec);
+    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro1");
+    Assert.assertNull(retrievedAdapter);
 
     // verify the other adapter still exists
     retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
@@ -783,7 +783,7 @@ public class DefaultStoreTest {
     store.removeAllAdapters(namespaceId);
 
     // verify all adapters are gone
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
-    Assert.assertNull(retrievedSpec);
+    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro2");
+    Assert.assertNull(retrievedAdapter);
   }
 }

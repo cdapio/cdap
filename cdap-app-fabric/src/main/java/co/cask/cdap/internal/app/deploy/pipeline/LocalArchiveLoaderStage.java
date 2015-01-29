@@ -111,6 +111,6 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     }
 
     emit(new ApplicationDeployable(cConf, Id.Application.from(id, specification.getName()),
-                                   specification, outputLocation));
+                                   specification, deploymentInfo.getApplicationDeployScope(), outputLocation));
   }
 }
