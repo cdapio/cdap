@@ -130,7 +130,7 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
     return new StringBuilder()
       .append("Creates a stream conversion ")
       .append(ElementType.ADAPTER.getPrettyName())
-      .append(" that periodically reads from a stream and writes to a time partitioned fileset. ")
+      .append(" that periodically reads from a stream and writes to a time-partitioned fileset. ")
       .append(ArgumentName.FREQUENCY)
       .append("is a number followed by a 'm', 'h', or 'd' for minute, hour, or day. ")
       .append(ArgumentName.FORMAT)
