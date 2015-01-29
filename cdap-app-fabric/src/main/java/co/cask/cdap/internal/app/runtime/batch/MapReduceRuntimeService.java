@@ -169,7 +169,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     context.setJob(job);
 
     // Call the user MapReduce for initialization
-    beforeSubmit(job);
+    beforeSubmit();
 
     // set resources for the job
     Resources mapperResources = context.getMapperResources();
@@ -299,7 +299,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } finally {
       // whatever happens we want to call this
       try {
-        onFinish(job);
+        onFinish(success);
       } finally {
         context.close();
         cleanupTask.run();
@@ -364,13 +364,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the {@link MapReduce#beforeSubmit(co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
-  private void beforeSubmit(final Job job) throws TransactionFailureException, InterruptedException {
+  private void beforeSubmit() throws TransactionFailureException, InterruptedException {
     runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
       @Override
-      public void apply(MapReduceContext context) throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+      public void apply(MapReduceContext mapReduceContext) throws Exception {
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
         try {
-          mapReduce.beforeSubmit(context);
+          mapReduce.beforeSubmit(mapReduceContext);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -381,14 +381,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
-  private void onFinish(final Job job) throws TransactionFailureException, InterruptedException, IOException {
-    final boolean succeeded = job.isSuccessful();
+  private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
     runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
       @Override
-      public void apply(MapReduceContext context) throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+      public void apply(MapReduceContext mapReduceContext) throws Exception {
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
         try {
-          mapReduce.onFinish(succeeded, context);
+          mapReduce.onFinish(succeeded, mapReduceContext);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
