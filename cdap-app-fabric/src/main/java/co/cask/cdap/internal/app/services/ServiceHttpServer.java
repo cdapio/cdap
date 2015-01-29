@@ -96,8 +96,8 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final RunId runId;
   private final Arguments arguments;
   private final int instanceId;
+  private volatile int instanceCount;
   private volatile BasicHttpServiceContextFactory contextFactory;
-  private int instanceCount;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
