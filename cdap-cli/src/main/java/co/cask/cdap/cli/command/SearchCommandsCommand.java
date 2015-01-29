@@ -45,8 +45,14 @@ public class SearchCommandsCommand extends HelpCommand {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    final String query = arguments.get(ArgumentName.QUERY.getName());
+    String originalQuery = arguments.get(ArgumentName.QUERY.getName());
+    String queryString = originalQuery;
+    if (!queryString.contains("\\S") && !queryString.contains("^")) {
+      // no full-match
+      queryString = ".*?" + queryString + ".*?";
+    }
 
+    final String query = queryString;
     Predicate<Command> filter = new Predicate<Command>() {
       @Override
       public boolean apply(@Nullable Command input) {
@@ -57,10 +63,10 @@ public class SearchCommandsCommand extends HelpCommand {
     output.println();
     Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL, filter);
     if (categorizedCommands.isEmpty()) {
-      output.printf("No matches found for \"%s\"", query);
+      output.printf("No matches found for \"%s\"", originalQuery);
       output.println();
     } else {
-      output.printf("Listing matches for \"%s\":", query);
+      output.printf("Listing matches for \"%s\":", originalQuery);
       output.println();
       output.println();
 
