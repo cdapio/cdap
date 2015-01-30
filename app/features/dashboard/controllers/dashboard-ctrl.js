@@ -75,6 +75,10 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
     myDashboardsModel.remove($scope.dashboards.activeIndex);
   };
 
+  $scope.reorderDashboard = function (reverse) {
+    var newIndex = myDashboardsModel.reorder(reverse);
+    $state.go($state.current, {tab: newIndex}, {reload: true});
+  };
 
   $scope.dragdrop = {
     dragStart: function (drag) {

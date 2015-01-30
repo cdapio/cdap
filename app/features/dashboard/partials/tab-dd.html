@@ -9,9 +9,19 @@
 
   <li role="presentation" class="divider"></li>
 
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href=""
+      ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeIndex].title)"
+      cask-promptable="currentBoard.rename($value)"
+    >
+      <span class="fa fa-fw fa-pencil"></span>
+      Rename
+    </a>
+  </li>
+
   <li role="presentation" ng-class="{disabled: dashboards.length<2}">
     <a role="menuitem" tabindex="-1" href=""
-      ng-click="dashboards.length>1 && shiftDashboard(-1)"
+      ng-click="dashboards.length>1 && reorderDashboard(-1)"
     >
       <span class="fa fa-fw fa-arrow-left"></span>
       Move Left
@@ -20,19 +30,10 @@
 
   <li role="presentation" ng-class="{disabled: dashboards.length<2}">
     <a role="menuitem" tabindex="-1" href=""
-      ng-click="dashboards.length>1 && shiftDashboard()"
+      ng-click="dashboards.length>1 && reorderDashboard()"
     >
       <span class="fa fa-fw fa-arrow-right"></span>
       Move Right
-    </a>
-  </li>
-
-  <li role="presentation">
-    <a role="menuitem" tabindex="-1" href=""
-      ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeIndex].title)"
-      cask-promptable="currentBoard.rename($value)">
-      <span class="fa fa-fw fa-pencil"></span>
-      Rename
     </a>
   </li>
 
@@ -42,7 +43,8 @@
     <a role="menuitem" tabindex="-1" href=""
       ng-click="dashboards.length>1 && caskConfirm()"
       cask-confirmable="removeDashboard()"
-      data-confirmable-content="Really delete the dashboard?">
+      data-confirmable-content="Really delete the dashboard?"
+    >
       <span class="fa fa-fw fa-trash"></span>
       Delete
     </a>
