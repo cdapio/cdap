@@ -1,9 +1,10 @@
 <div ncy-breadcrumb></div>
-<div ng-model="tabs.activeTab" bs-tabs>
-  <fieldset data-title="{{tab.title}}" ng-repeat="tab in tabs" bs-pane>
-    <div
-      ng-include="tab.partial"
-      onload="onTabLoaded($index)"
-    ></div>
-  </fieldset>
-</div>
+<h2>
+  <span ng-bind="$state.params.datasetId | caskCapitalizeFilter"></span>
+  <small> <em>Type: Dataset </em></small>
+</h2>
+
+<my-tabs
+  data-tabs-list="['Status','Explore','Programs','Inner','Metadata','Lineage','Resources']"
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
+</my-tabs>

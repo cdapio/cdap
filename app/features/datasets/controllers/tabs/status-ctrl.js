@@ -10,18 +10,14 @@ angular.module(PKG.name + '.feature.datasets')
 
     function fetchMetric(metric) {
       dataSrc.poll({
-        _cdapPathV2: getMetricUrl(metric)
+        _cdapPathV2: '/metrics/system/datasets/' + currentDataset + '/dataset.store.'+ metric +'?aggregate=true'
       }, function(res) {
         $scope[metric] = res.data;
       });
     }
 
-    function getMetricUrl(metric) {
-      return '/metrics/system/datasets/' + currentDataset + '/dataset.store.'+ metric +'?aggregate=true'
-    }
-
     var query = myHelpersUtil.objectQuery;
-
+    // Temporary API until we get a status API for each dataset.
     dataSrc.request({
       _cdapPathV2: '/data/datasets'
     })
@@ -29,10 +25,12 @@ angular.module(PKG.name + '.feature.datasets')
         var match = res.filter(function(ds) {
           return ds.name.indexOf(currentDataset) > -1;
         });
-        $scope.schema = (query(
+        $scope.schema = (
+          query(
             JSON.parse( query(match, 0, "properties", "schema") ),
             "fields"
-          ) || [])
+          ) || []
+        )
           .map(function(field) {
             if (angular.isArray(field.type)) {
               field.type = flattenFieldType(field.type);
