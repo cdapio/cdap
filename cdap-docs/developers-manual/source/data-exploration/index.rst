@@ -35,7 +35,7 @@ providing integration with external systems such as Business Intelligence (BI) t
 .. _fileset-exploration: filesets.html
 
 - |fileset-exploration|_ Describes how you can make a ``FileSet`` or 
-  ``TimePartitionedFileSet`` that's **explorable.**
+  ``TimePartitionedFileSet`` that is **explorable.**
 
 
 .. |custom-dataset-exploration| replace:: **Custom Dataset Exploration:**
