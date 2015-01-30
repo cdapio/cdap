@@ -14,7 +14,6 @@ angular.module(PKG.name + '.feature.mapreduce')
       .state('mapreduce.detail', {
         url: '/:programId',
         templateUrl: '/assets/features/mapreduce/templates/detail.html',
-        controller: 'CdapMapreduceDetailController',
         ncyBreadcrumb: {
           parent: 'programs.type',
           label: '{{$state.params.programId | caskCapitalizeFilter}}'

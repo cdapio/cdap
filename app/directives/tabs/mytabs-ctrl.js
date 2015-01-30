@@ -1,16 +1,10 @@
-angular.module(PKG.name + '.feature.mapreduce')
-  .controller('CdapMapreduceDetailController', function($scope, $state) {
-    $scope.tabs = [
-      'Runs',
-      'Schedules',
-      'Metadata',
-      'History',
-      'Resources'
-    ].map(function (t){
+angular.module(PKG.name + '.commons')
+  .controller('myTabsCtrl', function($scope, $state) {
+    $scope.tabs = $scope.tabsList().map(function (t){
       return {
         title: t,
         state: t.toLowerCase(),
-        partial: '/assets/features/mapreduce/templates/tabs/' + t.toLowerCase() + '.html'
+        partial: $scope.tabsPartialPath + t.toLowerCase() + '.html'
       };
     });
 
@@ -32,4 +26,6 @@ angular.module(PKG.name + '.feature.mapreduce')
       }
       $scope.tabs.activeTab = tab;
     });
+    // FIXME: For some weird reason it doesn't default to the first tab.
+    $scope.tabs.activeTab = 0;
   });
