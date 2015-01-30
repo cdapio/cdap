@@ -444,7 +444,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private void alterExploreStream(String stream, boolean enable) {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       // It shouldn't happen.
-      Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFascade instance is available");
+      Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
       try {
         if (enable) {
           exploreFacade.enableExploreStream(stream);
