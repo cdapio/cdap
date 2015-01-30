@@ -134,6 +134,8 @@ public class FactTableTest {
         writeInc(table, "metric" + k, ts + i * resolution + i, 2 * k + i, "tag1", "value2", "tag2", "value2");
         writeInc(table, "metric" + k, ts + i * resolution + i, 3 * k + i, "tag1", "value2", "tag2", "value1");
         writeInc(table, "metric" + k, ts + i * resolution + i, 4 * k + i, "tag1", "value1", "tag2", "value3");
+        // null value in tag matches only fuzzy ("any")
+        writeInc(table, "metric" + k, ts + i * resolution + i, 5 * k + i, "tag1", null, "tag2", "value3");
       }
     }
 
@@ -186,7 +188,7 @@ public class FactTableTest {
 
       assertScan(table, expected, scan);
 
-      // time points for fuzzy tag1 before third interval )very important case - caught some bugs)
+      // time points for fuzzy tag1 before third interval (very important case - caught some bugs)
       scan = new FactScan(ts - resolution, ts + resolution,
                             // null stands for any
                             "metric" + i, tagValues("tag1", null, "tag2", "value3"));
@@ -194,6 +196,8 @@ public class FactTableTest {
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value3"),
                    timeValues(ts, resolution, 4 * i, 4 * i + 1));
+      expected.put("metric" + i, tagValues("tag1", null, "tag2", "value3"),
+                   timeValues(ts, resolution, 5 * i, 5 * i + 1));
 
       assertScan(table, expected, scan);
     }
@@ -249,7 +253,7 @@ public class FactTableTest {
 
     assertScan(table, expected, scan);
 
-    // time points for fuzzy tag1 before third interval )very important case - caught some bugs)
+    // time points for fuzzy tag1 before third interval (very important case - caught some bugs)
     scan = new FactScan(ts - resolution, ts + resolution,
                           // null stands for any
                           null, tagValues("tag1", null, "tag2", "value3"));
@@ -258,6 +262,8 @@ public class FactTableTest {
     for (int i = 1; i < 3; i++) {
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value3"),
                    timeValues(ts, resolution, 4 * i, 4 * i + 1));
+      expected.put("metric" + i, tagValues("tag1", null, "tag2", "value3"),
+                   timeValues(ts, resolution, 5 * i, 5 * i + 1));
     }
 
     assertScan(table, expected, scan);

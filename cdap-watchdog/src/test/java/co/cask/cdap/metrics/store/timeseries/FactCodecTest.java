@@ -114,6 +114,13 @@ public class FactCodecTest {
     rowKey = codec.createRowKey(tagValues, "myMetric", ts);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
+    // fuzzy in value should match the "null" value
+    tagValues = ImmutableList.of(new TagValue("tag1", "value1"),
+                                 new TagValue("tag2", null),
+                                 new TagValue("tag3", "value3"));
+    rowKey = codec.createRowKey(tagValues, "myMetric", ts);
+    Assert.assertEquals(FuzzyRowFilter.ReturnCode.INCLUDE, filter.filterRow(rowKey));
+
     tagValues = ImmutableList.of(new TagValue("tag1", "value1"),
                                  new TagValue("tag2", "value2"),
                                  new TagValue("tag3", "value3"));
