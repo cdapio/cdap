@@ -1,0 +1,3845 @@
+%PDF-1.4
+%ìåãû ReportLab Generated PDF document http://www.reportlab.com
+1 0 obj
+<< /F1+0 132 0 R /F2+0 136 0 R /F3+0 140 0 R >>
+endobj
+2 0 obj
+<< /Contents 144 0 R /MediaBox [ 0 0 612 792 ] /Parent 143 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 /Trans <<  >> 
+  /Type /Page >>
+endobj
+3 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 657.75 547.44 669.75 ] /Subtype /Link /Type /Annot >>
+endobj
+4 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 645.75 408.19 657.75 ] /Subtype /Link /Type /Annot >>
+endobj
+5 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 627.75 547.44 639.75 ] /Subtype /Link /Type /Annot >>
+endobj
+6 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 615.75 408.19 627.75 ] /Subtype /Link /Type /Annot >>
+endobj
+7 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 597.75 547.3 609.75 ] /Subtype /Link /Type /Annot >>
+endobj
+8 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 585.75 389.52 597.75 ] /Subtype /Link /Type /Annot >>
+endobj
+9 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 567.75 547.3 579.75 ] /Subtype /Link /Type /Annot >>
+endobj
+10 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 555.75 389.52 567.75 ] /Subtype /Link /Type /Annot >>
+endobj
+11 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 537.75 547.3 549.75 ] /Subtype /Link /Type /Annot >>
+endobj
+12 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 525.75 389.52 537.75 ] /Subtype /Link /Type /Annot >>
+endobj
+13 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 507.75 547.3 519.75 ] /Subtype /Link /Type /Annot >>
+endobj
+14 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 495.75 389.52 507.75 ] /Subtype /Link /Type /Annot >>
+endobj
+15 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 477.75 547.3 489.75 ] /Subtype /Link /Type /Annot >>
+endobj
+16 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 465.75 389.52 477.75 ] /Subtype /Link /Type /Annot >>
+endobj
+17 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 447.75 547.3 459.75 ] /Subtype /Link /Type /Annot >>
+endobj
+18 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 435.75 389.52 447.75 ] /Subtype /Link /Type /Annot >>
+endobj
+19 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 417.75 547.3 429.75 ] /Subtype /Link /Type /Annot >>
+endobj
+20 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 405.75 389.52 417.75 ] /Subtype /Link /Type /Annot >>
+endobj
+21 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 387.75 547.3 399.75 ] /Subtype /Link /Type /Annot >>
+endobj
+22 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 375.75 389.52 387.75 ] /Subtype /Link /Type /Annot >>
+endobj
+23 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 357.75 547.3 369.75 ] /Subtype /Link /Type /Annot >>
+endobj
+24 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 345.75 389.52 357.75 ] /Subtype /Link /Type /Annot >>
+endobj
+25 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 327.75 547.3 339.75 ] /Subtype /Link /Type /Annot >>
+endobj
+26 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 315.75 389.52 327.75 ] /Subtype /Link /Type /Annot >>
+endobj
+27 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 297.75 547.3 309.75 ] /Subtype /Link /Type /Annot >>
+endobj
+28 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 285.75 389.52 297.75 ] /Subtype /Link /Type /Annot >>
+endobj
+29 0 obj
+<< /A << /S /URI /Type /Action /URI (https://glassfish.dev.java.net/public/CDDL+GPL.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 267.75 550.89 279.75 ] /Subtype /Link /Type /Annot >>
+endobj
+30 0 obj
+<< /A << /S /URI /Type /Action /URI (https://glassfish.dev.java.net/public/CDDL+GPL.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 255.75 395.17 267.75 ] /Subtype /Link /Type /Annot >>
+endobj
+31 0 obj
+<< /A << /S /URI /Type /Action /URI (http://glassfish.java.net/public/CDDL+GPL_1_1.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 237.75 549.62 249.75 ] /Subtype /Link /Type /Annot >>
+endobj
+32 0 obj
+<< /A << /S /URI /Type /Action /URI (http://glassfish.java.net/public/CDDL+GPL_1_1.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 225.75 394.52 237.75 ] /Subtype /Link /Type /Annot >>
+endobj
+33 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.opensource.org/licenses/bsd-license.php) >> /Border [ 0 0 0 ] /Rect [ 362.4 207.75 547.84 219.75 ] /Subtype /Link /Type /Annot >>
+endobj
+34 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.opensource.org/licenses/bsd-license.php) >> /Border [ 0 0 0 ] /Rect [ 362.4 195.75 401.01 207.75 ] /Subtype /Link /Type /Annot >>
+endobj
+35 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.opensource.org/licenses/cpl1.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 177.75 550.83 189.75 ] /Subtype /Link /Type /Annot >>
+endobj
+36 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.opensource.org/licenses/cpl1.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 165.75 370.24 177.75 ] /Subtype /Link /Type /Annot >>
+endobj
+37 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 147.75 547.3 159.75 ] /Subtype /Link /Type /Annot >>
+endobj
+38 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 135.75 381.08 147.75 ] /Subtype /Link /Type /Annot >>
+endobj
+39 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 117.75 547.3 129.75 ] /Subtype /Link /Type /Annot >>
+endobj
+40 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 105.75 381.08 117.75 ] /Subtype /Link /Type /Annot >>
+endobj
+41 0 obj
+<< /Annots [ 3 0 R 4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R 
+  13 0 R 14 0 R 15 0 R 16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R 22 0 R 
+  23 0 R 24 0 R 25 0 R 26 0 R 27 0 R 28 0 R 29 0 R 30 0 R 31 0 R 32 0 R 
+  33 0 R 34 0 R 35 0 R 36 0 R 37 0 R 38 0 R 39 0 R 40 0 R ] /Contents 145 0 R /MediaBox [ 0 0 612 792 ] /Parent 143 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 
+  /Trans <<  >> /Type /Page >>
+endobj
+42 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 711.75 547.3 723.75 ] /Subtype /Link /Type /Annot >>
+endobj
+43 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 699.75 389.52 711.75 ] /Subtype /Link /Type /Annot >>
+endobj
+44 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 681.75 547.3 693.75 ] /Subtype /Link /Type /Annot >>
+endobj
+45 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 669.75 389.52 681.75 ] /Subtype /Link /Type /Annot >>
+endobj
+46 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 651.75 547.3 663.75 ] /Subtype /Link /Type /Annot >>
+endobj
+47 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 639.75 389.52 651.75 ] /Subtype /Link /Type /Annot >>
+endobj
+48 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 621.75 547.3 633.75 ] /Subtype /Link /Type /Annot >>
+endobj
+49 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 609.75 389.52 621.75 ] /Subtype /Link /Type /Annot >>
+endobj
+50 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 591.75 547.3 603.75 ] /Subtype /Link /Type /Annot >>
+endobj
+51 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 579.75 389.52 591.75 ] /Subtype /Link /Type /Annot >>
+endobj
+52 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 561.75 547.3 573.75 ] /Subtype /Link /Type /Annot >>
+endobj
+53 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 549.75 389.52 561.75 ] /Subtype /Link /Type /Annot >>
+endobj
+54 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 531.75 547.3 543.75 ] /Subtype /Link /Type /Annot >>
+endobj
+55 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 519.75 389.52 531.75 ] /Subtype /Link /Type /Annot >>
+endobj
+56 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 501.75 547.3 513.75 ] /Subtype /Link /Type /Annot >>
+endobj
+57 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 489.75 389.52 501.75 ] /Subtype /Link /Type /Annot >>
+endobj
+58 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 471.75 547.3 483.75 ] /Subtype /Link /Type /Annot >>
+endobj
+59 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 459.75 389.52 471.75 ] /Subtype /Link /Type /Annot >>
+endobj
+60 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 441.75 547.3 453.75 ] /Subtype /Link /Type /Annot >>
+endobj
+61 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 429.75 389.52 441.75 ] /Subtype /Link /Type /Annot >>
+endobj
+62 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 411.75 547.3 423.75 ] /Subtype /Link /Type /Annot >>
+endobj
+63 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 399.75 389.52 411.75 ] /Subtype /Link /Type /Annot >>
+endobj
+64 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 381.75 547.3 393.75 ] /Subtype /Link /Type /Annot >>
+endobj
+65 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 369.75 389.52 381.75 ] /Subtype /Link /Type /Annot >>
+endobj
+66 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 351.75 547.3 363.75 ] /Subtype /Link /Type /Annot >>
+endobj
+67 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 339.75 389.52 351.75 ] /Subtype /Link /Type /Annot >>
+endobj
+68 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 321.75 547.3 333.75 ] /Subtype /Link /Type /Annot >>
+endobj
+69 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 309.75 389.52 321.75 ] /Subtype /Link /Type /Annot >>
+endobj
+70 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 291.75 547.3 303.75 ] /Subtype /Link /Type /Annot >>
+endobj
+71 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 279.75 389.52 291.75 ] /Subtype /Link /Type /Annot >>
+endobj
+72 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 261.75 547.3 273.75 ] /Subtype /Link /Type /Annot >>
+endobj
+73 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 249.75 389.52 261.75 ] /Subtype /Link /Type /Annot >>
+endobj
+74 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 231.75 547.3 243.75 ] /Subtype /Link /Type /Annot >>
+endobj
+75 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 219.75 389.52 231.75 ] /Subtype /Link /Type /Annot >>
+endobj
+76 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 201.75 547.3 213.75 ] /Subtype /Link /Type /Annot >>
+endobj
+77 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 189.75 389.52 201.75 ] /Subtype /Link /Type /Annot >>
+endobj
+78 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 171.75 547.3 183.75 ] /Subtype /Link /Type /Annot >>
+endobj
+79 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 159.75 389.52 171.75 ] /Subtype /Link /Type /Annot >>
+endobj
+80 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 141.75 547.3 153.75 ] /Subtype /Link /Type /Annot >>
+endobj
+81 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 129.75 389.52 141.75 ] /Subtype /Link /Type /Annot >>
+endobj
+82 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 111.75 547.3 123.75 ] /Subtype /Link /Type /Annot >>
+endobj
+83 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 99.75 389.52 111.75 ] /Subtype /Link /Type /Annot >>
+endobj
+84 0 obj
+<< /Annots [ 42 0 R 43 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 
+  52 0 R 53 0 R 54 0 R 55 0 R 56 0 R 57 0 R 58 0 R 59 0 R 60 0 R 61 0 R 
+  62 0 R 63 0 R 64 0 R 65 0 R 66 0 R 67 0 R 68 0 R 69 0 R 70 0 R 71 0 R 
+  72 0 R 73 0 R 74 0 R 75 0 R 76 0 R 77 0 R 78 0 R 79 0 R 80 0 R 81 0 R 
+  82 0 R 83 0 R ] /Contents 146 0 R /MediaBox [ 0 0 612 792 ] /Parent 143 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 
+  /Trans <<  >> /Type /Page >>
+endobj
+85 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 711.75 547.3 723.75 ] /Subtype /Link /Type /Annot >>
+endobj
+86 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 699.75 381.08 711.75 ] /Subtype /Link /Type /Annot >>
+endobj
+87 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 681.75 547.3 693.75 ] /Subtype /Link /Type /Annot >>
+endobj
+88 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 669.75 381.08 681.75 ] /Subtype /Link /Type /Annot >>
+endobj
+89 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 651.75 547.3 663.75 ] /Subtype /Link /Type /Annot >>
+endobj
+90 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 639.75 389.52 651.75 ] /Subtype /Link /Type /Annot >>
+endobj
+91 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 621.75 547.3 633.75 ] /Subtype /Link /Type /Annot >>
+endobj
+92 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 609.75 381.08 621.75 ] /Subtype /Link /Type /Annot >>
+endobj
+93 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 591.75 547.3 603.75 ] /Subtype /Link /Type /Annot >>
+endobj
+94 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.txt) >> /Border [ 0 0 0 ] /Rect [ 362.4 579.75 381.08 591.75 ] /Subtype /Link /Type /Annot >>
+endobj
+95 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 561.75 547.3 573.75 ] /Subtype /Link /Type /Annot >>
+endobj
+96 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 549.75 389.52 561.75 ] /Subtype /Link /Type /Annot >>
+endobj
+97 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 531.75 547.3 543.75 ] /Subtype /Link /Type /Annot >>
+endobj
+98 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 519.75 389.52 531.75 ] /Subtype /Link /Type /Annot >>
+endobj
+99 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 501.75 547.3 513.75 ] /Subtype /Link /Type /Annot >>
+endobj
+100 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 489.75 389.52 501.75 ] /Subtype /Link /Type /Annot >>
+endobj
+101 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 471.75 547.3 483.75 ] /Subtype /Link /Type /Annot >>
+endobj
+102 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 459.75 389.52 471.75 ] /Subtype /Link /Type /Annot >>
+endobj
+103 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 441.75 547.3 453.75 ] /Subtype /Link /Type /Annot >>
+endobj
+104 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 429.75 389.52 441.75 ] /Subtype /Link /Type /Annot >>
+endobj
+105 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 411.75 547.3 423.75 ] /Subtype /Link /Type /Annot >>
+endobj
+106 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 399.75 389.52 411.75 ] /Subtype /Link /Type /Annot >>
+endobj
+107 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 381.75 547.3 393.75 ] /Subtype /Link /Type /Annot >>
+endobj
+108 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 369.75 389.52 381.75 ] /Subtype /Link /Type /Annot >>
+endobj
+109 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.eclipse.org/legal/epl-v10.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 351.75 539.47 363.75 ] /Subtype /Link /Type /Annot >>
+endobj
+110 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.eclipse.org/legal/epl-v10.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 309.75 539.47 321.75 ] /Subtype /Link /Type /Annot >>
+endobj
+111 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.eclipse.org/legal/epl-v10.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 267.75 539.47 279.75 ] /Subtype /Link /Type /Annot >>
+endobj
+112 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.eclipse.org/legal/epl-v10.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 225.75 539.47 237.75 ] /Subtype /Link /Type /Annot >>
+endobj
+113 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.eclipse.org/legal/epl-v10.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 183.75 539.47 195.75 ] /Subtype /Link /Type /Annot >>
+endobj
+114 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 141.75 547.3 153.75 ] /Subtype /Link /Type /Annot >>
+endobj
+115 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 129.75 389.52 141.75 ] /Subtype /Link /Type /Annot >>
+endobj
+116 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 111.75 547.3 123.75 ] /Subtype /Link /Type /Annot >>
+endobj
+117 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 99.75 389.52 111.75 ] /Subtype /Link /Type /Annot >>
+endobj
+118 0 obj
+<< /Annots [ 85 0 R 86 0 R 87 0 R 88 0 R 89 0 R 90 0 R 91 0 R 92 0 R 93 0 R 94 0 R 
+  95 0 R 96 0 R 97 0 R 98 0 R 99 0 R 100 0 R 101 0 R 102 0 R 103 0 R 104 0 R 
+  105 0 R 106 0 R 107 0 R 108 0 R 109 0 R 110 0 R 111 0 R 112 0 R 113 0 R 114 0 R 
+  115 0 R 116 0 R 117 0 R ] /Contents 147 0 R /MediaBox [ 0 0 612 792 ] /Parent 143 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 
+  /Trans <<  >> /Type /Page >>
+endobj
+119 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 711.75 547.3 723.75 ] /Subtype /Link /Type /Annot >>
+endobj
+120 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 699.75 389.52 711.75 ] /Subtype /Link /Type /Annot >>
+endobj
+121 0 obj
+<< /A << /S /URI /Type /Action /URI (http://opensource.org/licenses/BSD-3-Clause) >> /Border [ 0 0 0 ] /Rect [ 362.4 681.75 547.41 693.75 ] /Subtype /Link /Type /Annot >>
+endobj
+122 0 obj
+<< /A << /S /URI /Type /Action /URI (http://opensource.org/licenses/BSD-3-Clause) >> /Border [ 0 0 0 ] /Rect [ 362.4 669.75 367.36 681.75 ] /Subtype /Link /Type /Annot >>
+endobj
+123 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 651.75 547.3 663.75 ] /Subtype /Link /Type /Annot >>
+endobj
+124 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 639.75 389.52 651.75 ] /Subtype /Link /Type /Annot >>
+endobj
+125 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 621.75 547.3 633.75 ] /Subtype /Link /Type /Annot >>
+endobj
+126 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.apache.org/licenses/LICENSE-2.0.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 609.75 389.52 621.75 ] /Subtype /Link /Type /Annot >>
+endobj
+127 0 obj
+<< /A << /S /URI /Type /Action /URI (http://www.slf4j.org/license.html) >> /Border [ 0 0 0 ] /Rect [ 362.4 591.75 501.99 603.75 ] /Subtype /Link /Type /Annot >>
+endobj
+128 0 obj
+<< /Annots [ 119 0 R 120 0 R 121 0 R 122 0 R 123 0 R 124 0 R 125 0 R 126 0 R 127 0 R ] /Contents 148 0 R /MediaBox [ 0 0 612 792 ] /Parent 143 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 
+  /Trans <<  >> /Type /Page >>
+endobj
+129 0 obj
+<< /Length 1906 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo
+<< /Registry (AAAAAA+SourceSansPro-Bold)
+/Ordering (AAAAAA+SourceSansPro-Bold)
+/Supplement 0
+>> def
+/CMapName /AAAAAA+SourceSansPro-Bold def
+/CMapType 2 def
+1 begincodespacerange
+<00> <7F>
+endcodespacerange
+128 beginbfchar
+<00> <0000>
+<01> <0001>
+<02> <0002>
+<03> <0003>
+<04> <0004>
+<05> <0005>
+<06> <0006>
+<07> <0007>
+<08> <0008>
+<09> <0009>
+<0A> <000A>
+<0B> <000B>
+<0C> <000C>
+<0D> <000D>
+<0E> <000E>
+<0F> <000F>
+<10> <0010>
+<11> <0011>
+<12> <0012>
+<13> <0013>
+<14> <0014>
+<15> <0015>
+<16> <0016>
+<17> <0017>
+<18> <0018>
+<19> <0019>
+<1A> <001A>
+<1B> <001B>
+<1C> <001C>
+<1D> <001D>
+<1E> <001E>
+<1F> <001F>
+<20> <0020>
+<21> <0021>
+<22> <0022>
+<23> <0023>
+<24> <0024>
+<25> <0025>
+<26> <0026>
+<27> <0027>
+<28> <0028>
+<29> <0029>
+<2A> <002A>
+<2B> <002B>
+<2C> <002C>
+<2D> <002D>
+<2E> <002E>
+<2F> <002F>
+<30> <0030>
+<31> <0031>
+<32> <0032>
+<33> <0033>
+<34> <0034>
+<35> <0035>
+<36> <0036>
+<37> <0037>
+<38> <0038>
+<39> <0039>
+<3A> <003A>
+<3B> <003B>
+<3C> <003C>
+<3D> <003D>
+<3E> <003E>
+<3F> <003F>
+<40> <0040>
+<41> <0041>
+<42> <0042>
+<43> <0043>
+<44> <0044>
+<45> <0045>
+<46> <0046>
+<47> <0047>
+<48> <0048>
+<49> <0049>
+<4A> <004A>
+<4B> <004B>
+<4C> <004C>
+<4D> <004D>
+<4E> <004E>
+<4F> <004F>
+<50> <0050>
+<51> <0051>
+<52> <0052>
+<53> <0053>
+<54> <0054>
+<55> <0055>
+<56> <0056>
+<57> <0057>
+<58> <0058>
+<59> <0059>
+<5A> <005A>
+<5B> <005B>
+<5C> <005C>
+<5D> <005D>
+<5E> <005E>
+<5F> <005F>
+<60> <0060>
+<61> <0061>
+<62> <0062>
+<63> <0063>
+<64> <0064>
+<65> <0065>
+<66> <0066>
+<67> <0067>
+<68> <0068>
+<69> <0069>
+<6A> <006A>
+<6B> <006B>
+<6C> <006C>
+<6D> <006D>
+<6E> <006E>
+<6F> <006F>
+<70> <0070>
+<71> <0071>
+<72> <0072>
+<73> <0073>
+<74> <0074>
+<75> <0075>
+<76> <0076>
+<77> <0077>
+<78> <0078>
+<79> <0079>
+<7A> <007A>
+<7B> <007B>
+<7C> <007C>
+<7D> <007D>
+<7E> <007E>
+<7F> <007F>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+endendstream
+endobj
+130 0 obj
+<< /Length 31216 /Length1 31216 >>
+stream
+     Ä  POS/2[‡ñU   ‹   `cmap	∑
+x  <  cvt Ÿi  T   (fpgmYú7  |  sglyfÂïd    5¯head˛-≥∞  9Ë   6hheaª  :    $hmtxØ6‰  :D  |locaïà,  ;¿   ŒmaxpÄB  <ê    nameı’ø9  <∞  <”postˇ∏ 2  yÑ    prepEÃ∂ù  y§   K ·º   äX   KäX  ^ 2                 ADBE    ˛ˇÓˇ  ÿ  ì    ‡î               
+     Ä                                                                     	 
+                        ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a      s í ñ   ˇ3 Ê  > ~ ê » ∏  ,K∏ 	PX±éY∏ˇÖ∏ Dπ 	 _^-∏ ,  EiD∞`-∏ ,∏ *!-∏ , F∞%FRX#Y ä äIdä F had∞%F hadRX#eäY/ ∞ SXi ∞ TX!∞@Yi ∞ TX!∞@eYY:-∏ , F∞%FRX#äY F jad∞%F jadRX#äY/˝-∏ ,K ∞&PXQX∞ÄD∞@DY!! E∞¿PX∞¿D!YY-∏ ,  EiD∞`  E}iD∞`-∏ ,∏ *-∏ ,K ∞&SX∞@∞ Yää ∞&SX#!∞Ääää#Y ∞&SX#!∏ ¿äää#Y ∞&SX#!∏ äää#Y ∞&SX#!∏@äää#Y ∏ &SX∞%E∏ÄPX#!∏Ä#!∞%E#!#!Y!YD-∏ 	,KSXED!!Y-   P  bî   	   g ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∫    9∫    9∫    9π 
+ Ù∫    9∏  π  Ù01!!'!/#?#P˝Ó¡_M^
+'))'T* ò+î˝lT∫˛çs∫˘MbbMC_;;_  QˇÙû    ∏  EX∏ /π  >Yπ 	 Ù01'3#4632#"&eî`)3&&33&&3ÖÖ˛Œó(55('55   ˇˇ LbÃÆ & 
+    
+ Ï    "  Úä   † ∏  EX∏ /π  >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Yª     +∏ π  Ù∏ –∏ –∏ ∏ –∏  ∏ –∏  ∏ –∏ ∏ –∏ ∏ –∏ –017#537#53733733#3##7##7#lJUO[ThTO[T_UgUﬁhª^n^••••^n^ªªªnn    'ˇí‘È - ] ∏  EX∏ '/π ' >Y∏  EX∏ /π  >Y∏ 'π  Ù∫   '9∏ ∏ –∏ π  Ù∫  ' 9∏ '∏ *–01.#"#5.'732654.546753É2 $&';D;'NNa,a#@&E$*'';D;'QGa0Hﬁ"! .A0Hghd' c"#$!!.>-Jage, ˇˇ ˇÙ@ò ' b   ' c}    b·      ˇÙâò 
+  D å ∏  EX∏ //π / >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫ :  +∏ π  Ù∫   :9∫   /9∏ /∏ ‹∏ /π  Ù∫ '  9∫ 7  9∫ A  :9017327.'>54&#".'#".54>7.54>32>73§5,(+&E=
+#0"Ö)T**e>5Q7!+.A)JV'1C$&Ü5&9∑%.D$& (.!'˝‰"#3C&"7,$#E#>/PD 5-& = N.<m3     Lb ‡Æ   ∫   +01'3#QîP)ÖÖ«    HˇM(ﬂ   ∫    +01.5467Ã?EE?\7227\≥gﬁÑÑﬁg&b÷kk÷b&    0ˇMﬂ   ∫   +01>54&'7'08228\?EE?\çb÷kk÷b&gﬁÑÑﬁg&    &]£»   ∏  EX∏ /π  >Y017'7737'W;ltMsl;=PQâh1HvwH1h,YY   " ^Ó6   ª     +∏ ∏ –∏  ∏ –01#53533##“∞∞l∞∞lh∏∏h∏     .ˇ>  ≠   ∏  EX∏ /π  >Y∏ 
+‹01>5#"&54632.7:#66&24\Xt@&+(&.IBSw  + …!1   ª    +013#+ˆˆ1h     =ˇÙ Ô ≠   ∏  EX∏ 	/π 	 >Y∏ ‹0174632#"&=3&&33&&3P(55('55   ˇ`6∆   ∏  EX∏  /π   >Y∏ ‹013#÷`…`∆¸ö    %ˇÙÎá  ' 5 ∏  EX∏ 
+/π 
+ >Y∏  EX∏  /π   >Yπ  Ù∏ 
+π  Ù01".54>32'2>54.#"3T;!!;T33T;!!;T3    +T|QQzS))SzQQ|T+r2TAAS//SAAT2  F  ⁄{  C ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ π  Ùπ  Ù∏ ∏ 	–0173#5>733!Fäw4H"lw˛lwo[
+˝¸w      ‰á  = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ –∏  –∏ π  Ù017>54&#"'>32>;!%=eI)0*#6P/bD/M8"9I';Ä˛AT9cWK"/1'O235J.(SSS(|  ˇÙﬂá / S ∏  EX∏ /π  >Y∏  EX∏ ,/π , >Yπ  Ù∫   ,9∏ /π  Ù∏ π  Ù∫ $  901732654.#52>54&#"'>32#"&'ZE)/8&B4+9#(&"7J,a;1Q9 737G&@V0Nl#´$'$"h!%Z&+-@*2EM>,E/1)       ¯{ 	  W ∏  EX∏ /π  >Y∏  EX∏ /π  >Yª     +∏ ∏ ‹∏  ∏ 	–∏ ∏ –∏ 	∏ –∏  ∏ –015467###5!533&TXIâ˛ÌË¥IgQ6äpòòe~˛ç  ˇÙ‡{ $ G ∏  EX∏ /π  >Y∏  EX∏ !/π ! >Yπ  Ù∫   !9∏ /∏ 	‹∏ π  Ù01732654&#"'!#>32#"&'YC)1:7-BhÈ!)I8 &@U.Nl&™%2102	*A|w0J35R93&  )ˇÙÏá  2 C ∏  EX∏ //π / >Y∏  EX∏ %/π % >Yª    +∏ %π   Ù∏ /π  Ù01%2654&#".#">32#".54>32!//$2ë6.# "")E3"9M+.WC(+G]2?\b163)#&2Å/L7	0J22N8$LwTYÇT)-  ,  Ê{  3 ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏ π  Ù∏ 	–013>7!5!#ü'=-˛„∫7C%îOÖyt>|ZCu}è]     *ˇÙËá   : W ∏  EX∏ %/π % >Y∏  EX∏ 6/π 6 >Yπ  Ù∫  6 %9∏ /∏ –∏ %π  Ù∏ ∏ ‹∏ ∏ -‹01732654.'7654&#"4675.54>32#".®:(%0$1á')$*<‘?-%06K,+H22!.@ ;S30Q;!≥*/'(4¢-0%-$%',„:JG3(A.-A'.GN?&@/.@     "ˇÙÊá  0 C ∏  EX∏ #/π # >Y∏  EX∏ -/π - >Yª     +∏ #π  Ù∏ -π  Ù01267.#"32>7#".54>32#"&'¸2
+7" 00_6.# "")E2"9M+.WC)+G]2?]V#K9163)æ/K8	0J21O8$LwTYÇT). ˇˇ =ˇÙ ÔÒ'   D    ˇˇ .ˇ> Ò'   D      " hÓ0 	  ∫   +∫   901%%"Ã∞áá∞˛4±y://:y±   ˇˇ " £ÓÚ& d t  d ç    " hÓ0 	  ∫   +∫   9015?5/5Ó˛4∞áá∞Ã±y://:y±    )ˇÙ•™  ) ( ∏  EX∏ '/π ' >Yª   
+ +∏ 'π ! Ù017&>54&#"'>324632#"&ö# %+Q"\8*I5!%ô2&&33&&2Á"80(%# J)2*A,1*'*/ó(55('55  1ˇTVù F S ? ª ;  B +ª '   +ª I   +ª   O +ª   1 +∫ " O 90174>32#"&'##"&54>3237332>54.#"3267#".%326?&#"1H{§\QÉ\2*BQ'+@D<H6J+&[.C+"BhI@z`:/Qi;'Q  .`6Kâi>?4#Õi´zB4_ÉNEgE"($%QE.XE**‹V/C)6bK,5aâTJnH$P.^çbCá*2    ˇ˙  Cå 	  T ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ /π 	 Ù01'.'###3#a©«(ñÃ±Ãú<1n34m1<sõå˝t     M  <å   & [ ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫ $   9∏ $/∫  $ 9∏  π  Ù∏ $π  Ù∏ π & Ù0132+2654&+254&+Mﬂ3WA%*FG'E\5Úÿ6124FSy<=Så&>/,&JB2H/Ö+%% ï˛ÌY+'´     .ˇÙ0ò  9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù014>32.#"3267#"..2Uq?=c!Q3"";,VH(<Q)i=?pT0BQX.3"[6N1eo Y00+T}    M  Lå   5 ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù∏  π  Ù0132+72>54.+M∏KxV..TuH¿Ø*D00D*å&OzTT|Q(w1P;:O/˛b     M  Ôå  M ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  π  Ù∫    9∏ /π  Ù∏ π  Ù01!!3#!!Mò˛˚ﬁﬁ˛^å|É{ñ|     M  Ëå 	 C ∏  EX∏  /π   >Y∏  EX∏ 	/π 	 >Y∏  π  Ù∫    	9∏ /π  Ù01!!3##Mõ˛¯‚‚ìå|ó|˝     .ˇÙDò # M ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù∫   9∏ /π  Ù014>32.#"32675#53#"..3WuBEe Q5*&?.[\&lÓ#rEBsV1BQX.4![6N1eo
+
+px˛‘!.+T}    M  Uå  I ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫ 	   9∏ 	/π  Ù∏  ∏ –∏ ∏ –013353###Mì·îî·ìå˚˚˝t˛  M   ‡å  % ∏  EX∏  /π   >Y∏  EX∏ /π  >Y013#Mììå˝t    ˇÙ≥å  + ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù01732653#"&'t0()ì3O6Ke"¥! 1Aß˛M/T>$:<   M  lå  [ ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∫ 	  901333##Mì¬¢≈È°üLìå˛ı˛¸˛xdØ   M  ‚å  + ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù013!!Mì˛kå˝|    M  ≠å  o ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 	/π 	 >Y∫   	9∫   	9∫   9∫    9013373#54>7##/##Múm''jõâ6d;d4áå˛€rr%˝tÔ:;9ó˝˝ó9;:Ô   M  Lå  [ ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫    90133.=3#'##Mó™@åó™@åå˛ºê4Ä:Ê˝tEé6|:Á    .ˇÙ~ò   5 ∏  EX∏ 
+/π 
+ >Y∏  EX∏  /π   >Yπ  Ù∏ 
+π  Ù01".54>32'2654&#"VBmN++NmBBmN++NmBCNNCCNN/X~PP}U--V}OP~X/scbnnbcs  M  :å   C ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏ /π  Ù∏  π  Ù0132+#254&+MÓ5]E()F\4[ìÂx=;Rå1Q;9T6›Rh3*≈    .ˇN†ò  * K ∏  EX∏ /π  >Y∏  EX∏ /π  >Yª '   +∏ π  Ù∏ π 	 Ù∏ ∏ $–0132654&#"#"&'.54>323267≈NCCNNCCN€;&hè#4U< +NmBBmN+p_N*%Iittibnn˝∏	`M7VqEP}U--V}OÑ™"    M  Så   T ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 	/π 	 >Yª   
+ +∏ π  Ù∫   
+90132654&+'##32‡L:==:LŒ}QìÎ4[D(?5î`100&˝ÈÎÎå/N:H]˛˚  #ˇÙ
+ò 1 I ∏  EX∏ /π  >Y∏  EX∏ ./π . >Yπ  Ù∫   .9∏ π  Ù∫ % . 901732654./.54>32.#"#"&'w#U).-#U/%">U39o*K @'&-$T<E!?\:@2∑&"	$
+ +9$(G5,*]	"TE)I7!//     å  3 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π   Ù∏ –01#5!##Ã≥˙≥î||˝     IˇÙOå  < ∏  EX∏  /π   >Y∏  EX∏ 	/π 	 >Y∏  EX∏ /π  >Yπ  Ù01332653#"&5Iî:77<éÉ~Üå˛ì`LL`m˛¢§ññ§  ˇ˘  3å  @ ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∫    90133>73#úNMñƒ±å˛–6e66e60˝t     å ! v ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ !/π ! >Y∏  EX∏ /π  >Y∫    !9∫   9∫  ! 
+90133>733>73#.'##ó-
+
+F}F
+
+-çtπ@=∂å˛œ3g44g31˛œ2g55f31˝t(&M$$M&˛ÿ      ,å  [ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   90133>?3#'.'##¿™§9
+4ù©¥§A=ûO={33{˛º˛∏Ö33Ö    ˇ¯  å  @ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   901733>?3#Ω≈û:;ö≈ìË§ñ%E&&E%ñ˛\Ë   $  ¸å 	 = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏ π  Ù∏ –017!5!!!$ ˛˚∫˛‡#˛(Y∑|Y˛I|    Wˇh*ƒ   ª    +ª    +013#3#W”ee”ƒN˝@N  ˇ`F∆   ∏  EX∏  /π   >Y∏ ‹013#` `∆¸ö    .ˇhƒ   ª     +ª    +01#53#5îf””J¿N¸§N  2ﬁû 	 8 ∏  EX∏  /π   >Y∏ ‹∏  π  Ù∫    9∏ ∏ –∏ 	–013#/##Õvõy.--.yû˛tÄááÄ    ˇtËˇ«   ª     +01!5Ë˛$9SS  ˇˇ Å>h‘  e      /ˇÙŸ¸  % v ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∏ /∏ π  Ù∫   9∏ π  Ù∏ π " Ù∏ π # Ù017467.#"'>32#'##".732675/Ñì$( @$40i;`ex G*"6&å$O<äNX!'a$ms˛‰3#)6+W*     AˇÙΩ  ! É ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ π  Ù∏ π  Ù∏ π  Ù∏ π ! Ù013>32#"&'##732654#"AìC#-H3#;K(!Csì(&6V,)Ω¨L$A]9@dE$  4åEMÜ-  $ˇÙæ¸  9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù0174>32&#"3267#".$*G^3.JC#"6>?0,;$X)4YB&¯>aB#[LAAL] #Ba     'ˇÙ¸Ω  # É ∏  EX∏ /π  >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ π  Ù∏ π  Ù∏ π  Ù∏ π ! Ù0174>32'53#'##".732675.#"'#9K'*6ìx
+F$.K5ó/+'*#6¯=`C$L©˝C1#$C`?JDÀC    $ˇÙ·¸  " Q ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∏ /∏ π  Ù∏ π  Ù∏ π " Ù0174>32!327#".%4&#"$(AT-5O5˛◊
+E2561&]-5\D&@&-#5¯<aC$$@W3!	93!Y#C`q+6/2    t…  V ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 
+/π 
+ >Y∏ π  Ù∏ π 	 Ù∏ –∏ ∏ –01&#"3###5754>32YYYìBB,F23K
+!&s˛É}m'F4    "ˇ-¸  C O m ∏  EX∏ !/π ! >Y∏  EX∏ ?/π ? >Yπ  Ù∫ 6 ! ?9∏ 6/π 	 Ù∏ !∏ $–∏ $/π % Ù∏ 6∏ .–∏ ./π D Ù∏ !π J Ù0132654&+"&'475.54675.54>323##"';2#".2654&#"õ<22@'%3 yG )"9J(,!µO	5G)
+!*P\a'Hf@,K9 €''''>#0<((1C,-C-k"+?)
+;C'A/0l)*')((*)  A   Ω  X ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫   9∏ –∏ π  Ù∏ π  Ù013>32#4&#"#AìJ3QIì (ìΩ¨Y+j^˛Ã!6(˛±  5   ﬂ“   - ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    +01"&546323#ä%00%&//oìì9+""**""+I˛    ˇÕˇ< ·“   7 ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫   +∏ π  Ù013#"&'73265"&54632Bì)D3)
+J%00%%00˛)H6 l&*:+""**""+  A  Ω  [ ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∫ 	   9013373#'#Aèù†Æªüp?èΩ˛n≈Ã˛‹¡Gz  AˇÙΩ  + ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù0133:7#".5Aì	%&4Ω˝◊m+=&   A  ¸ ! ò ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ !/π ! >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    !9∫ 	   !9∏ ∏ –π  Ù∏ 	π  Ù∏ π  Ù∏ π  Ù0133>32>32#4&#"#4&#"#Ax
+F15A!I2PKì %0ì &.ì@-+("1k]˛Ã!6(0˛±!6(0˛±     A   ¸  e ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∏ π  Ù∏ π  Ù0133>32#4&#"#Ax
+ L3QIì (ì?-j^˛Ã!6(˛±     $ˇÙ¸   5 ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ π  Ù0174>32#".732654&#"$(CX//WC((CW//XC(ó-.-..-.-¯>aB##Ba>>aB##Ba>ALLAALL   AˇH¸  ! É ∏  EX∏ 	/π 	 >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫  	 9∫   	9∏ π  Ù∏ π  Ù∏ 	π  Ù∏ π ! Ù01#33>32#"&'732654#"‘ìx
+I'-H2#;K( <(&6V+*'ë®1#$B]9@cE$dEMÜ-   'ˇH¸¸  #  ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9π  Ù∏ π  Ù∏ π  Ù∏ π ! Ù0174>32373#57#".732675.#"'#9K')>sìB".K5ó/+'*#6¯=`C$ 1˝XóL$C`?JDÀC    A  è¸  R ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏ ∏ ‹∏ π  Ù0133>32.#"#Ax
+L&=ìW30(3˛‡   ˇÙü¸ 0 I ∏  EX∏ /π  >Y∏  EX∏ -/π - >Yπ  Ù∫  - 9∏ π  Ù∫ #  -901732654.'.54>32.#"#"&'W"> !$.&2F+9V B48#/'4L21g&ï	#/":('X'	"1"":+&    ˇÙnt  E ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π 	 Ù∏  –∏ ∏ –∏ π  Ù01#5?33#3267#".5UDLzww#
+6$.A)}mÑÑs«*%k2G+   <ˇÙ¯  e ∏  EX∏  /π   >Y∏  EX∏ 	/π 	 >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∫  	 9∏ π  Ù01332673#'##"&5<ì &ìx I3QI˛ﬂ6(H˛E&+j^       ˇ  @ ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∫    90133>?3#î@
+
+	
+Aç¢™Í%M''M%Í˛       ! v ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ !/π ! >Y∏  EX∏ /π  >Y∫  !  9∫   9∫     90133>?33>?3#'.'##í0
+	78		/àw¨-,®Ê%H&&J#ÊÊ%H&&H%Ê˛∆#F((F#∆    Ù  [ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   901'33>?3#'.'##¶èû,
+"òêôû0		'òÓP++PˇÒR,+R    ˇ>˝  F ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∫   901326?33>?3#"&'7L%(
+øîG
+	<ç¨'3A, H$„’"F%#G#’˛/G/p   &  ¥ 	 = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏ π  Ù∏ –017#5!3!&–πp–◊˛rO.sN˛—s    ˇh*ƒ 3 + ª     +ª    +ª    +∫ *  901#"&54>54.'5>54.546;#"3*?B>	!!	>B?$&&$JN=Q*''V''*Q=N))L.93		39.L))    Vˇ ∂Ó   ∫   +013#V``Ó¸  .ˇh9ƒ 3 + ª    2 +ª    +ª #  $ +∫ 
+ $ #9012654&54675.54654&+532+5A$&&$?B>	!!	>B?J))L.93		39.L))N=Q*''V''*Q=N      Û§  ' ª    +∏ ∏ ‹π  Ù∏ –∏ ∏ –01>323267#".#"%K&.'##L%K&.'#$=9.;9.  ˇÙ_í   ( ∏ 
+/∏  EX∏  /π   >Yπ  Ù∏ 
+π  Ù01".54>32'2654&#"º#<++<##<++<#####6M11L55L11M6R8FF66FF8   ˇUˇÙ
+ò   ∏  EX∏  /π   >Y∏ ‹013´`U˛†§˝\     "Ó~   ª    +01!!"Ã˛4~h  ˇk> R‘   ∏  EX∏ /π  >Y∏ ‹013#ïéYk‘ñ       ÃaŒ]Ì_<ı 	Ë    ÕóÄü    Õó„ˇ˛Å«Œ  	          ÿ˛Ô  ·ˇ˛Ÿ«                X≤ P     –   –  T Q L " 'Y õ , LX HX 0… & ", .L +, =S  % F     ) , * ", =, . " " "œ )á 1=ˇ˙] MF .{ M$ M M~ .¢ M- M˝ f M M˙ Mô M¨ .^ M¨ .h M, #, ô I,ˇ˘- 7 ˇ¯ $X WS X . 2Ù + Å /= A” $= ' $U  "; A 5ˇÕ$ A AY A< A+ $= A< 'é Aª   <     &  V .  ˇU "ˇk   ` ` ` ` é öäúJ`Ç§Ã,NhºˆD≤\∆¸|‰¸*Lú.|‰	2	v	¥	Í
+F
+Ä
+†
+‘B®¯BàÓ@¨ÿP∆"`ñ≤ÃË.8Æ"l‰Bî6Ñ∏H|¸RúÜ–:Ñ⁄à‚6j∆ÿ4n≤Œ‚¸      f d  i       
+   s     $∂        E          E        T       # X        {       A è        –       ` ‚       B      	 \       h      ŸÅ       $Z       ~      
+ä      î      ü      	™  	   ä≥  	  =  	  [  	  Fc  	  (©  	  Ç—  	  $S  	  ¿w  	  47  	 	 k  	  2É  	 #∂µ  	  H:k  	  :≥  	 :À  	 :ﬂ  	 :ı  	 ;Copyright 2010, 2012 Adobe Systems Incorporated. All Rights Reserved.Source Sans ProBold1.050;ADBE;SourceSansPro-Bold;ADOBESource Sans Pro BoldVersion 1.050;PS Version 1.000;hotconv 1.0.70;makeotf.lib2.5.5900SourceSansPro-BoldSource is a trademark of Adobe Systems Incorporated in the United States and/or other countries.Adobe Systems IncorporatedPaul D. Hunthttp://www.adobe.com/typeCopyright 2010, 2012 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+This license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide development of collaborative font projects, to support the font creation efforts of academic and linguistic communities, and to provide a free and open framework in which fonts may be shared and improved in partnership with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and redistributed freely as long as they are not sold by themselves. The fonts, including any derivative works, can be bundled, embedded, redistributed and/or sold with any software provided that any reserved names are not used by derivative works. The fonts and derivatives, however, cannot be released under any other type of license. The requirement for fonts to remain under this license does not apply to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright Holder(s) under this license and clearly marked as such. This may include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting, or substituting -- in part or in whole -- any of the components of the Original Version, by changing formats or by porting the Font Software to a new environment.
+
+"Author" refers to any designer, engineer, programmer, technical writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining a copy of the Font Software, to use, study, copy, merge, embed, modify, redistribute, and sell modified and unmodified copies of the Font Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled, redistributed and/or sold with any software, provided that each copy contains the above copyright notice and this license. These can be included either as stand-alone text files, human-readable headers or in the appropriate machine-readable metadata fields within text or binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written permission is granted by the corresponding Copyright Holder. This restriction only applies to the primary font name as presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software shall not be used to promote, endorse or advertise any Modified Version, except to acknowledge the contribution(s) of the Copyright Holder(s) and the Author(s) or with their explicit written permission.
+
+5) The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license. The requirement for fonts to remain under this license does not apply to any document created using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.http://www.adobe.com/type/legal.htmlSlashed zeroStraight lAlternate aAlternate gSerifed I C o p y r i g h t   2 0 1 0 ,   2 0 1 2   A d o b e   S y s t e m s   I n c o r p o r a t e d .   A l l   R i g h t s   R e s e r v e d . S o u r c e   S a n s   P r o B o l d 1 . 0 5 0 ; A D B E ; S o u r c e S a n s P r o - B o l d ; A D O B E S o u r c e   S a n s   P r o   B o l d V e r s i o n   1 . 0 5 0 ; P S   V e r s i o n   1 . 0 0 0 ; h o t c o n v   1 . 0 . 7 0 ; m a k e o t f . l i b 2 . 5 . 5 9 0 0 S o u r c e S a n s P r o - B o l d S o u r c e   i s   a   t r a d e m a r k   o f   A d o b e   S y s t e m s   I n c o r p o r a t e d   i n   t h e   U n i t e d   S t a t e s   a n d / o r   o t h e r   c o u n t r i e s . A d o b e   S y s t e m s   I n c o r p o r a t e d P a u l   D .   H u n t h t t p : / / w w w . a d o b e . c o m / t y p e C o p y r i g h t   2 0 1 0 ,   2 0 1 2   A d o b e   S y s t e m s   I n c o r p o r a t e d   ( h t t p : / / w w w . a d o b e . c o m / ) ,   w i t h   R e s e r v e d   F o n t   N a m e   ' S o u r c e ' .   A l l   R i g h t s   R e s e r v e d .   S o u r c e   i s   a   t r a d e m a r k   o f   A d o b e   S y s t e m s   I n c o r p o r a t e d   i n   t h e   U n i t e d   S t a t e s   a n d / o r   o t h e r   c o u n t r i e s .  
+  
+ T h i s   F o n t   S o f t w a r e   i s   l i c e n s e d   u n d e r   t h e   S I L   O p e n   F o n t   L i c e n s e ,   V e r s i o n   1 . 1 .  
+  
+ T h i s   l i c e n s e   i s   c o p i e d   b e l o w ,   a n d   i s   a l s o   a v a i l a b l e   w i t h   a   F A Q   a t :   h t t p : / / s c r i p t s . s i l . o r g / O F L  
+  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+ S I L   O P E N   F O N T   L I C E N S E   V e r s i o n   1 . 1   -   2 6   F e b r u a r y   2 0 0 7  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  
+ P R E A M B L E  
+ T h e   g o a l s   o f   t h e   O p e n   F o n t   L i c e n s e   ( O F L )   a r e   t o   s t i m u l a t e   w o r l d w i d e   d e v e l o p m e n t   o f   c o l l a b o r a t i v e   f o n t   p r o j e c t s ,   t o   s u p p o r t   t h e   f o n t   c r e a t i o n   e f f o r t s   o f   a c a d e m i c   a n d   l i n g u i s t i c   c o m m u n i t i e s ,   a n d   t o   p r o v i d e   a   f r e e   a n d   o p e n   f r a m e w o r k   i n   w h i c h   f o n t s   m a y   b e   s h a r e d   a n d   i m p r o v e d   i n   p a r t n e r s h i p   w i t h   o t h e r s .  
+  
+ T h e   O F L   a l l o w s   t h e   l i c e n s e d   f o n t s   t o   b e   u s e d ,   s t u d i e d ,   m o d i f i e d   a n d   r e d i s t r i b u t e d   f r e e l y   a s   l o n g   a s   t h e y   a r e   n o t   s o l d   b y   t h e m s e l v e s .   T h e   f o n t s ,   i n c l u d i n g   a n y   d e r i v a t i v e   w o r k s ,   c a n   b e   b u n d l e d ,   e m b e d d e d ,   r e d i s t r i b u t e d   a n d / o r   s o l d   w i t h   a n y   s o f t w a r e   p r o v i d e d   t h a t   a n y   r e s e r v e d   n a m e s   a r e   n o t   u s e d   b y   d e r i v a t i v e   w o r k s .   T h e   f o n t s   a n d   d e r i v a t i v e s ,   h o w e v e r ,   c a n n o t   b e   r e l e a s e d   u n d e r   a n y   o t h e r   t y p e   o f   l i c e n s e .   T h e   r e q u i r e m e n t   f o r   f o n t s   t o   r e m a i n   u n d e r   t h i s   l i c e n s e   d o e s   n o t   a p p l y   t o   a n y   d o c u m e n t   c r e a t e d   u s i n g   t h e   f o n t s   o r   t h e i r   d e r i v a t i v e s .  
+  
+ D E F I N I T I O N S  
+ " F o n t   S o f t w a r e "   r e f e r s   t o   t h e   s e t   o f   f i l e s   r e l e a s e d   b y   t h e   C o p y r i g h t   H o l d e r ( s )   u n d e r   t h i s   l i c e n s e   a n d   c l e a r l y   m a r k e d   a s   s u c h .   T h i s   m a y   i n c l u d e   s o u r c e   f i l e s ,   b u i l d   s c r i p t s   a n d   d o c u m e n t a t i o n .  
+  
+ " R e s e r v e d   F o n t   N a m e "   r e f e r s   t o   a n y   n a m e s   s p e c i f i e d   a s   s u c h   a f t e r   t h e   c o p y r i g h t   s t a t e m e n t ( s ) .  
+  
+ " O r i g i n a l   V e r s i o n "   r e f e r s   t o   t h e   c o l l e c t i o n   o f   F o n t   S o f t w a r e   c o m p o n e n t s   a s   d i s t r i b u t e d   b y   t h e   C o p y r i g h t   H o l d e r ( s ) .  
+  
+ " M o d i f i e d   V e r s i o n "   r e f e r s   t o   a n y   d e r i v a t i v e   m a d e   b y   a d d i n g   t o ,   d e l e t i n g ,   o r   s u b s t i t u t i n g   - -   i n   p a r t   o r   i n   w h o l e   - -   a n y   o f   t h e   c o m p o n e n t s   o f   t h e   O r i g i n a l   V e r s i o n ,   b y   c h a n g i n g   f o r m a t s   o r   b y   p o r t i n g   t h e   F o n t   S o f t w a r e   t o   a   n e w   e n v i r o n m e n t .  
+  
+ " A u t h o r "   r e f e r s   t o   a n y   d e s i g n e r ,   e n g i n e e r ,   p r o g r a m m e r ,   t e c h n i c a l   w r i t e r   o r   o t h e r   p e r s o n   w h o   c o n t r i b u t e d   t o   t h e   F o n t   S o f t w a r e .  
+  
+ P E R M I S S I O N   &   C O N D I T I O N S  
+ P e r m i s s i o n   i s   h e r e b y   g r a n t e d ,   f r e e   o f   c h a r g e ,   t o   a n y   p e r s o n   o b t a i n i n g   a   c o p y   o f   t h e   F o n t   S o f t w a r e ,   t o   u s e ,   s t u d y ,   c o p y ,   m e r g e ,   e m b e d ,   m o d i f y ,   r e d i s t r i b u t e ,   a n d   s e l l   m o d i f i e d   a n d   u n m o d i f i e d   c o p i e s   o f   t h e   F o n t   S o f t w a r e ,   s u b j e c t   t o   t h e   f o l l o w i n g   c o n d i t i o n s :  
+  
+ 1 )   N e i t h e r   t h e   F o n t   S o f t w a r e   n o r   a n y   o f   i t s   i n d i v i d u a l   c o m p o n e n t s ,   i n   O r i g i n a l   o r   M o d i f i e d   V e r s i o n s ,   m a y   b e   s o l d   b y   i t s e l f .  
+  
+ 2 )   O r i g i n a l   o r   M o d i f i e d   V e r s i o n s   o f   t h e   F o n t   S o f t w a r e   m a y   b e   b u n d l e d ,   r e d i s t r i b u t e d   a n d / o r   s o l d   w i t h   a n y   s o f t w a r e ,   p r o v i d e d   t h a t   e a c h   c o p y   c o n t a i n s   t h e   a b o v e   c o p y r i g h t   n o t i c e   a n d   t h i s   l i c e n s e .   T h e s e   c a n   b e   i n c l u d e d   e i t h e r   a s   s t a n d - a l o n e   t e x t   f i l e s ,   h u m a n - r e a d a b l e   h e a d e r s   o r   i n   t h e   a p p r o p r i a t e   m a c h i n e - r e a d a b l e   m e t a d a t a   f i e l d s   w i t h i n   t e x t   o r   b i n a r y   f i l e s   a s   l o n g   a s   t h o s e   f i e l d s   c a n   b e   e a s i l y   v i e w e d   b y   t h e   u s e r .  
+  
+ 3 )   N o   M o d i f i e d   V e r s i o n   o f   t h e   F o n t   S o f t w a r e   m a y   u s e   t h e   R e s e r v e d   F o n t   N a m e ( s )   u n l e s s   e x p l i c i t   w r i t t e n   p e r m i s s i o n   i s   g r a n t e d   b y   t h e   c o r r e s p o n d i n g   C o p y r i g h t   H o l d e r .   T h i s   r e s t r i c t i o n   o n l y   a p p l i e s   t o   t h e   p r i m a r y   f o n t   n a m e   a s   p r e s e n t e d   t o   t h e   u s e r s .  
+  
+ 4 )   T h e   n a m e ( s )   o f   t h e   C o p y r i g h t   H o l d e r ( s )   o r   t h e   A u t h o r ( s )   o f   t h e   F o n t   S o f t w a r e   s h a l l   n o t   b e   u s e d   t o   p r o m o t e ,   e n d o r s e   o r   a d v e r t i s e   a n y   M o d i f i e d   V e r s i o n ,   e x c e p t   t o   a c k n o w l e d g e   t h e   c o n t r i b u t i o n ( s )   o f   t h e   C o p y r i g h t   H o l d e r ( s )   a n d   t h e   A u t h o r ( s )   o r   w i t h   t h e i r   e x p l i c i t   w r i t t e n   p e r m i s s i o n .  
+  
+ 5 )   T h e   F o n t   S o f t w a r e ,   m o d i f i e d   o r   u n m o d i f i e d ,   i n   p a r t   o r   i n   w h o l e ,   m u s t   b e   d i s t r i b u t e d   e n t i r e l y   u n d e r   t h i s   l i c e n s e ,   a n d   m u s t   n o t   b e   d i s t r i b u t e d   u n d e r   a n y   o t h e r   l i c e n s e .   T h e   r e q u i r e m e n t   f o r   f o n t s   t o   r e m a i n   u n d e r   t h i s   l i c e n s e   d o e s   n o t   a p p l y   t o   a n y   d o c u m e n t   c r e a t e d   u s i n g   t h e   F o n t   S o f t w a r e .  
+  
+ T E R M I N A T I O N  
+ T h i s   l i c e n s e   b e c o m e s   n u l l   a n d   v o i d   i f   a n y   o f   t h e   a b o v e   c o n d i t i o n s   a r e   n o t   m e t .  
+  
+ D I S C L A I M E R  
+ T H E   F O N T   S O F T W A R E   I S   P R O V I D E D   " A S   I S " ,   W I T H O U T   W A R R A N T Y   O F   A N Y   K I N D ,   E X P R E S S   O R   I M P L I E D ,   I N C L U D I N G   B U T   N O T   L I M I T E D   T O   A N Y   W A R R A N T I E S   O F   M E R C H A N T A B I L I T Y ,   F I T N E S S   F O R   A   P A R T I C U L A R   P U R P O S E   A N D   N O N I N F R I N G E M E N T   O F   C O P Y R I G H T ,   P A T E N T ,   T R A D E M A R K ,   O R   O T H E R   R I G H T .   I N   N O   E V E N T   S H A L L   T H E   C O P Y R I G H T   H O L D E R   B E   L I A B L E   F O R   A N Y   C L A I M ,   D A M A G E S   O R   O T H E R   L I A B I L I T Y ,   I N C L U D I N G   A N Y   G E N E R A L ,   S P E C I A L ,   I N D I R E C T ,   I N C I D E N T A L ,   O R   C O N S E Q U E N T I A L   D A M A G E S ,   W H E T H E R   I N   A N   A C T I O N   O F   C O N T R A C T ,   T O R T   O R   O T H E R W I S E ,   A R I S I N G   F R O M ,   O U T   O F   T H E   U S E   O R   I N A B I L I T Y   T O   U S E   T H E   F O N T   S O F T W A R E   O R   F R O M   O T H E R   D E A L I N G S   I N   T H E   F O N T   S O F T W A R E .  
+ h t t p : / / w w w . a d o b e . c o m / t y p e / l e g a l . h t m l S l a s h e d   z e r o S t r a i g h t   l A l t e r n a t e   a A l t e r n a t e   g S e r i f e d   I        ˇµ 2                    ∞ + ≤+≤+∑& +∑% + ∑0(" + ≤+∞  E}iDK∞`RX∞∞ Y∞é endstream
+endobj
+131 0 obj
+<< /Ascent 750 /CapHeight 660 /Descent -250 /Flags 262148 /FontBBox [ -231 -383 1223 974 ] /FontFile2 130 0 R 
+  /FontName /AAAAAA+SourceSansPro-Bold /ItalicAngle 0 /StemV 165 /Type /FontDescriptor >>
+endobj
+132 0 obj
+<< /BaseFont /AAAAAA+SourceSansPro-Bold /FirstChar 0 /FontDescriptor 131 0 R /LastChar 127 /Name /F1+0 /Subtype /TrueType 
+  /ToUnicode 129 0 R /Type /Font /Widths [ 0 690 690 690 690 690 690 690 690 690 
+  690 690 690 208 690 690 690 690 690 690 
+  690 690 690 690 690 690 690 690 690 690 
+  690 690 208 340 536 528 528 857 667 300 
+  344 344 457 528 300 332 300 339 528 528 
+  528 528 528 528 528 528 528 528 300 300 
+  528 528 528 463 903 573 605 582 635 548 
+  524 638 674 301 509 614 518 762 665 684 
+  606 684 616 556 556 665 556 813 567 525 
+  541 344 339 344 528 500 555 534 573 467 
+  573 518 341 534 571 276 278 548 286 857 
+  572 555 573 572 398 443 383 568 523 776 
+  514 521 460 344 268 344 528 690 ] >>
+endobj
+133 0 obj
+<< /Length 1951 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo
+<< /Registry (AAAAAA+SourceSansPro-Regular)
+/Ordering (AAAAAA+SourceSansPro-Regular)
+/Supplement 0
+>> def
+/CMapName /AAAAAA+SourceSansPro-Regular def
+/CMapType 2 def
+1 begincodespacerange
+<00> <82>
+endcodespacerange
+131 beginbfchar
+<00> <0000>
+<01> <0001>
+<02> <0002>
+<03> <0003>
+<04> <0004>
+<05> <0005>
+<06> <0006>
+<07> <0007>
+<08> <0008>
+<09> <0009>
+<0A> <000A>
+<0B> <000B>
+<0C> <000C>
+<0D> <000D>
+<0E> <000E>
+<0F> <000F>
+<10> <0010>
+<11> <0011>
+<12> <0012>
+<13> <0013>
+<14> <0014>
+<15> <0015>
+<16> <0016>
+<17> <0017>
+<18> <0018>
+<19> <0019>
+<1A> <001A>
+<1B> <001B>
+<1C> <001C>
+<1D> <001D>
+<1E> <001E>
+<1F> <001F>
+<20> <0020>
+<21> <0021>
+<22> <0022>
+<23> <0023>
+<24> <0024>
+<25> <0025>
+<26> <0026>
+<27> <0027>
+<28> <0028>
+<29> <0029>
+<2A> <002A>
+<2B> <002B>
+<2C> <002C>
+<2D> <002D>
+<2E> <002E>
+<2F> <002F>
+<30> <0030>
+<31> <0031>
+<32> <0032>
+<33> <0033>
+<34> <0034>
+<35> <0035>
+<36> <0036>
+<37> <0037>
+<38> <0038>
+<39> <0039>
+<3A> <003A>
+<3B> <003B>
+<3C> <003C>
+<3D> <003D>
+<3E> <003E>
+<3F> <003F>
+<40> <0040>
+<41> <0041>
+<42> <0042>
+<43> <0043>
+<44> <0044>
+<45> <0045>
+<46> <0046>
+<47> <0047>
+<48> <0048>
+<49> <0049>
+<4A> <004A>
+<4B> <004B>
+<4C> <004C>
+<4D> <004D>
+<4E> <004E>
+<4F> <004F>
+<50> <0050>
+<51> <0051>
+<52> <0052>
+<53> <0053>
+<54> <0054>
+<55> <0055>
+<56> <0056>
+<57> <0057>
+<58> <0058>
+<59> <0059>
+<5A> <005A>
+<5B> <005B>
+<5C> <005C>
+<5D> <005D>
+<5E> <005E>
+<5F> <005F>
+<60> <0060>
+<61> <0061>
+<62> <0062>
+<63> <0063>
+<64> <0064>
+<65> <0065>
+<66> <0066>
+<67> <0067>
+<68> <0068>
+<69> <0069>
+<6A> <006A>
+<6B> <006B>
+<6C> <006C>
+<6D> <006D>
+<6E> <006E>
+<6F> <006F>
+<70> <0070>
+<71> <0071>
+<72> <0072>
+<73> <0073>
+<74> <0074>
+<75> <0075>
+<76> <0076>
+<77> <0077>
+<78> <0078>
+<79> <0079>
+<7A> <007A>
+<7B> <007B>
+<7C> <007C>
+<7D> <007D>
+<7E> <007E>
+<7F> <007F>
+<80> <00A0>
+<81> <2022>
+<82> <00A9>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+endendstream
+endobj
+134 0 obj
+<< /Length 31672 /Length1 31672 >>
+stream
+     Ä  POS/2Z¥î[   ‹   `cmap
+D  <  cvt ô ˙  X   (fpgmYú7  Ä  sglyf‡êπ#  Ù  7∞head˛≥‚  ;§   6hhea£  ;‹   $hmtxΩªÁ  <   §locaµ»ƒé  =§   ‘maxpÉ@  >x    nameùÌ  >ò  <≤postˇ∏ 2  {L    prepñ˙Î  {l   K «ê   äX   KäX  ^ 2                 ADBE @  ˛ˇÓˇ  ÿ  ì    ‡î                    É                                                                     	 
+                        ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a   b c d  D R V   ˇ3 Ê  > ~ ê » ∏  ,K∏ 	PX±éY∏ˇÖ∏ Dπ 	 _^-∏ ,  EiD∞`-∏ ,∏ *!-∏ , F∞%FRX#Y ä äIdä F had∞%F hadRX#eäY/ ∞ SXi ∞ TX!∞@Yi ∞ TX!∞@eYY:-∏ , F∞%FRX#äY F jad∞%F jadRX#äY/˝-∏ ,K ∞&PXQX∞ÄD∞@DY!! E∞¿PX∞¿D!YY-∏ ,  EiD∞`  E}iD∞`-∏ ,∏ *-∏ ,K ∞&SX∞@∞ Yää ∞&SX#!∞Ääää#Y ∞&SX#!∏ ¿äää#Y ∞&SX#!∏ äää#Y ∞&SX#!∏@äää#Y ∏ &SX∞%E∏ÄPX#!∏Ä#!∞%E#!#!Y!YD-∏ 	,KSXED!!Y-   Y  5î   	   g ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∫    9∫    9∫    9π 
+ Ù∫    9∏  π  Ù01!!'!/#?#Y‹˛$¿X~RI46JÑ1BÎB2î˝lTË˛2ŒË˛ÊÑggÑI^ww^     UˇÙ Ãû    ∏  EX∏ /π  >Yπ 	 Ù01'3#4632#"&iS9####@^^˛Üî####   ˇˇ PØX≤ & 
+    
+ ∞    #  ”ä   õ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Yª     +ª    +∏ ∏ 
+–∏ ∏ –∏ ∏ –∏ ∏ –∏  ∏ –∏  ∏ –∏ ∏ –∏ ∏ –017#537#53733733#3##7##7#sPWU\5Ö5QWU\5Ñ6⁄ÑÃ9î:∑∑∑∑:î9ÃÃÃîî     4ˇíµÏ - ] ∏  EX∏ '/π ' >Y∏  EX∏ /π  >Y∏ 'π  Ù∫   '9∏ ∏ –∏ π  Ù∫  ' 9∏ '∏ *–01.#"#5.'732654.546753|5).6)>I>)SH<0Z & M.87)>I>)OB<0C4,$.#!/E6H\
+ec+9'8/(5'",?1CYdc* ˇˇ #ˇÙú ' e  
+ ' fq    e…       ˇÙRú   I å ∏  EX∏ 4/π 4 >Y∏  EX∏ "/π " >Y∏  EX∏ /π  >Y∫ ?  +∏ "π  Ù∫   ?9∫  " 49∏ /∏ ‹∏ 4π  Ù∫ ,  9∫ <  9∫ F  ?90173267.'>54&#".'#".54>7.54>32>73p#/">0Y##/M)!%,#L(&]:-I5$/(8"=D*5 W//M8'">Ø- *d5=-:!%+6˝…
+%")0C(!6.')M$!8*H: 6/)3^')`9Av4      PØ ®≤   ∫   +01'3#SX2V\\ß    RˇP	‹   ∫    +01.5467÷>FF>3:99:3∞dﬁÑÑ›e`€ss€`    &ˇP ›‹   ∫   +01>54&'7'&:99:3>FF>3ò`€ss€`e›ÑÑﬁd    :§h»   ∏  EX∏ /π  >Y017'7737'b9af	1	ga8'GG¡^(.lk.(^VV   " hœ,   ª     +∏ ∏ –∏  ∏ –01#53533##ÿ∂∂A∂∂A+>√√>√     /ˇV ∆ r   ∏  EX∏ /π  >Y∏ ‹01>5#"&54632/*0#$ %F=z>)4-A`   ) €   ª    +013#)ÊÊ?     AˇÙ ∏ r   ∏  EX∏ 	/π 	 >Y∏ ‹0174632#"&A####2####   
+ˇ`Q∆   ∏  EX∏  /π   >Y∏ ‹013#<˛ı<∆¸ö  ,ˇÙ≈ä   5 ∏  EX∏ /π  >Y∏  EX∏  /π   >Yπ  Ù∏ π  Ù01"&54632'2>54.#"˘alla`ll`-!!-.!E¨°°®®°°¨BAeFFd??dFå    O  ∑~  C ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ π  Ùπ  Ù∏ ∏ 	–0173#5>733!Oít,A?Ñ˛òD÷5˝∆D    $  ƒä  = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ –∏  –∏ π  Ù017>54&#"'>32>;!(HpL(<=(D/(Z?Yf'E_98π˛d1HtcS'7F- /,5gU-[ai;G   ˇÙæä 3 S ∏  EX∏ /π  >Y∏  EX∏ ./π . >Yπ  Ù∫   .9∏ /π  Ù∏ π  Ù∫ $  901732654.#52>54&#"'>32#".'DM9:J0N93E+;3(C,%Y9*F3@42&!9L,&?4)Ñ.?6/"? ,/6$4#-)<':J)6!*D/       ’~ 	  W ∏  EX∏ /π  >Y∏  EX∏ /π  >Yª     +∏ ∏ ‹∏  ∏ 	–∏ ∏ –∏ 	∏ –∏  ∏ –01%5467###5!5330ïmWN˛·\WÚπG,⁄B∞∞6ò˛t  ˇÙ¡~ & G ∏  EX∏ /π  >Y∏  EX∏ !/π ! >Yπ  Ù∫   !9∏ /∏ ‹∏ π  Ù01732>54&#"'!#>32#".'AM83&J>!/,?˜.)H6$<M*&?3)Å,&6!BJ3GΩ1K44P7     0ˇÙ…ä  . C ∏  EX∏ +/π + >Y∏  EX∏ !/π ! >Yª    +∏ !π   Ù∏ +π  Ù01%2>54&#".#">32#".54>32(:<G G¿7!<.P'Sc4D'/P;"(DW04K5%3 ?H'-^aﬁ@gL%+bc.K6&MsM`áU''  ,  «~  3 ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏ π  Ù∏ 	–013>7!5!#±+C/˛¬õ9G*UZñá~BG3HÑâô]     )ˇÙ»ä   E W ∏  EX∏ ,/π , >Y∏  EX∏ A/π A >Yπ  Ù∫  A ,9∏ /∏ –∏ ,π  Ù∏ ∏ #‹∏ ∏ 6‹01732654.'7>54&#"4>75.54>32#".s%28E0?"&3¥ #:5-:)5·!+#60B'*B/(6L.-M7 ´,!>2,!EÖ@#0A8/) ƒ5+!G3%<+-?%.( '2 $>./@  (ˇÙ¿ä  . C ∏  EX∏ !/π ! >Y∏  EX∏ +/π + >Yª     +∏ !π  Ù∏ +π  Ù01267.#"32>7#"&54>32#"&'ÎG H=):N7"<.P(Sb3E&/Q;!(DW03M6'.^`%4?HÀAhM&,bc.K6&MsM`áU'& ˇˇ AˇÙ ∏€'   i    ˇˇ /ˇV ∆€'   i      " Éœ 	  ∫   +∫   901%%"≠”ÜÜ”˛Sm®GN22NG®   ˇˇ " ¡œ‘& g k  g ñ    " Éœ 	  ∫   +∫   9015?5/5œ˛S”ÜÜ”≠+®GN22NG®    &ˇÙy™  ' ( ∏  EX∏ %/π % >Yª   
+ +∏ %π  Ù017&>54&#"'>324632#"&†'"10!;/ R6N]#'!]"##"∆'?5.-.(9+$/UK!60/29#î####   3ˇeÜ E T ? ª ;  A +ª '   +ª I   +ª   P +ª   1 +∫ " P 90174>32#"&'##"&54>3237332>54.#"3267#".%326?.#"3CsóTLyU.%:G")9@!3E2G,(7'T/'#FhDC~b;-Pm@.R"UiJÄ_7(-/!Àd§t?0WzJBcC"&&'HE(SC*(»u5M1<gJ*7déXIrN)13.[ÜW0*ü 2<    ê 	  T ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ /π 	 Ù01'.'###3#q  ⁄Ô?Uﬁ^ﬁYd7m99m7dC»ê˝p     Z  $ê   % [ ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫ #   9∏ #/∫ 
+ # 9∏  π  Ù∏ #π  Ù∏ π % Ù0132+2654&+2654&+Z√2S;!8:HP$B\7—¥UIMMerU^\Wrê&=+1OND0H0x:76/÷˛ ?C=9¯   4ˇÙú ! 9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù014>32.#"3267#".4,Nk?<Z/?*/L64K/0G /'b?>iM+HO~X/1 5!%Eb=>cF&&#3-2.W   Z  4ê 
+  5 ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Yπ  Ù∏  π  Ù0132+72654&+Z§òû(NrJ®ûssssKê®ùN{U-Dä}}Ñ˝¯    Z  ﬁê  M ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  π  Ù∫    9∏ /π  Ù∏ π  Ù01!!3#!!Zz˛Ÿ˘˘1˛|êFŒGÓG     Z  ‘ê 	 C ∏  EX∏  /π   >Y∏  EX∏ 	/π 	 >Y∏  π  Ù∫    	9∏ /π  Ù01!!3##Zz˛Ÿ˙˙SêFﬁF˛⁄    4ˇÙ&ú % M ∏  EX∏ /π  >Y∏  EX∏ !/π ! >Y∏ π  Ù∏ !π  Ù∫   !9∏ /π  Ù014>32.#"32675#53#".4-QnBD[/A22P87Q5#?ã◊ iBAlN,HO~X/35#%Eb=>cF&´E˛Ï!+.W   Z  2ê  I ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫ 	   9∏ 	/π  Ù∏  ∏ –∏ ∏ –013!3#!#ZS1TT˛œSê˛Ì˝p5˛À  Z   ≠ê  % ∏  EX∏  /π   >Y∏  EX∏ /π  >Y013#ZSSê˝p    ˇÙâê  + ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù01732653#"'[8#54T+E0{:á'#AK«˛1*K8 i  Z  ?ê  [ ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∫ 	  901333##ZS^ÕÌ]ƒqSê˛∑I˙˛jUÖ–   Z  Ãê  + ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù013!!ZS˛éê˝∑G    Z  }ê  o ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 	/π 	 >Y∫   	9∫   	9∫   9∫    9013373#467##'##Zb0.~bO5~/4Mê˛†ÜÜ`˝pi,j,í˛©Wí,j,˛ó    Z  -ê  [ ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫    90133.53#'##ZVÌGOVÓGOê˛dà2k4S˝pùá2g4˛©  4ˇÙeú  ' 5 ∏  EX∏ 
+/π 
+ >Y∏  EX∏  /π   >Yπ  Ù∏ 
+π  Ù01".54>32'2>54.#"L>gJ))Jg>>gK))Kg>,G33G,,G33G0YOO}W./W}NOY0I&Gc>=bD%%Db=>cG&  Z  ê   C ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏ /π  Ù∏  π  Ù0132+#2654&+Z…6Z?##@Y6vSøVSTUlê-J64L2˛¸HAFG7˛˚   4ˇ\sú  4 K ∏  EX∏ $/π $ >Y∏  EX∏ /π  >Yª 1   +∏ π  Ù∏ $π  Ù∏ ∏ .–0132>54.#"#"&'.54>323267ä3G,,G33G,,G3È2[z6X?")Jg>>gK)!=V4T6!K?eH&&He?=bD%%Db˝„
+WD6XwHO}W./W}NGuW7	,*   Z   ê   T ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 	/π 	 >Yª   
+ +∏ π  Ù∫   
+90132654&+##32≠nMRRMnûwSÕ2U="PC¶Y?@A4˝≥˛Îê,F3M\˛‚   *ˇÙÔú 3 I ∏  EX∏ /π  >Y∏  EX∏ 0/π 0 >Yπ  Ù∫   09∏ π  Ù∫ % 0 901732654./.54>32.#"#"&'\#_3AH(^0&7K-;d#-I.7C &]2$:R4Ev+è%-;0#)
+(7$%@/-$6!3-!()7$'D34-     ¸ê  3 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π   Ù∏ –01#5!##‚∆‡∆TJFF˝∂     WˇÙ.ê  < ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù01332>53#".5WS)8 !8*P$?V22W?$ê˛};P00P;É˛OlCClO      ê  @ ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∫    90133>73#YiiU–aê˛û;d::d;b˝p     ˙ê ! v ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ !/π ! >Y∏  EX∏ /π  >Y∫    !9∫   9∫  ! 
+90133>733>73#.'##VE		[L[	
+EPàdc	acê˛õ6h66i5e˛õ4j66i5e˝pã&I&&I&˛u      Úê  [ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   90133>?3#'.'##Œ≤\YWX≥ø\`_XS=®++®˛ø˛±±33±    ˇˇ  ›ê  @ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   901733>?3#ƒ≈YU"TW≈T˛íπ$F%%F$π˛n˛   -  Òê 	 = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏ π  Ù∏ –017!5!!!-Y˛∆¢˛¶]˛<2F1˝ËG    ^ˇhƒ   ª    +ª    +013#3#^≥uu≥ƒ/˝/  ˇ`T∆   ∏  EX∏  /π   >Y∏ ‹013#;;∆¸ö   ˇh —ƒ   ª     +ª    +01#53#5ìt≤≤i˛/¸§/  <µû 	  ∏  EX∏  /π   >Yπ  Ù013#/##‘IòHA12AHû˛~∞ÖÖ∞  ˇÇËˇπ   ª     +01!5Ë˛$G77  ˇˇ †=P   h      :ˇÙ∑Ú  ' v ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∏ /∏ π  Ù∫   9∏ π  Ù∏ π " Ù∏ π # Ù0174674.#"'>32#'##"&732675:èú	&+I!"b;YPD#Q->QQ1$#?#=T3~PU," 9)m[˛÷:)HH*$! á'  RˇÙ˚»  & É ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ π  Ù∏ π  Ù∏ π $ Ù∏ π & Ù013>32#"&'##732>54.#"RR!N)/H1":L*"I BR ?3%1";G»¬X'#A[8>bD#0l1H-(B/B     .ˇÙ∞Ú ! 9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù0174>32.#"3267#"..&@U/0E)/!8('8!#9%!Q,0T=#Ú=_B"#52E**D16""A_    /ˇÙŸ»  # É ∏  EX∏ /π  >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ π  Ù∏ π  Ù∏ π  Ù∏ π  Ù0174>32'53#'##"&732675.#"/#:L**> SDK+\mUF@"<93&Ú;_B$Sª˝89)Ñ{Xb!"˛1D    .ˇÙ Ú  $ Q ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∏ /∏ π  Ù∏ π  Ù∏ π $ Ù0174>32!3267#".%4&#".%=N*.I1˛∏WF#; N21U?$T?9/&Ú<_B# <T4O\6#A^aKO'9%       ?‘  V ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 	/π 	 >Y∏ π  Ù∏ π  Ù∏ –∏ ∏ –01&#"3###5754632-DggRBBEI)Ö^MC˛]£>MKV	    -ˇ ÏÚ  I Y m ∏  EX∏ %/π % >Y∏  EX∏ E/π E >Yπ  Ù∫ < % E9∏ </π  Ù∏ %∏ )–∏ )/π * Ù∏ <∏ 3–∏ 3/π J Ù∏ %π R Ù0132>54&+"&'4675.54675.54>323##"&';2#".2>54&#"uKB#9(20T!H&!"'2C%#©d0A%&$2^UU"@[9-J5…%<++<%R'.$"* 8'.C,(@-?4'?+	7="=."0N+6;;6+   R  ◊»  X ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫   9∏ –∏ π  Ù∏ π  Ù013>32#4&#"#RR#L3MGR,0&:%R»¬d!/`^˛Ã)E=&%˛†  C   µ¥   - ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    +01"&546323#|!!!!BRRJd˛    ˇÿˇ' µ¥   7 ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫   +∏ π  Ù013#"&'73265"&54632SR<I$	$*!!!!Ê˝„JX>2-Å   R  Ê»  [ ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∫ 	   901333#'#RQœ[£πZé[Q»˛ √˛›ÍjÄ     RˇÙ ÿ»  + ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù0133:7#"&5RR	/(»˝î>86    R  ÒÚ ! ò ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ !/π ! >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    !9∫ 	   !9∏ ∏ –π  Ù∏ 	π  Ù∏ π  Ù∏ π  Ù0133>32>32#4&#"#4&#"#RD K,8?&M-KIR,.7CR,/7CRÊF#/1,*3`^˛Ã)E=K˛†)E=K˛†     R  ◊Ú  e ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∏ π  Ù∏ π  Ù0133>32#4&#"#RD#M3MGR,0&:%RÊF#/`^˛Ã)E=&%˛†     .ˇÙÚ  ' 5 ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ π # Ù0174>32#".732>54.#".%>Q--Q>%%>Q--Q>%U%44%%44%Ú=_B""B_=<_A""A_<*D11D**E22E   Rˇ3˚Ú  ' É ∏  EX∏ 	/π 	 >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫  	 9∫   	9∏ π  Ù∏ π  Ù∏ 	π $ Ù∏ π ' Ù01#33>32#"&'732>54.#"§RD!O+/H0":L*"C"!>3%1"?$)§≥8(#A[9>aD#@1H-(B/"    /ˇ3ŸÚ  #  ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9π  Ù∏ π  Ù∏ π  Ù∏ π  Ù0174>32373#57#"&732675.#"/#:L**@!BSK*\mUF@"<93&Ú;_B$.˝M≠V'Ñ{Xb!"˛1D    R  ^Ú  R ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏ ∏ ‹∏ π  Ù0133>32.#"#RDG*CRÊX.6
+H2>˛»  ˇÙÉÚ 1 I ∏  EX∏ /π  >Y∏  EX∏ ./π . >Yπ  Ù∫  . 9∏ π  Ù∫ $  .901732654.'.54>32.#"#"&'E C,00(4)+>'.M'6 .+'5*-C+4^#n , 	!,3% 4*
+!0"4(&     ˇÙEn  E ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π 	 Ù∏  –∏ ∏ –∏ π  Ù01#5?33#3267#".5`HL
+EÉÉ!*/'5!£>ààC˛Ú-1>*<$  KˇÙŒÊ  e ∏  EX∏  /π   >Y∏  EX∏ 	/π 	 >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∫  	 9∏ π  Ù01332673#'##"&5KS+0&:#RD"K3NGÊ˛◊E='+Y˛L(0`^       «Ê  @ ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∫    90133>73#U\\Q¨`Ê˛Ï$H##H$˛    ∂Ê ! v ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ !/π ! >Y∏  EX∏ /π  >Y∫  !  9∫   9∫     90133>733>73#.'##TH	KPL	GNÇdF		
+D`Ê˛Á#B""C"˛Á#B""B#˛#D%%E#˛¸      ∞Ê  [ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9017'33>?3#'.'##≠ìYA;VìûYGBV˛Ëk))kÒıq,+q     ˇ/«Ê  F ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∫   901326?33>73#"&'71	*5√Uc
+WP∑ ,8%Ü;-$Á˛Û G"!H ˝Ú$>-A       èÊ 	 = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏ π  Ù∏ –017#5!!! ‰Lˇ ˛ê,wC,˛âC     "ˇhƒ 1 + ª     +ª    +ª    +∫ (  901#"&54>54.#52>54&546;#"3-;:""	:;-)  )i/8M1..43X7M8/*1.T313		403T.1*  \ˇ ñÓ   ∫   +013#\::Ó¸  ˇhƒ 3 + ª    1 +ª    +ª !  " +∫ 
+ " !9012654&54675.54654&+532"+59)  ),,	$2!,,i*1.T304		313T.1*/3'7X3/4..1'3/     $Õì  ' ª    +∏ ∏ ‹π  Ù∏ –∏ ∏ –01>323267#".#"$B /)&&.B /)&&90*  "0)    ( èÄ   ∫ 
+   +017".54>32ò(())è ,--,     1ˇı∑ç  ' E 3 ª :  A +ª -  4 +∏ -∏ #‹π  Ù∏ A∏ ‹π  Ù014>32#".732>54.#"4>32.#"3267#".14XvAAuY44YuAAvX4/,Kd99dK,,Kd99dK,f3C$*;#)7CA6 0>-&B2CLzV..VzLM{W//W{MBkM**MkBAkL))LkA+F2!'K;BM*!3I     #ˇÙMí   ( ∏ /∏  EX∏  /π   >Yπ  Ù∏ π  Ù01"&54632'2654&#"∏DQQDCRRC&00&'00ldckkcdl3ONNMMNNO   ˇYˇÙ ˚ú   ∏  EX∏  /π   >Y∏ ‹013ßj8˛ñ®˝X     "+œi   ª    +01!!"≠˛Si>  ˇë= A    ∏  EX∏ /π  >Y∏ ‹013#oVZ? ç       Ã[f£¥_<ı 	Ë    ÕóÄ•    Õó„ˇ@˛Ωà∏   	          ÿ˛Ô  ™ˇ@ˇà                iç Y            ! U© PÒ #Ò 48 #a   ˘ P/ R/ &¢ :Ò " ˘ /7 ) ˘ A^ 
+Ò ,Ò OÒ $Ò Ò Ò Ò 0Ò ,Ò )Ò ( ˘ A ˘ /Ò "Ò "Ò "© &O 3  L Z; 4g Z ZÓ Zi 4å Z Z‡ C ZÊ Z◊ Zá Zò 4@ Zò 4E Z * Ö W    ‹ˇˇ -/ ^^ / Ò <Ù  †  :+ R» .+ / .$ ¯ -  R ˆ C ˜ˇÿÔ R ˇ R= R# R .+ R& /[ R£ R   K” Œ æ ” © / " Ò \/ Ò $    0 (Ë 1o # VˇYÒ "  ˇë   b b b b ê úäúPfà™“ˆ 4Vp∏Ú>∞ ^ƒ˙ÜÏ¯&2T¢4ÇË	8	t	≤	Ë
+F
+Ç
+¢
+‘B¶ˆJíX∆Ú8tÍFÑ∫÷.BL¬>éh∂f¥Ë0x™*Ä‘P∆zƒVÃ&|≤
+x≤≤ÿTé™æÿ    i Z  q       
+   s     $∂        E          E        T       & [        E       A Å        ¬       ` ◊       7      	 Q       ]      Ÿv       $O       s      
+      â      î      	ü  	   ä®  	  2  	  P  	  L^  	  2  	  Ç™  	  *,  	  ¿V  	  4  	 	 J  	  2b  	 #∂î  	  H:J  	  :í  	 :™  	 :æ  	 :‘  	 :ÍCopyright 2010, 2012 Adobe Systems Incorporated. All Rights Reserved.Source Sans ProRegular1.050;ADBE;SourceSansPro-Regular;ADOBEVersion 1.050;PS Version 1.000;hotconv 1.0.70;makeotf.lib2.5.5900SourceSansPro-RegularSource is a trademark of Adobe Systems Incorporated in the United States and/or other countries.Adobe Systems IncorporatedPaul D. Hunthttp://www.adobe.com/typeCopyright 2010, 2012 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+This license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide development of collaborative font projects, to support the font creation efforts of academic and linguistic communities, and to provide a free and open framework in which fonts may be shared and improved in partnership with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and redistributed freely as long as they are not sold by themselves. The fonts, including any derivative works, can be bundled, embedded, redistributed and/or sold with any software provided that any reserved names are not used by derivative works. The fonts and derivatives, however, cannot be released under any other type of license. The requirement for fonts to remain under this license does not apply to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright Holder(s) under this license and clearly marked as such. This may include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting, or substituting -- in part or in whole -- any of the components of the Original Version, by changing formats or by porting the Font Software to a new environment.
+
+"Author" refers to any designer, engineer, programmer, technical writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining a copy of the Font Software, to use, study, copy, merge, embed, modify, redistribute, and sell modified and unmodified copies of the Font Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled, redistributed and/or sold with any software, provided that each copy contains the above copyright notice and this license. These can be included either as stand-alone text files, human-readable headers or in the appropriate machine-readable metadata fields within text or binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written permission is granted by the corresponding Copyright Holder. This restriction only applies to the primary font name as presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software shall not be used to promote, endorse or advertise any Modified Version, except to acknowledge the contribution(s) of the Copyright Holder(s) and the Author(s) or with their explicit written permission.
+
+5) The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license. The requirement for fonts to remain under this license does not apply to any document created using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.http://www.adobe.com/type/legal.htmlSlashed zeroStraight lAlternate aAlternate gSerifed I C o p y r i g h t   2 0 1 0 ,   2 0 1 2   A d o b e   S y s t e m s   I n c o r p o r a t e d .   A l l   R i g h t s   R e s e r v e d . S o u r c e   S a n s   P r o R e g u l a r 1 . 0 5 0 ; A D B E ; S o u r c e S a n s P r o - R e g u l a r ; A D O B E V e r s i o n   1 . 0 5 0 ; P S   V e r s i o n   1 . 0 0 0 ; h o t c o n v   1 . 0 . 7 0 ; m a k e o t f . l i b 2 . 5 . 5 9 0 0 S o u r c e S a n s P r o - R e g u l a r S o u r c e   i s   a   t r a d e m a r k   o f   A d o b e   S y s t e m s   I n c o r p o r a t e d   i n   t h e   U n i t e d   S t a t e s   a n d / o r   o t h e r   c o u n t r i e s . A d o b e   S y s t e m s   I n c o r p o r a t e d P a u l   D .   H u n t h t t p : / / w w w . a d o b e . c o m / t y p e C o p y r i g h t   2 0 1 0 ,   2 0 1 2   A d o b e   S y s t e m s   I n c o r p o r a t e d   ( h t t p : / / w w w . a d o b e . c o m / ) ,   w i t h   R e s e r v e d   F o n t   N a m e   ' S o u r c e ' .   A l l   R i g h t s   R e s e r v e d .   S o u r c e   i s   a   t r a d e m a r k   o f   A d o b e   S y s t e m s   I n c o r p o r a t e d   i n   t h e   U n i t e d   S t a t e s   a n d / o r   o t h e r   c o u n t r i e s .  
+  
+ T h i s   F o n t   S o f t w a r e   i s   l i c e n s e d   u n d e r   t h e   S I L   O p e n   F o n t   L i c e n s e ,   V e r s i o n   1 . 1 .  
+  
+ T h i s   l i c e n s e   i s   c o p i e d   b e l o w ,   a n d   i s   a l s o   a v a i l a b l e   w i t h   a   F A Q   a t :   h t t p : / / s c r i p t s . s i l . o r g / O F L  
+  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+ S I L   O P E N   F O N T   L I C E N S E   V e r s i o n   1 . 1   -   2 6   F e b r u a r y   2 0 0 7  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  
+ P R E A M B L E  
+ T h e   g o a l s   o f   t h e   O p e n   F o n t   L i c e n s e   ( O F L )   a r e   t o   s t i m u l a t e   w o r l d w i d e   d e v e l o p m e n t   o f   c o l l a b o r a t i v e   f o n t   p r o j e c t s ,   t o   s u p p o r t   t h e   f o n t   c r e a t i o n   e f f o r t s   o f   a c a d e m i c   a n d   l i n g u i s t i c   c o m m u n i t i e s ,   a n d   t o   p r o v i d e   a   f r e e   a n d   o p e n   f r a m e w o r k   i n   w h i c h   f o n t s   m a y   b e   s h a r e d   a n d   i m p r o v e d   i n   p a r t n e r s h i p   w i t h   o t h e r s .  
+  
+ T h e   O F L   a l l o w s   t h e   l i c e n s e d   f o n t s   t o   b e   u s e d ,   s t u d i e d ,   m o d i f i e d   a n d   r e d i s t r i b u t e d   f r e e l y   a s   l o n g   a s   t h e y   a r e   n o t   s o l d   b y   t h e m s e l v e s .   T h e   f o n t s ,   i n c l u d i n g   a n y   d e r i v a t i v e   w o r k s ,   c a n   b e   b u n d l e d ,   e m b e d d e d ,   r e d i s t r i b u t e d   a n d / o r   s o l d   w i t h   a n y   s o f t w a r e   p r o v i d e d   t h a t   a n y   r e s e r v e d   n a m e s   a r e   n o t   u s e d   b y   d e r i v a t i v e   w o r k s .   T h e   f o n t s   a n d   d e r i v a t i v e s ,   h o w e v e r ,   c a n n o t   b e   r e l e a s e d   u n d e r   a n y   o t h e r   t y p e   o f   l i c e n s e .   T h e   r e q u i r e m e n t   f o r   f o n t s   t o   r e m a i n   u n d e r   t h i s   l i c e n s e   d o e s   n o t   a p p l y   t o   a n y   d o c u m e n t   c r e a t e d   u s i n g   t h e   f o n t s   o r   t h e i r   d e r i v a t i v e s .  
+  
+ D E F I N I T I O N S  
+ " F o n t   S o f t w a r e "   r e f e r s   t o   t h e   s e t   o f   f i l e s   r e l e a s e d   b y   t h e   C o p y r i g h t   H o l d e r ( s )   u n d e r   t h i s   l i c e n s e   a n d   c l e a r l y   m a r k e d   a s   s u c h .   T h i s   m a y   i n c l u d e   s o u r c e   f i l e s ,   b u i l d   s c r i p t s   a n d   d o c u m e n t a t i o n .  
+  
+ " R e s e r v e d   F o n t   N a m e "   r e f e r s   t o   a n y   n a m e s   s p e c i f i e d   a s   s u c h   a f t e r   t h e   c o p y r i g h t   s t a t e m e n t ( s ) .  
+  
+ " O r i g i n a l   V e r s i o n "   r e f e r s   t o   t h e   c o l l e c t i o n   o f   F o n t   S o f t w a r e   c o m p o n e n t s   a s   d i s t r i b u t e d   b y   t h e   C o p y r i g h t   H o l d e r ( s ) .  
+  
+ " M o d i f i e d   V e r s i o n "   r e f e r s   t o   a n y   d e r i v a t i v e   m a d e   b y   a d d i n g   t o ,   d e l e t i n g ,   o r   s u b s t i t u t i n g   - -   i n   p a r t   o r   i n   w h o l e   - -   a n y   o f   t h e   c o m p o n e n t s   o f   t h e   O r i g i n a l   V e r s i o n ,   b y   c h a n g i n g   f o r m a t s   o r   b y   p o r t i n g   t h e   F o n t   S o f t w a r e   t o   a   n e w   e n v i r o n m e n t .  
+  
+ " A u t h o r "   r e f e r s   t o   a n y   d e s i g n e r ,   e n g i n e e r ,   p r o g r a m m e r ,   t e c h n i c a l   w r i t e r   o r   o t h e r   p e r s o n   w h o   c o n t r i b u t e d   t o   t h e   F o n t   S o f t w a r e .  
+  
+ P E R M I S S I O N   &   C O N D I T I O N S  
+ P e r m i s s i o n   i s   h e r e b y   g r a n t e d ,   f r e e   o f   c h a r g e ,   t o   a n y   p e r s o n   o b t a i n i n g   a   c o p y   o f   t h e   F o n t   S o f t w a r e ,   t o   u s e ,   s t u d y ,   c o p y ,   m e r g e ,   e m b e d ,   m o d i f y ,   r e d i s t r i b u t e ,   a n d   s e l l   m o d i f i e d   a n d   u n m o d i f i e d   c o p i e s   o f   t h e   F o n t   S o f t w a r e ,   s u b j e c t   t o   t h e   f o l l o w i n g   c o n d i t i o n s :  
+  
+ 1 )   N e i t h e r   t h e   F o n t   S o f t w a r e   n o r   a n y   o f   i t s   i n d i v i d u a l   c o m p o n e n t s ,   i n   O r i g i n a l   o r   M o d i f i e d   V e r s i o n s ,   m a y   b e   s o l d   b y   i t s e l f .  
+  
+ 2 )   O r i g i n a l   o r   M o d i f i e d   V e r s i o n s   o f   t h e   F o n t   S o f t w a r e   m a y   b e   b u n d l e d ,   r e d i s t r i b u t e d   a n d / o r   s o l d   w i t h   a n y   s o f t w a r e ,   p r o v i d e d   t h a t   e a c h   c o p y   c o n t a i n s   t h e   a b o v e   c o p y r i g h t   n o t i c e   a n d   t h i s   l i c e n s e .   T h e s e   c a n   b e   i n c l u d e d   e i t h e r   a s   s t a n d - a l o n e   t e x t   f i l e s ,   h u m a n - r e a d a b l e   h e a d e r s   o r   i n   t h e   a p p r o p r i a t e   m a c h i n e - r e a d a b l e   m e t a d a t a   f i e l d s   w i t h i n   t e x t   o r   b i n a r y   f i l e s   a s   l o n g   a s   t h o s e   f i e l d s   c a n   b e   e a s i l y   v i e w e d   b y   t h e   u s e r .  
+  
+ 3 )   N o   M o d i f i e d   V e r s i o n   o f   t h e   F o n t   S o f t w a r e   m a y   u s e   t h e   R e s e r v e d   F o n t   N a m e ( s )   u n l e s s   e x p l i c i t   w r i t t e n   p e r m i s s i o n   i s   g r a n t e d   b y   t h e   c o r r e s p o n d i n g   C o p y r i g h t   H o l d e r .   T h i s   r e s t r i c t i o n   o n l y   a p p l i e s   t o   t h e   p r i m a r y   f o n t   n a m e   a s   p r e s e n t e d   t o   t h e   u s e r s .  
+  
+ 4 )   T h e   n a m e ( s )   o f   t h e   C o p y r i g h t   H o l d e r ( s )   o r   t h e   A u t h o r ( s )   o f   t h e   F o n t   S o f t w a r e   s h a l l   n o t   b e   u s e d   t o   p r o m o t e ,   e n d o r s e   o r   a d v e r t i s e   a n y   M o d i f i e d   V e r s i o n ,   e x c e p t   t o   a c k n o w l e d g e   t h e   c o n t r i b u t i o n ( s )   o f   t h e   C o p y r i g h t   H o l d e r ( s )   a n d   t h e   A u t h o r ( s )   o r   w i t h   t h e i r   e x p l i c i t   w r i t t e n   p e r m i s s i o n .  
+  
+ 5 )   T h e   F o n t   S o f t w a r e ,   m o d i f i e d   o r   u n m o d i f i e d ,   i n   p a r t   o r   i n   w h o l e ,   m u s t   b e   d i s t r i b u t e d   e n t i r e l y   u n d e r   t h i s   l i c e n s e ,   a n d   m u s t   n o t   b e   d i s t r i b u t e d   u n d e r   a n y   o t h e r   l i c e n s e .   T h e   r e q u i r e m e n t   f o r   f o n t s   t o   r e m a i n   u n d e r   t h i s   l i c e n s e   d o e s   n o t   a p p l y   t o   a n y   d o c u m e n t   c r e a t e d   u s i n g   t h e   F o n t   S o f t w a r e .  
+  
+ T E R M I N A T I O N  
+ T h i s   l i c e n s e   b e c o m e s   n u l l   a n d   v o i d   i f   a n y   o f   t h e   a b o v e   c o n d i t i o n s   a r e   n o t   m e t .  
+  
+ D I S C L A I M E R  
+ T H E   F O N T   S O F T W A R E   I S   P R O V I D E D   " A S   I S " ,   W I T H O U T   W A R R A N T Y   O F   A N Y   K I N D ,   E X P R E S S   O R   I M P L I E D ,   I N C L U D I N G   B U T   N O T   L I M I T E D   T O   A N Y   W A R R A N T I E S   O F   M E R C H A N T A B I L I T Y ,   F I T N E S S   F O R   A   P A R T I C U L A R   P U R P O S E   A N D   N O N I N F R I N G E M E N T   O F   C O P Y R I G H T ,   P A T E N T ,   T R A D E M A R K ,   O R   O T H E R   R I G H T .   I N   N O   E V E N T   S H A L L   T H E   C O P Y R I G H T   H O L D E R   B E   L I A B L E   F O R   A N Y   C L A I M ,   D A M A G E S   O R   O T H E R   L I A B I L I T Y ,   I N C L U D I N G   A N Y   G E N E R A L ,   S P E C I A L ,   I N D I R E C T ,   I N C I D E N T A L ,   O R   C O N S E Q U E N T I A L   D A M A G E S ,   W H E T H E R   I N   A N   A C T I O N   O F   C O N T R A C T ,   T O R T   O R   O T H E R W I S E ,   A R I S I N G   F R O M ,   O U T   O F   T H E   U S E   O R   I N A B I L I T Y   T O   U S E   T H E   F O N T   S O F T W A R E   O R   F R O M   O T H E R   D E A L I N G S   I N   T H E   F O N T   S O F T W A R E .  
+ h t t p : / / w w w . a d o b e . c o m / t y p e / l e g a l . h t m l S l a s h e d   z e r o S t r a i g h t   l A l t e r n a t e   a A l t e r n a t e   g S e r i f e d   I         ˇµ 2                    ∞ + ≤+≤+∑D6*! +∑@6*! + ∑QC4$ + ≤+∞  E}iDK∞`RX∞∞ Y∞é endstream
+endobj
+135 0 obj
+<< /Ascent 750 /CapHeight 660 /Descent -250 /Flags 4 /FontBBox [ -192 -323 1160 952 ] /FontFile2 134 0 R 
+  /FontName /AAAAAA+SourceSansPro-Regular /ItalicAngle 0 /StemV 87 /Type /FontDescriptor >>
+endobj
+136 0 obj
+<< /BaseFont /AAAAAA+SourceSansPro-Regular /FirstChar 0 /FontDescriptor 135 0 R /LastChar 130 /Name /F2+0 /Subtype /TrueType 
+  /ToUnicode 133 0 R /Type /Font /Widths [ 0 653 653 653 653 653 653 653 653 653 
+  653 653 653 202 653 653 653 653 653 653 
+  653 653 653 653 653 653 653 653 653 653 
+  653 653 202 289 425 497 497 824 609 249 
+  303 303 418 497 249 311 249 350 497 497 
+  497 497 497 497 497 497 497 497 249 249 
+  497 497 497 425 847 544 588 571 615 527 
+  494 617 652 263 480 579 486 727 647 664 
+  576 664 581 534 536 645 515 786 513 476 
+  539 303 350 303 497 500 542 512 555 456 
+  555 496 292 504 544 246 247 495 255 829 
+  547 542 555 550 347 419 338 544 467 718 
+  446 467 425 303 241 303 497 653 202 304 
+  744 ] >>
+endobj
+137 0 obj
+<< /Length 1912 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo
+<< /Registry (AAAAAA+SourceSansPro-BoldIt)
+/Ordering (AAAAAA+SourceSansPro-BoldIt)
+/Supplement 0
+>> def
+/CMapName /AAAAAA+SourceSansPro-BoldIt def
+/CMapType 2 def
+1 begincodespacerange
+<00> <7F>
+endcodespacerange
+128 beginbfchar
+<00> <0000>
+<01> <0001>
+<02> <0002>
+<03> <0003>
+<04> <0004>
+<05> <0005>
+<06> <0006>
+<07> <0007>
+<08> <0008>
+<09> <0009>
+<0A> <000A>
+<0B> <000B>
+<0C> <000C>
+<0D> <000D>
+<0E> <000E>
+<0F> <000F>
+<10> <0010>
+<11> <0011>
+<12> <0012>
+<13> <0013>
+<14> <0014>
+<15> <0015>
+<16> <0016>
+<17> <0017>
+<18> <0018>
+<19> <0019>
+<1A> <001A>
+<1B> <001B>
+<1C> <001C>
+<1D> <001D>
+<1E> <001E>
+<1F> <001F>
+<20> <0020>
+<21> <0021>
+<22> <0022>
+<23> <0023>
+<24> <0024>
+<25> <0025>
+<26> <0026>
+<27> <0027>
+<28> <0028>
+<29> <0029>
+<2A> <002A>
+<2B> <002B>
+<2C> <002C>
+<2D> <002D>
+<2E> <002E>
+<2F> <002F>
+<30> <0030>
+<31> <0031>
+<32> <0032>
+<33> <0033>
+<34> <0034>
+<35> <0035>
+<36> <0036>
+<37> <0037>
+<38> <0038>
+<39> <0039>
+<3A> <003A>
+<3B> <003B>
+<3C> <003C>
+<3D> <003D>
+<3E> <003E>
+<3F> <003F>
+<40> <0040>
+<41> <0041>
+<42> <0042>
+<43> <0043>
+<44> <0044>
+<45> <0045>
+<46> <0046>
+<47> <0047>
+<48> <0048>
+<49> <0049>
+<4A> <004A>
+<4B> <004B>
+<4C> <004C>
+<4D> <004D>
+<4E> <004E>
+<4F> <004F>
+<50> <0050>
+<51> <0051>
+<52> <0052>
+<53> <0053>
+<54> <0054>
+<55> <0055>
+<56> <0056>
+<57> <0057>
+<58> <0058>
+<59> <0059>
+<5A> <005A>
+<5B> <005B>
+<5C> <005C>
+<5D> <005D>
+<5E> <005E>
+<5F> <005F>
+<60> <0060>
+<61> <0061>
+<62> <0062>
+<63> <0063>
+<64> <0064>
+<65> <0065>
+<66> <0066>
+<67> <0067>
+<68> <0068>
+<69> <0069>
+<6A> <006A>
+<6B> <006B>
+<6C> <006C>
+<6D> <006D>
+<6E> <006E>
+<6F> <006F>
+<70> <0070>
+<71> <0071>
+<72> <0072>
+<73> <0073>
+<74> <0074>
+<75> <0075>
+<76> <0076>
+<77> <0077>
+<78> <0078>
+<79> <0079>
+<7A> <007A>
+<7B> <007B>
+<7C> <007C>
+<7D> <007D>
+<7E> <007E>
+<7F> <007F>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+endendstream
+endobj
+138 0 obj
+<< /Length 30996 /Length1 30996 >>
+stream
+     Ä  POS/2[·ñt   ‹   `cmap	∑
+x  <  cvt Ÿi  T   (fpgmYú7  |  sglyfmÌÓ¡    4‰head˛≥Î  8‘   6hheaT7  9   $hmtx®Í	"  90  |locaîÙà<  :¨   ŒmaxpÄS  ;|    name≤AY±  ;ú  =	postˇ≠ 2  x®    prepEÃ¥ù  x»   K √º   äXˇÒ KäX D^ 2   	              ADBE !  ˛ˇÓˇ  ÿ  ì    ‡î               
+     Ä                                                                     	 
+                        ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a      s í ñ   ˇ3 Ê  > ~ ê » ∏  ,K∏ 	PX±éY∏ˇÖ∏ Dπ 	 _^-∏ ,  EiD∞`-∏ ,∏ *!-∏ , F∞%FRX#Y ä äIdä F had∞%F hadRX#eäY/ ∞ SXi ∞ TX!∞@Yi ∞ TX!∞@eYY:-∏ , F∞%FRX#äY F jad∞%F jadRX#äY/˝-∏ ,K ∞&PXQX∞ÄD∞@DY!! E∞¿PX∞¿D!YY-∏ ,  EiD∞`  E}iD∞`-∏ ,∏ *-∏ ,K ∞&SX∞@∞ Yää ∞&SX#!∞Ääää#Y ∞&SX#!∏ ¿äää#Y ∞&SX#!∏ äää#Y ∞&SX#!∏@äää#Y ∏ &SX∞%E∏ÄPX#!∏Ä#!∞%E#!#!Y!YD-∏ 	,KSXED!!Y-     òî   	   q ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∫    9∫    9∫    9π 
+ Ù∫    9∏  π  Ù∫    901!!73/#7#3ü˘Ç˛«NÑºOÖ»£;ò-òî˝l˛}¬¬É¡˛VaaLFF`   -ˇÙ=û    ∏  EX∏ /π  >Yπ  Ù0173#"&54>32°âSZ '$ '$ ~~˛¬Ó)!%+ $ ˇˇ ykû & 
+    
+ €      
+ä   y ∏  EX∏ /π  >Y∏  EX∏ /π  >Yª     +ª    +∏ ∏ 
+–∏ ∏ –∏ ∏ –∏ ∏ –∏  ∏ –∏  ∏ –∏ ∏ –∏ ∏ –017#737#73733733#3##7##7#^LR$LR6Q6d6P5KR$LS<Q<d<P$d$ºYtY®®®®YtYºººtt  ˇíÒÒ 1 e ∏  EX∏ +/π + >Y∏  EX∏ /π  >Y∏ +π  Ù∫  + 9∏ ∏ –∏ /∏ π  Ù∫   +9∏ +∏ .–∏ ./01.#"#7.'732654.54>?3õ4#(-4-1G,Z+NT@&*--4-1E*[#<Ê!''$&0<))E4"di
+0#S,)#+'&.8&'C3 ck
+*   ˇˇ 5ˇÙ¢ ' b * ' cd    bƒ      ˇÙ~ò 
+  A å ∏  EX∏ 3/π 3 >Y∏  EX∏ #/π # >Y∏  EX∏ /π  >Y∫ >   +∏ #π  Ù∫    >9∫  # 39∏ /∏ ‹∏ 3π  Ù∫    >9∫ +  9∫ ;  9017327.'>54&#".'#"&54>7.54>32>7ì)$// 7"q,<.zG/26"E!+b8Xb*6	
+6H)BD0= 6!2• * J(/ 7)5ô>t4l ZH(?2(7(G5G<%<1*#A&S0     yk'û   ∏  EX∏ /π  >Y∏ ‹0173#éá9Y ~~µ   8ˇMr›   ∫ 
+   +01.54>7s
+;X9Ojb		W≥KPS)WúíçH(ç˛„í FFA$    ˇﬂˇM›   ∫   
+ +01'654.'7ﬁ
+<X9Ojb		W› JOT(WùíçH(çí FFB#    eb     ∏  EX∏ /π  >Y017'777'yK_k Gr
+n&A=Wüb7A"suF&j%^R  0 _Â4   ª     +∏ ∏ –∏  ∏ –01#53533##◊ß®e®™daππaª    ˇÂˇE   £   ∏  EX∏ /π  >Yπ 	 Ù∏ ‹01>7.546329?	!+2+(+7P2p<#& $83./SB/
+   ! Õ .   ª    +013#6ÍÍ.a    ˇÙ ¿ £   ∏  EX∏  /π   >Yπ  Ù01"&54>32^ &$ &$)!%+ $  ˇªˇ`ä∆   ∏  EX∏  /π   >Y∏ ‹013#/[˛äY∆¸ö  &ˇÙÔá  # 9 ∏  EX∏ 
+/π 
+ >Y∏  EX∏  /π   >Y∏ 
+π  Ù∏  π  Ù01".54>32"32>54&Ÿ'A01Od3'A/1Nd)4( 4( 9V8i°m8:V9i°l7*6\|F;25\{F;4      ™{  C ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏ ∏ ‹∏ ∏ ‹∏ ∏ 	–0173#7>733!)ÉNt5J#fju˛nV˝Ûn   ˇÛ  ﬂá  9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏ π  Ù017>54&#"'>323!NZ1'&1B.]0[f%D`:◊˛VN@h\R*"+O')^M0UUZ5s ˇˇÙÂá / S ∏  EX∏ /π  >Y∏  EX∏ ,/π , >Yπ  Ù∫   ,9∏ /π  Ù∏ π  Ù∫ #  901732654.#72>54&#"'>32#"&'GE"4=$=.2B'(%1B0^2+G2=K31&B[4<t*≠#(/*!a#%X"(9"<UF,0J27;      Î{ 
+  S ∏  EX∏ /π  >Y∏  EX∏  /π   >Yª    +∏ ∏ –∏ –∏ ∏ –∏ ∏ 	–∏ ∏ ‹0137!733#7>7#˛˘.£KIIJ#mö`Å˛âjör"H#<ã    ˇ˘ˇÙ¸{ % I ∏  EX∏ /π  >Y∏  EX∏ "/π " >Yπ  Ù∫   "9∏ /π  Ù∏ π  Ù01732>54&#"'!#632#"&'O='*.)3NVﬂ# $>-+H\1<j*¨"(--+	*<s}*?*;]A#6<     2ˇÙá  3 C ∏  EX∏ ./π . >Y∏  EX∏ $/π $ >Yª    +∏ $π   Ù∏ .π  Ù0172>54&#".#">32#".54>32ˇ"#!3+€&9^H":*!<R1-J30UuE0'Z%.(,$
+
+69çed)?*.WD)!<S2a†r>    c  {  3 ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏ π  Ù∏ 	–013>7!7!#d3AO3˛Û•H_@'çSëÅq2sVBàäãF   %ˇÙÚá   = [ ∏  EX∏ (/π ( >Y∏  EX∏ 9/π 9 >Y∫   ( 99∏  /∏ 9π  Ù∏  ∏ ‹∏ –∏ (π  Ù∏ ∏ 1‹0132>54&7>54&#"4>75.54>32#".Ê),(#<,$ "-*Ù%2!9J* >1>4"-%?T."E9$#<)$2#&2e7& (*&$/È!7-"?&*D/%8'<TI1,E2(?     ˇÙÊá  3 C ∏  EX∏ $/π $ >Y∏  EX∏ ./π . >Yª     +∏ $π 	 Ù∏ .π  Ù012676454&#"3267#".54>32#".'2+#"#Ä&9^G"9*!;R1.I30TuE1'
+M#
+
+69%.(,πdd)?*.WD)!<S2bür> ˇˇ ˇÙ ˘Ò'  9N    ˇˇˇÂˇE ˘Ò'  9N      . lÂ) 	  ∫   +∫   901%%.∑™ÅÅ™˛I{Æp=./=rØ   ˇˇ 0 ßÂÔ& d t  d ç    0 lÁ) 	  ∫  	 +∫  	 901?5/50´ÄÄ´∑˛Iﬁ=/.=pÆ`Ø   ZˇÙ…™  * ( ∏  EX∏  /π   >Yª     +∏  π  Ù01"&54>32'>54&#"'>32° '$ &#%(+%"&'E#S-Qd(0+!)!%+ $Ù(;.%#%!'N#$OH'9.(*3"     +ˇV>ö E S Z ∏  EX∏ %/π % >Yª    +ª    / +ª I  6 +ª >  O +∏ %π 
+ Ù∫ 3 /  9∫ A O >901%2>54.#"3267#".54>32#"&'##"&54>32373'326?&#"h-%<`F?~e?,G[0A$*R+Cz\7Kß[NyT,'AW0#7	>6G 8I*-S3»&|7S6/WC(>nîWCcB J*S|SjπáN0Sq@PwP(&%$NB/YE*1)ﬁVM #ã-6 ˇ¬  ˇå 	  T ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∫   9∏ /π 	 Ù01'.'###3#c((ë¬MóX§AèV0^43^1Vg§å˝t      Aå   % W ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫ #   9∏ #/π  Ù∫ 
+ # 9∏  π  Ù∏ π % Ù0132+2654&+2654&+ü«1P: M@6;-Mg9ÌE<26: FJ46U&å$8'9W=09R3Å4+ #¢˛Ë53(+ª   8ˇÙAò ! 9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù014>32.#"3267#".86]I9Y^**H6@H89(2;!9[A#Tìm?71H-Ld6LXX%Ge      Nå 
+  5 ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Yπ  Ù∏  π  Ù0132+72>54&+üèâó5_ÑNÃ…/Q;"REUå~Ç`îe3n!DiGQJ˛P    !å  M ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  π  Ù∫    9∏ /π  Ù∏ π 	 Ù01!#3#!!üÇ˚’’"˛såsés•s       !å 	 C ∏  EX∏  /π   >Y∏  EX∏ 	/π 	 >Y∏  π  Ù∫    	9∏ /π  Ù01!#3##üÇ˚‘’4äås†s˛˙     8ˇÙSò % M ∏  EX∏ /π  >Y∏  EX∏ !/π ! >Y∏ π  Ù∏ !π  Ù∫   !9∏ /π  Ù014>32.#"326?#73#".86_ÉM?[]- -M8"6&%k„<&h><`C#Tìm?71H-Ld6&<,
+Äp˛…'%Fe      éå  I ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏ /π  Ù∏  ∏ –∏ ∏ –013373###üâ4ﬂ2âÇä9ﬂ6äå˝˝˝t˛È       (å  % ∏  EX∏  /π   >Y∏  EX∏ /π  >Y013#üâÇäå˝t  ˇ¯ˇÙÚå  + ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù01%#"&'73273ò	#9O49bT3#LUâZÀ,N;"30S&y©˛?     Åå  I ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏  ∏ –∏ ∏ –∫ 	  901333##üâ5ıñÌíèhc&äå˛Ù˛Ù˛Ä*kø     ≥å  + ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù0133!üâl˜˛å˝Ás     Êå  ] ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  ∏ –∏ ∏ 	–∫   	9∫  	 9∫    9∫    9013373#>7##'##üë/<§íÉÄ6Qô704~å˛”uu-˝t9:7ñ˛ıñ8:8˛˝       Ñå  E ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏ –∏  ∏ 
+–∫   
+9∫    90133>?3#'##üÖj#2ÇÇÑk!2Éå˛¨è<=>˜˝tSë7z9˙     9ˇÙyò  # 9 ∏  EX∏ 
+/π 
+ >Y∏  EX∏  /π   >Y∏ 
+π  Ù∏  π  Ù01".54>32"32>54&.8Z@#6[xB8Z@#6[x#B4 :6#B49%GgAVìk<&GfAVìk<-+Ic9NY+Jc9NX     Lå   G ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏ /∏  π  Ù∏ π  Ù0132+#2654&+üŒ0Q<"0Rm>M,äIN95F(å)B/D`=‚O>>,(–  9ˇPyò  - K ∏  EX∏ /π  >Y∏  EX∏ /π  >Yª   * +∏ π  Ù∏ π  Ù∏ ∏ '–01"32>54&#"'.54>323267~#B4 :6#B49.ÀFHQ6[xB8Z@#,Ke:J*!+Ic9NY+Jc9NX˝?	≥ÖfVìk<&GfANÜhD      Jå   T ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Yª     +∏ π  Ù∫    9012654&+2#'##0IJ85E&Ä0R;",=$eêTP/äÉ\?6*$√0(@-.I8(˛˛ÔÔå     ˇÙò + I ∏  EX∏ /π  >Y∏  EX∏ (/π ( >Yπ  Ù∫ 	 ( 9∏ π  Ù∫   (901732654&/.54>32.#"#"&'gM**4)#>-4$=T0:f&W8$(+,&@0+#@[8@y0ª&,(#!&K<*I7 6-Q#) 'E9-M9!8B     T  Jå  3 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π   Ù∏ –01#7!##ˇ´‡´jâtt˝Ë  KˇÙâå  3 ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù∏  ∏ –01332673#"&5467õâG,7/>LÜLÉhtuå˛õ&7:M[z˛àñäot9   O  }å  7 ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫    9∏  ∏ 
+–0133>73#Oè-ëó˛Ø¶å˛ø4h55h4A˝t  M  Så ! W ∏  EX∏  /π   >Y∏  EX∏ !/π ! >Y∫    !9∏  ∏ 
+–∏ –∏ !∏ –∫   9∫  ! 
+90133>733>73#467##då	-Üt&nÉ˝≠Ä™å˛«4i44j39˛«3i55i39˝t8 R&%M&˛»   ˇ‹  \å  E ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ –∏ ∏ –∫   9∫   90133>?3#'.'##Œeò!OíÂmò% ZíP<É23Ç˛æ˛∂é23ç   P  Uå  7 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∏ ∏ –01733>?3#∏hé&[ì˛Ï/àÏ†ù%D&&E&õ˛`Ï ˇ˚  ,å 	 E ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏  /∏ π  Ù∏ –∏ /017!7!!!d˛ˇ•˛ü˛>R«sS˛:s    ˇ˝ˇhqƒ   ª     +ª    +01#3#‘»¨»céOI\I˝6  Uˇ` ˙∆   ∏  EX∏  /π   >Y∏ ‹013#UXMY∆¸ö   ˇ„ˇhWƒ   ª     +ª    +01#73#7Sèa»¨»O I¸§I  Hﬁû 	 8 ∏  EX∏  /π   >Y∏ ‹∏  π  Ù∫    9∏ ∏ –∏ 	–013#/##›lïp-+,.pû˛uáááá   ˇ—ˇv©ˇ√   ª     +01!7©˛8=MMˇˇ ﬁ=ï“  e €      ˇÙ¸  # [ ∏  EX∏ /π  >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù0174>32373#7##"&726?.#",J`3"<mco"R'BJ»9#%0%™G{\4#5˛A#*^*∞ 8L--*  ˇÙΩ  $ [ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù01333>32#"&'#"32>54&çâ!!J%BJ,J_3"9¬9&#0% Ωü] ^XG{\4#5å#ª 8L--*   ˇÙ∆¸  9 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù∏ π  Ù0174>32.#"3267#".-Ok=/CL4'**%9O;)G4¿@sW2&Q 8I*-4T%5L     ˇÙCΩ  $ [ ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ 	/π 	 >Y∏  EX∏ /π  >Y∏ 	π  Ù∏ π  Ù0173#7##"&54>32326?.#"úâço"R'BJ,J`3"5©7#%0%ü˝CA#*^XG{\4!˛§*∞ 8L--*     ˇÙ”¸  ' Q ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   9∏ /∏ π  Ù∏ π $ Ù∏ π ' Ù0174>32!3267#".%654&#"1Ob2,>'	˛ÊA120Z:-K5A&#B»EqQ-3C'#>8V7Nè+77     $  π…  V ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ ∏  –∏ π  Ù∏ π  Ù∏ –01?>32.#"3###HA/A+6,"VXMâO@Í!&C2a
+)&k˛{Ö  ˇÙˇ+¸   / T ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Yª !   +∏ π  Ù∏ π ( Ù01#"&'7326?##"&54>323726?.#"aái-`*;@#1?"H*?R+G^3":ø8#."˛on##[53T $UXCtV2#5˛è%ù3E()'       ˛Ω  D ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏ –∏ π  Ù0133>32#>54#"#õâ&!N->8>â;31 @âΩ∑P)A>#˛ %
+3!˛π     %Õ   - ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∫   +013#"&54>32ràcâ¬.-1˛:!!" #. ˇ}ˇ<'Õ   7 ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫   +∏ π  Ù01#"&'732673'"&54632ï,>*.)
+eâ*-1$.2&A1
+c%)˙J!!!0" #.    )Ω  N ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∫    9∏ –∫ 	  9013373#'#õâRªòÀvâKQâΩ˛j…Ÿ˛È»Qw     %ˇÙ$Ω  + ∏  EX∏  /π   >Y∏  EX∏ /π  >Yπ  Ù0133:7#"&547õâq$6.Ω˝œ
+e4-#     ¸ + X ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ +/π + >Y∏ ∏ –∏ +∏ –∏ –∏ π & Ù∏ –0133>32>32#>54#"#>54&#"#po$R*81
+*T*>7>â;20 Bâ;1 @âB .0'&1A>#˛ %
+3!˛π%
+!˛π       ˛¸  D ∏  EX∏ /π  >Y∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏ –∏ π  Ù0133>32#>54#"#po%R0>8>â;31 @âB .A>#˛ %
+3!˛π  ˇÙÙ¸  # 9 ∏  EX∏ 
+/π 
+ >Y∏  EX∏  /π   >Y∏ 
+π  Ù∏  π  Ù01".54>32"32>54&ﬁ,F30Od3+G20Od-""#-##6K.HuR-6K.HuR-ö6K+-46J,.3   ˇÈˇH¸  $ R ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ ∏ 	–∏ 	/π  Ù∏ π  Ù01#33>32#"&'#"32>54&ãââo"O&BJ,J_3 4®9&#0% 2Ü®9&^XG{\4]#º 8L--*    ˇH¸  $ V ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ ∏ –∏ /∏ π  Ù∏ π  Ù01%##"&54>32373#7'26?.#"I"S'BJ,J`3"<màâ=9#%0%A#*^XG{\4#5˝XÜñ*∞ 8L--*      ©¸  5 ∏  EX∏  /π   >Y∏  EX∏ /π  >Y∏  ∏ –∏ /∏ ‹0133>32.#"#poP+-
+!>8â`/=v05˛·  ˇ¯ˇÙ°¸ , I ∏  EX∏ /π  >Y∏  EX∏ '/π ' >Yπ  Ù∫  ' 9∏ π  Ù∫   '901732654&'.54>32.#"#".'G47),**:4F(3QK,#-;6L-2/+ñ>C/#<+, G	@3$<+$    /ˇÙÅr  E ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π 	 Ù∏  –∏ ∏ –∏ π  Ù01#?33#3267#"&5467qBI*sqt+3
+:&KBÖeÇÇk’	0`J9     'ˇÙ  Q ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ π  Ù01!#7##"&546733273Øo"S->7>à:2*9@âC /A?"6˛€
+3@G     <    @ ∏  EX∏  /π   >Y∏  EX∏ 
+/π 
+ >Y∏  EX∏ /π  >Y∫    90133>?3#<à oÜ˝ûÛ%L&&K&Û˛    H  ˇ ! [ ∏  EX∏  /π   >Y∏  EX∏ !/π ! >Y∫    !9∏  ∏ 
+–∏ !∏ –∏ 
+∏ –∫   9∫  ! 
+90133>?33>?3#'647##Háfw]‘°Uõ$I%%J#$I%%I$˛–#G''G#–  ˇÿ    E ∏  EX∏ /π  >Y∏  EX∏ /π  >Y∏ –∏ ∏ –∫   9∫   901'33>?3#'.'##™Vä3í¬\å<ì	ÁU*+U˛˙ÍW,+W    ˇ›ˇ>  = ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∫   9∏ ∏ –01326?33>?3#"&'72Và"hÖ˛Ù38@&**L
+'!Â‡ R##P"‡˛-D.b ˇˆ  Ã 	 E ∏  EX∏ /π  >Y∏  EX∏ /π  >Yπ  Ù∏  –∏  /∏ π  Ù∏ –∏ /017#7!3!≥_˛˘–˛ÖM8kO˛ k   ˇhxƒ 5  ª 0  2 +ª    +014>54&'7>7>7>;#";#"&-)""0!@/(=6+AFD;#P('*(7"I")(N-97	 BD?I,   Xˇ ÆÓ   ∫   +013#XVVÓ¸ ˇ⁄ˇh8ƒ 5  ª    +ª 2  0 +01+73267>7>75.54>54&+732%)""0!@/(>5+mFD;$P('+)6!I")(N-97	 BD>I,     & ˆÂ†   ª    +ª    +01>32327#".#"& L#-&#(F K$,&$(:9-8/9-8    ˇÙVî  # ( ∏  EX∏  /π   >Yª 
+   +∏  π  Ù01".54>32"32>54&ï2&2G,2&2H);$4^F)*;$5]E)N/?$%+.?%%+    ˇ)ˇÙS†   ∏  EX∏  /π   >Y∏ ‹013◊⁄P˛&¨˝T     0Â{   ª     +015!0µaa    = ∫“   ∏  EX∏  /π   >Yπ  Ù013#8^“ï     Ãﬁáu_<ı 	Ë    ÕóÄì    Õó„ˇ)˛ÿé…  	          ÿ˛Ô  ≤ˇ)˛VéË ¬             Xó      ∆   ∆  K -˛ y˙ ˝ = 5y # yI 8Kˇﬂ∂ e˝ 0#ˇÂ@ !# Iˇª˝ &˝ ˝ˇÛ˝ˇ˝ ˝ˇ˘˝ 2˝ c˝ %˝ # #ˇÂ˝ .˝ 0˝ 0º Zb +$ˇ¬\ 7 8h  ¯ c 8å & Îˇ¯\ Ù ‰ É î 9G î 9T   TÉ K* O M)ˇ‹˝ Pˇ˚Jˇ˝I UKˇ„˙ H·ˇ— ﬁ( ) ª "  G $"ˇÙ" 	 ˇ}  %; (  )ˇÈ( Ä ®ˇ¯o / ' < Hˇÿˇ›ˇˆ  Xˇ⁄ & ˇ) 0    f f f f ò §é†Jfê∫‚4Hpä‹^Ã|Ë§(JVv»f¥		j	®	Ë
+ 
+Ä
+æ
+ﬁTz‹&x¬,ÑÍXêˆFÄº⁄ÙDXb∆,z‚Hû`ñ‡"Z h .j– rÆb∞ÍBTÆﬁ(DXr      f p  n       
+   s     $∂        E          E        T       % _        Ñ       A ü        ‡       ` Ù       T      	 n       z      Ÿì       $l       ê      
+ú      ¶      ±      	º  	   ä≈  	  O  	  m  	  JÉ  	  6Õ  	  Ç  	  (Ö  	  ¿≠  	  4m  	 	 °  	  2π  	 #∂Î  	  H:°  	  :È  	 ;  	 ;  	 ;+  	 ;ACopyright 2010, 2012 Adobe Systems Incorporated. All Rights Reserved.Source Sans ProBold Italic1.050;ADBE;SourceSansPro-BoldIt;ADOBESource Sans Pro Bold ItalicVersion 1.050;PS Version 1.000;hotconv 1.0.70;makeotf.lib2.5.5900SourceSansPro-BoldItSource is a trademark of Adobe Systems Incorporated in the United States and/or other countries.Adobe Systems IncorporatedPaul D. Hunthttp://www.adobe.com/typeCopyright 2010, 2012 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+This license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide development of collaborative font projects, to support the font creation efforts of academic and linguistic communities, and to provide a free and open framework in which fonts may be shared and improved in partnership with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and redistributed freely as long as they are not sold by themselves. The fonts, including any derivative works, can be bundled, embedded, redistributed and/or sold with any software provided that any reserved names are not used by derivative works. The fonts and derivatives, however, cannot be released under any other type of license. The requirement for fonts to remain under this license does not apply to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright Holder(s) under this license and clearly marked as such. This may include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting, or substituting -- in part or in whole -- any of the components of the Original Version, by changing formats or by porting the Font Software to a new environment.
+
+"Author" refers to any designer, engineer, programmer, technical writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining a copy of the Font Software, to use, study, copy, merge, embed, modify, redistribute, and sell modified and unmodified copies of the Font Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled, redistributed and/or sold with any software, provided that each copy contains the above copyright notice and this license. These can be included either as stand-alone text files, human-readable headers or in the appropriate machine-readable metadata fields within text or binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written permission is granted by the corresponding Copyright Holder. This restriction only applies to the primary font name as presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software shall not be used to promote, endorse or advertise any Modified Version, except to acknowledge the contribution(s) of the Copyright Holder(s) and the Author(s) or with their explicit written permission.
+
+5) The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license. The requirement for fonts to remain under this license does not apply to any document created using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.http://www.adobe.com/type/legal.htmlSlashed zeroStraight lAlternate aAlternate gSerifed I C o p y r i g h t   2 0 1 0 ,   2 0 1 2   A d o b e   S y s t e m s   I n c o r p o r a t e d .   A l l   R i g h t s   R e s e r v e d . S o u r c e   S a n s   P r o B o l d   I t a l i c 1 . 0 5 0 ; A D B E ; S o u r c e S a n s P r o - B o l d I t ; A D O B E S o u r c e   S a n s   P r o   B o l d   I t a l i c V e r s i o n   1 . 0 5 0 ; P S   V e r s i o n   1 . 0 0 0 ; h o t c o n v   1 . 0 . 7 0 ; m a k e o t f . l i b 2 . 5 . 5 9 0 0 S o u r c e S a n s P r o - B o l d I t S o u r c e   i s   a   t r a d e m a r k   o f   A d o b e   S y s t e m s   I n c o r p o r a t e d   i n   t h e   U n i t e d   S t a t e s   a n d / o r   o t h e r   c o u n t r i e s . A d o b e   S y s t e m s   I n c o r p o r a t e d P a u l   D .   H u n t h t t p : / / w w w . a d o b e . c o m / t y p e C o p y r i g h t   2 0 1 0 ,   2 0 1 2   A d o b e   S y s t e m s   I n c o r p o r a t e d   ( h t t p : / / w w w . a d o b e . c o m / ) ,   w i t h   R e s e r v e d   F o n t   N a m e   ' S o u r c e ' .   A l l   R i g h t s   R e s e r v e d .   S o u r c e   i s   a   t r a d e m a r k   o f   A d o b e   S y s t e m s   I n c o r p o r a t e d   i n   t h e   U n i t e d   S t a t e s   a n d / o r   o t h e r   c o u n t r i e s .  
+  
+ T h i s   F o n t   S o f t w a r e   i s   l i c e n s e d   u n d e r   t h e   S I L   O p e n   F o n t   L i c e n s e ,   V e r s i o n   1 . 1 .  
+  
+ T h i s   l i c e n s e   i s   c o p i e d   b e l o w ,   a n d   i s   a l s o   a v a i l a b l e   w i t h   a   F A Q   a t :   h t t p : / / s c r i p t s . s i l . o r g / O F L  
+  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+ S I L   O P E N   F O N T   L I C E N S E   V e r s i o n   1 . 1   -   2 6   F e b r u a r y   2 0 0 7  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  
+ P R E A M B L E  
+ T h e   g o a l s   o f   t h e   O p e n   F o n t   L i c e n s e   ( O F L )   a r e   t o   s t i m u l a t e   w o r l d w i d e   d e v e l o p m e n t   o f   c o l l a b o r a t i v e   f o n t   p r o j e c t s ,   t o   s u p p o r t   t h e   f o n t   c r e a t i o n   e f f o r t s   o f   a c a d e m i c   a n d   l i n g u i s t i c   c o m m u n i t i e s ,   a n d   t o   p r o v i d e   a   f r e e   a n d   o p e n   f r a m e w o r k   i n   w h i c h   f o n t s   m a y   b e   s h a r e d   a n d   i m p r o v e d   i n   p a r t n e r s h i p   w i t h   o t h e r s .  
+  
+ T h e   O F L   a l l o w s   t h e   l i c e n s e d   f o n t s   t o   b e   u s e d ,   s t u d i e d ,   m o d i f i e d   a n d   r e d i s t r i b u t e d   f r e e l y   a s   l o n g   a s   t h e y   a r e   n o t   s o l d   b y   t h e m s e l v e s .   T h e   f o n t s ,   i n c l u d i n g   a n y   d e r i v a t i v e   w o r k s ,   c a n   b e   b u n d l e d ,   e m b e d d e d ,   r e d i s t r i b u t e d   a n d / o r   s o l d   w i t h   a n y   s o f t w a r e   p r o v i d e d   t h a t   a n y   r e s e r v e d   n a m e s   a r e   n o t   u s e d   b y   d e r i v a t i v e   w o r k s .   T h e   f o n t s   a n d   d e r i v a t i v e s ,   h o w e v e r ,   c a n n o t   b e   r e l e a s e d   u n d e r   a n y   o t h e r   t y p e   o f   l i c e n s e .   T h e   r e q u i r e m e n t   f o r   f o n t s   t o   r e m a i n   u n d e r   t h i s   l i c e n s e   d o e s   n o t   a p p l y   t o   a n y   d o c u m e n t   c r e a t e d   u s i n g   t h e   f o n t s   o r   t h e i r   d e r i v a t i v e s .  
+  
+ D E F I N I T I O N S  
+ " F o n t   S o f t w a r e "   r e f e r s   t o   t h e   s e t   o f   f i l e s   r e l e a s e d   b y   t h e   C o p y r i g h t   H o l d e r ( s )   u n d e r   t h i s   l i c e n s e   a n d   c l e a r l y   m a r k e d   a s   s u c h .   T h i s   m a y   i n c l u d e   s o u r c e   f i l e s ,   b u i l d   s c r i p t s   a n d   d o c u m e n t a t i o n .  
+  
+ " R e s e r v e d   F o n t   N a m e "   r e f e r s   t o   a n y   n a m e s   s p e c i f i e d   a s   s u c h   a f t e r   t h e   c o p y r i g h t   s t a t e m e n t ( s ) .  
+  
+ " O r i g i n a l   V e r s i o n "   r e f e r s   t o   t h e   c o l l e c t i o n   o f   F o n t   S o f t w a r e   c o m p o n e n t s   a s   d i s t r i b u t e d   b y   t h e   C o p y r i g h t   H o l d e r ( s ) .  
+  
+ " M o d i f i e d   V e r s i o n "   r e f e r s   t o   a n y   d e r i v a t i v e   m a d e   b y   a d d i n g   t o ,   d e l e t i n g ,   o r   s u b s t i t u t i n g   - -   i n   p a r t   o r   i n   w h o l e   - -   a n y   o f   t h e   c o m p o n e n t s   o f   t h e   O r i g i n a l   V e r s i o n ,   b y   c h a n g i n g   f o r m a t s   o r   b y   p o r t i n g   t h e   F o n t   S o f t w a r e   t o   a   n e w   e n v i r o n m e n t .  
+  
+ " A u t h o r "   r e f e r s   t o   a n y   d e s i g n e r ,   e n g i n e e r ,   p r o g r a m m e r ,   t e c h n i c a l   w r i t e r   o r   o t h e r   p e r s o n   w h o   c o n t r i b u t e d   t o   t h e   F o n t   S o f t w a r e .  
+  
+ P E R M I S S I O N   &   C O N D I T I O N S  
+ P e r m i s s i o n   i s   h e r e b y   g r a n t e d ,   f r e e   o f   c h a r g e ,   t o   a n y   p e r s o n   o b t a i n i n g   a   c o p y   o f   t h e   F o n t   S o f t w a r e ,   t o   u s e ,   s t u d y ,   c o p y ,   m e r g e ,   e m b e d ,   m o d i f y ,   r e d i s t r i b u t e ,   a n d   s e l l   m o d i f i e d   a n d   u n m o d i f i e d   c o p i e s   o f   t h e   F o n t   S o f t w a r e ,   s u b j e c t   t o   t h e   f o l l o w i n g   c o n d i t i o n s :  
+  
+ 1 )   N e i t h e r   t h e   F o n t   S o f t w a r e   n o r   a n y   o f   i t s   i n d i v i d u a l   c o m p o n e n t s ,   i n   O r i g i n a l   o r   M o d i f i e d   V e r s i o n s ,   m a y   b e   s o l d   b y   i t s e l f .  
+  
+ 2 )   O r i g i n a l   o r   M o d i f i e d   V e r s i o n s   o f   t h e   F o n t   S o f t w a r e   m a y   b e   b u n d l e d ,   r e d i s t r i b u t e d   a n d / o r   s o l d   w i t h   a n y   s o f t w a r e ,   p r o v i d e d   t h a t   e a c h   c o p y   c o n t a i n s   t h e   a b o v e   c o p y r i g h t   n o t i c e   a n d   t h i s   l i c e n s e .   T h e s e   c a n   b e   i n c l u d e d   e i t h e r   a s   s t a n d - a l o n e   t e x t   f i l e s ,   h u m a n - r e a d a b l e   h e a d e r s   o r   i n   t h e   a p p r o p r i a t e   m a c h i n e - r e a d a b l e   m e t a d a t a   f i e l d s   w i t h i n   t e x t   o r   b i n a r y   f i l e s   a s   l o n g   a s   t h o s e   f i e l d s   c a n   b e   e a s i l y   v i e w e d   b y   t h e   u s e r .  
+  
+ 3 )   N o   M o d i f i e d   V e r s i o n   o f   t h e   F o n t   S o f t w a r e   m a y   u s e   t h e   R e s e r v e d   F o n t   N a m e ( s )   u n l e s s   e x p l i c i t   w r i t t e n   p e r m i s s i o n   i s   g r a n t e d   b y   t h e   c o r r e s p o n d i n g   C o p y r i g h t   H o l d e r .   T h i s   r e s t r i c t i o n   o n l y   a p p l i e s   t o   t h e   p r i m a r y   f o n t   n a m e   a s   p r e s e n t e d   t o   t h e   u s e r s .  
+  
+ 4 )   T h e   n a m e ( s )   o f   t h e   C o p y r i g h t   H o l d e r ( s )   o r   t h e   A u t h o r ( s )   o f   t h e   F o n t   S o f t w a r e   s h a l l   n o t   b e   u s e d   t o   p r o m o t e ,   e n d o r s e   o r   a d v e r t i s e   a n y   M o d i f i e d   V e r s i o n ,   e x c e p t   t o   a c k n o w l e d g e   t h e   c o n t r i b u t i o n ( s )   o f   t h e   C o p y r i g h t   H o l d e r ( s )   a n d   t h e   A u t h o r ( s )   o r   w i t h   t h e i r   e x p l i c i t   w r i t t e n   p e r m i s s i o n .  
+  
+ 5 )   T h e   F o n t   S o f t w a r e ,   m o d i f i e d   o r   u n m o d i f i e d ,   i n   p a r t   o r   i n   w h o l e ,   m u s t   b e   d i s t r i b u t e d   e n t i r e l y   u n d e r   t h i s   l i c e n s e ,   a n d   m u s t   n o t   b e   d i s t r i b u t e d   u n d e r   a n y   o t h e r   l i c e n s e .   T h e   r e q u i r e m e n t   f o r   f o n t s   t o   r e m a i n   u n d e r   t h i s   l i c e n s e   d o e s   n o t   a p p l y   t o   a n y   d o c u m e n t   c r e a t e d   u s i n g   t h e   F o n t   S o f t w a r e .  
+  
+ T E R M I N A T I O N  
+ T h i s   l i c e n s e   b e c o m e s   n u l l   a n d   v o i d   i f   a n y   o f   t h e   a b o v e   c o n d i t i o n s   a r e   n o t   m e t .  
+  
+ D I S C L A I M E R  
+ T H E   F O N T   S O F T W A R E   I S   P R O V I D E D   " A S   I S " ,   W I T H O U T   W A R R A N T Y   O F   A N Y   K I N D ,   E X P R E S S   O R   I M P L I E D ,   I N C L U D I N G   B U T   N O T   L I M I T E D   T O   A N Y   W A R R A N T I E S   O F   M E R C H A N T A B I L I T Y ,   F I T N E S S   F O R   A   P A R T I C U L A R   P U R P O S E   A N D   N O N I N F R I N G E M E N T   O F   C O P Y R I G H T ,   P A T E N T ,   T R A D E M A R K ,   O R   O T H E R   R I G H T .   I N   N O   E V E N T   S H A L L   T H E   C O P Y R I G H T   H O L D E R   B E   L I A B L E   F O R   A N Y   C L A I M ,   D A M A G E S   O R   O T H E R   L I A B I L I T Y ,   I N C L U D I N G   A N Y   G E N E R A L ,   S P E C I A L ,   I N D I R E C T ,   I N C I D E N T A L ,   O R   C O N S E Q U E N T I A L   D A M A G E S ,   W H E T H E R   I N   A N   A C T I O N   O F   C O N T R A C T ,   T O R T   O R   O T H E R W I S E ,   A R I S I N G   F R O M ,   O U T   O F   T H E   U S E   O R   I N A B I L I T Y   T O   U S E   T H E   F O N T   S O F T W A R E   O R   F R O M   O T H E R   D E A L I N G S   I N   T H E   F O N T   S O F T W A R E .  
+ h t t p : / / w w w . a d o b e . c o m / t y p e / l e g a l . h t m l S l a s h e d   z e r o S t r a i g h t   l A l t e r n a t e   a A l t e r n a t e   g S e r i f e d   I      ˇı  ˇµ 2                    ∞ + ≤+≤+∑& +∑% + ∑0(" + ≤+∞  E}iDK∞`RX∞∞ Y∞é endstream
+endobj
+139 0 obj
+<< /Ascent 750 /CapHeight 660 /Descent -250 /Flags 262212 /FontBBox [ -215 -296 1166 969 ] /FontFile2 138 0 R 
+  /FontName /AAAAAA+SourceSansPro-BoldIt /ItalicAngle -11 /StemV 165 /Type /FontDescriptor >>
+endobj
+140 0 obj
+<< /BaseFont /AAAAAA+SourceSansPro-BoldIt /FirstChar 0 /FontDescriptor 139 0 R /LastChar 127 /Name /F3+0 /Subtype /TrueType 
+  /ToUnicode 137 0 R /Type /Font /Widths [ 0 663 663 663 663 663 663 663 663 663 
+  663 663 663 198 663 663 663 663 663 663 
+  663 663 663 663 663 663 663 663 663 663 
+  663 663 198 331 510 506 509 829 633 291 
+  329 331 438 509 291 320 291 329 509 509 
+  509 509 509 509 509 509 509 509 291 291 
+  509 509 509 444 866 548 604 567 616 527 
+  504 611 652 294 491 604 500 740 643 660 
+  583 660 596 529 532 643 554 794 553 509 
+  525 330 329 331 506 481 534 552 553 443 
+  546 496 327 546 546 265 267 525 275 827 
+  552 533 553 552 384 424 367 545 499 748 
+  490 499 443 328 255 331 509 663 ] >>
+endobj
+141 0 obj
+<< /Outlines 149 0 R /PageLabels 150 0 R /PageMode /UseNone /Pages 143 0 R /Type /Catalog >>
+endobj
+142 0 obj
+<< /Author () /CreationDate (D:20141203195915+08'00') /Creator (\(unspecified\)) /Keywords () /Producer (ReportLab PDF Library - www.reportlab.com) /Subject (\(unspecified\)) 
+  /Title (Cask Data Application Platform 2.6.0) >>
+endobj
+143 0 obj
+<< /Count 5 /Kids [ 2 0 R 41 0 R 84 0 R 118 0 R 128 0 R ] /Type /Pages >>
+endobj
+144 0 obj
+<< /Length 567 >>
+stream
+1 0 0 1 0 0 cm 
+q
+1 0 0 1 54 702 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm 89.63 0 Td /F1+0 20 Tf 24 TL (Cask Data Application Platform 2.6.0) Tj T* -89.63 0 Td ET
+Q
+Q
+q
+1 0 0 1 54 672 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 3 Tm 75.4275 0 Td /F1+0 15 Tf 18 TL (Cask Data Application Platform Level 1 Dependencies) Tj T* -75.4275 0 Td ET
+Q
+Q
+q
+1 0 0 1 54 662 cm
+Q
+q
+1 0 0 1 48 48 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 228.61 0 Td /F2+0 10 Tf 12 TL (Cask Data Application Platform 2.6.0\200\201\200\202 2014 Cask Data, Inc.\200\201\200Page 1) Tj T* -228.61 0 Td ET
+Q
+Q
+ 
+endstream
+endobj
+145 0 obj
+<< /Length 12365 >>
+stream
+1 0 0 1 0 0 cm 
+q
+1 0 0 1 54 720 cm
+Q
+q
+1 0 0 1 54 696 cm
+q
+BT 1 0 0 1 0 2 Tm 137.965 0 Td 12 TL 0 0 0 rg /F3+0 10 Tf 12 TL (Cask Data Application Platform Level 1 Dependencies) Tj T* -137.965 0 Td ET
+Q
+Q
+q
+1 0 0 1 54 102 cm
+1 1 1 rg
+n 0 588 504 -18 re f*
+.909804 .913725 .933333 rg
+n 0 570 504 -30 re f*
+1 1 1 rg
+n 0 540 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 510 504 -30 re f*
+1 1 1 rg
+n 0 480 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 450 504 -30 re f*
+1 1 1 rg
+n 0 420 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 390 504 -30 re f*
+1 1 1 rg
+n 0 360 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 330 504 -30 re f*
+1 1 1 rg
+n 0 300 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 270 504 -30 re f*
+1 1 1 rg
+n 0 240 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 210 504 -30 re f*
+1 1 1 rg
+n 0 180 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 150 504 -30 re f*
+1 1 1 rg
+n 0 120 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 90 504 -30 re f*
+1 1 1 rg
+n 0 60 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 30 504 -30 re f*
+.843137 .901961 .996078 rg
+n 0 588 504 -18 re f*
+0 0 0 rg
+q
+1 0 0 1 6 573 cm
+q
+.843137 .901961 .996078 rg
+n 0 0 88.8 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 26.645 0 Td /F2+0 10 Tf 12 TL (Package) Tj T* -26.645 0 Td ET
+Q
+Q
+q
+1 0 0 1 106.8 573 cm
+q
+.843137 .901961 .996078 rg
+n 0 0 88.8 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 29.035 0 Td /F2+0 10 Tf 12 TL (Artifact) Tj T* -29.035 0 Td ET
+Q
+Q
+q
+1 0 0 1 207.6 573 cm
+q
+.843137 .901961 .996078 rg
+n 0 0 88.8 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 28.67 0 Td /F2+0 10 Tf 12 TL (License) Tj T* -28.67 0 Td ET
+Q
+Q
+q
+1 0 0 1 308.4 573 cm
+q
+.843137 .901961 .996078 rg
+n 0 0 189.6 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 69.5 0 Td /F2+0 10 Tf 12 TL (License URL) Tj T* -69.5 0 Td ET
+Q
+Q
+0 0 0 rg
+q
+1 0 0 1 6 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (ch.qos.logback) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (logback-classic) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (LGPL and EPL) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 543 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.gnu.org/licenses/old-licenses/lg) Tj T* (pl-2.1.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 525 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (ch.qos.logback) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 525 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (logback-core) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 525 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (LGPL and EPL) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 513 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.gnu.org/licenses/old-licenses/lg) Tj T* (pl-2.1.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 483 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (com.google.code.fin) Tj T* (dbugs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 495 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jsr305) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 483 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 483 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 453 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (com.google.code.gs) Tj T* (on) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 465 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (gson) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 453 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 453 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 435 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (com.google.guava) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 435 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (guava) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 423 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 423 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 393 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (com.google.inject.ex) Tj T* (tensions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 405 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (guice-assistedinject) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 393 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 393 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 363 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (com.google.inject.ex) Tj T* (tensions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 375 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (guice-multibindings) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 363 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 363 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 345 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (com.google.inject) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 345 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (guice) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 333 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 333 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 303 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (com.googlecode.con) Tj T* (current-trees) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 315 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (concurrent-trees) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 303 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 303 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 285 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (com.ning) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 285 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (async-http-client) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 273 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 273 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 255 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (commons-codec) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 255 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (commons-codec) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 243 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 243 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 225 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (commons-lang) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 225 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (commons-lang) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 213 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 213 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 195 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (io.netty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 195 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (netty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 183 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 183 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 165 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (javax.servlet) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 165 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (javax.servlet-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 165 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (CCDL 1.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 153 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (https://glassfish.dev.java.net/public/CDDL+G) Tj T* (PL.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 135 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (javax.ws.rs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 135 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (javax.ws.rs-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Best of CDDL and) Tj T* (GPL 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 123 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://glassfish.java.net/public/CDDL+GPL_1) Tj T* (_1.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jline) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jline) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (The BSD License) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 93 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.opensource.org/licenses/bsd-lic) Tj T* (ense.php) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 75 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (junit) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 75 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (junit) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 63 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Common Public) Tj T* (License Version 1.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 63 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.opensource.org/licenses/cpl1.0.t) Tj T* (xt) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.avro) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (avro) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (The Apache Software) Tj T* (License, Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 33 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.txt) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.avro) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (avro-ipc) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (The Apache Software) Tj T* (License, Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.txt) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 0 m 504 0 l S
+n 0 570 m 504 570 l S
+n 0 540 m 504 540 l S
+n 0 510 m 504 510 l S
+n 0 480 m 504 480 l S
+n 0 450 m 504 450 l S
+n 0 420 m 504 420 l S
+n 0 390 m 504 390 l S
+n 0 360 m 504 360 l S
+n 0 330 m 504 330 l S
+n 0 300 m 504 300 l S
+n 0 270 m 504 270 l S
+n 0 240 m 504 240 l S
+n 0 210 m 504 210 l S
+n 0 180 m 504 180 l S
+n 0 150 m 504 150 l S
+n 0 120 m 504 120 l S
+n 0 90 m 504 90 l S
+n 0 60 m 504 60 l S
+n 0 30 m 504 30 l S
+n 100.8 0 m 100.8 588 l S
+n 201.6 0 m 201.6 588 l S
+n 302.4 0 m 302.4 588 l S
+n 0 588 m 504 588 l S
+n 0 0 m 0 588 l S
+n 504 0 m 504 588 l S
+Q
+Q
+q
+1 0 0 1 48 48 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 228.61 0 Td /F2+0 10 Tf 12 TL (Cask Data Application Platform 2.6.0\200\201\200\202 2014 Cask Data, Inc.\200\201\200Page 2) Tj T* -228.61 0 Td ET
+Q
+Q
+ 
+endstream
+endobj
+146 0 obj
+<< /Length 12579 >>
+stream
+1 0 0 1 0 0 cm 
+q
+1 0 0 1 54 96 cm
+1 1 1 rg
+n 0 630 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 600 504 -30 re f*
+1 1 1 rg
+n 0 570 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 540 504 -30 re f*
+1 1 1 rg
+n 0 510 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 480 504 -30 re f*
+1 1 1 rg
+n 0 450 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 420 504 -30 re f*
+1 1 1 rg
+n 0 390 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 360 504 -30 re f*
+1 1 1 rg
+n 0 330 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 300 504 -30 re f*
+1 1 1 rg
+n 0 270 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 240 504 -30 re f*
+1 1 1 rg
+n 0 210 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 180 504 -30 re f*
+1 1 1 rg
+n 0 150 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 120 504 -30 re f*
+1 1 1 rg
+n 0 90 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 60 504 -30 re f*
+1 1 1 rg
+n 0 30 504 -30 re f*
+0 0 0 rg
+q
+1 0 0 1 6 615 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.avro) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 615 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (avro-mapred) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 603 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 603 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 585 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.flume) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 585 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (flume-ng-core) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 573 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 573 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.flume) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (flume-ng-sdk) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 543 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 543 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 513 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (org.apache.geronim) Tj T* (o.components) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 525 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (geronimo-jaspi) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 513 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 513 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 495 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hadoop) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 495 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hadoop-common) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 483 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 483 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 465 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hadoop) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 465 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hadoop-hdfs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 453 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 453 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 435 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hadoop) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 423 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (hadoop-mapreduce-) Tj T* (client-common) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 423 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 423 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 405 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hadoop) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 393 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (hadoop-mapreduce-) Tj T* (client-core) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 393 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 393 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 375 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hadoop) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 375 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hadoop-minicluster) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 363 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 363 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 345 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 345 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 333 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 333 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 315 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 315 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-client) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 303 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 303 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 285 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 285 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-client) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 273 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 273 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 255 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 255 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-common) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 243 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 243 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 225 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 225 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-common) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 213 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 213 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 195 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 195 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-protocol) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 183 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 183 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 165 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 165 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-protocol) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 153 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 153 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 135 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 135 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-server) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 123 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hbase) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hbase-server) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 93 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 93 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 75 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hive) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 75 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hive-jdbc) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 63 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 63 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hive) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hive-metastore) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 33 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.hive) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (hive-service) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 630 m 504 630 l S
+n 0 0 m 504 0 l S
+n 0 600 m 504 600 l S
+n 0 570 m 504 570 l S
+n 0 540 m 504 540 l S
+n 0 510 m 504 510 l S
+n 0 480 m 504 480 l S
+n 0 450 m 504 450 l S
+n 0 420 m 504 420 l S
+n 0 390 m 504 390 l S
+n 0 360 m 504 360 l S
+n 0 330 m 504 330 l S
+n 0 300 m 504 300 l S
+n 0 270 m 504 270 l S
+n 0 240 m 504 240 l S
+n 0 210 m 504 210 l S
+n 0 180 m 504 180 l S
+n 0 150 m 504 150 l S
+n 0 120 m 504 120 l S
+n 0 90 m 504 90 l S
+n 0 60 m 504 60 l S
+n 0 30 m 504 30 l S
+n 100.8 0 m 100.8 630 l S
+n 201.6 0 m 201.6 630 l S
+n 302.4 0 m 302.4 630 l S
+n 0 0 m 0 630 l S
+n 504 0 m 504 630 l S
+Q
+Q
+q
+1 0 0 1 48 48 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 228.61 0 Td /F2+0 10 Tf 12 TL (Cask Data Application Platform 2.6.0\200\201\200\202 2014 Cask Data, Inc.\200\201\200Page 3) Tj T* -228.61 0 Td ET
+Q
+Q
+ 
+endstream
+endobj
+147 0 obj
+<< /Length 11480 >>
+stream
+1 0 0 1 0 0 cm 
+q
+1 0 0 1 54 96 cm
+1 1 1 rg
+n 0 630 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 600 504 -30 re f*
+1 1 1 rg
+n 0 570 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 540 504 -30 re f*
+1 1 1 rg
+n 0 510 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 480 504 -30 re f*
+1 1 1 rg
+n 0 450 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 420 504 -30 re f*
+1 1 1 rg
+n 0 390 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 360 504 -30 re f*
+1 1 1 rg
+n 0 330 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 300 504 -30 re f*
+1 1 1 rg
+n 0 270 504 -42 re f*
+.909804 .913725 .933333 rg
+n 0 228 504 -42 re f*
+1 1 1 rg
+n 0 186 504 -42 re f*
+.909804 .913725 .933333 rg
+n 0 144 504 -42 re f*
+1 1 1 rg
+n 0 102 504 -42 re f*
+.909804 .913725 .933333 rg
+n 0 60 504 -30 re f*
+1 1 1 rg
+n 0 30 504 -30 re f*
+0 0 0 rg
+q
+1 0 0 1 6 603 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (org.apache.httpcom) Tj T* (ponents) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 615 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (httpclient) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 603 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (The Apache Software) Tj T* (License, Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 603 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.txt) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 573 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (org.apache.httpcom) Tj T* (ponents) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 585 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (httpcore) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 573 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (The Apache Software) Tj T* (License, Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 573 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.txt) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.kafka) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 555 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (kafka_2.10) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 543 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 543 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 525 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.spark) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 525 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (spark-core_2.10) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 513 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (The Apache Software) Tj T* (License, Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 513 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.txt) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 495 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.thrift) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 495 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (libthrift) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 483 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (The Apache Software) Tj T* (License, Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 483 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.txt) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 465 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 465 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 453 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 453 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 435 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 435 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-common) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 423 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 423 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 405 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 405 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-core) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 393 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 393 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 375 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 375 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-discovery-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 363 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 363 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 345 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 345 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-discovery-core) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 333 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 333 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 315 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 315 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-yarn) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 303 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 303 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 285 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.apache.twill) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 285 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (twill-zookeeper) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 273 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 273 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 255 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 255 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jetty-jaspi) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 231 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 26 Tm /F2+0 10 Tf 12 TL (Eclipse Public) Tj T* (License Version 1.0 +) Tj T* (AL, V2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 255 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (http://www.eclipse.org/legal/epl-v10.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 213 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 213 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jetty-plus) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 26 Tm /F2+0 10 Tf 12 TL (Eclipse Public) Tj T* (License Version 1.0 +) Tj T* (AL, V2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 213 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (http://www.eclipse.org/legal/epl-v10.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 171 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 171 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jetty-security) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 147 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 26 Tm /F2+0 10 Tf 12 TL (Eclipse Public) Tj T* (License Version 1.0 +) Tj T* (AL, V2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 171 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (http://www.eclipse.org/legal/epl-v10.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 129 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 129 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jetty-server) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 26 Tm /F2+0 10 Tf 12 TL (Eclipse Public) Tj T* (License Version 1.0 +) Tj T* (AL, V2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 129 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (http://www.eclipse.org/legal/epl-v10.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 87 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.eclipse.jetty) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 87 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (jetty-util) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 63 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 26 Tm /F2+0 10 Tf 12 TL (Eclipse Public) Tj T* (License Version 1.0 +) Tj T* (AL, V2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 87 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (http://www.eclipse.org/legal/epl-v10.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.iq80.leveldb) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (leveldb) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 33 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.jboss.resteasy) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (resteasy-guice) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 630 m 504 630 l S
+n 0 0 m 504 0 l S
+n 0 600 m 504 600 l S
+n 0 570 m 504 570 l S
+n 0 540 m 504 540 l S
+n 0 510 m 504 510 l S
+n 0 480 m 504 480 l S
+n 0 450 m 504 450 l S
+n 0 420 m 504 420 l S
+n 0 390 m 504 390 l S
+n 0 360 m 504 360 l S
+n 0 330 m 504 330 l S
+n 0 300 m 504 300 l S
+n 0 270 m 504 270 l S
+n 0 228 m 504 228 l S
+n 0 186 m 504 186 l S
+n 0 144 m 504 144 l S
+n 0 102 m 504 102 l S
+n 0 60 m 504 60 l S
+n 0 30 m 504 30 l S
+n 100.8 0 m 100.8 630 l S
+n 201.6 0 m 201.6 630 l S
+n 302.4 0 m 302.4 630 l S
+n 0 0 m 0 630 l S
+n 504 0 m 504 630 l S
+Q
+Q
+q
+1 0 0 1 48 48 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 228.61 0 Td /F2+0 10 Tf 12 TL (Cask Data Application Platform 2.6.0\200\201\200\202 2014 Cask Data, Inc.\200\201\200Page 4) Tj T* -228.61 0 Td ET
+Q
+Q
+ 
+endstream
+endobj
+148 0 obj
+<< /Length 3233 >>
+stream
+1 0 0 1 0 0 cm 
+q
+1 0 0 1 54 588 cm
+1 1 1 rg
+n 0 138 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 108 504 -30 re f*
+1 1 1 rg
+n 0 78 504 -30 re f*
+.909804 .913725 .933333 rg
+n 0 48 504 -30 re f*
+1 1 1 rg
+n 0 18 504 -18 re f*
+0 0 0 rg
+q
+1 0 0 1 6 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.jboss.resteasy) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 111 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (resteasy-servlet-initi) Tj T* (alizer) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 111 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 111 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 93 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.ow2.asm) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 93 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (asm-all) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 93 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (BSD License) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 81 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://opensource.org/licenses/BSD-3-Claus) Tj T* (e) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 63 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.quartz-scheduler) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 63 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (quartz) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 51 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 51 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.quartz-scheduler) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (quartz-jobs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (Apache License,) Tj T* (Version 2.0) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 21 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 14 Tm /F2+0 10 Tf 12 TL (http://www.apache.org/licenses/LICENSE-2.) Tj T* (0.html) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (org.slf4j) Tj T* ET
+Q
+Q
+q
+1 0 0 1 106.8 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (slf4j-api) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (MIT license) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.4 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 2 Tm /F2+0 10 Tf 12 TL (http://www.slf4j.org/license.html) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 138 m 504 138 l S
+n 0 108 m 504 108 l S
+n 0 78 m 504 78 l S
+n 0 48 m 504 48 l S
+n 0 18 m 504 18 l S
+n 100.8 0 m 100.8 138 l S
+n 201.6 0 m 201.6 138 l S
+n 302.4 0 m 302.4 138 l S
+n 0 0 m 0 138 l S
+n 504 0 m 504 138 l S
+n 0 0 m 504 0 l S
+Q
+Q
+q
+1 0 0 1 54 588 cm
+Q
+q
+1 0 0 1 48 48 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 2 Tm 228.61 0 Td /F2+0 10 Tf 12 TL (Cask Data Application Platform 2.6.0\200\201\200\202 2014 Cask Data, Inc.\200\201\200Page 5) Tj T* -228.61 0 Td ET
+Q
+Q
+ 
+endstream
+endobj
+149 0 obj
+<< /Count 0 /Type /Outlines >>
+endobj
+150 0 obj
+<< /Nums [ 0 151 0 R 1 152 0 R 2 153 0 R 3 154 0 R 4 155 0 R ] >>
+endobj
+151 0 obj
+<< /S /D /St 1 >>
+endobj
+152 0 obj
+<< /S /D /St 2 >>
+endobj
+153 0 obj
+<< /S /D /St 3 >>
+endobj
+154 0 obj
+<< /S /D /St 4 >>
+endobj
+155 0 obj
+<< /S /D /St 5 >>
+endobj
+xref
+0 156
+0000000000 65535 f
+0000000075 00000 n
+0000000141 00000 n
+0000000342 00000 n
+0000000542 00000 n
+0000000742 00000 n
+0000000942 00000 n
+0000001142 00000 n
+0000001334 00000 n
+0000001527 00000 n
+0000001719 00000 n
+0000001913 00000 n
+0000002106 00000 n
+0000002300 00000 n
+0000002493 00000 n
+0000002687 00000 n
+0000002880 00000 n
+0000003074 00000 n
+0000003267 00000 n
+0000003461 00000 n
+0000003654 00000 n
+0000003848 00000 n
+0000004041 00000 n
+0000004235 00000 n
+0000004428 00000 n
+0000004622 00000 n
+0000004815 00000 n
+0000005009 00000 n
+0000005202 00000 n
+0000005396 00000 n
+0000005594 00000 n
+0000005792 00000 n
+0000005989 00000 n
+0000006186 00000 n
+0000006383 00000 n
+0000006580 00000 n
+0000006772 00000 n
+0000006964 00000 n
+0000007156 00000 n
+0000007349 00000 n
+0000007541 00000 n
+0000007734 00000 n
+0000008219 00000 n
+0000008412 00000 n
+0000008606 00000 n
+0000008799 00000 n
+0000008993 00000 n
+0000009186 00000 n
+0000009380 00000 n
+0000009573 00000 n
+0000009767 00000 n
+0000009960 00000 n
+0000010154 00000 n
+0000010347 00000 n
+0000010541 00000 n
+0000010734 00000 n
+0000010928 00000 n
+0000011121 00000 n
+0000011315 00000 n
+0000011508 00000 n
+0000011702 00000 n
+0000011895 00000 n
+0000012089 00000 n
+0000012282 00000 n
+0000012476 00000 n
+0000012669 00000 n
+0000012863 00000 n
+0000013056 00000 n
+0000013250 00000 n
+0000013443 00000 n
+0000013637 00000 n
+0000013830 00000 n
+0000014024 00000 n
+0000014217 00000 n
+0000014411 00000 n
+0000014604 00000 n
+0000014798 00000 n
+0000014991 00000 n
+0000015185 00000 n
+0000015378 00000 n
+0000015572 00000 n
+0000015765 00000 n
+0000015959 00000 n
+0000016152 00000 n
+0000016345 00000 n
+0000016869 00000 n
+0000017061 00000 n
+0000017254 00000 n
+0000017446 00000 n
+0000017639 00000 n
+0000017832 00000 n
+0000018026 00000 n
+0000018218 00000 n
+0000018411 00000 n
+0000018603 00000 n
+0000018796 00000 n
+0000018989 00000 n
+0000019183 00000 n
+0000019376 00000 n
+0000019570 00000 n
+0000019763 00000 n
+0000019958 00000 n
+0000020152 00000 n
+0000020347 00000 n
+0000020541 00000 n
+0000020736 00000 n
+0000020930 00000 n
+0000021125 00000 n
+0000021319 00000 n
+0000021514 00000 n
+0000021703 00000 n
+0000021892 00000 n
+0000022081 00000 n
+0000022270 00000 n
+0000022459 00000 n
+0000022653 00000 n
+0000022848 00000 n
+0000023042 00000 n
+0000023236 00000 n
+0000023712 00000 n
+0000023906 00000 n
+0000024101 00000 n
+0000024292 00000 n
+0000024483 00000 n
+0000024677 00000 n
+0000024872 00000 n
+0000025066 00000 n
+0000025261 00000 n
+0000025442 00000 n
+0000025729 00000 n
+0000027693 00000 n
+0000058983 00000 n
+0000059205 00000 n
+0000059955 00000 n
+0000061964 00000 n
+0000093710 00000 n
+0000093929 00000 n
+0000094698 00000 n
+0000096668 00000 n
+0000127738 00000 n
+0000127964 00000 n
+0000128716 00000 n
+0000128829 00000 n
+0000129077 00000 n
+0000129171 00000 n
+0000129795 00000 n
+0000142219 00000 n
+0000154857 00000 n
+0000166396 00000 n
+0000169687 00000 n
+0000169738 00000 n
+0000169824 00000 n
+0000169862 00000 n
+0000169900 00000 n
+0000169938 00000 n
+0000169976 00000 n
+trailer
+<< /ID 
+ % ReportLab generated PDF document -- digest (http://www.reportlab.com)
+ [(\251\236\237\243\204\036\205\037\026G5\336\266z[\273) (\251\236\237\243\204\036\205\037\026G5\336\266z[\273)]
+ /Info 142 0 R /Root 141 0 R /Size 156 >>
+startxref
+170014
+%%EOF

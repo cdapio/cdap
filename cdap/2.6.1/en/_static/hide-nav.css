@@ -1,0 +1,10 @@
+
+h3.pagenavtitle {
+    display: none;
+    visibility: hidden;
+}
+
+nav.pagenav {
+    display: none;
+    visibility: hidden;
+}
