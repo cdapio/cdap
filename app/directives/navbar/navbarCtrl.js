@@ -21,7 +21,7 @@ angular.module(PKG.name + '.commons')
       $scope.highlightTab = toState.data && toState.data.highlightTab;
       // This is required when user creates a new namespace in admin section.
       // As of now $dropdown doesn't have broadcast event for click.
-      if (fromState.name === "admin.namespace.create") {
+      if (fromState.name === 'admin.namespace.create') {
         updateNamespaceList();
       }
     });

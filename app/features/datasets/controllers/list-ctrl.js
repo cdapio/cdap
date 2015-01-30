@@ -6,5 +6,5 @@ angular.module(PKG.name + '.feature.datasets')
     })
       .then(function(datasets) {
         $scope.datasets = datasets;
-      })
+      });
   });

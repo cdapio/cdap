@@ -1,22 +1,54 @@
 <div class="row">
-  <div class="col-sm-3">
+  <div class="col-sm-3 sidebar">
 
     <ul class="list-group list-unstyled">
       <li class="list-group-item">
-        <a ui-sref="admin.system">
+        <a ui-sref="admin.system.overview">
           System Configuration
         </a>
+        <ul class="list-unstyled"
+            ng-show="submenu.system">
+          <li>
+            <a ui-sref="admin.system.instance">
+              Instance
+            </a>
+          </li>
+          <li>
+            <a ui-sref="admin.system.services">
+              Services
+            </a>
+          </li>
+          <li>
+            <a ui-sref="admin.system.notifications">
+              Notifications
+            </a>
+          </li>
+        </ul>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.security">
-          Security Configuration
+        <a ui-sref="admin.security.overview">
+          Systemwide Security
         </a>
+        <ul class="list-unstyled"
+            ng-show="submenu.security">
+          <li>
+            <a ui-sref="admin.security.permissions">
+              Global Permissions
+            </a>
+          </li>
+          <li>
+            <a ui-sref="admin.security.tokens">
+              Access Tokens
+            </a>
+          </li>
+          <li>
+            <a ui-sref="admin.security.logs">
+              Audit Logs
+            </a>
+          </li>
+        </ul>
       </li>
-      <li class="list-group-item">
-        <a ui-sref="admin.namespace.create">
-          Create Namespace
-        </a>
-      </li>
+
       <li
         class="list-group-item"
         data-start-collapsed="1"
@@ -25,6 +57,11 @@
           Namespaces
         </a>
         <ul class="list-unstyled" bs-collapse-target>
+          <li>
+            <a ui-sref="admin.namespace.create">
+              Create Namespace
+            </a>
+          </li>
           <my-tree-view data-model="nsList"></my-tree-view>
         </ul>
       </li>

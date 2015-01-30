@@ -20,5 +20,5 @@ angular.module(PKG.name + '.feature.data')
           label: 'Data',
           parent: 'overview'
         }
-      })
+      });
   });

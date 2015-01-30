@@ -36,7 +36,6 @@ angular.module(PKG.name+'.feature.apps')
           url: '/overview',
           parent: 'apps.detail',
           templateUrl: '/assets/features/apps/templates/detail.html',
-          controller: 'CdapAppDetailController',
           ncyBreadcrumb: {
             parent: 'apps.list',
             label: '{{$state.params.appId}}'

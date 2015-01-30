@@ -15,11 +15,7 @@
   </div>
 
 </div>
-<div ng-model="tabs.activeTab" bs-tabs>
-  <fieldset data-title="{{tab.title}}" ng-repeat="tab in tabs" bs-pane>
-    <div
-      ng-include="tab.partial"
-      onload="onTabLoaded($index)"
-    ></div>
-  </fieldset>
-</div>
+<my-tabs
+  data-tabs-partial-path="/assets/features/streams/templates/tabs/"
+  data-tabs-list="['Status','Explore','Programs','Inner','Metadata','Lineage','Resources']">
+</my-tabs>

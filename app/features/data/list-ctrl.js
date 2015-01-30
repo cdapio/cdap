@@ -8,7 +8,7 @@ angular.module(PKG.name + '.feature.data')
       .then(function(res) {
         $scope.dataList = res
           .map(function(dataset) {
-            dataset.dataType = "Stream";
+            dataset.dataType = 'Stream';
             return dataset;
           })
           .concat($scope.dataList);
@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.data')
       .then(function(res) {
         $scope.dataList = res
           .map(function(stream) {
-            stream.dataType = "Dataset";
+            stream.dataType = 'Dataset';
             return stream;
           })
           .concat($scope.dataList);
