@@ -139,6 +139,7 @@
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-adapters</artifactId>
           <version>${project.version}</version>
+          <scope>provided</scope>
         </dependency>
       </dependencies>
       <build>
