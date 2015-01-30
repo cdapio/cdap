@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when an element cannot be deleted.
+ * Thrown when an element already exists.
  */
-public class CannotBeDeletedException extends Exception {
+public class AlreadyExistsException extends Exception {
 
   private final String elementType;
   private final String elementId;
 
-  public CannotBeDeletedException(String elementType, String elementId) {
-    super(String.format("Element '%s' of type '%s' cannot be deleted", elementId, elementType));
+  public AlreadyExistsException(String elementType, String elementId) {
+    super(String.format("%s '%s' already exists", elementType, elementId));
     this.elementType = elementType;
     this.elementId = elementId;
   }
 
   /**
-   * @return Type of element: flow, stream, dataset, etc
+   * @return Type of the element: flow, stream, dataset, etc.
    */
   public String getElementType() {
     return elementType;
   }
 
   /**
-   * @return ID of the element
+   * @return ID of the element.
    */
   public String getElementId() {
     return elementId;

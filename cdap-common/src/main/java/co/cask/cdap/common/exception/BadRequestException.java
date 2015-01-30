@@ -14,24 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when a dataset type is not found
+ * Thrown when the input was bad.
  */
-public class DatasetTypeNotFoundException extends NotFoundException {
+public class BadRequestException extends Exception {
 
-  private final String datasetType;
-
-  public DatasetTypeNotFoundException(String datasetType) {
-    super("dataset type", datasetType);
-    this.datasetType = datasetType;
-  }
-
-  /**
-   * @return the dataset type that was not found
-   */
-  public String getDatasetType() {
-    return datasetType;
+  public BadRequestException(String s) {
+    super(s);
   }
 }

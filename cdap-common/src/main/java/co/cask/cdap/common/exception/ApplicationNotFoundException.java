@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when an adapter was not found.
+ * Thrown when an application is not found in CDAP.
  */
-public class AdapterNotFoundException extends NotFoundException {
+public class ApplicationNotFoundException extends NotFoundException {
 
-  private final String adapterName;
+  private final String appId;
 
-  public AdapterNotFoundException(String adapterName) {
-    super("adapter", adapterName);
-    this.adapterName = adapterName;
+  public ApplicationNotFoundException(String appId) {
+    super("application", appId);
+    this.appId = appId;
   }
 
   /**
-   * @return Name of the adapter that was not found
+   * @return ID of the application
    */
-  public String getAdapterName() {
-    return adapterName;
+  public String getAppId() {
+    return appId;
   }
 }

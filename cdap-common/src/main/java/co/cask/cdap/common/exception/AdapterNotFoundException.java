@@ -14,11 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Thrown when an adapter was not found.
  */
-public class UnauthorizedException extends Exception {
+public class AdapterNotFoundException extends NotFoundException {
 
+  private final String adapterName;
+
+  public AdapterNotFoundException(String adapterName) {
+    super("adapter", adapterName);
+    this.adapterName = adapterName;
+  }
+
+  /**
+   * @return Name of the adapter that was not found
+   */
+  public String getAdapterName() {
+    return adapterName;
+  }
 }

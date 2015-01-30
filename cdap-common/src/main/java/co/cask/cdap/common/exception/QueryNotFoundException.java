@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when a dataset module cannot be deleted.
+ * Thrown when a query was not found by its handle.
  */
-public class DatasetModuleCannotBeDeletedException extends CannotBeDeletedException {
+public class QueryNotFoundException extends NotFoundException {
 
-  private final String moduleName;
+  private final String queryHandle;
 
-  public DatasetModuleCannotBeDeletedException(String moduleName) {
-    super("dataset module", moduleName);
-    this.moduleName = moduleName;
+  public QueryNotFoundException(String queryHandle) {
+    super("query", queryHandle);
+    this.queryHandle = queryHandle;
   }
 
   /**
-   * @return Name of the dataset module that cannot be deleted
+   * @return Query handle of the query that was not found
    */
-  public String getModuleName() {
-    return moduleName;
+  public String getQueryHandle() {
+    return queryHandle;
   }
 }

@@ -14,24 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when a stream is not found
+ * Thrown when an access token is unauthorized or the authentication header is not exist.
  */
-public class StreamNotFoundException extends NotFoundException {
+public class UnAuthorizedAccessTokenException extends Exception {
 
-  private final String streamId;
-
-  public StreamNotFoundException(String streamId) {
-    super("stream", streamId);
-    this.streamId = streamId;
+  public UnAuthorizedAccessTokenException() {
+    super();
   }
 
-  /**
-   * @return ID of the stream that was not found
-   */
-  public String getStreamId() {
-    return streamId;
+  public UnAuthorizedAccessTokenException(String msg) {
+    super(msg);
+  }
+
+  public UnAuthorizedAccessTokenException(String msg, Throwable throwable) {
+    super(msg, throwable);
   }
 }

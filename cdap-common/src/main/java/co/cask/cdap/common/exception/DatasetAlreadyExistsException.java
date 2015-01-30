@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when Adapter is not found.
+ * Thrown when the user tries to create a dataset, but a dataset already exists by that name.
  */
-public class AdapterNotFoundException extends Exception {
-  public AdapterNotFoundException(String adapterName) {
-    super(String.format("Adapter %s not found.", adapterName));
+public class DatasetAlreadyExistsException extends AlreadyExistsException {
+
+  private final String datasetName;
+
+  public DatasetAlreadyExistsException(String datasetName) {
+    super("dataset", datasetName);
+    this.datasetName = datasetName;
+  }
+
+  /**
+   * @return Name of the existing dataset
+   */
+  public String getDatasetName() {
+    return datasetName;
   }
 }
