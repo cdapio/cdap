@@ -243,11 +243,7 @@ Application class' ``configure()`` you specify:
     public void configure() {
       DatasetProperties props = 
           DatasetProperties.builder().add("hbase.splits", "[[64],[128],[192]]").build();
-
-          DatasetProperties.builder().add("hbase.splits", new Gson().toJson(new byte[][]{{64},{128},{192}})).build();
-
       createDataset("myTable", KeyValueTable.class, props);
-
       // init other components
     }
   } 
