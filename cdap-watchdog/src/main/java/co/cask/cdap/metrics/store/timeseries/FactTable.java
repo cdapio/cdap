@@ -69,7 +69,7 @@ public final class FactTable {
    *                 resolution seconds. It essentially defines how many columns per row in the table.
    *                 This value should be < 65535.
    */
-  FactTable(MetricsTable timeSeriesTable,
+  public FactTable(MetricsTable timeSeriesTable,
             EntityTable entityTable, int resolution, int rollTime) {
     // Two bytes for column name, which is a delta timestamp
     Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
