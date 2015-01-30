@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * This class handle assignment of unique ID to entity name, persisted by a OVCTable.
@@ -90,6 +91,9 @@ public final class EntityTable {
    * @return Unique ID, it is guaranteed to be smaller than the maxId passed in constructor.
    */
   public long getId(String type, String name) {
+    if (name == null) {
+      return 0;
+    }
     return entityCache.getUnchecked(new EntityName(type, name)) % maxId;
   }
 
@@ -97,10 +101,14 @@ public final class EntityTable {
    * Returns the entity name for the given id and type.
    * @param id The id to lookup
    * @param type The type of the entity.
-   * @return The entity name with the given id assigned to.
+   * @return The entity name with the given id assigned to or {@code null} if given id is an encoded null value
    * @throws IllegalArgumentException if the given ID does not map to any name.
    */
+  @Nullable
   public String getName(long id, String type) {
+    if (id == 0) {
+      return null;
+    }
     try {
       return idCache.get(new EntityId(id, type)).getName();
     } catch (ExecutionException e) {
