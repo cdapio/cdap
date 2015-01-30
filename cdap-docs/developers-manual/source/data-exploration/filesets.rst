@@ -44,7 +44,7 @@ For example, in the configure method of your application::
       .build());
 
 These Dataset properties map directly to table properties in Hive. 
-For example, Dataset above would result in the following "create table" statement being generated::
+For example, the Dataset above would result in the following "create table" statement being generated::
 
   CREATE EXTERNAL TABLE cdap_user_myfiles(
     user string,
