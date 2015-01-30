@@ -4,9 +4,28 @@
 angular.module(PKG.name+'.services')
   .factory('myHelpers', function(){
 
-  function foo() {
-    return 'bar';
+
+   /**
+    * set a property deep in an object
+    * adapted from Y.namespace
+    * http://yuilibrary.com/yui/docs/api/files/yui_js_yui.js.html#l1370
+    * @param  {Object} obj object on which to set a value
+    * @param  {String} key potentially nested key, eg "foo.bar.baz"
+    * @param  {Mixed} val value to set at the key
+    * @return {Object}     modified obj
+    */
+  function deepSet(obj, key, val) {
+    console.log('it does not work yet');
+    return obj;
   }
+
+
+
+
+
+
+
+
 
   /*
     Purpose: Query a json object or an array of json objects
@@ -35,7 +54,7 @@ angular.module(PKG.name+'.services')
       5. query(obj1, 0, 'p2', 'p32', 'somethingelse') => null
       6. query(obj1, 1, 'p2', 'p32') => null
    */
-  
+
   function objectQuery(obj) {
     if (obj === null || typeof obj === "undefined") {
         return null;
@@ -50,8 +69,11 @@ angular.module(PKG.name+'.services')
     return obj;
   }
 
+
+  /* ----------------------------------------------------------------------- */
+
   return {
-    foo: foo,
+    deepSet: deepSet,
     objectQuery: objectQuery
   }
 });
