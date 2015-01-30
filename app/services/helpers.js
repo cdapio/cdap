@@ -1,6 +1,9 @@
 /**
  * various utility functions
  */
+
+var PERIOD = '.';
+
 angular.module(PKG.name+'.services')
   .factory('myHelpers', function(){
 
@@ -15,10 +18,26 @@ angular.module(PKG.name+'.services')
     * @return {Object}     modified obj
     */
   function deepSet(obj, key, val) {
-    console.log('it does not work yet');
+    var it = obj, j, d, m;
+
+    if (key.indexOf(PERIOD) > -1) {
+      d = key.split(PERIOD);
+      m = d.length-1;
+      for (j = 0; j <= m; j++) {
+        if(j!==m) {
+          it[d[j]] = it[d[j]] || {};
+          it = it[d[j]];
+        }
+        else { // last part
+          it[d[m]] = val;
+        }
+      }
+    } else {
+      obj[key] = val;
+    }
+
     return obj;
   }
-
 
 
 
