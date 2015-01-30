@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,4 +30,14 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
    * @return the specification bound to this HttpServiceContext
    */
   HttpServiceHandlerSpecification getSpecification();
+
+  /**
+   * @return number of instances of this handler.
+   */
+  int getInstanceCount();
+
+  /**
+   * @return instance id of this handler.
+   */
+  int getInstanceId();
 }

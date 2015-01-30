@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -34,7 +35,9 @@ import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +55,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   // dependent
   private static final String STREAM_META_TABLE = "app.meta";
   private static final String TYPE_STREAM = "stream";
+  private static final String TYPE_NAMESPACE = "namespace";
 
   private Transactional<StreamMds, MetadataStoreDataset> txnl;
 
@@ -118,14 +122,34 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public List<StreamSpecification> listStreams() throws Exception {
+  public List<StreamSpecification> listStreams(final String accountId) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, List<StreamSpecification>>() {
       @Override
       public List<StreamSpecification> apply(StreamMds mds) throws Exception {
-        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, accountId).build(),
                                 StreamSpecification.class);
       }
     });
+  }
+
+  @Override
+  public Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
+    return txnl.executeUnchecked(
+      new TransactionExecutor.Function<StreamMds, Multimap<NamespaceMeta, StreamSpecification>>() {
+        @Override
+        public Multimap<NamespaceMeta, StreamSpecification> apply(StreamMds mds) throws Exception {
+          ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+          // TODO use only one HBase row scanner to perform the below query - [CDAP-1285]
+          List<NamespaceMeta> namespaces =
+            mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE).build(), NamespaceMeta.class);
+          for (NamespaceMeta meta : namespaces) {
+            builder.putAll(meta, mds.streams.list(
+              new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, meta.getId()).build(),
+              StreamSpecification.class));
+          }
+          return builder.build();
+        }
+      });
   }
 
   private MetadataStoreDataset.Key getKey(String accountId, String streamName) {

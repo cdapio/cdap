@@ -17,7 +17,7 @@
 package co.cask.cdap.cli.util;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 

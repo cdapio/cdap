@@ -17,13 +17,13 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.AlreadyExistsException;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.DatasetModuleAlreadyExistsException;
-import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
-import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.DatasetModuleAlreadyExistsException;
+import co.cask.cdap.common.exception.DatasetModuleCannotBeDeletedException;
+import co.cask.cdap.common.exception.DatasetModuleNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.http.HttpMethod;

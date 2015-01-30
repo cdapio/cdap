@@ -39,7 +39,7 @@ write to—the data virtualization layer in CDAP.
 **Application virtualizations** include:
 
 - :doc:`Flows (and Flowlets) <flows-flowlets/index>`
-- :doc:`MapReduce Jobs <mapreduce-programs>`
+- :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Workflows <workflows>`
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Procedures <procedures>`

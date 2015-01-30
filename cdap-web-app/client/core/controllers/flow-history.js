@@ -56,12 +56,6 @@ define([], function () {
 
 		},
 
-		loadRun: function (runId) {
-
-			// Noop
-
-		},
-
 		get_flowlet: function (id) {
 			id = id + "";
 			var content = this.elements.Flowlet.content;

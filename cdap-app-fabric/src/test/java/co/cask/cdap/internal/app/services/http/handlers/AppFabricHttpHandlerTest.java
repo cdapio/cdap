@@ -44,6 +44,7 @@ import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
@@ -965,6 +966,23 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  private void setAndTestRuntimeArgs(String appId, String runnableType, String runnableId,
+                                     Map<String, String> args) throws Exception {
+    HttpResponse response;
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
+    String runtimeArgsUrl = String.format("/v2/apps/%s/%s/%s/runtimeargs", appId, runnableType, runnableId);
+    response = doPut(runtimeArgsUrl, argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doGet(runtimeArgsUrl);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String responseEntity = EntityUtils.toString(response.getEntity());
+    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() { }.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+  }
+
   /**
    * Test for schedule handlers.
    */
@@ -981,6 +999,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // 7. Verify there are runs after the resume by looking at the history
     HttpResponse response = deploy(AppWithSchedule.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    runtimeArguments.put("someKey", "someWorkflowValue");
+    runtimeArguments.put("workflowKey", "workflowValue");
+
+    setAndTestRuntimeArgs("AppWithSchedule", ProgramType.WORKFLOW.getCategoryName(), "SampleWorkflow",
+                          runtimeArguments);
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());

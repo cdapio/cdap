@@ -68,6 +68,7 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
    * @param notificationJson notification as a json object
    */
   protected void notificationReceived(NotificationFeed feed, JsonElement notificationJson) {
+    LOG.trace("Notification received on feed {}: {}", feed, notificationJson);
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
     synchronized (subscribers) {
       callers = ImmutableList.copyOf(callers);

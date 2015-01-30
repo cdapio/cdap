@@ -241,6 +241,7 @@ public final class ConcurrentStreamWriter implements Closeable {
       return eventQueue;
 
     } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);
     } finally {

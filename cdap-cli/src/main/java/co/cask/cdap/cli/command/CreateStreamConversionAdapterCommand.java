@@ -103,7 +103,7 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {
-    String schemaStr = arguments.get(ArgumentName.SCHEMA.toString(), "body bytes");
+    String schemaStr = arguments.get(ArgumentName.SCHEMA.toString(), "body string not null");
     return isJson(schemaStr) ? Schema.parseJson(schemaStr) : Schema.parseSQL(schemaStr);
   }
 
@@ -130,7 +130,7 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
     return new StringBuilder()
       .append("Creates a stream conversion ")
       .append(ElementType.ADAPTER.getPrettyName())
-      .append(" that periodically reads from a stream and writes to a time partitioned fileset.")
+      .append(" that periodically reads from a stream and writes to a time-partitioned fileset. ")
       .append(ArgumentName.FREQUENCY)
       .append(" is a number followed by a 'm', 'h', or 'd' for minute, hour, or day.")
       .append(ArgumentName.FORMAT)

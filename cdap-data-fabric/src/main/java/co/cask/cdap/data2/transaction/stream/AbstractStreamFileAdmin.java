@@ -24,6 +24,7 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -37,6 +38,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -68,6 +70,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
+  private ExploreFacade exploreFacade;
 
   // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
   // TODO: Remove usage of this when no longer needed
@@ -84,6 +87,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
     this.oldStreamAdmin = oldStreamAdmin;
+  }
+
+  @Inject(optional = true)
+  public void setExploreFacade(ExploreFacade exploreFacade) {
+    // Optional injection is used to simplify Guice injection since ExploreFacade is only need when explore is enabled
+    this.exploreFacade = exploreFacade;
   }
 
   @Override
@@ -244,6 +253,15 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     }
     if (!originalConfig.getFormat().equals(config.getFormat())) {
       saveConfig(config);
+
+      // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
+      // a hive change, as they are just properties used by the stream storage handler.
+      Schema currSchema = originalConfig.getFormat().getSchema();
+      Schema newSchema = config.getFormat().getSchema();
+      if (!currSchema.equals(newSchema)) {
+        alterExploreStream(config.getName(), false);
+        alterExploreStream(config.getName(), true);
+      }
     }
   }
 
@@ -292,6 +310,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     createStreamFeeds(config);
 
     streamCoordinatorClient.streamCreated(name);
+    alterExploreStream(name, true);
   }
 
   /**
@@ -419,6 +438,24 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     // For all new instances, set files offsets to smallest one constructed above.
     for (int i = oldInstances; i < instances; i++) {
       newStates.add(new StreamConsumerState(groupId, i, smallestOffsets));
+    }
+  }
+
+  private void alterExploreStream(String stream, boolean enable) {
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      // It shouldn't happen.
+      Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
+      try {
+        if (enable) {
+          exploreFacade.enableExploreStream(stream);
+        } else {
+          exploreFacade.disableExploreStream(stream);
+        }
+      } catch (Exception e) {
+        // at this time we want to still allow using stream even if it cannot be used for exploration
+        String msg = String.format("Cannot enable exploration of stream %s: %s", stream, e.getMessage());
+        LOG.error(msg, e);
+      }
     }
   }
 }

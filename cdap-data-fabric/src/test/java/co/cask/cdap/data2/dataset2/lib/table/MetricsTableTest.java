@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -28,6 +29,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -42,15 +45,15 @@ public abstract class MetricsTableTest {
 
   protected abstract MetricsTable getTable(String name) throws Exception;
 
-  static final byte[] A = Bytes.toBytes(1L);
-  static final byte[] B = Bytes.toBytes(2L);
-  static final byte[] C = Bytes.toBytes(3L);
-  static final byte[] P = Bytes.toBytes(4L);
-  static final byte[] Q = Bytes.toBytes(5L);
-  static final byte[] R = Bytes.toBytes(6L);
-  static final byte[] X = Bytes.toBytes(7L);
-  static final byte[] Y = Bytes.toBytes(8L);
-  static final byte[] Z = Bytes.toBytes(9L);
+  protected static final byte[] A = Bytes.toBytes(1L);
+  protected static final byte[] B = Bytes.toBytes(2L);
+  protected static final byte[] C = Bytes.toBytes(3L);
+  protected static final byte[] P = Bytes.toBytes(4L);
+  protected static final byte[] Q = Bytes.toBytes(5L);
+  protected static final byte[] R = Bytes.toBytes(6L);
+  protected static final byte[] X = Bytes.toBytes(7L);
+  protected static final byte[] Y = Bytes.toBytes(8L);
+  protected static final byte[] Z = Bytes.toBytes(9L);
 
   @Test
   public void testGetPutSwap() throws Exception {
@@ -98,17 +101,19 @@ public abstract class MetricsTableTest {
     Assert.assertArrayEquals(Y, table.get(A, Q));
   }
 
-  class IncThread extends Thread {
+  protected class IncThread extends Thread implements Closeable {
     final MetricsTable table;
     final byte[] row;
     final Map<byte[], Long> incrememts;
     int rounds;
-    IncThread(MetricsTable table, byte[] row, Map<byte[], Long> incrememts, int rounds) {
+
+    public IncThread(MetricsTable table, byte[] row, Map<byte[], Long> incrememts, int rounds) {
       this.table = table;
       this.row = row;
       this.incrememts = incrememts;
       this.rounds = rounds;
     }
+
     public void run() {
       while (rounds-- > 0) {
         try {
@@ -119,22 +124,29 @@ public abstract class MetricsTableTest {
         }
       }
     }
+
+    @Override
+    public void close() throws IOException {
+      table.close();
+    }
   }
 
-  class IncAndGetThread extends Thread {
+  protected class IncAndGetThread extends Thread implements Closeable {
     final MetricsTable table;
     final byte[] row;
     final byte[] col;
     final long delta;
     int rounds;
     Long previous = 0L;
-    IncAndGetThread(MetricsTable table, byte[] row, byte[] col, long delta, int rounds) {
+
+    public IncAndGetThread(MetricsTable table, byte[] row, byte[] col, long delta, int rounds) {
       this.table = table;
       this.row = row;
       this.col = col;
       this.delta = delta;
       this.rounds = rounds;
     }
+
     public void run() {
       while (rounds-- > 0) {
         try {
@@ -146,17 +158,20 @@ public abstract class MetricsTableTest {
         }
       }
     }
+
+    @Override
+    public void close() throws IOException {
+      table.close();
+    }
   }
 
   @Test
-  @Ignore
-  //TODO: CDAP-1186
   public void testConcurrentIncrement() throws Exception {
     final MetricsTable table = getTable("testConcurrentIncrement");
     final int rounds = 500;
     Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);
     Map<byte[], Long> inc2 = ImmutableMap.of(Y, 1L, Z, 2L);
-    Collection<Thread> threads = ImmutableList.of(new IncThread(table, A, inc1, rounds),
+    Collection<? extends Thread> threads = ImmutableList.of(new IncThread(table, A, inc1, rounds),
                                                   new IncThread(table, A, inc2, rounds),
                                                   new IncAndGetThread(table, A, Z, 5, rounds),
                                                   new IncAndGetThread(table, A, Z, 2, rounds));
@@ -165,7 +180,11 @@ public abstract class MetricsTableTest {
     }
     for (Thread t : threads) {
       t.join();
+      if (t instanceof Closeable) {
+        ((Closeable) t).close();
+      }
     }
+
     Assert.assertEquals(rounds + 10L, table.incrementAndGet(A, X, 10L));
     Assert.assertEquals(3 * rounds - 20L, table.incrementAndGet(A, Y, -20L));
     Assert.assertEquals(9 * rounds, table.incrementAndGet(A, Z, 0L));
@@ -316,7 +335,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testRangeDeleteWithoutFilter() throws Exception {
-    MetricsTable table = getTable("rangeDelete");
+    MetricsTable table = getTable("rangeDeleteWithoutFilter");
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {

@@ -17,11 +17,11 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.AdapterNotFoundException;
-import co.cask.cdap.client.exception.AdapterTypeNotFoundException;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.AdapterTypeNotFoundException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;

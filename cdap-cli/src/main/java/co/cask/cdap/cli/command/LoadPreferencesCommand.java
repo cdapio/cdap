@@ -20,7 +20,7 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.client.exception.BadRequestException;
+import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;

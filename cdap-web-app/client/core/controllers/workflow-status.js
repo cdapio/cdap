@@ -192,10 +192,10 @@ define(['helpers/plumber'], function (Plumber) {
       }
 
       var self = this;
-      var context = this.get('model.context');
+      var context = this.get('model.schedulesContext');
 
       this.get('elements.Schedule').forEach(function (schedule, index) {
-        self.HTTP.rest(context, 'schedules', schedule.id.program.programName, 'status', function (status) {
+        self.HTTP.rest(context, 'schedules', schedule.id.schedule.name, 'status', function (status) {
 
           if (status.status === 'SUSPENDED') {
             self.set('suspended', true);
@@ -263,11 +263,11 @@ define(['helpers/plumber'], function (Plumber) {
     resume: function () {
 
       var self = this;
-      var context = this.get('model.context');
+      var context = this.get('model.schedulesContext');
       var total = this.get('schedules.length');
 
       this.get('elements.Schedule').forEach(function (schedule, index) {
-        self.HTTP.rpc(context, 'schedules', schedule.id, 'resume', function () {
+        self.HTTP.rpc(context, 'schedules', schedule.id.schedule.name, 'resume', function () {
           if (!--total) {
             self.set('suspended', false);
           }
@@ -279,11 +279,11 @@ define(['helpers/plumber'], function (Plumber) {
     suspend: function () {
 
       var self = this;
-      var context = this.get('model.context');
+      var context = this.get('model.schedulesContext');
       var total = this.get('schedules.length');
 
       this.get('elements.Schedule').forEach(function (schedule, index) {
-        self.HTTP.rpc(context, 'schedules', schedule.id, 'suspend', function () {
+        self.HTTP.rpc(context, 'schedules', schedule.id.schedule.name, 'suspend', function () {
           if (!--total) {
             self.set('suspended', true);
           }

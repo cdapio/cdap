@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -92,7 +92,15 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    serviceWorker.stop();
+    if (serviceWorker == null) {
+      return;
+    }
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(serviceWorker.getClass().getClassLoader());
+    try {
+      serviceWorker.stop();
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
   }
 
   @Override
@@ -105,6 +113,10 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
         t.start();
       }
     };
+  }
+
+  public void setInstanceCount(int instanceCount) {
+    context.setInstanceCount(instanceCount);
   }
 
   private void initialize() throws Exception {

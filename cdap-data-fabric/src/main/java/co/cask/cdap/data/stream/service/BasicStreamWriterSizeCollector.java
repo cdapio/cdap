@@ -23,6 +23,8 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
@@ -32,6 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Basic implementation of a {@link StreamWriterSizeCollector}.
  */
 public class BasicStreamWriterSizeCollector extends AbstractIdleService implements StreamWriterSizeCollector {
+  private static final Logger LOG = LoggerFactory.getLogger(BasicStreamWriterSizeCollector.class);
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ConcurrentMap<String, AtomicLong> streamSizes;
@@ -81,5 +84,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     if (value != null) {
       value.addAndGet(dataSize);
     }
+    LOG.trace("Received data for stream {}: {}B. Total size is now {}", streamName, dataSize,
+              value == null ? dataSize : value.get());
   }
 }
