@@ -93,6 +93,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     if (adapterArguments.getHeadersStr() != null) {
       job.getConfiguration().set(HEADERS_KEY, adapterArguments.getHeadersStr());
     }
+    job.setJobName("StreamConversion_" + adapterArguments.getSourceName() + "_" + sinkName + "-" + partitionTime);
   }
 
   @Override

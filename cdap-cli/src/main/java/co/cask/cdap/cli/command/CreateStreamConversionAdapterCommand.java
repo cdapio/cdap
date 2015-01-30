@@ -103,7 +103,7 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {
-    String schemaStr = arguments.get(ArgumentName.SCHEMA.toString(), "body bytes");
+    String schemaStr = arguments.get(ArgumentName.SCHEMA.toString(), "body string not null");
     return isJson(schemaStr) ? Schema.parseJson(schemaStr) : Schema.parseSQL(schemaStr);
   }
 
