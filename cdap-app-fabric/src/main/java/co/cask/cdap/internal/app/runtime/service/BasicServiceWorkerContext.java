@@ -72,19 +72,19 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final DatasetFramework datasetFramework;
   private final Metrics userMetrics;
   private final int instanceId;
-  private final int instanceCount;
+  private volatile int instanceCount;
   private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
   private final Program program;
   private final Map<String, String> runtimeArgs;
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
                                    int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
-                                   MetricsCollectionService metricsSerice,
+                                   MetricsCollectionService metricsCollectionService,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient transactionSystemClient,
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsSerice, program, spec.getName(), runId.getId(), instanceId),
+          getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
           datasetFramework, cConf, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
@@ -94,7 +94,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsSerice, program,
+    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  spec.getName(), runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
 
@@ -186,6 +186,10 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   @Override
   public int getInstanceId() {
     return instanceId;
+  }
+
+  public void setInstanceCount(int instanceCount) {
+    this.instanceCount = instanceCount;
   }
 
   @Override

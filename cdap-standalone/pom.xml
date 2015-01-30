@@ -150,6 +150,7 @@
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-adapters</artifactId>
           <version>${project.version}</version>
+          <scope>provided</scope>
         </dependency>
       </dependencies>
       <build>
@@ -176,10 +177,10 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
-                  <excludeArtifactIds>zkclient,servlet-api,cdap-adapters</excludeArtifactIds>
+                  <excludeArtifactIds>zkclient,servlet-api</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
-                  <includeScope>compile</includeScope>
+                  <includeScope>runtime</includeScope>
                 </configuration>
               </execution>
               <execution>

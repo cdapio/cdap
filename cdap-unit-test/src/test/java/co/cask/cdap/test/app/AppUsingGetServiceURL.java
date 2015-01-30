@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -53,6 +54,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
   public static final String CENTRAL_SERVICE = "CentralService";
   public static final String SERVICE_WITH_WORKER = "ServiceWithWorker";
+  public static final String LIFECYCLE_WORKER = "LifecycleWorker";
   public static final String PROCEDURE = "ForwardingProcedure";
   public static final String ANSWER = "MagicalString";
   public static final String DATASET_NAME = "SharedDataSet";
@@ -121,9 +123,52 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       setName(SERVICE_WITH_WORKER);
       addHandler(new NoOpHandler());
       addWorkers(new PingingWorker());
+      addWorker(LIFECYCLE_WORKER, new LifecycleWorker());
     }
+
     public static final class NoOpHandler extends AbstractHttpServiceHandler {
       // handles nothing.
+    }
+
+    private static final class LifecycleWorker extends AbstractServiceWorker {
+      private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
+      private volatile boolean isRunning;
+
+      @Override
+      protected void configure() {
+        useDatasets(WORKER_INSTANCES_DATASET);
+        setInstances(3);
+      }
+
+      @Override
+      public void initialize(ServiceWorkerContext context) throws Exception {
+        super.initialize(context);
+
+        String key = String.format("init.%d", getContext().getInstanceId());
+        byte[] value = Bytes.toBytes(getContext().getInstanceCount());
+        writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+      }
+
+      @Override
+      public void run() {
+        isRunning = true;
+        while (isRunning) {
+          try {
+            TimeUnit.MILLISECONDS.sleep(50);
+          } catch (InterruptedException e) {
+            LOG.error("Error sleeping in LifecycleWorker", e);
+          }
+        }
+      }
+
+      @Override
+      public void stop() {
+        isRunning = false;
+
+        String key = String.format("stop.%d", getContext().getInstanceId());
+        byte[] value = Bytes.toBytes(getContext().getInstanceCount());
+        writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+      }
     }
 
     private static final class PingingWorker extends AbstractServiceWorker {
@@ -132,32 +177,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       @Override
       protected void configure() {
         useDatasets(DATASET_NAME);
-        useDatasets(WORKER_INSTANCES_DATASET);
         setInstances(5);
-      }
-
-      @Override
-      public void initialize(ServiceWorkerContext context) throws Exception {
-        super.initialize(context);
-
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataset(WORKER_INSTANCES_DATASET);
-            String key = String.format("%d.%d", getContext().getInstanceId(), System.nanoTime());
-            table.write(key, Bytes.toBytes(getContext().getInstanceCount()));
-          }
-        });
-      }
-
-      private void writeToDataSet(final String key, final String val) {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataset(DATASET_NAME);
-            table.write(key, val);
-          }
-        });
       }
 
       @Override
@@ -168,7 +188,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         }
 
         URL url;
-        String response;
         try {
           url = new URL(baseURL, "ping");
         } catch (MalformedURLException e) {
@@ -179,9 +198,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           HttpURLConnection conn = (HttpURLConnection) url.openConnection();
           try {
             if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-              response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
               // Write the response to dataset, so that we can verify it from a test.
-              writeToDataSet(DATASET_KEY, response);
+              writeToDataSet(getContext(), DATASET_NAME, DATASET_KEY, ByteStreams.toByteArray(conn.getInputStream()));
             }
           } finally {
             conn.disconnect();
@@ -190,6 +208,18 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           LOG.error("Got exception {}", e);
         }
       }
+    }
+
+
+    private static void writeToDataSet(final ServiceWorkerContext context,
+                                       final String tableName, final String key, final byte[] value) {
+      context.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          KeyValueTable table = context.getDataset(tableName);
+          table.write(key, value);
+        }
+      });
     }
   }
 
@@ -201,10 +231,10 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     @Override
     protected void configure() {
       setName("CentralService");
-      addHandler(new NoOpHandler());
+      addHandler(new PingHandler());
     }
 
-    public static final class NoOpHandler extends AbstractHttpServiceHandler {
+    public static final class PingHandler extends AbstractHttpServiceHandler {
       @Path("/ping")
       @GET
       public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
