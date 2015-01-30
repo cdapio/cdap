@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -25,12 +26,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
@@ -61,6 +65,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractDistributedProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedProgramRunner.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .create();
 
   private final TwillRunner twillRunner;
   private final Configuration hConf;
@@ -104,7 +112,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       throw Throwables.propagate(e);
     }
 
-    final String runtimeArgs = new Gson().toJson(options.getUserArguments());
+    final String programOptions = GSON.toJson(options);
 
     // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
     // Twill would also ignore it if it is not running in secure mode.
@@ -124,7 +132,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
-            String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs
+            String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
           ).start();
         return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram, programDir);
       }
