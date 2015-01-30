@@ -13,30 +13,41 @@ Data Exploration
 .. toctree::
    :maxdepth: 1
    
-    Streams <streams>
-    Filesets <filesets>
-    Custom Datasets <custom-datasets>
+    Stream Exploration <streams>
+    Fileset Exploration <filesets>
+    Custom Dataset Exploration <custom-datasets>
     Integration with External Systems <integration>
 
 This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
 Queries can be run over Streams and certain types of Datasets, with a JDBC driver
 providing integration with external systems such as Business Intelligence (BI) tools.
 
-.. rubric:: Exploring Streams
 
-All streams can be explored, with support for attaching read formats and schemas, enabling powerful queries.
-:ref:`stream-exploration` describes how you can attach a schema to a Stream.
+.. |stream-exploration| replace:: **Stream Exploration:**
+.. _stream-exploration: streams.html
 
-.. rubric:: Exploring FileSet Datasets
+- |stream-exploration|_ **All streams can be explored**, with support for attaching read
+  formats and schemas, **enabling powerful queries.** This section covers how you attach a
+  format and schema to a Stream.
 
-:ref:`fileset-exploration` describes how you can make a ``FileSet`` or ``TimePartitionedFileSet`` explorable.
 
-.. rubric:: Exploring Custom Datasets
+.. |fileset-exploration| replace:: **Fileset Exploration:**
+.. _fileset-exploration: filesets.html
 
-:ref:`custom-dataset-exploration` describes how you can make a custom dataset that is explorable.
+- |fileset-exploration|_ Describes how you can make a ``FileSet`` or 
+  ``TimePartitionedFileSet`` that's **explorable.**
 
-.. rubric:: Integration with External Systems
 
-Through the use of a JDBC driver, CDAP can be integrated with a wide range of external systems. :ref:`exploration-integration`
-describes how to use the JDBC driver programmatically, with two examples of integrating CDAP with
-business intelligence tools.
+.. |custom-dataset-exploration| replace:: **Custom Dataset Exploration:**
+.. _custom-dataset-exploration: custom-datasets.html
+
+- |custom-dataset-exploration|_ Describes how you can make a **custom Dataset** that is **explorable.**
+
+
+.. |integration-exploration| replace:: **Integration with External Systems:**
+.. _integration-exploration: integration.html
+
+- |integration-exploration|_ Through the use of a **JDBC driver**, CDAP can be integrated with
+  a wide range of external systems. This describes how to use the JDBC driver
+  programmatically, with **two examples of integrating CDAP** with business intelligence
+  tools.

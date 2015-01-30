@@ -4,8 +4,13 @@
 
 .. _exploration-integration:
 
+============================================
 Integrating with External Systems
--------------------------------------
+============================================
+
+CDAP JDBC Driver
+================
+
 CDAP provides a JDBC driver to make integrations with external programs and third-party BI (business intelligence)
 tools easier.
 
@@ -22,8 +27,8 @@ with the matching version number::
 
   cdap-explore-jdbc-<version>.jar
 
-Using the CDAP JDBC driver in your Java code
-............................................
+Using the CDAP JDBC Driver in your Java Code
+-----------------------------------------------------------
 
 To use CDAP JDBC driver in your code, place ``cdap-jdbc-driver.jar`` in the classpath of your application.
 If you are using Maven, you can simply add a dependency in your file ``pom.xml``::
@@ -61,7 +66,7 @@ JDBC drivers are a standard in the Java ecosystem, with many `resources about th
 <http://docs.oracle.com/javase/tutorial/jdbc/>`__.
 
 Accessing CDAP Datasets through Business Intelligence Tools
------------------------------------------------------------
+===========================================================
 
 Most Business Intelligence tools can integrate with relational databases using JDBC drivers. They often include
 drivers to connect to standard databases such as MySQL or PostgreSQL.
@@ -71,7 +76,7 @@ We'll look at two business intelligence tools — *SquirrelSQL* and *Pentaho Dat
 and see how to connect them to a running CDAP instance and interact with CDAP Datasets.
 
 SquirrelSQL
-...........
+-----------
 
 *SquirrelSQL* is a simple JDBC client which executes SQL queries against many different relational databases.
 Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
@@ -113,7 +118,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
       :width: 6in
 
 Pentaho Data Integration
-........................
+------------------------
 
 *Pentaho Data Integration* is an advanced, open source business intelligence tool that can execute
 transformations of data coming from various sources. Let's see how to connect it to
