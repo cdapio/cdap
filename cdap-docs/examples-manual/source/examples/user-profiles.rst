@@ -40,7 +40,8 @@ of the Application are tied together by a class ``UserProfiles``:
     :language: java
     :lines: 32-
 
-This application uses a Table with conflict detection at the column level.
+This application uses a Table with conflict detection either at the row level or
+at the column level.
 
 A conflict occurs if two transactions that overlap in time modify the same data in a table.
 For example, a flowlet's process method might overlap with a service handler.
@@ -57,11 +58,26 @@ only detected if both transactions modify the same column of the same row.
 This is more precise, but it requires more book-keeping in the transaction
 system and thus can impact performance.
 
-UserProfileService
-------------------
+Column-level conflict detection should be enabled if it is known that different
+transactions frequently modify different columns of the same row concurrently.
+
+UserProfiles Application
+------------------------
+
+This application uses:
+
+- a Stream ``events`` to receive events of user activity;
+- a Dataset ``profiles`` to store user profiles with conflict detection at either the row or column level;
+- a Dataset ``counters`` to count events by URL (this is not essential for the purpose of the example);
+- a Service ``UserProfileService`` to create, delete, and update profiles; and
+- a Flow ``ActivityFlow`` to count events and record the time of last activity for the users.
 
 The ``UserProfileService`` is a Service for creating and modifying user profiles. It has
 handlers to create, update, and retrieve user profiles.
+
+A script (``add-users.sh``) is used to populate the ``profiles`` Dataset. Two additional 
+scripts (``update-login.sh`` and ``send-events.sh``) are used to create a conflict by attempting
+to write to two different columns of the same row at the same time.
 
 
 Building and Starting
@@ -114,8 +130,8 @@ Running CDAP Applications
 Running the Example
 ===================
 
-Delete an Existing Dataset
------------------------------
+Deleting an Existing Dataset
+----------------------------
 
 Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call:
 
