@@ -1,19 +1,19 @@
 /**
  * various utility functions
  */
-
-var PERIOD = '.';
-
 angular.module(PKG.name+'.services')
   .factory('myHelpers', function(){
 
+  var PERIOD = '.';
+
+  /* ----------------------------------------------------------------------- */
 
    /**
     * set a property deep in an object
     * adapted from Y.namespace
     * http://yuilibrary.com/yui/docs/api/files/yui_js_yui.js.html#l1370
     * @param  {Object} obj object on which to set a value
-    * @param  {String} key potentially nested key, eg "foo.bar.baz"
+    * @param  {String} key potentially nested jsonpath, eg "foo.bar.baz"
     * @param  {Mixed} val value to set at the key
     * @return {Object}     modified obj
     */
@@ -39,12 +39,19 @@ angular.module(PKG.name+'.services')
     return obj;
   }
 
+  /* ----------------------------------------------------------------------- */
 
+  /**
+   * get to a property deep in an obj by jsonpath
+   * @param  {Object} obj object to inspect
+   * @param  {String} key jsonpath eg "foo.bar.baz"
+   * @return {Mixed}     value at the
+   */
+  function deepGet(obj, key) {
+    return objectQuery.apply(null, [obj].concat(key.split('.')));
+  }
 
-
-
-
-
+  /* ----------------------------------------------------------------------- */
 
   /*
     Purpose: Query a json object or an array of json objects
