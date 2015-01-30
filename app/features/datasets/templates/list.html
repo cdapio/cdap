@@ -11,8 +11,8 @@
   </thead>
   <tbody>
     <tr ng-repeat="data in datasets | orderBy:sortable.predicate:sortable.reverse">
-      <td ng-bind="data.name">
-
+      <td>
+        <a ui-sref="datasets.detail.overview({datasetId: data.name})" ng-bind="data.name | caskCapitalizeFilter">
       </td>
       <td ng-bind="data.type">  </td>
       <td ng-bind="data.description">  </td>

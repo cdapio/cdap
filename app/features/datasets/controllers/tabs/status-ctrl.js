@@ -29,12 +29,14 @@ angular.module(PKG.name + '.feature.datasets')
         var match = res.filter(function(ds) {
           return ds.name.indexOf(currentDataset) > -1;
         });
-        $scope.schema = query(
+        $scope.schema = (query(
             JSON.parse( query(match, 0, "properties", "schema") ),
             "fields"
-          )
+          ) || [])
           .map(function(field) {
-            field.type = flattenFieldType(field.type);
+            if (angular.isArray(field.type)) {
+              field.type = flattenFieldType(field.type);
+            }
             return field;
           });
       });
