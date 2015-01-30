@@ -140,6 +140,6 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public String getCategory() {
-    return CommandCategory.DATA_EGRESS.getName();
+    return CommandCategory.EGRESS.getName();
   }
 }

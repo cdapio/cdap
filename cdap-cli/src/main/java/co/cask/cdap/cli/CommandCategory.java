@@ -22,8 +22,10 @@ package co.cask.cdap.cli;
 public enum CommandCategory {
   GENERAL("General"),
   LIFECYCLE("Lifecycle"),
-  DATA_INGRESS("Data Ingress"),
-  DATA_EGRESS("Data Egress");
+  DATASET("Dataset"),
+  EXPLORE("Explore"),
+  INGEST("Ingest"),
+  EGRESS("Egress");
 
   final String name;
 

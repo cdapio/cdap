@@ -61,6 +61,6 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getCategory() {
-    return CommandCategory.DATA_INGRESS.getName();
+    return CommandCategory.INGEST.getName();
   }
 }

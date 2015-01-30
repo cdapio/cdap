@@ -98,6 +98,6 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
 
   @Override
   public String getCategory() {
-    return CommandCategory.DATA_INGRESS.getName();
+    return CommandCategory.INGEST.getName();
   }
 }

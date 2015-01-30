@@ -120,6 +120,6 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getCategory() {
-    return CommandCategory.DATA_EGRESS.getName();
+    return CommandCategory.EXPLORE.getName();
   }
 }
