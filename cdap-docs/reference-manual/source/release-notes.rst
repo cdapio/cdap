@@ -26,10 +26,14 @@ Cask Data Application Platform Release Notes
 `Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
 =============================================================
 
-
 CDAP Bug Fixes
 --------------
-
+- Allow unchecked Dataset upgrade on application deploy
+  (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__).
+- Update Hive Dataset table when a dataset is updated
+  (`CDAP-71 <https://issues.cask.co/browse/CDAP-71>`__).
+- Use Hadoop configuration files bundled with Explore Service
+  (`CDAP-1250 <https://issues.cask.co/browse/CDAP-1250>`__).
 
 .. _known-issues-261:
 
