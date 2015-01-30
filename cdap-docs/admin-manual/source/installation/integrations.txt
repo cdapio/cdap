@@ -90,7 +90,7 @@ Install, Setup, and Startup
 
 .. rubric:: Setup
 
-Run the Cloudera Manager *Add Service* Wizard and select *CDAP*.
+Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
 When completing the Wizard, these notes may help:
 
    - *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
@@ -106,7 +106,7 @@ When completing the Wizard, these notes may help:
      Port"; it’s used by the CDAP Console to connect to the Router service.
 
 
-.. rubric:: Cloudera Manager *Add Service* Wizard, Step-by-Step
+.. rubric:: Cloudera Manager Admin Console *Add Service* Wizard, Step-by-Step
 
 .. figure:: ../_images/integration-cloudera/cloudera-csd-01.png
    :figwidth: 100%
@@ -175,12 +175,12 @@ When completing the Wizard, these notes may help:
 
 .. rubric:: Startup
 
-After the *Add Service* Wizard completes, the "Quick Link" from the "Cask DAP" service
-should load in the Cloudera Manager UI. (By default, port 9999 of the host where the
-Web-App role instance is running.) The UI may initially show errors while all the CDAP
+After the Admin Console's *Add Service* Wizard completes, the "Quick Link" from the "Cask DAP" service
+should load in the Admin Console. (By default, port 9999 of the host where the
+Web-App role instance is running.) The Admin Console may initially show errors while all the CDAP
 YARN containers are starting up.
 
-Allow up to a few minutes for this. The "Services" link on the upper right will show
+Allow for up to a few minutes for this. The "Services" link on the upper right will show
 the status of the CDAP services. They should all turn green, showing completion of
 startup. 
 
@@ -207,7 +207,7 @@ Verification
 
 After CDAP has started up, the best way to verify the installation is to deploy an application,
 ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the UI, though this can all be done via
+procedure describes how to do this primarily, via the CDAP Console, though this can all be done via
 command line.
 
 We provide in our SDK pre-built ``.JAR`` files for convenience.
@@ -218,7 +218,11 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we'll use the ``Purchase`` example and its jar, located in 
-   ``CDAP_HOME/examples/Purchase-<version>.jar.``
+   ``CDAP_HOME/examples/Purchase-<version>.jar.`` The ``Purchase``example is documented 
+   in the CDAP :ref:`examples manual <examples-purchase>`.
+
+#. Open a web browser to the CDAP Console. It is located on port ``9999`` of the box where
+   you installed CDAP.
 
 #. From the CDAP Console Overview page, click "Load App” and navigate to the jar.
    (You can also drag-and-drop to the browser window)
