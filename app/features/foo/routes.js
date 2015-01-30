@@ -12,12 +12,16 @@ angular.module(PKG.name+'.feature.foo')
         templateUrl: '/assets/features/foo/foo.html'
       })
 
-      .state('test-prefs', {
-        url: '/test/prefs',
-        templateUrl: '/assets/features/foo/prefs.html',
+      .state('test-settings', {
+        url: '/test/settings',
+        templateUrl: '/assets/features/foo/settings.html',
         controller: function ($scope, mySettings) {
-          // window.mySettings = mySettings;
-          $scope.model = mySettings.get('test');
+          mySettings.get('test').then(function (result){
+            $scope.model = result;
+          });
+          $scope.doSave = function () {
+            mySettings.set('test', $scope.model);
+          };
         }
       });
 

@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.programs')
     $scope.goToDetail = function(programId) {
       $state.go($stateParams.programType + '.detail', {
         programId: programId
-      })
+      });
     };
 
     $scope.doProgram = function(programId, action) {
@@ -42,5 +42,5 @@ angular.module(PKG.name + '.feature.programs')
           method: 'POST'
         }
       );
-    }
+    };
   });

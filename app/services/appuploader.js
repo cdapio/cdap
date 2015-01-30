@@ -30,5 +30,5 @@ angular.module(PKG.name + '.services')
 
     return {
       upload: upload
-    }
+    };
   });

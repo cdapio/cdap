@@ -8,7 +8,7 @@ angular.module(PKG.name + '.feature.streams')
       },
       {
         text: 'Action1',
-        href: "#"
+        href: '#'
       }
     ];
 
