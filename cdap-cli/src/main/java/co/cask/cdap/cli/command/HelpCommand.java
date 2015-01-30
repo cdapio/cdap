@@ -58,6 +58,7 @@ public class HelpCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     output.println();
+    output.println();
 
     if (arguments.hasArgument(ArgumentName.COMMAND_CATEGORY.getName())) {
       // help with one category
@@ -76,11 +77,6 @@ public class HelpCommand implements Command {
       printCommands(output, category.getName(), commandList);
     } else {
       // normal help
-      output.println("CLI version " + config.getVersion());
-      output.println(Constants.EV_HOSTNAME + "=" + config.getHost());
-      output.println();
-      output.println("Available commands:");
-      output.println();
 
       Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
                                                                          Predicates.<Command>alwaysTrue());
