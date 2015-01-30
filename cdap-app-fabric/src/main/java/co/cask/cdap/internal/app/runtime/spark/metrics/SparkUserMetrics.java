@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.metrics;
+package co.cask.cdap.internal.app.runtime.spark.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.Spark;
@@ -36,11 +36,10 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
 
   /** For serde purposes only */
   public SparkUserMetrics() {
-    metricsCollector = null;
   }
 
-  public SparkUserMetrics(MetricsCollector collector) {
-    metricsCollector = collector.childCollector(Constants.Metrics.Tag.SCOPE, "user");
+  public static void setMetricsCollector(MetricsCollector collector) {
+    SparkUserMetrics.metricsCollector = collector.childCollector(Constants.Metrics.Tag.SCOPE, "user");
   }
 
   @Override
@@ -53,11 +52,19 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
     metricsCollector.gauge(metricName, value);
   }
 
+  /**
+   * Since MetricsCollector (only member) is a static member there is nothing to serialize.
+   * For supporting Spark in Distributed mode, this needs to be revisited.
+   */
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     //do nothing
   }
 
+  /**
+   * Since MetricsCollector (only member) is a static field there is nothing to serialize.
+   * For supporting Spark in Distributed mode, this needs to be revisited.
+   */
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     //do nothing
