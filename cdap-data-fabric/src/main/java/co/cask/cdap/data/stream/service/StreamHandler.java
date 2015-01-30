@@ -32,7 +32,6 @@ import co.cask.cdap.data.stream.service.upload.FileContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -95,8 +94,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final MetricsCollector streamHandlerMetricsCollector;
   private final MetricsCollector streamMetricsCollector;
   private final ConcurrentStreamWriter streamWriter;
-  private final ExploreFacade exploreFacade;
-  private final boolean exploreEnabled;
   private final long batchBufferThreshold;
   private final StreamBodyConsumerFactory streamBodyConsumerFactory;
 
@@ -114,14 +111,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                        StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade, StreamWriterSizeCollector sizeCollector) {
+                       StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.exploreFacade = exploreFacade;
     this.sizeCollector = sizeCollector;
-    this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
     this.streamHandlerMetricsCollector = metricsCollectionService.getCollector(getStreamHandlerMetricsContext());
@@ -192,16 +187,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
     streamMetaStore.addStream(accountID, stream);
-    // Enable ad-hoc exploration of stream
-    if (exploreEnabled) {
-      try {
-        exploreFacade.enableExploreStream(stream);
-      } catch (Exception e) {
-        // at this time we want to still allow using stream even if it cannot be used for exploration
-        String msg = String.format("Cannot enable exploration of stream %s: %s", stream, e.getMessage());
-        LOG.error(msg, e);
-      }
-    }
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -303,15 +288,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     streamAdmin.updateConfig(requestedConfig);
-    // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
-    // a hive change, as they are just properties used by the stream storage handler.
-    Schema currSchema = currConfig.getFormat().getSchema();
-    Schema newSchema = requestedConfig.getFormat().getSchema();
-    if (exploreEnabled && !currSchema.equals(newSchema)) {
-      exploreFacade.disableExploreStream(stream);
-      exploreFacade.enableExploreStream(stream);
-    }
-
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
