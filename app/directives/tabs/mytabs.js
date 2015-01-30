@@ -3,7 +3,7 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'EA',
       scope: {
-        tabsPartialPath: '=',
+        tabsPartialPath: '@',
         tabs: '&'
       },
       controller: 'myTabsCtrl',

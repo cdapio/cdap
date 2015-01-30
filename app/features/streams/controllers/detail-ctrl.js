@@ -19,15 +19,4 @@ angular.module(PKG.name + '.feature.streams')
         $scope.stream = streams;
       });
 
-    $scope.tabs = [
-      'Status',
-      'Explore',
-      'Programs',
-      'Inner',
-      'Metadata',
-      'Lineage',
-      'Resources'
-    ];
-    $scope.tabsPartialPath = '/assets/features/streams/templates/tabs/';
-    
   });
