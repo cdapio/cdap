@@ -230,7 +230,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we'll use the ``Purchase`` example and its jar, located in 
-   ``CDAP_HOME/examples/Purchase-<version>.jar.`` The ``Purchase``example is documented 
+   ``CDAP_HOME/examples/Purchase-<version>.jar``. The ``Purchase`` example is documented 
    in the CDAP :ref:`examples manual <examples-purchase>`.
 
 #. Open a web browser to the CDAP Console. It is located on port ``9999`` of the box where
