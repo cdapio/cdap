@@ -39,7 +39,7 @@ If you are using Maven, you can simply add a dependency in your file ``pom.xml``
   </dependencies>
 
 Here is a snippet of Java code that uses the CDAP JDBC driver to connect to a running instance of CDAP,
-and executes a query::
+and executes a query over a CDAP dataset ``mydataset``::
 
   // First, register the driver once in your application
   Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");

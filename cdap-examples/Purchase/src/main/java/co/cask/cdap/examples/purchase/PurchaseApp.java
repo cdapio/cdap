@@ -17,10 +17,8 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 
@@ -67,23 +65,6 @@ public class PurchaseApp extends AbstractApplication {
     // Schedule the workflow
     scheduleWorkflow("DailySchedule", "0 4 * * *", "PurchaseHistoryWorkflow");
 
-
-    Schema schema = Schema.recordOf(
-      "purchase",
-      Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("item_id", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
-    );
-    createDataset("myfiles", "fileSet", FileSetProperties.builder()
-      .setBasePath("mylocation")
-      .setInputFormat("org.apache.avro.mapreduce.AvroKeyInputFormat")
-      .setOutputFormat("org.apache.avro.mapreduce.AvroKeyOutputFormat")
-      .setEnableExploreOnCreate(true)
-      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", schema.toString())
-      .build());
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
       ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);

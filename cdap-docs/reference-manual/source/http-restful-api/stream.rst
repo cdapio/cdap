@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-stream:
 
@@ -296,13 +296,13 @@ Example
 
 Setting Stream Properties
 -------------------------
-There are a few Stream properties that can be changed.
+There are a number of Stream properties that can be specified.
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
 it was written to the Stream.
 The default TTL for all Streams is infinite, meaning that events will never expire.
 The format property defines how Stream event bodies should be read for data exploration.
 Different formats support different types of schemas. Schemas are used to determine
-table schema for running ad-hoc SQL queries on the Stream.
+the table schema used for running ad-hoc SQL-like queries on the Stream.
 See :ref:`stream-exploration` for more information about formats and schemas. 
 
 Stream properties can be changed with an HTTP PUT method to the URL::
@@ -332,7 +332,7 @@ New properties are passed in the JSON request body.
      - JSON Object describing the format name, schema, and settings
 
 If a property is not given in the request body, no change will be made to the value.
-For example, setting format but not ttl will preserve the current value for ttl.
+For example, setting format but not TTL will preserve the current value for TTL.
 Changing the schema attached to a Stream will drop the Hive table associated with
 the Stream and re-create it with the new schema.
 
@@ -380,5 +380,5 @@ Example
      
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day,
-       and the format to csv (comma separated values) with a three field schema
+       and the format to CSV (comma separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
