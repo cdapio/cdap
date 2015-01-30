@@ -20,4 +20,5 @@
 # URL to repository
 default['cdap']['repo']['apt_repo_url'] = 'http://repository.cask.co/ubuntu/precise/amd64/cdap'
 default['cdap']['repo']['apt_components'] = 'node['cdap']['version'].to_f'
+default['cdap']['repo']['repo_version'] = 'node['cdap']['version'].to_f'
 default['cdap']['repo']['yum_repo_url'] = 'http://repository.cask.co/centos/6/x86_64/cdap'
