@@ -11,24 +11,31 @@ describe('myHelpers', function(){
     myHelpers = $injector.get('myHelpers');
   }));
 
-  // actual testing follows
+
+
 
   describe('objectQuery', function() {
 
     it('is a method', function() {
-      expect(mySettings.objectQuery).toEqual(jasmine.any(Function));
+      expect(myHelpers.objectQuery).toEqual(jasmine.any(Function));
     });
 
     // FIXME: add tests for objectQuery
   });
 
 
+
+
+
   describe('deepSet', function() {
 
     it('is a method', function() {
-      expect(mySettings.deepSet).toEqual(jasmine.any(Function));
+      expect(myHelpers.deepSet).toEqual(jasmine.any(Function));
     });
 
+    // it('is a method', function() {
+    //   expect(myHelpers.deepSet).toEqual(jasmine.any(Function));
+    // });
 
   });
 
