@@ -4,7 +4,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         tabsPartialPath: '@',
-        tabs: '&'
+        tabsList: '&'
       },
       controller: 'myTabsCtrl',
       templateUrl: 'tabs/mytabs.html'
