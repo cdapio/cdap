@@ -1,1 +1,10 @@
-<h2> Datasets detail page </h2>
+<div ncy-breadcrumb></div>
+<h2>
+  <span ng-bind="$state.params.datasetId | caskCapitalizeFilter"></span>
+  <small> <em>Type: Dataset </em></small>
+</h2>
+
+<my-tabs
+  data-tabs-list="['Status','Explore','Programs','Inner','Metadata','Lineage','Resources']"
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
+</my-tabs>

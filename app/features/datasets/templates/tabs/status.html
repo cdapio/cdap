@@ -1,0 +1,42 @@
+<div class="container" ng-controller="CdapDatasetDetailStatusController">
+  <div class="row">
+    <div class="col-sm-6">
+    <div class="col-sm-3">
+      <h4> Storage </h4>
+      <em ng-bind="bytes + 'K'"></em>
+    </div>
+    <div class="col-sm-3">
+      <h4> Writes </h4>
+      <em ng-bind="writes + 'K'"></em>
+    </div>
+    <div class="col-sm-3">
+      <h4> Reads </h4>
+      <em ng-bind="reads + 'K'"> </em>
+    </div>
+    <div class="col-sm-3">
+      <h4> Transactions </h4>
+
+    </div>
+  </div>
+  <div class="col-sm-6"></div>
+  </div>
+
+  <h2> Schema </h2>
+  <table class="table table-striped table-responsive" cask-sortable ng-show="schema.length > 0">
+    <thead ng-class="{'sort-enabled': apps.length>0}">
+      <tr>
+        <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+        <th> Type </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="field in schema | orderBy:sortable.predicate:sortable.reverse">
+        <td ng-bind="field.name"> </td>
+        <td ng-bind="field.type"> </td>
+      </tr>
+    </tbody>
+  </table>
+  <div ng-show="schema.length == 0" class="well well-lg text-center">
+    <span> No Schema defined for this Dataset </span>
+  </div>
+</div>
