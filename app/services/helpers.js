@@ -100,6 +100,7 @@ angular.module(PKG.name+'.services')
 
   return {
     deepSet: deepSet,
+    deepGet: deepGet,
     objectQuery: objectQuery
   }
 });

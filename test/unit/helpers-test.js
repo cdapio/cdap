@@ -24,7 +24,33 @@ describe('myHelpers', function(){
   });
 
 
+  describe('deepGet', function() {
 
+    it('is a method', function() {
+      expect(myHelpers.deepGet).toEqual(jasmine.any(Function));
+    });
+
+    it('gets a value from the passed object', function() {
+      var obj = {1:2, foo:'bar', baz: {bat: 'man'}};
+
+      expect(myHelpers.deepGet(obj, 'foo'))
+        .toEqual('bar');
+
+      expect(myHelpers.deepGet(obj, '1'))
+        .toEqual(2);
+
+      expect(myHelpers.deepGet(obj, 'boom'))
+        .toBeFalsy();
+    });
+
+    it('gets a deep value from the passed object', function() {
+      var obj = {foo:{bar:{baz: {bat: 'man'}}}};
+
+      expect(myHelpers.deepGet(obj, 'foo.bar.baz'))
+        .toEqual({bat:'man'});
+    });
+
+  });
 
 
   describe('deepSet', function() {
