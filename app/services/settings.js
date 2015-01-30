@@ -4,7 +4,7 @@ angular.module(PKG.name + '.services')
     return new MyConfigStore('consolesettings');
   })
 
-  .factory('MyConfigStore', function MyConfigStoreFactory($q, MyDataSource) {
+  .factory('MyConfigStore', function MyConfigStoreFactory($q, MyDataSource, myHelpers) {
 
     var data = new MyDataSource();
 
@@ -20,24 +20,14 @@ angular.module(PKG.name + '.services')
 
     /**
      * set a preference
-     * @param {string} key
+     * @param {string} key, can have a path like "foo.bar.baz"
      * @param {mixed} value
      * @return {promise} resolved with the response from server
      */
     MyConfigStore.prototype.set = function (key, value) {
       var deferred = $q.defer();
 
-
-      var kp = key.split('.');
-
-      if(kp.length>1) {
-        // TODO use a deepSet ala http://yuilibrary.com/yui/docs/api/files/yui_js_yui.js.html#l1370
-        throw new Error("Not implemented sub-key creation");
-      }
-      else {
-        this.data[key] = value;
-      }
-
+      myHelpers.deepSet(this.data, key, value);
 
       data.request(
         {
