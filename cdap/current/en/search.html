@@ -17,7 +17,7 @@
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
     </script>
-    <title>Search &mdash; Cask Data Application Platform 2.6.0 Documentation</title>
+    <title>Search &mdash; Cask Data Application Platform 2.6.1 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,7 +29,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.6.0',
+        VERSION:     '2.6.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -40,7 +40,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/searchtools.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 2.6.0 Documentation" href="index.html" />
+    <link rel="top" title="Cask Data Application Platform 2.6.1 Documentation" href="index.html" />
   <script type="text/javascript">
     jQuery(function() { Search.loadIndex("searchindex.js"); });
   </script>
@@ -59,9 +59,9 @@
         
         <script type="text/javascript" src="_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('2.6.0');</script>
+        <script>window.setVersion('2.6.1');</script>
        
-        <li><a href="table-of-contents.html">CDAP Documentation v2.6.0</a> &raquo;</li> 
+        <li><a href="table-of-contents.html">CDAP Documentation v2.6.1</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -79,16 +79,57 @@
   </p>
   </div>
   <p>
+<!-- 
     From here you can search these documents. Enter your search
     words into the box below and click <b>"Search".</b> Note that the Search
     function will automatically search for all of the words. Pages
     containing fewer words won't appear in the result list.
+ -->
+  From here you can search the documentation. 
   </p>
-  <form action="" method="get">
-    <input type="text" name="q" value="" />
+  <p>
+  To perform a <strong>Quick Search</strong>, enter your search word(s) into the box below and
+  click <strong>"Search"</strong>: 
+  </p>
+  <form name="searchQ" action="" method="get">
+    <input maxlength="256" size="40" type="text" name="q" value="" />
     <input type="submit" value="Search" />
     <span id="search-progress" style="padding-left: 10px"></span>
   </form>
+  <p>
+  <i>Quick Search</i> is a local keyword search; not as comprehensive as
+  an external search engine, but fast and often sufficiently accurate. Note that the Search function will automatically search for all of the
+  words. Pages containing fewer words won't appear in the result list.
+  </p>
+<!-- 
+  <p>
+  You can search—using Google—the site for either <strong>this documentation release</strong> or <strong>all documentation releases</strong>:
+  </p>
+  <p>
+  <table>
+  <tr>
+  <td>
+  <form id="searchG" action="http://www.google.com/search" name="searchbox" method="get" target="_blank"/> 
+    <input type="hidden" name="hl" value="en" /> 
+    <input type="hidden" name="ie" value="ISO-8859-1" /> 
+    <input type="hidden" name="q" value="" /> 
+    <input type="submit" value="Search this release using Google" name="btnG" 
+      style="font-size:75%;" onclick="javascript: form.q.value=document.searchQ.q.value + ' site:docs.cask.co/cdap/2.6.1 OR site:docs.cask.co/cdap/2.6.1';"/> 
+  </form>
+  </td>
+  <td>
+  <form id="searchG2" action="http://www.google.com/search" name="searchbox" method="get" target="_blank"/> 
+    <input type="hidden" name="hl" value="en" /> 
+    <input type="hidden" name="ie" value="ISO-8859-1" /> 
+    <input type="hidden" name="q" value="" /> 
+    <input type="submit" value="Search all releases using Google" name="btnG" 
+      style="font-size:75%;" onclick="javascript: form.q.value=document.searchQ.q.value + ' site:docs.cask.co/cdap';"/> 
+  </form>
+  </td>
+  </tr>
+  </table>
+  </p>
+ -->
   
   <div id="search-results">
   
@@ -101,10 +142,10 @@
         <div class="sphinxsidebarwrapper">
   <div role="note" aria-label="manuals links">
     <h3><a href="table-of-contents/../index.html"
-        rel="nofollow">CDAP Documentation v2.6.0</a></h3>
+        rel="nofollow">CDAP Documentation v2.6.1</a></h3>
     <ul class="this-page-menu">
-      <li><b><a href="table-of-contents/../index.html"
-            rel="nofollow">Introduction</a></b></li>
+      <li><a href="table-of-contents/../index.html"
+            rel="nofollow">Introduction</a></li>
       <li><a href="table-of-contents/../developers-manual/index.html"
             rel="nofollow">Developers’ Manual</a></li>
       <li><a href="table-of-contents/../admin-manual/index.html"
@@ -119,9 +160,11 @@
             rel="nofollow">Glossary</a></li>
       <li><a href="table-of-contents/../reference-manual/faq.html"
             rel="nofollow">FAQ</a></li>
+      <li><b><a href="table-of-contents/../search.html"
+            rel="nofollow">Search</a></b></li>
     </ul>
    </div><!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -151,7 +194,7 @@
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/2.6.0/cdap-docs-2.6.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/2.6.1/cdap-docs-2.6.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

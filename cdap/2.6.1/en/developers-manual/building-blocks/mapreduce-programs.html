@@ -1,0 +1,374 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55077523-3']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>MapReduce Jobs &mdash; Cask Data Application Platform 2.6.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.1 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Workflows" href="workflows.html" />
+    <link rel="prev" title="Partitioning Strategies" href="flows-flowlets/partitioning-strategies.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="workflows.html" title="Workflows"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="flows-flowlets/partitioning-strategies.html" title="Partitioning Strategies"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mapreduce-jobs">
+<span id="mapreduce"></span><h1>MapReduce Jobs<a class="headerlink" href="#mapreduce-jobs" title="Permalink to this headline">¶</a></h1>
+<p>A <strong>MapReduce Job</strong> is used to process data in batch. MapReduce jobs can be
+written as in a conventional Hadoop system. Additionally, CDAP
+<strong>Datasets</strong> can be accessed from MapReduce jobs as both input and
+output.</p>
+<p>To process data using MapReduce, either specify <tt class="docutils literal"><span class="pre">addMapReduce()</span></tt> in your
+Application specification:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCountJob</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>or specify <tt class="docutils literal"><span class="pre">addWorkflow()</span></tt> in your Application and specify your MapReduce Job in the
+<a class="reference internal" href="workflows.html#workflows"><em>Workflow</em></a> definition:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="c1">// Run a MapReduce Job on the acquired data using a Workflow</span>
+  <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryWorkflow</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>You must implement the <tt class="docutils literal"><span class="pre">MapReduce</span></tt> interface, which requires the
+implementation of three methods:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">configure()</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">onFinish()</span></tt></li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseHistoryBuilder</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;Purchase History Builder MapReduce Job&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Builds a purchase history for each customer&quot;</span><span class="o">);</span>
+    <span class="n">useDatasets</span><span class="o">(</span><span class="s">&quot;frequentCustomers&quot;</span><span class="o">);</span>
+    <span class="n">setInputDataset</span><span class="o">(</span><span class="s">&quot;purchases&quot;</span><span class="o">);</span>
+    <span class="n">setOutputDataset</span><span class="o">(</span><span class="s">&quot;history&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>The configure method is similar to the one found in Flows and
+Applications. It defines the name and description of the MapReduce job.
+You can also specify Datasets to be used as input or output for the job, and
+resources (memory and virtual cores) used by the Mappers and Reducers.</p>
+<p>The <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method is invoked at runtime, before the
+MapReduce job is executed. Through a passed instance of the
+<tt class="docutils literal"><span class="pre">MapReduceContext</span></tt> you have access to the actual Hadoop job
+configuration, as though you were running the MapReduce job directly on
+Hadoop. For example, you can specify the Mapper and Reducer classes as
+well as the intermediate data format:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">PurchaseMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputKeyClass</span><span class="o">(</span><span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputValueClass</span><span class="o">(</span><span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">PerUserReducer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">onFinish()</span></tt> method is invoked after the MapReduce job has
+finished. You could perform cleanup or send a notification of job
+completion, if that was required. Because many MapReduce jobs do not
+need this method, the <tt class="docutils literal"><span class="pre">AbstractMapReduce</span></tt> class provides a default
+implementation that does nothing:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+  <span class="c1">// do nothing</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>CDAP <tt class="docutils literal"><span class="pre">Mapper</span></tt> and <tt class="docutils literal"><span class="pre">Reducer</span></tt> implement <a class="reference external" href="http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html">the standard Hadoop APIs</a>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PurchaseMapper</span>
+    <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Purchase</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="n">Metrics</span> <span class="n">mapMetrics</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">key</span><span class="o">,</span> <span class="n">Purchase</span> <span class="n">purchase</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">user</span> <span class="o">=</span> <span class="n">purchase</span><span class="o">.</span><span class="na">getCustomer</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">purchase</span><span class="o">.</span><span class="na">getPrice</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">100000</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">mapMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;purchases.large&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="n">user</span><span class="o">),</span> <span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">toJson</span><span class="o">(</span><span class="n">purchase</span><span class="o">)));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PerUserReducer</span>
+    <span class="kd">extends</span> <span class="n">Reducer</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">String</span><span class="o">,</span> <span class="n">PurchaseHistory</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;frequentCustomers&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">frequentCustomers</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">Metrics</span> <span class="n">reduceMetrics</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">reduce</span><span class="o">(</span><span class="n">Text</span> <span class="n">customer</span><span class="o">,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">&gt;</span> <span class="n">values</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="n">PurchaseHistory</span> <span class="n">purchases</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PurchaseHistory</span><span class="o">(</span><span class="n">customer</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+    <span class="kt">int</span> <span class="n">numPurchases</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">Text</span> <span class="n">val</span> <span class="o">:</span> <span class="n">values</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">purchases</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">val</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">Purchase</span><span class="o">.</span><span class="na">class</span><span class="o">));</span>
+      <span class="n">numPurchases</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">numPurchases</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">reduceMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;customers.rare&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">numPurchases</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">reduceMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;customers.frequent&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+      <span class="n">frequentCustomers</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">customer</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">numPurchases</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">customer</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">purchases</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="mapreduce-and-datasets">
+<span id="mapreduce-datasets"></span><h2>MapReduce and Datasets<a class="headerlink" href="#mapreduce-and-datasets" title="Permalink to this headline">¶</a></h2>
+<p>Both CDAP <tt class="docutils literal"><span class="pre">Mapper</span></tt> and <tt class="docutils literal"><span class="pre">Reducer</span></tt> can directly read
+or write to a Dataset, similar to the way a Flowlet or Service can.</p>
+<p>To access a Dataset directly in Mapper or Reducer, you need (1) a
+declaration and (2) an injection:</p>
+<ol class="arabic">
+<li><p class="first">Declare the Dataset in the MapReduce job’s configure() method.
+For example, to have access to a Dataset named <em>catalog</em>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyMapReduceJob</span> <span class="kd">implements</span> <span class="n">MapReduce</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="n">MapReduceConfigurer</span> <span class="n">configurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">useDatasets</span><span class="o">(</span><span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="s">&quot;catalog&quot;</span><span class="o">))</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Inject the Dataset into the mapper or reducer that uses it:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">CatalogJoinMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Purchase</span><span class="o">,</span> <span class="o">...&gt;</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;catalog&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">ProductCatalog</span> <span class="n">catalog</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">key</span><span class="o">,</span> <span class="n">Purchase</span> <span class="n">purchase</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="c1">// join with catalog by product ID</span>
+    <span class="n">Product</span> <span class="n">product</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">purchase</span><span class="o">.</span><span class="na">getProductId</span><span class="o">());</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Additionally, a MapReduce job can interact with a Dataset by using it as an input or an
+output, as described in <a class="reference internal" href="datasets/datasets-mapreduce.html#datasets-map-reduce-jobs"><em>Datasets and MapReduce Jobs</em></a>.</p>
+<p class="rubric">Examples of Using Map Reduce Jobs</p>
+<ul class="simple">
+<li>For an example of <strong>a MapReduce Job,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.1)"><em class="xref std std-ref">Purchase</em></a> example.</li>
+<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-mapreduce-guide.html#cdap-mapreduce-guide" title="(in Cask Data Application Platform v2.6.1)"><em>Batch Data Processing With CDAP</em></a> also
+demonstrates the use of MapReduce.</li>
+<li>The <a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.6.1)"><em class="xref std std-ref">Tutorial</em></a>
+<a class="reference external" href="http://docs.cask.co/tutorial/current/en/tutorial2.html">WISE: Web Analytics</a>
+uses a MapReduce Job.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.1</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+      <li><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+      <li><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+      <li><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+      <li><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> MapReduce Programs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mapreduce-and-datasets">MapReduce and Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="flows-flowlets/partitioning-strategies.html"
+                        title="Previous Chapter">Partitioning Strategies</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="workflows.html"
+                        title="Next Chapter">Workflows</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.1/cdap-docs-2.6.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Partitioning Strategies" href="flows-flowlets/partitioning-strategies.html" />Partitioning Strategies</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Workflows" href="workflows.html" />Workflows</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
