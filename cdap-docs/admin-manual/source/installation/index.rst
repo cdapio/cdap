@@ -15,6 +15,7 @@ Installation
    
     Quick Start <quick-start>
     Installation and Configuration <installation>
+    Integrating CDAP <integrations>
     Security <security>
     Monitoring <monitoring>
     Appendix: cdap-site.xml <cdap-site>
@@ -35,6 +36,13 @@ Installation
 - |installation|_ Covers **installing and configuring CDAP:** the system, network, and software
   requirements; packaging options; and the instructions for installation and verification of the
   CDAP components so they work with your existing Hadoop cluster.
+
+
+.. |integrations| replace:: **Integrating CDAP:**
+.. _integrations: integrations.html
+
+- |integrations|_ Covers **integrating CDAP with Hadoop installations:** using products such 
+  as `Cloudera Manager <https://github.com/cloudera/cm_ext/wiki>`__.
 
 
 .. |security| replace:: **Security:**

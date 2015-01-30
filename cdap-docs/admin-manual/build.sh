@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -24,5 +24,15 @@
 # Targets not included in usage are intended for internal usage by script
 
 source ../_common/common-build.sh
+
+CHECK_INCLUDES=$TRUE
+
+function pandoc_includes() {
+  INCLUDES_DIR=$1
+  version
+  cd $SCRIPT_PATH
+  local installation="$SCRIPT_PATH/$SOURCE/installation"
+  rewrite $installation/integrations.txt  $INCLUDES_DIR/integrations.rst  "<version>"  $PROJECT_VERSION
+}
 
 run_command $1
