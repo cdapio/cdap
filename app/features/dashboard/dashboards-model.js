@@ -194,6 +194,28 @@ function (Widget, MyDataSource) {
     );
   };
 
+  /**
+   * reorder dashboards
+   * @param  {Boolean} reverse true to move left
+   * @return {Number}         new index of current dashboard in reordered array
+   */
+  Model.prototype.reorder = function (reverse) {
+    var max = this.data.length-1,
+        index = this.data.activeIndex,
+        insert = index + (reverse?-1:1);
+
+    if(insert > max) {
+      insert = 0;
+    }
+    else if(insert < 0) {
+      insert = max;
+    }
+
+    this.data.splice(insert, 0, this.data.splice(index, 1)[0]);
+
+    return insert;
+  };
+
 
   /**
    * add a new dashboard tab
