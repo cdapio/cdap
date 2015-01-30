@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Introduction to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>CDAP Documentation v2.6.1 &mdash; Cask Data Application Platform 2.6.1 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.6.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.1 Documentation" href="#" />
+    <link rel="next" title="Developers’ Manual" href="developers-manual/index.html" />
+    <link rel="prev" title="CDAP Documentation Table of Contents" href="table-of-contents.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="developers-manual/index.html" title="Developers’ Manual"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="table-of-contents.html" title="CDAP Documentation Table of Contents"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.1');</script>
+       
+        <li><a href="table-of-contents.html">CDAP Documentation v2.6.1</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-documentation-vversion">
+<span id="documentation-index"></span><h1>CDAP Documentation v2.6.1<a class="headerlink" href="#cdap-documentation-vversion" title="Permalink to this headline">¶</a></h1>
+<p class="rubric">Introduction to the Cask Data Application Platform</p>
+<p>The Cask™ Data Application Platform (CDAP) is an open source application development
+platform for the Hadoop ecosystem that provides developers with data and application
+virtualization to accelerate application development, address a broader range of real-time
+and batch use cases, and deploy applications into production while satisfying enterprise
+requirements.</p>
+<p>CDAP is a layer of software running on top of Apache™ Hadoop® platforms such as the
+Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides three essential components:</p>
+<ul class="simple">
+<li>Virtualization of data in the Hadoop environment through logical representations of underlying
+data;</li>
+<li>Virtualization of applications through application containers; and</li>
+<li>Services and tools that enable faster application creation in development and higher degrees of
+operational control in production.</li>
+</ul>
+<p>CDAP exposes developer APIs (Application Programming Interfaces) for creating applications
+and accessing core CDAP services. CDAP defines and implements a diverse collection of services that land
+applications and data on existing Hadoop infrastructure such as HBase, HDFS, YARN, MapReduce,
+Hive, and Spark.</p>
+<p>These documents are your complete reference to the Cask Data Application Platform: they help
+you get started and set up your development environment; explain how CDAP works; and teach
+how to develop and test CDAP applications.</p>
+<p>It includes the CDAP programming APIs and client interfaces, with instructions
+on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.</p>
+<ul class="simple">
+<li><a class="reference external" href="developers-manual/index.html"><strong>Developers’ Manual:</strong></a><ul>
+<li><strong>Getting Started:</strong> A quick, hands-on introduction to CDAP</li>
+<li><strong>Overview:</strong> The overall architecture and technology behind CDAP</li>
+<li><strong>Building Blocks:</strong> The two core virtualizations in CDAP: Data and Applications, and their components</li>
+<li><strong>Security:</strong> Perimeter security, configuration and client authentication</li>
+<li><strong>Testing and Debugging:</strong> Test framework, tools and procedures for debugging, and packaging your completed application</li>
+<li><strong>Ingesting Data:</strong> Different techniques for ingesting data into CDAP</li>
+<li><strong>Advanced Topics:</strong> Data exploration of datasets and best practices for CDAP development</li>
+</ul>
+</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="admin-manual/index.html"><strong>Administration Manual:</strong></a><ul>
+<li><strong>Installation:</strong> Putting CDAP into production, with installation, configuration, security setup, and monitoring</li>
+<li><strong>Operations:</strong> Logging, metrics, runtime arguments, scaling instances and introduces the CDAP Console</li>
+</ul>
+</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="examples-manual/index.html"><strong>Examples, Guides, and Tutorials:</strong></a><ul>
+<li><strong>Examples:</strong> Included with the <a class="reference external" href="build/source/../../developers-manual/getting-started/index.html#getting-started-index" title="(in Cask Data Application Platform v2.6.1)"><em class="xref std std-ref">CDAP SDK</em></a>, they range from a simple introductory to more elaborate examples</li>
+<li><strong>How-To Guides:</strong> Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions</li>
+<li><strong>Tutorials:</strong> Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations</li>
+<li><strong>CDAP Apps and Packs Repository:</strong> data applications built using CDAP and useful building blocks for your data applications</li>
+</ul>
+</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="reference-manual/index.html"><strong>Reference Manual:</strong></a><ul>
+<li><strong>HTTP RESTful API:</strong> HTTP interface for a multitude of purposes</li>
+<li><strong>Javadocs:</strong> The Java APIs for writing CDAP Applications</li>
+<li><strong>Java Client API:</strong> Methods for interacting with CDAP from external Java applications</li>
+<li><strong>Command Line Interface API:</strong> Methods for interacting with a CDAP instance from within a shell</li>
+<li><strong>Licenses and Dependencies:</strong> License information for the CDAP and list of CDAP Dependent Packages</li>
+</ul>
+</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="reference-manual/release-notes.html"><strong>Release Notes:</strong></a> Notes for current and previous CDAP versions</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="reference-manual/glossary.html"><strong>Glossary:</strong></a> Definitions of terms and phrases used in CDAP</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="reference-manual/faq.html"><strong>FAQ:</strong></a> Answers to questions you might have about CDAP</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="search.html"><strong>Search:</strong></a> Search this documentation using <em>Quick Search</em></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../index.html"
+        rel="nofollow">CDAP Documentation v2.6.1</a></h3>
+    <ul class="this-page-menu">
+      <li><b><a href="table-of-contents/../index.html"
+            rel="nofollow">Introduction</a></b></li>
+      <li><a href="table-of-contents/../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+      <li><a href="table-of-contents/../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+      <li><a href="table-of-contents/../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><a href="table-of-contents/../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+      <li><a href="table-of-contents/../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+      <li><a href="table-of-contents/../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+      <li><a href="table-of-contents/../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+      <li><a href="table-of-contents/../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.1/cdap-docs-2.6.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Documentation Table of Contents" href="table-of-contents.html" />CDAP Documentation Table of Contents</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        &copy; Copyright 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Developers’ Manual" href="developers-manual/index.html" />Developers’ Manual</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
