@@ -20,7 +20,7 @@ define([], function () {
         model.actions[i].state = 'IDLE';
         model.actions[i].running = false;
         model.actions[i].appId = self.get('model').app;
-        model.actions[i].divId = model.actions[i].name.replace(' ', '');
+        model.actions[i].divId = model.actions[i].programName.replace(' ', '');
 
         if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
           var transformedModel = C.Mapreduce.transformModel(model.actions[i]);

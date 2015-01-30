@@ -93,7 +93,7 @@
                     --after-install "${project.basedir}/src/rpm/scripts/common-postinst"
                     --before-install "${project.basedir}/src/rpm/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/rpm/scripts/common-prerm"
-                    --iteration 1
+                    --iteration "${release.iteration}"
                     etc
                   </commandlineArgs>
                 </configuration>
@@ -169,7 +169,7 @@
                     --after-install "${project.basedir}/src/debian/scripts/common-postinst"
                     --before-install "${project.basedir}/src/debian/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/debian/scripts/common-prerm"
-                    --iteration 1
+                    --iteration "${release.iteration}"
                     etc
                   </commandlineArgs>
                 </configuration>

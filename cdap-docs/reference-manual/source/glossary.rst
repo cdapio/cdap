@@ -110,6 +110,10 @@ Glossary
    Apache Hadoop
       See :term:`Hadoop`.
 
+   Avro
+      Refers to the `Apache Avro™ <http://avro.apache.org>`__ project, which is a
+      data serialization system that provides rich data structures and a compact, fast, binary data format.
+
 
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
@@ -120,3 +124,4 @@ Glossary
 
 .. Apache |(TM)| Hadoop |(R)|
 .. Apache™ Hadoop®
+

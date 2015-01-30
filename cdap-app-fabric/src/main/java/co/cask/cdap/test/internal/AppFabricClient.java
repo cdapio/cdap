@@ -266,9 +266,9 @@ public class AppFabricClient {
 
     ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
                                                                          "org.apache.hadoop",
-                                                                         "org.apache.hbase",
                                                                          "org.apache.hive",
-                                                                         "org.apache.spark"));
+                                                                         "org.apache.spark"),
+                                                        ImmutableList.of("org.apache.hadoop.hbase"));
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     bundler.createBundle(jarLocation, clz);
 

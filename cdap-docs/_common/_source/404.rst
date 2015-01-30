@@ -63,15 +63,14 @@ The **main page for the documentation:** :ref:`CDAP Documentation <documentation
 
 .. rubric:: Search
 
-The site has a **Quick Search**, located in the left sidebar.
+The site has a **Quick Search**, located in the left sidebar and on the 
+`Search page <search.html>`__.
 
 *Quick Search* is a local keyword search; not as comprehensive as an external search
 engine, but fast and often sufficiently accurate. Note that the Search function will
 automatically search for all of the words. Pages containing fewer words won't appear in
 the result list.
 
-You can search—using Google—the site for either **this documentation
-release** or **all documentation releases** from the `Search page <search.html>`__.
 
 .. rubric:: Contact Us
 
