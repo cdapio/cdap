@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when there was an error in resetting the CDAP instance.
+ * Thrown when a dataset module cannot be deleted.
  */
-public class ResetFailureException extends Exception {
+public class DatasetModuleCannotBeDeletedException extends CannotBeDeletedException {
 
-  public ResetFailureException(String message) {
-    super(message);
+  private final String moduleName;
+
+  public DatasetModuleCannotBeDeletedException(String moduleName) {
+    super("dataset module", moduleName);
+    this.moduleName = moduleName;
+  }
+
+  /**
+   * @return Name of the dataset module that cannot be deleted
+   */
+  public String getModuleName() {
+    return moduleName;
   }
 }

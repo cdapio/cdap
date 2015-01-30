@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.Version;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;

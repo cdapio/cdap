@@ -17,11 +17,11 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.ResetFailureException;
-import co.cask.cdap.client.exception.ResetNotEnabledException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.client.exception.UnauthorizedException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.exception.ResetFailureException;
+import co.cask.cdap.common.exception.ResetNotEnabledException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;

@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when a dataset was not found.
+ * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
  */
-public class DatasetNotFoundException extends NotFoundException {
+public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
 
-  private final String datasetName;
+  private final String moduleName;
 
-  public DatasetNotFoundException(String datasetName) {
-    super("dataset", datasetName);
-    this.datasetName = datasetName;
+  public DatasetModuleAlreadyExistsException(String moduleName) {
+    super("dataset module", moduleName);
+    this.moduleName = moduleName;
   }
 
   /**
-   * @return Name of the dataset that was not found
+   * @return Name of the existing dataset module
    */
-  public String getDatasetName() {
-    return datasetName;
+  public String getModuleName() {
+    return moduleName;
   }
 }

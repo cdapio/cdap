@@ -20,7 +20,7 @@ import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;

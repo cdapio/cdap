@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
+ * Thrown when a stream is not found
  */
-public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
+public class StreamNotFoundException extends NotFoundException {
 
-  private final String moduleName;
+  private final String streamId;
 
-  public DatasetModuleAlreadyExistsException(String moduleName) {
-    super("dataset module", moduleName);
-    this.moduleName = moduleName;
+  public StreamNotFoundException(String streamId) {
+    super("stream", streamId);
+    this.streamId = streamId;
   }
 
   /**
-   * @return Name of the existing dataset module
+   * @return ID of the stream that was not found
    */
-  public String getModuleName() {
-    return moduleName;
+  public String getStreamId() {
+    return streamId;
   }
 }

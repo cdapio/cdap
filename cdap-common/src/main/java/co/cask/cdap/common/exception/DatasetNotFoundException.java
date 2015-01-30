@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when a query was not found by its handle.
+ * Thrown when a dataset was not found.
  */
-public class QueryNotFoundException extends NotFoundException {
+public class DatasetNotFoundException extends NotFoundException {
 
-  private final String queryHandle;
+  private final String datasetName;
 
-  public QueryNotFoundException(String queryHandle) {
-    super("query", queryHandle);
-    this.queryHandle = queryHandle;
+  public DatasetNotFoundException(String datasetName) {
+    super("dataset", datasetName);
+    this.datasetName = datasetName;
   }
 
   /**
-   * @return Query handle of the query that was not found
+   * @return Name of the dataset that was not found
    */
-  public String getQueryHandle() {
-    return queryHandle;
+  public String getDatasetName() {
+    return datasetName;
   }
 }

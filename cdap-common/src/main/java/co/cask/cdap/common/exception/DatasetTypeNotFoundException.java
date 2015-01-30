@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when reset is not enabled for the CDAP instance.
+ * Thrown when a dataset type is not found
  */
-public class ResetNotEnabledException extends Exception {
+public class DatasetTypeNotFoundException extends NotFoundException {
 
+  private final String datasetType;
+
+  public DatasetTypeNotFoundException(String datasetType) {
+    super("dataset type", datasetType);
+    this.datasetType = datasetType;
+  }
+
+  /**
+   * @return the dataset type that was not found
+   */
+  public String getDatasetType() {
+    return datasetType;
+  }
 }

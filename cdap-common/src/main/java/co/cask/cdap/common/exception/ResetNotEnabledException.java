@@ -14,24 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when an adapter type is not found
+ * Thrown when reset is not enabled for the CDAP instance.
  */
-public class AdapterTypeNotFoundException extends NotFoundException {
+public class ResetNotEnabledException extends Exception {
 
-  private final String adapterType;
-
-  public AdapterTypeNotFoundException(String adapterType) {
-    super("adapter type", adapterType);
-    this.adapterType = adapterType;
-  }
-
-  /**
-   * @return the adapter type that was not found
-   */
-  public String getAdapterType() {
-    return adapterType;
-  }
 }

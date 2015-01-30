@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
  * Thrown when the user tried to execute some service operation, but the service was not enabled.

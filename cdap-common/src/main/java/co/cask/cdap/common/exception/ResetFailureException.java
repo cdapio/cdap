@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when the input was bad.
+ * Thrown when there was an error in resetting the CDAP instance.
  */
-public class BadRequestException extends Exception {
+public class ResetFailureException extends Exception {
 
-  public BadRequestException(String s) {
-    super(s);
+  public ResetFailureException(String message) {
+    super(message);
   }
 }

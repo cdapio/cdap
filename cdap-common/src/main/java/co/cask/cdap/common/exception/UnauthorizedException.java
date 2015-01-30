@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 /**
- * Thrown when the user tries to create a dataset, but a dataset already exists by that name.
+ * Thrown when a user is not authorized to perform an operation.
  */
-public class DatasetAlreadyExistsException extends AlreadyExistsException {
+public class UnauthorizedException extends Exception {
 
-  private final String datasetName;
-
-  public DatasetAlreadyExistsException(String datasetName) {
-    super("dataset", datasetName);
-    this.datasetName = datasetName;
-  }
-
-  /**
-   * @return Name of the existing dataset
-   */
-  public String getDatasetName() {
-    return datasetName;
-  }
 }

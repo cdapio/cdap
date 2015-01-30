@@ -18,11 +18,11 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.DatasetAlreadyExistsException;
-import co.cask.cdap.client.exception.DatasetNotFoundException;
-import co.cask.cdap.client.exception.DatasetTypeNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.exception.DatasetAlreadyExistsException;
+import co.cask.cdap.common.exception.DatasetNotFoundException;
+import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.common.http.HttpMethod;

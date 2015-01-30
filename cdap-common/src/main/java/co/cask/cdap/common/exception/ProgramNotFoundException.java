@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.client.exception;
+package co.cask.cdap.common.exception;
 
 import co.cask.cdap.proto.ProgramType;
 
