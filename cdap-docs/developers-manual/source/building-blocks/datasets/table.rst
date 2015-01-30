@@ -244,16 +244,8 @@ Application class' ``configure()`` you specify:
       DatasetProperties props = 
           DatasetProperties.builder().add("hbase.splits", "[[64],[128],[192]]").build();
       createDataset("myTable", KeyValueTable.class, props);
+      
       // init other components
+      
     }
   } 
-
-
-
-To create a Dataset pre-split into multiple regions, where the underlying storage is HBase,
-you can use::
-
-  createDataset("frequentCustomers", KeyValueTable.class,
-    DatasetProperties.builder()
-                     .add("hbase.splits", new Gson().toJson(new byte[][]{{1},{2},{3},{4},{5}})
-                     .build());
