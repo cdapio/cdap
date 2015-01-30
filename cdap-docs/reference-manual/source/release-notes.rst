@@ -28,11 +28,11 @@ Cask Data Application Platform Release Notes
 
 CDAP Bug Fixes
 --------------
-- Allow unchecked Dataset upgrade on application deploy
+- Allow an unchecked Dataset upgrade upon application deployment
   (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__).
-- Update Hive Dataset table when a dataset is updated
+- Update the Hive Dataset table when a Dataset is updated
   (`CDAP-71 <https://issues.cask.co/browse/CDAP-71>`__).
-- Use Hadoop configuration files bundled with Explore Service
+- Use Hadoop configuration files bundled with the Explore Service
   (`CDAP-1250 <https://issues.cask.co/browse/CDAP-1250>`__).
 
 .. _known-issues-261:
