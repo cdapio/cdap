@@ -265,7 +265,8 @@ public final class Constants {
      * Contains HTTP headers used by Stream handler.
      */
     public static final class Headers {
-      public static final String CONSUMER_ID = "X-ConsumerId";
+      public static final String SCHEMA = "schema";
+      public static final String SCHEMA_HASH = "schema.hash";
     }
 
     //max instances of stream handler service

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.http.BodyConsumer;
@@ -154,8 +155,8 @@ final class AvroStreamBodyConsumer extends BodyConsumer {
           // Create the {@link ContentWriter} for writing encoded Avro content to stream
           String schemaStr = schema.toString();
           ContentWriter contentWriter = contentWriterFactory.create(ImmutableMap.of(
-            "schema", schemaStr,
-            "schema.hash", Hashing.md5().hashString(schemaStr, Charsets.UTF_8).toString()
+            Constants.Stream.Headers.SCHEMA, schemaStr,
+            Constants.Stream.Headers.SCHEMA_HASH, Hashing.md5().hashString(schemaStr, Charsets.UTF_8).toString()
           ));
 
           try {
