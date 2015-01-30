@@ -150,17 +150,3 @@ CDAP Datasets using the CDAP JDBC driver.
    from the results of the SQL query on the CDAP Datasets.
 #. For more information on how to add components to a transformation and link them together, see the
    `Pentaho Data Integration page <http://community.pentaho.com/projects/data-integration/>`__.
-
-
-Formulating Queries
--------------------
-When creating your queries, keep these limitations in mind:
-
-- The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
-- When addressing your datasets in queries, you need to prefix the data set name with the CDAP
-  namespace ``cdap_user_``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
-  name is ``cdap_user_productcatalog``. Note that the table name is lower-case.
-
-For more examples of queries, please refer to the `Hive language manual
-<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.
