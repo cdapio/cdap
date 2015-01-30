@@ -30,7 +30,7 @@
 
   <properties>
     <app.main.class>co.cask.cdap.examples.sparkpagerank.SparkPageRankApp</app.main.class>
-    <cdap.version>2.6.0</cdap.version>
+    <cdap.version>2.6.1</cdap.version>
   </properties>
 
   <dependencies>
