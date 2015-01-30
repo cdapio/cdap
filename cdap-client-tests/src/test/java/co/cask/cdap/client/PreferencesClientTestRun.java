@@ -41,7 +41,6 @@ import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -84,8 +83,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
                                                         AppReturnsArgs.SERVICE));
       programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE,
                           ImmutableMap.of("run", "value"));
-      programClient.waitForStatus(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, "RUNNING",
-                                  15, TimeUnit.SECONDS);
+      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       propMap.put("run", "value");
       propMap.putAll(setMap);
       URL serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
@@ -95,13 +93,11 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
       programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      programClient.waitForStatus(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, "STOPPED",
-                                  15, TimeUnit.SECONDS);
+      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
 
       client.deleteInstancePreferences();
       programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      programClient.waitForStatus(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, "RUNNING",
-                                  15, TimeUnit.SECONDS);
+      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       propMap.remove("key");
       propMap.remove("run");
       serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
@@ -111,14 +107,12 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
       programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      programClient.waitForStatus(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, "STOPPED",
-                                  15, TimeUnit.SECONDS);
+      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
 
       propMap.clear();
       programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, propMap);
       programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      programClient.waitForStatus(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, "RUNNING",
-                                  15, TimeUnit.SECONDS);
+      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
                            AppReturnsArgs.ENDPOINT);
       request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
@@ -127,8 +121,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
     } finally {
       programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      programClient.waitForStatus(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, "STOPPED",
-                                  15, TimeUnit.SECONDS);
+      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       appClient.delete(AppReturnsArgs.NAME);
     }
   }
