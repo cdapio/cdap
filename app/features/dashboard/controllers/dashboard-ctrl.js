@@ -66,31 +66,14 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
   };
 
 
-  $scope.addDashboard = function () {
-    myDashboardsModel.add({
-      title: 'dashboard '+Date.now()
-    });
-
+  $scope.addDashboard = function (title) {
+    myDashboardsModel.add({title: title});
     $state.go($state.current, {tab: 0}, {reload: true});
   };
 
   $scope.removeDashboard = function () {
     myDashboardsModel.remove($scope.dashboards.activeIndex);
   };
-
-  $scope.renameDashboard = function (newName) {
-    myDashboardsModel.current().rename(newName);
-  };
-
-
-  $scope.removeWidget = function (w) {
-    myDashboardsModel.current().removeWidget(w);
-  };
-
-  $scope.renameWidget = function (w, newName) {
-    myDashboardsModel.current().renameWidget(w, newName);
-  };
-
 
 
   $scope.dragdrop = {
