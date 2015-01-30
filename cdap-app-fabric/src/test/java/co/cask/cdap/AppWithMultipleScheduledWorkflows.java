@@ -44,11 +44,11 @@ public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
    * Some Workflow
    */
   public static class SomeWorkflow extends AbstractWorkflow {
-    public static final String NAME = "SampleWorkflow";
+    public static final String NAME = "SomeWorkflow";
     @Override
     public void configure() {
       setName(NAME);
-      setDescription("SampleWorkflow description");
+      setDescription("SomeWorkflow description");
       addAction(new SomeDummyAction());
     }
   }
