@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.commons')
   .controller('myTabsCtrl', function($scope, $state) {
-    $scope.tabs = $scope.tabs.map(function (t){
+    $scope.tabs = $scope.tabs().map(function (t){
       return {
         title: t,
         state: t.toLowerCase(),
