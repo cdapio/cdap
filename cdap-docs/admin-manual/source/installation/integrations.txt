@@ -11,15 +11,16 @@ Integrating CDAP
 Integrating CDAP using Cloudera Manager
 =======================================
 
-You can use `Cloudera Manager <https://github.com/cloudera/cm_ext/wiki>`__ to integrate
-CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom Service
-Descriptor). Once the CSD is installed, you will able to use Cloudera Manager to install,
-start and mange CDAP on Hadoop clusters.
+You can use `Cloudera Manager
+<http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
+to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
+Service Descriptor). Once the CSD is installed, you will able to use Cloudera Manager to
+install, start and manage CDAP on Hadoop clusters.
 
 These instructions cover the steps to integrate CDAP using Cloudera Manager:
 
 - **Prerequisites:** Preparing your Hadoop cluster for CDAP.
-- **Download:** Downloading the CSD file
+- **Download:** Downloading the CSD file.
 - **Install, Setup, and Startup:** Installing the CSD, running the *Add Service* Wizard, and starting CDAP.
 - **Verification:** Confirming that CDAP was installed and configured successfully.
 - **Troubleshooting:** Particular situations that can occur with Cloudera.
@@ -43,19 +44,20 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 -------------
 
-#. Node.js must be installed on the node(s) where the Web-App role instance will run. 
-   For the RHEL/CentOS distribution, a “yum install npm” should suffice.
+#. Node.js (version 0.8.16 or greater) must be installed on the node(s) where the Web-App
+   role instance will run. You can download the latest version of Node.js from `nodejs.org
+   <http://nodejs.org>`__.
 
-#. Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to 0
-   (unlimited). Each YARN container launched by CDAP connects to zookeeper so its a function
-   of usage
+#. Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+   (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+   the number of connections required is a function of usage.
 
 #. For Kerberos-enabled Hadoop clusters:
 
    - The 'cdap' user needs to be granted Hbase permissions to create tables.
      In an Hbase shell, enter::
      
-      "grant 'cdap', 'CRW'"
+      grant 'cdap', 'ACRW'
 
    - The 'cdap' user must be able to launch YARN containers, either by adding it to the YARN
      ``allowed.system.users`` or by adjusting ``min.user.id``.
@@ -63,9 +65,9 @@ Prerequisites
 #. Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
    ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions.
 
-#. Ensure that YARN has sufficient memory capacity. The default minimum container size can
-   then be lowered. Lack of YARN memory capacity is the leading cause of apparent failures
-   that we see reported.
+#. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
+   size. Lack of YARN memory capacity is the leading cause of apparent failures that we
+   see reported.
 
 
 Download
@@ -74,13 +76,16 @@ Download
 Download the CDAP CSD (Custom Service Descriptor): it can be found on the `Cask Resources
 webpage <http://cask.co/resources/#cdap-cds>`__.
 
+Details on CSDs and Cloudera Manager Extensions are `available online 
+<https://github.com/cloudera/cm_ext/wiki>`__.
+
 
 Install, Setup, and Startup
 ---------------------------
 
 .. rubric:: Install the CSD
 
-#. Install the CSD.
+#. `Install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
 #. Download and distribute the CDAP-<version> parcel.
 
 .. rubric:: Setup
@@ -97,10 +102,6 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Kerberos Auth Enabled** is needed if running against a
      secure Hadoop cluster.
 
-   - *Add Service* Wizard, Page 5: **Router Bind Port:** CDAP Router service default bind
-     port is 10000, which may conflict with *Hive Server2*; you may need to change one of
-     these.
-
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP Console to connect to the Router service.
 
@@ -111,6 +112,7 @@ When completing the Wizard, these notes may help:
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Cloudera Manager:** Starting the *Add Service* Wizard.
 
@@ -119,6 +121,7 @@ When completing the Wizard, these notes may help:
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Add Service Wizard, Page 1:** Selecting CDAP (Cask DAP) as the service to be added.
 
@@ -127,6 +130,7 @@ When completing the Wizard, these notes may help:
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Add Service Wizard, Page 2:** Setting the dependencies (in this case, including Hive).
    
@@ -135,22 +139,17 @@ When completing the Wizard, these notes may help:
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
-   **Add Service Wizard, Page 3:** Before machines have been specified.
-
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-05.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-
-   **Add Service Wizard, Page 3:** When customizing Role Assignments, CDAP **Security Auth** Service can be added later.
+   **Add Service Wizard, Page 3:** When customizing Role Assignments, CDAP **Security
+   Auth** Service can be added later.
 
 
 .. figure:: ../_images/integration-cloudera/cloudera-csd-06.png
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Add Service Wizard, Page 4:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
 
@@ -159,6 +158,7 @@ When completing the Wizard, these notes may help:
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Add Service Wizard, Page 5:** Finishing first run of commands to install CDAP.
    
@@ -167,6 +167,7 @@ When completing the Wizard, these notes may help:
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Add Service Wizard, Page 6:** Congratulations screen, though there is still work to be done.
    
@@ -187,6 +188,7 @@ startup.
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Cloudera Manager:** CDAP starting up.
    
@@ -195,6 +197,7 @@ startup.
    :figwidth: 100%
    :width: 800px
    :align: center
+   :class: bordered-image
 
    **Cloudera Manager:** CDAP completed startup: all lights green!
    
