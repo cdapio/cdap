@@ -152,7 +152,6 @@
     <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
     <module>cdap-security</module>
-    <module>cdap-security-service</module>
     <module>cdap-gateway</module>
     <module>cdap-explore-client</module>
     <module>cdap-explore-jdbc</module>
