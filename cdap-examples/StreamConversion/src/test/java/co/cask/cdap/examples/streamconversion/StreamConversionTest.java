@@ -65,7 +65,7 @@ public class StreamConversionTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
-    DataSetManager<TimePartitionedFileSet> fileSetManager= getDataset("converted");
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
     TimePartitionedFileSet converted = fileSetManager.get();
     Map<Long, String> partitions = converted.getPartitions(startTime, System.currentTimeMillis());
     Assert.assertEquals(1, partitions.size());
