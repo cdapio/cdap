@@ -17,10 +17,10 @@
 package co.cask.cdap.notifications.service;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -47,7 +47,7 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
   private static final Gson GSON = new Gson();
 
-  private final Multimap<NotificationFeed, NotificationCaller<?>> subscribers;
+  private final Multimap<Id.NotificationFeed, NotificationCaller<?>> subscribers;
 
   private final DatasetFramework dsFramework;
   private final TransactionSystemClient transactionSystemClient;
@@ -58,16 +58,17 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
     this.dsFramework = dsFramework;
     this.transactionSystemClient = transactionSystemClient;
     this.feedManager = feedManager;
-    this.subscribers = Multimaps.synchronizedMultimap(HashMultimap.<NotificationFeed, NotificationCaller<?>>create());
+    this.subscribers = Multimaps.synchronizedMultimap(
+      HashMultimap.<Id.NotificationFeed, NotificationCaller<?>>create());
   }
 
   /**
    * Called when a notification is received on a feed, to push it to all the handlers that subscribed to the feed.
    *
-   * @param feed {@link NotificationFeed} of the notification
+   * @param feed {@link Id.NotificationFeed} of the notification
    * @param notificationJson notification as a json object
    */
-  protected void notificationReceived(NotificationFeed feed, JsonElement notificationJson) {
+  protected void notificationReceived(Id.NotificationFeed feed, JsonElement notificationJson) {
     LOG.trace("Notification received on feed {}: {}", feed, notificationJson);
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
     synchronized (subscribers) {
@@ -80,19 +81,19 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(NotificationFeed feed, N notification)
+  public <N> ListenableFuture<N> publish(Id.NotificationFeed feed, N notification)
     throws NotificationException {
     return publish(feed, notification, notification.getClass());
   }
 
   @Override
-  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler)
+  public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler)
     throws NotificationFeedException {
     return subscribe(feed, handler, Threads.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
+  public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
     throws NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
@@ -104,17 +105,17 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
 
   /**
    * Wrapper around a {@link NotificationHandler}, containing a reference to a {@link NotificationHandler}
-   * and a {@link NotificationFeed}.
+   * and a {@link Id.NotificationFeed}.
    *
    * @param <N> Type of the Notification to handle
    */
   private class NotificationCaller<N> implements NotificationHandler<N>, Cancellable {
-    private final NotificationFeed feed;
+    private final Id.NotificationFeed feed;
     private final NotificationHandler<N> handler;
     private final Executor executor;
     private volatile boolean completed;
 
-    NotificationCaller(NotificationFeed feed, NotificationHandler<N> handler, Executor executor) {
+    NotificationCaller(Id.NotificationFeed feed, NotificationHandler<N> handler, Executor executor) {
       this.feed = feed;
       this.handler = handler;
       this.executor = executor;

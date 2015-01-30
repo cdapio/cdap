@@ -25,9 +25,9 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -295,15 +295,15 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   /**
-   * Create the public {@link NotificationFeed}s that concerns the stream with configuration {@code config}.
+   * Create the public {@link Id.NotificationFeed}s that concerns the stream with configuration {@code config}.
    *
    * @param config config of the stream to create feeds for
    */
   private void createStreamFeeds(StreamConfig config) {
     // TODO use accountID as namespace?
     try {
-      NotificationFeed streamFeed = new NotificationFeed.Builder()
-        .setNamespace(Constants.DEFAULT_NAMESPACE)
+      Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
+        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(String.format("%sSize", config.getName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
