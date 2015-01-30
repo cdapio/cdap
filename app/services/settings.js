@@ -27,7 +27,17 @@ angular.module(PKG.name + '.services')
     MyConfigStore.prototype.set = function (key, value) {
       var deferred = $q.defer();
 
-      this.data[key] = value;
+
+      var kp = key.split('.');
+
+      if(kp.length>1) {
+        // TODO use a deepSet ala http://yuilibrary.com/yui/docs/api/files/yui_js_yui.js.html#l1370
+        throw new Error("Not implemented sub-key creation");
+      }
+      else {
+        this.data[key] = value;
+      }
+
 
       data.request(
         {
