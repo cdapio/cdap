@@ -38,6 +38,21 @@ CDAP Bug Fixes
 Known Issues
 ------------
 
+- Typically Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
+  any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the Dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow unchecked Dataset upgrades.
+  Upgrades cause the Dataset metadata i.e. it's specification, including properties, to be updated. The Dataset
+  runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as is.
+
+  You can allow unchecked Dataset upgrades by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that Datasets are upgraded when the Application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
+  all Applications that are using the Dataset before deploying the new version of the Application.
+  This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
+  When Datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+  other Applications that are using the Dataset can work with the new changes.
 
 `Release 2.6.0 <http://docs.cask.co/cdap/2.6.0/index.html>`__
 =============================================================
