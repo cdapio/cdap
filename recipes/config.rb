@@ -55,6 +55,20 @@ if node['cdap'].key?('cdap_security')
   end
 end # End cdap-security.xml
 
+# Setup cdap-env.sh
+if node['cdap'].key?('cdap_env') && node['cdap']['version'].to_f >= 2.7
+  my_vars = { :options => node['cdap']['cdap_env'] }
+
+  template "#{cdap_conf_dir}/cdap-env.sh" do
+    source 'generic-env.sh.erb'
+    mode 0644
+    owner 'cdap'
+    group 'cdap'
+    variables my_vars
+    action :create
+  end
+end # End cdap-env.sh
+
 execute 'copy logback.xml from conf.dist' do
   command "cp /etc/cdap/conf.dist/logback.xml /etc/cdap/#{node['cdap']['conf_dir']}"
   not_if { ::File.exist?("/etc/cdap/#{node['cdap']['conf_dir']}/logback.xml") }
