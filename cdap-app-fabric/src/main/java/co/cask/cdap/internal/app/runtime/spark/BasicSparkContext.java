@@ -22,7 +22,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.app.metrics.SparkUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.SerializableServiceDiscoverer;
@@ -72,7 +72,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private final StreamAdmin streamAdmin;
   private final SparkLoggingContext loggingContext;
   private final SerializableServiceDiscoverer serializableServiceDiscoverer;
-  private final Metrics userMetrics;
+  private final SparkUserMetrics userMetrics;
 
   public void setMetricsPropertyFile(File file) {
     metricsPropertyFile = file;
@@ -95,7 +95,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     this.streamAdmin = streamAdmin;
     SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
     this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
-    this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
+    this.userMetrics = new SparkUserMetrics(getProgramMetrics());
     this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
   }
