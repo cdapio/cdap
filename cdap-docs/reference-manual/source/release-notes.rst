@@ -28,15 +28,18 @@ Cask Data Application Platform Release Notes
 
 CDAP Bug Fixes
 --------------
-- Allow unchecked Dataset upgrade on application deploy
+- Allow an unchecked Dataset upgrade upon application deployment
   (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__).
-- Update Hive Dataset table when a dataset is updated
+- Update the Hive Dataset table when a Dataset is updated
   (`CDAP-71 <https://issues.cask.co/browse/CDAP-71>`__).
-- Use Hadoop configuration files bundled with Explore Service
+- Use Hadoop configuration files bundled with the Explore Service
   (`CDAP-1250 <https://issues.cask.co/browse/CDAP-1250>`__).
+
+.. _known-issues-261:
 
 Known Issues
 ------------
+- See also the *Known Issues* of `version 2.6.0. <#known-issues-260>`_
 
 - Typically Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
   any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
