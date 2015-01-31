@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
-function (Widget, MyDataSource) {
+function (Widget, MyDataSource, mySettings, $q) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
@@ -115,7 +115,7 @@ function (Widget, MyDataSource) {
     var body = this.properties();
 
     if(this.id) { // updating
-      dSrc.request(
+      return dSrc.request(
         {
           method: 'PUT',
           _cdapNsPath: API_PATH + '/' + this.id,
@@ -124,7 +124,7 @@ function (Widget, MyDataSource) {
       );
     }
     else { // saving
-      dSrc.request(
+      return dSrc.request(
         {
           method: 'POST',
           _cdapNsPath: API_PATH,
@@ -142,17 +142,31 @@ function (Widget, MyDataSource) {
 
 
   function Model () {
-    var data = [];
-    data.activeIndex = 0;
+    var data = [],
+        self = this,
+        deferred = $q.defer();
 
+    data.activeIndex = 0;
     this.data = data;
 
-    this.$promise = dSrc.request(
-      {
-        method: 'GET',
-        _cdapNsPath: API_PATH
-      },
-      (function (result) {
+    this.$promise = deferred.promise;
+
+    mySettings.get('dashboards')
+      .then(function(cfg){
+        if(!angular.isArray(cfg)) {
+          cfg = [];
+        }
+
+        return $q.all(cfg.map(function(id){
+          return dSrc.request(
+            {
+              method: 'GET',
+              _cdapNsPath: API_PATH + '/' + id
+            }
+          );
+        }));
+      })
+      .then(function (result) {
 
         if(result.length) {
           // recreate saved dashboards
@@ -163,11 +177,11 @@ function (Widget, MyDataSource) {
           });
 
         } else { // no dashboards yet
-          this.add(); // create a new default one
+          self.add(); // create a new default one
         }
-      }).bind(this)
-    );
 
+        deferred.resolve(self);
+      });
   }
 
 
@@ -179,6 +193,14 @@ function (Widget, MyDataSource) {
   };
 
 
+  /**
+   * save dashboard config to backend
+   */
+  Model.prototype.persist = function () {
+    return mySettings.set('dashboards', this.data.map(function(one){
+      return one.id;
+    }));
+  };
 
   /**
    * remove a dashboard tab
@@ -192,6 +214,8 @@ function (Widget, MyDataSource) {
         _cdapNsPath: API_PATH + '/' + removed.id
       }
     );
+
+    this.persist();
   };
 
   /**
@@ -213,6 +237,8 @@ function (Widget, MyDataSource) {
 
     this.data.splice(insert, 0, this.data.splice(index, 1)[0]);
 
+    this.persist();
+
     return insert;
   };
 
@@ -232,7 +258,7 @@ function (Widget, MyDataSource) {
     d.columns[0].push(new Widget());
 
     // save to backend
-    d.persist();
+    d.persist().then(this.persist.bind(this));
 
     // insert at beginning of data array
     this.data.unshift(d);
