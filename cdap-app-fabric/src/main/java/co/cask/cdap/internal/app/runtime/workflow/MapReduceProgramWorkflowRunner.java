@@ -55,7 +55,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
-                                "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());
+                                "No MapReduce with name %s found in Application %s", name, spec.getName());
 
     final Program mapReduceProgram = new WorkflowMapReduceProgram(workflowProgram, mapReduceSpec);
     return getRuntimeContextCallable(name, mapReduceProgram);
