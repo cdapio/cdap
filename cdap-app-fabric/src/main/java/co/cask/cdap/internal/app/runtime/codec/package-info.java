@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,15 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.distributed;
 
 /**
- * Helper class for defining argument options
+ * This package contains GSON codec for various object types using by the runtime system
  */
-final class RunnableOptions {
-  static final String JAR = "jar";
-  static final String PROGRAM_OPTIONS = "popts";
-
-  private RunnableOptions() {
-  }
-}
+package co.cask.cdap.internal.app.runtime.codec;
