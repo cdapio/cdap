@@ -485,11 +485,11 @@ public abstract class AppFabricTestBase {
   private static void createNamespaces() throws Exception {
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(201, response.getStatusLine().getStatusCode());
 
     response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(201, response.getStatusLine().getStatusCode());
   }
 
   private static void deleteNamespaces() throws Exception {

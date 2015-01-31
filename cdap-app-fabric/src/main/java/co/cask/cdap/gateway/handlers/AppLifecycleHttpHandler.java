@@ -36,6 +36,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
@@ -50,6 +51,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
@@ -60,7 +62,6 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
@@ -173,6 +174,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final AdapterService adapterService;
 
+  private final NamespaceService namespaceService;
+
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
@@ -180,10 +183,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService) {
+                                 AdapterService adapterService, NamespaceService namespaceService) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
+    this.namespaceService = namespaceService;
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.archiveDir = this.appFabricDir + "/archive";
     this.locationFactory = locationFactory;
@@ -522,29 +526,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean namespaceExists(String namespace) {
-    boolean isValid = false;
-    if (namespace != null && !namespace.isEmpty()) {
-      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
-        isValid = true;
-      } else {
-        // null namespace found. check if this is default, and try to create it.
-        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
-        // time during the initialization of CDAP.
-        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
-          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
-                                                           .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setName(Constants.DEFAULT_NAMESPACE)
-                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
-          if (existing != null) {
-            LOG.trace("Default namespace already exists.");
-          } else {
-            LOG.trace("Created default namespace.");
-          }
-          isValid = true;
-        }
-      }
+    boolean exists = false;
+    try {
+      namespaceService.getNamespace(Id.Namespace.from(namespace));
+      exists = true;
+    } catch (NotFoundException e) {
     }
-    return isValid;
+    return exists;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)
