@@ -71,6 +71,12 @@ describe('myHelpers', function(){
       expect(obj).toEqual({thing:1, foo: {bar: {bat: 'man'}}});
     });
 
+    it('supports numbers as strings in the key', function() {
+      var obj = {1:2};
+      myHelpers.deepSet(obj, '3.4', 'aaa');
+      expect(obj).toEqual({ 1:2, '3':{'4':'aaa'} });
+    });
+
   });
 
 });
