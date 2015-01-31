@@ -70,8 +70,8 @@ The custom action then can be added to the Workflow using the ``addAction()`` me
 
 .. rubric::  Concurrent Workflows
 
-By default, Workflow runs sequentially. Multiple instances of the Workflow can be run concurrently. To enable the
-concurrent runs for the Workflow, set its runtime argument ``concurrent.runs.enabled`` to ``true``.
+By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run concurrently. To enable
+concurrent runs for a Workflow, set its runtime argument ``concurrent.runs.enabled`` to ``true``.
 
 .. rubric::  Example of Using a Workflow
 
