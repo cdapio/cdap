@@ -48,7 +48,7 @@ angular.module(PKG.name+'.services')
    * @return {Mixed}     value at the
    */
   function deepGet(obj, key) {
-    return objectQuery.apply(null, [obj].concat(key.split('.')));
+    return objectQuery.apply(null, [obj].concat(key.split(PERIOD)));
   }
 
   /* ----------------------------------------------------------------------- */
