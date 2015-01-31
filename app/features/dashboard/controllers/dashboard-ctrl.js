@@ -14,20 +14,21 @@ function ($scope, $state, $dropdown, myDashboardsModel) {
     $scope.$watch('dashboards.activeIndex', function (newVal) {
       $state.go($state.current, {tab:newVal});
     });
-  });
 
-  $scope.$on('$stateChangeSuccess', function (event, state) {
-    var tab = parseInt($state.params.tab, 10) || 0;
-    if((tab<0 || tab>=$scope.dashboards.length)) {
-      tab = 0;
+    function checkTabParam() {
+      var tab = parseInt($state.params.tab, 10) || 0;
+      if((tab<0 || tab>=$scope.dashboards.length)) {
+        tab = 0;
+      }
+      if($scope.dashboards.activeIndex !== tab) {
+        $scope.dashboards.activeIndex = tab;
+      }
+      $scope.currentBoard = myDashboardsModel.current();
     }
-    console.log('$stateChangeSuccess', $state.params.tab, tab);
-    if($scope.dashboards.activeIndex !== tab) {
-      $scope.dashboards.activeIndex = tab;
-    }
-    $scope.currentBoard = myDashboardsModel.current();
-  });
 
+    $scope.$on('$stateChangeSuccess', checkTabParam);
+    checkTabParam();
+  });
 
 
 
