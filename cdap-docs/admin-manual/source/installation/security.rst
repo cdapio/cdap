@@ -261,9 +261,10 @@ To configure basic authentication add the following properties to ``cdap-site.xm
 ========================================================== =========================== ======================================
 Property                                                   Default Value               Description
 ========================================================== =========================== ======================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.server.BasicAuthenticationHandler``
-                                                                                       Name of the class handling
-                                                                                       authentication
+``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+                                                           ``server.``                 authentication
+                                                           ``BasicAuthentication``\
+                                                           ``Handler``
 ``security.authentication.basic.realmfile``                ``<path>``                  An absolute or relative path to the 
                                                                                        realm file
 ========================================================== =========================== ======================================
@@ -283,18 +284,23 @@ LDAP Authentication
 You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
-========================================================== ==================================================================
+========================================================== =========================== ======================================
 Property                                                   Default Value               Description
-========================================================== ==================================================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.server.LDAPAuthenticationHandler``
-``security.authentication.loginmodule.className``          ``co.cask.cdap.security.server.LDAPLoginModule``
-``security.authentication.handler.debug``                  ``true/false``
+========================================================== =========================== ======================================
+``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+                                                           ``server.``                 authentication
+                                                           ``LDAPAuthentication``\
+                                                           ``Handler``
+``security.authentication.loginmodule.className``          ``co.cask.cdap.security.``\
+                                                           ``server.``
+                                                           ``LDAPLoginModule``
+``security.authentication.handler.debug``                  ``false``                   Set to ``true`` to enable debugging
 ``security.authentication.handler.hostname``               ``<hostname>``
 ``security.authentication.handler.port``                   ``<port>``
 ``security.authentication.handler.userBaseDn``             ``<userBaseDn>``
 ``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``
 ``security.authentication.handler.userObjectClass``        ``<userObjectClass>``
-========================================================== ==================================================================
+========================================================== =========================== ======================================
 
 In addition, you may configure these optional properties in ``cdap-site.xml``:
 
@@ -308,14 +314,13 @@ Property                                                   Default Value        
                                                                                        search the LDAP directory
 ``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``       The Unique User ID Attribute
 ``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>`` Password of the ``userIdAttribute``
-``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Role Based 
-                                                                                       ?????
+``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Role Based: <to be confirmed>
 ``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``     Name of attribute specifying the role 
-                                                                                       ?????
+                                                                                       <to be confirmed>
 ``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``   Name of attribute specifying the role 
-                                                                                       ?????
+                                                                                       <to be confirmed>
 ``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``       Name of attribute specifying the role 
-                                                                                       ?????
+                                                                                       <to be confirmed>
 ========================================================== =========================== ======================================
 
 To enable SSL between the authentication server and the LDAP instance, configure
@@ -337,12 +342,16 @@ JASPI Authentication
 To authenticate a user using JASPI (Java Authentication Service Provider Interface) add 
 the following properties to ``cdap-site.xml``:
 
-========================================================== ==================================================================
-Property                                                   Value
-========================================================== ==================================================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.server.JASPIAuthenticationHandler``
-``security.authentication.loginmodule.className``          ``<custom-login-module>``
-========================================================== ==================================================================
+========================================================== =========================== ======================================
+Property                                                   Default Value               Description
+========================================================== =========================== ======================================
+``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+                                                           ``server.``                 authentication
+                                                           ``JASPIAuthentication``\
+                                                           ``Handler``
+``security.authentication.loginmodule.className``          ``<custom-login-module>``   Name of the class of the login module
+                                                                                       handling authentication
+========================================================== =========================== ======================================
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
 such as ``security.authentication.handler.hostname``, will be provided to the handler.
