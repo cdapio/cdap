@@ -64,13 +64,14 @@ for more information about input formats, output format, SerDes, and table prope
 
 Limitations
 -----------
-As exploration is tied directly to Hive, file exploration has several limitations that mirror limitations in Hive:
+There are several limitations for file exploration:
 
-- All explorable files must be of the same format.
-- All explorable files must be in a format known to the version of Hive you are using.
+- All explorable files must be in Avro format.
+- Your version of Hive must include the AvroSerDe.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permissions errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 
+There are plans for adding support for additional file formats in upcoming releases.
 A ``FileSet`` has some additional limitations that the ``TimePartitionedFileSet`` does not have:
 
 - Hive tables created by a ``FileSet`` are not partitioned; this means all queries perform a full table scan.
