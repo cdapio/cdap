@@ -4,7 +4,7 @@ angular.module(PKG.name + '.services')
     return new MyConfigStore('consolesettings');
   })
 
-  .factory('MyConfigStore', function MyConfigStoreFactory($q, MyDataSource) {
+  .factory('MyConfigStore', function MyConfigStoreFactory($q, MyDataSource, myHelpers) {
 
     var data = new MyDataSource();
 
@@ -20,24 +20,14 @@ angular.module(PKG.name + '.services')
 
     /**
      * set a preference
-     * @param {string} key
+     * @param {string} key, can have a path like "foo.bar.baz"
      * @param {mixed} value
      * @return {promise} resolved with the response from server
      */
     MyConfigStore.prototype.set = function (key, value) {
       var deferred = $q.defer();
 
-
-      var kp = key.split('.');
-
-      if(kp.length>1) {
-        // TODO use a deepSet ala http://yuilibrary.com/yui/docs/api/files/yui_js_yui.js.html#l1370
-        throw new Error("Not implemented sub-key creation");
-      }
-      else {
-        this.data[key] = value;
-      }
-
+      myHelpers.deepSet(this.data, key, value);
 
       data.request(
         {
@@ -59,8 +49,11 @@ angular.module(PKG.name + '.services')
      * @return {promise} resolved with the value
      */
     MyConfigStore.prototype.get = function (key, force) {
-      if (!force && this.data[key]) {
-        return $q.when(this.data[key]);
+
+      var val = myHelpers.deepGet(this.data, key);
+
+      if (!force && val) {
+        return $q.when(val);
       }
 
       var self = this;
@@ -68,7 +61,9 @@ angular.module(PKG.name + '.services')
       if (this.pending) {
         var deferred = $q.defer();
         this.pending.promise.then(function () {
-          deferred.resolve(self.data[key]);
+          deferred.resolve(
+            myHelpers.deepGet(self.data, key)
+          );
         });
         return deferred.promise;
       }
@@ -82,7 +77,9 @@ angular.module(PKG.name + '.services')
         },
         function (res) {
           self.data = res.property;
-          self.pending.resolve(self.data[key]);
+          self.pending.resolve(
+            myHelpers.deepGet(self.data, key)
+          );
         }
       );
 
