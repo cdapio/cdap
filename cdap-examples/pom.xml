@@ -71,7 +71,7 @@
                 <excludes>
                   <exclude>build-number.txt</exclude>
                   <exclude>LICENSE*.txt</exclude>
-                  <exclude>README.md</exclude>
+                  <exclude>README.*</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>
