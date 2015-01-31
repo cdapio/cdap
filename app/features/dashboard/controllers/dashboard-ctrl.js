@@ -6,10 +6,8 @@ angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
 function ($scope, $state, $dropdown, myDashboardsModel) {
 
   $scope.dashboards = myDashboardsModel.data;
-  $scope.currentBoard = {};
 
   myDashboardsModel.$promise.then(function() {
-    $scope.currentBoard = myDashboardsModel.current();
 
     $scope.$watch('dashboards.activeIndex', function (newVal) {
       $state.go($state.current, {tab:newVal});
