@@ -70,6 +70,7 @@ import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -149,6 +150,7 @@ public class TestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static NamespaceService namespaceService;
 
   // This list is to record ApplicationManager create inside @Test method
   private final List<ApplicationManager> applicationManagers = Lists.newArrayList();
@@ -292,12 +294,20 @@ public class TestBase {
         }
       }
     );
+    new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NamespaceService.class).in(Scopes.SINGLETON);
+      }
+    };
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    namespaceService = injector.getInstance(NamespaceService.class);
+    namespaceService.startAndWait();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -375,6 +385,7 @@ public class TestBase {
       throw Throwables.propagate(e);
     }
     exploreExecutorService.stopAndWait();
+    namespaceService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
