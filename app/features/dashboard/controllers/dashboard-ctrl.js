@@ -3,19 +3,17 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
+function ($scope, $state, $dropdown, myDashboardsModel) {
 
   $scope.dashboards = myDashboardsModel.data;
+  $scope.currentBoard = {};
 
   myDashboardsModel.$promise.then(function() {
     $scope.currentBoard = myDashboardsModel.current();
-  });
 
-  /**
-   * handle tab navigation
-   */
-  $scope.$watch('dashboards.activeIndex', function (newVal) {
-    $state.go($state.current, {tab:newVal});
+    $scope.$watch('dashboards.activeIndex', function (newVal) {
+      $state.go($state.current, {tab:newVal});
+    });
   });
 
   $scope.$on('$stateChangeSuccess', function (event, state) {
@@ -23,10 +21,12 @@ function ($scope, $state, $alert, $dropdown, myDashboardsModel, Widget) {
     if((tab<0 || tab>=$scope.dashboards.length)) {
       tab = 0;
     }
-    $scope.dashboards.activeIndex = tab;
+    console.log('$stateChangeSuccess', $state.params.tab, tab);
+    if($scope.dashboards.activeIndex !== tab) {
+      $scope.dashboards.activeIndex = tab;
+    }
     $scope.currentBoard = myDashboardsModel.current();
   });
-
 
 
 
