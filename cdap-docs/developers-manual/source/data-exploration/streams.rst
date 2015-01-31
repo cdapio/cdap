@@ -47,7 +47,7 @@ will not get any results.
 
 Schema
 ------
-CDAP schemas are adopted from the `Avro Schema Declaration `<http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
+CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
 with a few differences:
  
   * Map keys do not have to be strings, but can be of any type.
