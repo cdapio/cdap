@@ -17,11 +17,11 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.ProgramNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;

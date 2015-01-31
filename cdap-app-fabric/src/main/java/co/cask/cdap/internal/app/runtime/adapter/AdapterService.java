@@ -29,6 +29,8 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -40,6 +42,7 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Schedules;
 import co.cask.cdap.proto.AdapterSpecification;
@@ -49,6 +52,7 @@ import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -89,6 +93,7 @@ public class AdapterService extends AbstractIdleService {
   private final StreamAdmin streamAdmin;
   private final Scheduler scheduler;
   private final Store store;
+  private final PreferencesStore preferencesStore;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
   private final String archiveDir;
 
@@ -96,7 +101,8 @@ public class AdapterService extends AbstractIdleService {
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
                         StreamAdmin streamAdmin, StoreFactory storeFactory, LocationFactory locationFactory,
-                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory) {
+                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
+                        PreferencesStore preferencesStore) {
     this.configuration = configuration;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(configuration, Namespace.USER));
@@ -107,6 +113,7 @@ public class AdapterService extends AbstractIdleService {
     this.managerFactory = managerFactory;
     archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
     this.adapterTypeInfos = Maps.newHashMap();
+    this.preferencesStore = preferencesStore;
   }
 
   @Override
@@ -234,6 +241,8 @@ public class AdapterService extends AbstractIdleService {
     validateSources(adapterName, adapterSpec.getSources());
     createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
+    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
+    preferencesStore.setProperties(namespaceId, appSpec.getName(), properties);
     schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
     store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
   }

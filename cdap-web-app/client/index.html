@@ -137,7 +137,7 @@
       {{outlet}}
 
     </div>
-    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
+    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014-2015 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
 
     <a href="http://cask.co/company/terms" target="_blank" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
@@ -172,7 +172,7 @@
               <li>using a Procedure to query a DataSet to obtain the results.</li>
             </ol>
 
-            <p>These are the basics of Cask's Data Application Platform.</p>
+            <p>These are the basics of the Cask Data Application Platform.</p>
             <p>For a programming quickstart, follow the <a target="_blank" href="http://www.cask.co/resources/">instructions online</a> about modifying the code and redeploying the app.</p>
 
           </div>
@@ -756,7 +756,7 @@
             <h1>Usage</h1>
             <br />
             <div class="alert alert-info">
-              This is a long lasting Access Token that you can use to authenticate against CDAP. Access Tokens are used to identify and authenticate users.
+              This is a long-lasting Access Token that you can use to authenticate against CDAP. Access Tokens are used to identify and authenticate users.
             </div>
             <br />
             <table class="table" role="table">
@@ -769,7 +769,7 @@
               <tr>
                 <td class="bolder-font">Step 2</td>
                 <td>
-                  Save the downloaded file as ".cdap.accesstoken" under your home directory (~/).
+                  Save the downloaded file as ".cdap.accesstoken" in your home directory (~/).
                 </td>
               </tr>
               <tr>
@@ -1122,7 +1122,7 @@
             </thead>
             <tbody>
             {{#each runs}}
-              <tr class="run-list" {{action "loadRun" runid}}>
+              <tr class="run-list">
                 <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
                 <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
@@ -1611,7 +1611,7 @@
             </thead>
             <tbody>
             {{#each runs}}
-              <tr class="run-list" {{action "loadRun" runid}}>
+              <tr class="run-list">
                 <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
                 <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>

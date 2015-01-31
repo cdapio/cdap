@@ -25,6 +25,7 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.MultiStreamApp;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
@@ -51,6 +52,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -97,6 +99,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
   private static final String APP_WITH_CONCURRENT_WORKFLOW = "ConcurrentWorkflowApp";
   private static final String CONCURRENT_WORKFLOW_NAME = "ConcurrentWorkflow";
+  private static final String WORKFLOW_APP_WITH_ERROR_RUNS = "WorkflowAppWithErrorRuns";
+  private static final String WORKFLOW_WITH_ERROR_RUNS = "WorkflowWithErrorRuns";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
 
@@ -792,6 +796,25 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowRuns() throws Exception {
+    HttpResponse response = deploy(WorkflowAppWithErrorRuns.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS, WORKFLOW_WITH_ERROR_RUNS, "completed");
+    scheduleHistoryRuns(5, runsUrl, 0);
+
+    Map<String, String> propMap = ImmutableMap.of("ThrowError", "true");
+    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
+    store.setProperties(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS, ProgramType.WORKFLOW.getCategoryName(),
+                        WORKFLOW_WITH_ERROR_RUNS, propMap);
+
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS, WORKFLOW_WITH_ERROR_RUNS, "failed");
+    scheduleHistoryRuns(5, runsUrl, 0);
   }
 
   @Test

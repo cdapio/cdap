@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -179,6 +179,16 @@ public class HttpHandlerGeneratorTest {
     @Override
     public HttpServiceHandlerSpecification getSpecification() {
       return null;
+    }
+
+    @Override
+    public int getInstanceCount() {
+      return 1;
+    }
+
+    @Override
+    public int getInstanceId() {
+      return 1;
     }
 
     @Override

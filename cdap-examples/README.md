@@ -74,6 +74,11 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
 
+## StreamConversion
+
+- An application that illustrates the use of time-partitioned file sets.
+- It periodically converts a stream into partitions of a file set, which can be read by SQL queries.
+
 ## UserProfiles
 
 - An application that demonstrates column-level conflict detection.

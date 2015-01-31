@@ -63,8 +63,8 @@ The above lists link to the examples below for each portion of the API.
 
 .. _client-api-configuring-client:
 
-Configuring your *Client
-------------------------
+Configuring your \*Client
+-------------------------
 
 Every *\*Client* constructor requires a `ClientConfig` instance which configures the hostname and port of the CDAP
 instance that you wish to interact with.

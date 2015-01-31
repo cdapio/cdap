@@ -37,14 +37,14 @@ import java.util.Map;
  */
 public final class FormatStreamEventDecoder<T> implements StreamEventDecoder<LongWritable, GenericStreamEventData<T>> {
   private final LongWritable key = new LongWritable();
-  private final RecordFormat<ByteBuffer, T> bodyFormat;
+  private final RecordFormat<StreamEvent, T> bodyFormat;
 
   /**
    * Create a decoder for stream events that decodes the body of the stream using the given initialized format.
    *
    * @param bodyFormat Initialized format.
    */
-  public FormatStreamEventDecoder(RecordFormat<ByteBuffer, T> bodyFormat) {
+  public FormatStreamEventDecoder(RecordFormat<StreamEvent, T> bodyFormat) {
     this.bodyFormat = bodyFormat;
   }
 
@@ -52,7 +52,7 @@ public final class FormatStreamEventDecoder<T> implements StreamEventDecoder<Lon
   public DecodeResult<LongWritable, GenericStreamEventData<T>> decode(
     StreamEvent event, DecodeResult<LongWritable, GenericStreamEventData<T>> result) {
     key.set(event.getTimestamp());
-    T body = bodyFormat.read(event.getBody());
+    T body = bodyFormat.read(event);
     Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
     return result.setKey(key).setValue(new GenericStreamEventData<T>(headers, body));
   }

@@ -20,8 +20,8 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.format.ByteBufferRecordFormat;
 import co.cask.cdap.data.format.RecordFormats;
+import co.cask.cdap.data.format.StreamEventRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
@@ -54,12 +54,10 @@ import java.util.Properties;
 public class StreamSerDe implements SerDe {
   private static final Logger LOG = LoggerFactory.getLogger(StreamSerDe.class);
   private static final int BODY_OFFSET = 2;
-  private ArrayList<String> columnNames;
-  private ArrayList<TypeInfo> columnTypes;
   private List<String> bodyColumnNames;
   private List<TypeInfo> bodyColumnTypes;
   private ObjectInspector inspector;
-  private ByteBufferRecordFormat streamFormat;
+  private StreamEventRecordFormat<?> streamFormat;
 
   // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
   // the conf, but be very careful when doing so. If there are multiple hive tables involved in a query, initialize
@@ -72,8 +70,10 @@ public class StreamSerDe implements SerDe {
     // The columns property comes from the Hive metastore, which has it from the create table statement
     // It is then important that this schema be accurate and in the right order - the same order as
     // object inspectors will reflect them.
-    columnNames = Lists.newArrayList(properties.getProperty(serdeConstants.LIST_COLUMNS).split(","));
-    columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(properties.getProperty(serdeConstants.LIST_COLUMN_TYPES));
+    List<String> columnNames = Lists.newArrayList(properties.getProperty(serdeConstants.LIST_COLUMNS).split(","));
+    List<TypeInfo> columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(
+      properties.getProperty(serdeConstants.LIST_COLUMN_TYPES));
+
     // timestamp and headers are guaranteed to be the first columns in a stream table.
     // the rest of the columns are for the stream body.
     bodyColumnNames = columnNames.subList(BODY_OFFSET, columnNames.size());
@@ -98,7 +98,7 @@ public class StreamSerDe implements SerDe {
       StreamAdmin streamAdmin = context.getStreamAdmin();
       StreamConfig streamConfig = streamAdmin.getConfig(streamName);
       FormatSpecification formatSpec = streamConfig.getFormat();
-      this.streamFormat = (ByteBufferRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
+      this.streamFormat = (StreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
       // if we hit this something went wrong much earlier.
@@ -141,9 +141,8 @@ public class StreamSerDe implements SerDe {
     event.add(streamEvent.getHeaders());
 
     try {
-      // The format should always format the body into a record.
-      event.addAll(ObjectTranslator.flattenRecord(
-        streamFormat.read(streamEvent.getBody()), bodyColumnNames, bodyColumnTypes));
+      // The format should always format the stream event into a record.
+      event.addAll(ObjectTranslator.flattenRecord(streamFormat.read(streamEvent), bodyColumnNames, bodyColumnTypes));
       return event;
     } catch (Throwable t) {
       LOG.info("Unable to format the stream body.", t);

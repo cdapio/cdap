@@ -20,9 +20,9 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -30,14 +30,14 @@ import java.util.Map;
 /**
  * Stream record format that interprets the entire body as a single string.
  */
-public class TextRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
+public class TextRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   private Charset charset = Charsets.UTF_8;
   private String fieldName = "body";
 
   @Override
-  public StructuredRecord read(ByteBuffer input) {
-    String bodyAsStr = Bytes.toString(input, charset);
+  public StructuredRecord read(StreamEvent event) {
+    String bodyAsStr = Bytes.toString(event.getBody(), charset);
     return StructuredRecord.builder(schema).set(fieldName, bodyAsStr).build();
   }
 

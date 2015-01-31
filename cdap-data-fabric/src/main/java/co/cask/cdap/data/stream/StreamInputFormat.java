@@ -46,7 +46,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -328,7 +327,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
       // to format the stream body.
       if (decoderClass.isAssignableFrom(FormatStreamEventDecoder.class)) {
         try {
-          RecordFormat<ByteBuffer, V> bodyFormat = getInitializedFormat(conf);
+          RecordFormat<StreamEvent, V> bodyFormat = getInitializedFormat(conf);
           return (StreamEventDecoder<K, V>) new FormatStreamEventDecoder(bodyFormat);
         } catch (Exception e) {
           throw new IllegalArgumentException("Unable to get the stream body format.");
@@ -341,7 +340,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     }
   }
 
-  private RecordFormat<ByteBuffer, V> getInitializedFormat(Configuration conf)
+  private RecordFormat<StreamEvent, V> getInitializedFormat(Configuration conf)
     throws UnsupportedTypeException, IllegalAccessException, ClassNotFoundException, InstantiationException {
     String formatSpecStr = conf.get(BODY_FORMAT);
     if (formatSpecStr == null || formatSpecStr.isEmpty()) {

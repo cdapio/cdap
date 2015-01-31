@@ -21,13 +21,14 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,22 +42,23 @@ import java.util.Map;
  * In addition, the very last field can be an array of strings.
  * </p>
  */
-public class DelimitedStringsRecordFormat extends ByteBufferRecordFormat<StructuredRecord> {
+public class DelimitedStringsRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   public static final String DELIMITER = "delimiter";
   private Charset charset = Charsets.UTF_8;
   private String delimiter = ",";
 
   @Override
-  public StructuredRecord read(ByteBuffer input) throws UnexpectedFormatException {
-    String bodyAsStr = Bytes.toString(input, charset);
+  public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
+    String bodyAsStr = Bytes.toString(event.getBody(), charset);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     Iterator<String> bodyFields = Splitter.on(delimiter).split(bodyAsStr).iterator();
     for (Schema.Field field : schema.getFields()) {
       Schema fieldSchema = field.getSchema();
       String fieldName = field.getName();
       if (isStringArray(fieldSchema)) {
-        builder.set(fieldName, Lists.newArrayList(bodyFields).toArray(new String[0]));
+        List<String> fields = Lists.newArrayList(bodyFields);
+        builder.set(fieldName, fields.toArray(new String[fields.size()]));
       } else {
         String val = bodyFields.hasNext() ? bodyFields.next() : null;
         // if the body field is an empty string and the column is not a string type, interpret it as a null.

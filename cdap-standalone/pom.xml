@@ -138,12 +138,19 @@
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
         <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
       </properties>
       <dependencies>
         <dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-web-app</artifactId>
           <version>${project.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-adapters</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
         </dependency>
       </dependencies>
       <build>
@@ -171,6 +178,23 @@
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
                   <excludeArtifactIds>zkclient,servlet-api</excludeArtifactIds>
+                  <prependGroupId>true</prependGroupId>
+                  <silent>true</silent>
+                  <includeScope>runtime</includeScope>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-adapters</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${stage.plugins.dir}</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <includeArtifactIds>cdap-adapters</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
@@ -262,7 +286,7 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-api/target</directory>
                       <includes>
-                        <include>api-${project.version}*.jar</include>
+                        <include>cdap-api-${project.version}*.jar</include>
                       </includes>
                     </resource>
                     <!-- Copy web-app -->

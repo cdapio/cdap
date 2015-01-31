@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -50,14 +51,14 @@ public class AvroRecordFormatTest {
       new FormatSpecification(Formats.AVRO, schema, Collections.<String, String>emptyMap());
 
     org.apache.avro.Schema avroSchema = convertSchema(schema);
-    RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
+    RecordFormat<StreamEvent, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
     GenericRecord record = new GenericRecordBuilder(avroSchema).set("x", 5).build();
-    GenericRecord actual = format.read(toBytes(record));
+    GenericRecord actual = format.read(toStreamEvent(record));
     Assert.assertEquals(5, actual.get("x"));
 
     record = new GenericRecordBuilder(avroSchema).set("x", 10).build();
-    actual = format.read(toBytes(record));
+    actual = format.read(toStreamEvent(record));
     Assert.assertEquals(10, actual.get("x"));
   }
 
@@ -96,9 +97,9 @@ public class AvroRecordFormatTest {
       .set("nullable", null)
       .build();
 
-    RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
+    RecordFormat<StreamEvent, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
-    GenericRecord actual = format.read(toBytes(record));
+    GenericRecord actual = format.read(toStreamEvent(record));
     Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
     Assert.assertEquals(Long.MAX_VALUE, actual.get("long"));
     Assert.assertFalse((Boolean) actual.get("boolean"));
@@ -134,9 +135,9 @@ public class AvroRecordFormatTest {
       schema,
       Collections.<String, String>emptyMap()
     );
-    RecordFormat<ByteBuffer, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
+    RecordFormat<StreamEvent, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
 
-    GenericRecord actual = format.read(toBytes(record));
+    GenericRecord actual = format.read(toStreamEvent(record));
     Assert.assertEquals(Integer.MAX_VALUE, actual.get("int"));
     GenericRecord actualInner = (GenericRecord) actual.get("record");
     Assert.assertEquals(5, actualInner.get("int"));
@@ -155,7 +156,7 @@ public class AvroRecordFormatTest {
     }
   }
 
-  private ByteBuffer toBytes(GenericRecord record) throws IOException {
+  private StreamEvent toStreamEvent(GenericRecord record) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
     DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(record.getSchema());
@@ -163,6 +164,6 @@ public class AvroRecordFormatTest {
     encoder.flush();
     out.close();
     byte[] serializedRecord = out.toByteArray();
-    return ByteBuffer.wrap(serializedRecord);
+    return new StreamEvent(ByteBuffer.wrap(serializedRecord));
   }
 }

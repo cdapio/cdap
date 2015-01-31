@@ -163,6 +163,7 @@ public class AppWithServices extends AbstractApplication {
     @Path("/failure")
     @GET
     public void failure(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
       throw new IllegalStateException("Failed");
     }
 

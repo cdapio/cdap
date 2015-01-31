@@ -98,9 +98,9 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     runCommand("show partitions " + TABLE_NAME, true,
                Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=11/day=10/hour=1/minute=0")),
-                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=11/day=10/hour=2/minute=0")),
-                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=11/day=10/hour=3/minute=0"))));
+                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=1/minute=0")),
+                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=2/minute=0")),
+                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=3/minute=0"))));
 
     // remove a partition
     dropPartition(tpfs, time2);
@@ -110,8 +110,8 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     runCommand("show partitions " + TABLE_NAME, true,
                Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=11/day=10/hour=1/minute=0")),
-                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=11/day=10/hour=3/minute=0"))));
+                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=1/minute=0")),
+                 new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=3/minute=0"))));
 
     // drop the dataset
     datasetFramework.deleteInstance(NAME);

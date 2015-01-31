@@ -20,8 +20,8 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
 
