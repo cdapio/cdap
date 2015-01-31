@@ -59,7 +59,7 @@ public class StreamConversionTest extends TestBase {
     // record the current time
     long startTime = System.currentTimeMillis();
 
-    // run the workflow
+    // run the mapreduce
     MapReduceManager mapReduceManager =
       appManager.startMapReduce("StreamConversionMapReduce", RuntimeArguments.NO_ARGUMENTS);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);

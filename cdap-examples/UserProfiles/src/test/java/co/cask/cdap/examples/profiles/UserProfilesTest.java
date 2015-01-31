@@ -123,14 +123,13 @@ public class UserProfilesTest extends TestBase {
     streamWriter.send(new Gson().toJson(new Event(activeTime, "1234", "/some/path")));
 
     try {
-      // Wait for the last Flowlet processing 5 events, or at most 5 seconds
+      // Wait for the last Flowlet processing 1 events, or at most 5 seconds
       RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("UserProfiles", "ActivityFlow", "updater");
       metrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
       Assert.assertFalse(flowManager.isRunning());
     }
-    TimeUnit.SECONDS.sleep(5);
 
     // verify the last active time for the user
     tableManager.flush();
