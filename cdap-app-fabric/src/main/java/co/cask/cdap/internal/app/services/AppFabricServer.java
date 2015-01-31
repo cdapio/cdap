@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.http.HandlerHook;
@@ -60,6 +61,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
+  private final NamespaceService namespaceService;
   private final ProgramRuntimeService programRuntimeService;
   private final AdapterService adapterService;
   private final Set<String> servicesNames;
@@ -80,6 +82,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         NamespaceService namespaceService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames) {
     this.hostname = hostname;
@@ -88,6 +91,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.handlers = handlers;
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
+    this.namespaceService = namespaceService;
     this.programRuntimeService = programRuntimeService;
     this.adapterService = adapterService;
     this.servicesNames = servicesNames;
@@ -108,6 +112,7 @@ public final class AppFabricServer extends AbstractIdleService {
     FileUtils.deleteDirectory(tmpDir);
 
     schedulerService.start();
+    namespaceService.start();
     adapterService.start();
     programRuntimeService.start();
 
@@ -190,5 +195,6 @@ public final class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
     adapterService.stopAndWait();
+    namespaceService.stopAndWait();
   }
 }

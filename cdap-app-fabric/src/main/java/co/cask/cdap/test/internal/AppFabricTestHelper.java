@@ -32,6 +32,7 @@ import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -84,6 +85,7 @@ public class AppFabricTestHelper {
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(SchedulerService.class).startAndWait();
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
+      injector.getInstance(NamespaceService.class).startAndWait();
     }
     return injector;
   }

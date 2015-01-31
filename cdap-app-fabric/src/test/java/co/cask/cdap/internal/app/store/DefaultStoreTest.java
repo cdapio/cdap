@@ -55,6 +55,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -93,6 +94,19 @@ public class DefaultStoreTest {
   @Before
   public void before() throws Exception {
     store.clear();
+    // The store.clear() call above deletes the 'default' namespace, which causes subsequent tests to fail.
+    // The default namespace is only created during AppFabricServer (NamespaceService in particular) startup.
+    // Re-creating it once here temporarily until AppFabricTestHelper uses v2 APIs for managing app lifecycle.
+    // In a real-scenario (non-unit test), users are not allowed to delete the 'default' namespace, so this scenario
+    // should never occur.
+    // Since this is only temporary and is for unit test purposes (and is the unit test of Store), using the Store
+    // directly to re-create the default namespace rather than restarting/re-initializing NamespaceService.
+    // TODO: CDAP-1368: Update AppFabricTestHelper to use v3 APIs, and create/use non-default namespaces in these tests.
+    store.createNamespace(new NamespaceMeta.Builder()
+                            .setId(Constants.DEFAULT_NAMESPACE)
+                            .setName(Constants.DEFAULT_NAMESPACE)
+                            .setDescription(Constants.DEFAULT_NAMESPACE)
+                            .build());
   }
 
   @Test

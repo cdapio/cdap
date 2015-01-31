@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,12 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.config.DashboardStore;
-import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
@@ -49,24 +48,19 @@ import javax.ws.rs.PathParam;
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 
-  private final Store store;
-  private final PreferencesStore preferencesStore;
-  private final DashboardStore dashboardStore;
+  private final NamespaceService namespaceService;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                              PreferencesStore preferencesStore, DashboardStore dashboardStore) {
+  public NamespaceHttpHandler(Authenticator authenticator, NamespaceService namespaceService) {
     super(authenticator);
-    this.store = storeFactory.create();
-    this.preferencesStore = preferencesStore;
-    this.dashboardStore = dashboardStore;
+    this.namespaceService = namespaceService;
   }
 
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, store.listNamespaces());
+      responder.sendJson(HttpResponseStatus.OK, namespaceService.listNamespaces());
     } catch (Exception e) {
       LOG.error("Internal error while listing all namespaces", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -78,12 +72,10 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
     try {
-      NamespaceMeta ns = store.getNamespace(Id.Namespace.from(namespaceId));
-      if (ns == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
-        return;
-      }
+      NamespaceMeta ns = namespaceService.getNamespace(Id.Namespace.from(namespaceId));
       responder.sendJson(HttpResponseStatus.OK, ns);
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
     } catch (Exception e) {
       LOG.error("Internal error while getting namespace '{}'", namespaceId, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -142,15 +134,11 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       .build();
 
     try {
-      NamespaceMeta existing = store.createNamespace(builder.build());
-      // make the API idempotent, but send appropriate response
-      String response;
-      if (existing == null) {
-        response = String.format("Namespace '%s' created successfully.", namespaceId);
-      } else {
-        response = String.format("Namespace '%s' already exists.", namespaceId);
-      }
-      responder.sendString(HttpResponseStatus.OK, response);
+      namespaceService.createNamespace(builder.build());
+      responder.sendString(HttpResponseStatus.OK,
+                           String.format("Namespace '%s' created successfully.", namespaceId));
+    } catch (AlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.OK, String.format("Namespace '%s' already exists.", namespaceId));
     } catch (Exception e) {
       LOG.error("Internal error while creating namespace.", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -170,19 +158,10 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
-      // Delete Preferences associated with this namespace
-      preferencesStore.deleteProperties(namespace);
-
-      // Delete all dashboards associated with this namespace
-      dashboardStore.delete(namespace);
-
-      // Store#deleteNamespace already checks for existence
-      NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);
-      if (deletedNamespace == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
-      } else {
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
+      namespaceService.deleteNamespace(namespaceId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
