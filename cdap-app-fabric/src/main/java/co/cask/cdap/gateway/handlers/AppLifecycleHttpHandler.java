@@ -526,13 +526,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean namespaceExists(String namespace) {
-    boolean exists = false;
     try {
       namespaceService.getNamespace(Id.Namespace.from(namespace));
-      exists = true;
+      return true;
     } catch (NotFoundException e) {
+      return false;
     }
-    return exists;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)

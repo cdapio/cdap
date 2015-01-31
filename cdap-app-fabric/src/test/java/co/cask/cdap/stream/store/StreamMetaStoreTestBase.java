@@ -17,6 +17,8 @@
 package co.cask.cdap.stream.store;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.collect.ImmutableList;
@@ -33,9 +35,9 @@ public abstract class StreamMetaStoreTestBase {
 
   protected abstract StreamMetaStore getStreamMetaStore();
 
-  protected abstract void createNamespace(String namespaceId);
+  protected abstract void createNamespace(String namespaceId) throws AlreadyExistsException;
 
-  protected abstract void deleteNamespace(String namespaceId);
+  protected abstract void deleteNamespace(String namespaceId) throws NotFoundException;
 
   @Before
   public void beforeTests() throws Exception {

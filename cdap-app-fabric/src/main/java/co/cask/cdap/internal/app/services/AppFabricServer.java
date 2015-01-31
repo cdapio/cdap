@@ -112,7 +112,7 @@ public final class AppFabricServer extends AbstractIdleService {
     FileUtils.deleteDirectory(tmpDir);
 
     schedulerService.start();
-    namespaceService.startAndWait();
+    namespaceService.start();
     adapterService.start();
     programRuntimeService.start();
 

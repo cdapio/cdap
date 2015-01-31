@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,8 @@ import java.util.List;
 /**
  * {@link AbstractIdleService} for managing namespaces
  */
-public class NamespaceService extends AbstractIdleService {
+@Singleton
+public final class NamespaceService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceService.class);
   private static final String NAMESPACE_ELEMENT_TYPE = "Namespace";
 
@@ -50,24 +52,20 @@ public class NamespaceService extends AbstractIdleService {
     this.dashboardStore = dashboardStore;
   }
 
-  @Override
-  protected void startUp() throws Exception {
-    LOG.info("Starting namespace service");
-    initialize();
-  }
-
   /**
-   * Initialize a namespace.
+   * Initializes and starts namespace service.
    * Currently only creates the default namespace if it does not exist.
    * In future, it could potentially create metrics tables, datasets, etc.
    */
-  private void initialize() {
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting namespace service");
     createDefaultNamespace();
   }
 
   /**
-   * This method creates the default namespace at a more deterministic time.
-   * This should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
+   * Creates the default namespace at a more deterministic time.
+   * It should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
    */
   private void createDefaultNamespace() {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
@@ -85,10 +83,12 @@ public class NamespaceService extends AbstractIdleService {
   }
 
   public List<NamespaceMeta> listNamespaces() {
+    startAndWait();
     return store.listNamespaces();
   }
 
   public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NotFoundException {
+    startAndWait();
     NamespaceMeta ns = store.getNamespace(namespaceId);
     if (ns == null) {
       throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
@@ -97,6 +97,7 @@ public class NamespaceService extends AbstractIdleService {
   }
 
   public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException {
+    startAndWait();
     NamespaceMeta existing = store.createNamespace(metadata);
     if (existing != null) {
       throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getId());
@@ -104,6 +105,7 @@ public class NamespaceService extends AbstractIdleService {
   }
 
   public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException {
+    startAndWait();
     // Delete Preferences associated with this namespace
     preferencesStore.deleteProperties(namespaceId.getId());
 
