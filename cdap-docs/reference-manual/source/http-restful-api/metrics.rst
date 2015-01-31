@@ -209,8 +209,6 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce``
    * - One Spark Program
      - ``/apps/<app-id>/spark/<spark-id>``
-   * - One Service Handler/Worker
-     - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
    * - One Service
      - ``/apps/<app-id>/services/<service-id>``
    * - All Services of an Application

@@ -17,8 +17,9 @@ failure, the execution is stopped at the failed job and no subsequent jobs in th
 are executed.
 
 To execute MapReduce or Spark programs in a Workflow, you will need to add them in your
-application along with the Workflow. You can optionally add a schedule (such as a
-`crontab schedule <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
+application along with the Workflow. You can optionally add a :ref:`Schedule <schedules>` 
+(such as a `crontab schedule 
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
 to the Workflow::
 
   public void configure() {
@@ -67,6 +68,11 @@ custom action, you will need to extend the ``AbstractWorkflowAction`` and implem
   }
 
 The custom action then can be added to the Workflow using the ``addAction()`` method as shown above.
+
+.. rubric::  Concurrent Workflows
+
+By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run concurrently. To enable
+concurrent runs for a Workflow, set its runtime argument ``concurrent.runs.enabled`` to ``true``.
 
 .. rubric::  Example of Using a Workflow
 

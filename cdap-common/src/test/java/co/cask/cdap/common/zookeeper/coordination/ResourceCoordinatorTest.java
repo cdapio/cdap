@@ -143,6 +143,16 @@ public class ResourceCoordinatorTest {
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
+          // Update the requirement to be an empty requirement, the handler should receive an empty collection
+          client.submitRequirement(ResourceRequirement.builder(serviceName).build());
+          Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
+
+          // Update the requirement to have one partition, the handler should receive one resource
+          client.submitRequirement(ResourceRequirement.builder(serviceName).addPartitions("p", 1, 1).build());
+          assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
+          Assert.assertNotNull(assigned);
+          Assert.assertEquals(1, assigned.size());
+
           // Delete the requirement, the handler should receive a empty collection
           client.deleteRequirement(requirement.getName());
           Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
