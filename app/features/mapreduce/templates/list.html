@@ -1,0 +1,33 @@
+<div ncy-breadcrumb></div>
+<table class="table table-striped table-responsive" cask-sortable>
+  <thead>
+    <tr>
+      <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+      <th> Description </th>
+      <th> App </th>
+      <th> Status </th>
+      <th> Action (start/pause)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="program in mapreduceList | orderBy:sortable.predicate:sortable.reverse">
+      <td >
+        <a ng-bind="program.name"
+            ui-sref="mapreduce.detail({programId: program.id})"
+           >
+        </a>
+      </td>
+      <td ng-bind="program.description">  </td>
+      <td ng-bind="program.app">  </td>
+      <td ng-bind="program.status"> </td>
+      <td>
+        <a ng-click="doProgram(program.id, 'start')" ng-if="program.status === 'STOPPED'" href="">
+          <span class="fa fa-play fa-1"> </span>
+        </a>
+        <a ng-click="doProgram(program.id, 'stop')" ng-if="program.status === 'RUNNING'" href="">
+          <i class="fa fa-pause"> </i>
+        </a>
+      </td>
+    </tr>
+  <tbody>
+</table>

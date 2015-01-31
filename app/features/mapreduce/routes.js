@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.mapreduce')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('mapreduce', {
-        url: '',
+        url: '/mapreduce',
         abstract: true,
         parent: 'programs',
         data: {
@@ -11,11 +11,20 @@ angular.module(PKG.name + '.feature.mapreduce')
         },
         template: '<ui-view/>'
       })
+      .state('mapreduce.list', {
+        url: '/list',
+        templateUrl: '/assets/features/mapreduce/templates/list.html',
+        controller: 'CdapMapreduceListController',
+        ncyBreadcrumb: {
+          parent: 'apps.detail.overview',
+          label: 'Mapreduce'
+        }
+      })
       .state('mapreduce.detail', {
         url: '/:programId',
         templateUrl: '/assets/features/mapreduce/templates/detail.html',
         ncyBreadcrumb: {
-          parent: 'programs.type',
+          parent: 'mapreduce.list',
           label: '{{$state.params.programId | caskCapitalizeFilter}}'
         }
       })
