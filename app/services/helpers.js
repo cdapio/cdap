@@ -4,9 +4,6 @@
 angular.module(PKG.name+'.services')
   .factory('myHelpers', function(){
 
-  var PERIOD = '.';
-
-  /* ----------------------------------------------------------------------- */
 
    /**
     * set a property deep in an object
@@ -20,8 +17,8 @@ angular.module(PKG.name+'.services')
   function deepSet(obj, key, val) {
     var it = obj, j, d, m;
 
-    if (key.indexOf(PERIOD) > -1) {
-      d = key.split(PERIOD);
+    if (key.indexOf('.') > -1) {
+      d = key.split('.');
       m = d.length-1;
       for (j = 0; j <= m; j++) {
         if(j!==m) {
@@ -48,7 +45,7 @@ angular.module(PKG.name+'.services')
    * @return {Mixed}     value at the
    */
   function deepGet(obj, key) {
-    return objectQuery.apply(null, [obj].concat(key.split(PERIOD)));
+    return objectQuery.apply(null, [obj].concat(key.split('.')));
   }
 
   /* ----------------------------------------------------------------------- */
@@ -82,14 +79,13 @@ angular.module(PKG.name+'.services')
    */
 
   function objectQuery(obj) {
-    if (obj === null || typeof obj === "undefined") {
+    if (!angular.isObject(obj)) {
         return null;
     }
     for (var i = 1; i < arguments.length; i++) {
-        var param = arguments[i];
-        obj = obj[param];
-        if (obj === null || typeof obj === "undefined") {
-            return null;
+        obj = obj[arguments[i]];
+        if (!angular.isObject(obj)) {
+            return obj;
         }
     }
     return obj;
