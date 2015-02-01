@@ -14,11 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.namespace;
+package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;

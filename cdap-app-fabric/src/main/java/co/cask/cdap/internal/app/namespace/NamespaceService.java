@@ -26,12 +26,22 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.sun.istack.Nullable;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {@link AbstractIdleService} for managing namespaces
@@ -55,14 +65,69 @@ public final class NamespaceService extends AbstractIdleService {
   /**
    * Initializes and starts namespace service.
    * Currently only creates the default namespace if it does not exist.
-   * In future, it could potentially create metrics tables, datasets, etc.
+   * In future, it could potentially do other tasks as well.
    */
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting namespace service");
-    createDefaultNamespace();
+    ensureDefaultNamespaceExists();
   }
 
+  /**
+   * Asynchronously ensures that the default namespace exists, with retries.
+   * Need a retry mechanism since the ensure operation requires the dataset service to be running.
+   * Hence this method ensures that the default namespace exists in a separate thread, with multiple retries
+   */
+  private void ensureDefaultNamespaceExists() {
+    ListenableFuture<Void> listenableFuture = asyncCreateDefaultNamespace();
+    Futures.addCallback(listenableFuture, new FutureCallback<Void>() {
+      @Override
+      public void onSuccess(Void aVoid) {
+        // No-op, since either default namespace already existed, or its creation was successful
+        LOG.info("Successfully ensured existence of default namespace.");
+      }
+
+      @Override
+      public void onFailure(Throwable throwable) {
+        LOG.warn("Failed to ensure existence of default namespace.");
+        // now keep retrying
+        if (isRunning()) {
+          final FutureCallback<Void> callback = this;
+          // Retry in 2 seconds. Shouldn't sleep in this callback thread. Should start a new thread for the retry.
+          Thread retryThread = new Thread("retrying-default-namespace-ensurer") {
+            @Override
+            public void run() {
+              try {
+                TimeUnit.SECONDS.sleep(2);
+                LOG.info("Retrying to ensure that default namespace exists.");
+                Futures.addCallback(asyncCreateDefaultNamespace(), callback);
+              } catch (InterruptedException e) {
+                LOG.warn("Default namespace ensurer retry thread interrupted.");
+              }
+            }
+          };
+          retryThread.setDaemon(true);
+          retryThread.start();
+        }
+      }
+    });
+  }
+
+  /**
+   * Asynchronously calls #createDefaultNamespace to create the default namespace
+   */
+  private ListenableFuture<Void> asyncCreateDefaultNamespace() {
+    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(
+      Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("default-namespace-ensurer")));
+    return executorService.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        createDefaultNamespace();
+        return null;
+      }
+    });
+  }
+  
   /**
    * Creates the default namespace at a more deterministic time.
    * It should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
@@ -74,19 +139,31 @@ public final class NamespaceService extends AbstractIdleService {
       .setDescription(Constants.DEFAULT_NAMESPACE)
       .build();
 
-    NamespaceMeta existingDefaultNamespace = store.createNamespace(defaultNamespace);
-    if (existingDefaultNamespace == null) {
+    try {
+      createNamespace(defaultNamespace);
       LOG.info("Successfully created 'default' namespace.");
-    } else {
+    } catch (AlreadyExistsException e) {
       LOG.info("'default' namespace already exists.");
     }
   }
 
+  /**
+   * Lists all namespaces
+   *
+   * @return a list of {@link NamespaceMeta} for all namespaces
+   */
   public List<NamespaceMeta> listNamespaces() {
     startAndWait();
     return store.listNamespaces();
   }
 
+  /**
+   * Gets details of a namespace
+   *
+   * @param namespaceId {@link Id.Namespace} of the requested namespace
+   * @return the {@link NamespaceMeta} of the requested namespace
+   * @throws NotFoundException if the requested namespace is not found
+   */
   public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NotFoundException {
     startAndWait();
     NamespaceMeta ns = store.getNamespace(namespaceId);
@@ -96,6 +173,12 @@ public final class NamespaceService extends AbstractIdleService {
     return ns;
   }
 
+  /**
+   * Creates a new namespace
+   *
+   * @param metadata the {@link NamespaceMeta} for the new namespace to be created
+   * @throws AlreadyExistsException if the specified namespace already exists
+   */
   public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException {
     startAndWait();
     NamespaceMeta existing = store.createNamespace(metadata);
@@ -104,6 +187,12 @@ public final class NamespaceService extends AbstractIdleService {
     }
   }
 
+  /**
+   * Deletes the specified namespace
+   *
+   * @param namespaceId the {@link Id.Namespace} of the specified namespace
+   * @throws NotFoundException if the specified namespace does not exist
+   */
   public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException {
     startAndWait();
     // Delete Preferences associated with this namespace
