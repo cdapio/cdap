@@ -16,11 +16,8 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -44,9 +41,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.sun.xml.internal.rngom.ast.builder.SchemaBuilder;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
@@ -478,25 +472,6 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     stmt.close();
 
     connection.close();
-  }
-
-  @Test
-  public void testFileSetQuery() throws Exception {
-    Schema schema = new SchemaBuilder().
-    datasetFramework.addInstance("fileSet", "avrofiles", FileSetProperties.builder()
-      .setBasePath("mylocation")
-      .setInputFormat("org.apache.avro.mapreduce.AvroKeyInputFormat")
-      .setOutputFormat("org.apache.avro.mapreduce.AvroKeyOutputFormat")
-        // everything past here is an explore property
-      .setEnableExploreOnCreate(true)
-      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", schema.toString())
-      .build());
-    FileSet fileSet = datasetFramework.getDataset("avrofiles", DatasetDefinition.NO_ARGUMENTS, null);
-    GenericRecord record1 = new GenericData.Record()
-    fileSet.getBaseLocation().getOutputStream();
   }
 
   @Test
