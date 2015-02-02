@@ -299,10 +299,11 @@ Property                                                   Value                
 ``security.authentication.handler.debug``                  ``false``                   Set to ``true`` to enable debugging
 ``security.authentication.handler.hostname``               ``<hostname>``              LDAP server host
 ``security.authentication.handler.port``                   ``<port>``                  LDAP server port
-``security.authentication.handler.userBaseDn``             ``<userBaseDn>``            LDAP base Distinguished Name to
-                                                                                       authenticate with
-``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``      LDAP attribute used as the relative 
-                                                                                       Distinguished Name
+``security.authentication.handler.userBaseDn``             ``<userBaseDn>``            Distinguished Name of the root for 
+                                                                                       user account entries in the LDAP
+                                                                                       directory
+``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``      LDAP Object attribute for username 
+                                                                                       when search by role DN
 ``security.authentication.handler.userObjectClass``        ``<userObjectClass>``
 ========================================================== =========================== ======================================
 
@@ -333,10 +334,10 @@ these properties in ``cdap-site.xml``:
 ========================================================== ================= ========= ======================================
 Property                                                   Default Value     Value     Description
 ========================================================== ================= ========= ======================================
-``security.authentication.handler.useLdaps``               ``false``         ``true``  Set to ``true`` to enable use of LDAP
-``security.authentication.handler.ldapsVerifyCertificate`` ``true``          ``true``  Set to ``true`` to enable SSL between
-                                                                                       the authentication server and the LDAP 
-                                                                                       instance
+``security.authentication.handler.useLdaps``               ``false``         ``true``  Set to ``true`` to enable use of LDAPS
+``security.authentication.handler.ldapsVerifyCertificate`` ``true``          ``true``  Set to ``true`` to enable verification
+                                                                                       of the SSL certificate used by the
+                                                                                        LDAP server
 ========================================================== ================= ========= ======================================
 
 .. _installation-jaspi-authentication:
