@@ -81,6 +81,8 @@ Here are some rules to follow for Flows, Flowlets, Services, and Procedures:
 Keeping these guidelines in mind will help you write more efficient and faster-performing
 code.
 
+.. _transaction-system-conflict-detection:
+
 Levels of Conflict Detection
 ----------------------------
 

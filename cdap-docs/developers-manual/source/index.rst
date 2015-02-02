@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _developer-index:
 
@@ -57,12 +57,19 @@ CDAP Developers’ Manual
   a daemon to tail local files and an Apache Flume Sink implementation.
 
 
+.. |data-exploration| replace:: **Data Exploration:**
+.. _data-exploration: data-exploration/index.html
+
+- |data-exploration|_ Data in CDAP can be *explored without writing any code* through the use of *ad-hoc SQL-like queries*.
+  Exploration of Streams and Datasets, along with integration with business intelligence tools, are covered in this section.
+
+
 .. |advanced| replace:: **Advanced Topics:**
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on the **Data Exploration
-  of Datasets**, **Best Practices for CDAP development**, and **Adapters**.
+  developers who want a deeper dive into CDAP, with presentations on 
+  **Best Practices for CDAP development** and **Adapters**.
   
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

@@ -22,7 +22,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.SerializableServiceDiscoverer;
@@ -34,6 +33,7 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
@@ -72,7 +72,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private final StreamAdmin streamAdmin;
   private final SparkLoggingContext loggingContext;
   private final SerializableServiceDiscoverer serializableServiceDiscoverer;
-  private final Metrics userMetrics;
+  private final SparkUserMetrics userMetrics;
 
   public void setMetricsPropertyFile(File file) {
     metricsPropertyFile = file;
@@ -95,7 +95,8 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     this.streamAdmin = streamAdmin;
     SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
     this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
-    this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
+    SparkUserMetrics.setMetricsCollector(getProgramMetrics());
+    this.userMetrics = new SparkUserMetrics();
     this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
   }
