@@ -145,7 +145,7 @@ public final class ScheduleTaskRunner {
       public void error(Throwable cause) {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.STOPPED);
+                      ProgramController.State.ERROR);
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);

@@ -68,7 +68,7 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
       StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
       long filesSize = StreamUtils.fetchStreamFilesSize(config);
       createSizeAggregator(streamSpec.getName(), filesSize, config.getNotificationThresholdMB());
@@ -85,7 +85,7 @@ public class LocalStreamService extends AbstractStreamService {
   @Override
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamSpec.getName());
       if (streamSizeAggregator == null) {
         // First time that we see this Stream here

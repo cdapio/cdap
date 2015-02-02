@@ -50,6 +50,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
@@ -59,6 +61,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,7 +131,7 @@ public class DistributedStreamService extends AbstractStreamService {
     this.feedManager = feedManager;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.heartbeatPublisher = heartbeatPublisher;
-    this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
+    this.resourceCoordinatorClient = new ResourceCoordinatorClient(getCoordinatorZKClient());
     this.leaderListeners = Sets.newHashSet();
     this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.aggregators = Maps.newConcurrentMap();
@@ -186,7 +189,7 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
       sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
     StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
@@ -282,6 +285,10 @@ public class DistributedStreamService extends AbstractStreamService {
     return newAggregator;
   }
 
+  private ZKClient getCoordinatorZKClient() {
+    return ZKClients.namespace(zkClient, "/" + Constants.Service.STREAMS + "/coordination");
+  }
+
   /**
    * Subscribe to the streams heartbeat notification feed. One heartbeat contains data for all existing streams,
    * we filter that to only take into account the streams that this {@link DistributedStreamService} is a leader
@@ -366,35 +373,15 @@ public class DistributedStreamService extends AbstractStreamService {
   private void performLeaderElection() {
     // Start the resource coordinator that will map Streams to Stream handlers
     leaderElection = new LeaderElection(
+      // TODO: Should unify this leader election with DistributedStreamFileJanitorService
       zkClient, "/election/" + STREAMS_COORDINATOR, new ElectionHandler() {
       @Override
       public void leader() {
         LOG.info("Became Stream handler leader. Starting resource coordinator.");
-        resourceCoordinator = new ResourceCoordinator(zkClient, discoveryServiceClient,
+        resourceCoordinator = new ResourceCoordinator(getCoordinatorZKClient(), discoveryServiceClient,
                                                       new BalancedAssignmentStrategy());
         resourceCoordinator.startAndWait();
-
-        resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, new ResourceModifier() {
-          @Nullable
-          @Override
-          public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
-            try {
-              // Create one requirement for the resource coordinator for all the streams.
-              // One stream is identified by one partition
-              ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-              for (StreamSpecification spec : streamMetaStore.listStreams()) {
-                LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
-                          spec.getName());
-                builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
-              }
-              return builder.build();
-            } catch (Throwable e) {
-              LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
-              Throwables.propagate(e);
-              return null;
-            }
-          }
-        });
+        updateRequirement();
       }
 
       @Override
@@ -406,6 +393,71 @@ public class DistributedStreamService extends AbstractStreamService {
       }
     });
     leaderElection.start();
+  }
+
+  /**
+   * Updates stream resource requirement. It will retry if failed to do so.
+   */
+  private void updateRequirement() {
+    final ResourceModifier modifier = createRequirementModifier();
+    Futures.addCallback(resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, modifier),
+                        new FutureCallback<ResourceRequirement>() {
+      @Override
+      public void onSuccess(ResourceRequirement result) {
+        // No-op
+        LOG.info("Stream resource requirement updated to {}", result);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.warn("Failed to update stream resource requirement.", t);
+        if (isRunning()) {
+          final FutureCallback<ResourceRequirement> callback = this;
+          // Retry in 2 seconds. Shouldn't sleep in this callback thread. Should start a new thread for the retry.
+          Thread retryThread = new Thread("stream-resource-update") {
+            @Override
+            public void run() {
+              try {
+                TimeUnit.SECONDS.sleep(2);
+                LOG.info("Retrying update stream resource requirement");
+                Futures.addCallback(resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, modifier),
+                                    callback);
+              } catch (InterruptedException e) {
+                LOG.warn("Stream resource retry thread interrupted", e);
+              }
+            }
+          };
+          retryThread.setDaemon(true);
+          retryThread.start();
+        }
+      }
+    });
+  }
+
+  /**
+   * Creates a {@link ResourceModifier} that updates stream resource requirement by consulting stream meta store.
+   */
+  private ResourceModifier createRequirementModifier() {
+    return new ResourceModifier() {
+      @Nullable
+      @Override
+      public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
+        try {
+          // Create one requirement for the resource coordinator for all the streams.
+          // One stream is identified by one partition
+          ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
+          for (StreamSpecification spec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
+            LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
+                      spec.getName());
+            builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
+          }
+          return builder.build();
+        } catch (Throwable e) {
+          LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
+          throw Throwables.propagate(e);
+        }
+      }
+    };
   }
 
   /**

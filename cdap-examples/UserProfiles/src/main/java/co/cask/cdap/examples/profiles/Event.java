@@ -35,8 +35,7 @@ public class Event {
   private final String userId;
   private final String url;
 
-  @SuppressWarnings("unused")
-  private Event(long time, String userId, String url) {
+  Event(long time, String userId, String url) {
     this.time = time;
     this.userId = userId;
     this.url = url;

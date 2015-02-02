@@ -18,6 +18,7 @@ package co.cask.cdap.runtime;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.MissingSparkWorkflowApp;
 import co.cask.cdap.OneActionWorkflowApp;
+import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.WorkflowSchedulesWithSameNameApp;
 import co.cask.cdap.app.program.Program;
@@ -146,6 +147,16 @@ public class WorkflowTest {
     } catch (Exception ex) {
       Assert.assertEquals(ex.getCause().getCause().getMessage(),
                           "Schedule with the name 'DailySchedule' already exists.");
+    }
+
+    // try deploying app containing a schedule for non existent workflow
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        ScheduleAppWithMissingWorkflow.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Schedule is configured for non existent Workflow.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "Workflow 'NonExistentWorkflow' is not configured with the Application.");
     }
   }
 
