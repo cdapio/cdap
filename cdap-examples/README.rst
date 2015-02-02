@@ -86,12 +86,11 @@ SparkPageRank
 - An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
 
-## StreamConversion
+StreamConversion
+----------------
+- An application that illustrates the use of time-partitioned File sets.
+- It periodically converts a Stream into partitions of a File set, which can be read by SQL queries.
 
-- An application that illustrates the use of time-partitioned file sets.
-- It periodically converts a stream into partitions of a file set, which can be read by SQL queries.
-
-## UserProfiles
 UserProfiles
 ------------
 - An application that demonstrates column-level conflict detection. Run as-is, it uses
