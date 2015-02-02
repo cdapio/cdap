@@ -5,36 +5,29 @@ angular.module(PKG.name + '.feature.services')
 
 
     $scope.services = [];
-    datasrc.request(
-      {
-        _cdapNsPath: basePath
-      },
-      function(res) {
+    datasrc.request({
+      _cdapNsPath: basePath
+    })
+      .then(function(res) {
         $scope.services = res;
         res.forEach(pollStatus);
-      }
-    );
+      });
 
     function pollStatus(program) {
       var programId = program.id;
-      datasrc.poll(
-        {
-          _cdapNsPath: basePath + '/' +
-                        programId + '/status'
-        },
-        function (res) {
-          program.status = res.status;
-        }
-      );
+      datasrc.poll({
+        _cdapNsPath: basePath + '/' +
+                     programId + '/status'
+      }, function (res) {
+        program.status = res.status;
+      });
     }
 
     $scope.doProgram = function(programId, action) {
-      datasrc.request(
-        {
+      datasrc.request({
           _cdapNsPath: basePath + '/' + programId + '/' + action,
           method: 'POST'
-        }
-      );
+      });
     };
 
   });

@@ -22,7 +22,7 @@
       <td ng-bind="program.status"> </td>
       <td>
         <a ng-click="doProgram(program.id, 'start')" ng-if="program.status === 'STOPPED'" href="">
-          <span class="fa fa-play fa-1"> </span>
+          <span class="fa fa-play"> </span>
         </a>
         <a ng-click="doProgram(program.id, 'stop')" ng-if="program.status === 'RUNNING'" href="">
           <i class="fa fa-pause"> </i>
