@@ -261,7 +261,7 @@ The simplest way to identity a client is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
 ========================================================== =========================== ======================================
-Property                                                   Default Value               Description
+Property                                                   Value                       Description
 ========================================================== =========================== ======================================
 ``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
                                                            ``server.``                 authentication
@@ -287,7 +287,7 @@ You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
 ========================================================== =========================== ======================================
-Property                                                   Default Value               Description
+Property                                                   Value                       Description
 ========================================================== =========================== ======================================
 ``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
                                                            ``server.``                 authentication
@@ -309,22 +309,22 @@ Property                                                   Default Value        
 In addition, you may configure these optional properties in ``cdap-site.xml``:
 
 ========================================================== =========================== ======================================
-Property                                                   Default Value               Description
+Property                                                   Value                       Description
 ========================================================== =========================== ======================================
-``security.authentication.handler.bindDn``                 ``<bindDn>``                The user on an external LDAP server 
-                                                                                       permitted to search the LDAP directory
-``security.authentication.handler.bindPassword``           ``<bindPassword>``          The password of the user on an
-                                                                                       external LDAP server permitted to 
-                                                                                       search the LDAP directory
+``security.authentication.handler.bindDn``                 ``<bindDn>``                The Distinguished Name used to bind to
+                                                                                       the LDAP server and search the
+                                                                                       directory
+``security.authentication.handler.bindPassword``           ``<bindPassword>``          The password used to bind to the LDAP
+                                                                                       server
 ``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``       The Unique User ID Attribute
 ``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>`` Password of the ``userIdAttribute``
-``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Role Based: <to be confirmed>
-``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``     Name of attribute specifying the role 
-                                                                                       <to be confirmed>
-``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``   Name of attribute specifying the role 
-                                                                                       <to be confirmed>
-``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``       Name of attribute specifying the role 
-                                                                                       <to be confirmed>
+``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Role Based Distinguished Name
+``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``      
+                                                                                       
+``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``    
+                                                                                       
+``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``        
+                                                                                       
 ========================================================== =========================== ======================================
 
 To enable SSL between the authentication server and the LDAP instance, configure
@@ -347,7 +347,7 @@ To authenticate a user using JASPI (Java Authentication Service Provider Interfa
 the following properties to ``cdap-site.xml``:
 
 ========================================================== =========================== ======================================
-Property                                                   Default Value               Description
+Property                                                   Value                       Description
 ========================================================== =========================== ======================================
 ``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
                                                            ``server.``                 authentication
