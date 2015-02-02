@@ -268,7 +268,7 @@ public final class Constants {
       public static final String CONSUMER_ID = "X-ConsumerId";
     }
 
-    //max instances of stream handler service
+    // max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
     public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
@@ -276,6 +276,9 @@ public final class Constants {
 
     // Period in seconds between two heartbeats in a stream service
     public static final int HEARTBEAT_INTERVAL = 2;
+
+    // Zookeeper namespace in which to keep the coordination metadata
+    public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
   }
 
   /**

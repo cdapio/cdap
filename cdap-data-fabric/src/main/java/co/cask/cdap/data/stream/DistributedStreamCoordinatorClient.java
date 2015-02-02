@@ -32,6 +32,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.zookeeper.ZKClient;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   public DistributedStreamCoordinatorClient(CConfiguration cConf, StreamAdmin streamAdmin, ZKClient zkClient) {
     super(cConf, streamAdmin);
     this.zkClient = zkClient;
-    this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
+    this.resourceCoordinatorClient = new ResourceCoordinatorClient(getCoordinatorZKClient());
   }
 
   @Override
@@ -103,5 +104,9 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
         }
       });
     return Futures.transform(future, Functions.<Void>constant(null));
+  }
+
+  private ZKClient getCoordinatorZKClient() {
+    return ZKClients.namespace(zkClient, Constants.Stream.STREAM_ZK_COORDINATION_NAMESPACE);
   }
 }
