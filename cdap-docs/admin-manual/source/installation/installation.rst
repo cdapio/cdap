@@ -168,6 +168,10 @@ For a distributed enterprise, you must install these Hadoop components:
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
 possibly *Hive*) cluster configurations by adding your configuration to their class paths.
 
+**Note:** Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+(unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+the number of connections required is a function of usage.
+
 .. _deployment-architectures:
 
 Deployment Architectures
