@@ -61,7 +61,7 @@ After the build completes, you will have a distribution of the CDAP standalone u
 
 Take the ``cdap-<version>.tar.gz`` file and unzip it into a suitable location.
 
-For more build options, please refer to the `build instructions <BUILD.md`__.
+For more build options, please refer to the `build instructions <BUILD.rst`__.
 
 Getting Started Guide
 ---------------------
@@ -143,7 +143,7 @@ CDAP IRC Channel: #cdap on irc.freenode.net
 License and Trademarks
 ======================
 
-Copyright © 2014 Cask Data, Inc.
+Copyright © 2014-2015 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
