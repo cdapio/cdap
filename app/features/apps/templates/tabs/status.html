@@ -19,12 +19,17 @@
         </thead>
         <tbody>
           <tr ng-repeat="program in programs">
+            <td>
+              <a ng-bind="program.name"
+                  href=""
+                  ng-click="goToDetail(program.type_plural, program.id)"></a>
+            </td>
             <td ng-bind="program.status"></td>
-            <td ng-bind="program.name"></td>
             <td ng-bind="program.description"></td>
             <td>
               <a ng-bind="program.type"
-                  ui-sref="programs.type({programType: (program.type_plural | lowercase)})"
+                  href=""
+                  ng-click="goToList(program.type_plural)"
               ></a>
             </td>
           </tr>

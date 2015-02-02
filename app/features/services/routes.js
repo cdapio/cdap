@@ -1,8 +1,8 @@
-angular.module(PKG.name + '.feature.mapreduce')
+angular.module(PKG.name + '.feature.services')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
-      .state('mapreduce', {
-        url: '/mapreduce',
+      .state('services', {
+        url: '/services',
         abstract: true,
         parent: 'programs',
         data: {
@@ -11,24 +11,24 @@ angular.module(PKG.name + '.feature.mapreduce')
         },
         template: '<ui-view/>'
       })
-      .state('mapreduce.list', {
+      .state('services.list', {
         url: '/list',
-        templateUrl: '/assets/features/mapreduce/templates/list.html',
-        controller: 'CdapMapreduceListController',
+        templateUrl: '/assets/features/services/templates/list.html',
+        controller: 'CdapServicesListController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview',
-          label: 'Mapreduce'
+          label: 'Services'
         }
       })
-      .state('mapreduce.detail', {
+      .state('services.detail', {
         url: '/:programId',
-        templateUrl: '/assets/features/mapreduce/templates/detail.html',
+        templateUrl: '/assets/features/services/templates/detail.html',
         ncyBreadcrumb: {
-          parent: 'mapreduce.list',
+          parent: 'services.list',
           label: '{{$state.params.programId | caskCapitalizeFilter}}'
         }
       })
-        .state('mapreduce.detail.tab', {
+        .state('services.detail.tab', {
           url: '/:tab',
           ncyBreadcrumb: {
             skip: true

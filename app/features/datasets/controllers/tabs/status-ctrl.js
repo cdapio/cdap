@@ -28,7 +28,7 @@ angular.module(PKG.name + '.feature.datasets')
           });
           try {
             $scope.schema = (
-              query(JSON.parse( query(match, 0, "properties", "schema") ),"fields") || []
+              query(JSON.parse( query(match, 0, "properties", "schema") || null ),"fields") || []
             )
               .map(function(field) {
                 if (angular.isArray(field.type)) {

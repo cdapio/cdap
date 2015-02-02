@@ -52,6 +52,8 @@ angular.module(PKG.name+'.services')
 
   /*
     Purpose: Query a json object or an array of json objects
+    Return: Returns undefined if property is not defined(never set) and
+            and a valid value (including null) if defined.
     Usage:
       var obj1 = [
         {
@@ -60,11 +62,13 @@ angular.module(PKG.name+'.services')
             p21: 'angular',
             p22: 21,
             p23: {
-              p231: 'ember'
+              p231: 'ember',
+              p232: null
             }
           },
           p3: 1296,
-          p4: [1, 2, 3]
+          p4: [1, 2, 3],
+          p5: null
         },
         {
           p101: 'somethingelse'
@@ -73,9 +77,11 @@ angular.module(PKG.name+'.services')
       1. query(obj1, 0, 'p1') => 'something'
       2. query(obj1, 0, 'p2', 'p22') => 21
       3. query(obj1, 0, 'p2', 'p32') => { p231: 'ember'}
-      4. query(obj1, 0, 'notaproperty') => null
-      5. query(obj1, 0, 'p2', 'p32', 'somethingelse') => null
-      6. query(obj1, 1, 'p2', 'p32') => null
+      4. query(obj1, 0, 'notaproperty') => undefined
+      5. query(obj1, 0, 'p2', 'p32', 'somethingelse') => undefined
+      6. query(obj1, 1, 'p2', 'p32') => undefined
+      7. query(obj1, 0, 'p2', 'p23', 'p232') => null
+      8. query(obj1, 0, 'p5') => null
    */
 
   function objectQuery(obj) {
@@ -85,7 +91,7 @@ angular.module(PKG.name+'.services')
     for (var i = 1; i < arguments.length; i++) {
         obj = obj[arguments[i]];
         if (!angular.isObject(obj)) {
-            return obj;
+          return obj;
         }
     }
     return obj;

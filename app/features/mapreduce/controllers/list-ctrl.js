@@ -1,21 +1,20 @@
-angular.module(PKG.name + '.feature.programs')
-  .controller('ProgramsListController', function($scope, $state, $stateParams, MyDataSource) {
+angular.module(PKG.name + '.feature.mapreduce')
+  .controller('CdapMapreduceListController', function($scope, $state, $stateParams, MyDataSource) {
     var datasrc = new MyDataSource($scope),
-        basePath = '/apps/' + $stateParams.appId + '/' + $stateParams.programType;
+        basePath = '/apps/' + $stateParams.appId + '/mapreduce';
 
 
-    $scope.programs = [];
+    $scope.mapreduceList = [];
     datasrc.request(
       {
         _cdapNsPath: basePath
       },
       function(res) {
-        $scope.programs = res;
+        $scope.mapreduceList = res;
         res.forEach(pollStatus);
       }
     );
 
-    // FIXME: Not DRY. Almost same thing done in CdapAppDetailStatusController
     function pollStatus(program) {
       var programId = program.id;
       datasrc.poll(
@@ -28,12 +27,6 @@ angular.module(PKG.name + '.feature.programs')
         }
       );
     }
-
-    $scope.goToDetail = function(programId) {
-      $state.go($stateParams.programType + '.detail', {
-        programId: programId
-      });
-    };
 
     $scope.doProgram = function(programId, action) {
       datasrc.request(

@@ -15,12 +15,65 @@ describe('myHelpers', function(){
 
 
   describe('objectQuery', function() {
-
+    var d = new Date();
+    var obj = {
+      "pro1": {
+        "pro11": 11,
+        "pro12": "string",
+        "pro13": true,
+        "pro14": d,
+        "pro15": null
+      },
+      "pro2": false,
+      "pro3": "string else",
+      "pro5": null
+    };
     it('is a method', function() {
       expect(myHelpers.objectQuery).toEqual(jasmine.any(Function));
     });
 
-    // TODO: add some tests for objectQuery
+    it('returns appropriate value if present: 1(number)', function() {
+      expect(myHelpers.objectQuery(obj, "pro1", "pro11")).toEqual(11);
+    });
+
+    it('returns appropriate value if present: 2(boolean)', function() {
+      expect(myHelpers.objectQuery(obj, "pro1", "pro13")).toEqual(true);
+    });
+
+    it('returns appropriate value if present: 3(string)', function() {
+      expect(myHelpers.objectQuery(obj, "pro1", "pro12")).toEqual("string");
+    });
+
+    it('returns appropriate value if present: 4(date)', function() {
+      expect(myHelpers.objectQuery(obj, "pro1", "pro14")).toEqual(d);
+    });
+
+    it('returns appropriate value if present: 5(object)', function() {
+      expect(myHelpers.objectQuery(obj, "pro1")).toEqual({
+        "pro11": 11,
+        "pro12": "string",
+        "pro13": true,
+        "pro14": d,
+        "pro15": null
+      });
+    });
+
+    it('returns undefined if value not present: 1', function() {
+      expect(myHelpers.objectQuery(obj, "something")).toEqual(undefined);
+    });
+
+    it('returns undefined if value not present: 2', function() {
+      expect(myHelpers.objectQuery(obj, "pro1", "pro14", "pro141")).toEqual(undefined);
+    });
+
+    it('returns null if explicitly set to null: 1', function() {
+      expect(myHelpers.objectQuery(obj, "pro1", "pro15")).toEqual(null);
+    });
+
+    it('returns null if explicitly set to null: 2', function() {
+      expect(myHelpers.objectQuery(obj, "pro5")).toEqual(null);
+    });
+
   });
 
 

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.apps')
-  .controller('CdapAppDetailStatusController', function($scope, $stateParams, MyDataSource) {
+  .controller('CdapAppDetailStatusController', function($state, $scope, $stateParams, MyDataSource) {
     var programTypes = [
           'flows',
           'services',
@@ -44,5 +44,16 @@ angular.module(PKG.name + '.feature.apps')
         }
       );
     }
+
+    $scope.goToDetail = function(programType, program) {
+      $state.go(programType.toLowerCase() + '.detail', {
+        programId: program
+      })
+    }
+
+    //ui-sref="programs.type({programType: (program.type_plural | lowercase)})"
+    $scope.goToList = function(programType) {
+      $state.go(programType.toLowerCase() + '.list');
+    };
 
   });
