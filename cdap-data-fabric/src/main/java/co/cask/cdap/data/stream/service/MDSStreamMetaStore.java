@@ -142,7 +142,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
         public Multimap<NamespaceMeta, StreamSpecification> apply(StreamMds mds) throws Exception {
           ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
           Map<byte[], StreamSpecification> streamSpecs =
-            mds.streams.listKV(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(), StreamSpecification.class);
+            mds.streams.listKV(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+                               StreamSpecification.class);
           for (Map.Entry<byte[], StreamSpecification> streamSpecificationEntry : streamSpecs.entrySet()) {
             List<byte[]> keyParts = MetadataStoreDataset.Key.Splitter.split(streamSpecificationEntry.getKey());
             // Namespace id is the key part with index 1.
