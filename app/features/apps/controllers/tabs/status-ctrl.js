@@ -46,7 +46,6 @@ angular.module(PKG.name + '.feature.apps')
     }
 
     $scope.goToDetail = function(programType, program) {
-      debugger;
       $state.go(programType.toLowerCase() + '.detail', {
         programId: program
       })
