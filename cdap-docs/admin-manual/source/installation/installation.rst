@@ -197,6 +197,11 @@ Preparing the Cluster
 ---------------------
 .. _install-preparing-the-cluster:
 
+CDAP utilizes ZooKeeper heavily. This requires setting the ``maxClientCnxns`` in ``zoo.cfg`` to a
+sufficiently high value for your cluster. Since the optimal value of this setting is a function of
+the number of CDAP application containers, Cask recommends setting this value to ``0`` to allow
+unlimited connections from a single host.
+
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
