@@ -24,10 +24,6 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 List of Example Apps
 ====================
 
-Convert
--------
-- Illustrates how to use time-partitioned file sets *(Beta feature)*.
-
 CountRandom
 -----------
 - Generates random numbers between 0 and 9999.

@@ -26,13 +26,13 @@
   <name>CDAP Examples</name>
 
   <modules>
-    <module>Convert</module>
     <module>CountRandom</module>
     <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>StreamConversion</module>
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
     <module>WordCount</module>

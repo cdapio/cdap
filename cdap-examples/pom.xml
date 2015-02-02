@@ -40,6 +40,7 @@
     <module>StreamConversion</module>
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
+    <module>WordCount</module>
   </modules>
 
   <repositories>
