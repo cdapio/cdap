@@ -35,7 +35,7 @@ import java.io.OutputStream;
 public class AvroHelper {
 
   /**
-   * Generate an Avro file of schema (key: String, value String) containing record of the form ("i", "Record #i)
+   * Generate an Avro file of schema (key: String, value String) containing the records ("i", "Record #i")
    * for start <= i < end. The file is written using the passed-in output stream.
    */
   public static void generateAvroFile(OutputStream out, int start, int end) throws IOException {
