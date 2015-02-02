@@ -135,8 +135,9 @@ Property                                          Default Value        Descripti
 ``router.bind.port``                              ``10000``            Port number that the CDAP Router should bind to for 
                                                                        HTTP Connections
 ``security.auth.server.bind.port``                ``10009``            Port number that the CDAP Authentication Server should
-                                                                       bind to for HTTP
-``dashboard.bind.port``                           ``9999``             CDAP Console bind port
+                                                                       bind to for HTTP Connections
+``dashboard.bind.port``                           ``9999``             Port number that the CDAP Console should
+                                                                       bind to for HTTP Connections
 ================================================= ==================== ======================================================
 
 With SSL:
@@ -147,8 +148,9 @@ Property                                          Default Value        Descripti
 ``router.ssl.bind.port``                          ``10443``            Port number that the CDAP router should bind to for 
                                                                        HTTPS Connections
 ``security.auth.server.ssl.bind.port``            ``10010``            Port number that the CDAP Authentication Server should
-                                                                       bind to for HTTP
-``dashboard.ssl.bind.port``                       ``9443``             CDAP Console bind port
+                                                                       bind to for HTTPS Connections
+``dashboard.ssl.bind.port``                       ``9443``             Port number that the CDAP Console should bind to for 
+                                                                       HTTPS Connections
 ================================================= ==================== ======================================================
 
 
@@ -295,10 +297,12 @@ Property                                                   Default Value        
                                                            ``server.``
                                                            ``LDAPLoginModule``
 ``security.authentication.handler.debug``                  ``false``                   Set to ``true`` to enable debugging
-``security.authentication.handler.hostname``               ``<hostname>``
-``security.authentication.handler.port``                   ``<port>``
-``security.authentication.handler.userBaseDn``             ``<userBaseDn>``
-``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``
+``security.authentication.handler.hostname``               ``<hostname>``              LDAP server host
+``security.authentication.handler.port``                   ``<port>``                  LDAP server port
+``security.authentication.handler.userBaseDn``             ``<userBaseDn>``            LDAP base Distinguished Name to
+                                                                                       authenticate with
+``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``      LDAP attribute used as the relative 
+                                                                                       Distinguished Name
 ``security.authentication.handler.userObjectClass``        ``<userObjectClass>``
 ========================================================== =========================== ======================================
 
