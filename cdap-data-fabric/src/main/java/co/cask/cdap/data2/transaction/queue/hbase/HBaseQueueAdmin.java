@@ -337,14 +337,22 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
+  private void deleteConsumerConfigurations(String namespaceId) throws IOException {
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespace(namespaceId));
+  }
+
   private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
+  }
+
+  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix) throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(configTableName)) {
       // we need to delete the row for this queue name from the config table
       HTable hTable = new HTable(admin.getConfiguration(), configTableName);
       try {
-        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(namespaceId, app, flow));
+        byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
         stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
 
@@ -412,15 +420,16 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
-      String tableName = Bytes.toString(desc.getName());
-      // It's important to keep config table enabled while disabling queue tables.
-      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
-        drop(desc.getName());
-      }
-    }
+    dropTablesWithPrefix(tableNamePrefix);
     // drop config table last
     drop(Bytes.toBytes(configTableName));
+  }
+
+  @Override
+  public void dropAllInNamespace(String namespaceId) throws Exception {
+    // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
+    dropTablesWithPrefix(String.format("%s.%s.", tableNamePrefix, namespaceId));
+    deleteConsumerConfigurations(namespaceId);
   }
 
   @Override
@@ -543,6 +552,16 @@ public class HBaseQueueAdmin implements QueueAdmin {
         LOG.info(String.format("Upgrading queue hbase table: %s", tableName));
         upgrade(tableName, properties);
         LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
+      }
+    }
+  }
+
+  private void dropTablesWithPrefix(String tableNamePrefix) throws IOException {
+    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
+      String tableName = Bytes.toString(desc.getName());
+      // It's important to keep config table enabled while disabling queue tables.
+      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+        drop(desc.getName());
       }
     }
   }

@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * tests for queues. Extend this class to run the tests against an implementation of the queues.
+ * Tests for queues. Extend this class to run the tests against an implementation of the queues.
  */
 public abstract class QueueTest {
 
@@ -412,6 +412,60 @@ public abstract class QueueTest {
   @Test
   public void testDropAllForFlow() throws Exception {
     testClearOrDropAllForFlow(true);
+  }
+
+  @Test
+  public void testDropAllForNamespace() throws Exception {
+    // deliberately used namespace names 'namespace' and 'namespace1' to test correct prefix matching
+    // create 4 queues
+    QueueName myQueue1 = QueueName.fromFlowlet("namespace", "myapp1", "myflow1", "myflowlet1", "myout1");
+    QueueName myQueue2 = QueueName.fromFlowlet("namespace", "myapp2", "myflow2", "myflowlet2", "myout2");
+    QueueName yourQueue1 = QueueName.fromFlowlet("namespace1", "yourapp1", "yourflow1", "yourflowlet1", "yourout1");
+    QueueName yourQueue2 = QueueName.fromFlowlet("namespace1", "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
+
+    String myQueueName1 = myQueue1.toString();
+    String myQueueName2 = myQueue2.toString();
+    String yourQueueName1 = yourQueue1.toString();
+    String yourQueueName2 = yourQueue2.toString();
+
+    queueAdmin.create(myQueueName1);
+    queueAdmin.create(myQueueName2);
+    queueAdmin.create(yourQueueName1);
+    queueAdmin.create(yourQueueName2);
+
+    // verify that queues got created
+    Assert.assertTrue(queueAdmin.exists(myQueueName1) && queueAdmin.exists(myQueueName2) &&
+                        queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+
+    // create some consumer configurations for all queues
+    configureGroups(myQueue1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(myQueue2, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(yourQueue1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(yourQueue2, ImmutableMap.of(0L, 1, 1L, 1));
+
+    // verify that the consumer config exists
+    verifyConsumerConfigExists(myQueue1, myQueue2, yourQueue1, yourQueue2);
+
+    // drop queues in namespace 'namespace'
+    queueAdmin.dropAllInNamespace("namespace");
+
+    // verify queues in 'namespace' are dropped
+    Assert.assertFalse(queueAdmin.exists(myQueueName1) || queueAdmin.exists(myQueueName2));
+    // also verify that consumer config of all queues in 'myspace' is deleted
+    verifyConsumerConfigIsDeleted(myQueue1, myQueue2);
+
+    // but the ones in 'namespace1' still exist
+    Assert.assertTrue(queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+    // consumer config for queues in 'namespace1' should also still exist
+    verifyConsumerConfigExists(yourQueue1, yourQueue2);
+
+    // drop queues in 'namespace1'
+    queueAdmin.dropAllInNamespace("namespace1");
+
+    // verify queues in 'namespace1' are dropped
+    Assert.assertFalse(queueAdmin.exists(yourQueueName1) || queueAdmin.exists(yourQueueName2));
+    // verify that the consumer config of all queues in 'namespace1' is deleted
+    verifyConsumerConfigIsDeleted(yourQueue1, yourQueue2);
   }
 
   @Test
