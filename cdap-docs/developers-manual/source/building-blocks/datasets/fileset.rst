@@ -130,3 +130,7 @@ See the Apache™ Twill®
 `API documentation <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
 for additional information about the ``Location`` abstraction.
 
+.. rubric::  Examples of Using FileSet Dataset
+
+- For an example that **demonstrates the use of time-partitioned File sets,** see the :ref:`Stream Conversion
+  example <examples-stream-conversion>`, and its class ``StreamConversionApp`` that defines the fileset dataset.
