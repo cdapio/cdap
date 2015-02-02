@@ -304,7 +304,8 @@ Property                                                   Value                
                                                                                        directory
 ``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``      LDAP Object attribute for username 
                                                                                        when search by role DN
-``security.authentication.handler.userObjectClass``        ``<userObjectClass>``
+``security.authentication.handler.userObjectClass``        ``<userObjectClass>``       LDAP Object class used to store user  
+                                                                                       entries
 ========================================================== =========================== ======================================
 
 In addition, you may configure these optional properties in ``cdap-site.xml``:
@@ -317,15 +318,19 @@ Property                                                   Value                
                                                                                        directory
 ``security.authentication.handler.bindPassword``           ``<bindPassword>``          The password used to bind to the LDAP
                                                                                        server
-``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``       The Unique User ID Attribute
-``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>`` Password of the ``userIdAttribute``
-``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Role Based Distinguished Name
-``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``      
-                                                                                       
-``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``    
-                                                                                       
-``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``        
-                                                                                       
+``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``       LDAP Object attribute containing the 
+                                                                                       username
+``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>`` LDAP Object attribute containing the 
+                                                                                       user password
+``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Distinguished Name of the root of the 
+                                                                                       LDAP tree to search for group 
+                                                                                       memberships
+``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``     LDAP Object attribute specifying the 
+                                                                                       group name 
+``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``   LDAP Object attribute specifying the 
+                                                                                       group members
+``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``       LDAP Object class used to store group  
+                                                                                       entries
 ========================================================== =========================== ======================================
 
 To enable SSL between the authentication server and the LDAP instance, configure
@@ -337,7 +342,7 @@ Property                                                   Default Value     Val
 ``security.authentication.handler.useLdaps``               ``false``         ``true``  Set to ``true`` to enable use of LDAPS
 ``security.authentication.handler.ldapsVerifyCertificate`` ``true``          ``true``  Set to ``true`` to enable verification
                                                                                        of the SSL certificate used by the
-                                                                                        LDAP server
+                                                                                       LDAP server
 ========================================================== ================= ========= ======================================
 
 .. _installation-jaspi-authentication:
