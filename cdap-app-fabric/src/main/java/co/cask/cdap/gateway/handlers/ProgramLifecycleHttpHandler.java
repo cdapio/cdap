@@ -37,6 +37,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -52,6 +53,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -151,6 +153,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final QueueAdmin queueAdmin;
 
+  private final StreamAdmin streamAdmin;
+
   private final Scheduler scheduler;
 
   private final PreferencesStore preferencesStore;
@@ -201,7 +205,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler, PreferencesStore preferencesStore) {
+                                     StreamAdmin streamAdmin, Scheduler scheduler, PreferencesStore preferencesStore) {
     super(authenticator);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
@@ -211,6 +215,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
   }
@@ -1045,6 +1050,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  @DELETE
+  @Path("/queues")
+  public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespaceId) {
+    // synchronized to avoid a potential race condition here:
+    // 1. the check for state returns that all flows are STOPPED
+    // 2. The API deletes queues because
+    // Between 1. and 2., a flow is started using the /namespaces/{namespace-id}/apps/{app-id}/flows/{flow-id}/start API
+    // Averting this race condition by synchronizing this method. The resource that needs to be locked here is
+    // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
+    // synchronized on this.
+    // This synchronization works in HA mode because even in HA mode there is only one leader at a time.
+    try {
+      List<ProgramRecord> flows = listPrograms(Id.Namespace.from(namespaceId), ProgramType.FLOW, store);
+      for (ProgramRecord flow : flows) {
+        String appId = flow.getApp();
+        String flowId = flow.getId();
+        Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
+        ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
+        if (!"STOPPED".equals(status.getStatus())) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN,
+                               String.format("Flow '%s' from application '%s' in namespace '%s' is running, " +
+                                               "please stop it first.", flowId, appId, namespaceId));
+          return;
+        }
+      }
+      queueAdmin.dropAllInNamespace(namespaceId);
+      // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
+      // TODO: CDAP-1184 Implement metrics deletion once we have v3 APIs for deleting metrics
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Error while deleting queues in namespace " + namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
 
   /**
    * Populates requested and provisioned instances for a program type.
