@@ -207,3 +207,45 @@ When you want to delete all the columns of a row and you know all of them,
 passing all of them will make the deletion faster. Deleting all the columns of a row will
 also delete the entire row, as the underlying implementation of a Table is a 
 `columnar store. <http://en.wikipedia.org/wiki/Column-oriented_DBMS>`__
+
+.. _table-datasets-pre-splitting:
+
+Pre-Splitting a Table into Multiple Regions
+===========================================
+
+When the underlying storage for a Table Dataset (or any Dataset that uses a Table
+underneath, such as a ``KeyValueTable``) is HBase, CDAP allows you to 
+`configure pre-splitting <http://hbase.apache.org/book.html#manual_region_splitting_decisions>`__
+to gain a better distribution of data operations after the tables are created. This helps
+optimize for better performance, depending on your use case.
+
+To specify the splits for a Table-based Dataset, you use the ``hbase.splits`` dataset property. 
+The value must contain a JSON-formatted ``byte[][]`` of the split keys, such as::
+
+  { "hbase.splits": "[[64],[128],[192]]" }
+
+The above will create four regions; the first of which will receive all rows whose first
+byte is in the range 0…63; the second will receive the range 64…127, the third will
+receive the range 128…191 and the fourth will receive the range 192…255.
+
+You set Dataset properties when you create the Dataset, either during application
+deployment or via CDAP's HTTP RESTful APIs. The following is an example of the former; for
+an example of the latter, please refer to the 
+:ref:`Dataset section <http-restful-api-dataset-creating>` of the :ref:`RESTful API
+:Reference <restful-api>`.
+
+To configure pre-splitting for a Table created during application deployment, in your
+Application class' ``configure()`` you specify:
+
+  public class MyApp extends AbstractApplication {
+
+    @Override
+    public void configure() {
+      DatasetProperties props = 
+          DatasetProperties.builder().add("hbase.splits", "[[64],[128],[192]]").build();
+      createDataset("myTable", KeyValueTable.class, props);
+      
+      // init other components
+      
+    }
+  } 
