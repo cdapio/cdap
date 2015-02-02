@@ -133,7 +133,8 @@ Running the Example
 Deleting an Existing Dataset
 ----------------------------
 
-Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call:
+If it has been created from an earlier run of the example, delete the ``profiles``
+Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call:
 
   curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
 
@@ -146,8 +147,8 @@ Once the application is deployed:
 - Click on ``UserProfiles`` in the Overview page of the CDAP Console to get to the
   Application detail page, click:
   
-  - ``FileSetService`` in the *Service* pane to get to the Service detail page, then click the *Start* button; and
   - ``ActivityFlow`` in the *Flow* pane to get to the Flow detail page, then click the *Start* button; or
+  - ``UserProfileService`` in the *Service* pane to get to the Service detail page, then click the *Start* button; and
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
@@ -156,12 +157,12 @@ Once the application is deployed:
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start service UserProfiles.FileSetService``
-        ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
+      - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
+        ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
 
     * - On Windows:
-      - ``> bin\cdap-cli.bat start service UserProfiles.FileSetService``    
-        ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
+      - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
+        ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
 
 Populate the ``profiles`` Table
 -------------------------------
@@ -204,10 +205,12 @@ a conflict would show as (reformatted to fit)::
     at co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:166) ~[tephra-core-0.3.4.jar:na]
     at co.cask.tephra.TransactionContext.finish(TransactionContext.java:78) ~[tephra-core-0.3.4.jar:na]
 
-
 Note that in order to see this happen (and to change from row- to column- and vice-versa),
 you need to delete the ``profiles`` dataset before redeploying the application, to force
 its recreation with the new properties.
+
+Running the example with ``ConflictDetection.COLUMN`` will result in the two scripts running
+concurrently without the generation of errors.
 
 Stopping the Application
 -------------------------------
@@ -216,9 +219,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Service**
 
-- Click on ``FileSetExample`` in the Overview page of the CDAP Console to get to the
-  Application detail page, click ``FileSetService`` in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; or
+- Click on ``UserProfiles`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``ActivityFlow`` in the *Flow* section of the *Process* pane
+  to get to the Flow's detail page, and then click the *Stop* button; repeat these steps for
+  the ``FileSetService`` in the *Service* pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -226,6 +230,9 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop service FileSetExample.FileSetService``
+      - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
+        ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
+
     * - On Windows:
-      - ``> bin\cdap-cli.bat stop service FileSetExample.FileSetService``    
+      - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
+        ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    

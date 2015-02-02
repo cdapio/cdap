@@ -34,7 +34,6 @@
     <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
-    <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
     <module>StreamConversion</module>
