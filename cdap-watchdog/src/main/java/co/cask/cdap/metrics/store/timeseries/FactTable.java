@@ -24,6 +24,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.NavigableMap;
@@ -35,6 +37,7 @@ import javax.annotation.Nullable;
  * Thread safe as long as the passed into the constructor datasets are thread safe (usually is not the case).
  */
 public final class FactTable {
+  private static final Logger LOG = LoggerFactory.getLogger(FactTable.class);
   private static final int MAX_ROLL_TIME = 0xfffe;
 
   private static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
@@ -109,26 +112,18 @@ public final class FactTable {
 
     FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow);
 
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
+                timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
+    }
+
     return new FactScanner(timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter), codec,
                              scan.getStartTs(), scan.getEndTs());
   }
 
   @Nullable
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
-    // if any of measure name or tag values are not provided, we do need fuzzy row filter, otherwise don't:
-    // the scan is well defined by start & stop keys
-    if (scan.getMeasureName() != null) {
-      boolean needFilter = false;
-      for (TagValue tagValue : scan.getTagValues()) {
-        if (tagValue.getValue() != null) {
-          needFilter = true;
-          break;
-        }
-      }
-      if (!needFilter) {
-        return null;
-      }
-    }
+    // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName());
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
@@ -172,5 +167,15 @@ public final class FactTable {
     }
 
     rowMap.put(column, value);
+  }
+
+  private String toPrettyLog(byte[] key) {
+    StringBuilder sb = new StringBuilder("{");
+    for (byte b : key) {
+      String enc = String.valueOf((int) b) + "    ";
+      sb.append(enc.substring(0, 5));
+    }
+    sb.append("}");
+    return sb.toString();
   }
 }

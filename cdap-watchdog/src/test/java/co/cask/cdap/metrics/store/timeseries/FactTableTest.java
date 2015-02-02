@@ -188,7 +188,7 @@ public class FactTableTest {
 
       assertScan(table, expected, scan);
 
-      // time points for fuzzy tag1 before third interval (very important case - caught some bugs)
+      // time points for fuzzy tag1 before third interval
       scan = new FactScan(ts - resolution, ts + resolution,
                             // null stands for any
                             "metric" + i, tagValues("tag1", null, "tag2", "value3"));
@@ -198,6 +198,44 @@ public class FactTableTest {
                    timeValues(ts, resolution, 4 * i, 4 * i + 1));
       expected.put("metric" + i, tagValues("tag1", null, "tag2", "value3"),
                    timeValues(ts, resolution, 5 * i, 5 * i + 1));
+
+      assertScan(table, expected, scan);
+
+      // time points for both fuzzy tags before third interval
+      scan = new FactScan(ts - resolution, ts + resolution,
+                          // null stands for any
+                          "metric" + i, tagValues("tag1", null, "tag2", null));
+
+      expected = HashBasedTable.create();
+      expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
+                   timeValues(ts, resolution, i, i + 1));
+      expected.put("metric" + i, tagValues("tag1", "value2", "tag2", "value1"),
+                   timeValues(ts, resolution, 3 * i, 3 * i + 1));
+      expected.put("metric" + i, tagValues("tag1", "value2", "tag2", "value2"),
+                   timeValues(ts, resolution, 2 * i, 2 * i + 1));
+      expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value3"),
+                   timeValues(ts, resolution, 4 * i, 4 * i + 1));
+      expected.put("metric" + i, tagValues("tag1", null, "tag2", "value3"),
+                   timeValues(ts, resolution, 5 * i, 5 * i + 1));
+
+      assertScan(table, expected, scan);
+
+      // time points for both fuzzy tags since third interval
+      scan = new FactScan(ts + resolution, ts + 3 * resolution,
+                          // null stands for any
+                          "metric" + i, tagValues("tag1", null, "tag2", null));
+
+      expected = HashBasedTable.create();
+      expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
+                   timeValues(ts + resolution, resolution, i + 1, i + 2));
+      expected.put("metric" + i, tagValues("tag1", "value2", "tag2", "value1"),
+                   timeValues(ts + resolution, resolution, 3 * i + 1, 3 * i + 2));
+      expected.put("metric" + i, tagValues("tag1", "value2", "tag2", "value2"),
+                   timeValues(ts + resolution, resolution, 2 * i + 1, 2 * i + 2));
+      expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value3"),
+                   timeValues(ts + resolution, resolution, 4 * i + 1, 4 * i + 2));
+      expected.put("metric" + i, tagValues("tag1", null, "tag2", "value3"),
+                   timeValues(ts + resolution, resolution, 5 * i + 1, 5 * i + 2));
 
       assertScan(table, expected, scan);
     }
