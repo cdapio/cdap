@@ -808,15 +808,20 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   @DELETE
   @Path("/queues")
-  public void clearQueues(HttpRequest request, final HttpResponder responder) {
-    programLifecycleHttpHandler.clearQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+  public void deleteQueues(HttpRequest request, HttpResponder responder) {
+    programLifecycleHttpHandler.deleteQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   @DELETE
   @Path("/streams")
-  public void clearStreams(HttpRequest request, final HttpResponder responder) {
-    programLifecycleHttpHandler.clear(request, responder, Constants.DEFAULT_NAMESPACE,
-                                      ProgramLifecycleHttpHandler.ToClear.STREAMS);
+  public void deleteStreams(HttpRequest request, HttpResponder responder) {
+    try {
+      streamAdmin.dropAll();
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Error while deleting streams", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   @GET

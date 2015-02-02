@@ -1050,11 +1050,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /*************************** Queues APIs **************************************/
   @DELETE
   @Path("/queues")
-  public synchronized void clearQueues(HttpRequest request, HttpResponder responder,
-                                       @PathParam("namespace-id") String namespaceId) {
+  public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespaceId) {
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1077,42 +1076,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           return;
         }
       }
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-      return;
-    }
-    // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-    // TODO: CDAP-1184 Implement metrics deletion once metrics APIs accept namespace
-    clear(request, responder, namespaceId, ToClear.QUEUES);
-  }
-
-  /**
-   * Protected until /v3 APIs for streams are added
-   */
-  protected static enum ToClear {
-    QUEUES, STREAMS
-  }
-
-  /**
-   * Clears queues/streams. namespaceId here can be null if you want to delete all queues/streams across all namespaces.
-   * However, that API has not been exposed yet - CDAP-1180
-   */
-  protected void clear(HttpRequest request, HttpResponder responder, @Nullable String namespaceId, ToClear toClear) {
-    try {
-      if (toClear == ToClear.QUEUES) {
-        if (namespaceId == null) {
-          queueAdmin.dropAll();
-        } else {
-          queueAdmin.dropAllInNamespace(namespaceId);
-        }
-      } else if (toClear == ToClear.STREAMS) {
-        // TODO: Drops everything for now. In CDAP-773 add API for deleting streams in a namespace.
-        streamAdmin.dropAll();
-      }
+      queueAdmin.dropAllInNamespace(namespaceId);
+      // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
+      // TODO: CDAP-1184 Implement metrics deletion once we have v3 APIs for deleting metrics
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-      LOG.error("Exception clearing data fabric: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      LOG.error("Error while deleting queues in namespace " + namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
