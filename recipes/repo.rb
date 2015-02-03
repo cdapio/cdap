@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-repo_version = node['cdap']['version']}.to_f
+repo_version = node['cdap']['version'].to_f
 
 case node['platform_family']
 when 'debian'
