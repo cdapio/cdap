@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metrics.store.timeseries;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 
 /**
@@ -33,7 +35,7 @@ public final class FactScan {
     this.endTs = endTs;
     this.startTs = startTs;
     this.measureName = measureName;
-    this.tagValues = tagValues;
+    this.tagValues = ImmutableList.copyOf(tagValues);
   }
 
   public List<TagValue> getTagValues() {

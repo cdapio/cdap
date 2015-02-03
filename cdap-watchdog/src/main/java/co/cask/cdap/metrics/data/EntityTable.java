@@ -87,10 +87,10 @@ public final class EntityTable {
 
   /**
    * Returns an unique id for the given name.
-   * @param name The {@link EntityName} to lookup.
+   * @param name The {@link EntityName} to lookup. Can be {@code null}, which is treated as a normal value.
    * @return Unique ID, it is guaranteed to be smaller than the maxId passed in constructor.
    */
-  public long getId(String type, String name) {
+  public long getId(String type, @Nullable String name) {
     if (name == null) {
       return 0;
     }

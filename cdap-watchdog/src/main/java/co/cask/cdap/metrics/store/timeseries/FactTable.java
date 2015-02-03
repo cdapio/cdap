@@ -59,7 +59,7 @@ public final class FactTable {
   private final FactCodec codec;
 
   /**
-   * Creates a MetricTable.
+   * Creates an instance of {@link FactTable}.
    *
    * @param timeSeriesTable A table for storing facts informaction.
    * @param entityTable The table for storing tag encoding mappings.

@@ -49,16 +49,37 @@ public class FactCodec {
     this.deltaCache = createDeltaCache(rollTimebaseInterval);
   }
 
+  /**
+   * Builds row key for write and get operations.
+   * @param tagValues tags
+   * @param measureName measure name
+   * @param ts timestamp
+   * @return row key
+   */
   public byte[] createRowKey(List<TagValue> tagValues, String measureName, long ts) {
     // "false" would write null in tag values as "undefined"
     return createRowKey(tagValues, measureName, ts, false);
   }
 
+  /**
+   * Builds start row key for scan operation.
+   * @param tagValues tags
+   * @param measureName measure name
+   * @param ts timestamp
+   * @return row key
+   */
   public byte[] createStartRowKey(List<TagValue> tagValues, String measureName, long ts) {
     // "false" would write null in tag values as "undefined"
     return createRowKey(tagValues, measureName, ts, false);
   }
 
+  /**
+   * Builds end row key for scan operation.
+   * @param tagValues tags
+   * @param measureName measure name
+   * @param ts timestamp
+   * @return row key
+   */
   public byte[] createEndRowKey(List<TagValue> tagValues, String measureName, long ts) {
     // "false" would write null in tag values as "undefined"
     return createRowKey(tagValues, measureName, ts, true);
@@ -98,7 +119,6 @@ public class FactCodec {
   }
 
   private long roundToResolution(long ts) {
-    // rounding to greatest that is smaller
     return (ts / resolution) * resolution;
   }
 

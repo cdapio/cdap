@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metrics.store.timeseries;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 
 /**
@@ -28,7 +30,7 @@ public final class Fact {
   private final TimeValue timeValue;
 
   public Fact(List<TagValue> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
-    this.tagValues = tagValues;
+    this.tagValues = ImmutableList.copyOf(tagValues);
     this.measureType = measureType;
     this.measureName = measureName;
     this.timeValue = timeValue;

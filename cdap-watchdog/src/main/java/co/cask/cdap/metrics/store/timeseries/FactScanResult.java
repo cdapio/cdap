@@ -16,8 +16,6 @@
 
 package co.cask.cdap.metrics.store.timeseries;
 
-import com.google.common.base.Objects;
-
 import java.util.Iterator;
 import java.util.List;
 
@@ -46,27 +44,5 @@ public final class FactScanResult implements Iterable<TimeValue> {
   @Override
   public Iterator<TimeValue> iterator() {
     return timeValues.iterator();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    FactScanResult other = (FactScanResult) o;
-
-    return measureName.equals(other.measureName) &&
-      tagValues.equals(other.tagValues) &&
-      timeValues.equals(other.timeValues);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(measureName, tagValues, timeValues);
   }
 }
