@@ -28,7 +28,7 @@
   <properties>
     <app.main.class>${package}.HelloWorld</app.main.class>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>2.7.0</cdap.version>
+    <cdap.version>2.8.0-SNAPSHOT</cdap.version>
     <slf4j.version>1.7.5</slf4j.version>
     <guava.version>13.0.1</guava.version>
     <junit.version>4.11</junit.version>
