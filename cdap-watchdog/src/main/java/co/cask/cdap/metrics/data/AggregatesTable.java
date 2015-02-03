@@ -59,31 +59,6 @@ public final class AggregatesTable {
   }
 
   /**
-   * Atomically compare a single metric entry with an expected value, and if it matches, replace it with a new value.
-   *
-   * @param context the context of the metric.
-   * @param metric the name of the metric.
-   * @param runId the runid of the metric.
-   * @param tag the tag of the metric.  If null, the empty tag is used.
-   * @param oldValue the expected value of the column. If null, this means that the column must not exist.
-   * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.
-   * @return whether the write happened, that is, whether the existing value of the column matched the expected value.
-   */
-  public boolean swap(String context, String metric, String runId, String tag, Long oldValue, Long newValue)
-    throws OperationException {
-    byte[] row = getKey(context, metric, runId);
-    byte[] col = (tag == null) ? Bytes.toBytes(MetricsConstants.EMPTY_TAG) : Bytes.toBytes(tag);
-    try {
-      byte[] oldVal = (oldValue == null) ? null : Bytes.toBytes(oldValue);
-      byte[] newVal = (newValue == null) ? null : Bytes.toBytes(newValue);
-
-      return aggregatesTable.swap(row, col, oldVal, newVal);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
-  }
-
-  /**
    * Updates aggregates for the given list of {@link MetricsRecord}.
    *
    * @throws OperationException When there is an error updating the table.
