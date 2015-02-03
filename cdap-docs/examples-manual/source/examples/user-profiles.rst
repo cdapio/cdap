@@ -38,7 +38,7 @@ of the Application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
-    :lines: 32-
+    :lines: 31-
 
 This application uses a Table with conflict detection either at the row level or
 at the column level.
@@ -84,9 +84,10 @@ Building and Starting
 =====================
 
 To observe conflict detection at both the row-level and column-level, you will need to modify 
-and build this example twice. The first time, you will use row-level conflict detection, and see
-errors appearing in a log. The second time, you will use column-level conflict detection and
-see the scripts complete successfully without errors.
+and build this example twice:
+
+- The first time, you will use row-level conflict detection, and see errors appearing in a log;
+- The second time, you will use column-level conflict detection and see the scripts complete successfully without errors.
   
 Build the Application with Row-level Conflict Detection
 -------------------------------------------------------
@@ -95,7 +96,7 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
       :language: java
-      :lines: 43-45
+      :lines: 41-43
       
 - The first time you build the application, set the ``tableProperties`` to ``ConflictDetection.ROW``. 
 
@@ -125,7 +126,7 @@ SDK in ``libexec\bin\curl.exe``
 Running CDAP Applications
 ============================================
 
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+.. include:: /../../developers-manual/build/_includes/building-apps-versioned.rst
     :start-line: 9
 
 Running the Example
@@ -135,7 +136,7 @@ Deleting an Existing Dataset
 ----------------------------
 
 If it has been created from an earlier run of the example, delete the ``profiles``
-Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call:
+Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call::
 
   curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
 
@@ -159,11 +160,11 @@ Once the application is deployed:
 
     * - On Linux:
       - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
-        ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
+      - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
 
     * - On Windows:
       - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
-        ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
+      - ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
 
 Populate the ``profiles`` Table
 -------------------------------
@@ -232,8 +233,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
     * - On Linux:
       - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
-        ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
+      - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
 
     * - On Windows:
       - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
-        ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    
+      - ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    
