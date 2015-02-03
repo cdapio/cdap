@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import com.google.common.cache.CacheBuilder;
@@ -46,12 +45,6 @@ public class TimeSeriesTables {
       });
   }
 
-  public void clear() throws OperationException {
-    for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.getUnchecked(resolution).clear();
-    }
-  }
-
   public void deleteBefore(long deleteBefore) {
     for (int resolution : timeSeriesResolutions) {
       try {
@@ -68,7 +61,7 @@ public class TimeSeriesTables {
     }
   }
 
-  public MetricsScanner scan(int resolution, MetricsScanQuery scanQuery) throws OperationException {
+  public MetricsScanner scan(int resolution, MetricsScanQuery scanQuery) throws Exception {
     return metricsTableCaches.getUnchecked(resolution).scan(scanQuery);
   }
 }

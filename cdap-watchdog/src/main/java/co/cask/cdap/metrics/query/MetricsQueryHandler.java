@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
@@ -142,9 +141,7 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (OperationException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
-    } catch (ServerException e) {
+    } catch (Exception e) {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
     }
   }

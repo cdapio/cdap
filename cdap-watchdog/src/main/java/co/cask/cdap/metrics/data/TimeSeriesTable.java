@@ -140,7 +140,7 @@ public final class TimeSeriesTable {
     timeSeriesTable.increment(convertedIncrementsTable);
   }
 
-  public MetricsScanner scan(MetricsScanQuery query) throws OperationException {
+  public MetricsScanner scan(MetricsScanQuery query) throws Exception {
     return scanFor(query, false);
   }
 
@@ -268,7 +268,7 @@ public final class TimeSeriesTable {
     return nextRow;
   }
 
-  public MetricsScanner scanAllTags(MetricsScanQuery query) throws OperationException {
+  public MetricsScanner scanAllTags(MetricsScanQuery query) throws Exception {
     return scanFor(query, true);
   }
 
@@ -371,24 +371,16 @@ public final class TimeSeriesTable {
 
   /**
    * Clears the storage table.
-   * @throws OperationException If error in clearing data.
+   * @throws Exception If error in clearing data.
    */
-  public void clear() throws OperationException {
-    try {
-      timeSeriesTable.deleteAll(new byte[]{});
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  public void clear() throws Exception {
+    timeSeriesTable.deleteAll(new byte[]{});
   }
 
-  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags) throws OperationException {
-    try {
-      ScannerFields fields = getScannerFields(query, shouldMatchAllTags);
-      Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
-      return new MetricsScanner(query, scanner, entityCodec, resolution);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags) throws Exception {
+    ScannerFields fields = getScannerFields(query, shouldMatchAllTags);
+    Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
+    return new MetricsScanner(query, scanner, entityCodec, resolution);
   }
 
   /**

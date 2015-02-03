@@ -97,14 +97,19 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   public void query(HttpRequest request, HttpResponder responder,
                      @QueryParam("context") String context,
                      @QueryParam("metric") String metric) throws Exception {
-    MetricsRequestBuilder builder =
-      new MetricsRequestBuilder(null)
-        .setContextPrefix(context)
-        .setMetricPrefix(metric);
-    // sets time range, query type, etc.
-    MetricsRequestParser.parseQueryString(new URI(request.getUri()), builder);
-    JsonElement queryResult = requestExecutor.executeQuery(builder.build());
-    responder.sendJson(HttpResponseStatus.OK, queryResult);
+    try {
+      MetricsRequestBuilder builder =
+        new MetricsRequestBuilder(null)
+          .setContextPrefix(context)
+          .setMetricPrefix(metric);
+      // sets time range, query type, etc.
+      MetricsRequestParser.parseQueryString(new URI(request.getUri()), builder);
+      JsonElement queryResult = requestExecutor.executeQuery(builder.build());
+      responder.sendJson(HttpResponseStatus.OK, queryResult);
+    } catch (Exception e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    }
   }
 
   private void searchMetricAndRespond(HttpResponder responder, String context) {

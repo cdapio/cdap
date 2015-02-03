@@ -19,7 +19,6 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.AggregatesScanResult;
 import co.cask.cdap.metrics.data.AggregatesScanner;
 import co.cask.cdap.metrics.data.AggregatesTable;
@@ -45,7 +44,6 @@ import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
@@ -73,7 +71,7 @@ public class MetricsRequestExecutor {
     });
   }
 
-  public JsonElement executeQuery(MetricsRequest metricsRequest) throws IOException, OperationException {
+  public JsonElement executeQuery(MetricsRequest metricsRequest) throws Exception {
 
     // Pretty ugly logic now. Need to refactor
     Object resultObj = null;
@@ -128,7 +126,7 @@ public class MetricsRequestExecutor {
   }
 
   private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder)
-    throws OperationException {
+    throws Exception {
     int resolution = metricsRequest.getTimeSeriesResolution();
     long start = metricsRequest.getStartTime() / resolution * resolution;
     long end = (metricsRequest.getEndTime() / resolution) * resolution;
@@ -226,7 +224,7 @@ public class MetricsRequestExecutor {
   }
 
   private Iterator<TimeValue> queryTimeSeries(MetricsScanQuery scanQuery, Interpolator interpolator, int resolution)
-    throws OperationException {
+    throws Exception {
 
     Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
     MetricsScanner scanner = timeSeriesTables.scan(resolution, scanQuery);
