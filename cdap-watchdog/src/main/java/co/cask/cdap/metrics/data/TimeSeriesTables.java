@@ -52,23 +52,11 @@ public class TimeSeriesTables {
     }
   }
 
-  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
-    for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.getUnchecked(resolution).delete(contextPrefix, metricPrefix);
-    }
-  }
-
-  public void delete(MetricsScanQuery scanQuery) throws OperationException {
-    for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.getUnchecked(resolution).delete(scanQuery);
-    }
-  }
-
   public void deleteBefore(long deleteBefore) {
     for (int resolution : timeSeriesResolutions) {
       try {
         metricsTableCaches.getUnchecked(resolution).deleteBefore(deleteBefore);
-      } catch (OperationException e) {
+      } catch (Exception e) {
         LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
       }
     }
