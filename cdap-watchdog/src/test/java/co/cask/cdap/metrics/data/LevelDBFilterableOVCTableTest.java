@@ -59,7 +59,7 @@ public class LevelDBFilterableOVCTableTest {
   private static final int rollTime = 60;
 
   @Test
-  public void testAggregatesQuery() throws OperationException {
+  public void testAggregatesQuery() throws Exception {
     AggregatesTable table = tableFactory.createAggregates();
     List<MetricsRecord> records = Lists.newLinkedList();
     List<TagMetric> tags = Lists.newArrayList();

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.AggregatesTable;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.transport.MetricsRecord;
@@ -62,7 +61,7 @@ public final class AggregatesMetricsProcessor implements MetricsProcessor {
   public void process(Iterator<MetricsRecord> records) {
     try {
       aggregatesTable.get().update(Iterators.filter(records, predicate));
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Failed to write to time series table: {}", e.getMessage(), e);
     }
   }
