@@ -119,8 +119,8 @@ Re-build the Application with Column-level Conflict Detection
 - Now, rebuild the application, setting the ``tableProperties`` back to its original value, ``ConflictDetection.COLUMN``.
 - Re-deploy and re-run the application. You should not see any errors now in the log.    
 
-**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-SDK in ``libexec\bin\curl.exe``
+.. **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+.. SDK in ``libexec\bin\curl.exe``
 
 
 Running CDAP Applications
@@ -163,10 +163,10 @@ Once the application is deployed:
     * - 
       - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
       
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
-    * - 
-      - ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
+..    * - On Windows:
+..      - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
+..    * - 
+..      - ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
 
 Populate the ``profiles`` Table
 -------------------------------
@@ -180,8 +180,8 @@ Populate the ``profiles`` tables with users using a script. From the example's d
     * - On Linux:
       - ``$ ./bin/add-users.sh``
 
-    * - On Windows:
-      - ``> bin\add-users.bat``    
+..    * - On Windows:
+..      - ``> bin\add-users.bat``    
 
 
 Create a Conflict
@@ -238,8 +238,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
     * - 
       - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
 
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
-    * - 
-      - ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    
+..    * - On Windows:
+..      - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
+..    * - 
+..      - ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    
 
