@@ -99,23 +99,23 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   // returns mapping of all that has same first id parts
-  public <T> Map<byte[], T> listKV(Key id, Class<T> classOfT) {
+  public <T> Map<Key, T> listKV(Key id, Class<T> classOfT) {
     return listKV(id, classOfT, Integer.MAX_VALUE);
   }
 
   // returns mapping of  all that has same first id parts, with a limit
-  public <T> Map<byte[], T> listKV(Key id, Class<T> classOfT, int limit) {
+  public <T> Map<Key, T> listKV(Key id, Class<T> classOfT, int limit) {
     return listKV(id, null, classOfT, limit, Predicates.<T>alwaysTrue());
   }
 
   // returns mapping of all that has first id parts in range of startId and stopId
-  public <T> Map<byte[], T> listKV(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit,
+  public <T> Map<Key, T> listKV(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit,
                                    Predicate<T> filter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
     try {
-      Map<byte[], T> map = Maps.newLinkedHashMap();
+      Map<Key, T> map = Maps.newLinkedHashMap();
       Scanner scan = table.scan(startKey, stopKey);
       Row next;
       while ((limit-- > 0) && (next = scan.next()) != null) {
@@ -126,7 +126,8 @@ public class MetadataStoreDataset extends AbstractDataset {
         T value = deserialize(columnValue, classOfT);
 
         if (filter.apply(value)) {
-          map.put(next.getRow(), value);
+          Key key = new Key.Builder().add(next.getRow()).build();
+          map.put(key, value);
         }
       }
       return map;
@@ -177,6 +178,39 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
 
     /**
+     * Splits the keys into the parts that comprise this.
+     */
+    public List<byte[]> split() {
+      List<byte[]> bytes = Lists.newArrayList();
+      int offset = 0;
+      while (offset < key.length) {
+        int length = Bytes.toInt(key, offset);
+        offset += Ints.BYTES;
+        bytes.add(Arrays.copyOfRange(key, offset, offset + length));
+        offset += length;
+      }
+      return bytes;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Key that = (Key) o;
+      return Bytes.equals(this.key, that.key);
+    }
+
+    @Override
+    public int hashCode() {
+      return Bytes.hashCode(key);
+    }
+
+    /**
      * Builds {@link Key}s.
      */
     public static final class Builder {
@@ -188,6 +222,11 @@ public class MetadataStoreDataset extends AbstractDataset {
 
       public Builder(Key start) {
         this.key = start.getKey();
+      }
+
+      public Builder add(byte[] part) {
+        key = Bytes.add(key, part);
+        return this;
       }
 
       public Builder add(String part) {
@@ -204,29 +243,12 @@ public class MetadataStoreDataset extends AbstractDataset {
       }
 
       public Builder add(long part) {
-        key = Bytes.add(key, Bytes.toBytes(part));
+        add(Bytes.toBytes(part));
         return this;
       }
 
       public Key build() {
         return new Key(key);
-      }
-    }
-
-    /**
-     * Splits {@link Key}s.
-     */
-    public static final class Splitter {
-      public static List<byte[]> split(byte[] key) {
-        List<byte[]> bytes = Lists.newArrayList();
-        int offset = 0;
-        while (offset < key.length) {
-          int length = Bytes.toInt(key, offset);
-          offset += Ints.BYTES;
-          bytes.add(Arrays.copyOfRange(key, offset, offset + length));
-          offset += length;
-        }
-        return bytes;
       }
     }
   }

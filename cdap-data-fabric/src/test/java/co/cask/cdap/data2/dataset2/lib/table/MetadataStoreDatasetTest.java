@@ -36,7 +36,7 @@ public class MetadataStoreDatasetTest {
     MetadataStoreDataset.Key key = builder.build();
 
     List<String> splitKeyParts = Lists.newArrayList();
-    List<byte[]> splittedBytes = MetadataStoreDataset.Key.Splitter.split(key.getKey());
+    List<byte[]> splittedBytes = key.split();
     for (byte[] bytes : splittedBytes) {
       splitKeyParts.add(Bytes.toString(bytes));
     }
