@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
@@ -38,7 +37,7 @@ public abstract class TimeSeriesTableTestBase {
   protected abstract MetricsTableFactory getTableFactory();
 
   @Test
-  public void testAggregate() throws OperationException {
+  public void testAggregate() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     // 2012-10-01T12:00:00
@@ -122,7 +121,7 @@ public abstract class TimeSeriesTableTestBase {
 
 
   @Test
-  public void testTimeSeriesMinuteResolutionAggregation() throws OperationException {
+  public void testTimeSeriesMinuteResolutionAggregation() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(60);
 
     // 2012-10-01T12:00:00
@@ -146,7 +145,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testIncrements() throws OperationException, InterruptedException {
+  public void testIncrements() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
     // 2012-10-01T12:00:00
@@ -184,7 +183,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testTimeSeriesMinuteResolution() throws OperationException {
+  public void testTimeSeriesMinuteResolution() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(60);
 
     // 2012-10-01T12:00:00
@@ -222,7 +221,7 @@ public abstract class TimeSeriesTableTestBase {
 
   private void insertMetrics(TimeSeriesTable timeSeriesTable,
                              String context, String runId, String metric, Iterable<String> tags,
-                             long startTime, int offset, int count, int batchSize) throws OperationException {
+                             long startTime, int offset, int count, int batchSize) throws Exception {
 
     List<TagMetric> tagMetrics = Lists.newLinkedList();
     List<MetricsRecord> records = Lists.newArrayListWithCapacity(batchSize);
@@ -242,7 +241,7 @@ public abstract class TimeSeriesTableTestBase {
   private void insertMetricsEachMinute(TimeSeriesTable timeSeriesTable,
                                        String context, String runId, String metric, Iterable<String> tags,
                                        long startTime, int offset, int count, MetricType type)
-    throws OperationException {
+    throws Exception {
 
     List<TagMetric> tagMetrics = Lists.newLinkedList();
     List<MetricsRecord> records = Lists.newArrayListWithCapacity(count);
@@ -257,7 +256,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testClear() throws OperationException {
+  public void testClear() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -288,7 +287,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testIntOverflow() throws OperationException {
+  public void testIntOverflow() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -310,7 +309,7 @@ public abstract class TimeSeriesTableTestBase {
 
 
   @Test
-  public void testGauge() throws OperationException {
+  public void testGauge() throws Exception {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -336,7 +335,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testDelete() throws OperationException {
+  public void testDelete() throws Exception {
 
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
@@ -398,7 +397,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testDeleteContextAndMetric() throws OperationException {
+  public void testDeleteContextAndMetric() throws Exception {
 
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
@@ -485,7 +484,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testRangeDelete() throws OperationException {
+  public void testRangeDelete() throws Exception {
 
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 
@@ -597,7 +596,7 @@ public abstract class TimeSeriesTableTestBase {
   }
 
   @Test
-  public void testScanAllTags() throws OperationException {
+  public void testScanAllTags() throws Exception {
 
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries(1);
 

@@ -74,7 +74,7 @@ public class TimeSeriesTables {
     }
   }
 
-  public void save(List<MetricsRecord> records) throws OperationException {
+  public void save(List<MetricsRecord> records) throws Exception {
     for (int resolution : timeSeriesResolutions) {
       metricsTableCaches.getUnchecked(resolution).save(records.iterator());
     }

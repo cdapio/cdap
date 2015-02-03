@@ -112,11 +112,11 @@ public final class TimeSeriesTable {
    * {@link co.cask.cdap.metrics.transport.MetricType} is Counter, we would perform an increment and if its of
    * Gauge type we perform a put operation
    */
-  public void save(Iterable<MetricsRecord> records) throws OperationException {
+  public void save(Iterable<MetricsRecord> records) throws Exception {
     save(records.iterator());
   }
 
-  public void save(Iterator<MetricsRecord> records) throws OperationException {
+  public void save(Iterator<MetricsRecord> records) throws Exception {
     if (!records.hasNext()) {
       return;
     }
@@ -136,12 +136,8 @@ public final class TimeSeriesTable {
     NavigableMap<byte[], NavigableMap<byte[], Long>> convertedGaugesTable =
       Maps.transformValues(gaugesTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
 
-    try {
-      timeSeriesTable.put(convertedGaugesTable);
-      timeSeriesTable.increment(convertedIncrementsTable);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    timeSeriesTable.put(convertedGaugesTable);
+    timeSeriesTable.increment(convertedIncrementsTable);
   }
 
   public MetricsScanner scan(MetricsScanQuery query) throws OperationException {
