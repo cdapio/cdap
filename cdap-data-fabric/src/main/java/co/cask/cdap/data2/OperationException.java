@@ -28,16 +28,6 @@ public class OperationException extends Exception {
    * Constructor for operation exception.
    * @param statusCode status code
    * @param message a descriptive message for the error
-   */
-  public OperationException(int statusCode, String message) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-
-  /**
-   * Constructor for operation exception.
-   * @param statusCode status code
-   * @param message a descriptive message for the error
    * @param cause the original throwable that caused this error
    */
   public OperationException(int statusCode, String message, Throwable cause) {
@@ -64,9 +54,5 @@ public class OperationException extends Exception {
   @Override
   public String getMessage() {
     return getStatusMessage();
-  }
-
-  public String getMessageOnly() {
-    return super.getMessage();
   }
 }
