@@ -26,7 +26,7 @@ environment, the abstraction of a unified API, lifecycle management and a progra
 model for both data applications and their data. You can package, deploy and manage
 applications as a single unit.
 
-You can run applications ranging from simple MapReduce Jobs through complete ETL (extract,
+You can run applications ranging from simple MapReduce programs through complete ETL (extract,
 transform, and load) pipelines all the way up to complex, enterprise-scale data-intensive
 applications. Developers can build and test their applications end-to-end in a full-stack,
 single-node installation. CDAP can be run either standalone, deployed within the

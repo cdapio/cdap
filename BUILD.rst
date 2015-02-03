@@ -126,7 +126,7 @@ To modify the hive-exec jar again, follow these steps:
 
 cdap-gateway
 ------------
-CDAP Gateway
+CDAP Router
 
 cdap-integration-test
 ---------------------
