@@ -114,14 +114,20 @@ function copy_html() {
 }
 
 function build_docs_outer_level() {
+  echo ""
+  echo "========================================================"
+  echo "Building outer-level docs..."
+  echo "========================================================"
+  echo ""
   clean
   version
   
   # Copies placeholder file and renames it
-  copy_source admin-manual      "Administration Manual"
-  copy_source developers-manual "Developers’ Manual"
-  copy_source reference-manual  "Reference Manual"
-  copy_source examples-manual   "Examples, Guides, and Tutorials"
+  copy_source admin-manual        "Administration Manual"
+  copy_source developers-manual   "Developers’ Manual"
+  copy_source integrations-manual "Integrations"
+  copy_source reference-manual    "Reference Manual"
+  copy_source examples-manual     "Examples, Guides, and Tutorials"
 
   # Build outer-level docs
   cd $SCRIPT_PATH
@@ -138,6 +144,7 @@ function build_docs_outer_level() {
   # Copy lower-level doc manuals
   copy_html admin-manual
   copy_html developers-manual
+  copy_html integrations-manual
   copy_html reference-manual
   copy_html examples-manual
 
@@ -199,12 +206,17 @@ function _build_docs() {
 function build() {
   build_specific_doc admin-manual $1
   build_specific_doc developers-manual $1
+  build_specific_doc integrations-manual $1
   build_specific_doc reference-manual $1
   build_specific_doc examples-manual $1
 }
 
 function build_specific_doc() {
+  echo ""
+  echo "========================================================"
   echo "Building $1, target $2..."
+  echo "========================================================"
+  echo ""
   cd $SCRIPT_PATH/$1
   ./build.sh $2 $ARG_2 $ARG_3
 }

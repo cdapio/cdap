@@ -6,15 +6,16 @@
 {%- set master_url_root = pathto(master_doc, 1) %}
 {%- set titles = ['CDAP Documentation'] + theme_manual_titles %}
 {%- if master_url_root == '#' %}{% set master_url_root = '' %}{% endif %}
-{%- if   pagename == 'release-notes' %}{% set doc5 = '<b>' %}{% set doc5b = '</b>' %}
-{%- elif pagename == 'glossary'      %}{% set doc6 = '<b>' %}{% set doc6b = '</b>' %}
-{%- elif pagename == 'faq'           %}{% set doc7 = '<b>' %}{% set doc7b = '</b>' %}
-{%- elif pagename == 'search'        %}{% set doc8 = '<b>' %}{% set doc8b = '</b>' %}
+{%- if   pagename == 'release-notes' %}{% set doc6 = '<b>' %}{% set doc6b = '</b>' %}
+{%- elif pagename == 'glossary'      %}{% set doc7 = '<b>' %}{% set doc7b = '</b>' %}
+{%- elif pagename == 'faq'           %}{% set doc8 = '<b>' %}{% set doc8b = '</b>' %}
+{%- elif pagename == 'search'        %}{% set doc9 = '<b>' %}{% set doc9b = '</b>' %}
 {%- elif html_short_title_toc == titles[0] and pagename == 'index' %}{% set doc0 = '<b>' %}{% set doc0b = '</b>' %}
 {%- elif html_short_title_toc == titles[1] %}{% set doc1 = '<b>' %}{% set doc1b = '</b>' %}
 {%- elif html_short_title_toc == titles[2] %}{% set doc2 = '<b>' %}{% set doc2b = '</b>' %}
 {%- elif html_short_title_toc == titles[3] %}{% set doc3 = '<b>' %}{% set doc3b = '</b>' %}
 {%- elif html_short_title_toc == titles[4] %}{% set doc4 = '<b>' %}{% set doc4b = '</b>' %}
+{%- elif html_short_title_toc == titles[5] %}{% set doc5 = '<b>' %}{% set doc5b = '</b>' %}
 {%- endif %}
 {%- if html_short_title_toc != titles[0] %}{% set master_url_root =  master_url_root + '/..' %}{%- endif %}
   <div role="note" aria-label="manuals links">
@@ -23,21 +24,32 @@
     <ul class="this-page-menu">
       <li>{{ doc0}}<a href="{{ master_url_root }}{{ _('/../index.html') }}"
             rel="nofollow">{{ _('Introduction') }}</a>{{ doc0b }}</li>
+            
       <li>{{ doc1 }}<a href="{{ master_url_root }}{{ _('/../developers-manual/index.html') }}"
             rel="nofollow">{{ titles[1] }}</a>{{ doc1b }}</li>
+            
       <li>{{ doc2 }}<a href="{{ master_url_root }}{{ _('/../admin-manual/index.html') }}"
             rel="nofollow">{{ titles[2] }}</a>{{ doc2b }}</li>
-      <li>{{ doc3 }}<a href="{{ master_url_root }}{{ _('/../examples-manual/index.html') }}"
+            
+      <li>{{ doc3 }}<a href="{{ master_url_root }}{{ _('/../integrations-manual/index.html') }}"
             rel="nofollow">{{ titles[3] }}</a>{{ doc3b }}</li>
-      <li>{{ doc4 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/index.html') }}"
+            
+      <li>{{ doc4 }}<a href="{{ master_url_root }}{{ _('/../examples-manual/index.html') }}"
             rel="nofollow">{{ titles[4] }}</a>{{ doc4b }}</li>
-      <li>{{ doc5 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/release-notes.html') }}"
-            rel="nofollow">{{ _('Release Notes') }}</a>{{ doc5b }}</li>
-      <li>{{ doc6 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/glossary.html') }}"
-            rel="nofollow">{{ _('Glossary') }}</a>{{ doc6b }}</li>
-      <li>{{ doc7 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/faq.html') }}"
-            rel="nofollow">{{ _('FAQ') }}</a>{{ doc7b }}</li>
-      <li>{{ doc8 }}<a href="{{ master_url_root }}{{ _('/../search.html') }}"
-            rel="nofollow">{{ _('Search') }}</a>{{ doc8b }}</li>
+            
+      <li>{{ doc5 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/index.html') }}"
+            rel="nofollow">{{ titles[5] }}</a>{{ doc5b }}</li>
+            
+      <li>{{ doc6 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/release-notes.html') }}"
+            rel="nofollow">{{ _('Release Notes') }}</a>{{ doc6b }}</li>
+            
+      <li>{{ doc7 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/glossary.html') }}"
+            rel="nofollow">{{ _('Glossary') }}</a>{{ doc7b }}</li>
+            
+      <li>{{ doc8 }}<a href="{{ master_url_root }}{{ _('/../reference-manual/faq.html') }}"
+            rel="nofollow">{{ _('FAQ') }}</a>{{ doc8b }}</li>
+            
+      <li>{{ doc9 }}<a href="{{ master_url_root }}{{ _('/../search.html') }}"
+            rel="nofollow">{{ _('Search') }}</a>{{ doc9b }}</li>
     </ul>
    </div>

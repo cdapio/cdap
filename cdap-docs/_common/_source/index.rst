@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-relations: true
 :hide-global-toc: true
@@ -63,6 +63,15 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
   - **Installation:** Putting CDAP into production, with installation, configuration, security setup, and monitoring
   - **Operations:** Logging, metrics, runtime arguments, scaling instances and introduces the CDAP Console
+
+
+.. |integrations-manual| replace:: **Integrations:**
+.. _integrations-manual: integrations-manual/index.html
+
+- |integrations-manual|_ 
+
+  - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, and running interactive queries with Impala
+  - **Pentaho:** Pentaho integration
 
 
 .. |examples-manual| replace:: **Examples, Guides, and Tutorials:**
