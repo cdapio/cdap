@@ -3,8 +3,7 @@ function ($scope, $state, myAppUploader, MyDataSource) {
 
   $scope.apps = [];
 
-  var myDataSrc = new MyDataSource($scope),
-       partialPath = '/assets/features/admin/templates/';
+  var myDataSrc = new MyDataSource($scope);
 
   myDataSrc.request({
     _cdapPath: '/namespaces/' + $state.params.nsadmin + '/apps'
