@@ -19,8 +19,6 @@ package co.cask.cdap.metrics.data;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -220,14 +218,10 @@ public final class AggregatesTable {
 
   /**
    * Clears the storage table.
-   * @throws OperationException If error in clearing data.
+   * @throws Exception If error in clearing data.
    */
-  public void clear() throws OperationException {
-    try {
-      aggregatesTable.deleteAll(new byte[] { });
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  public void clear() throws Exception {
+    aggregatesTable.deleteAll(new byte[] { });
   }
 
   private AggregatesScanner scanFor(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {
