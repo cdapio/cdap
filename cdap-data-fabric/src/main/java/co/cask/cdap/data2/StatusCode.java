@@ -22,8 +22,5 @@ package co.cask.cdap.data2;
 public class StatusCode {
 
   public static final int OK = 0;
-
-  public static final int ILLEGAL_INCREMENT = 2000;
-
   public static final int INTERNAL_ERROR = 5000;
 }
