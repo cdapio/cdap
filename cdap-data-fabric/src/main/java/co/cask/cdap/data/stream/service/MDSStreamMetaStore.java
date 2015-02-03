@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of {@link StreamMetaStore} that access MDS directly.
@@ -139,13 +141,14 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
         @Override
         public Multimap<NamespaceMeta, StreamSpecification> apply(StreamMds mds) throws Exception {
           ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
-          // TODO use only one HBase row scanner to perform the below query - [CDAP-1285]
-          List<NamespaceMeta> namespaces =
-            mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE).build(), NamespaceMeta.class);
-          for (NamespaceMeta meta : namespaces) {
-            builder.putAll(meta, mds.streams.list(
-              new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, meta.getId()).build(),
-              StreamSpecification.class));
+          Map<MetadataStoreDataset.Key, StreamSpecification> streamSpecs =
+            mds.streams.listKV(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+                               StreamSpecification.class);
+          for (Map.Entry<MetadataStoreDataset.Key, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
+            List<byte[]> keyParts = streamSpecEntry.getKey().split();
+            // Namespace id is the key part with index 1.
+            String namespaceId = Bytes.toString(keyParts.get(1));
+            builder.put(new NamespaceMeta.Builder().setId(namespaceId).build(), streamSpecEntry.getValue());
           }
           return builder.build();
         }
