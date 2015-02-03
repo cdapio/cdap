@@ -32,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.schema.SchemaConverter;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.QueryHandle;
@@ -260,7 +261,22 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      Dataset dataset;
+      try {
+        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      } catch (Exception e) {
+        String className = isClassNotFoundException(e);
+        if (className == null) {
+          throw e;
+        }
+        LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
+                   "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
+                   "guide for more information.", datasetName, className, className, datasetName);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
       if (dataset == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
@@ -283,6 +299,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (deleteStatement == null) {
         // This is not an error: whether the dataset is explorable may not be known where this call originates from.
         LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
+      
+      // If table does not exist, nothing to be done
+      try {
+        exploreService.getTableInfo(null, getHiveTableName(datasetName));
+      } catch (TableNotFoundException e) {
+        // Ignore exception, since this means table was not found.
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);

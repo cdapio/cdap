@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.queue;
 
-import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,12 +27,12 @@ public class QueueNameTest {
   @Test
   public void testQueueNameForFlowlet() {
     // create a queue name
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
+    QueueName queueName = QueueName.fromFlowlet("namespace", "app", "flow", "flowlet", "out");
 
     // verify all parts are correct
     Assert.assertTrue(queueName.isQueue());
     Assert.assertFalse(queueName.isStream());
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, queueName.getFirstComponent());
+    Assert.assertEquals("namespace", queueName.getFirstComponent());
     Assert.assertEquals("app", queueName.getSecondComponent());
     Assert.assertEquals("flow", queueName.getThirdComponent());
     Assert.assertEquals("flowlet", queueName.getFourthComponent());
@@ -43,7 +42,7 @@ public class QueueNameTest {
     queueName = QueueName.from(queueName.toURI());
     Assert.assertTrue(queueName.isQueue());
     Assert.assertFalse(queueName.isStream());
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, queueName.getFirstComponent());
+    Assert.assertEquals("namespace", queueName.getFirstComponent());
     Assert.assertEquals("app", queueName.getSecondComponent());
     Assert.assertEquals("flow", queueName.getThirdComponent());
     Assert.assertEquals("flowlet", queueName.getFourthComponent());
@@ -53,11 +52,15 @@ public class QueueNameTest {
     queueName = QueueName.from(queueName.toBytes());
     Assert.assertTrue(queueName.isQueue());
     Assert.assertFalse(queueName.isStream());
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, queueName.getFirstComponent());
+    Assert.assertEquals("namespace", queueName.getFirstComponent());
     Assert.assertEquals("app", queueName.getSecondComponent());
     Assert.assertEquals("flow", queueName.getThirdComponent());
     Assert.assertEquals("flowlet", queueName.getFourthComponent());
     Assert.assertEquals("out", queueName.getSimpleName());
+
+    // verify prefix methods
+    Assert.assertEquals("queue:///namespace/", QueueName.prefixForNamespace("namespace"));
+    Assert.assertEquals("queue:///namespace/app/flow/", QueueName.prefixForFlow("namespace", "app", "flow"));
   }
 
   @Test

@@ -22,8 +22,12 @@ import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.hash.Hashing;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -144,6 +148,33 @@ public class AvroRecordFormatTest {
     Assert.assertEquals(3.14159, actualInner.get("double"));
   }
 
+  @Test
+  public void testSchemaProjection() throws Exception {
+    Schema sourceSchema = Schema.recordOf("source",
+                                          Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                          Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Schema readSchema = Schema.recordOf("read", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    GenericRecord record = new GenericRecordBuilder(convertSchema(sourceSchema))
+      .set("id", 1)
+      .set("name", "value")
+      .build();
+
+    FormatSpecification formatSpecification = new FormatSpecification(Formats.AVRO, readSchema,
+                                                                      ImmutableMap.<String, String>of());
+    RecordFormat<StreamEvent, GenericRecord> format = RecordFormats.createInitializedFormat(formatSpecification);
+
+    // Convert an event that has schema associated
+    GenericRecord projectedRecord = format.read(toStreamEvent(record, true));
+    Assert.assertEquals(record.get("name").toString(), projectedRecord.get("name").toString());
+
+    // Convert an event that has no schema associated. The record must be written with the read schema.
+    record = new GenericRecordBuilder(convertSchema(readSchema))
+      .set("name", "value2")
+      .build();
+    projectedRecord = format.read(toStreamEvent(record));
+    Assert.assertEquals(record.get("name").toString(), projectedRecord.get("name").toString());
+  }
+
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
     return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
   }
@@ -157,6 +188,10 @@ public class AvroRecordFormatTest {
   }
 
   private StreamEvent toStreamEvent(GenericRecord record) throws IOException {
+    return toStreamEvent(record, false);
+  }
+
+  private StreamEvent toStreamEvent(GenericRecord record, boolean writeSchema) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
     DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(record.getSchema());
@@ -164,6 +199,15 @@ public class AvroRecordFormatTest {
     encoder.flush();
     out.close();
     byte[] serializedRecord = out.toByteArray();
-    return new StreamEvent(ByteBuffer.wrap(serializedRecord));
+    String schemaString = record.getSchema().toString();
+
+    Map<String, String> headers = Maps.newHashMap();
+    if (writeSchema) {
+      headers.put(Constants.Stream.Headers.SCHEMA, schemaString);
+      headers.put(Constants.Stream.Headers.SCHEMA_HASH,
+                  Hashing.md5().hashString(schemaString, Charsets.UTF_8).toString());
+    }
+
+    return new StreamEvent(headers, ByteBuffer.wrap(serializedRecord));
   }
 }

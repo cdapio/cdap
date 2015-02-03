@@ -129,7 +129,8 @@ Node.js Runtime
 +++++++++++++++
 You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
-1. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
+#. The version of Node.js must be v0.8.16 or greater.
+#. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/download/>`__.
  #. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at

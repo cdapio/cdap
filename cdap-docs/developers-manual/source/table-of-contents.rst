@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ============================================
 CDAP Developers’ Manual Table of Contents
@@ -16,4 +16,5 @@ CDAP Developers’ Manual Table of Contents
     Security <security/index>
     Testing and Debugging <testing/index>
     Ingesting Data <ingesting-tools/index>
+    Data Exploration <data-exploration/index>
     Advanced Topics <advanced/index>

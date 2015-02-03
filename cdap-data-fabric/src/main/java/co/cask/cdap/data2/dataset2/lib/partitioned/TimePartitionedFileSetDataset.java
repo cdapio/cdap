@@ -127,7 +127,8 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
   }
 
   @Override
-  public Collection<String> getPartitions(long startTime, long endTime) {
+  public Collection<String> getPartitionPaths(long startTime, long endTime) {
+    // this is the same as getPartitions(startTime, endTime).values(), but we want to avoid construction of the map
     final byte[] startKey = Bytes.toBytes(startTime);
     final byte[] endKey = Bytes.toBytes(endTime);
     List<String> paths = Lists.newArrayList();
@@ -141,6 +142,30 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
         byte[] pathBytes = row.get(RELATIVE_PATH);
         if (pathBytes != null) {
           paths.add(Bytes.toString(pathBytes));
+        }
+      }
+      return paths;
+    } finally {
+      scanner.close();
+    }
+  }
+
+  @Override
+  public Map<Long, String> getPartitions(long startTime, long endTime) {
+    final byte[] startKey = Bytes.toBytes(startTime);
+    final byte[] endKey = Bytes.toBytes(endTime);
+    Map<Long, String> paths = Maps.newHashMap();
+    Scanner scanner = partitions.scan(startKey, endKey);
+    try {
+      while (true) {
+        Row row = scanner.next();
+        if (row == null) {
+          break;
+        }
+        long partitionTime = Bytes.toLong(row.getRow());
+        byte[] pathBytes = row.get(RELATIVE_PATH);
+        if (pathBytes != null) {
+          paths.put(partitionTime, Bytes.toString(pathBytes));
         }
       }
       return paths;
@@ -173,7 +198,7 @@ public class TimePartitionedFileSetDataset extends AbstractDataset implements Ti
     if (endTime == null) {
       throw new DataSetException("End time for input time range must be given as argument.");
     }
-    Collection<String> inputPaths = getPartitions(startTime, endTime);
+    Collection<String> inputPaths = getPartitionPaths(startTime, endTime);
     List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
     for (String path : inputPaths) {
       inputLocations.add(files.getLocation(path));

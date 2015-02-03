@@ -134,6 +134,7 @@
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <cask.common.version>0.1.0</cask.common.version>
+    <release.iteration>1</release.iteration>
   </properties>
 
   <modules>
@@ -151,7 +152,6 @@
     <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
     <module>cdap-security</module>
-    <module>cdap-security-service</module>
     <module>cdap-gateway</module>
     <module>cdap-explore-client</module>
     <module>cdap-explore-jdbc</module>
@@ -1568,10 +1568,10 @@
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm,org.apache.spark</excludeGroupIds>
-                    <excludeArtifactIds>hive-exec,cdap-adapters</excludeArtifactIds>
+                    <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
-                    <includeScope>compile</includeScope>
+                    <includeScope>runtime</includeScope>
                   </configuration>
                 </execution>
               </executions>
@@ -2006,7 +2006,7 @@
                       --after-install "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postinst"
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
-                      --iteration 1
+                      --iteration "${release.iteration}"
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>
@@ -2057,7 +2057,7 @@
                       --after-install "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postinst"
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
-                      --iteration 1
+                      --iteration "${release.iteration}"
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>

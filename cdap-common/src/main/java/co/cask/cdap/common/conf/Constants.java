@@ -265,7 +265,8 @@ public final class Constants {
      * Contains HTTP headers used by Stream handler.
      */
     public static final class Headers {
-      public static final String CONSUMER_ID = "X-ConsumerId";
+      public static final String SCHEMA = "schema";
+      public static final String SCHEMA_HASH = "schema.hash";
     }
 
     //max instances of stream handler service
@@ -542,6 +543,7 @@ public final class Constants {
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
+    public static final String QUERY_ID = "explore.query.id";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
 
