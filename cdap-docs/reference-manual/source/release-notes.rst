@@ -34,6 +34,80 @@ API Changes
    `CDAP-1078 <https://issues.cask.co/browse/CDAP-1078>`__).
 
 
+New Features
+------------
+
+- **Spark**
+
+  - Spark now uses a configurer-style API for specifying
+  - Spark can now run as a part of a Workflow
+
+- **Security**
+
+  - CDAP Master now obtains and refreshes Kerberos tickets programmatically
+
+- **Datasets**
+
+  - A new, experimental dataset type to support time-partitioned file sets has been added
+  - Time-partitioned file sets can be queried with Impala on CDH distributions
+  - Streams can be made queryable with Impala by deploying an adapter that periodically
+    converts it into partitions of a time-partitioned file set
+  - Support for different levels of conflict detection: ``ROW``, ``COLUMN``, or ``NONE``
+  - Removed support for ``@DisableTransaction``
+  - Support for annotating a Stream with a schema
+  - A new API for uploading entire files to a Stream has been added 
+
+- **Workflow**
+
+  - Workflow now uses a configurer-style API for specifying
+  - Multiple instances of a Workflow can be run concurrently
+  - Programs are no longer part of a Workflow; instead, they are added in the application
+    and are referenced a Workflow using their names
+  - Schedules are now at the application level and properties can be specified for
+    a Schedules; these properties will be passed to the scheduled program as runtime
+    arguments
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.6.1. <#known-issues-261>`_
+- When upgrading an existing CDAP installation to 2.7.0, all metrics are reset.
+
+
+`Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
+=============================================================
+
+CDAP Bug Fixes
+--------------
+- Allow an *unchecked Dataset upgrade* upon application deployment
+  (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__).
+- Update the Hive Dataset table when a Dataset is updated
+  (`CDAP-71 <https://issues.cask.co/browse/CDAP-71>`__).
+- Use Hadoop configuration files bundled with the Explore Service
+  (`CDAP-1250 <https://issues.cask.co/browse/CDAP-1250>`__).
+
+.. _known-issues-261:
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.6.0. <#known-issues-260>`_
+
+- Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
+  any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the Dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked Dataset upgrades*.
+  Upgrades cause the Dataset metadata, i.e. its specification including properties, to be updated. The Dataset
+  runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
+
+  You can allow *unchecked Dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that Datasets are upgraded when the Application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
+  all Applications that are using the Dataset before deploying the new version of the Application.
+  This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
+  When Datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+  other Applications that are using the Dataset can work with the new changes.
+
+
 `Release 2.6.0 <http://docs.cask.co/cdap/2.6.0/index.html>`__
 =============================================================
 
