@@ -1,0 +1,8 @@
+<div ncy-breadcrumb></div>
+<h2>
+  <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+  <small> <em>Type: Flows </em></small>
+</h2>
+<my-tabs
+  data-tabs-list="['Runs','Schedules','Metadata','History','Resources']"
+  data-tabs-partial-path="/assets/features/flows/templates/tabs/"></my-tabs>
