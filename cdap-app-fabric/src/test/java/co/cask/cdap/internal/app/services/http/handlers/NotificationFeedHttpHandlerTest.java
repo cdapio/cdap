@@ -41,6 +41,9 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   private static final String CATEGORY_FIELD = "category";
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
+
+  // TODO when [CDAP-903] is done, those tests will fail because the following namespace will not have been created
+  // Modify the tests at that time to create the namespace, and test the behavior when using non-existant namespaces
   private static final String NAMESPACE = "namespaceTest";
   private static final String CATEGORY = "categoryTest";
   private static final String NAME = "test";
@@ -269,6 +272,4 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deleteFeed("does", "not", "exist");
     assertResponseCode(404, response);
   }
-
-  // TODO add test for non-existant namespace
 }

@@ -28,8 +28,12 @@ import java.util.List;
  * Service side of the {@link NotificationFeedManager}.
  */
 public class NotificationFeedService implements NotificationFeedManager {
+  // TODO once [CDAP-903] is completed, then creating a namespace will create a store in that namespace,
+  // and any operation on that store will only be possible if it exists, hence there will be no need
+  // to check for the existence of a namespace.
+  // If we don't create one store per namespace, how do we check for the existence of a namespace
+  // when creating a feed?
   private final NotificationFeedStore store;
-  // TODO should use a namespaceService to check that a namespace exists
 
   @Inject
   public NotificationFeedService(NotificationFeedStore store) {
