@@ -107,15 +107,11 @@ public final class AggregatesTable {
    * Deletes all the row keys which match the context prefix.
    * @param contextPrefix Prefix of the context to match.  Null not allowed, full table deletes should be done through
    *                      the clear method.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
-  public void delete(String contextPrefix) throws OperationException {
+  public void delete(String contextPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null, "null context not allowed");
-    try {
-      aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
   /**
@@ -124,9 +120,9 @@ public final class AggregatesTable {
    *
    * @param contextPrefix Prefix of the context to match, null means any context.
    * @param metricPrefix Prefix of the metric to match, null means any metric.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
-  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
+  public void delete(String contextPrefix, String metricPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null || metricPrefix != null,
                                 "context and metric cannot both be null");
     if (metricPrefix == null) {
@@ -143,18 +139,14 @@ public final class AggregatesTable {
    * @param metricPrefix Prefix of metric to match, null means any metric.
    * @param runId Runid to match.
    * @param tags Tags to match, null means any tag.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
   public void delete(String contextPrefix, String metricPrefix, String runId, String... tags)
-    throws OperationException {
+    throws Exception {
     byte[] startRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0);
     byte[] endRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
-    try {
-      aggregatesTable.deleteRange(startRow, endRow, tags == null ? null : Bytes.toByteArrays(tags),
-                                  getFilter(contextPrefix, metricPrefix, runId));
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    aggregatesTable.deleteRange(startRow, endRow, tags == null ? null : Bytes.toByteArrays(tags),
+                                getFilter(contextPrefix, metricPrefix, runId));
   }
 
   /**
