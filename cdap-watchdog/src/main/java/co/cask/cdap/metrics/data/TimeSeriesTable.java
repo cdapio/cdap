@@ -19,8 +19,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -277,7 +275,7 @@ public final class TimeSeriesTable {
    *
    * @param contextPrefix Prefix of the context to match.  Must not be null, as full table deletes should be done
    *                      through the clear method.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null, "null context not allowed for delete");

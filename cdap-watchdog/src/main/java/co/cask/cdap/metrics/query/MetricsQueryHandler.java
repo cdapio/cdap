@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.http.HttpResponder;
@@ -114,7 +113,7 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   @GET
   @Path("/system/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/{metric}")
   public void handleFlowletDatasetMetrics(HttpRequest request, HttpResponder responder)
-    throws IOException, OperationException {
+    throws IOException {
     handleRequest(request, responder);
   }
 
@@ -122,7 +121,7 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   @GET
   @Path("/system/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/runs/{run-id}/flowlets/{flowlet-id}/{metric}")
   public void handleFlowletDatasetMetricsWithRunId(HttpRequest request, HttpResponder responder)
-    throws IOException, OperationException {
+    throws IOException {
     handleRequest(request, responder);
   }
 
