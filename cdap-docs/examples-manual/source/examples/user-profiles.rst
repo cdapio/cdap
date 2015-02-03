@@ -96,7 +96,7 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
       :language: java
-      :lines: 41-43
+      :lines: 41-42
       
 - The first time you build the application, set the ``tableProperties`` to ``ConflictDetection.ROW``. 
 
@@ -112,7 +112,7 @@ Re-build the Application with Column-level Conflict Detection
 
 - Stop the Application's Flow and Service (as described `below <#stopping-the-application>`__).
 - Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or
-  by making a ``curl`` call:
+  by making a ``curl`` call::
 
     curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
 
@@ -160,10 +160,12 @@ Once the application is deployed:
 
     * - On Linux:
       - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
+    * - 
       - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
-
+      
     * - On Windows:
       - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
+    * - 
       - ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
 
 Populate the ``profiles`` Table
@@ -196,7 +198,7 @@ see transaction conflicts in the logs. But when the ``profiles`` table uses
 column-level conflict detection, these conflicts are avoided.
 
 To see the behavior with row-level conflict detection, set
-the dataset creation statement at the bottom of``UserProfiles.java`` to use ``ConflictDetection.ROW``
+the dataset creation statement at the bottom of ``UserProfiles.java`` to use ``ConflictDetection.ROW``
 and run the steps as above. You should see transaction conflicts in the logs. For example, such
 a conflict would show as (reformatted to fit)::
 
@@ -233,8 +235,11 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
     * - On Linux:
       - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
+    * - 
       - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
 
     * - On Windows:
       - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
+    * - 
       - ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    
+
