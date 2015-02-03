@@ -9,7 +9,7 @@ Integrations
 ==================================================
 
 
-.. rubric:: Partners: Cloudera
+.. rubric:: Cloudera
 
 .. |cloudera-introduction| replace:: **Introduction:**
 .. _cloudera-introduction: cloudera/index.html

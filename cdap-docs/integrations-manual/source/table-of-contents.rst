@@ -10,5 +10,5 @@ Integrations Table of Contents
    :maxdepth: 3
 
     Introduction <index>
-    Partners: Cloudera <cloudera/index>
+    Cloudera <cloudera/index>
     Pentaho <pentaho/index>
