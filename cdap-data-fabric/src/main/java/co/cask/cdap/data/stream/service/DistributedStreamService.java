@@ -286,7 +286,7 @@ public class DistributedStreamService extends AbstractStreamService {
   }
 
   private ZKClient getCoordinatorZKClient() {
-    return ZKClients.namespace(zkClient, "/" + Constants.Service.STREAMS + "/coordination");
+    return ZKClients.namespace(zkClient, Constants.Stream.STREAM_ZK_COORDINATION_NAMESPACE);
   }
 
   /**
@@ -487,7 +487,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
-      LOG.debug("Stream leader requirement has changed");
+      LOG.info("Stream leader requirement has changed to {}", partitionReplicas);
       Set<String> streamNames =
         ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, String>() {
           @Nullable

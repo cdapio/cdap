@@ -53,6 +53,11 @@ the packages, and prior to starting services.
 - The CDAP user should be able to write temp files; if not, see the instructions in 
   :ref:`the installation guide <install-tmp-files>`.
 
+- **Note:** Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+  (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+  the number of connections required is a function of usage.
+
+
 Configuring Package Managers
 ----------------------------
 
