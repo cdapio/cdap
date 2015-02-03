@@ -56,11 +56,11 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -329,7 +329,7 @@ public class TestBase {
         protected void configure() {
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
         }
