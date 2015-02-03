@@ -17,7 +17,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.data.MetricsScanQuery;
@@ -111,7 +110,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private void searchMetricAndRespond(HttpResponder responder, String context) {
     try {
       responder.sendJson(HttpResponseStatus.OK, searchMetric(context));
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -120,13 +119,13 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private void searchChildContextAndRespond(HttpResponder responder, String context) {
     try {
       responder.sendJson(HttpResponseStatus.OK, searchChildContext(context));
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  private Collection<String> searchChildContext(String contextPrefix) throws OperationException {
+  private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     SortedSet<String> nextLevelContexts = Sets.newTreeSet();
     TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
@@ -140,7 +139,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     return nextLevelContexts;
   }
 
-  private Set<String> searchMetric(String contextPrefix) throws OperationException {
+  private Set<String> searchMetric(String contextPrefix) throws Exception {
     SortedSet<String> metrics = Sets.newTreeSet();
     TimeSeriesTable table = timeSeriesTables.get();
     MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).

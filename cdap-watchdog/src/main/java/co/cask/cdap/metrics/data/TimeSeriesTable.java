@@ -149,26 +149,22 @@ public final class TimeSeriesTable {
    * if the context is null , this returns the list of context at the first level.
    * @param query
    * @return List of contexts at a given level
-   * @throws OperationException
+   * @throws Exception
    */
-  public List<String> getNextLevelContexts(MetricsScanQuery query) throws OperationException {
+  public List<String> getNextLevelContexts(MetricsScanQuery query) throws Exception {
     return getAvailableContextAndMetrics(query, true);
   }
 
-  public List<String> getAllMetrics(MetricsScanQuery query) throws OperationException {
+  public List<String> getAllMetrics(MetricsScanQuery query) throws Exception {
     return getAvailableContextAndMetrics(query, false);
   }
 
   /**
    * If @param isContextQuery, is true we return the list of unique available contexts at the next level,
    * if its false, we would return the available unique metrics in a given context
-   * @param query
-   * @param isContextQuery
-   * @return
-   * @throws OperationException
    */
   private List<String> getAvailableContextAndMetrics(MetricsScanQuery query, boolean isContextQuery)
-    throws OperationException {
+    throws Exception {
     List<String> metricsScanResults = Lists.newArrayList();
     int targetOffset = -1, length = -1;
 
@@ -199,7 +195,7 @@ public final class TimeSeriesTable {
 
   private List<String> getUniqueContextAndMetrics(byte[] startRow, byte[] endRow, FuzzyRowFilter filter,
                                                   boolean isContextQuery, String contextPrefix,
-                                                  int targetOffset, int length) throws OperationException {
+                                                  int targetOffset, int length) throws Exception {
 
     List<String> metricsScanResults = Lists.newArrayList();
     Row rowResult;
@@ -217,13 +213,7 @@ public final class TimeSeriesTable {
     // returned from the scan.
     do {
       ScannerFields fields = new ScannerFields(startRow, endRow, null, filter);
-      Scanner scanner = null;
-      try {
-        scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
-      } catch (Exception e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-      }
-
+      Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
       rowResult = scanner.next();
       if (rowResult != null) {
         byte[] rowKey = rowResult.getRow();
