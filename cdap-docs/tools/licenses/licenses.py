@@ -200,8 +200,9 @@ def master_print():
     # Print out the results
     keys = master_libs_dict.keys()
     keys.sort()
-    for k in keys:
-        master_libs_dict[k].pretty_print()    
+    max = len("%d" % keys[-1]) # set max to maximum number of characters in keys
+    for i, k in enumerate(keys):
+        master_libs_dict[k].pretty_print(i+1, max)    
 
 
 def process_enterprise(input_file, options):
@@ -474,13 +475,16 @@ class Library:
                     length = max(self.MAX_SIZES[element], length)
                 self.MAX_SIZES[element] = length
 
-    def pretty_print(self):
-        SPACER = 2
+    def pretty_print(self, i=0, digits=3):
+        SPACER = 1
         line = ""
         for element in self.PRINT_ORDER:
             if element[0] != "_":
                 length = self.MAX_SIZES[element]
                 line += self.__dict__[element].ljust(self.MAX_SIZES[element]+ SPACER)
+        if i != 0:
+            format = "%%%dd:%%s" % digits
+            line = format % (i, line)
         print line
 
     def get_row(self):
