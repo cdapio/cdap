@@ -76,7 +76,7 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
   private void persist() {
     try {
       metaTable.save(ImmutableMap.copyOf(offsets));
-    } catch (OperationException e) {
+    } catch (Exception e) {
       // Simple log and ignore the error.
       LOG.error("Failed to persist consumed message offset. {}", e.getMessage(), e);
     }
