@@ -109,6 +109,7 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 Re-build the Application with Column-level Conflict Detection
 -------------------------------------------------------------
 
+- Stop the Application's Flow and Service (as described `below <#stopping-the-application>`__).
 - Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call:
 
