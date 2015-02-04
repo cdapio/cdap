@@ -396,9 +396,9 @@ Depending on your installation, you may want to set these properties:
   See :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. This feature is currently 
   not supported on secure Hadoop clusters.
 
-.. _install-secure-hadoop:
-
 .. highlight:: console
+
+.. _install-secure-hadoop:
 
 Secure Hadoop
 .............
@@ -601,4 +601,3 @@ Troubleshooting
   Change the line for ``allowed.system.users`` to::
 
     allowed.system.users=yarn,cdap
-  
