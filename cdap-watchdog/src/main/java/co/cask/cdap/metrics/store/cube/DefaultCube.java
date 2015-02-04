@@ -138,7 +138,7 @@ public class DefaultCube implements Cube {
       if (agg.getTagNames().containsAll(query.getGroupByTags()) &&
         agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
 
-        // todo: make choosing sophisticated than just by number of tags :)
+        // todo: choose aggregation smarter than just by number of tags :)
         if (currentBest == null || currentBest.getTagNames().size() > agg.getTagNames().size()) {
           currentBest = agg;
         }
@@ -153,16 +153,31 @@ public class DefaultCube implements Cube {
     Table<Map<String, String>, Long, Long> resultTable = HashBasedTable.create();
     while (scanner.hasNext()) {
       FactScanResult next = scanner.next();
+
+      boolean skip = false;
       // using tree map, as we are using it as a key for a map
       Map<String, String> seriesTags = Maps.newTreeMap();
       for (String tagName : query.getGroupByTags()) {
         // todo: use Map<String, String> instead of List<TagValue> into a String, String, everywhere
         for (TagValue tagValue : next.getTagValues()) {
           if (tagName.equals(tagValue.getTagName())) {
+            if (tagValue.getValue() == null) {
+              // Currently, we do NOT return null as grouped by value.
+              // Depending on whether tag is required or not the records with null value in it may or may not
+              // aggregation. At this moment, the choosing of the aggregation for query doesn't look at this,
+              // potentially null may or may not be included in results, depending on the aggregation selected
+              // querying. We don't want to produce inconsistent results, so don't return nulls in any of the
+              skip = true;
+              continue;
+            }
             seriesTags.put(tagName, tagValue.getValue());
             break;
           }
         }
+      }
+
+      if (skip) {
+        continue;
       }
 
       for (TimeValue timeValue : next) {

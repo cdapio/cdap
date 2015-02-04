@@ -16,23 +16,28 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Default implementation of {@link Aggregation}.
  */
 public class DefaultAggregation implements Aggregation {
   private final List<String> aggregateTags;
-  private final List<String> requiredTags;
+  private final Set<String> requiredTags;
 
   /**
    * Creates instance of {@link DefaultAggregation}.
    * @param aggregateTags tags to be included in aggregation.
    * @param requiredTags tags that must be present in {@link CubeFact} for aggregated value to be stored.
    */
-  public DefaultAggregation(List<String> aggregateTags, List<String> requiredTags) {
-    this.aggregateTags = aggregateTags;
-    this.requiredTags = requiredTags;
+  public DefaultAggregation(List<String> aggregateTags, Collection<String> requiredTags) {
+    this.aggregateTags = ImmutableList.copyOf(aggregateTags);
+    this.requiredTags = ImmutableSet.copyOf(requiredTags);
   }
 
   @Override

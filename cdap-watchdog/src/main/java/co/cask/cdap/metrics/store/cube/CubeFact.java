@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.store.cube;
 
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import co.cask.cdap.metrics.store.timeseries.TimeValue;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class CubeFact {
   private final TimeValue timeValue;
 
   public CubeFact(Map<String, String> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
-    this.tagValues = tagValues;
+    this.tagValues = ImmutableMap.copyOf(tagValues);
     this.measureType = measureType;
     this.measureName = measureName;
     this.timeValue = timeValue;

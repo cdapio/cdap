@@ -19,6 +19,8 @@ package co.cask.cdap.metrics.store.cube;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
@@ -54,8 +56,8 @@ public final class CubeQuery {
     this.resolution = resolution;
     this.measureName = measureName;
     this.measureType = measureType;
-    this.sliceByTagValues = sliceByTagValues;
-    this.groupByTags = groupByTags;
+    this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
+    this.groupByTags = ImmutableList.copyOf(groupByTags);
   }
 
   public long getStartTs() {

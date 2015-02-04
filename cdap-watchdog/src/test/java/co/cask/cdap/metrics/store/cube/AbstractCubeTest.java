@@ -68,10 +68,9 @@ public abstract class AbstractCubeTest {
     writeInc(cube, "metric2",  1,  1,  "1",  "1",  "1");
 
 
-    // now let's try querying
+    // now let's query!
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1"), ImmutableList.of("tag2"),
                      ImmutableList.of(
-                       new TimeSeries("metric1", tagValuesWithNulls("tag2", null), timeValues(4, 4, 6, 6)),
                        new TimeSeries("metric1", tagValuesWithNulls("tag2", "1"), timeValues(1, 2, 7, 3, 10, 2, 11, 3)),
                        new TimeSeries("metric1", tagValuesWithNulls("tag2", "2"), timeValues(3, 8))));
 
@@ -87,7 +86,6 @@ public abstract class AbstractCubeTest {
                        new TimeSeries("metric1", tagValuesWithNulls("tag1", "2"),
                                       timeValues(3, 7, 12, 4))));
 
-    // now let's query!
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag3", "3"), new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(3, 5))));
@@ -119,8 +117,6 @@ public abstract class AbstractCubeTest {
     Collection<TimeSeries> result = cube.query(query);
 
     Assert.assertEquals(expected.size(), result.size());
-    System.out.println(expected);
-    System.out.println(result);
     Assert.assertTrue(expected.containsAll(result));
   }
 
