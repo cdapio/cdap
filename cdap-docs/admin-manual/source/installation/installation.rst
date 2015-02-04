@@ -439,7 +439,7 @@ In order to configure CDAP Master for Kerberos authentication:
     
 - When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
 
-    echo "grant cdap>, 'ACRW'" | hbase shell
+    echo "grant 'cdap', 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
@@ -600,4 +600,4 @@ Troubleshooting
   LinuxContainerExecutor in Yarn by editing the ``/etc/hadoop/conf/container-executor.cfg``
   file. Change the line for ``allowed.system.users`` to::
 
-    allowed.system.users=yarn,cdap
+    allowed.system.users=cdap
