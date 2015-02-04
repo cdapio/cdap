@@ -1,9 +1,10 @@
 <div ng-controller="WidgetTimeseriesCtrl">
 
-  <epoch-live-line
+  <epoch-line
     data-history="chartHistory"
     chart-height="200"
     chart-ticks="{ bottom: 3 }"
-  ></epoch-live-line>
+    chart-axes="['left', 'bottom']"
+  ></epoch-line>
 
 </div>

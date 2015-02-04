@@ -47,14 +47,9 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-  .controller('WidgetTimeseriesCtrl', function ($scope, $interval) {
-    $scope.wdgt.fetchData();
-
-    // To make the graph refresh every 1 second
-    // $interval(function () {
-    //   $scope.wdgt.fetchData();
-    // }, 1000);
+  .controller('WidgetTimeseriesCtrl', function ($scope) {
     
+    $scope.wdgt.fetchData();    
 
     $scope.$watch('wdgt.data', function (newVal) {
       if(angular.isArray(newVal)) {
