@@ -60,7 +60,7 @@ CDAP Developers’ Manual
 .. |data-exploration| replace:: **Data Exploration:**
 .. _data-exploration: data-exploration/index.html
 
-- |data-exploration|_ Data in CDAP can be *explored without writing any code* through the use of *ad-hoc SQL-like queries*.
+- |data-exploration|_ Data in CDAP can be **explored without writing any code** through the use of **ad-hoc SQL-like queries**.
   Exploration of Streams and Datasets, along with integration with business intelligence tools, are covered in this section.
 
 

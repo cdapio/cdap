@@ -16,14 +16,15 @@ Examples
    :titlesonly:
 
    Hello World <hello-world>
-   Word Count <word-count>
-   File Sets <fileset>
    Count Random <count-random>
+   File Sets <fileset>
    Purchase <purchase>
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
    Stream Conversion <stream-conversion>
+   User Profiles <user-profiles>
    Web Analytics <web-analytics>
+   Word Count <word-count>
 
 In addition to the :ref:`Getting Started's <getting-started-index>` 
 :ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
@@ -37,9 +38,6 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Hello World<hello-world>`
     - A simple HelloWorld App that's written using CDAP. It introduces how the components Stream, Flow, Dataset,
       and Service are used in a CDAP application.
-  * - :doc:`Word Count<word-count>`
-    - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
-      It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
   * - :doc:`File Sets<fileset>`
     - A variation of the WordCount example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
@@ -61,11 +59,17 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
       of URLs from an input stream.
   * - :doc:`Stream Conversion<stream-conversion>`
-    - An application that demonstrates the use of time-partitioned file sets.
-      It periodically converts a stream into partitions of a file set, which can be read by SQL queries.
+    - An application that demonstrates the use of time-partitioned File sets.
+      It periodically converts a Stream into partitions of a File set, which can be read by SQL queries.
+  * - :doc:`User Profiles<user-profiles>`
+    - An application that demonstrates column-level conflict detection using the example of updating of
+      user profiles in a Dataset.
   * - :doc:`Web Analytics<web-analytics>`
     - An application to generate statistics and to provide insights about web usage through the analysis
       of web traffic.
+  * - :doc:`Word Count<word-count>`
+    - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
+      It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
 
 
 .. rubric:: What's Next
