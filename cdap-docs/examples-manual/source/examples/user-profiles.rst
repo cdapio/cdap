@@ -23,7 +23,7 @@ The fields of a user profile are updated in different ways:
     user updates their profile.
   - The time of the last login is updated by a sign-on service every
     time the user logs in, also through a RESTful call.
-  - The time of the last activity is updated by a flow that processes
+  - The time of the last activity is updated by a Flow that processes
     events whenever it encounters an event from that user.
 
 This application illustrates both row-level and column-level conflict detection for a Table.
@@ -44,7 +44,7 @@ This application uses a Table with conflict detection either at the row level or
 at the column level.
 
 A conflict occurs if two transactions that overlap in time modify the same data in a table.
-For example, a flowlet's process method might overlap with a service handler.
+For example, a Flowlet's process method might overlap with a Service handler.
 Such a conflict is detected at the time that the transactions are committed,
 and the transaction that attempts to commit last is rolled back.
 
@@ -154,14 +154,17 @@ Once the application is deployed:
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
       - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
-    * - 
       - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
+
+..  .. list-table::
+..    :widths: 20 80
+..    :stub-columns: 1
+
+..    * - On Linux:
+..      - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
+..    * - 
+..      - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
       
 ..    * - On Windows:
 ..      - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
@@ -173,12 +176,14 @@ Populate the ``profiles`` Table
 
 Populate the ``profiles`` tables with users using a script. From the example's directory, use:
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+  - ``$ ./bin/add-users.sh``
 
-    * - On Linux:
-      - ``$ ./bin/add-users.sh``
+..  .. list-table::
+..    :widths: 20 80
+..    :stub-columns: 1
+
+..    * - On Linux:
+..      - ``$ ./bin/add-users.sh``
 
 ..    * - On Windows:
 ..      - ``> bin\add-users.bat``    
@@ -214,7 +219,7 @@ you need to delete the ``profiles`` dataset before redeploying the application, 
 its recreation with the new properties.
 
 Running the example with ``ConflictDetection.COLUMN`` will result in the two scripts running
-concurrently without the generation of errors.
+concurrently without transaction conflicts.
 
 Stopping the Application
 -------------------------------
@@ -229,14 +234,17 @@ Once done, you can stop the application as described above in `Stopping an Appli
   the ``FileSetService`` in the *Service* pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
       - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
-    * - 
       - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
+
+..  .. list-table::
+..    :widths: 20 80
+..    :stub-columns: 1
+
+..    * - On Linux:
+..      - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
+..    * - 
+..      - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
 
 ..    * - On Windows:
 ..      - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
