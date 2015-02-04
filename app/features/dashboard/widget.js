@@ -28,6 +28,7 @@ angular.module(PKG.name+'.feature.dashboard')
           method: 'POST'
         },
         (function (result) {
+          result.data.splice(result.data.length-1, 1);
           this.data = result.data;
         }).bind(this)
       );
@@ -58,7 +59,7 @@ angular.module(PKG.name+'.feature.dashboard')
             label: $scope.wdgt.metric.name,
             values: newVal.map(function (o) {
               return {
-                x: o.time,
+                time: o.time,
                 y: o.value
               };
             })
