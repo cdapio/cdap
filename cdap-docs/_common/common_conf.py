@@ -76,10 +76,11 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-  'admin':      ('../../admin-manual/',      os.path.abspath('../../admin-manual/build/html/objects.inv')),
-  'developers': ('../../developers-manual/', os.path.abspath('../../developers-manual/build/html/objects.inv')),
-  'reference':  ('../../reference-manual',   os.path.abspath('../../reference-manual/build/html/objects.inv')),
-  'examples':   ('../../examples-manual',    os.path.abspath('../../examples-manual/build/html/objects.inv')),
+  'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
+  'developers':   ('../../developers-manual/',   os.path.abspath('../../developers-manual/build/html/objects.inv')),
+  'integrations': ('../../integrations/', os.path.abspath('../../integrations/build/html/objects.inv')),
+  'reference':    ('../../reference-manual',     os.path.abspath('../../reference-manual/build/html/objects.inv')),
+  'examples':     ('../../examples-manual',      os.path.abspath('../../examples-manual/build/html/objects.inv')),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -176,22 +177,44 @@ html_theme = 'cdap'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+#
 # html_theme_options = {"showtoc_include_showtocs":"false"}
 # manuals and manual_titles are lists of the manuals in the doc set
+#
 # versions points to the JSON file on the webservers
 # versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
 # format is a dictionary, with "development" and "older" lists of lists, and "current" a list, 
 # the inner-lists being the directory and a label
+#
+# manual_list is an ordered list of the manuals
+manuals_list = [
+    ["developers-manual",   u"Developers’ Manual",             "",],
+    ["admin-manual",        "Administration Manual",           "",],
+    ["integrations",        "Integrations",                    "new-icon",],
+    ["examples-manual",     "Examples, Guides, and Tutorials", "",],
+    ["reference-manual",    "Reference Manual",                "",],
+]
+manuals_dict = {}
+manual_titles_list = []
+manual_dirs_list  = []
+manual_icons_list = []
+for manual in manuals_list:
+    manuals_dict[manual[0]]= manual[1]
+    manual_dirs_list.append(manual[0])
+    manual_titles_list.append(manual[1])
+    manual_icons_list.append(manual[2])
+
 html_theme_options = {
-  "manuals":["developers-manual","admin-manual","examples-manual","reference-manual",],
-  "manual_titles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
+  "manuals": manual_dirs_list,
+  "manual_titles": manual_titles_list,
+  "manual_icons": manual_icons_list,
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": 
-        [ ["2.8.0-SNAPSHOT", "2.8.0"], ["2.7.0-SNAPSHOT", "2.7.0"],], 
-      "current": ["2.6.0", "2.6.0"], 
+        [ ["2.8.0-SNAPSHOT", "2.8.0"], ], 
+      "current": ["2.7.0", "2.7.0"], 
       "older": 
-        [ ["2.5.2", "2.5.2"], ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
+        [ ["2.6.1", "2.6.1"],["2.6.0", "2.6.0"],["2.5.2", "2.5.2"], ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
     },
 }
 
