@@ -206,6 +206,10 @@ create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
   sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
+When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
+
+  echo "grant 'cdap', 'ACRW'" | hbase shell
+
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
 ``yarn``. If you set up your cluster as above, no further changes are required.
 
@@ -214,6 +218,7 @@ In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HD
 If your cluster is not setup with these defaults, you'll need to 
 :ref:`edit your CDAP configuration <install-configuration>` once you have downloaded and installed
 the packages, and prior to starting services.
+
 
 .. _install-packaging:
 
@@ -597,6 +602,3 @@ Troubleshooting
 
     allowed.system.users=yarn,cdap
   
-- When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
-
-    echo "grant 'cdap', 'ACRW'" | hbase shell
