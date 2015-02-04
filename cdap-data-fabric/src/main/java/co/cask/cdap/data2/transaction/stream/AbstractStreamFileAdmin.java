@@ -234,16 +234,22 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                   "(can only update ttl, format or threshold)",
                                 config.getName());
 
-    if (originalConfig.getTTL() != config.getTTL()) {
-      // This call will also save the config
-      streamCoordinatorClient.changeTTL(originalConfig, config.getTTL());
-    }
-    if (originalConfig.getNotificationThresholdMB() != config.getNotificationThresholdMB()) {
-      // This call will also save the config
-      streamCoordinatorClient.changeThreshold(originalConfig, config.getNotificationThresholdMB());
-    }
-    if (!originalConfig.getFormat().equals(config.getFormat())) {
+    // It's a temp fix to avoid async update (through stream coordinator client overwrites changes in here.
+    // It works only if there is no concurrent updates from multiple clients
+    // A proper fix needs to be done to make concurrent updates from multiple threads/processes safe.
+    boolean formatChanged = !originalConfig.getFormat().equals(config.getFormat());
+    boolean ttlChanged = originalConfig.getTTL() != config.getTTL();
+    boolean thresholdChanged = !originalConfig.getNotificationThresholdMB().equals(config.getNotificationThresholdMB());
+
+    if (formatChanged || ttlChanged || thresholdChanged) {
       saveConfig(config);
+    }
+
+    if (ttlChanged) {
+      streamCoordinatorClient.changeTTL(originalConfig.getName(), config.getTTL());
+    }
+    if (thresholdChanged) {
+      streamCoordinatorClient.changeThreshold(originalConfig.getName(), config.getNotificationThresholdMB());
     }
   }
 
