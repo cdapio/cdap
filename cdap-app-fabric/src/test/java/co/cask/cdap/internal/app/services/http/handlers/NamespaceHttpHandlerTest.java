@@ -101,7 +101,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     int initialSize = namespaces.size();
     // create and verify
     response = createNamespace(METADATA_VALID, ID);
-    assertResponseCode(201, response);
+    assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
     Assert.assertEquals(initialSize + 1, namespaces.size());
@@ -120,7 +120,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testCreateDuplicate() throws Exception {
     // prepare - create namespace
     HttpResponse response = createNamespace(METADATA_VALID, ID);
-    assertResponseCode(201, response);
+    assertResponseCode(200, response);
     response = getNamespace(ID);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
@@ -173,7 +173,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testCreateMissingOrEmptyFields() throws Exception {
     // create with no metadata
     HttpResponse response = createNamespace(ID);
-    assertResponseCode(201, response);
+    assertResponseCode(200, response);
     // verify
     response = getNamespace(ID);
     JsonObject namespace = readGetResponse(response);
@@ -187,7 +187,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     // create with missing fields
     response = createNamespace(METADATA_MISSING_FIELDS, ID);
-    assertResponseCode(201, response);
+    assertResponseCode(200, response);
     // verify
     response = getNamespace(ID);
     namespace = readGetResponse(response);
@@ -201,7 +201,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     // create with empty fields
     response = createNamespace(METADATA_EMPTY_FIELDS, ID);
-    assertResponseCode(201, response);
+    assertResponseCode(200, response);
     // verify
     response = getNamespace(ID);
     namespace = readGetResponse(response);

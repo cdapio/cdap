@@ -294,6 +294,12 @@ public class TestBase {
         }
       }
     );
+    new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NamespaceService.class).in(Scopes.SINGLETON);
+      }
+    };
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);

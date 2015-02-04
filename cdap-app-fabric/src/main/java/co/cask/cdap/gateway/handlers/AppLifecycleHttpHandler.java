@@ -36,7 +36,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
@@ -165,15 +164,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
   private final StreamConsumerFactory streamConsumerFactory;
-
   private final QueueAdmin queueAdmin;
-
   private final DiscoveryServiceClient discoveryServiceClient;
-
   private final PreferencesStore preferencesStore;
-
   private final AdapterService adapterService;
-
   private final NamespaceService namespaceService;
 
   @Inject
@@ -317,7 +311,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceExists(namespaceId)) {
+    if (!namespaceService.hasNamespace(namespaceId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
@@ -409,7 +403,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("adapter-id") String adapterName) {
 
     try {
-      if (!namespaceExists(namespaceId)) {
+      if (!namespaceService.hasNamespace(namespaceId)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
         return;
@@ -465,7 +459,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
-    if (!namespaceExists(namespaceId)) {
+    if (!namespaceService.hasNamespace(namespaceId)) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));
@@ -522,15 +516,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
       throw new Exception(e.getMessage());
-    }
-  }
-
-  private boolean namespaceExists(String namespace) {
-    try {
-      namespaceService.getNamespace(Id.Namespace.from(namespace));
-      return true;
-    } catch (NotFoundException e) {
-      return false;
     }
   }
 

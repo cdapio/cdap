@@ -24,6 +24,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -151,6 +152,11 @@ public abstract class AppFabricTestBase {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
 
+    NamespaceService namespaceService = injector.getInstance(NamespaceService.class);
+    /*while (!namespaceService.isInitialized()) {
+      System.out.println("################ Waiting...");
+      TimeUnit.SECONDS.sleep(1);
+    }*/
     createNamespaces();
   }
 
@@ -485,11 +491,11 @@ public abstract class AppFabricTestBase {
   private static void createNamespaces() throws Exception {
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
-    Assert.assertEquals(201, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
-    Assert.assertEquals(201, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   private static void deleteNamespaces() throws Exception {
