@@ -11,7 +11,11 @@ CDAP Administration Manual
 
 .. rubric:: Installation
 
-**Installation:** Covers **putting CDAP into production, with installation, configuration, security setup, and
+
+.. |installation| replace:: **Installation:**
+.. _installation: installation/index.html
+
+|installation|_ Covers **putting CDAP into production, with installation, configuration, security setup, and
 monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
 .. |quickstart| replace:: **Quick Start:**
@@ -21,18 +25,12 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
   configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
   :ref:`install` guide has additional details.
 
-.. |installation| replace:: **Installation and Configuration:**
-.. _installation: installation/installation.html
+.. |installation-configuration| replace:: **Installation and Configuration:**
+.. _installation-configuration: installation/installation.html
 
-- |installation|_ Covers **installing and configuring CDAP:** the system, network, and software
+- |installation-configuration|_ Covers **installing and configuring CDAP:** the system, network, and software
   requirements; packaging options; and the instructions for installation and verification of the
   CDAP components so they work with your existing Hadoop cluster.
-
-.. |integrations| replace:: **Integrating CDAP:**
-.. _integrations: installation/integrations.html
-
-- |integrations|_ Covers **integrating CDAP with Hadoop installations:** using products such 
-  as `Cloudera Manager <https://github.com/cloudera/cm_ext/wiki>`__.
 
 .. |security| replace:: **Security:**
 .. _security: installation/security.html
@@ -55,7 +53,10 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 
 .. rubric:: Operations
 
-**Operations:** Covers **logging, metrics, runtime arguments, scaling instances and 
+.. |operations| replace:: **Operations:**
+.. _operations: installation/index.html
+
+|operations|_ Covers **logging, metrics, runtime arguments, scaling instances and 
 introduces the CDAP Console.** 
 
 .. |logging| replace:: **Logging:**
