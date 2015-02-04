@@ -153,7 +153,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 #. Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected. 
    The API listens on the host where the Gateway/Router role instance is running, port
-   10000 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
+   11015 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
 
      curl -w '\n' -v \
        'http://[router-host]:[router-port]/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
