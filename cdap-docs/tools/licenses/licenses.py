@@ -200,7 +200,7 @@ def master_print():
     # Print out the results
     keys = master_libs_dict.keys()
     keys.sort()
-    max = len("%d" % keys[-1]) # set max to maximum number of characters in keys
+    max = len("%d" % len(keys)) # set max to maximum number of characters in keys
     for i, k in enumerate(keys):
         master_libs_dict[k].pretty_print(i+1, max)    
 
@@ -293,10 +293,10 @@ def process_dependencies(dependency):
     for lib_dict in [master_libs_dict]:
         keys = lib_dict.keys()
         keys.sort()
-        missing_licenses = 0
+        missing_licenses = []
         for k in keys:
             if lib_dict[k].license == "":
-                missing_licenses += 1
+                missing_licenses.append(lib_dict[k])
             if DEBUG:
                 lib_dict[k].pretty_print()
         print_debug("Records: %s" % len(keys))
@@ -304,7 +304,10 @@ def process_dependencies(dependency):
     print "New CSV: Rows: %s" % len(new_libs_dict.keys())
     print "New Master CSV: Rows: %s" % len(master_libs_dict.keys())
     print "New Master CSV: Missing Entry Rows: %s" % missing_entries
-    print "New Master CSV: Missing License Rows: %s" % missing_licenses
+    print "New Master CSV: Missing License Rows: %s" % len(missing_licenses)
+    if missing_licenses:
+        for miss in missing_licenses:
+            print "  %s" % miss
     
     if missing_entries:
         i = 0
