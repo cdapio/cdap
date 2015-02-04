@@ -4,4 +4,4 @@
 
 .. highlight:: console
 
-.. include:: ../../build/_includes/integrations.rst
+.. include:: ../../../build/_includes/configuring.rst
