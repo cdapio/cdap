@@ -9,7 +9,7 @@ Pentaho Data Integration
 
 *Pentaho Data Integration* is an advanced, open source business intelligence tool that can execute
 transformations of data coming from various sources. Let's see how to connect it to
-CDAP Datasets using the CDAP JDBC driver.
+CDAP Datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 
 #. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``
    file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.

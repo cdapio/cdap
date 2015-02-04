@@ -10,8 +10,9 @@ Cloudera *Add Service* Wizard, Step-by-Step
 
 As described in :ref:`cloudera-configuring`, you can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
-to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
-Service Descriptor). These instructions show you how to use that CSD with the 
+to integrate CDAP into a Hadoop cluster by 
+:ref:`downloading and installing a CDAP CSD (Custom
+Service Descriptor) <cloudera-configuring-download>`. These instructions show you how to use that CSD with the 
 Cloudera Manager Admin Console *Add Service* Wizard to install CDAP.
 
 

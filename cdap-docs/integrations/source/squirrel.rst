@@ -8,7 +8,7 @@ SquirrelSQL
 -----------
 
 *SquirrelSQL* is a simple JDBC client which executes SQL queries against many different relational databases.
-Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
+Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
 
 #. Open the ``Drivers`` pane, located on the far left corner of *SquirrelSQL*.
 #. Click the ``+`` icon of the ``Drivers`` pane.

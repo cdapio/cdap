@@ -5,9 +5,8 @@
 .. _cloudera-ingesting:
 
 ==================================================
-Ingesting and Exploring Data with Impala
+Ingestion and Exploration
 ==================================================
-
 
 .. _integrations-impala:
 
@@ -34,7 +33,7 @@ When using CDAP with Impala:
 - |fileset|_ The **CDAP FileSet Datasets** can be explored through ad-hoc SQL-like queries.
 
 
-Ingesting Data and Exploring it with Impala
+Ingesting and Exploring Data with Impala
 ===========================================
 
 Streams are the primary means of bringing data from external systems into the CDAP in

@@ -66,6 +66,7 @@ Prerequisites
    size. Lack of YARN memory capacity is the leading cause of apparent failures that we
    see reported.
 
+.. _cloudera-configuring-download:
 
 Download
 =======================================
