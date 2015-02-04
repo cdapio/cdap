@@ -22,7 +22,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -59,7 +58,7 @@ public class LevelDBFilterableOVCTableTest {
   private static final int rollTime = 60;
 
   @Test
-  public void testAggregatesQuery() throws OperationException {
+  public void testAggregatesQuery() throws Exception {
     AggregatesTable table = tableFactory.createAggregates();
     List<MetricsRecord> records = Lists.newLinkedList();
     List<TagMetric> tags = Lists.newArrayList();
@@ -111,7 +110,7 @@ public class LevelDBFilterableOVCTableTest {
   }
 
   @Test
-  public void testTimeseriesQuery() throws OperationException {
+  public void testTimeseriesQuery() throws Exception {
     TimeSeriesTable tsTable = tableFactory.createTimeSeries(1);
 
     // one below the 1317470400 timebase

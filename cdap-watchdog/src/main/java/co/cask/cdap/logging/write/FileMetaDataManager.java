@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -84,7 +83,6 @@ public final class FileMetaDataManager {
    * @param loggingContext logging context containing the meta data.
    * @param startTimeMs start log time associated with the file.
    * @param location log file.
-   * @throws OperationException
    */
   public void writeMetaData(final LoggingContext loggingContext,
                             final long startTimeMs,
@@ -107,7 +105,6 @@ public final class FileMetaDataManager {
    * Returns a list of log files for a logging context.
    * @param loggingContext logging context.
    * @return Sorted map containing key as start time, and value as log file.
-   * @throws OperationException
    */
   public SortedMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
     return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, SortedMap<Long, Location>>() {
@@ -133,7 +130,6 @@ public final class FileMetaDataManager {
    * @param tillTime time till the meta data will be deleted.
    * @param callback callback called before deleting a meta data column.
    * @return total number of columns deleted.
-   * @throws OperationException
    */
   public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
     return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Integer>() {

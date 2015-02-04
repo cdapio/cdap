@@ -29,7 +29,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -146,7 +145,7 @@ public abstract class MetricsSuiteTestBase {
     stopMetricsService(conf);
     try {
       stop();
-    } catch (OperationException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
       tmpFolder.delete();
@@ -158,7 +157,7 @@ public abstract class MetricsSuiteTestBase {
     doDelete("/v2/metrics/");
   }
 
-  public static void initialize() throws IOException, OperationException {
+  public static void initialize() throws IOException {
     CConfiguration cConf = CConfiguration.create();
 
     // use this injector instead of the one in startMetricsService because that one uses a
@@ -185,7 +184,7 @@ public abstract class MetricsSuiteTestBase {
     setupMeta();
   }
 
-  public static void stop() throws OperationException {
+  public static void stop() {
     collectionService.stopAndWait();
 
     Deque<File> files = Lists.newLinkedList();
@@ -261,7 +260,7 @@ public abstract class MetricsSuiteTestBase {
   }
 
   // write WordCount app to metadata store
-  public static void setupMeta() throws OperationException {
+  public static void setupMeta() {
     validResources = ImmutableList.of(
       "/system/reads?aggregate=true",
       "/system/apps/WordCount/reads?aggregate=true",
