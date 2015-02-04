@@ -34,12 +34,12 @@
     <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
-    <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
     <module>StreamConversion</module>
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
+    <module>WordCount</module>
   </modules>
 
   <repositories>
@@ -71,7 +71,7 @@
                 <excludes>
                   <exclude>build-number.txt</exclude>
                   <exclude>LICENSE*.txt</exclude>
-                  <exclude>README.md</exclude>
+                  <exclude>README.*</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>
