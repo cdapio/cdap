@@ -5,7 +5,7 @@ Configuring and Installing CDAP using Cloudera Manager
 ======================================================
 
 
-Integrating CDAP using Cloudera Manager
+Overview
 =======================================
 
 You can use `Cloudera Manager
@@ -23,8 +23,8 @@ These instructions cover the steps to integrate CDAP using Cloudera Manager:
 - **Troubleshooting:** Particular situations that can occur with Cloudera.
 
 
-Overview
---------
+Roles and Dependencies
+----------------------
 The CDAP CSD consists of four mandatory roles:
 
 - Master
@@ -39,7 +39,7 @@ the 'cdap' user installed by the parcel.
 
 
 Prerequisites
--------------
+=======================================
 
 #. Node.js (version 0.8.16 or greater) must be installed on the node(s) where the Web-App
    role instance will run. You can download the latest version of Node.js from `nodejs.org
@@ -68,7 +68,7 @@ Prerequisites
 
 
 Download
---------
+=======================================
 
 Download the CDAP CSD (Custom Service Descriptor): it can be found on the `Cask Resources
 webpage <http://cask.co/resources/#cdap-csd>`__.
@@ -78,14 +78,14 @@ Details on CSDs and Cloudera Manager Extensions are `available online
 
 
 Install, Setup, and Startup
----------------------------
+=======================================
 
 .. rubric:: Install the CSD
 
 #. `Install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
 #. Download and distribute the CDAP-<version> parcel.
 
-.. rubric:: Setup
+.. rubric:: Setup using the Cloudera Manager Admin Console *Add Service* Wizard
 
 Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
 When completing the Wizard, these notes may help:
@@ -102,16 +102,13 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP Console to connect to the Router service.
 
-
-.. rubric:: Cloudera Manager Admin Console *Add Service* Wizard, Step-by-Step
-
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
 
 .. _cloudera-verification:
 
 Verification
-------------
+=======================================
 
 After CDAP has started up, the best way to verify the installation is to deploy an application,
 ingest some data, run a MapReduce program on it, and then query the results out.  The following
@@ -171,7 +168,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 
 Troubleshooting
----------------
+=======================================
 
 Some versions of Hive may try to create a temporary staging directory at the table
 location when executing queries. If you are seeing permissions errors when running a

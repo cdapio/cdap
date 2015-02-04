@@ -78,7 +78,7 @@ extensions = [
 intersphinx_mapping = {
   'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
   'developers':   ('../../developers-manual/',   os.path.abspath('../../developers-manual/build/html/objects.inv')),
-  'integrations': ('../../integrations-manual/', os.path.abspath('../../integrations-manual/build/html/objects.inv')),
+  'integrations': ('../../integrations/', os.path.abspath('../../integrations/build/html/objects.inv')),
   'reference':    ('../../reference-manual',     os.path.abspath('../../reference-manual/build/html/objects.inv')),
   'examples':     ('../../examples-manual',      os.path.abspath('../../examples-manual/build/html/objects.inv')),
 }
@@ -190,7 +190,7 @@ html_theme = 'cdap'
 manuals_list = [
     ["developers-manual",   u"Developers’ Manual"],
     ["admin-manual",        "Administration Manual"],
-    ["integrations-manual", "Integrations"],
+    ["integrations",        "Integrations"],
     ["examples-manual",     "Examples, Guides, and Tutorials"],
     ["reference-manual",    "Reference Manual"],
 ]

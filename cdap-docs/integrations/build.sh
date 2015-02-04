@@ -24,7 +24,7 @@ function pandoc_includes() {
   INCLUDES_DIR=$1
   version
   cd $SCRIPT_PATH
-  local cloudera="$SCRIPT_PATH/$SOURCE/cloudera"
+  local cloudera="$SCRIPT_PATH/$SOURCE/partners/cloudera"
   rewrite $cloudera/configuring.txt  $INCLUDES_DIR/configuring.rst  "<version>"  $PROJECT_VERSION
 }
 

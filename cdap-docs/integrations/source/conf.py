@@ -12,7 +12,7 @@ from common_conf import *
 
 # Override the common config
 
-html_short_title_toc = manuals_dict["integrations-manual"]
+html_short_title_toc = manuals_dict["integrations"]
 html_short_title = u'CDAP %s' % html_short_title_toc
 
 html_context = {"html_short_title_toc":html_short_title_toc}

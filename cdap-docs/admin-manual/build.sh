@@ -18,14 +18,4 @@
 
 source ../_common/common-build.sh
 
-CHECK_INCLUDES=$TRUE
-
-function pandoc_includes() {
-  INCLUDES_DIR=$1
-  version
-  cd $SCRIPT_PATH
-  local installation="$SCRIPT_PATH/$SOURCE/installation"
-  rewrite $installation/integrations.txt  $INCLUDES_DIR/integrations.rst  "<version>"  $PROJECT_VERSION
-}
-
 run_command $1

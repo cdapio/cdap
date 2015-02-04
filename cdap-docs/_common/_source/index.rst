@@ -65,10 +65,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Operations:** Logging, metrics, runtime arguments, scaling instances and introduces the CDAP Console
 
 
-.. |integrations-manual| replace:: **Integrations:**
-.. _integrations-manual: integrations-manual/index.html
+.. |integrations| replace:: **Integrations:**
+.. _integrations: integrations/index.html
 
-- |integrations-manual|_ 
+- |integrations|_ 
 
   - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, and running interactive queries with Impala
   - **Pentaho:** Pentaho integration
