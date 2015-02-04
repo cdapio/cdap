@@ -17,7 +17,6 @@ angular.module(PKG.name + '.feature.admin')
         $scope.submenu.security = $state.is('admin.security') || $state.includes('admin.security.**');
         $scope.submenu.system = $state.is('admin.system') || $state.includes('admin.system.**');
 
-
     });
 
 
