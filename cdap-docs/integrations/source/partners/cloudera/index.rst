@@ -16,7 +16,6 @@ Cloudera
     Configuring and Installing <configuring>
     Add Service Wizard <step-by-step-cloudera>
     Ingesting and Exploration <ingesting>
-    FAQ <faq>
 
 
 .. |cloudera-configuring| replace:: **Configuring and Installing:**
@@ -37,10 +36,10 @@ Cloudera
 - |cloudera-ingesting|_ Ingest and explore data using **Impala**
 
 
-.. |cloudera-faq| replace:: **FAQ:**
-.. _cloudera-faq: faq.html
+.. .. |cloudera-faq| replace:: **FAQ:**
+.. .. _cloudera-faq: faq.html
 
-.. - |cloudera-faq|_ for Cloudera and Impala
+.. .. - |cloudera-faq|_ for Cloudera and Impala
 
 
 .. rubric:: Introduction to CDAP, Cloudera and Impala

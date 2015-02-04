@@ -141,7 +141,12 @@ function build_docs_outer_level() {
     sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
   fi
   
-  # Copy lower-level doc manuals
+  echo ""
+  echo "========================================================"
+  echo "Copying lower-level docs..."
+  echo "========================================================"
+  echo ""
+
   copy_html admin-manual
   copy_html developers-manual
   copy_html integrations
