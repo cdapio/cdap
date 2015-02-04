@@ -151,6 +151,8 @@ public abstract class HBaseQueueTest extends QueueTest {
       .with(new AbstractModule() {
         @Override
         protected void configure() {
+          // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
+          bind(StreamAdmin.class).to(HBaseStreamAdmin.class);
           bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
         }
       })
