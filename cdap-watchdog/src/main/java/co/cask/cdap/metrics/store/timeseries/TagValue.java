@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 /**
  * Represents tag and its value assigned to the {@link Fact}.
  */
-public final class TagValue {
+public final class TagValue implements Comparable<TagValue> {
   private final String tagName;
   private final String value;
 
@@ -64,5 +64,14 @@ public final class TagValue {
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("tagName", tagName).add("value", value).toString();
+  }
+
+  @Override
+  public int compareTo(TagValue o) {
+    int cmp = tagName.compareTo(o.getTagName());
+    if (cmp != 0) {
+      return cmp;
+    }
+    return value.compareTo(o.getValue());
   }
 }

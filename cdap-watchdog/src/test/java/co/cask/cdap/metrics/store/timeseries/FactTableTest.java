@@ -20,12 +20,15 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableServic
 import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * Test base for {@link co.cask.cdap.metrics.data.TimeSeriesTable}.
@@ -108,8 +111,54 @@ public class FactTableTest {
     // metric = null means "all"
     FactScan scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, null, tagValues);
     assertScan(table, expected, scan);
+
+    // verify the next tags search
+    Set<TagValue> nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
+    assertTagValues(ImmutableSet.of(new TagValue("tag2", "value2")), nextTags);
+
+    nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag2", "value2")),
+                                 ts, ts + 3);
+    assertTagValues(ImmutableSet.of(new TagValue("tag3", "value3")), nextTags);
+
+    // add new tag values
+    tagValues = ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag2", "value5"));
+    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric",
+                                        new TimeValue(ts, 10))));
+
+    tagValues = ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag4", "value5"));
+    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric",
+                                        new TimeValue(ts, 10))));
+
+    nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1")),
+                                 ts, ts + 1);
+    assertTagValues(ImmutableSet.of(new TagValue("tag2", "value2"),
+                                    new TagValue("tag2", "value5"), new TagValue("tag4", "value5")), nextTags);
+
+    // search for metric names given tags list and verify
+
+    SortedSet<String> metricNames = table.getMeasureNames(ImmutableList.of(new TagValue("tag1", "value1"),
+                                                                      new TagValue("tag2", "value2"),
+                                                                      new TagValue("tag3", "value3")), ts, ts + 1);
+    assertMetricsList(ImmutableSet.of("metric1", "metric2", "metric3"), metricNames);
+
+    metricNames = table.getMeasureNames(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
+    assertMetricsList(ImmutableSet.of("metric", "metric1"), metricNames);
+
   }
 
+  private void assertMetricsList(Set<String> expected, Set<String> actual) {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (String metric : expected) {
+      Assert.assertTrue(actual.contains(metric));
+    }
+  }
+
+  private void assertTagValues(Set<TagValue> expected, Set<TagValue> nextTags) {
+    Assert.assertEquals(expected.size(), nextTags.size());
+    for (TagValue tag : nextTags) {
+      Assert.assertTrue(expected.contains(tag));
+    }
+  }
 
   @Test
   public void testQuery() throws Exception {
