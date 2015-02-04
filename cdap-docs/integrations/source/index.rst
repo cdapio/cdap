@@ -14,7 +14,7 @@ Integrations
 .. |cloudera-introduction| replace:: **Introduction:**
 .. _cloudera-introduction: partners/cloudera/index.html
 
-- |cloudera-introduction|_ Introduction to **CDAP, Cloudera, and Impala**
+- |cloudera-introduction|_ Utilizing CDAP on **Cloudera Enterprise Data Hub**
 
 
 .. |cloudera-configuring| replace:: **Configuring and Installing:**
@@ -29,10 +29,10 @@ Integrations
 - |cloudera-add-service|_ A **step-by-step guide** to installing CDAP using the Cloudera Manager *Add Service* Wizard
 
 
-.. |cloudera-ingesting| replace:: **Ingesting and Exploration:**
+.. |cloudera-ingesting| replace:: **Ingestion and Exploration:**
 .. _cloudera-ingesting: partners/cloudera/ingesting.html
 
-- |cloudera-ingesting|_ Ingest and explore data using **Impala**
+- |cloudera-ingesting|_ Ingesting and exploring data using **Impala**
 
 
 .. |cloudera-faq| replace:: **FAQ:**
@@ -47,8 +47,8 @@ Most Business Intelligence tools can integrate with relational databases using J
 drivers. They often include drivers to connect to standard databases such as MySQL or
 PostgreSQL. Most tools allow the addition of non-standard JDBC drivers.
 
-Two business intelligence tools — :ref:`SquirrelSQL <squirrel-integration>` and 
-:ref:`Pentaho Data Integration <pentaho-integration>` — are covered, explaining connecting
+Two business intelligence tools—:ref:`SquirrelSQL <squirrel-integration>` and 
+:ref:`Pentaho Data Integration <pentaho-integration>`—are covered, explaining connecting
 them to a running CDAP instance and interacting with CDAP Datasets.
 
 The example :ref:`cdap-bi-guide` includes the use of Pentaho.
