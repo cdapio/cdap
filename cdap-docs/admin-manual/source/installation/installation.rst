@@ -206,10 +206,6 @@ create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
   sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
-When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
-
-  echo "grant 'cdap', 'ACRW'" | hbase shell
-
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
 ``yarn``. If you set up your cluster as above, no further changes are required.
 
@@ -434,9 +430,14 @@ In order to configure CDAP Master for Kerberos authentication:
     </property>
 
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
-  that with the command (substituting for ``<cdap-principal>``)::
+  that by running the following command as the ``hbase`` user (substituting for
+  ``<cdap-principal>``)::
   
-    sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown <cdap-principal> /cdap
+  hadoop fs -mkdir /cdap && hadoop fs -chown <cdap-principal> /cdap
+    
+- When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
+
+  echo "grant 'cdap', 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
@@ -588,16 +589,13 @@ If you are upgrading a secure Hadoop cluster, see the notes above about
 Troubleshooting
 ---------------------------------
 
-- If you are using a LinuxContainerExecutor, the ``cdap`` user needs to be present on all
-  Hadoop nodes.
+- If you have YARN configured to use LinuxContainerExecutor (see the setting for
+  ``yarn.nodemanager.container-executor.class``), the ``cdap`` user needs to be present on
+   all Hadoop nodes.
 
 - If you are using a LinuxContainerExecutor, and the UID for the ``cdap`` user is less than
   500, you will need to add the ``cdap`` user to the allowed users configuration for the
   LinuxContainerExecutor in Yarn by editing the ``/etc/hadoop/conf/container-executor.cfg``
-  file::
-
-    sudo vi /etc/hadoop/conf/container-executor.cfg
-  
-  Change the line for ``allowed.system.users`` to::
+  file. Change the line for ``allowed.system.users`` to::
 
     allowed.system.users=yarn,cdap
