@@ -430,14 +430,15 @@ In order to configure CDAP Master for Kerberos authentication:
     </property>
 
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
-  that by running the following command as the ``hbase`` user (substituting for
+  that by running the following command as the ``hdfs`` user (substituting for
   ``<cdap-principal>``)::
   
     hadoop fs -mkdir /cdap && hadoop fs -chown <cdap-principal> /cdap
     
-- When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
+- When running on a secure HBase cluster, as the ``hbase`` user, issue the following command
+  (substituting for ``<cdap-principal>``)::
 
-    echo "grant 'cdap', 'ACRW'" | hbase shell
+    echo "grant <cdap-principal>, 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
