@@ -215,6 +215,7 @@ If your cluster is not setup with these defaults, you'll need to
 :ref:`edit your CDAP configuration <install-configuration>` once you have downloaded and installed
 the packages, and prior to starting services.
 
+
 .. _install-packaging:
 
 Packaging
@@ -391,9 +392,9 @@ Depending on your installation, you may want to set these properties:
   See :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. This feature is currently 
   not supported on secure Hadoop clusters.
 
-.. _install-secure-hadoop:
-
 .. highlight:: console
+
+.. _install-secure-hadoop:
 
 Secure Hadoop
 .............
@@ -427,6 +428,18 @@ In order to configure CDAP Master for Kerberos authentication:
       <description>The Kerberos principal name that should be used to login the CDAP Master
       process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>
+
+- The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``; however, you
+  are free to use a different appropriate name.
+
+- The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
+  that by running the following command as the ``hdfs`` user::
+  
+    hadoop fs -mkdir /cdap && hadoop fs -chown cdap /cdap
+    
+- When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
+
+    echo "grant 'cdap', 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
@@ -569,4 +582,22 @@ and then restart CDAP.
 #. Restart the CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+     
+If you are upgrading a secure Hadoop cluster, see the notes above about
+:ref:`configuring secure Hadoop <install-secure-hadoop>`. 
 
+.. _install-troubleshooting:
+
+Troubleshooting
+---------------------------------
+
+- If you have YARN configured to use LinuxContainerExecutor (see the setting for
+  ``yarn.nodemanager.container-executor.class``), the ``cdap`` user needs to be present on
+  all Hadoop nodes.
+
+- If you are using a LinuxContainerExecutor, and the UID for the ``cdap`` user is less than
+  500, you will need to add the ``cdap`` user to the allowed users configuration for the
+  LinuxContainerExecutor in Yarn by editing the ``/etc/hadoop/conf/container-executor.cfg``
+  file. Change the line for ``allowed.system.users`` to::
+
+    allowed.system.users=cdap
