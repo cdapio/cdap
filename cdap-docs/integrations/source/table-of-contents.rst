@@ -11,4 +11,6 @@ Integrations Table of Contents
 
     Introduction <index>
     Cloudera <partners/cloudera/index>
-    Pentaho <pentaho/index>
+    JDBC <jdbc>
+    Pentaho <pentaho>
+    Squirrel <squirrel>

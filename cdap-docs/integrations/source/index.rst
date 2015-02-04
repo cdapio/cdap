@@ -41,15 +41,35 @@ Integrations
 .. - |cloudera-faq|_ for Cloudera and Impala
 
 
-.. rubric:: Pentaho
+.. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools
 
-.. |pentaho-introduction| replace:: **Introduction:**
-.. _pentaho-introduction: pentaho/index.html
+Most Business Intelligence tools can integrate with relational databases using JDBC
+drivers. They often include drivers to connect to standard databases such as MySQL or
+PostgreSQL. Most tools allow the addition of non-standard JDBC drivers.
 
-- |pentaho-introduction|_ A guide that covers the **most-common case…**
+Two business intelligence tools — :ref:`SquirrelSQL <squirrel-integration>` and 
+:ref:`Pentaho Data Integration <pentaho-integration>` — are covered, explaining connecting
+them to a running CDAP instance and interacting with CDAP Datasets.
+
+The example :ref:`cdap-bi-guide` includes the use of Pentaho.
+
+.. |jdbc| replace:: **CDAP JDBC Driver:**
+.. _jdbc: jdbc.html
+
+- |jdbc|_ A JDBC driver provided with CDAP to make **integrations with external programs**
+  and third-party BI (business intelligence) tools easier.
 
 
-.. |pentaho-jdbc| replace:: **JDBC Drive:**
-.. _pentaho-jdbc: pentaho/jdbc.html
+.. |pentaho| replace:: **Pentaho Data Integration:**
+.. _pentaho: pentaho.html
 
-- |pentaho-jdbc|_ A guide that covers the **most-common case…**
+- |pentaho|_ An advanced, open source business intelligence tool that can execute
+  transformations of data.
+
+
+.. |squirrel| replace:: **SquirrelSQL:**
+.. _squirrel: squirrel.html
+
+- |squirrel|_ A simple JDBC client which executes SQL queries against many different relational databases.
+
+
