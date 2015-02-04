@@ -429,16 +429,17 @@ In order to configure CDAP Master for Kerberos authentication:
       process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>
 
-- The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
-  that by running the following command as the ``hdfs`` user (substituting for
-  ``<cdap-principal>``)::
-  
-    hadoop fs -mkdir /cdap && hadoop fs -chown <cdap-principal> /cdap
-    
-- When running on a secure HBase cluster, as the ``hbase`` user, issue the following command
-  (substituting for ``<cdap-principal>``)::
+- The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``; however, you
+  are free to use a different appropriate name.
 
-    echo "grant <cdap-principal>, 'ACRW'" | hbase shell
+- The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
+  that by running the following command as the ``hdfs`` user::
+  
+    hadoop fs -mkdir /cdap && hadoop fs -chown cdap /cdap
+    
+- When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
+
+    echo "grant cdap>, 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
