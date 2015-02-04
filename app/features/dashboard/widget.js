@@ -28,6 +28,7 @@ angular.module(PKG.name+'.feature.dashboard')
           method: 'POST'
         },
         (function (result) {
+          result.data.splice(result.data.length-1, 1);
           this.data = result.data;
         }).bind(this)
       );
@@ -46,19 +47,23 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-  .controller('WidgetTimeseriesCtrl', function ($scope) {
-
+  .controller('WidgetTimeseriesCtrl', function ($scope, $interval) {
     $scope.wdgt.fetchData();
+
+    // $interval(function () {
+    //   $scope.wdgt.fetchData();
+    // }, 1000);
+    
 
     $scope.$watch('wdgt.data', function (newVal) {
       if(angular.isArray(newVal)) {
-
+        
         $scope.chartHistory = [
           {
             label: $scope.wdgt.metric.name,
             values: newVal.map(function (o) {
               return {
-                x: o.time,
+                time: o.time,
                 y: o.value
               };
             })
