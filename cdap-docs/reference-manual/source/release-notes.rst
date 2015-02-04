@@ -39,33 +39,33 @@ New Features
 
 - **Spark**
 
-  - Spark now uses a configurer-style API for specifying
-  - Spark can now run as a part of a Workflow
+  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__)
+  - Spark can now run as a part of a Workflow (`CDAP-465 <https://issues.cask.co/browse/CDAP-465>`__)
 
 - **Security**
 
-  - CDAP Master now obtains and refreshes Kerberos tickets programmatically
+  - CDAP Master now obtains and refreshes Kerberos tickets programmatically (`CDAP-1134 <https://issues.cask.co/browse/CDAP-1134>`__)
 
 - **Datasets**
 
   - A new, experimental dataset type to support time-partitioned file sets has been added
-  - Time-partitioned file sets can be queried with Impala on CDH distributions
+  - Time-partitioned file sets can be queried with Impala on CDH distributions (`CDAP-926 <https://issues.cask.co/browse/CDAP-926>`__)
   - Streams can be made queryable with Impala by deploying an adapter that periodically
-    converts it into partitions of a time-partitioned file set
-  - Support for different levels of conflict detection: ``ROW``, ``COLUMN``, or ``NONE``
-  - Removed support for ``@DisableTransaction``
-  - Support for annotating a Stream with a schema
-  - A new API for uploading entire files to a Stream has been added 
+    converts it into partitions of a time-partitioned file set (`CDAP-1129 <https://issues.cask.co/browse/CDAP-1129>`__)
+  - Support for different levels of conflict detection: ``ROW``, ``COLUMN``, or ``NONE`` (`CDAP-1016 <https://issues.cask.co/browse/CDAP-1016>`__)
+  - Removed support for ``@DisableTransaction`` (`CDAP-1279 <https://issues.cask.co/browse/CDAP-1279>`__)
+  - Support for annotating a Stream with a schema (`CDAP-606 <https://issues.cask.co/browse/CDAP-606>`__)
+  - A new API for uploading entire files to a Stream has been added (`CDAP-411 <https://issues.cask.co/browse/CDAP-411>`__)
 
 - **Workflow**
 
-  - Workflow now uses a configurer-style API for specifying
-  - Multiple instances of a Workflow can be run concurrently
+  - Workflow now uses a configurer-style API for specifying (`CDAP-1207 <https://issues.cask.co/browse/CDAP-1207>`__)
+  - Multiple instances of a Workflow can be run concurrently (`CDAP-513 <https://issues.cask.co/browse/CDAP-513>`__)
   - Programs are no longer part of a Workflow; instead, they are added in the application
-    and are referenced a Workflow using their names
+    and are referenced a Workflow using their names (`CDAP-1116 <https://issues.cask.co/browse/CDAP-1116>`__)
   - Schedules are now at the application level and properties can be specified for
     a Schedules; these properties will be passed to the scheduled program as runtime
-    arguments
+    arguments (`CDAP-1148 <https://issues.cask.co/browse/CDAP-1148>`__)
 
 Known Issues
 ------------
