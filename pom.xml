@@ -2102,6 +2102,32 @@
         </pluginManagement>
       </build>
     </profile>
+
+    <!-- For running findbugs plugin -->
+    <profile>
+      <id>findbugs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>2.5.5</version>
+            <executions>
+              <execution>
+                <id>findbugs-check</id>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-test-classes</phase>
+                <configuration>
+                  <failOnError>false</failOnError>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <!-- Site reporting section -->
