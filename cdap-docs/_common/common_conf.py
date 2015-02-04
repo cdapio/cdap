@@ -188,23 +188,26 @@ html_theme = 'cdap'
 #
 # manual_list is an ordered list of the manuals
 manuals_list = [
-    ["developers-manual",   u"Developers’ Manual"],
-    ["admin-manual",        "Administration Manual"],
-    ["integrations",        "Integrations"],
-    ["examples-manual",     "Examples, Guides, and Tutorials"],
-    ["reference-manual",    "Reference Manual"],
+    ["developers-manual",   u"Developers’ Manual",             "",],
+    ["admin-manual",        "Administration Manual",           "",],
+    ["integrations",        "Integrations",                    "new-icon",],
+    ["examples-manual",     "Examples, Guides, and Tutorials", "",],
+    ["reference-manual",    "Reference Manual",                "",],
 ]
 manuals_dict = {}
 manual_titles_list = []
 manual_dirs_list  = []
+manual_icons_list = []
 for manual in manuals_list:
     manuals_dict[manual[0]]= manual[1]
     manual_dirs_list.append(manual[0])
     manual_titles_list.append(manual[1])
+    manual_icons_list.append(manual[2])
 
 html_theme_options = {
   "manuals": manual_dirs_list,
-  "manual_titles":manual_titles_list,
+  "manual_titles": manual_titles_list,
+  "manual_icons": manual_icons_list,
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": 
