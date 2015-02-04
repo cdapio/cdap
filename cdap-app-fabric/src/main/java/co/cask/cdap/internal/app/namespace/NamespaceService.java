@@ -26,19 +26,11 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,13 +64,17 @@ public final class NamespaceService extends AbstractIdleService {
     ensureDefaultNamespaceExists();
   }
 
-  public boolean isInitialized() {
-    return store != null && store.getNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE)) != null;
-  }
-
+  /**
+   * Asynchronously initializes the #store, with retries.
+   * Need a retry mechanism since {@link StoreFactory#create()} requires the dataset service to be running.
+   */
   private void initializeStore() {
-    ListenableFuture<Void> listenableFuture = asyncInitializeStore();
-    Futures.addCallback(listenableFuture, generateFutureCallback(listenableFuture));
+    new RetryThread(new Runnable() {
+      @Override
+      public void run() {
+        store = storeFactory.create();
+      }
+    }, 2, TimeUnit.SECONDS).run();
   }
 
   /**
@@ -87,201 +83,53 @@ public final class NamespaceService extends AbstractIdleService {
    * Hence this method ensures that the default namespace exists in a separate thread, with multiple retries
    */
   private void ensureDefaultNamespaceExists() {
-    ListenableFuture<Void> listenableFuture = asyncCreateDefaultNamespace();
-    Futures.addCallback(listenableFuture, generateFutureCallback(listenableFuture));
-  }
-
-  private FutureCallback<Void> generateFutureCallback(final ListenableFuture<Void> future) {
-    return new FutureCallback<Void>() {
-      @Override
-      public void onSuccess(Void o) {
-        // No-op, since the task was successful
-        LOG.info("Successfully completed retry task.");
-      }
-
-      @Override
-      public void onFailure(Throwable throwable) {
-        LOG.warn("Task failed. Retrying.");
-        // now keep retrying
-        if (isRunning()) {
-          final FutureCallback<Void> callback = this;
-          // Retry in 2 seconds. Shouldn't sleep in this callback thread. Should start a new thread for the retry.
-          Thread retryThread = new Thread("retrying-thread") {
-            @Override
-            public void run() {
-              try {
-                TimeUnit.SECONDS.sleep(2);
-                LOG.info("Retrying task.");
-                Futures.addCallback(future, callback);
-              } catch (InterruptedException e) {
-                LOG.warn("Retry thread interrupted.");
-              }
-            }
-          };
-          retryThread.setDaemon(true);
-          retryThread.start();
-        }
-      }
-    };
-  }
-
-  /**
-   * Asynchronously calls #createDefaultNamespace to create the default namespace
-   */
-  private ListenableFuture<Void> asyncCreateDefaultNamespace() {
-    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-    return executorService.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        createDefaultNamespace();
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Asynchronously calls #createDefaultNamespace to create the default namespace
-   */
-  private ListenableFuture<Void> asyncInitializeStore() {
-    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-    return executorService.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        store = storeFactory.create();
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Asynchronously initializes the #store, with retries.
-   * Need a retry mechanism since {@link StoreFactory#create()} requires the dataset service to be running.
-   */
-  /*private void initializeStore() throws InterruptedException {
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    try {
-      executorService.submit(new Runnable() {
-        @Override
-        public void run() {
-          Thread.currentThread().setName("store-initializer");
-          boolean initialized = false;
-          while (!initialized) {
-            LOG.info("Retrying to initialize store.");
-            try {
-              TimeUnit.SECONDS.sleep(1);
-              store = storeFactory.create();
-              LOG.info("Successfully initialized store.");
-              initialized = true;
-            } catch (InterruptedException e) {
-              LOG.warn("store-initializer thread interrupted.");
-            } catch (Exception e) {
-              LOG.warn("Error while initializing store", e);
-            }
-          }
-        }
-      });
-    } finally {
-      executorService.awaitTermination(15, TimeUnit.SECONDS);
-      executorService.shutdown();
-    }
-  }*/
-
-  /**
-   * Asynchronously ensures that the default namespace exists, with retries.
-   * Need a retry mechanism since the ensure operation requires the dataset service to be running.
-   */
-  /*private void ensureDefaultNamespaceExists() throws InterruptedException {
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    LOG.info("Hello");
-    try {
-      executorService.submit(new Runnable() {
-        @Override
-        public void run() {
-          LOG.info("Hello1");
-          Thread.currentThread().setName("default-namespace-ensurer");
-          boolean exists = false;
-          int retries = 0;
-          LOG.info(String.format("Exists = %s.1", exists));
-          LOG.info(String.format("Retry# %s to ensure that default namespace exists.1", retries++));
-          while (!exists) {
-            LOG.info("Hello1.5");
-            LOG.info(String.format("Exists = %s", exists));
-            LOG.info(String.format("Retry# %s to ensure that default namespace exists.", retries++));
-            try {
-              TimeUnit.SECONDS.sleep(2);
-              createDefaultNamespace();
-              // if code reaches here, either the default namespace was created or it existed already
-              LOG.info(String.format("Successfully ensured existence of 'default' namespace in %s retries" +
-                                       ".", retries));
-              exists = true;
-              LOG.info("Hello2");
-            } catch (InterruptedException e) {
-              //retries++;
-              LOG.info("Hello3");
-              LOG.info(String.format("default-namespace-ensurer thread interrupted during retry# %s.",
-                                     retries));
-            } catch (Exception e) {
-              //retries++;
-              LOG.info("Hello4");
-            }
-          }
-        }
-      });
-    } finally {
-      LOG.info("Hello5");
-      executorService.shutdown();
-      executorService.awaitTermination(15, TimeUnit.SECONDS);
-      LOG.info("Hello6");
-//    try {
-//    } catch (InterruptedException e) {
-//     LOG.info("Hello7");
-//     LOG.info("Interrupted waiting for retry thread to terminate.");
-    }
-  }*/
-
-  /*private void ensureDefaultNamespaceExists() throws InterruptedException {
-    Thread retryThread = new Thread("default-namespace-ensurer") {
+    new RetryThread(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Hello1");
-        boolean exists = false;
-        int retries = 0;
-        LOG.info(String.format("Exists = %s.1", exists));
-        LOG.info(String.format("Retry# %s to ensure that default namespace exists.1", retries));
-        while (!exists) {
-          LOG.info("Hello1.5");
-          LOG.info(String.format("Exists = %s", exists));
-          LOG.info(String.format("Retry# %s to ensure that default namespace exists.", retries));
-          try {
-            TimeUnit.SECONDS.sleep(2);
-            if (retries == 0) {
-              throw new RuntimeException("throwing");
+        createDefaultNamespace();
+      }
+    }, 2, TimeUnit.SECONDS).run();
+  }
+
+  static class RetryThread implements Runnable {
+
+    private Runnable toRetry;
+    private int waitBetweenRetries;
+    private TimeUnit waitUnit;
+
+    RetryThread(Runnable runnable, int wait, TimeUnit unit) {
+      this.toRetry = runnable;
+      this.waitBetweenRetries = wait;
+      this.waitUnit = unit;
+    }
+
+    @Override
+    public void run() {
+      Thread thread = new Thread("retry-with-sleep-thread") {
+        @Override
+        public void run() {
+          int retries = 0;
+          while (true) {
+            try {
+              toRetry.run();
+              // if run() does not throw exception, break
+              break;
+            } catch (Exception e) {
+              retries++;
+              LOG.warn("Error during retry# {} - {}", retries, e.getMessage());
+              try {
+                waitUnit.sleep(waitBetweenRetries);
+              } catch (InterruptedException e1) {
+                LOG.warn("Interrupted during retry# - {}", retries, e1.getMessage());
+              }
             }
-            System.out.println("waiting");
-            //createDefaultNamespace();
-            // if code reaches here, either the default namespace was created or it existed already
-            LOG.info(String.format("Successfully ensured existence of 'default' namespace in %s retries" +
-                                     ".", retries));
-            exists = true;
-            LOG.info("Hello2");
-          } catch (InterruptedException e) {
-            retries++;
-            LOG.info("Hello3");
-            LOG.info(String.format("default-namespace-ensurer thread interrupted during retry# %s.",
-                                   retries));
-          } catch (Exception e) {
-            retries++;
-            LOG.info("Hello4");
           }
         }
-      }
-    };
-    //retryThread.setDaemon(true);
-    retryThread.start();
-    LOG.info("Blocking");
-    retryThread.join();
-    LOG.info("finished blocking");
-  }*/
+      };
+      thread.setDaemon(true);
+      thread.start();
+    }
+  }
 
   /**
    * Creates the default namespace at a more deterministic time.

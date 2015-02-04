@@ -24,7 +24,6 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -152,11 +151,6 @@ public abstract class AppFabricTestBase {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
 
-    NamespaceService namespaceService = injector.getInstance(NamespaceService.class);
-    /*while (!namespaceService.isInitialized()) {
-      System.out.println("################ Waiting...");
-      TimeUnit.SECONDS.sleep(1);
-    }*/
     createNamespaces();
   }
 
