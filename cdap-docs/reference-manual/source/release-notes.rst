@@ -24,7 +24,7 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
-`Release 2.7.0 <http://docs.cask.co/cdap/2.7.0/index.html>`__
+`Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
 =============================================================
 
 API Changes
@@ -70,7 +70,7 @@ New Features
 Known Issues
 ------------
 - See also the *Known Issues* of `version 2.6.1. <#known-issues-261>`_
-- When upgrading an existing CDAP installation to 2.7.0, all metrics are reset.
+- When upgrading an existing CDAP installation to 2.7.1, all metrics are reset.
 
 
 `Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
