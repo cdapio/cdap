@@ -48,12 +48,12 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('WidgetTimeseriesCtrl', function ($scope) {
-    
-    $scope.wdgt.fetchData();    
+
+    $scope.wdgt.fetchData();
 
     $scope.$watch('wdgt.data', function (newVal) {
       if(angular.isArray(newVal)) {
-        
+
         $scope.chartHistory = [
           {
             label: $scope.wdgt.metric.name,
