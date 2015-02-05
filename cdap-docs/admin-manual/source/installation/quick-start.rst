@@ -16,8 +16,8 @@ CDAP on a Hadoop cluster, through the running of a verification application in C
 Deployment
 -------------
 
-- Determine your deployment architecture, following :ref:`the suggested setups <deployment-architectures>`.
-- Check that you have :ref:`the required hardware <install-hardware-requirements>`.
+- Determine your deployment architecture, following the :ref:`suggested setups <deployment-architectures>`.
+- Check that you have the :ref:`required hardware <install-hardware-requirements>`.
 
 Software Prerequisites
 ----------------------
