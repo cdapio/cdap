@@ -3,11 +3,12 @@
 <h3 ng-bind="apps.name | caskCapitalizeFilter"></h3>
 
 <div class="btn-group pull-right">
-    <div class="dropdown">
-        <button role="tab" ng-click="appDdClick($event)" class="btn btn-default dropdown-toggle" type="button">Actions
-          <span class="caret"></span>
-        </button>
-    </div>
+    <a class="btn btn-default"
+      data-template="/assets/features/admin/templates/partials/app-dd.html"
+      bs-dropdown>
+        Actions
+        <span class="caret"></span>
+    </a>
 </div>
 
 <table class="table table-striped table-responsive" cask-sortable>
