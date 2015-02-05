@@ -30,6 +30,8 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.SortedSet;
@@ -126,70 +128,89 @@ public final class FactTable {
   }
 
   /**
-   * Given a list of previous tags, we return a list of available tags at the child context in the provided time range.
-   * @param previousTags
+   * Given the list of tag values, return sorted collection of tagValues that appear next to the given tagValues
+   * (on first position right after given ones) in any of the written facts in specified time range.
+   * @param tags - list of tags , we need to return the tags at the next position after these list of tags.
    * @param startTs
    * @param endTs
-   * @return
+   * @return Sorted collection of tags
    * @throws Exception
    */
-  public SortedSet<TagValue> getNextTags(List<TagValue> previousTags, long startTs, long endTs) throws Exception {
-    byte[] startRow = codec.createStartRowKey(previousTags, null, startTs, true);
-    byte[] endRow = codec.createEndRowKey(previousTags, null, endTs, true);
+  public Collection<TagValue> getNextTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
+    //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
+    //todo: pass a limit on number of tags returned
+    byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
+    byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, previousTags),
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
                                                                 startRow, true);
     Row rowResult;
-    int targetIndex = previousTags.size();
-    SortedSet<TagValue> nextLevelContexts = Sets.newTreeSet();
-
-    do {
-      Scanner scanner = null;
-      scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
-      rowResult = scanner.next();
-      if (rowResult != null) {
-        //add item to list and increment the start row
-        List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
-        if (tagValues.size() > targetIndex) {
-          nextLevelContexts.add(tagValues.get(targetIndex));
+    int targetIndex = tags.size();
+    SortedSet<TagValue> result = Sets.newTreeSet(new Comparator<TagValue>() {
+      @Override
+      public int compare(TagValue t1, TagValue t2) {
+        int cmp = t1.getTagName().compareTo(t2.getTagName());
+        if (cmp != 0) {
+          return cmp;
         }
-        startRow = codec.getNextRowKey(previousTags, rowResult.getRow());
+        return t1.getValue().compareTo(t2.getValue());
       }
-    } while (rowResult != null);
+    });
+    Scanner scanner = null;
+    try {
+      do {
+        scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        rowResult = scanner.next();
+        if (rowResult != null) {
+          //add item to list and increment the start row
+          List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
+          if (tagValues.size() > targetIndex) {
+            result.add(tagValues.get(targetIndex));
+          }
+          startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
+        }
+      } while (rowResult != null);
+    } finally {
+      scanner.close();
+    }
 
-    return nextLevelContexts;
+    return result;
   }
 
   /**
    * Given a list of {@link co.cask.cdap.metrics.store.timeseries.TagValue} and time range,
-   * return the list of metric names with the provided tag value pairs in the given time range.
-   * @param previousTags
+   * return all measure names of the Facts that have given tagValues and are in the given time range.
+   * @param tags - list of tags to match, we return the measureNames that match this tags list.
    * @param startTs
    * @param endTs
-   * @return
+   * @return Sorted collection of measureNames
    * @throws Exception
    */
-  public SortedSet<String> getMeasureNames(List<TagValue> previousTags, long startTs, long endTs) throws Exception {
-    byte[] startRow = codec.createStartRowKey(previousTags, null, startTs, true);
-    byte[] endRow = codec.createEndRowKey(previousTags, null, endTs, true);
+  public Collection<String> getMeasureNames(List<TagValue> tags, long startTs, long endTs) throws Exception {
+    //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
+    //todo: pass a limit on number of tags returned
+    byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
+    byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, previousTags),
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
                                                                 startRow, true);
     Row rowResult;
-    SortedSet<String> metricNames = Sets.newTreeSet();
-
-    do {
-      Scanner scanner = null;
-      scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
-      rowResult = scanner.next();
-      if (rowResult != null) {
-        //add item to list and increment the start row
-        metricNames.add(codec.getMeasureName(rowResult.getRow()));
-        startRow = codec.getNextRowKey(previousTags, rowResult.getRow());
-      }
-    } while (rowResult != null);
-
-    return metricNames;
+    SortedSet<String> measureNames = Sets.newTreeSet();
+    Scanner scanner = null;
+    try {
+      do {
+        scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        rowResult = scanner.next();
+        if (rowResult != null) {
+          //add item to list and increment the start row
+          measureNames.add(codec.getMeasureName(rowResult.getRow()));
+          startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
+        }
+      } while (rowResult != null);
+    } finally {
+      scanner.close();
+    }
+    return measureNames;
   }
 
 
