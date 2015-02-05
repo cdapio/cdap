@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailController', function($scope, $state, $timeout) {
+  .controller('FlowsDetailController', function($state, $timeout) {
     if ($state.includes('**.runs.**')) {
       // If going to flow detail run tab don't do anything.
       // ui-router already has everything to load the state.

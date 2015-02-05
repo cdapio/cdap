@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailRunController', function($scope, $state, MyDataSource, $rootScope, $timeout) {
+  .controller('FlowsDetailRunController', function($scope, $state, MyDataSource, $timeout) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.feature.flows')
       }
     });
 
-    $rootScope.$on('$stateChangeSuccess', function(event, toState) {
+    $scope.$on('$stateChangeSuccess', function(event, toState) {
       var tab;
       if ($state.includes('flows.detail.runs.detail.*')) {
         tab = $scope.runTabs.indexOf(toState.name.split('.').slice(-1).pop())

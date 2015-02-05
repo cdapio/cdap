@@ -21,10 +21,10 @@ angular.module(PKG.name + '.feature.flows')
     }
 
     $scope.doProgram = function(programId, action) {
-      var flow = $scope.flows.filter(function(flow) {
+      var matchedFlow = $scope.flows.filter(function(flow) {
         return flow.id === programId;
       });
-      flow[0].status = 'UPDATING';
+      matchedFlow[0].status = 'UPDATING';
       dataSrc.request({
           _cdapNsPath: basePath + '/' + programId + '/' + action,
           method: 'POST'
