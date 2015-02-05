@@ -16,11 +16,9 @@ Data Exploration
     Stream Exploration <streams>
     Fileset Exploration <filesets>
     Custom Dataset Exploration <custom-datasets>
-    Integration with External Systems <integration>
 
 This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
-Queries can be run over Streams and certain types of Datasets, with a JDBC driver
-providing integration with external systems such as Business Intelligence (BI) tools.
+Queries can be run over Streams and certain types of Datasets.
 
 
 .. |stream-exploration| replace:: **Stream Exploration:**
@@ -43,11 +41,4 @@ providing integration with external systems such as Business Intelligence (BI) t
 
 - |custom-dataset-exploration|_ Describes how you can make a **custom Dataset** that is **explorable.**
 
-
-.. |integration-exploration| replace:: **Integration with External Systems:**
-.. _integration-exploration: integration.html
-
-- |integration-exploration|_ Through the use of a **JDBC driver**, CDAP can be integrated with
-  a wide range of external systems. This describes how to use the JDBC driver
-  programmatically, with **two examples of integrating CDAP** with business intelligence
-  tools.
+Further information on Data Exploration can be found in our :ref:`Integrations Manual <integrations-index>`.
