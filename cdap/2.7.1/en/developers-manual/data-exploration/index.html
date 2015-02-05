@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Data Exploration &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+        <link rel="stylesheet" href="../_static/hide-toc.css" type="text/css" />
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../index.html" />
+    <link rel="next" title="Stream Exploration" href="streams.html" />
+    <link rel="prev" title="CDAP Flume" href="../ingesting-tools/cdap-flume.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="streams.html" title="Stream Exploration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="../ingesting-tools/cdap-flume.html" title="CDAP Flume"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="data-exploration">
+<span id="id1"></span><h1>Data Exploration<a class="headerlink" href="#data-exploration" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="streams.html"> Stream Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesets.html"> Fileset Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom-datasets.html"> Custom Dataset Exploration</a></li>
+</ul>
+</div>
+<p>This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
+Queries can be run over Streams and certain types of Datasets.</p>
+<ul class="simple">
+<li><a class="reference external" href="streams.html"><strong>Stream Exploration:</strong></a> <strong>All streams can be explored</strong>, with support for attaching read
+formats and schemas, <strong>enabling powerful queries.</strong> This section covers how you attach a
+format and schema to a Stream.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="filesets.html"><strong>Fileset Exploration:</strong></a> Describes how you can make a <tt class="docutils literal"><span class="pre">FileSet</span></tt> or
+<tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> that is <strong>explorable.</strong></li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="custom-datasets.html"><strong>Custom Dataset Exploration:</strong></a> Describes how you can make a <strong>custom Dataset</strong> that is <strong>explorable.</strong></li>
+</ul>
+<p>Further information on Data Exploration can be found in our <a class="reference external" href="../source/../../integrations/index.html#integrations-index" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Integrations Manual</em></a>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Data Exploration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Stream Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesets.html"> Fileset Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-datasets.html"> Custom Dataset Exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="../ingesting-tools/cdap-flume.html"
+                        title="Previous Chapter">CDAP Flume</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="streams.html"
+                        title="Next Chapter">Stream Exploration</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Flume" href="../ingesting-tools/cdap-flume.html" />CDAP Flume</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Stream Exploration" href="streams.html" />Stream Exploration</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

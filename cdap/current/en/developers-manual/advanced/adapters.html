@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Adapters (Beta) &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../index.html" />
+    <link rel="up" title="Advanced Topics" href="index.html" />
+    <link rel="prev" title="Best Practices for Developing Applications" href="best-practices.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="best-practices.html" title="Best Practices for Developing Applications"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Advanced Topics</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="adapters-beta">
+<span id="advanced-adapters"></span><h1>Adapters (Beta)<a class="headerlink" href="#adapters-beta" title="Permalink to this headline">¶</a></h1>
+<p>Adapters read data from one or more data sources, perform a transformation, and then
+write to one or more data sinks. They may be used for ETL (extract, transform, and load)
+purposes, or any situation where you want to pipe data from one data source to another.</p>
+<p>CDAP currently provides a stream-conversion adapter that regularly reads data from
+a Stream and then writes the data to a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> in
+<a class="reference external" href="http://avro.apache.org">Avro format</a>. The output
+can then be explored through Hive or Impala, assuming a compatible schema is used.</p>
+<p>Each Adapter type is implemented as a CDAP Application, with an Adapter as
+a schedule for running the program in the application. For example, the stream-conversion
+Adapter type is an application named StreamConversion. Each Adapter is a schedule
+that periodically runs the Workflow defined in the StreamConversion application.
+Custom adapters can be added to CDAP, though the feature is experimental and will
+likely change and improve in future releases.</p>
+<div class="section" id="stream-conversion-adapter">
+<h2>Stream-conversion Adapter<a class="headerlink" href="#stream-conversion-adapter" title="Permalink to this headline">¶</a></h2>
+<p>A stream-conversion Adapter regularly reads data from a source Stream and writes
+it to a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> as Avro files. You may want to use this Adapter if you
+want to run partitioned Hive or Impala queries on data in a Stream. You may also want
+to use the Adapter if you have set a TTL on a Stream for real-time processing,
+but want to keep all Stream data around in another format for archiving purposes.
+Each Stream event is translated as a line in the output fileset.
+Stream format and schema must be given as adapter properties.
+The output schema will add a required <tt class="docutils literal"><span class="pre">ts</span></tt> field of type long for the timestamp of the
+event, as well as nullable string fields for any headers given in the adapter properties.</p>
+<p>Stream conversion Adapters require these properties:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">frequency</span></tt>: Defines how often the Adapter should run, as a number followed by a letter.
+For example, 5m means the Adapter will run every five minutes, and 2h means the Adapter
+will run every two hours. For minutes, the number given must be an even divisor of an hour.
+For example, 30m is valid, but 13m is not because an hour does not evenly divide into 13 minute chunks.
+Similarly, for hours, the number given must be an even divisor of a day.
+For example, 3h is valid, but 7h is not.</li>
+<li><tt class="docutils literal"><span class="pre">source.name</span></tt>: The name of the Stream to read from.</li>
+<li><tt class="docutils literal"><span class="pre">source.format.name</span></tt>: The name of the format of the Stream body.</li>
+<li><tt class="docutils literal"><span class="pre">source.format.settings</span></tt>: Settings of the format as a JSON Object of string to string.</li>
+<li><tt class="docutils literal"><span class="pre">source.schema</span></tt>: The schema of the Stream body.</li>
+<li><tt class="docutils literal"><span class="pre">sink.name</span></tt>: The name of the <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> to write to.</li>
+</ul>
+<p>These Adapter properties are optional:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">mapper.resources.memory.mb</span></tt>: Amount of memory each mapper of the Mapreduce program should use.</li>
+<li><tt class="docutils literal"><span class="pre">mapper.resources.vcores</span></tt>: Number of virtual cores each mapper of the Mapreduce program should use.</li>
+<li><tt class="docutils literal"><span class="pre">headers</span></tt>: Any stream headers that should be included in the output.</li>
+</ul>
+<p>This sink property is required:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">explore.table.property.avro.schema.literal</span></tt>: The output schema including timestamp and headers.</li>
+</ul>
+<p>Each time the Adapter is run, it will read stream events from a time range, write to the fileset, and add those
+files as a partition. The time range is calculated based on the frequency of the Adapter and the logical
+start time of the Adapter run. For example, if the Adapter is configured to run every hour, each run of the
+Adapter will read events starting from the logical start time minus an hour and ending at the logical start time.
+The logical start time is the time at which the schedule is triggered. For an hour frequency, this means
+the logical start time will be on the hour, every hour. Even if the run actually begins at 5:03:13, the logical
+start will be 5:00:00 and the run will read Stream events that were added from 4:00:00 inclusive to 5:00:00 exclusive.</p>
+<p>As there are so many properties, and because properties such as schema must be string values of
+escaped JSON Objects, it is highly recommended that you use the CLI to create stream-conversion Adapters.
+For example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">cdap</span> <span class="o">(</span><span class="nl">http:</span><span class="c1">//127.0.0.1:10000)&gt; create stream-conversion adapter convert_tickers on tickers frequency 10m format csv schema &quot;ticker string, trades int, price double&quot;</span>
+</pre></div>
+</div>
+<p>The command above will create a stream-conversion Adapter named <tt class="docutils literal"><span class="pre">convert_tickers</span></tt> that runs every ten minutes.
+It will read from the <em>tickers</em> Stream and write to the <em>tickers_converted</em> <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>.
+It will require stream events to be comma-separated values of ticker, trades, and price, and will write
+events as partitioned Avro files. With this adapter running, you will be able to run Hive or Impala queries
+over the output fileset, which will contain the <tt class="docutils literal"><span class="pre">ts</span></tt>, <tt class="docutils literal"><span class="pre">ticker</span></tt>, <tt class="docutils literal"><span class="pre">trades</span></tt>, and <tt class="docutils literal"><span class="pre">price</span></tt> fields as well
+as the partition fields:</p>
+<div class="highlight-java"><div class="highlight"><pre>cdap (http://127.0.0.1:10000)&gt; execute &#39;describe cdap_user_tickers_converted&#39;
++=======================================================================+
+| col_name: STRING        | data_type: STRING    | comment: STRING      |
++=======================================================================+
+| tickers                 | string               | from deserializer    |
+| trades                  | int                  | from deserializer    |
+| price                   | double               | from deserializer    |
+| ts                      | bigint               | from deserializer    |
+| year                    | int                  |                      |
+| month                   | int                  |                      |
+| day                     | int                  |                      |
+| hour                    | int                  |                      |
+| minute                  | int                  |                      |
+|                         |                      |                      |
+| # Partition Information |                      |                      |
+| # col_name              | data_type            | comment              |
+|                         |                      |                      |
+| year                    | int                  |                      |
+| month                   | int                  |                      |
+| day                     | int                  |                      |
+| hour                    | int                  |                      |
+| minute                  | int                  |                      |
++=======================================================================+
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-a-custom-adapter-type">
+<h2>Adding a Custom Adapter Type<a class="headerlink" href="#adding-a-custom-adapter-type" title="Permalink to this headline">¶</a></h2>
+<p>Adapter types are CDAP Applications that contain a special manifest file and are placed
+in an adapter plugins directory. If you wish to write a custom Adapter type, make sure
+your manifest file contains these properties:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">CDAP-Adapter-Type</span></tt>: Name by which your adapter type will be referenced.</li>
+<li><tt class="docutils literal"><span class="pre">CDAP-Adapter-Program-Type</span></tt>: Schedulable program type of your adapter.
+Currently, only <tt class="docutils literal"><span class="pre">WORKFLOW</span></tt> is supported.</li>
+<li><tt class="docutils literal"><span class="pre">CDAP-Adapter-Properties</span></tt>: Default properties to use for your adapter, formatted
+as a JSON Object of strings to strings. Properties set when creating an Adapter
+will be applied on top of the default properties.
+Adapter properties are passed to the Adapter program as runtime arguments.</li>
+<li><tt class="docutils literal"><span class="pre">CDAP-Source-Type</span></tt>: The source type. Currently only <tt class="docutils literal"><span class="pre">STREAM</span></tt> is supported.</li>
+<li><tt class="docutils literal"><span class="pre">CDAP-Sink-Type</span></tt>: The sink type. Currently only <tt class="docutils literal"><span class="pre">DATASET</span></tt> is supported.</li>
+<li><tt class="docutils literal"><span class="pre">CDAP-Sink-Properties</span></tt>: Default properties to use for sinks created when an
+Adapter is created, formatted as a JSON Object of strings to strings. Sink properties
+set when creating an Adapter will be applied on top of the default properties.
+When an Adapter is created, if the sink given does not already exist it will be
+created with the sink properties. The dataset.class properties must be present
+for dataset sinks.</li>
+</ul>
+<p>You can look at the cdap-adapters module in the CDAP project as an example.
+Once you have built your application jar, you must place it in the directory specified
+by the <tt class="docutils literal"><span class="pre">app.adapter.dir</span></tt> configuration setting.
+This setting defaults to <tt class="docutils literal"><span class="pre">/opt/cdap/master/plugins</span></tt> for distributed CDAP, and <tt class="docutils literal"><span class="pre">plugins</span></tt>
+for CDAP Standalone. Note that the jar must be present on all CDAP masters.</p>
+<p>Adapters are an experimental feature in CDAP. As such, they are subject to change
+and improvement in future releases. For example, much of the information placed
+in the manifest file will likely be exposed for programmatic manipulation.
+When creating a custom adapter, keep in mind the following limitations:</p>
+<ul class="simple">
+<li>The RESTful API for adapters only supports a single source and single sink.</li>
+<li>Adapter properties are passed to Adapter programs as runtime arguments.
+Source and Sink properties are not passed.</li>
+<li>Only Workflows can be scheduled by the Adapter framework.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Advanced Topics</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="best-practices.html"> Best Practices</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Adapters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stream-conversion-adapter">Stream-conversion Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adding-a-custom-adapter-type">Adding a Custom Adapter Type</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="best-practices.html"
+                        title="Previous Chapter">Best Practices for Developing Applications</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Best Practices for Developing Applications" href="best-practices.html" />Best Practices for Developing Applications</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

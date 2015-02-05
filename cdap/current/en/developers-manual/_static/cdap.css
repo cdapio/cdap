@@ -248,6 +248,17 @@ div.warning {
     border: 1px solid #f66;
 }
 
+div.new-icon {
+  position:absolute;
+  z-index: 5;
+  background-image: url(./ico_new.png);
+  display: inline-block;
+  margin-left: -18px;
+  width: 22px;
+  height: 22px;
+  background-repeat: no-repeat
+}
+
 p.admonition-title {
     display: inline;
 }
@@ -300,4 +311,10 @@ div.viewcode-block:target {
     background-color: #f4debf;
     border-top: 1px solid #ac9;
     border-bottom: 1px solid #ac9;
+}
+
+img.bordered-image { 
+    border:2px outset #708091;
+    display: inline-block; 
+    margin-top: 20px; 
 }
