@@ -23,6 +23,15 @@ angular.module(PKG.name + '.feature.flows')
           url: '/:programId',
           templateUrl: '/assets/features/flows/templates/detail.html',
           controller: 'FlowsDetailController',
+          onEnter: function($state, $timeout) {
+
+            $timeout(function() {
+              if ($state.is('flows.detail')) {
+                $state.go('flows.detail.runs');
+              }
+            });
+
+          },
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
             label: '{{$state.params.programId | caskCapitalizeFilter}}'
