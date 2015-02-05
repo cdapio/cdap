@@ -61,7 +61,7 @@ jdk.tools.jdk.tools-1.7.jar
 jline.jline-2.12.jar
 joda-time.joda-time-2.1.jar
 log4j.log4j-1.2.16.jar
-native
+hadoop.dll
 net.java.dev.jets3t.jets3t-0.9.0.jar
 net.jcip.jcip-annotations-1.0.jar
 net.jpountz.lz4.lz4-1.2.0.jar

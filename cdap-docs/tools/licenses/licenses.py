@@ -38,6 +38,8 @@ ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
 STANDALONE = "cdap-standalone-dependencies"
 
+CASK_REVERSE_DOMAIN = "co.cask"
+
 LICENSES_SOURCE = "../../reference-manual/source/licenses"
 
 SPACE = " "*3
@@ -48,14 +50,14 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEBUG = False
 
 def get_sdk_version():
-    # Sets the CDAP Build Version via maven
-    mvn_version_cmd = "mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
-    -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
+    # Sets the Build Version
+    grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     try:
-        version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")
+        full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("<version>", "").replace("</version>", "")
+        version = full_version.replace("-SNAPSHOT", "")
     except:
-        print "Could not get version from maven"
+        print "Could not get version using grep"
         sys.exit(1)
     return version
 
@@ -235,7 +237,7 @@ def process_level_1(input_file, options):
                     print 'lib.jar %s' % lib.jar
                     level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
                     continue
-                if not missing_libs_dict.has_key(artifact_id):
+                if not missing_libs_dict.has_key(artifact_id) and not jar.startswith(CASK_REVERSE_DOMAIN):
                     missing_libs_dict[artifact_id] = jar
 
     print "Level 1: Row count: %s" % row_count
