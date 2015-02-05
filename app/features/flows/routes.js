@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.flows')
           }
         })
           .state('flows.detail.runs', {
-            url: '/runs',
+            url: '/runs/:runId',
             templateUrl: '/assets/features/flows/templates/tabs/runs.html',
             controller: 'FlowsDetailRunController',
             ncyBreadcrumb: {
@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.flows')
           })
 
             .state('flows.detail.runs.detail', {
-              url: '/:runId',
+              url: '',
               template: '<ui-view/>',
               abstract: true
             })
@@ -79,18 +79,30 @@ angular.module(PKG.name + '.feature.flows')
               })
           .state('flows.detail.schedules', {
             url: '/schedules',
-            templateUrl: '/assets/features/flows/templates/tabs/schedules.html'
+            templateUrl: '/assets/features/flows/templates/tabs/schedules.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
           })
           .state('flows.detail.metadata', {
             url: '/metadata',
-            templateUrl: '/assets/features/flows/templates/tabs/metadata.html'
+            templateUrl: '/assets/features/flows/templates/tabs/metadata.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
           })
           .state('flows.detail.history', {
             url: '/history',
-            templateUrl: '/assets/features/flows/templates/tabs/history.html'
+            templateUrl: '/assets/features/flows/templates/tabs/history.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
           })
           .state('flows.detail.resources', {
             url: '/resources',
-            templateUrl: '/assets/features/flows/templates/tabs/resources.html'
+            templateUrl: '/assets/features/flows/templates/tabs/resources.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
           });
   });
