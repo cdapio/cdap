@@ -35,6 +35,7 @@ import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
@@ -168,14 +169,16 @@ public class RemoteApplicationManager implements ApplicationManager {
     return programId;
   }
 
-  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit, ProgramId jobId)
-    throws InterruptedException, TimeoutException {
-    while (timeout > 0 && isRunning(jobId)) {
-      timeoutUnit.sleep(1);
-      timeout--;
+  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit,
+                                    ProgramId jobId) throws InterruptedException, TimeoutException {
+    // Min sleep time is 10ms, max sleep time is 1 seconds
+    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+    Stopwatch stopwatch = new Stopwatch().start();
+    while (isRunning(jobId) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+      TimeUnit.MILLISECONDS.sleep(sleepMillis);
     }
 
-    if (timeout == 0 && isRunning(jobId)) {
+    if (isRunning(jobId)) {
       throw new TimeoutException("Time limit reached.");
     }
   }
@@ -227,7 +230,7 @@ public class RemoteApplicationManager implements ApplicationManager {
           }
 
           @Override
-          public String status() {
+          public String status(int expectedCode) {
             throw new UnsupportedOperationException("TODO");
           }
         };

@@ -19,9 +19,6 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -30,6 +27,8 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -41,13 +40,18 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -55,11 +59,14 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -69,7 +76,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -95,7 +101,6 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetOpExecutor dsOpService;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
-  protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
   protected static StreamHttpService streamHttpService;
 
@@ -135,11 +140,6 @@ public class BaseHiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-
-    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    datasetManagerEndpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
-
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
@@ -290,7 +290,22 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
-      new StreamAdminModules().getInMemoryModules()
+      new StreamAdminModules().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+
+          Multibinder<HttpHandler> handlerBinder =
+            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandler.class);
+          handlerBinder.addBinding().to(StreamFetchHandler.class);
+          CommonHandlers.add(handlerBinder);
+
+          bind(StreamHttpService.class).in(Scopes.SINGLETON);
+        }
+      }
     );
   }
 
@@ -321,7 +336,22 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new StreamAdminModules().getStandaloneModules(),
+      new NotificationServiceRuntimeModule().getStandaloneModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+
+          Multibinder<HttpHandler> handlerBinder =
+            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandler.class);
+          handlerBinder.addBinding().to(StreamFetchHandler.class);
+          CommonHandlers.add(handlerBinder);
+
+          bind(StreamHttpService.class).in(Scopes.SINGLETON);
+        }
+      }
     );
   }
 }

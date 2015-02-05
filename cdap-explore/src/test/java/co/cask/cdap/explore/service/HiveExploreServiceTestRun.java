@@ -18,7 +18,6 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -424,7 +423,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new TableInfo.ColumnInfo("userid", "bigint", null),
                             new TableInfo.ColumnInfo("page_url", "string", null),
                             new TableInfo.ColumnInfo("referrer_url", "string", null),
-                            new TableInfo.ColumnInfo("ip", "string", "IP Address of the User")
+                            new TableInfo.ColumnInfo("ip", "string", "IP Address of the User"),
+                            new TableInfo.ColumnInfo("dt", "string", null),
+                            new TableInfo.ColumnInfo("country", "string", null)
                           ),
                           tableInfo.getLocation(),
                           "org.apache.hadoop.mapred.SequenceFileInputFormat",

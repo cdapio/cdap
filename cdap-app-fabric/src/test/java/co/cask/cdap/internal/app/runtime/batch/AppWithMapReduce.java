@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import org.apache.hadoop.mapreduce.Job;
 
 /**
@@ -75,6 +76,8 @@ public class AppWithMapReduce extends AbstractApplication {
     @UseDataSet("timeSeries")
     private TimeseriesTable table;
 
+    private Metrics metrics;
+
     @Override
     protected void configure() {
       setOutputDataset("timeSeries");
@@ -82,6 +85,7 @@ public class AppWithMapReduce extends AbstractApplication {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
+      metrics.count("beforeSubmit", 1);
       Job hadoopJob = context.getHadoopJob();
       AggregateMetricsByTag.configureJob(hadoopJob);
       String metricName = context.getRuntimeArguments().get("metric");
@@ -96,12 +100,15 @@ public class AppWithMapReduce extends AbstractApplication {
         hadoopJob.getConfiguration().setInt("c.mapper.flush.freq", 1);
         hadoopJob.getConfiguration().setInt("c.reducer.flush.freq", 1);
       }
+      metrics.count("beforeSubmit", 1);
     }
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+      metrics.count("onFinish", 1);
       System.out.println("Action taken on MapReduce job " + (succeeded ? "" : "un") + "successful completion");
       onFinishTable.write(Bytes.toBytes("onFinish"), Bytes.toBytes("onFinish:done"));
+      metrics.count("onFinish", 1);
     }
   }
 }

@@ -19,8 +19,6 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -112,7 +110,8 @@ public class HBaseMetricsTable implements MetricsTable {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
-        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+        throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                          " row: " + Bytes.toStringBinary(row));
       }
       throw e;
     }
@@ -150,7 +149,7 @@ public class HBaseMetricsTable implements MetricsTable {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
-        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+        throw new NumberFormatException("Attempted to increment a value that is not convertible to long.");
       }
       throw e;
     }
@@ -168,7 +167,9 @@ public class HBaseMetricsTable implements MetricsTable {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
-        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+        throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                          " row: " + Bytes.toStringBinary(row) +
+                                          " column: " + Bytes.toStringBinary(column));
       }
       throw e;
     }

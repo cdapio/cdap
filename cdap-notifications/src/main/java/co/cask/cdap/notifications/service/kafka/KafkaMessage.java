@@ -16,6 +16,7 @@
 
 package co.cask.cdap.notifications.service.kafka;
 
+import com.google.common.base.Objects;
 import com.google.gson.JsonElement;
 
 /**
@@ -36,5 +37,13 @@ class KafkaMessage {
 
   public JsonElement getNotificationJson() {
     return notificationJson;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("messageKey", messageKey)
+      .add("notificationJson", notificationJson)
+      .toString();
   }
 }

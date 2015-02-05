@@ -31,8 +31,10 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -70,7 +72,6 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,13 +222,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
             contextConfig.set(context, cConf, tx, programJarCopy.getName());
 
             LOG.info("Submitting MapReduce Job: {}", context);
-            ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(job.getConfiguration().getClassLoader());
+            ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
             try {
               // submits job and returns immediately
               job.submit();
             } finally {
-              Thread.currentThread().setContextClassLoader(oldClassLoader);
+              ClassLoaders.setContextClassLoader(oldClassLoader);
             }
 
             this.job = job;
@@ -367,8 +367,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private void beforeSubmit() throws TransactionFailureException, InterruptedException {
     runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
       @Override
-      public void apply(MapReduceContext context) throws Exception {
-        mapReduce.beforeSubmit(context);
+      public void apply(MapReduceContext mapReduceContext) throws Exception {
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
+        try {
+          mapReduce.beforeSubmit(mapReduceContext);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       }
     }, "beforeSubmit()");
   }
@@ -379,8 +384,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
     runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
       @Override
-      public void apply(MapReduceContext context) throws Exception {
-        mapReduce.onFinish(succeeded, context);
+      public void apply(MapReduceContext mapReduceContext) throws Exception {
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
+        try {
+          mapReduce.onFinish(succeeded, mapReduceContext);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       }
     }, "onFinish()");
   }

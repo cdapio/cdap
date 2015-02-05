@@ -20,12 +20,15 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
  * Utility class to convert String array to Map<String, String>.
  */
 public final class RuntimeArguments {
+
+  public static final Map<String, String> NO_ARGUMENTS = Collections.emptyMap();
 
   private RuntimeArguments() {
   }

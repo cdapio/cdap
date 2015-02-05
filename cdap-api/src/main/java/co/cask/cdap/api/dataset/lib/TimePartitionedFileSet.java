@@ -45,7 +45,7 @@ public interface TimePartitionedFileSet extends Dataset, InputFormatProvider, Ou
   /**
    * Remove a partition for a given time.
    */
-  public void removePartition(long time);
+  public void dropPartition(long time);
 
   /**
    * @return the relative path of the partition for a specific time.
@@ -57,7 +57,13 @@ public interface TimePartitionedFileSet extends Dataset, InputFormatProvider, Ou
    * @return the relative paths of all partitions with a time that is between startTime (inclusive)
    *         and endTime (exclusive).
    */
-  public Collection<String> getPartitions(long startTime, long endTime);
+  public Collection<String> getPartitionPaths(long startTime, long endTime);
+
+  /**
+   * @return a mapping from the partition time to the relative path, of all partitions with a time
+   *         that is between startTime (inclusive) and endTime (exclusive).
+   */
+  public Map<Long, String> getPartitions(long startTime, long endTime);
 
   /**
    * @return the underlying (embedded) file set.

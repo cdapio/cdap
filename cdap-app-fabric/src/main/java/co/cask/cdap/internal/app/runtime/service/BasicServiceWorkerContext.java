@@ -31,6 +31,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -39,6 +40,7 @@ import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TxConstants;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -70,19 +72,19 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final DatasetFramework datasetFramework;
   private final Metrics userMetrics;
   private final int instanceId;
-  private final int instanceCount;
-  private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
+  private volatile int instanceCount;
+  private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
   private final Program program;
   private final Map<String, String> runtimeArgs;
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
                                    int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
-                                   MetricsCollectionService metricsSerice,
+                                   MetricsCollectionService metricsCollectionService,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient transactionSystemClient,
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsSerice, program, spec.getName(), runId.getId(), instanceId),
+          getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
           datasetFramework, cConf, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
@@ -92,19 +94,26 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsSerice, program,
+    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  spec.getName(), runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
+
+    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 minutes.
+    // This ensures that when a dataset instance is requested multiple times during a single transaction,
+    // the same instance is always returned.
+    long cacheExpiryTimeout =
+      Math.max(2, 2 * TimeUnit.SECONDS.toMinutes(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
+                                                              TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(2, TimeUnit.MINUTES)
-      .removalListener(new RemovalListener<Long, Map<String, Dataset>>() {
+      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.MINUTES)
+      .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
-        public void onRemoval(RemovalNotification<Long, Map<String, Dataset>> notification) {
+        public void onRemoval(RemovalNotification<Long, Map<DatasetCacheKey, Dataset>> notification) {
           if (notification.getValue() != null) {
-            for (Map.Entry<String, Dataset> entry : notification.getValue().entrySet()) {
+            for (Map.Entry<DatasetCacheKey, Dataset> entry : notification.getValue().entrySet()) {
               try {
                 entry.getValue().close();
               } catch (IOException e) {
@@ -114,10 +123,10 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
           }
         }
       })
-      .build(new CacheLoader<Long, Map<String, Dataset>>() {
+      .build(new CacheLoader<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
-        public Map<String, Dataset> load(Long key) throws Exception {
+        public Map<DatasetCacheKey, Dataset> load(Long key) throws Exception {
           return Maps.newHashMap();
         }
       });
@@ -157,7 +166,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
       runnable.run(new DynamicDatasetContext(context, datasetFramework, getProgram().getClassLoader(),
                                              datasets, runtimeArgs) {
         @Override
-        protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+        protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
           return datasetsCache;
         }
       });
@@ -177,6 +186,10 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   @Override
   public int getInstanceId() {
     return instanceId;
+  }
+
+  public void setInstanceCount(int instanceCount) {
+    this.instanceCount = instanceCount;
   }
 
   @Override

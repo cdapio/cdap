@@ -22,7 +22,6 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -40,6 +39,7 @@ import com.google.common.reflect.TypeToken;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,12 +110,15 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           }
         }
         // Remove all process states and group states for each stream
-        String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
+        String namespace = String.format("%s.%s.%s",
+                                         programId.getNamespaceId(),
+                                         programId.getApplicationId(),
+                                         programId.getId());
         for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
           streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
         }
 
-        queueAdmin.dropAllForFlow(programId.getApplicationId(), programId.getId());
+        queueAdmin.dropAllForFlow(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         deletedFlows.add(programId.getId());
       }
     }
@@ -127,9 +130,9 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   }
 
   private void deleteMetrics(String account, String application, Iterable<String> flows) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(DISCOVERY_TIMEOUT_SECONDS,
+                                                                            TimeUnit.SECONDS);
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");

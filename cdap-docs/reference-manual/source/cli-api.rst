@@ -87,9 +87,12 @@ These are the available commands:
    ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The header is formatted as ""{'key':'value', ...}"" and the body is a String."
    ``connect <cdap-instance-uri>``,"Connects to a CDAP instance. <credential(s)> parameter(s) could be used if authentication is enabled in the gateway server."
    **Creating**
+   ``create adapter <adapter-name> type <adapter-type> [props <adapter-props>] src <adapter-source> [src-props <adapter-source-config>] sink <adapter-sink> [sink-props <adapter-sink-config>]``,"Creates an Adapter"
    ``create dataset instance <dataset-type> <new-dataset-name>``,"Creates a Dataset"
    ``create stream <new-stream-id>``,"Creates a Stream"
+   ``create stream-conversion adapter <adapter-name> on <stream-id> [frequency <frequency>] [format <format>] [schema <schema>] [headers <headers>] [to <dataset-name>]``,"Creates a stream conversion Adapter that periodically reads from a stream and writes to a time partitioned fileset"
    **Deleting**
+   ``delete adapter <adapter-name>``,"Deletes an Adapter"
    ``delete app <app-id>``,"Deletes an application"
    ``delete dataset instance <dataset-name>``,"Deletes a Dataset"
    ``delete dataset module <dataset-module>``,"Deletes a Dataset module"

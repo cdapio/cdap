@@ -32,7 +32,6 @@ import co.cask.cdap.data.stream.service.upload.FileContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -92,10 +91,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
-  private final MetricsCollector metricsCollector;
+  private final MetricsCollector streamHandlerMetricsCollector;
+  private final MetricsCollector streamMetricsCollector;
   private final ConcurrentStreamWriter streamWriter;
-  private final ExploreFacade exploreFacade;
-  private final boolean exploreEnabled;
   private final long batchBufferThreshold;
   private final StreamBodyConsumerFactory streamBodyConsumerFactory;
 
@@ -113,17 +111,16 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                        StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                        MetricsCollectionService metricsCollectionService,
-                       ExploreFacade exploreFacade, StreamWriterSizeCollector sizeCollector) {
+                       StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.exploreFacade = exploreFacade;
     this.sizeCollector = sizeCollector;
-    this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
-    this.metricsCollector = metricsCollectionService.getCollector(getMetricsContext());
+    this.streamHandlerMetricsCollector = metricsCollectionService.getCollector(getStreamHandlerMetricsContext());
+    this.streamMetricsCollector = metricsCollectionService.getCollector(getStreamMetricsContext());
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
@@ -165,7 +162,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(stream);
       StreamProperties streamProperties =
-        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat());
+        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat(),
+                             streamConfig.getNotificationThresholdMB());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -189,16 +187,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
     streamMetaStore.addStream(accountID, stream);
-    // Enable ad-hoc exploration of stream
-    if (exploreEnabled) {
-      try {
-        exploreFacade.enableExploreStream(stream);
-      } catch (Exception e) {
-        // at this time we want to still allow using stream even if it cannot be used for exploration
-        String msg = String.format("Cannot enable exploration of stream %s: %s", stream, e.getMessage());
-        LOG.error(msg, e);
-      }
-    }
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -300,15 +288,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     streamAdmin.updateConfig(requestedConfig);
-    // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
-    // a hive change, as they are just properties used by the stream storage handler.
-    Schema currSchema = currConfig.getFormat().getSchema();
-    Schema newSchema = requestedConfig.getFormat().getSchema();
-    if (exploreEnabled && !currSchema.equals(newSchema)) {
-      exploreFacade.disableExploreStream(stream);
-      exploreFacade.enableExploreStream(stream);
-    }
-
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -317,7 +296,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public StreamMetricsCollector createMetricsCollector(final String streamName) {
         final MetricsCollector childCollector =
-          metricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -334,8 +313,19 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     };
   }
 
-  private Map<String, String> getMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+  private Map<String, String> getStreamHandlerMetricsContext() {
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
+                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
+                           Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
+  }
+
+  /**
+   * TODO: CDAP-1244:This should accept namespaceId. Refactor metricsCollectors here after streams are namespaced.
+   */
+  private Map<String, String> getStreamMetricsContext() {
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
@@ -383,7 +373,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       try {
         // if a format is given, make sure it is a valid format,
         // check that we can instantiate the format class
-        RecordFormat format = RecordFormats.createInitializedFormat(newFormatSpec);
+        RecordFormat<?, ?> format = RecordFormats.createInitializedFormat(newFormatSpec);
         // the request may contain a null schema, in which case the default schema of the format should be used.
         // create a new specification object that is guaranteed to have a non-null schema.
         newFormatSpec = new FormatSpecification(newFormatSpec.getName(),
@@ -399,8 +389,19 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
+    // if no threshold is given, use the existing threshold.
+    Integer newThreshold = properties.getThreshold();
+    if (newThreshold == null) {
+      newThreshold = currConfig.getNotificationThresholdMB();
+    } else {
+      if (newThreshold <= 0) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
+        return null;
+      }
+    }
+
     return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
-                            newTTL, currConfig.getLocation(), newFormatSpec);
+                            newTTL, currConfig.getLocation(), newFormatSpec, newThreshold);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -408,7 +409,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
-          metricsCollector.increment("collect.async.reject", 1);
+          streamHandlerMetricsCollector.increment("collect.async.reject", 1);
           r.run();
         }
       }
@@ -424,17 +425,27 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
+  /**
+   * Same as calling {@link #getHeaders(HttpRequest, String, ImmutableMap.Builder)} with a new builder.
+   */
   private Map<String, String> getHeaders(HttpRequest request, String stream) {
-    // build a new event from the request, start with the headers
-    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+    return getHeaders(request, stream, ImmutableMap.<String, String>builder());
+  }
+
+  /**
+   * Extracts event headers from the HTTP request. Only HTTP headers that are prefixed with "{@code <stream-name>.}"
+   * will be included. The result will be stored in an Immutable map built by the given builder.
+   */
+  private Map<String, String> getHeaders(HttpRequest request, String stream,
+                                         ImmutableMap.Builder<String, String> builder) {
     // and transfer all other headers that are to be preserved
     String prefix = stream + ".";
     for (Map.Entry<String, String> header : request.getHeaders()) {
       if (header.getKey().startsWith(prefix)) {
-        headers.put(header.getKey().substring(prefix.length()), header.getValue());
+        builder.put(header.getKey().substring(prefix.length()), header.getValue());
       }
     }
-    return headers.build();
+    return builder.build();
   }
 
   /**
@@ -443,12 +454,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private ContentWriterFactory createContentWriterFactory(String accountId,
                                                           String stream, HttpRequest request) throws IOException {
     long contentLength = HttpHeaders.getContentLength(request, -1L);
+    String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
+
+    // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
+    Map<String, String> headers = getHeaders(request, stream,
+                                             ImmutableMap.<String, String>builder().put("content.type", contentType));
+
     if (contentLength >= 0 && contentLength <= batchBufferThreshold) {
-      return new BufferedContentWriterFactory(accountId, stream, streamWriter, getHeaders(request, stream));
+      return new BufferedContentWriterFactory(accountId, stream, streamWriter, headers);
     }
 
     StreamConfig config = streamAdmin.getConfig(stream);
-    return new FileContentWriterFactory(accountId, config, streamWriter, getHeaders(request, stream));
+    return new FileContentWriterFactory(accountId, config, streamWriter, headers);
   }
 
   /**
@@ -461,6 +478,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       json.addProperty("name", src.getName());
       json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
+      json.addProperty("threshold", src.getThreshold());
       return json;
     }
   }

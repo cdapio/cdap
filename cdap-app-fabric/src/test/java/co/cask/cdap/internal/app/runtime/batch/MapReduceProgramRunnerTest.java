@@ -411,6 +411,8 @@ public class MapReduceProgramRunnerTest {
           Assert.assertTrue(countersFromContext.get(new Get("reducer")).getLong("records", 0) > 0);
         }
       });
+
+    // todo: verify metrics. Will be possible after refactor for CDAP-765
   }
 
   @Test

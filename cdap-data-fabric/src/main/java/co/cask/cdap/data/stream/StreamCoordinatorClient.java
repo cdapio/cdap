@@ -39,12 +39,22 @@ public interface StreamCoordinatorClient extends Service {
   /**
    * Changes the TTL of the given stream.
    *
-   * @param streamConfig stream configuration
+   * @param streamName name of the stream
    * @param ttl the new TTL
    * @return A future that will be completed when the update of TTL is done. The future result will carry
    *         the TTL updated by this method.
    */
-  ListenableFuture<Long> changeTTL(StreamConfig streamConfig, long ttl);
+  ListenableFuture<Long> changeTTL(String streamName, long ttl);
+
+  /**
+   * Changes the notification threshold of the given stream.
+   *
+   * @param streamName name of the stream
+   * @param threshold the new notification threshold
+   * @return A future that will be completed when the update of threshold is done. The future result will carry
+   *         the threshold updated by this method.
+   */
+  ListenableFuture<Integer> changeThreshold(String streamName, int threshold);
 
   /**
    * Receives event for changes in stream properties.

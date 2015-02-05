@@ -22,21 +22,22 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -90,10 +91,10 @@ public abstract class GatewayTestBase {
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
   private static MetricsQueryService metrics;
-  private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+  private static NotificationService notificationService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -143,11 +144,13 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
-        new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getStandaloneModules()
+        new NotificationServiceRuntimeModule().getInMemoryModules(),
+        new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
+          install(new StreamServiceRuntimeModule().getStandaloneModules());
+
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
           // AppFabricServiceModule
@@ -160,7 +163,7 @@ public abstract class GatewayTestBase {
 
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
         }
@@ -175,10 +178,10 @@ public abstract class GatewayTestBase {
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
-    streamHttpService = injector.getInstance(StreamHttpService.class);
     appFabricServer.startAndWait();
     metrics.startAndWait();
-    streamHttpService.startAndWait();
+    notificationService = injector.getInstance(NotificationService.class);
+    notificationService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -193,9 +196,9 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
+    notificationService.stopAndWait();
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
-    streamHttpService.stopAndWait();
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();

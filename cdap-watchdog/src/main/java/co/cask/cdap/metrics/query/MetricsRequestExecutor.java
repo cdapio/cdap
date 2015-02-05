@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.AggregatesScanResult;
 import co.cask.cdap.metrics.data.AggregatesScanner;
 import co.cask.cdap.metrics.data.AggregatesTable;
@@ -45,7 +44,6 @@ import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
@@ -73,7 +71,7 @@ public class MetricsRequestExecutor {
     });
   }
 
-  public JsonElement executeQuery(MetricsRequest metricsRequest) throws IOException, OperationException {
+  public JsonElement executeQuery(MetricsRequest metricsRequest) throws Exception {
 
     // Pretty ugly logic now. Need to refactor
     Object resultObj = null;
@@ -128,7 +126,7 @@ public class MetricsRequestExecutor {
   }
 
   private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder)
-    throws OperationException {
+    throws Exception {
     int resolution = metricsRequest.getTimeSeriesResolution();
     long start = metricsRequest.getStartTime() / resolution * resolution;
     long end = (metricsRequest.getEndTime() / resolution) * resolution;
@@ -196,12 +194,11 @@ public class MetricsRequestExecutor {
       if (queueName.isStream()) {
         streamNames.add(queueName.getSimpleName());
       } else if (queueName.isQueue()) {
-        // TODO: After CDAP-1167 is fixed, namespace should be the first component of the queueName.
         String context = String.format("%s.%s.f.%s.%s",
-                                       Constants.DEFAULT_NAMESPACE,
-                                       queueName.getFirstComponent(), // the app
-                                       queueName.getSecondComponent(), // the flow
-                                       queueName.getThirdComponent()); // the flowlet
+                                       queueName.getFirstComponent(), // the namespace
+                                       queueName.getSecondComponent(), // the app
+                                       queueName.getThirdComponent(), // the flow
+                                       queueName.getFourthComponent()); // the flowlet
         queueNameContexts.add(new ImmutablePair<String, String>(queueName.getSimpleName(), context));
       } else {
         LOG.warn("unknown type of queue name {} ", queueName.toString());
@@ -215,7 +212,10 @@ public class MetricsRequestExecutor {
       enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "system.process.events.out", "0", pair.getFirst()));
     }
     for (String streamName : streamNames) {
-      String ctx = Constants.Gateway.METRICS_CONTEXT + "." + Constants.Gateway.STREAM_HANDLER_NAME;
+      String ctx = String.format("%s.%s.%s",
+                                 Constants.SYSTEM_NAMESPACE,
+                                 Constants.Gateway.METRICS_CONTEXT,
+                                 Constants.Gateway.STREAM_HANDLER_NAME);
       enqueue += sumAll(aggregatesTable.scan(ctx, "system.collect.events", "0", streamName));
     }
 
@@ -224,7 +224,7 @@ public class MetricsRequestExecutor {
   }
 
   private Iterator<TimeValue> queryTimeSeries(MetricsScanQuery scanQuery, Interpolator interpolator, int resolution)
-    throws OperationException {
+    throws Exception {
 
     Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
     MetricsScanner scanner = timeSeriesTables.scan(resolution, scanQuery);

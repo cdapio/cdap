@@ -18,9 +18,9 @@ package co.cask.cdap.client.common;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.ProgramNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -40,6 +40,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public abstract class ClientTestBase extends StandaloneTestBase {
+  protected static final boolean START_LOCAL_STANDALONE = true;
   protected static final String HOSTNAME = "localhost";
   protected static final int PORT = 10000;
 
@@ -48,6 +49,11 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   @Before
   public void setUp() throws Throwable {
     clientConfig = new ClientConfig.Builder().setHostname(HOSTNAME).setPort(PORT).build();
+  }
+
+  @Override
+  protected ClientConfig getClientConfig() {
+    return clientConfig;
   }
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {

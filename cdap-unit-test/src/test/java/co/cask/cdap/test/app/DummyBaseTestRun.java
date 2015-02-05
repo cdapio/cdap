@@ -16,20 +16,22 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * This test and DummyBaseCloneTest make sure that two TestBase classes can be executed in the same suite -
  * in particular, it makes sure that Explore is working properly.
  */
-public class DummyBaseTestRun extends TestBase {
+public class DummyBaseTestRun extends TestFrameworkTestBase {
+
   @Test
   public void test() throws Exception {
     deployApplication(DummyApp.class);
@@ -44,10 +46,12 @@ public class DummyBaseTestRun extends TestBase {
       } finally {
         resultSet.close();
       }
-      Assert.assertEquals(Sets.newHashSet("cdap_stream_who", "cdap_user_whom"), tables);
+      // Since this test can runs in test suite that may contains other tests,
+      // use intersect to verify to avoid seeing tables created by other tests
+      Set<String> expected = Sets.newHashSet("cdap_stream_who", "cdap_user_whom");
+      Assert.assertEquals(expected, Sets.intersection(expected, tables));
     } finally {
       connection.close();
-      clear();
     }
   }
 }

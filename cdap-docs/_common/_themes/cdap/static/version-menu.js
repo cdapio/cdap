@@ -43,8 +43,12 @@
       document.write('<li style="width: 120px; position: absolute; margin-left: -165px; text-align: right; top: 6px;">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
+    var ess = "s";
     if (data.development) {
-      document.write('<optgroup label="Development Release">');          
+      if (data.development.length == 1) {
+        ess = "";
+      }
+      document.write('<optgroup label="Development Release' + ess +'">');          
       var i;
       for (i in data.development) {
         writelink(data.development[i][0], data.development[i][1]);
@@ -57,7 +61,11 @@
       document.write('</optgroup>');
     }
     if (data.older) {
-      document.write('<optgroup label="Older Releases">');
+      ess = "s";
+      if (data.older.length == 1) {
+        ess = "";
+      }
+      document.write('<optgroup label="Older Release' + ess + '">');
       var j;
       for (j in data.older) {
         writelink(data.older[j][0], data.older[j][1]);

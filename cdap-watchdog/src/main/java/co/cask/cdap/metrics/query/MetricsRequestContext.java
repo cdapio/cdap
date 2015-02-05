@@ -61,22 +61,22 @@ public class MetricsRequestContext {
     this.runId = runId;
 
     List<String> contextParts = Lists.newArrayListWithCapacity(4);
-    if (typeId == null || typeId.isEmpty()) {
+    // the first part of the context is namespaceId. If it is null, set contextPrefix to null
+    if (namespaceId == null || namespaceId.isEmpty()) {
       this.contextPrefix = null;
     } else {
-      // namespaceId is null for system services
-      if (this.namespaceId != null) {
-        contextParts.add(this.namespaceId);
-      }
-      contextParts.add(typeId);
-      if (requestType != null) {
-        if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
-          contextParts.add(requestType.getCode());
-        }
-        if (requestId != null && !requestId.isEmpty()) {
-          contextParts.add(requestId);
-          if (componentId != null && !componentId.isEmpty()) {
-            contextParts.add(componentId);
+      contextParts.add(namespaceId);
+      if (typeId != null && !typeId.isEmpty()) {
+        contextParts.add(typeId);
+        if (requestType != null) {
+          if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
+            contextParts.add(requestType.getCode());
+          }
+          if (requestId != null && !requestId.isEmpty()) {
+            contextParts.add(requestId);
+            if (componentId != null && !componentId.isEmpty()) {
+              contextParts.add(componentId);
+            }
           }
         }
       }

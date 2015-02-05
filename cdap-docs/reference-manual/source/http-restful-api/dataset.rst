@@ -37,6 +37,7 @@ The response body will contain a JSON-formatted list of the existing Datasets::
      }
    }
 
+.. _http-restful-api-dataset-creating:
 
 Creating a Dataset
 ------------------

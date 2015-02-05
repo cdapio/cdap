@@ -19,8 +19,10 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -64,10 +66,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(getProcedureContext("yourspace", "WCount1", "RCounts"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Mapper));
+                                                                       MapReduceMetrics.TaskType.Mapper,
+                                                                       "run1", "task1"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(
-      getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount", MapReduceMetrics.TaskType.Reducer));
+      getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
+                              MapReduceMetrics.TaskType.Reducer, "run1", "task2"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter", "splitter"));
     collector.increment("reads", 1);
@@ -84,6 +88,9 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
+    collector = collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+    collector.increment("resources.total.storage", 10);
+
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);
   }
@@ -92,7 +99,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
-                               ImmutableList.<String>of("myspace", "yourspace"));
+                       ImmutableList.<String>of("myspace", "system", "yourspace"));
+
+    // verify childContext in system context
+    verifySearchResultContains("/v3/metrics/search?target=childContext&context=system",
+                       ImmutableList.<String>of("system.-"));
+    verifySearchResultContains("/v3/metrics/search?target=childContext&context=system.-",
+                       ImmutableList.<String>of("system.-.cluster"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace",
@@ -119,11 +132,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of("yourspace.WCount1.b.ClassicWordCount.m",
                                                 "yourspace.WCount1.b.ClassicWordCount.r"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m",
+                       ImmutableList.<String>of("yourspace.WCount1.b.ClassicWordCount.m.task1"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m.task1",
                        ImmutableList.<String>of());
   }
 
   @Test
   public void testQueryMetrics() throws Exception {
+    // aggregate result, in the system namespace
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=system.-.cluster&metric=system.resources.total.storage&aggregate=true", 10);
+    // cluster metrics must have system in the context prefix
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=-.cluster&metric=system.resources.total.storage&aggregate=true", 0);
+
     // aggregate result, in the right namespace
     verifyAggregateQueryResult(
       "/v3/metrics/query?context=yourspace.WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 3);
@@ -153,6 +175,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testSearchMetrics() throws Exception {
+    // metrics in system namespace
+    verifySearchResult("/v3/metrics/search?target=metric&context=system.-.cluster",
+                       ImmutableList.<String>of("system.resources.total.storage"));
+    // cluster metrics must have system prefix in context
+    verifySearchResult("/v3/metrics/search?target=metric&context=-.cluster", ImmutableList.<String>of());
+
     // metrics in myspace
     verifySearchResult("/v3/metrics/search?target=metric&context=myspace.WordCount1.f.WordCounter.splitter",
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));

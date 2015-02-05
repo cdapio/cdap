@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
@@ -38,7 +37,7 @@ public abstract class AggregatesTableTestBase {
   protected abstract MetricsTableFactory getTableFactory();
 
   @Test
-  public void testSimpleAggregates() throws OperationException {
+  public void testSimpleAggregates() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
@@ -76,7 +75,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testIntOverflow() throws OperationException {
+  public void testIntOverflow() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     // 2012-10-01T12:00:00
@@ -97,7 +96,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testGaugeValues() throws OperationException {
+  public void testGaugeValues() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     // 2012-10-01T12:00:00
@@ -124,7 +123,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testScanAllTags() throws OperationException {
+  public void testScanAllTags() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
     try {
       aggregatesTable.update(ImmutableList.of(
@@ -155,7 +154,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testScanTagPrefix() throws OperationException {
+  public void testScanTagPrefix() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
     try {
       aggregatesTable.update(ImmutableList.of(
@@ -195,7 +194,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testClear() throws OperationException {
+  public void testClear() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     for (int i = 1; i <= 10; i++) {
@@ -231,7 +230,7 @@ public abstract class AggregatesTableTestBase {
 
 
   @Test
-  public void testRowFilter() throws OperationException {
+  public void testRowFilter() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
@@ -260,7 +259,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testTags() throws OperationException {
+  public void testTags() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
@@ -292,7 +291,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testDeleteContext() throws OperationException {
+  public void testDeleteContext() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
@@ -343,7 +342,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testDeleteContextAndMetric() throws OperationException {
+  public void testDeleteContextAndMetric() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
@@ -412,7 +411,7 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
-  public void testDeletes() throws OperationException {
+  public void testDeletes() throws Exception {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates();
 
     try {
@@ -468,39 +467,6 @@ public abstract class AggregatesTableTestBase {
     } finally {
       aggregatesTable.clear();
     }
-  }
-
-  @Test
-  public void testSwap() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates();
-    try {
-      checkSwapForTag(aggregatesTable, null);
-      checkSwapForTag(aggregatesTable, "tag");
-    } finally {
-      aggregatesTable.clear();
-    }
-  }
-
-  private void checkSwapForTag(AggregatesTable aggregatesTable, String tag) throws OperationException {
-    // table is empty, this should fail
-    Assert.assertFalse(aggregatesTable.swap("context", "metric", "0", tag, 0L, 1L));
-    // check we really didn't write anything
-    Assert.assertFalse(aggregatesTable.scan("context", "metric", "0", tag).hasNext());
-
-    // entry does not exist as expected, the write should go through
-    Assert.assertTrue(aggregatesTable.swap("context", "metric", "0", tag, null, 1L));
-    // check it actually wrote
-    Assert.assertEquals(1, sumScan(aggregatesTable, "context", "metric", "0", tag));
-
-    // entry does not match values, should fail
-    Assert.assertFalse(aggregatesTable.swap("context", "metric", "0", tag, 5L, 1L));
-    // check it really didn't write
-    Assert.assertEquals(1, sumScan(aggregatesTable, "context", "metric", "0", tag));
-
-    // entry does match values, should succeed
-    Assert.assertTrue(aggregatesTable.swap("context", "metric", "0", tag, 1L, 5L));
-    // check it really wrote
-    Assert.assertEquals(5, sumScan(aggregatesTable, "context", "metric", "0", tag));
   }
 
   private long sumScan(AggregatesTable table, String context, String metric, String runId, String tag) {

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -27,6 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -34,13 +36,16 @@ import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of {@link StreamMetaStore} that access MDS directly.
@@ -52,6 +57,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   // dependent
   private static final String STREAM_META_TABLE = "app.meta";
   private static final String TYPE_STREAM = "stream";
+  private static final String TYPE_NAMESPACE = "namespace";
 
   private Transactional<StreamMds, MetadataStoreDataset> txnl;
 
@@ -118,14 +124,35 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public List<StreamSpecification> listStreams() throws Exception {
+  public List<StreamSpecification> listStreams(final String accountId) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, List<StreamSpecification>>() {
       @Override
       public List<StreamSpecification> apply(StreamMds mds) throws Exception {
-        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, accountId).build(),
                                 StreamSpecification.class);
       }
     });
+  }
+
+  @Override
+  public Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
+    return txnl.executeUnchecked(
+      new TransactionExecutor.Function<StreamMds, Multimap<NamespaceMeta, StreamSpecification>>() {
+        @Override
+        public Multimap<NamespaceMeta, StreamSpecification> apply(StreamMds mds) throws Exception {
+          ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+          Map<MetadataStoreDataset.Key, StreamSpecification> streamSpecs =
+            mds.streams.listKV(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+                               StreamSpecification.class);
+          for (Map.Entry<MetadataStoreDataset.Key, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
+            List<byte[]> keyParts = streamSpecEntry.getKey().split();
+            // Namespace id is the key part with index 1.
+            String namespaceId = Bytes.toString(keyParts.get(1));
+            builder.put(new NamespaceMeta.Builder().setId(namespaceId).build(), streamSpecEntry.getValue());
+          }
+          return builder.build();
+        }
+      });
   }
 
   private MetadataStoreDataset.Key getKey(String accountId, String streamName) {

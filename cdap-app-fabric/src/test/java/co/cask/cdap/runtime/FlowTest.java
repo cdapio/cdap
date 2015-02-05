@@ -25,7 +25,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -181,11 +180,10 @@ public class FlowTest {
       getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered procedureDiscovered = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s", DefaultId.NAMESPACE.getId(), "WordCountApp", "WordFrequency"));
-    EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(procedureDiscovered),
-                                                                      2L, TimeUnit.SECONDS);
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(procedureDiscovered);
     int trials = 0;
     while (trials++ < 10) {
-      Discoverable discoverable = endpointStrategy.pick();
+      Discoverable discoverable = endpointStrategy.pick(2, TimeUnit.SECONDS);
       URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
                                       discoverable.getSocketAddress().getHostName(),
                                       discoverable.getSocketAddress().getPort(),

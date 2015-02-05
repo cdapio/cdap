@@ -244,16 +244,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,spark,procedures,services}.
+   * Returns status of a type specified by {flows,workflows,mapreduce,spark,procedures,services,schedules}.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
+  @Path("/apps/{app-id}/{type}/{id}/status")
   public void getStatus(final HttpRequest request, final HttpResponder responder,
                         @PathParam("app-id") final String appId,
-                        @PathParam("runnable-type") final String runnableType,
-                        @PathParam("runnable-id") final String runnableId) {
+                        @PathParam("type") final String type,
+                        @PathParam("id") final String id) {
     programLifecycleHttpHandler.getStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                          runnableType, runnableId);
+                                          type, id);
   }
 
   /**
@@ -323,39 +323,39 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts a program.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/start")
+  @Path("/apps/{app-id}/{type}/{id}/start")
   public void startProgram(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
-                           @PathParam("runnable-type") final String runnableType,
-                           @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, runnableType, runnableId, "start");
+                           @PathParam("type") final String type,
+                           @PathParam("id") final String id) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, type, id, "start");
   }
 
   /**
    * Starts a program with debugging enabled.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/debug")
+  @Path("/apps/{app-id}/{type}/{id}/debug")
   public void debugProgram(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
-                           @PathParam("runnable-type") final String runnableType,
-                           @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, runnableType, runnableId, "debug");
+                           @PathParam("type") final String type,
+                           @PathParam("id") final String id) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, type, id, "debug");
   }
 
   /**
    * Stops a program.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/stop")
+  @Path("/apps/{app-id}/{type}/{id}/stop")
   public void stopProgram(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                      appId, runnableType, runnableId, "stop");
+                          @PathParam("type") final String type,
+                          @PathParam("id") final String id) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, type, id, "stop");
   }
 
   /**
@@ -647,7 +647,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                                     appId, workflowId);
   }
 
-  //TODO [SAGAR]: CDAP-1155: Implement API to get ScheduleSpecification given schedule name
   /**
    * Returns the schedule ids for a given workflow.
    */
@@ -661,42 +660,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Get schedule state.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
-  public void getScheduleState(HttpRequest request, HttpResponder responder,
-                               @PathParam("app-id") String appId,
-                               @PathParam("workflow-id") String workflowId,
-                               @PathParam("schedule-id") String scheduleId) {
-    programLifecycleHttpHandler.getScheduleState(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                 appId, workflowId, scheduleId);
-  }
-
-  /**
-   * Suspend a workflow schedule.
+   * Suspend a schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
-  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/schedules/{schedule-name}/suspend")
+  public void suspendSchedule(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
-                                      @PathParam("workflow-id") String workflowId,
-                                      @PathParam("schedule-id") String scheduleId) {
-    programLifecycleHttpHandler.workflowScheduleSuspend(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                        appId, workflowId, scheduleId);
+                                      @PathParam("schedule-name") String scheduleName) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, "schedules", scheduleName, "suspend");
   }
 
   /**
-   * Resume a workflow schedule.
+   * Resume a schedule.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
-  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/schedules/{schedule-name}/resume")
+  public void resumeSchedule(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") String appId,
-                                     @PathParam("workflow-id") String workflowId,
-                                     @PathParam("schedule-id") String scheduleId) {
-    programLifecycleHttpHandler.workflowScheduleResume(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                       appId, workflowId, scheduleId);
+                                     @PathParam("schedule-name") String scheduleName) {
+    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                              appId, "schedules", scheduleName, "resume");
   }
 
   /**
@@ -824,41 +808,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   @DELETE
   @Path("/queues")
-  public void clearQueues(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ToClear.QUEUES);
+  public void deleteQueues(HttpRequest request, HttpResponder responder) {
+    programLifecycleHttpHandler.deleteQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   @DELETE
   @Path("/streams")
-  public void clearStreams(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ToClear.STREAMS);
-  }
-
-  private static enum ToClear {
-    QUEUES, STREAMS
-  }
-
-  private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
+  public void deleteStreams(HttpRequest request, HttpResponder responder) {
     try {
-      getAuthenticatedAccountId(request);
-      try {
-        if (toClear == ToClear.QUEUES) {
-          queueAdmin.dropAll();
-        } else if (toClear == ToClear.STREAMS) {
-          streamAdmin.dropAll();
-        }
-        responder.sendStatus(HttpResponseStatus.OK);
-      } catch (Exception e) {
-        LOG.error("Exception clearing data fabric: ", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }  catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      streamAdmin.dropAll();
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Error while deleting streams", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -1217,7 +1179,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, "", "");
       List<ProgramRecord> programRecords = listProgramsByDataAccess(programId, type, data, name);
-      if (programRecords.isEmpty()) {
+      if (programRecords == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         responder.sendJson(HttpResponseStatus.OK, programRecords);
@@ -1230,8 +1192,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * @return list of program records, an empty list if no programs were found, or null if the stream or
+   * dataset does not exist
+   */
   private List<ProgramRecord> listProgramsByDataAccess(Id.Program programId, ProgramType type,
                                                        Data data, String name) throws Exception {
+    // search all apps for programs that use this
     List<ProgramRecord> result = Lists.newArrayList();
     Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
       new Id.Namespace(programId.getNamespaceId()));
@@ -1259,7 +1226,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
     }
-    return result;
+    if (!result.isEmpty()) {
+      return result;
+    }
+    // if no programs were found, check whether the data exists, return [] if yes, null if not
+    boolean exists = false;
+    if (data == Data.DATASET) {
+      exists = dsFramework.hasInstance(name);
+    } else if (data == Data.STREAM) {
+      exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
+    }
+    return exists ? result : null;
   }
 
   private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {

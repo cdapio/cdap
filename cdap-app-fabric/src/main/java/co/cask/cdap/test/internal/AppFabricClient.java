@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
@@ -37,7 +38,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -174,30 +174,35 @@ public class AppFabricClient {
     return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });
   }
 
-  public void suspend(String appId, String wflowId, String schedId) {
+  public void suspend(String appId, String scheduleName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/suspend", appId, wflowId, schedId);
+    String uri = String.format("/v2/apps/%s/schedules/%s/suspend", appId, scheduleName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowScheduleSuspend(request, responder, appId, wflowId, schedId);
+    httpHandler.suspendSchedule(request, responder, appId, scheduleName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
   }
 
-  public void resume(String appId, String wflowId, String schedId) {
+  public void resume(String appId, String schedName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/resume", appId, wflowId, schedId);
+    String uri = String.format("/v2/apps/%s/schedules/%s/resume", appId, schedName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowScheduleResume(request, responder, appId, wflowId, schedId);
+    httpHandler.resumeSchedule(request, responder, appId, schedName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
-  public String scheduleStatus(String appId, String wflowId, String schedId) {
+  public String scheduleStatus(String appId, String schedId, int expectedResponseCode) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/status", appId, wflowId, schedId);
+    String uri = String.format("/v2/apps/%s/schedules/%s/status", appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.getScheduleState(request, responder, appId, wflowId, schedId);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get workflow schedules status failed");
-    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-    return json.get("status");
+    httpHandler.getStatus(request, responder, appId, "schedules", schedId);
+    verifyResponse(HttpResponseStatus.valueOf(expectedResponseCode), responder.getStatus(),
+                   "Get schedules status failed");
+    if (HttpResponseStatus.NOT_FOUND.getCode() == expectedResponseCode) {
+      return "NOT_FOUND";
+    } else {
+      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+      return json.get("status");
+    }
   }
 
   private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
@@ -261,9 +266,9 @@ public class AppFabricClient {
 
     ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
                                                                          "org.apache.hadoop",
-                                                                         "org.apache.hbase",
                                                                          "org.apache.hive",
-                                                                         "org.apache.spark"));
+                                                                         "org.apache.spark"),
+                                                        ImmutableList.of("org.apache.hadoop.hbase"));
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     bundler.createBundle(jarLocation, clz);
 

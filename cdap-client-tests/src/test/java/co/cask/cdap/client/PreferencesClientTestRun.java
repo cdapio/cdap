@@ -19,9 +19,9 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -83,6 +83,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
                                                         AppReturnsArgs.SERVICE));
       programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE,
                           ImmutableMap.of("run", "value"));
+      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       propMap.put("run", "value");
       propMap.putAll(setMap);
       URL serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
@@ -92,9 +93,11 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
       programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
 
       client.deleteInstancePreferences();
       programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       propMap.remove("key");
       propMap.remove("run");
       serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
@@ -104,10 +107,12 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
       programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
 
       propMap.clear();
       programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, propMap);
       programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
                            AppReturnsArgs.ENDPOINT);
       request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
@@ -116,6 +121,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
     } finally {
       programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       appClient.delete(AppReturnsArgs.NAME);
     }
   }

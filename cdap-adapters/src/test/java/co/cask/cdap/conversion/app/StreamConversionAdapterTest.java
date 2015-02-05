@@ -28,7 +28,6 @@ import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -48,7 +47,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class StreamConversionAdapterTest extends TestBase {
-  private static final Gson GSON = new Gson();
 
   @Test
   public void testMapReduce() throws Exception {
@@ -81,7 +79,6 @@ public class StreamConversionAdapterTest extends TestBase {
       .setBasePath(filesetName)
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-      .setOutputProperty("schema", eventSchema.toString())
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
@@ -89,22 +86,14 @@ public class StreamConversionAdapterTest extends TestBase {
       .setTableProperty("avro.schema.literal", eventSchema.toString())
       .build());
 
-    Map<String, String> adapterProperties = Maps.newHashMap();
-    adapterProperties.put(AdapterArguments.SOURCE_NAME, streamName);
-    adapterProperties.put(AdapterArguments.SINK_NAME, filesetName);
-    adapterProperties.put(AdapterArguments.FREQUENCY, "10m");
-
-    Map<String, String> sourceProperties = Maps.newHashMap();
-    sourceProperties.put(AdapterArguments.FORMAT_NAME, Formats.CSV);
-    sourceProperties.put(AdapterArguments.FORMAT_SETTINGS, "{}");
-    sourceProperties.put(AdapterArguments.HEADERS, "header1,header2");
-    sourceProperties.put(AdapterArguments.SCHEMA, bodySchema.toString());
-
     Map<String, String> runtimeArgs = Maps.newHashMap();
-    runtimeArgs.put("adapter.properties", GSON.toJson(adapterProperties));
-    runtimeArgs.put("source.properties", GSON.toJson(sourceProperties));
-
-    runtimeArgs.put(StreamConversionMapReduce.ADAPTER_PROPERTIES, GSON.toJson(adapterProperties));
+    runtimeArgs.put(AdapterArguments.SOURCE_NAME, streamName);
+    runtimeArgs.put(AdapterArguments.SINK_NAME, filesetName);
+    runtimeArgs.put(AdapterArguments.FREQUENCY, "10m");
+    runtimeArgs.put(AdapterArguments.FORMAT_NAME, Formats.CSV);
+    runtimeArgs.put(AdapterArguments.FORMAT_SETTINGS, "{}");
+    runtimeArgs.put(AdapterArguments.HEADERS, "header1,header2");
+    runtimeArgs.put(AdapterArguments.SCHEMA, bodySchema.toString());
 
     // run the mapreduce job and wait for it to finish
     MapReduceManager mapReduceManager = appManager.startMapReduce("StreamConversionMapReduce", runtimeArgs);
@@ -135,8 +124,6 @@ public class StreamConversionAdapterTest extends TestBase {
     Assert.assertEquals("YHOO", records.get(2).get("ticker").toString());
     Assert.assertEquals(1, records.get(2).get("num"));
     Assert.assertEquals(48.53, records.get(2).get("price"));
-
-    appManager.stopAll();
   }
 
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

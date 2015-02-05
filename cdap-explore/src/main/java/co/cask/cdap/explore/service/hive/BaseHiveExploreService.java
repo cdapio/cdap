@@ -30,6 +30,7 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetAccessor;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
@@ -50,6 +51,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
@@ -94,6 +96,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -279,6 +282,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
+    
+    // Close all resources associated with instantiated Datasets
+    DatasetAccessor.closeAllQueries();
   }
 
   @Override
@@ -481,18 +487,46 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       String db = database == null ? "default" : database;
+
       Table tableInfo = getMetaStoreClient().getTable(db, table);
+      List<FieldSchema> tableFields = tableInfo.getSd().getCols();
+      // for whatever reason, it seems like the table columns for partitioned tables are not present
+      // in the storage descriptor. If columns are missing, do a separate call for schema.
+      if (tableFields == null || tableFields.isEmpty()) {
+        // don't call .getSchema()... class not found exception if we do in the thrift code...
+        tableFields = getMetaStoreClient().getFields(db, table);
+      }
+
       ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
-      ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
-      for (FieldSchema column : tableInfo.getSd().getCols()) {
+      Set<String> fieldNames = Sets.newHashSet();
+      for (FieldSchema column : tableFields) {
         schemaBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(), column.getComment()));
+        fieldNames.add(column.getName());
       }
+
+      ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
       for (FieldSchema column : tableInfo.getPartitionKeys()) {
-        partitionKeysBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(),
-                                                                     column.getComment()));
+        TableInfo.ColumnInfo columnInfo = new TableInfo.ColumnInfo(column.getName(), column.getType(),
+                                                                   column.getComment());
+        partitionKeysBuilder.add(columnInfo);
+        // add partition keys to the schema if they are not already there,
+        // since they show up when you do a 'describe <table>' command.
+        if (!fieldNames.contains(column.getName())) {
+          schemaBuilder.add(columnInfo);
+        }
       }
+
+      // its a cdap generated table if it uses our storage handler, or if a property is set on the table.
+      String cdapName = null;
+      Map<String, String> tableParameters = tableInfo.getParameters();
+      if (tableParameters != null) {
+        cdapName = tableParameters.get(Constants.Explore.CDAP_NAME);
+      }
+      // tables created after CDAP 2.6 should set the "cdap.name" property, but older ones
+      // do not. So also check if it uses a cdap storage handler.
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      boolean isDatasetTable = DatasetStorageHandler.class.getName().equals(storageHandler) ||
+      boolean isDatasetTable = cdapName != null ||
+        DatasetStorageHandler.class.getName().equals(storageHandler) ||
         StreamStorageHandler.class.getName().equals(storageHandler);
 
       return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
@@ -628,7 +662,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       // Fetch results from Hive
       LOG.trace("Getting results for handle {}", handle);
-      List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
+      OperationHandle opHandle = getOperationHandle(handle);
+      List<QueryResult> results = fetchNextResults(opHandle, size);
       QueryStatus status = getStatus(handle);
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
@@ -651,17 +686,29 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
         Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
 
         ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-        for (TRow tRow : tRowSet.getRows()) {
-          List<Object> cols = Lists.newArrayList();
-          for (TColumnValue tColumnValue : tRow.getColVals()) {
-            cols.add(tColumnToObject(tColumnValue));
+        // if it's the interface
+        if (rowSet instanceof Iterable) {
+          for (Object[] row : (Iterable<Object[]>) rowSet) {
+            List<Object> cols = Lists.newArrayList();
+            for (int i = 0; i < row.length; i++) {
+              cols.add(row[i]);
+            }
+            rowsBuilder.add(new QueryResult(cols));
           }
-          rowsBuilder.add(new QueryResult(cols));
+        } else {
+          // otherwise do nasty thrift stuff
+          Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+          Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+          TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
+          for (TRow tRow : tRowSet.getRows()) {
+            List<Object> cols = Lists.newArrayList();
+            for (TColumnValue tColumnValue : tRow.getColVals()) {
+              cols.add(tColumnToObject(tColumnValue));
+            }
+            rowsBuilder.add(new QueryResult(cols));
+          }
         }
         return rowsBuilder.build();
       } else {
@@ -792,6 +839,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
     inactiveHandleCache.invalidate(handle);
     activeHandleCache.invalidate(handle);
+    DatasetAccessor.closeQuery(handle);
   }
 
   @Override
@@ -863,6 +911,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected Map<String, String> startSession() throws IOException {
     Map<String, String> sessionConf = Maps.newHashMap();
 
+    QueryHandle queryHandle = QueryHandle.generate();
+    sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
+    
     Transaction tx = startTransaction();
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
@@ -891,7 +942,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    */
   protected QueryHandle saveOperationInfo(OperationHandle operationHandle, SessionHandle sessionHandle,
                                      Map<String, String> sessionConf, String statement) {
-    QueryHandle handle = QueryHandle.generate();
+    QueryHandle handle = QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
     activeHandleCache.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf, statement));
     return handle;
   }

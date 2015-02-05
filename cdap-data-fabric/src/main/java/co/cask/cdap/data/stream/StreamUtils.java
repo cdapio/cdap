@@ -373,6 +373,33 @@ public final class StreamUtils {
     return maxSequence + 1;
   }
 
+  /**
+   * Get the size of the data persisted for the stream which config is the {@code streamConfig}.
+   *
+   * @param streamConfig stream to get data size of
+   * @return the size of the data persisted for the stream which config is the {@code streamName}
+   * @throws IOException in case of any error in fetching the size
+   */
+  public static long fetchStreamFilesSize(StreamConfig streamConfig) throws IOException {
+    Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(), getGeneration(streamConfig));
+    long size = 0;
+    List<Location> locations = streamPath.list();
+    // All directories are partition directories
+    for (Location location : locations) {
+      if (!location.isDirectory() || !isPartition(location.getName())) {
+        continue;
+      }
+
+      List<Location> partitionFiles = location.list();
+      for (Location partitionFile : partitionFiles) {
+        if (!partitionFile.isDirectory() && StreamFileType.EVENT.isMatched(partitionFile.getName())) {
+          size += partitionFile.length();
+        }
+      }
+    }
+    return size;
+  }
+
   private StreamUtils() {
   }
 }

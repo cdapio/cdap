@@ -32,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.schema.SchemaConverter;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.QueryHandle;
@@ -63,6 +64,7 @@ import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -259,25 +261,61 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      Dataset dataset;
+      try {
+        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      } catch (Exception e) {
+        String className = isClassNotFoundException(e);
+        if (className == null) {
+          throw e;
+        }
+        LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
+                   "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
+                   "guide for more information.", datasetName, className, className, datasetName);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
       if (dataset == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
       }
 
-      // TODO we also have to drop the Hive table for file sets
-      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
-        // It is not an error to get non-Record enabled datasets, since the type of dataset may not be known where this
-        // call originates from.
-        LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
-                  RecordWritable.class.getName());
+      String deleteStatement = null;
+      if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+        deleteStatement = generateDeleteStatement(datasetName);
+      } else if (dataset instanceof FileSet || dataset instanceof TimePartitionedFileSet) {
+        // this cannot fail because we were able to instantiate the dataset
+        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetName);
+        if (spec != null) {
+          Map<String, String> properties = spec.getProperties();
+          if (FileSetProperties.isExploreEnabled(properties)) {
+            deleteStatement = generateDeleteStatement(datasetName);
+          }
+        }
+      }
+
+      if (deleteStatement == null) {
+        // This is not an error: whether the dataset is explorable may not be known where this call originates from.
+        LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
+      
+      // If table does not exist, nothing to be done
+      try {
+        exploreService.getTableInfo(null, getHiveTableName(datasetName));
+      } catch (TableNotFoundException e) {
+        // Ignore exception, since this means table was not found.
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
 
-      String deleteStatement = generateDeleteStatement(datasetName);
       LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
 
       QueryHandle handle = exploreService.execute(deleteStatement);
@@ -306,6 +344,25 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Add partition for time {} dataset {} - {}", partitionTime, datasetName, addPartitionStatement);
 
       QueryHandle handle = exploreService.execute(addPartitionStatement);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", handle.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  @DELETE
+  @Path("/datasets/{dataset}/partitions/{time}")
+  public void dropPartition(HttpRequest request, HttpResponder responder,
+                           @PathParam("dataset") final String datasetName,
+                           @PathParam("time") final long partitionTime) {
+    try {
+      String dropPartitionStatement = generateDropPartitionStatement(datasetName, partitionTime);
+      LOG.debug("Drop partition for time {} dataset {} - {}", partitionTime, datasetName, dropPartitionStatement);
+
+      QueryHandle handle = exploreService.execute(dropPartitionStatement);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -346,21 +403,27 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     Schema schema = Schema.recordOf("streamEvent", fields);
     String hiveSchema = SchemaConverter.toHiveSchema(schema);
     String tableName = getStreamTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
-                           "LOCATION \"%s\"",
+                           "LOCATION \"%s\"" +
+                           "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.STREAM_NAME, name, location);
+                         Constants.Explore.STREAM_NAME, name, location,
+                         // this is set so we know what stream it is created from, and so we know it's from CDAP
+                         Constants.Explore.CDAP_NAME, name);
   }
 
   public static String generateCreateStatement(String name, Dataset dataset)
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Dataset\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Dataset\" " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")" +
+                           "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.DATASET_NAME, name);
+                         Constants.Explore.DATASET_NAME, name,
+                         // this is set so we know what dataset it is created from, and so we know it's from CDAP
+                         Constants.Explore.CDAP_NAME, name);
   }
 
   public static String generateFileSetCreateStatement(String name, Dataset dataset, Map<String, String> properties)
@@ -386,6 +449,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
     String tblProperties = "";
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
+    tableProperties.put(Constants.Explore.CDAP_NAME, name);
     if (!tableProperties.isEmpty()) {
       StringBuilder builder = new StringBuilder("TBLPROPERTIES (");
       Joiner.on(", ").appendTo(builder, Iterables.transform(
@@ -408,7 +472,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     //   TBLPROPERTIES ('avro.schema.literal'='...');
 
     return String.format(
-      "CREATE EXTERNAL TABLE %s %s ROW FORMAT SERDE '%s' " +
+      "CREATE EXTERNAL TABLE IF NOT EXISTS %s %s ROW FORMAT SERDE '%s' " +
         "STORED AS INPUTFORMAT '%s' OUTPUTFORMAT '%s' LOCATION '%s' %s",
       tableName, partitioned, serde, inputFormat, outputFormat, baseLocation.toURI().toString(), tblProperties);
   }
@@ -421,12 +485,24 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(time);
     int year = calendar.get(Calendar.YEAR);
-    int month = calendar.get(Calendar.MONTH);
+    int month = calendar.get(Calendar.MONTH) + 1;
     int day = calendar.get(Calendar.DAY_OF_MONTH);
     int hour = calendar.get(Calendar.HOUR_OF_DAY);
     int minute = calendar.get(Calendar.MINUTE);
     return String.format("ALTER TABLE %s ADD PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d) LOCATION '%s'",
                          getHiveTableName(name), year, month, day, hour, minute, path);
+  }
+
+  public static String generateDropPartitionStatement(String name, long time) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(time);
+    int year = calendar.get(Calendar.YEAR);
+    int month = calendar.get(Calendar.MONTH) + 1;
+    int day = calendar.get(Calendar.DAY_OF_MONTH);
+    int hour = calendar.get(Calendar.HOUR_OF_DAY);
+    int minute = calendar.get(Calendar.MINUTE);
+    return String.format("ALTER TABLE %s DROP PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d)",
+                         getHiveTableName(name), year, month, day, hour, minute);
   }
 
   /**

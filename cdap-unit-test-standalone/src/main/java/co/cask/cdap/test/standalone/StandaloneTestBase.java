@@ -16,10 +16,15 @@
 
 package co.cask.cdap.test.standalone;
 
+import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.StandaloneMain;
+import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -50,7 +55,9 @@ public class StandaloneTestBase {
     testStackIndex++;
     if (standaloneMain == null) {
       try {
-        configuration = CConfiguration.create();
+        if (configuration == null) {
+          configuration = CConfiguration.create();
+        }
         configuration.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
         // Start without UI
@@ -66,6 +73,14 @@ public class StandaloneTestBase {
     }
   }
 
+  @After
+  public void tearDownStandalone() throws Exception {
+    ProgramClient programClient = new ProgramClient(getClientConfig());
+    programClient.stopAll();
+    MetaClient metaClient = new MetaClient(getClientConfig());
+    metaClient.resetUnrecoverably();
+  }
+
   @AfterClass
   public static void tearDownClass() throws Exception {
     testStackIndex--;
@@ -73,5 +88,16 @@ public class StandaloneTestBase {
       standaloneMain.shutDown();
       standaloneMain = null;
     }
+  }
+
+  protected ClientConfig getClientConfig() {
+    ClientConfig.Builder builder = new ClientConfig.Builder();
+    builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
+    builder.setDefaultConnectTimeoutMs(120000);
+    builder.setDefaultReadTimeoutMs(120000);
+    builder.setUploadConnectTimeoutMs(0);
+    builder.setUploadConnectTimeoutMs(0);
+
+    return builder.build();
   }
 }

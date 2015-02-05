@@ -16,6 +16,7 @@
 
 package co.cask.cdap.notifications.service.kafka;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -65,18 +66,20 @@ public class KafkaNotificationService extends AbstractNotificationService {
 
   private final Map<TopicPartition, KafkaNotificationsCallback> kafkaCallbacks;
   private KafkaPublisher kafkaPublisher;
+  private final int nbPartitions;
 
   // Executor to publish notifications to Kafka
   private ListeningExecutorService publishingExecutor;
 
   @Inject
-  public KafkaNotificationService(KafkaClient kafkaClient, DatasetFramework dsFramework,
+  public KafkaNotificationService(CConfiguration cConf, KafkaClient kafkaClient, DatasetFramework dsFramework,
                                   TransactionSystemClient transactionSystemClient,
                                   NotificationFeedManager feedManager) {
     super(dsFramework, transactionSystemClient, feedManager);
     this.kafkaClient = kafkaClient;
     this.feedManager = feedManager;
     this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
+    this.nbPartitions = cConf.getInt("kafka.num.partitions");
 
     this.kafkaCallbacks = Maps.newHashMap();
   }
@@ -133,6 +136,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
     synchronized (this) {
       KafkaNotificationsCallback kafkaCallback = kafkaCallbacks.get(topicPartition);
       if (kafkaCallback == null) {
+        LOG.debug("Creating new Kafka notification callback for topic-partition {}", topicPartition);
         kafkaCallback = new KafkaNotificationsCallback(topicPartition);
         kafkaCallbacks.put(topicPartition, kafkaCallback);
       }
@@ -166,9 +170,15 @@ public class KafkaNotificationService extends AbstractNotificationService {
         if (subscriptions == 0) {
           KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
-          // TODO there is a bug in twill, that when the topic doesn't exist, add latest will not make subscription
-          // start from offset 0 - but that will be fixed soon
-          preparer.addLatest(topicPartition.getTopic(), topicPartition.getPartition());
+          for (int i = 0; i < nbPartitions; i++) {
+            // TODO there is a bug in twill, that when the topic doesn't exist, add latest will not make subscription
+            // start from offset 0 - but that will be fixed soon
+
+            // For now, subscribe to all the partitions, because we don't know exactly to what
+            // partition the feed will be mapped to. Twill does not expose the possibility to choose
+            // a partitioner.
+            preparer.addLatest(topicPartition.getTopic(), i);
+          }
           kafkaSubscription = preparer.consume(this);
         }
         subscriptions++;
@@ -200,10 +210,12 @@ public class KafkaNotificationService extends AbstractNotificationService {
         try {
           KafkaMessage decodedMessage = KafkaMessageCodec.decode(payload);
           try {
+            LOG.trace("Decoded notification from Kafka: {}", decodedMessage);
             notificationReceived(KafkaNotificationUtils.getMessageFeed(decodedMessage.getMessageKey()),
                                  decodedMessage.getNotificationJson());
           } catch (Throwable t) {
-            LOG.warn("Error while processing notification {} with handler {}", decodedMessage.getNotificationJson(), t);
+            LOG.warn("Error while processing notification {} with handler {}",
+                     decodedMessage.getNotificationJson(), t);
           }
         } catch (IOException e) {
           LOG.error("Could not decode Kafka message {} using Gson.", message, e);

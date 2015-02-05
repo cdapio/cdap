@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,14 +27,17 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.NoOpStreamMetaStore;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
+import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -76,7 +79,9 @@ public class LocalQueueTest extends QueueTest {
         .with(new AbstractModule() {
           @Override
           protected void configure() {
-            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+            // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
+            bind(StreamAdmin.class).to(LevelDBStreamAdmin.class);
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
           }
         }));
     // transaction manager is a "service" and must be started
@@ -103,13 +108,15 @@ public class LocalQueueTest extends QueueTest {
         .with(new AbstractModule() {
           @Override
           protected void configure() {
-            bind(StreamMetaStore.class).to(NoOpStreamMetaStore.class);
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueueProducer);
-    producer = factory.createProducer(QueueName.fromFlowlet("app", "my", "flowlet", "output"));
+    producer = factory.createProducer(QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet",
+                                                            "output"));
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 

@@ -16,19 +16,21 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.ProgramNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -121,9 +123,8 @@ public class IntegrationTestBase {
     }
 
     // stop all programs
-    IntegrationTestClient integrationTestClient = getIntegrationTestClient();
-    integrationTestClient.stopAll();
-    integrationTestClient.resetUnrecoverably();
+    getProgramClient().stopAll();
+    getMetaClient().resetUnrecoverably();
 
     assertNoApps();
     assertNoUserDatasets();
@@ -154,6 +155,10 @@ public class IntegrationTestBase {
     return builder.build();
   }
 
+  protected MetaClient getMetaClient() {
+    return new MetaClient(getClientConfig());
+  }
+
   protected ApplicationClient getApplicationClient() {
     return new ApplicationClient(getClientConfig());
   }
@@ -168,10 +173,6 @@ public class IntegrationTestBase {
 
   protected DatasetClient getDatasetClient() {
     return new DatasetClient(getClientConfig());
-  }
-
-  protected IntegrationTestClient getIntegrationTestClient() {
-    return new IntegrationTestClient(getClientConfig());
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
@@ -236,7 +237,7 @@ public class IntegrationTestBase {
     });
 
     Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
-                       + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
+                         + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
   }
 
   private void assertNoApps() throws Exception {
