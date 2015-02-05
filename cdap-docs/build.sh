@@ -192,7 +192,7 @@ function build_docs() {
 }
 
 function build_docs_github() {
-  _build_docs "docs-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
+  _build_docs "build-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
 }
 
 function build_docs_web() {
