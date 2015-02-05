@@ -1,0 +1,44 @@
+<h2> {{$state.params.nsadmin | caskCapitalizeFilter}}: Apps </h2>
+
+<h3 ng-bind="apps.name | caskCapitalizeFilter"></h3>
+
+<div class="btn-group pull-right">
+    <div class="dropdown">
+        <button role="tab" ng-click="appDdClick($event)" class="btn btn-default dropdown-toggle" type="button">Actions
+          <span class="caret"></span>
+        </button>
+    </div>
+</div>
+
+<table class="table table-striped table-responsive" cask-sortable>
+    <tr>
+        <th>Type, Version:</th>
+        <td>
+            <span ng-bind="apps.type"> </span>,
+            <span ng-bind="apps.version"> </span>
+        </td>
+    </tr>
+    <tr>
+        <th>ID:</th>
+        <td ng-bind="apps.id"></td>
+    </tr>
+    <tr>
+        <th>Display Name:</th>
+        <td ng-bind="apps.name"></td>
+    </tr>
+    <tr>
+        <th>Description:</th>
+        <td ng-bind="apps.description"></td>
+    </tr>
+    <tr>
+        <th>Properties:</th>
+        <td>
+            <table>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
