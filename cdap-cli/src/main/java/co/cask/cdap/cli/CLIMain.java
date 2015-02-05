@@ -18,12 +18,14 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.HelpCommand;
+import co.cask.cdap.cli.command.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
+import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
 import com.google.common.base.Joiner;
@@ -49,16 +51,9 @@ public class CLIMain {
 
   private final CLI cli;
 
-  private final Iterable<Command> commands;
+  private final Iterable<CommandSet<Command>> commands;
 
   public CLIMain(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    HelpCommand helpCommand = new HelpCommand(new Supplier<Iterable<Command>>() {
-      @Override
-      public Iterable<Command> get() {
-        return getCommands();
-      }
-    }, cliConfig);
-
     Injector injector = Guice.createInjector(
       new AbstractModule() {
         @Override
@@ -75,12 +70,15 @@ public class CLIMain {
       connectCommand.tryDefaultConnection(System.out, false);
     }
 
-    this.commands = Iterables.concat(
+    this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
-      ImmutableList.<Command>of(helpCommand));
+      new CommandSet<Command>(ImmutableList.<Command>of(
+        new HelpCommand(getCommandsSupplier(), cliConfig),
+        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
+      )));
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
-    cli = new CLI<Command>(commands, completers);
+    cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
@@ -112,8 +110,13 @@ public class CLIMain {
     return this.cli;
   }
 
-  private Iterable<Command> getCommands() {
-    return this.commands;
+  private Supplier<Iterable<CommandSet<Command>>> getCommandsSupplier() {
+    return new Supplier<Iterable<CommandSet<Command>>>() {
+      @Override
+      public Iterable<CommandSet<Command>> get() {
+        return commands;
+      }
+    };
   }
 
   public static void main(String[] args) throws Exception {

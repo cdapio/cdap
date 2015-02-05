@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.GetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.GetProgramLiveInfoCommandSet;
 import co.cask.cdap.cli.command.GetProgramLogsCommandSet;
@@ -37,7 +39,7 @@ import com.google.inject.Injector;
 /**
  * Program commands.
  */
-public class ProgramCommands extends CommandSet<Command> {
+public class ProgramCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public ProgramCommands(Injector injector) {
@@ -58,5 +60,10 @@ public class ProgramCommands extends CommandSet<Command> {
         .add(injector.getInstance(StartProgramCommandSet.class))
         .add(injector.getInstance(StopProgramCommandSet.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

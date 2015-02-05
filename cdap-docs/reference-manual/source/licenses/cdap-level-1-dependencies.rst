@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
-    :version: 2.6.0
+    :copyright: Copyright © 2015 Cask Data, Inc.
+    :version: 2.7.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -39,7 +39,9 @@ Cask Data Application Platform Level 1 Dependencies
    "jline","jline","The BSD License","http://www.opensource.org/licenses/bsd-license.php"
    "junit","junit","Common Public License Version 1.0","http://www.opensource.org/licenses/cpl1.0.txt"
    "org.apache.avro","avro","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
+   "org.apache.avro","avro","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro","avro-ipc","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
+   "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.flume","flume-ng-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.flume","flume-ng-sdk","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

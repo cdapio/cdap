@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2;
+package co.cask.cdap.cli;
 
 /**
- * Defines internal status codes for use in operation results or execptions.
+ * Implement this to have a category.
  */
-public class StatusCode {
-
-  public static final int OK = 0;
-
-  public static final int ILLEGAL_INCREMENT = 2000;
-
-  public static final int INTERNAL_ERROR = 5000;
+public interface Categorized {
+  String getCategory();
 }

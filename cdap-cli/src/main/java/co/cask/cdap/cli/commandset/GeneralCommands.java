@@ -16,8 +16,11 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.ExitCommand;
+import co.cask.cdap.cli.command.QuitCommand;
 import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -25,20 +28,24 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 
-import java.util.List;
-
 /**
- * Preference commands.
+ * General commands.
  */
-public class BasicCommands extends CommandSet<Command> {
+public class GeneralCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
-  public BasicCommands(Injector injector) {
+  public GeneralCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
         .add(injector.getInstance(VersionCommand.class))
         .add(injector.getInstance(ExitCommand.class))
+        .add(injector.getInstance(QuitCommand.class))
         .add(injector.getInstance(ConnectCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.GENERAL.getName();
   }
 }

@@ -40,7 +40,6 @@ import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -747,7 +746,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
    * the reset API has a v3 version
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException, OperationException {
+  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
@@ -798,7 +797,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) throws OperationException {
+  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
                                                                    appSpec.getMapReduce().values(),
@@ -813,7 +812,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param appId        applicationId.
    * @throws IOException if there are errors with location IO
    */
-  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+  private void deleteProgramLocations(Id.Application appId) throws IOException {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
@@ -842,7 +841,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Delete stored Preferences of the application and all its programs.
    * @param appId applicationId
    */
-  private void deletePreferences(Id.Application appId) throws OperationException {
+  private void deletePreferences(Id.Application appId) {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 

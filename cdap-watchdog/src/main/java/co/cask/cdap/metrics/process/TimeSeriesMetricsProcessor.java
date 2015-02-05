@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.data.TimeSeriesTables;
 import co.cask.cdap.metrics.transport.MetricsRecord;
@@ -56,7 +55,7 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
           metricsRecords.clear();
         }
       }
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Failed to write to time series table: {}", e.getMessage(), e);
     }
   }
