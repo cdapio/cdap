@@ -16,8 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.http.HandlerContext;
@@ -105,10 +103,8 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
       responder.sendJson(HttpResponseStatus.OK, output);
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
-    } catch (ServerException e) {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     } finally {
       reader.close();

@@ -19,8 +19,6 @@ package co.cask.cdap.metrics.data;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -59,76 +57,47 @@ public final class AggregatesTable {
   }
 
   /**
-   * Atomically compare a single metric entry with an expected value, and if it matches, replace it with a new value.
-   *
-   * @param context the context of the metric.
-   * @param metric the name of the metric.
-   * @param runId the runid of the metric.
-   * @param tag the tag of the metric.  If null, the empty tag is used.
-   * @param oldValue the expected value of the column. If null, this means that the column must not exist.
-   * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.
-   * @return whether the write happened, that is, whether the existing value of the column matched the expected value.
-   */
-  public boolean swap(String context, String metric, String runId, String tag, Long oldValue, Long newValue)
-    throws OperationException {
-    byte[] row = getKey(context, metric, runId);
-    byte[] col = (tag == null) ? Bytes.toBytes(MetricsConstants.EMPTY_TAG) : Bytes.toBytes(tag);
-    try {
-      byte[] oldVal = (oldValue == null) ? null : Bytes.toBytes(oldValue);
-      byte[] newVal = (newValue == null) ? null : Bytes.toBytes(newValue);
-
-      return aggregatesTable.swap(row, col, oldVal, newVal);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
-  }
-
-  /**
    * Updates aggregates for the given list of {@link MetricsRecord}.
    *
-   * @throws OperationException When there is an error updating the table.
+   * @throws Exception When there is an error updating the table.
    */
-  public void update(Iterable<MetricsRecord> records) throws OperationException {
+  public void update(Iterable<MetricsRecord> records) throws Exception {
     update(records.iterator());
   }
 
   /**
    * Updates aggregates for the given iterator of {@link MetricsRecord}.
    *
-   * @throws OperationException When there is an error updating the table.
+   * @throws Exception When there is an error updating the table.
    */
-  public void update(Iterator<MetricsRecord> records) throws OperationException {
-    try {
-      while (records.hasNext()) {
-        MetricsRecord record = records.next();
-        byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
-        if (record.getType() == MetricType.COUNTER) {
-          Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+  public void update(Iterator<MetricsRecord> records) throws Exception {
+    while (records.hasNext()) {
+      MetricsRecord record = records.next();
+      byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
+      if (record.getType() == MetricType.COUNTER) {
+        Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-          // The no tag value
-          increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
+        // The no tag value
+        increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
 
-          // For each tag, increments corresponding values
-          for (TagMetric tag : record.getTags()) {
-            increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
-          }
-          aggregatesTable.increment(rowKey, increments);
-        } else if (record.getType() == MetricType.GAUGE) {
-          NavigableMap<byte[], Long> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-          // The no tag value
-          gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
-
-          // For each tag, sets corresponding values
-          for (TagMetric tag : record.getTags()) {
-            gauges.put(Bytes.toBytes(tag.getTag()), record.getValue());
-          }
-          NavigableMap<byte[], NavigableMap<byte[], Long>> keyMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-          keyMap.put(rowKey, gauges);
-          aggregatesTable.put(keyMap);
+        // For each tag, increments corresponding values
+        for (TagMetric tag : record.getTags()) {
+          increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
         }
+        aggregatesTable.increment(rowKey, increments);
+      } else if (record.getType() == MetricType.GAUGE) {
+        NavigableMap<byte[], Long> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        // The no tag value
+        gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
+
+        // For each tag, sets corresponding values
+        for (TagMetric tag : record.getTags()) {
+          gauges.put(Bytes.toBytes(tag.getTag()), record.getValue());
+        }
+        NavigableMap<byte[], NavigableMap<byte[], Long>> keyMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        keyMap.put(rowKey, gauges);
+        aggregatesTable.put(keyMap);
       }
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
   }
 
@@ -136,15 +105,11 @@ public final class AggregatesTable {
    * Deletes all the row keys which match the context prefix.
    * @param contextPrefix Prefix of the context to match.  Null not allowed, full table deletes should be done through
    *                      the clear method.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
-  public void delete(String contextPrefix) throws OperationException {
+  public void delete(String contextPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null, "null context not allowed");
-    try {
-      aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
   /**
@@ -153,9 +118,9 @@ public final class AggregatesTable {
    *
    * @param contextPrefix Prefix of the context to match, null means any context.
    * @param metricPrefix Prefix of the metric to match, null means any metric.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
-  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
+  public void delete(String contextPrefix, String metricPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null || metricPrefix != null,
                                 "context and metric cannot both be null");
     if (metricPrefix == null) {
@@ -172,18 +137,14 @@ public final class AggregatesTable {
    * @param metricPrefix Prefix of metric to match, null means any metric.
    * @param runId Runid to match.
    * @param tags Tags to match, null means any tag.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
   public void delete(String contextPrefix, String metricPrefix, String runId, String... tags)
-    throws OperationException {
+    throws Exception {
     byte[] startRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0);
     byte[] endRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
-    try {
-      aggregatesTable.deleteRange(startRow, endRow, tags == null ? null : Bytes.toByteArrays(tags),
-                                  getFilter(contextPrefix, metricPrefix, runId));
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    aggregatesTable.deleteRange(startRow, endRow, tags == null ? null : Bytes.toByteArrays(tags),
+                                getFilter(contextPrefix, metricPrefix, runId));
   }
 
   /**
@@ -257,14 +218,10 @@ public final class AggregatesTable {
 
   /**
    * Clears the storage table.
-   * @throws OperationException If error in clearing data.
+   * @throws Exception If error in clearing data.
    */
-  public void clear() throws OperationException {
-    try {
-      aggregatesTable.deleteAll(new byte[] { });
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  public void clear() throws Exception {
+    aggregatesTable.deleteAll(new byte[] { });
   }
 
   private AggregatesScanner scanFor(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {

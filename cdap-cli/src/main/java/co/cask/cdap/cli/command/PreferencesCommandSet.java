@@ -17,6 +17,8 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Command;
@@ -29,7 +31,7 @@ import java.util.List;
 /**
  * Contains commands to get Preferences.
  */
-public class PreferencesCommandSet extends CommandSet<Command> {
+public class PreferencesCommandSet extends CommandSet<Command> implements Categorized {
 
   @Inject
   public PreferencesCommandSet(PreferencesClient client, CLIConfig cliConfig) {
@@ -48,5 +50,10 @@ public class PreferencesCommandSet extends CommandSet<Command> {
       }
     }
     return commands;
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

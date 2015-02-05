@@ -20,6 +20,8 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -35,7 +37,7 @@ import java.util.List;
 /**
  * Get a list of the endpoints that a {@link Service} exposes.
  */
-public class GetServiceEndpointsCommand extends AbstractAuthCommand {
+public class GetServiceEndpointsCommand extends AbstractAuthCommand implements Categorized {
 
   private final ServiceClient serviceClient;
 
@@ -79,5 +81,10 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("List the endpoints that a %s exposes", ElementType.SERVICE.getPrettyName());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

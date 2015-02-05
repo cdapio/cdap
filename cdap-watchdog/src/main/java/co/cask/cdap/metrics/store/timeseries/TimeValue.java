@@ -21,7 +21,8 @@ import com.google.common.base.Objects;
 /**
  * Represents a value of the measure at specific timestamp.
  */
-public final class TimeValue {
+//todo: move in higher-level package? It is used everywhere
+public final class TimeValue implements Comparable<TimeValue> {
   private final long timestamp;
   private final long value;
 
@@ -61,5 +62,10 @@ public final class TimeValue {
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("ts", timestamp).add("value", value).toString();
+  }
+
+  @Override
+  public int compareTo(TimeValue o) {
+    return timestamp > o.timestamp ? 1 : (timestamp < o.timestamp ? -1 : 0);
   }
 }

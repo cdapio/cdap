@@ -1,14 +1,11 @@
-.. meta::
-    :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+.. _cloudera-configuring:
 
-.. _integrations:
+======================================================
+Configuring and Installing CDAP using Cloudera Manager
+======================================================
 
-================
-Integrating CDAP
-================
 
-Integrating CDAP using Cloudera Manager
+Overview
 =======================================
 
 You can use `Cloudera Manager
@@ -26,8 +23,8 @@ These instructions cover the steps to integrate CDAP using Cloudera Manager:
 - **Troubleshooting:** Particular situations that can occur with Cloudera.
 
 
-Overview
---------
+Roles and Dependencies
+----------------------
 The CDAP CSD consists of four mandatory roles:
 
 - Master
@@ -42,7 +39,7 @@ the 'cdap' user installed by the parcel.
 
 
 Prerequisites
--------------
+=======================================
 
 #. Node.js (version 0.8.16 or greater) must be installed on the node(s) where the Web-App
    role instance will run. You can download the latest version of Node.js from `nodejs.org
@@ -69,26 +66,26 @@ Prerequisites
    size. Lack of YARN memory capacity is the leading cause of apparent failures that we
    see reported.
 
+.. _cloudera-configuring-download:
 
 Download
---------
+=======================================
 
-Download the CDAP CSD (Custom Service Descriptor): it can be found on the `Cask Resources
-webpage <http://cask.co/resources/#cdap-cds>`__.
+Download the CDAP CSD (Custom Service Descriptor): `download JAR file <http://repository.cask.co/downloads/co/cask/cdap/csd/2.7.0/CDAP-2.7.0-1.jar>`__.
 
 Details on CSDs and Cloudera Manager Extensions are `available online 
 <https://github.com/cloudera/cm_ext/wiki>`__.
 
 
 Install, Setup, and Startup
----------------------------
+=======================================
 
 .. rubric:: Install the CSD
 
 #. `Install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
 #. Download and distribute the CDAP-<version> parcel.
 
-.. rubric:: Setup
+.. rubric:: Setup using the Cloudera Manager Admin Console *Add Service* Wizard
 
 Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
 When completing the Wizard, these notes may help:
@@ -105,117 +102,13 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP Console to connect to the Router service.
 
+Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
+:ref:`are available <step-by-step-cloudera-add-service>`.
 
-.. rubric:: Cloudera Manager Admin Console *Add Service* Wizard, Step-by-Step
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-01.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Cloudera Manager:** Starting the *Add Service* Wizard.
-
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-02.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Add Service Wizard, Page 1:** Selecting CDAP (Cask DAP) as the service to be added.
-
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-03.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Add Service Wizard, Page 2:** Setting the dependencies (in this case, including Hive).
-   
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-04.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Add Service Wizard, Page 3:** When customizing Role Assignments, CDAP **Security
-   Auth** Service can be added later.
-
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-06.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Add Service Wizard, Page 4:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
-
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-07.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Add Service Wizard, Page 5:** Finishing first run of commands to install CDAP.
-   
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-08.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Add Service Wizard, Page 6:** Congratulations screen, though there is still work to be done.
-   
-
-
-.. rubric:: Startup
-
-After the Cloudera Manager Admin Console's *Add Service* Wizard completes, *Cask DAP* will
-show in the list for the cluster where you installed it. You can select it, and go to the
-*Cask DAP* page, with *Quick Links* and *Status Summary*. The lights of the *Status
-Summary* should all turn green, showing completion of startup. 
-
-The *Quick Links* includes a link to the **CDAP Console**, which by default is running on 
-port ``9999`` of the host where the Web-App role instance is running.
-
-The CDAP Console may initially show errors while all of the CDAP YARN containers are
-starting up. Allow for up to a few minutes for this. The *Services* link in the CDAP
-Console in the upper right will show the status of the CDAP services. 
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-09.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Cloudera Manager:** CDAP (Cask DAP) now added to the cluster.
-   
-
-.. figure:: ../_images/integration-cloudera/cloudera-csd-10.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Cloudera Manager:** CDAP completed startup: all lights green!
-   
-
-.. figure:: ../_images/console/console_01_overview.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **CDAP Console:** Showing started-up with two applications deployed.
-
+.. _cloudera-verification:
 
 Verification
-------------
+=======================================
 
 After CDAP has started up, the best way to verify the installation is to deploy an application,
 ingest some data, run a MapReduce program on it, and then query the results out.  The following
@@ -261,7 +154,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 #. Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected. 
    The API listens on the host where the Gateway/Router role instance is running, port
-   10000 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
+   11015 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
 
      curl -w '\n' -v \
        'http://[router-host]:[router-port]/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
@@ -275,7 +168,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 
 Troubleshooting
----------------
+=======================================
 
 Some versions of Hive may try to create a temporary staging directory at the table
 location when executing queries. If you are seeing permissions errors when running a

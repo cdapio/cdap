@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.MetricsConstants.ConfigKeys;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import com.google.common.collect.Lists;
@@ -158,7 +157,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       long offset = metaTable.get(new TopicPartition(topic, partition));
       LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       return offset;
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Failed to get offset from meta table. Defaulting to beginning. {}", e.getMessage(), e);
     }
     return -1L;

@@ -18,7 +18,7 @@ CDAP Product License
 
 The Cask Data Application Platform (CDAP) product is copyright and licensed as follows:
 
-   Copyright © 2014 Cask Data, Inc.
+   Copyright © 2014-2015 Cask Data, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ CDAP Documentation License
 
 The Cask Data Application Platform (CDAP) documentation is copyright and licensed as follows:
 
-   Copyright © 2014 Cask Data, Inc.
+   Copyright © 2014-2015 Cask Data, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

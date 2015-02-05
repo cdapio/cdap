@@ -18,7 +18,6 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServerException;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.AggregatesTable;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
@@ -37,7 +36,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
@@ -153,18 +151,18 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (OperationException e) {
-      LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (ServerException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
+    } catch (Exception e) {
+      LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     }
   }
 
   private void deleteTableEntries(String contextPrefix,
-                                  String metricPrefix, String tag) throws OperationException {
+                                  String metricPrefix, String tag) throws Exception {
     AggregatesTable aggTable = aggregatesTable.get();
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
