@@ -1,14 +1,14 @@
 angular.module(PKG.name + '.services')
 
-  .factory('mySettings', function (MyConfigStore) {
-    return new MyConfigStore('consolesettings');
+  .factory('mySettings', function (MyPersistentStorage) {
+    return new MyPersistentStorage('consolesettings');
   })
 
-  .factory('MyConfigStore', function MyConfigStoreFactory($q, MyDataSource, myHelpers) {
+  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyDataSource, myHelpers) {
 
     var data = new MyDataSource();
 
-    function MyConfigStore (type) {
+    function MyPersistentStorage (type) {
       this.endpoint = '/configuration/'+type;
 
       // our cache of the server-side data
@@ -24,7 +24,7 @@ angular.module(PKG.name + '.services')
      * @param {mixed} value
      * @return {promise} resolved with the response from server
      */
-    MyConfigStore.prototype.set = function (key, value) {
+    MyPersistentStorage.prototype.set = function (key, value) {
       var deferred = $q.defer();
 
       myHelpers.deepSet(this.data, key, value);
@@ -48,7 +48,7 @@ angular.module(PKG.name + '.services')
      * @param {boolean} force true to bypass cache
      * @return {promise} resolved with the value
      */
-    MyConfigStore.prototype.get = function (key, force) {
+    MyPersistentStorage.prototype.get = function (key, force) {
 
       var val = myHelpers.deepGet(this.data, key);
 
@@ -92,5 +92,5 @@ angular.module(PKG.name + '.services')
       return promise;
     };
 
-    return MyConfigStore;
+    return MyPersistentStorage;
   });
