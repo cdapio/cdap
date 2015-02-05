@@ -65,7 +65,7 @@
       if (data.older.length == 1) {
         ess = "";
       }
-      document.write('<optgroup label="Older Releases' + ess + '">');
+      document.write('<optgroup label="Older Release' + ess + '">');
       var j;
       for (j in data.older) {
         writelink(data.older[j][0], data.older[j][1]);
