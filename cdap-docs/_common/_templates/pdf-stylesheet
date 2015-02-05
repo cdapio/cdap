@@ -47,7 +47,7 @@ pageTemplates:
             [0cm, 0cm, 100%, 100%]
         showHeader : false
         showFooter : true
-        defaultFooter : ".. class:: right\n\n###Title### • © 2015 Cask Data, Inc. • Page ###Page###"
+        defaultFooter : ".. class:: right\n\n###Title### • Copyright © 2015 Cask Data, Inc. • Page ###Page###"
         
     twoColumn:
         frames: []
