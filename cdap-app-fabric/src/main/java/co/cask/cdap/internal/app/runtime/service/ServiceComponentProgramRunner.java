@@ -18,10 +18,8 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -31,8 +29,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
-import co.cask.cdap.internal.app.services.BasicHttpServiceContextFactory;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.internal.app.services.ServiceWorkerDriver;
 import co.cask.cdap.proto.ProgramType;
@@ -104,9 +100,10 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
       Preconditions.checkArgument(host != null, "No hostname is provided");
 
-      component = new ServiceHttpServer(host, program, spec, runId, serviceAnnouncer,
-                                        createHttpServiceContextFactory(program, runId, instanceId,
-                                        options.getUserArguments()), metricsCollectionService, dataFabricFacadeFactory);
+      component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
+                                        instanceId, instanceCount, serviceAnnouncer,
+                                        metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
+                                        txClient, discoveryServiceClient, cConf);
     } else {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());
@@ -119,22 +116,9 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       component = new ServiceWorkerDriver(program, workerSpec, context);
     }
 
-    ProgramControllerServiceAdapter controller = new ProgramControllerServiceAdapter(component, componentName, runId);
+    ProgramControllerServiceAdapter controller =
+      new ServiceComponentProgramControllerAdapter(component, componentName, runId);
     component.start();
     return controller;
-  }
-
-  private BasicHttpServiceContextFactory createHttpServiceContextFactory(final Program program,
-                                                                         final RunId runId,
-                                                                         final int instanceId,
-                                                                         final Arguments runtimeArgs) {
-    return new BasicHttpServiceContextFactory() {
-      @Override
-      public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(spec, program, runId, instanceId, runtimeArgs,
-                                           metricsCollectionService, datasetFramework, cConf,
-                                           discoveryServiceClient, txClient);
-      }
-    };
   }
 }

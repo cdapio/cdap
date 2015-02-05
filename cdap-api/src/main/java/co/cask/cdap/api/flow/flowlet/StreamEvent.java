@@ -43,6 +43,13 @@ public class StreamEvent extends StreamEventData {
   }
 
   /**
+   * Creates an instance with the given body and empty headers.
+   */
+  public StreamEvent(ByteBuffer body) {
+    this(Collections.<String, String>emptyMap(), body);
+  }
+
+  /**
    * Creates an instance with the given headers and body and current time as the event timestamp.
    */
   public StreamEvent(Map<String, String> headers, ByteBuffer body) {

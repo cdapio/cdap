@@ -17,11 +17,11 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.AdapterNotFoundException;
-import co.cask.cdap.client.exception.AdapterTypeNotFoundException;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.AdapterTypeNotFoundException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
@@ -108,7 +108,7 @@ public class AdapterClient {
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL("v3", namespace, String.format("adapters/%s", adapterName));
-    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(adapterConfig)).build();
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
@@ -124,7 +124,7 @@ public class AdapterClient {
    *
    * @param namespace the namespace to use
    * @param adapterName Name of the adapter to delete
-   * @throws AdapterNotFoundException if the dataset with the specified name could not be found
+   * @throws AdapterNotFoundException if the adapter with the specified name could not be found
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
@@ -139,11 +139,11 @@ public class AdapterClient {
   }
 
   /**
-   * Checks if a dataset exists.
+   * Checks if a adapter exists.
    *
    * @param namespace the namespace to use
    * @param adapterName Name of the adapter to check
-   * @return true if the dataset exists
+   * @return true if the adapter exists
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
@@ -158,12 +158,12 @@ public class AdapterClient {
    * Waits for an adapter to exist.
    *
    * @param namespace the namespace to use
-   * @param adapterName Name of the dataset to check
+   * @param adapterName Name of the adapter to check
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the dataset was not yet existent before {@code timeout} milliseconds
+   * @throws TimeoutException if the adapter was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForExists(final String namespace, final String adapterName, long timeout, TimeUnit timeoutUnit)
@@ -184,12 +184,12 @@ public class AdapterClient {
   /**
    * Waits for an adapter to be deleted.
    *
-   * @param adapterName Name of the dataset to check
+   * @param adapterName Name of the adapter to check
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the dataset was not yet deleted before {@code timeout} milliseconds
+   * @throws TimeoutException if the adapter was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForDeleted(final String namespace, final String adapterName, long timeout, TimeUnit timeoutUnit)

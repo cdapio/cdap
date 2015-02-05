@@ -48,6 +48,7 @@ public enum ArgumentName {
   NUM_INSTANCES("num-instances"),
   START_TIME("start-time"),
   END_TIME("end-time"),
+  TIMEOUT("timeout"),
   LIMIT("limit"),
   RUN_STATUS("status"),
   APP_JAR_FILE("app-jar-file"),
@@ -59,6 +60,10 @@ public enum ArgumentName {
   ENDPOINT("endpoint"),
   HEADERS("headers"),
   HTTP_BODY("body"),
+  FORMAT("format"),
+  SCHEMA("schema"),
+  SETTINGS("settings"),
+  FREQUENCY("frequency"),
 
   NAMESPACE_ID("namespace-id"),
   NAMESPACE_DISPLAY_NAME("namespace-display-name"),

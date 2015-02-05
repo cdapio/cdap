@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
@@ -63,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * tests for queues. Extend this class to run the tests against an implementation of the queues.
+ * Tests for queues. Extend this class to run the tests against an implementation of the queues.
  */
 public abstract class QueueTest {
 
@@ -103,7 +104,7 @@ public abstract class QueueTest {
   @Test
   public void testDropAllQueues() throws Exception {
     // create a queue and a stream and enqueue one entry each
-    QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAQ");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "myApp", "myFlow", "myFlowlet", "tDAQ");
     QueueName streamName = QueueName.fromStream("tDAQStream");
     final QueueProducer qProducer = queueClientFactory.createProducer(queueName);
     final QueueProducer sProducer = queueClientFactory.createProducer(streamName);
@@ -140,7 +141,7 @@ public abstract class QueueTest {
   @Test
   public void testDropAllStreams() throws Exception {
     // create a queue and a stream and enqueue one entry each
-    QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAS");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "myApp", "myFlow", "myFlowlet", "tDAS");
     QueueName streamName = QueueName.fromStream("tDASStream");
     final QueueProducer qProducer = queueClientFactory.createProducer(queueName);
     final QueueProducer sProducer = queueClientFactory.createProducer(streamName);
@@ -208,7 +209,7 @@ public abstract class QueueTest {
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "singlefifo");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "singlefifo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
@@ -216,14 +217,14 @@ public abstract class QueueTest {
   @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "multififo");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "multififo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "singlehash");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "singlehash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
@@ -238,13 +239,13 @@ public abstract class QueueTest {
   @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "batchhash");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "batchhash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 10);
   }
 
   @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queuefailure");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queuefailure");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
 
     createEnqueueRunnable(queueName, 5, 1, null).run();
@@ -316,7 +317,7 @@ public abstract class QueueTest {
 
   @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queuerollback");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queuerollback");
     QueueProducer producer = queueClientFactory.createProducer(queueName);
     QueueConsumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -414,15 +415,69 @@ public abstract class QueueTest {
   }
 
   @Test
+  public void testDropAllForNamespace() throws Exception {
+    // deliberately used namespace names 'namespace' and 'namespace1' to test correct prefix matching
+    // create 4 queues
+    QueueName myQueue1 = QueueName.fromFlowlet("namespace", "myapp1", "myflow1", "myflowlet1", "myout1");
+    QueueName myQueue2 = QueueName.fromFlowlet("namespace", "myapp2", "myflow2", "myflowlet2", "myout2");
+    QueueName yourQueue1 = QueueName.fromFlowlet("namespace1", "yourapp1", "yourflow1", "yourflowlet1", "yourout1");
+    QueueName yourQueue2 = QueueName.fromFlowlet("namespace1", "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
+
+    String myQueueName1 = myQueue1.toString();
+    String myQueueName2 = myQueue2.toString();
+    String yourQueueName1 = yourQueue1.toString();
+    String yourQueueName2 = yourQueue2.toString();
+
+    queueAdmin.create(myQueueName1);
+    queueAdmin.create(myQueueName2);
+    queueAdmin.create(yourQueueName1);
+    queueAdmin.create(yourQueueName2);
+
+    // verify that queues got created
+    Assert.assertTrue(queueAdmin.exists(myQueueName1) && queueAdmin.exists(myQueueName2) &&
+                        queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+
+    // create some consumer configurations for all queues
+    configureGroups(myQueue1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(myQueue2, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(yourQueue1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(yourQueue2, ImmutableMap.of(0L, 1, 1L, 1));
+
+    // verify that the consumer config exists
+    verifyConsumerConfigExists(myQueue1, myQueue2, yourQueue1, yourQueue2);
+
+    // drop queues in namespace 'namespace'
+    queueAdmin.dropAllInNamespace("namespace");
+
+    // verify queues in 'namespace' are dropped
+    Assert.assertFalse(queueAdmin.exists(myQueueName1) || queueAdmin.exists(myQueueName2));
+    // also verify that consumer config of all queues in 'myspace' is deleted
+    verifyConsumerConfigIsDeleted(myQueue1, myQueue2);
+
+    // but the ones in 'namespace1' still exist
+    Assert.assertTrue(queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+    // consumer config for queues in 'namespace1' should also still exist
+    verifyConsumerConfigExists(yourQueue1, yourQueue2);
+
+    // drop queues in 'namespace1'
+    queueAdmin.dropAllInNamespace("namespace1");
+
+    // verify queues in 'namespace1' are dropped
+    Assert.assertFalse(queueAdmin.exists(yourQueueName1) || queueAdmin.exists(yourQueueName2));
+    // verify that the consumer config of all queues in 'namespace1' is deleted
+    verifyConsumerConfigIsDeleted(yourQueue1, yourQueue2);
+  }
+
+  @Test
   public void testClearAllForFlowWithNoQueues() throws Exception {
     queueAdmin.dropAll();
-    queueAdmin.clearAllForFlow("app", "flow");
+    queueAdmin.clearAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
   @Test
   public void testDropAllForFlowWithNoQueues() throws Exception {
     queueAdmin.dropAll();
-    queueAdmin.dropAllForFlow("app", "flow");
+    queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
   private void testClearOrDropAllForFlow(boolean doDrop) throws Exception {
@@ -430,9 +485,9 @@ public abstract class QueueTest {
     // using a different app name for each case as this test leaves some entries
     String app = doDrop ? "tDAFF" : "tCAFF";
 
-    QueueName queueName1 = QueueName.fromFlowlet(app, "flow1", "flowlet1", "out1");
-    QueueName queueName2 = QueueName.fromFlowlet(app, "flow1", "flowlet2", "out2");
-    QueueName queueName3 = QueueName.fromFlowlet(app, "flow2", "flowlet1", "out");
+    QueueName queueName1 = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, app, "flow1", "flowlet1", "out1");
+    QueueName queueName2 = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, app, "flow1", "flowlet2", "out2");
+    QueueName queueName3 = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, app, "flow2", "flowlet1", "out");
     configureGroups(queueName1, ImmutableMap.of(0L, 1, 1L, 1));
     configureGroups(queueName2, ImmutableMap.of(0L, 1, 1L, 1));
     configureGroups(queueName3, ImmutableMap.of(0L, 1, 1L, 1));
@@ -467,9 +522,9 @@ public abstract class QueueTest {
 
     // clear/drop all queues for flow1
     if (doDrop) {
-      queueAdmin.dropAllForFlow(app, "flow1");
+      queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, app, "flow1");
     } else {
-      queueAdmin.clearAllForFlow(app, "flow1");
+      queueAdmin.clearAllForFlow(Constants.DEFAULT_NAMESPACE, app, "flow1");
     }
 
     if (doDrop) {
@@ -515,7 +570,7 @@ public abstract class QueueTest {
   @Test
   public void testReset() throws Exception {
     // NOTE: using different name of the queue from other unit-tests because this test leaves entries
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queueReset");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queueReset");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     QueueProducer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);
@@ -566,7 +621,8 @@ public abstract class QueueTest {
   public void testConcurrentEnqueue() throws Exception {
     // This test is for testing multiple producers that writes with a delay after a transaction started.
     // This is for verifying consumer advances the startKey correctly.
-    final QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "concurrent");
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
+                                                      "concurrent");
     configureGroups(queueName, ImmutableMap.of(0L, 1));
 
     final CyclicBarrier barrier = new CyclicBarrier(4);
@@ -636,7 +692,8 @@ public abstract class QueueTest {
 
   @Test
   public void testMultiStageConsumer() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "multistage");
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
+                                                      "multistage");
     configureGroups(queueName, ImmutableMap.of(0L, 2));
 
     // Enqueue 10 items
@@ -698,7 +755,8 @@ public abstract class QueueTest {
 
   private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
     // since this is used by more than one test method, ensure uniqueness of the queue name by adding strategy
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1" + strategy.toString());
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
+                                                "queue1" + strategy.toString());
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     QueueProducer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);

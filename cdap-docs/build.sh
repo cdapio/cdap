@@ -114,14 +114,20 @@ function copy_html() {
 }
 
 function build_docs_outer_level() {
+  echo ""
+  echo "========================================================"
+  echo "Building outer-level docs..."
+  echo "========================================================"
+  echo ""
   clean
   version
   
   # Copies placeholder file and renames it
-  copy_source admin-manual      "Administration Manual"
-  copy_source developers-manual "Developers’ Manual"
-  copy_source reference-manual  "Reference Manual"
-  copy_source examples-manual   "Examples, Guides, and Tutorials"
+  copy_source admin-manual        "Administration Manual"
+  copy_source developers-manual   "Developers’ Manual"
+  copy_source integrations        "Integrations"
+  copy_source reference-manual    "Reference Manual"
+  copy_source examples-manual     "Examples, Guides, and Tutorials"
 
   # Build outer-level docs
   cd $SCRIPT_PATH
@@ -135,17 +141,29 @@ function build_docs_outer_level() {
     sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
   fi
   
-  # Copy lower-level doc manuals
+  echo ""
+  echo "========================================================"
+  echo "Copying lower-level docs..."
+  echo "========================================================"
+  echo ""
+
   copy_html admin-manual
   copy_html developers-manual
+  copy_html integrations
   copy_html reference-manual
   copy_html examples-manual
 
-  # Rewrite 404 file
-  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$PROJECT_VERSION/en/_static"
-  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$PROJECT_VERSION/en/_images"
-  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$PROJECT_VERSION/en/|g"
-  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$PROJECT_VERSION/en/search.html"
+  local project_dir
+  # Rewrite 404 file, using branch if not a release
+  if [ "x$GIT_BRANCH_TYPE" == "xfeature" ]; then
+    project_dir=$PROJECT_VERSION-$GIT_BRANCH
+  else
+    project_dir=$PROJECT_VERSION
+  fi
+  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$project_dir/en/_static"
+  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$project_dir/en/_images"
+  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$project_dir/en/|g"
+  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$project_dir/en/search.html"
 }
 
 ################################################## current
@@ -174,7 +192,7 @@ function build_docs() {
 }
 
 function build_docs_github() {
-  _build_docs "docs-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
+  _build_docs "build-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
 }
 
 function build_docs_web() {
@@ -193,12 +211,17 @@ function _build_docs() {
 function build() {
   build_specific_doc admin-manual $1
   build_specific_doc developers-manual $1
+  build_specific_doc integrations $1
   build_specific_doc reference-manual $1
   build_specific_doc examples-manual $1
 }
 
 function build_specific_doc() {
+  echo ""
+  echo "========================================================"
   echo "Building $1, target $2..."
+  echo "========================================================"
+  echo ""
   cd $SCRIPT_PATH/$1
   ./build.sh $2 $ARG_2 $ARG_3
 }

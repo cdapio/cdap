@@ -35,12 +35,11 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -50,9 +49,10 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterNotFoundException;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.AdapterConfig;
@@ -62,6 +62,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.Sink;
+import co.cask.cdap.proto.Source;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
@@ -69,8 +71,10 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -78,6 +82,7 @@ import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -94,6 +99,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -260,7 +266,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // Deletion of a particular application is not allowed if that application is used by an adapter
       if (adapterService.getAdapterTypeInfo(appId) != null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("An adapter type exists with with the name: %s", appId));
+                             String.format("Cannot delete Application %s." +
+                                             " An AdapterType exists with a conflicting name.", appId));
+
         return;
       }
 
@@ -316,10 +324,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Retrieves an adapter
    */
   @GET
-  @Path("/adapters/{adapter-name}")
+  @Path("/adapters/{adapter-id}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-name") String adapterName) {
+                         @PathParam("adapter-id") String adapterName) {
     try {
       AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
@@ -332,10 +340,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts/stops an adapter
    */
   @POST
-  @Path("/adapters/{adapterId}/{action}")
+  @Path("/adapters/{adapter-id}/{action}")
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapterId") String adapterId,
+                               @PathParam("adapter-id") String adapterId,
                                @PathParam("action") String action) {
     try {
       if ("start".equals(action)) {
@@ -350,6 +358,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (InvalidAdapterOperationException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    }
+  }
+
+  /**
+   * Retrieves the status of an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-id}/status")
+  public void getAdapterStatus(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("adapter-id") String adapterId) {
+    try {
+      responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
+    } catch (AdapterNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
   }
 
@@ -357,10 +382,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes an adapter
    */
   @DELETE
-  @Path("/adapters/{adapter-name}")
+  @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) {
     try {
       adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -372,11 +397,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Create an adapter.
    */
-  @PUT
-  @Path("/adapters/{adapter-name}")
+  @POST
+  @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-name") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) {
 
     try {
       if (!namespaceExists(namespaceId)) {
@@ -399,16 +424,37 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      AdapterSpecification spec = config.toAdapterSpec(adapterName, adapterTypeInfo.getSourceType(),
-                                                       adapterTypeInfo.getSinkType());
+      AdapterSpecification spec = convertToSpec(adapterName, config, adapterTypeInfo);
       adapterService.createAdapter(namespaceId, spec);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (AdapterAlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (Throwable th) {
       LOG.error("Failed to deploy adapter", th);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
+  }
+
+  private AdapterSpecification convertToSpec(String name, AdapterConfig config, AdapterTypeInfo typeInfo) {
+    Map<String, String> sourceProperties = Maps.newHashMap(typeInfo.getDefaultSourceProperties());
+    if (config.source.properties != null) {
+      sourceProperties.putAll(config.source.properties);
+    }
+    Set<Source> sources = ImmutableSet.of(
+      new Source(config.source.name, typeInfo.getSourceType(), sourceProperties));
+    Map<String, String> sinkProperties = Maps.newHashMap(typeInfo.getDefaultSinkProperties());
+    if (config.sink.properties != null) {
+      sinkProperties.putAll(config.sink.properties);
+    }
+    Set<Sink> sinks = ImmutableSet.of(
+      new Sink(config.sink.name, typeInfo.getSinkType(), sinkProperties));
+    Map<String, String> adapterProperties = Maps.newHashMap(typeInfo.getDefaultAdapterProperties());
+    if (config.properties != null) {
+      adapterProperties.putAll(config.properties);
+    }
+    return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
@@ -677,12 +723,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
       // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      String namespace = String.format("%s.%s.%s",
+                                       flowProgramId.getNamespaceId(),
+                                       flowProgramId.getApplicationId(),
+                                       flowProgramId.getId());
       for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
         streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
       }
 
-      queueAdmin.dropAllForFlow(appId.getId(), flowSpecification.getName());
+      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
 
@@ -697,7 +746,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
    * the reset API has a v3 version
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException, OperationException {
+  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
@@ -706,9 +755,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         (new Id.Application(new Id.Namespace(namespaceId), applicationId));
       applications.add(spec);
     }
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(DISCOVERY_TIMEOUT_SECONDS,
+                                                                            TimeUnit.SECONDS);
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");
@@ -748,7 +797,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) throws OperationException {
+  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
                                                                    appSpec.getMapReduce().values(),
@@ -763,7 +812,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param appId        applicationId.
    * @throws IOException if there are errors with location IO
    */
-  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+  private void deleteProgramLocations(Id.Application appId) throws IOException {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
@@ -792,7 +841,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Delete stored Preferences of the application and all its programs.
    * @param appId applicationId
    */
-  private void deletePreferences(Id.Application appId) throws OperationException {
+  private void deletePreferences(Id.Application appId) {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 

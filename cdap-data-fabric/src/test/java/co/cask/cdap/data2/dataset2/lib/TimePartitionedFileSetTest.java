@@ -64,26 +64,26 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     long time = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("12/10/14 5:10 am").getTime();
 
     // make sure the file set has no partitions initially
-    Assert.assertTrue("should return no partitions", fileSet.getPartitions(0L, Long.MAX_VALUE).isEmpty());
+    Assert.assertTrue("should return no partitions", fileSet.getPartitionPaths(0L, Long.MAX_VALUE).isEmpty());
     Assert.assertNull("should return null", fileSet.getPartition(time));
 
     // add a partition, verify getPartition() works
     fileSet.addPartition(time, "first/partition");
     Assert.assertEquals("first/partition", fileSet.getPartition(time));
-    Assert.assertTrue("should return no partitions", fileSet.getPartitions(time + 1, Long.MAX_VALUE).isEmpty());
-    Assert.assertTrue("should return no partitions", fileSet.getPartitions(0L, time).isEmpty());
+    Assert.assertTrue("should return no partitions", fileSet.getPartitionPaths(time + 1, Long.MAX_VALUE).isEmpty());
+    Assert.assertTrue("should return no partitions", fileSet.getPartitionPaths(0L, time).isEmpty());
 
-    // verify getPartitions() works with various ranges
-    Collection<String> paths = fileSet.getPartitions(0L, Long.MAX_VALUE);
+    // verify getPartitionPaths() works with various ranges
+    Collection<String> paths = fileSet.getPartitionPaths(0L, Long.MAX_VALUE);
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertEquals("first/partition", paths.iterator().next());
-    paths = fileSet.getPartitions(0L, time + 1);
+    paths = fileSet.getPartitionPaths(0L, time + 1);
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertEquals("first/partition", paths.iterator().next());
-    paths = fileSet.getPartitions(time, time + TimeUnit.HOURS.toMillis(1));
+    paths = fileSet.getPartitionPaths(time, time + TimeUnit.HOURS.toMillis(1));
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertEquals("first/partition", paths.iterator().next());
-    paths = fileSet.getPartitions(time - TimeUnit.HOURS.toMillis(1), time + TimeUnit.HOURS.toMillis(1));
+    paths = fileSet.getPartitionPaths(time - TimeUnit.HOURS.toMillis(1), time + TimeUnit.HOURS.toMillis(1));
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertEquals("first/partition", paths.iterator().next());
 
@@ -92,19 +92,19 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     fileSet.addPartition(time1, "second/partition");
     Assert.assertEquals("second/partition", fileSet.getPartition(time1));
 
-    paths = fileSet.getPartitions(0L, Long.MAX_VALUE);
+    paths = fileSet.getPartitionPaths(0L, Long.MAX_VALUE);
     Assert.assertEquals("should return two partitions", 2, paths.size());
     Assert.assertTrue(paths.contains("first/partition"));
     Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitions(time, time + TimeUnit.MINUTES.toMillis(30));
+    paths = fileSet.getPartitionPaths(time, time + TimeUnit.MINUTES.toMillis(30));
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertTrue(paths.contains("first/partition"));
-    paths = fileSet.getPartitions(time + TimeUnit.MINUTES.toMillis(30), time1);
+    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1);
     Assert.assertTrue(paths.isEmpty());
-    paths = fileSet.getPartitions(time + TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
+    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitions(time - TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
+    paths = fileSet.getPartitionPaths(time - TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
     Assert.assertEquals("should return two partition", 2, paths.size());
     Assert.assertTrue(paths.contains("first/partition"));
     Assert.assertTrue(paths.contains("second/partition"));
@@ -121,17 +121,17 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     fileSet.dropPartition(time);
     Assert.assertNull("should return null", fileSet.getPartition(time));
 
-    paths = fileSet.getPartitions(0L, Long.MAX_VALUE);
+    paths = fileSet.getPartitionPaths(0L, Long.MAX_VALUE);
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitions(time, time + TimeUnit.MINUTES.toMillis(30));
+    paths = fileSet.getPartitionPaths(time, time + TimeUnit.MINUTES.toMillis(30));
     Assert.assertTrue(paths.isEmpty());
-    paths = fileSet.getPartitions(time + TimeUnit.MINUTES.toMillis(30), time1);
+    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1);
     Assert.assertTrue(paths.isEmpty());
-    paths = fileSet.getPartitions(time + TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
+    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitions(time - TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
+    paths = fileSet.getPartitionPaths(time - TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
     Assert.assertEquals("should return one partition", 1, paths.size());
     Assert.assertTrue(paths.contains("second/partition"));
 
@@ -167,7 +167,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   public void testInputPartitionPaths() throws Exception {
     // make sure the dataset has no partitions
     final TimePartitionedFileSet tpfs = getInstance("tpfs");
-    Assert.assertTrue(tpfs.getPartitions(0L, Long.MAX_VALUE).isEmpty());
+    Assert.assertTrue(tpfs.getPartitionPaths(0L, Long.MAX_VALUE).isEmpty());
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();

@@ -33,16 +33,40 @@ File paths can either be absolute paths or, in the case of
 
 .. _enabling-security:
 
-Enabling Security
------------------
-To enable security in CDAP, add these properties to ``cdap-site.xml``:
+
+Enabling Security (Standalone CDAP)
+-----------------------------------
+
+To enable security in :term:`Standalone CDAP <standalone cdap>`, add these properties to ``cdap-site.xml``:
 
 ================================================= ===================== =====================================================
-Property                                          Value                 Notes
+Property                                          Default Value         Description
 ================================================= ===================== =====================================================
-``security.enabled``                              ``true``
+``security.enabled``                              ``false``             Enables authentication for CDAP. When set to ``true`` 
+                                                                        all requests to CDAP must provide a valid access 
+                                                                        token.
+``security.auth.server.bind.address``             ``<hostname>``        IP address that the CDAP Authentication Server should
+                                                                        bind to
+================================================= ===================== =====================================================
+
+Client Authentication then needs to be configured, as described below under
+:ref:`Configuring Authentication Mechanisms <installation-configuring-authentication-mechanisms>`. 
+With Standalone CDAP, the simplest is :ref:`Basic Authentication <installation-basic-authentication>`.
+
+
+Enabling Security (Distributed CDAP)
+------------------------------------
+To enable security in :term:`Distributed CDAP <distributed cdap>`, add these properties to ``cdap-site.xml``:
+
+================================================= ===================== =====================================================
+Property                                          Default Value         Description
+================================================= ===================== =====================================================
+``security.enabled``                              ``false``             Enables authentication for CDAP. When set to ``true`` 
+                                                                        all requests to CDAP must provide a valid access 
+                                                                        token.
 ``security.auth.server.address``                  *Deprecated*          Use ``security.auth.server.bind.address`` instead
-``security.auth.server.bind.address``             ``<hostname>``
+``security.auth.server.bind.address``             ``<hostname>``        IP address that the CDAP Authentication Server should
+                                                                        bind to
 ================================================= ===================== =====================================================
 
 Configuring Kerberos (required)
@@ -94,34 +118,40 @@ Running Servers with SSL
 
 To enable running servers with SSL in CDAP, add this property to ``cdap-site.xml``:
 
-================================================= ===========================================================================
-Property                                          Value
-================================================= ===========================================================================
-``ssl.enabled``                                   ``true``
-================================================= ===========================================================================
+================================================= ==================== ======================================================
+Property                                          Default Value        Description
+================================================= ==================== ======================================================
+``ssl.enabled``                                   ``true``             ``true`` to enable servers running with SSL in CDAP
+================================================= ==================== ======================================================
 
 Default Ports
 .............
 
 Without SSL:
 
-================================================= ===========================================================================
-Property                                          Default Value
-================================================= ===========================================================================
-``router.bind.port``                              ``10000``
-``security.auth.server.bind.port``                ``10009``
-``dashboard.bind.port``                           ``9999``
-================================================= ===========================================================================
+================================================= ==================== ======================================================
+Property                                          Default Value        Description
+================================================= ==================== ======================================================
+``router.bind.port``                              ``10000``            Port number that the CDAP Router should bind to for 
+                                                                       HTTP Connections
+``security.auth.server.bind.port``                ``10009``            Port number that the CDAP Authentication Server should
+                                                                       bind to for HTTP Connections
+``dashboard.bind.port``                           ``9999``             Port number that the CDAP Console should
+                                                                       bind to for HTTP Connections
+================================================= ==================== ======================================================
 
 With SSL:
 
-================================================= ===========================================================================
-Property                                          Default Value
-================================================= ===========================================================================
-``router.ssl.bind.port``                          ``10443``
-``security.auth.server.ssl.bind.port``            ``10010``
-``dashboard.ssl.bind.port``                       ``9443``
-================================================= ===========================================================================
+================================================= ==================== ======================================================
+Property                                          Default Value        Description
+================================================= ==================== ======================================================
+``router.ssl.bind.port``                          ``10443``            Port number that the CDAP router should bind to for 
+                                                                       HTTPS Connections
+``security.auth.server.ssl.bind.port``            ``10010``            Port number that the CDAP Authentication Server should
+                                                                       bind to for HTTPS Connections
+``dashboard.ssl.bind.port``                       ``9443``             Port number that the CDAP Console should bind to for 
+                                                                       HTTPS Connections
+================================================= ==================== ======================================================
 
 
 Configuring SSL for the Authentication Server
@@ -212,6 +242,8 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
 
 You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
+.. _installation-configuring-authentication-mechanisms:
+
 Configuring Authentication Mechanisms
 -------------------------------------
 CDAP provides several ways to authenticate a client’s identity:
@@ -228,19 +260,24 @@ Basic Authentication
 The simplest way to identity a client is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
-========================================================== ==================================================================
-Property                                                   Value
-========================================================== ==================================================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.server.BasicAuthenticationHandler``
-``security.authentication.basic.realmfile``                ``<path>`` *(either absolute or relative)*
-========================================================== ==================================================================
+========================================================== =========================== ======================================
+Property                                                   Value                       Description
+========================================================== =========================== ======================================
+``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+                                                           ``server.``                 authentication
+                                                           ``BasicAuthentication``\
+                                                           ``Handler``
+``security.authentication.basic.realmfile``                ``<path>``                  An absolute or relative path to the 
+                                                                                       realm file
+========================================================== =========================== ======================================
 
 The realm file is of the following format::
 
   username: password[,rolename ...]
 
-Note that it is not advisable to use this method of authentication. In production, we recommend using any of the
-other methods described below.
+In Standalone CDAP, the realm file can be specified as ``conf/realmfile`` and placed with
+the ``cdap-site.xml`` file. Note that it is not advisable to use this method of
+authentication. In production, we recommend using any of the other methods described below.
 
 .. _installation-ldap-authentication:
 
@@ -249,43 +286,64 @@ LDAP Authentication
 You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
-========================================================== ==================================================================
-Property                                                   Value
-========================================================== ==================================================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.server.LDAPAuthenticationHandler``
-``security.authentication.loginmodule.className``          ``co.cask.cdap.security.server.LDAPLoginModule``
-``security.authentication.handler.debug``                  ``true/false``
-``security.authentication.handler.hostname``               ``<hostname>``
-``security.authentication.handler.port``                   ``<port>``
-``security.authentication.handler.userBaseDn``             ``<userBaseDn>``
-``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``
-``security.authentication.handler.userObjectClass``        ``<userObjectClass>``
-========================================================== ==================================================================
+========================================================== =========================== ======================================
+Property                                                   Value                       Description
+========================================================== =========================== ======================================
+``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+                                                           ``server.``                 authentication
+                                                           ``LDAPAuthentication``\
+                                                           ``Handler``
+``security.authentication.loginmodule.className``          ``co.cask.cdap.security.``\
+                                                           ``server.``
+                                                           ``LDAPLoginModule``
+``security.authentication.handler.debug``                  ``false``                   Set to ``true`` to enable debugging
+``security.authentication.handler.hostname``               ``<hostname>``              LDAP server host
+``security.authentication.handler.port``                   ``<port>``                  LDAP server port
+``security.authentication.handler.userBaseDn``             ``<userBaseDn>``            Distinguished Name of the root for 
+                                                                                       user account entries in the LDAP
+                                                                                       directory
+``security.authentication.handler.userRdnAttribute``       ``<userRdnAttribute>``      LDAP Object attribute for username 
+                                                                                       when search by role DN
+``security.authentication.handler.userObjectClass``        ``<userObjectClass>``       LDAP Object class used to store user  
+                                                                                       entries
+========================================================== =========================== ======================================
 
 In addition, you may configure these optional properties in ``cdap-site.xml``:
 
-========================================================== ==================================================================
-Property                                                   Value
-========================================================== ==================================================================
-``security.authentication.handler.bindDn``                 ``<bindDn>``
-``security.authentication.handler.bindPassword``           ``<bindPassword>``
-``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``
-``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>``
-``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``
-``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``
-``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``
-``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``
-========================================================== ==================================================================
+========================================================== =========================== ======================================
+Property                                                   Value                       Description
+========================================================== =========================== ======================================
+``security.authentication.handler.bindDn``                 ``<bindDn>``                The Distinguished Name used to bind to
+                                                                                       the LDAP server and search the
+                                                                                       directory
+``security.authentication.handler.bindPassword``           ``<bindPassword>``          The password used to bind to the LDAP
+                                                                                       server
+``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``       LDAP Object attribute containing the 
+                                                                                       username
+``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>`` LDAP Object attribute containing the 
+                                                                                       user password
+``security.authentication.handler.roleBaseDn``             ``<roleBaseDn>``            Distinguished Name of the root of the 
+                                                                                       LDAP tree to search for group 
+                                                                                       memberships
+``security.authentication.handler.roleNameAttribute``      ``<roleNameAttribute>``     LDAP Object attribute specifying the 
+                                                                                       group name 
+``security.authentication.handler.roleMemberAttribute``    ``<roleMemberAttribute>``   LDAP Object attribute specifying the 
+                                                                                       group members
+``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``       LDAP Object class used to store group  
+                                                                                       entries
+========================================================== =========================== ======================================
 
 To enable SSL between the authentication server and the LDAP instance, configure
 these properties in ``cdap-site.xml``:
 
-========================================================== ================= ================================================
-Property                                                   Value             Default Value
-========================================================== ================= ================================================
-``security.authentication.handler.useLdaps``               ``true/false``    ``false``
-``security.authentication.handler.ldapsVerifyCertificate`` ``true/false``    ``true``
-========================================================== ================= ================================================
+========================================================== ================= ========= ======================================
+Property                                                   Default Value     Value     Description
+========================================================== ================= ========= ======================================
+``security.authentication.handler.useLdaps``               ``false``         ``true``  Set to ``true`` to enable use of LDAPS
+``security.authentication.handler.ldapsVerifyCertificate`` ``true``          ``true``  Set to ``true`` to enable verification
+                                                                                       of the SSL certificate used by the
+                                                                                       LDAP server
+========================================================== ================= ========= ======================================
 
 .. _installation-jaspi-authentication:
 
@@ -294,12 +352,16 @@ JASPI Authentication
 To authenticate a user using JASPI (Java Authentication Service Provider Interface) add 
 the following properties to ``cdap-site.xml``:
 
-========================================================== ==================================================================
-Property                                                   Value
-========================================================== ==================================================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.server.JASPIAuthenticationHandler``
-``security.authentication.loginmodule.className``          ``<custom-login-module>``
-========================================================== ==================================================================
+========================================================== =========================== ======================================
+Property                                                   Value                       Description
+========================================================== =========================== ======================================
+``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+                                                           ``server.``                 authentication
+                                                           ``JASPIAuthentication``\
+                                                           ``Handler``
+``security.authentication.loginmodule.className``          ``<custom-login-module>``   Name of the class of the login module
+                                                                                       handling authentication
+========================================================== =========================== ======================================
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
 such as ``security.authentication.handler.hostname``, will be provided to the handler.

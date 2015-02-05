@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -151,6 +151,8 @@ public abstract class HBaseQueueTest extends QueueTest {
       .with(new AbstractModule() {
         @Override
         protected void configure() {
+          // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
+          bind(StreamAdmin.class).to(HBaseStreamAdmin.class);
           bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
         }
       })
@@ -179,17 +181,35 @@ public abstract class HBaseQueueTest extends QueueTest {
     tableUtil = new HBaseTableUtilFactory().get();
   }
 
+  // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("application1", "flow1", "flowlet1", "output1");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
+                                                "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
+    Assert.assertEquals("test.system.queue.application1.flow1", tableName);
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
+
+    queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
+    tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
+    Assert.assertEquals("test.system.queue.testNamespace.application1.flow1", tableName);
+    Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
+    Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
+    Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
+
+    try {
+      HBaseQueueAdmin.getNamespaceId("test.system.queue.testNamespace.application1.flow1.unexpected");
+      Assert.fail("Should fail because of invalid table name");
+    } catch (IllegalArgumentException e) {
+    }
   }
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet("app", "flow", "flowlet", "out"));
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app",
+                                                                              "flow", "flowlet", "out"));
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
@@ -205,7 +225,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "out");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
     String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
 
     // Set a group info

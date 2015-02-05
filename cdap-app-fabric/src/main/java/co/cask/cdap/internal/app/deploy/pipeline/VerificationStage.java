@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -28,6 +30,8 @@ import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
@@ -53,10 +57,12 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
+  private final AdapterService adapterService;
 
-  public VerificationStage(DatasetFramework dsFramework) {
+  public VerificationStage(DatasetFramework dsFramework, AdapterService adapterService) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.dsFramework = dsFramework;
+    this.adapterService = adapterService;
   }
 
   /**
@@ -72,7 +78,14 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     ApplicationSpecification specification = input.getSpecification();
     Id.Application appId = input.getId();
 
-    // TODO: add a check against system applications (adapters, for instance).
+    if (ApplicationDeployScope.USER.equals(input.getApplicationDeployScope())) {
+      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(appId.getId());
+      if (adapterTypeInfo != null) {
+        throw new RuntimeException
+          (String.format("Cannot deploy Application %s. An AdapterType exists with a conflicting name.", appId));
+      }
+    }
+
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());
@@ -134,9 +147,24 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
             // no-op
             break;
           default:
-            throw new RuntimeException(String.format("Unknown Program '%s', Program Type '%s' in the Workflow.",
+            throw new RuntimeException(String.format("Unknown Program '%s' in the Workflow.",
                                                      program.getProgramName()));
         }
+      }
+    }
+
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      ScheduleProgramInfo program = entry.getValue().getProgram();
+      switch (program.getProgramType()) {
+        case WORKFLOW:
+          if (!specification.getWorkflows().containsKey(program.getProgramName())) {
+            throw new RuntimeException(String.format("Workflow '%s' is not configured with the Application.",
+                                                     program.getProgramName()));
+          }
+          break;
+        default:
+          throw new RuntimeException(String.format("Program '%s' with Program Type '%s' cannot be scheduled.",
+                                                   program.getProgramName(), program.getProgramType()));
       }
     }
 

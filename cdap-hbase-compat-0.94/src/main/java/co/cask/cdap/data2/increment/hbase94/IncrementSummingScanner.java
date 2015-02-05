@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.increment.hbase94;
 
+import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,13 +47,15 @@ class IncrementSummingScanner implements RegionScanner {
   // Highest timestamp, beyond which we cannot aggregate increments during flush and compaction.
   // Increments newer than this may still be visible to running transactions
   private final long compactionUpperBound;
+  // scan start time to use in computing TTL
+  private final long oldestTsByTTL;
 
   IncrementSummingScanner(HRegion region, int batchSize, InternalScanner internalScanner, ScanType scanType) {
-    this(region, batchSize, internalScanner, scanType, Long.MAX_VALUE);
+    this(region, batchSize, internalScanner, scanType, Long.MAX_VALUE, -1);
   }
 
   IncrementSummingScanner(HRegion region, int batchSize, InternalScanner internalScanner, ScanType scanType,
-                          long compationUpperBound) {
+                          long compationUpperBound, long oldestTsByTTL) {
     this.region = region;
     this.batchSize = batchSize;
     this.baseScanner = new WrappedScanner(internalScanner);
@@ -61,6 +64,7 @@ class IncrementSummingScanner implements RegionScanner {
     }
     this.scanType = scanType;
     this.compactionUpperBound = compationUpperBound;
+    this.oldestTsByTTL = oldestTsByTTL;
   }
 
   @Override
@@ -175,7 +179,7 @@ class IncrementSummingScanner implements RegionScanner {
         }
         // add this increment to the tally
         runningSum += Bytes.toLong(cell.getBuffer(),
-            cell.getValueOffset() + IncrementHandler.DELTA_MAGIC_PREFIX.length);
+            cell.getValueOffset() + IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
       } else {
         // otherwise (not an increment)
         if (previousIncrement != null) {
@@ -203,8 +207,11 @@ class IncrementSummingScanner implements RegionScanner {
           LOG.trace("Including raw cell: " + cell);
         }
 
-        cells.add(cell);
-        addedCnt++;
+        // apply any configured TTL
+        if (cell.getTimestamp() > oldestTsByTTL) {
+          cells.add(cell);
+          addedCnt++;
+        }
       }
       // if we made it this far, consume the current cell
       baseScanner.nextCell(limit);
@@ -230,14 +237,14 @@ class IncrementSummingScanner implements RegionScanner {
     }
 
     return Bytes.equals(
-      first.getBuffer(), first.getKeyOffset(), first.getKeyLength() - KeyValue.TIMESTAMP_SIZE,
-      second.getBuffer(), second.getKeyOffset(), second.getKeyLength() - KeyValue.TIMESTAMP_SIZE);
+        first.getBuffer(), first.getKeyOffset(), first.getKeyLength() - KeyValue.TIMESTAMP_SIZE,
+        second.getBuffer(), second.getKeyOffset(), second.getKeyLength() - KeyValue.TIMESTAMP_SIZE);
   }
 
   private KeyValue newCell(KeyValue toCopy, long value) {
     byte[] newValue = Bytes.toBytes(value);
     if (scanType != ScanType.USER_SCAN && scanType != ScanType.MAJOR_COMPACT) {
-      newValue = Bytes.add(IncrementHandler.DELTA_MAGIC_PREFIX, newValue);
+      newValue = Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, newValue);
     }
     return new KeyValue(toCopy.getRow(), toCopy.getFamily(), toCopy.getQualifier(), toCopy.getTimestamp(),
                         newValue);

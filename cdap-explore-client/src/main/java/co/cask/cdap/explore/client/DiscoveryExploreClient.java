@@ -18,7 +18,6 @@ package co.cask.cdap.explore.client;
 
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.explore.service.Explore;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -43,17 +42,14 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(
-            discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE)), 3L, TimeUnit.SECONDS);
+        return new RandomEndpointStrategy(discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE));
       }
     });
   }
 
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
-    EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    Discoverable discoverable = endpointStrategy.pick();
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }

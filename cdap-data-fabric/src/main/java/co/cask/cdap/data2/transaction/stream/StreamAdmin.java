@@ -28,12 +28,12 @@ import java.util.Map;
 public interface StreamAdmin extends EntityAdmin {
 
   /**
-   * Deletes all entries for all queues.
+   * Deletes all entries for all streams.
    */
   void dropAll() throws Exception;
 
   /**
-   * Sets the number of consumer instances for the given consumer group in a queue.
+   * Sets the number of consumer instances for the given consumer group in a stream.
    * @param streamName Name of the stream.
    * @param groupId The consumer group to alter.
    * @param instances Number of instances.
@@ -42,7 +42,7 @@ public interface StreamAdmin extends EntityAdmin {
 
 
   /**
-   * Sets the consumer groups information for the given queue.
+   * Sets the consumer groups information for the given stream.
    * @param streamName Name of the stream.
    * @param groupInfo A map from groupId to number of instances of each group.
    */

@@ -17,15 +17,16 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.ProgramNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -123,12 +124,39 @@ public class ProgramClient {
   public void stop(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/stop",
-                                              appId, programType.getCategoryName(), programName));
+    URL url = config.resolveURL(String.format("apps/%s/%s/%s/stop", appId, programType.getCategoryName(), programName));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
+    }
+  }
+
+  /**
+   * Stops all currently running programs.
+   *
+   * @throws IOException
+   * @throws UnAuthorizedAccessTokenException
+   * @throws InterruptedException
+   * @throws TimeoutException
+   */
+  public void stopAll() throws IOException, UnAuthorizedAccessTokenException, InterruptedException, TimeoutException {
+    Map<ProgramType, List<ProgramRecord>> allPrograms = new ApplicationClient(config).listAllPrograms();
+    for (Map.Entry<ProgramType, List<ProgramRecord>> entry : allPrograms.entrySet()) {
+      ProgramType programType = entry.getKey();
+      List<ProgramRecord> programRecords = entry.getValue();
+      for (ProgramRecord programRecord : programRecords) {
+        try {
+          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getId());
+          if (!status.equals("STOPPED")) {
+            this.stop(programRecord.getApp(), programType, programRecord.getId());
+            this.waitForStatus(programRecord.getApp(), programType, programRecord.getId(),
+                               "STOPPED", 60, TimeUnit.SECONDS);
+          }
+        } catch (ProgramNotFoundException e) {
+          // IGNORE
+        }
+      }
     }
   }
 

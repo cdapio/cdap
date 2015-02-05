@@ -20,12 +20,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -139,19 +135,4 @@ public abstract class StreamFileJanitorTestBase {
 
     throw new IOException("Not a valid generation directory");
   }
-
-  /**
-   * A stream admin for interact with files only (the product one operations on both file and HBase).
-   */
-  protected static final class TestStreamFileAdmin extends AbstractStreamFileAdmin {
-
-    @Inject
-    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                        StreamCoordinatorClient streamCoordinatorClient,
-                        StreamConsumerStateStoreFactory stateStoreFactory) {
-      super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, new NoOpNotificationFeedManager(),
-            new NoopStreamAdmin());
-    }
-  }
-
 }

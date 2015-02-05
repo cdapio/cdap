@@ -101,7 +101,17 @@ To create a Dataset of type ``UniqueCountTable``, add the following into the App
 
 You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
 These properties will be used by embedded Datasets during creation and will be available via the
-``DatasetSpecification`` passed to the Dataset constructor.
+``DatasetSpecification`` passed to the Dataset constructor. For example, to create a Dataset with
+a TTL (time-to-live) property, you can use::
+
+  createDataset("frequentCustomers", KeyValueTable.class,
+    DatasetProperties.builder()
+                     .add(OrderedTable.PROPERTY_TTL, "3600")      
+                     .build());
+
+You can pass other properties, such as for 
+:ref:`conflict detection <transaction-system-conflict-detection>` and for
+:ref:`pre-splitting into multiple regions <table-datasets-pre-splitting>`.
 
 Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 

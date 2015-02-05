@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -137,15 +138,21 @@ public class HBaseQueueAdmin implements QueueAdmin {
    */
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
-      // <cdap namespace>.system.queue.<account>.<flow>
-      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
+      // <cdap namespace>.system.queue.<namespace>.<app>.<flow>
+      return getTableNameForFlow(queueName.getFirstComponent(),
+                                 queueName.getSecondComponent(),
+                                 queueName.getThirdComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
   }
 
-  private String getTableNameForFlow(String app, String flow) {
-    return tableNamePrefix + "." + app + "." + flow;
+  private String getTableNameForFlow(String namespaceId, String app, String flow) {
+    StringBuilder tableName = new StringBuilder(tableNamePrefix).append(".");
+    if (!Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
+      tableName.append(namespaceId).append(".");
+    }
+    return tableName.append(app).append(".").append(flow).toString();
   }
 
   /**
@@ -180,12 +187,37 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return column;
   }
 
+  // TODO: CDAP-1177 Move these functions to an abstract base class to share with LevelDBQueueAdmin
+  /**
+   * @param queueTableName actual queue table name
+   * @return namespace id that this queue belongs to
+   */
+  public static String getNamespaceId(String queueTableName) {
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
+    String[] parts = queueTableName.split("\\.");
+    String namespaceId;
+    if (parts.length == 5) {
+      // cdap.system.queue.<app>.<flow>
+      namespaceId = Constants.DEFAULT_NAMESPACE;
+    } else if (parts.length == 6) {
+      // cdap.system.queue.<namespace>.<app>.<flow>
+      namespaceId = parts[parts.length - 3];
+    } else {
+      throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
+                                                         "Expected 'cdap.system.queue.<app>.<flow>' or " +
+                                                         "'cdap.system.queue.<namespace>.<app>.<flow>'. " +
+                                                         "Received '%s'",
+                                                       queueTableName));
+    }
+    return namespaceId;
+  }
+
   /**
    * @param queueTableName actual queue table name
    * @return app name this queue belongs to
    */
   public static String getApplicationName(String queueTableName) {
-    // last two parts are appName and flow
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
     String[] parts = queueTableName.split("\\.");
     return parts[parts.length - 2];
   }
@@ -195,7 +227,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
    * @return flow name this queue belongs to
    */
   public static String getFlowName(String queueTableName) {
-    // last two parts are appName and flow
+    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
     String[] parts = queueTableName.split("\\.");
     return parts[parts.length - 1];
   }
@@ -245,21 +277,21 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String app, String flow) throws Exception {
+  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    String tableName = getTableNameForFlow(app, flow);
+    String tableName = getTableNameForFlow(namespaceId, app, flow);
     truncate(Bytes.toBytes(tableName));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(app, flow);
+    deleteConsumerConfigurations(namespaceId, app, flow);
   }
 
   @Override
-  public void dropAllForFlow(String app, String flow) throws Exception {
+  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    String tableName = getTableNameForFlow(app, flow);
+    String tableName = getTableNameForFlow(namespaceId, app, flow);
     drop(Bytes.toBytes(tableName));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(app, flow);
+    deleteConsumerConfigurations(namespaceId, app, flow);
   }
 
   @Override
@@ -305,14 +337,22 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void deleteConsumerConfigurations(String app, String flow) throws IOException {
+  private void deleteConsumerConfigurations(String namespaceId) throws IOException {
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespace(namespaceId));
+  }
+
+  private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
+  }
+
+  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix) throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(configTableName)) {
       // we need to delete the row for this queue name from the config table
       HTable hTable = new HTable(admin.getConfiguration(), configTableName);
       try {
-        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+        byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
         stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
 
@@ -380,15 +420,16 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
-      String tableName = Bytes.toString(desc.getName());
-      // It's important to keep config table enabled while disabling queue tables.
-      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
-        drop(desc.getName());
-      }
-    }
+    dropTablesWithPrefix(tableNamePrefix);
     // drop config table last
     drop(Bytes.toBytes(configTableName));
+  }
+
+  @Override
+  public void dropAllInNamespace(String namespaceId) throws Exception {
+    // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
+    dropTablesWithPrefix(String.format("%s.%s.", tableNamePrefix, namespaceId));
+    deleteConsumerConfigurations(namespaceId);
   }
 
   @Override
@@ -511,6 +552,16 @@ public class HBaseQueueAdmin implements QueueAdmin {
         LOG.info(String.format("Upgrading queue hbase table: %s", tableName));
         upgrade(tableName, properties);
         LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
+      }
+    }
+  }
+
+  private void dropTablesWithPrefix(String tableNamePrefix) throws IOException {
+    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
+      String tableName = Bytes.toString(desc.getName());
+      // It's important to keep config table enabled while disabling queue tables.
+      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+        drop(desc.getName());
       }
     }
   }

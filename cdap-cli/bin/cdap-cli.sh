@@ -19,12 +19,6 @@
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
-bin=`dirname "${BASH_SOURCE-$0}"`
-bin=`cd "$bin"; pwd`
-lib="$bin"/../lib
-conf="$bin"/../conf
-CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
-script=`basename $0`
 
 # Need this for relative symlinks.
 while [ -h "$PRG" ] ; do
@@ -36,6 +30,13 @@ while [ -h "$PRG" ] ; do
         PRG=`dirname "$PRG"`"/$link"
     fi
 done
+
+bin=`dirname "${PRG}"`
+bin=`cd "$bin"; pwd`
+lib="$bin"/../lib
+conf="$bin"/../conf
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
+script=`basename $0`
 
 if [ "$CLASSPATH" = "" ]; then
   CLASSPATH=${lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar

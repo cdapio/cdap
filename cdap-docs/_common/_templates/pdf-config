@@ -1,6 +1,6 @@
 # This is the rst2pdf config file. Modify and place in /_templates/ 
 # and pass to rst2pdf by including it in the .rst file as a comment
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 
 [general]
 # author="Cask Data, Inc."

@@ -24,17 +24,14 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,7 +40,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,8 +123,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public ListenableFuture<Long> changeTTL(final StreamConfig streamConfig, final long newTTL) {
-    return Futures.transform(propertyStore.get().update(streamConfig.getName(), new PropertyUpdater<StreamProperty>() {
+  public ListenableFuture<Long> changeTTL(final String streamName, final long newTTL) {
+    return Futures.transform(propertyStore.get().update(streamName, new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
         final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
@@ -137,19 +133,13 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
           @Override
           public void run() {
             try {
+              StreamConfig streamConfig = streamAdmin.getConfig(streamName);
               int currentGeneration = (property == null) ?
                 StreamUtils.getGeneration(streamConfig) :
                 property.getGeneration();
               int currentThreshold = (property == null) ?
                 streamConfig.getNotificationThresholdMB() :
                 property.getThreshold();
-
-              StreamConfig newConfig = new StreamConfig(streamConfig.getName(), streamConfig.getPartitionDuration(),
-                                                        streamConfig.getIndexInterval(), newTTL,
-                                                        streamConfig.getLocation(),
-                                                        streamConfig.getFormat(),
-                                                        currentThreshold);
-              saveConfig(newConfig);
               resultFuture.set(new StreamProperty(currentGeneration, newTTL, currentThreshold));
             } catch (IOException e) {
               resultFuture.setException(e);
@@ -162,6 +152,40 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
       @Override
       public Long apply(StreamProperty property) {
         return property.getTTL();
+      }
+    });
+  }
+
+  @Override
+  public ListenableFuture<Integer> changeThreshold(final String streamName, final int newThreshold) {
+    return Futures.transform(propertyStore.get().update(streamName, new PropertyUpdater<StreamProperty>() {
+      @Override
+      public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
+        final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
+        updateExecutor.execute(new Runnable() {
+
+          @Override
+          public void run() {
+            try {
+              StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+              int currentGeneration = (property == null) ?
+                StreamUtils.getGeneration(streamConfig) :
+                property.getGeneration();
+              long currentTTL = (property == null) ?
+                streamConfig.getTTL() :
+                property.getTTL();
+              resultFuture.set(new StreamProperty(currentGeneration, currentTTL, newThreshold));
+            } catch (IOException e) {
+              resultFuture.setException(e);
+            }
+          }
+        });
+        return resultFuture;
+      }
+    }), new Function<StreamProperty, Integer>() {
+      @Override
+      public Integer apply(StreamProperty property) {
+        return property.getThreshold();
       }
     });
   }
@@ -184,27 +208,6 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
    * @throws Exception when stopping the service could not be performed
    */
   protected abstract void doShutDown() throws Exception;
-
-  /**
-   * Overwrites a stream config file.
-   *
-   * @param config The new configuration.
-   */
-  private void saveConfig(StreamConfig config) throws IOException {
-    Location configLocation = config.getLocation().append(AbstractStreamFileAdmin.CONFIG_FILE_NAME);
-    Location tempLocation = configLocation.getTempFile("tmp");
-    try {
-      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
-        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
-
-      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
-                               "Rename {} to {} failed", tempLocation, configLocation);
-    } finally {
-      if (tempLocation.exists()) {
-        tempLocation.delete();
-      }
-    }
-  }
 
   /**
    * Object for holding property value in the property store.
@@ -290,7 +293,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
       } catch (Exception e) {
         // It's ok if the stream config is not yet available (meaning no data has ever been writen to the stream yet.
         this.currentProperty = new StreamProperty(0, Long.MAX_VALUE,
-                                                  cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD, 1000));
+                                                  cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD));
       }
     }
 

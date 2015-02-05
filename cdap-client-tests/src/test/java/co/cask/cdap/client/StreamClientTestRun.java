@@ -19,9 +19,9 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.StreamNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.StreamNotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -190,7 +190,9 @@ public class StreamClientTestRun extends ClientTestBase {
     Assert.assertEquals(msgCount, events.size());
 
     for (int i = 0; i < msgCount; i++) {
-      Assert.assertEquals("Event " + i, Bytes.toString(events.get(i).getBody()));
+      StreamEvent event = events.get(i);
+      Assert.assertEquals("Event " + i, Bytes.toString(event.getBody()));
+      Assert.assertEquals("text/plain", event.getHeaders().get("content.type"));
     }
   }
 }

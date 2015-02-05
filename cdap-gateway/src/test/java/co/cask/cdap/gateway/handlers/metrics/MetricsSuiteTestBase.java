@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -30,7 +29,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -147,7 +145,7 @@ public abstract class MetricsSuiteTestBase {
     stopMetricsService(conf);
     try {
       stop();
-    } catch (OperationException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
       tmpFolder.delete();
@@ -159,7 +157,7 @@ public abstract class MetricsSuiteTestBase {
     doDelete("/v2/metrics/");
   }
 
-  public static void initialize() throws IOException, OperationException {
+  public static void initialize() throws IOException {
     CConfiguration cConf = CConfiguration.create();
 
     // use this injector instead of the one in startMetricsService because that one uses a
@@ -186,7 +184,7 @@ public abstract class MetricsSuiteTestBase {
     setupMeta();
   }
 
-  public static void stop() throws OperationException {
+  public static void stop() {
     collectionService.stopAndWait();
 
     Deque<File> files = Lists.newLinkedList();
@@ -246,10 +244,9 @@ public abstract class MetricsSuiteTestBase {
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
 
-    EndpointStrategy metricsEndPoints = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS)), 1L, TimeUnit.SECONDS);
+    EndpointStrategy metricsEndPoints = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS));
 
-    port = metricsEndPoints.pick().getSocketAddress().getPort();
+    port = metricsEndPoints.pick(1L, TimeUnit.SECONDS).getSocketAddress().getPort();
 
     return injector;
   }
@@ -263,7 +260,7 @@ public abstract class MetricsSuiteTestBase {
   }
 
   // write WordCount app to metadata store
-  public static void setupMeta() throws OperationException {
+  public static void setupMeta() {
     validResources = ImmutableList.of(
       "/system/reads?aggregate=true",
       "/system/apps/WordCount/reads?aggregate=true",

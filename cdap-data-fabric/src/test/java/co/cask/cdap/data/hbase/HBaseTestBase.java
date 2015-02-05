@@ -24,6 +24,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -60,152 +61,31 @@ import java.util.Random;
 public abstract class HBaseTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTestBase.class);
 
-  protected Configuration conf;
-
-  public MiniZooKeeperCluster zkCluster;
-
-  protected MiniDFSCluster dfsCluster;
-
-  protected MiniHBaseCluster hbaseCluster;
-
-  private final List<File> tmpDirList = Lists.newArrayList();
-
   // Accessors for test implementations
 
-  public Configuration getConfiguration() {
-    return conf;
-  }
+  public abstract Configuration getConfiguration();
 
   public HBaseAdmin getHBaseAdmin() throws IOException {
-    return new HBaseAdmin(conf);
+    return new HBaseAdmin(getConfiguration());
   }
 
   public HTable getHTable(byte [] tableName) throws IOException {
-    return new HTable(conf, tableName);
+    return new HTable(getConfiguration(), tableName);
   }
 
   // Temporary directories
 
-  private final Random r = new Random();
-
-  public File getRandomTempDir() {
-    File dir = Files.createTempDir();
-    tmpDirList.add(dir);
-    return dir;
-  }
-
   public String getZkConnectionString() {
-    return "localhost:" + zkCluster.getClientPort();
+    return "localhost:" + getZKClientPort();
   }
+
+  public abstract int getZKClientPort();
 
   // Test startup / teardown
 
-  @BeforeClass
-  public void startHBase() throws Exception {
-    conf = new Configuration();
-    // Set any necessary configurations (disable UIs to prevent port conflicts)
-    conf.setInt("hbase.regionserver.info.port", -1);
-    conf.setInt("hbase.master.info.port", -1);
-    // Disable compression since it may not be available in environment where we run unit-test
-    conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, "NONE");
+  public abstract void startHBase() throws Exception;
 
-    // Start ZooKeeper
-
-    zkCluster = new MiniZooKeeperCluster(conf);
-    System.err.println("Starting ZK in 1 sec...");
-    Thread.sleep(1000);
-    int zkPort = zkCluster.startup(getRandomTempDir(), 1);
-    System.err.println("\n\nStarted ZK on port " + zkPort + "\n\n\n");
-
-    // Add ZK info to conf
-    conf.set(HConstants.ZOOKEEPER_CLIENT_PORT, Integer.toString(zkPort));
-
-    // Start DFS
-
-    File dfsPath = getRandomTempDir();
-    System.setProperty("test.build.data", dfsPath.toString());
-    System.setProperty("test.cache.data", dfsPath.toString());
-    System.err.println("Instantiating dfs cluster in 1 sec...");
-    Thread.sleep(1000);
-    dfsCluster = new MiniDFSCluster.Builder(conf)
-        .nameNodePort(0)
-        .numDataNodes(1)
-        .format(true)
-        .manageDataDfsDirs(true)
-        .manageNameDfsDirs(true)
-        .build();
-    System.err.println("Waiting for dfs to start...");
-    dfsCluster.waitClusterUp();
-    System.err.println("DFS started...");
-    Thread.sleep(1000);
-
-    // Add HDFS info to conf
-    conf.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString());
-
-    // Start HBase
-    createHBaseRootDir(conf);
-    conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
-    conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
-    conf.set("hbase.master.logcleaner.plugins", "");
-    conf.setInt("zookeeper.session.timeout", 300000); // increasing session timeout for unit tests
-    Configuration c = new Configuration(conf);
-    System.err.println("Instantiating HBase cluster in 1 sec...");
-    Thread.sleep(1000);
-    hbaseCluster = new MiniHBaseCluster(c, 1, 1);
-    System.err.println("Just waiting around for a bit now");
-    Thread.sleep(1000);
-  }
-
-  @AfterClass
-  public void stopHBase() throws Exception {
-
-    // Stop HBase
-
-    if (hbaseCluster != null) {
-      System.err.println("\n\n\nShutting down HBase in 1 sec...\n\n\n");
-      Thread.sleep(1000);
-      hbaseCluster.shutdown();
-      System.err.println("\n\n\nDone with HBase shutdown\n\n\n");
-      hbaseCluster = null;
-    }
-
-    // Stop DFS
-
-    if (dfsCluster != null) {
-      System.err.println("\n\n\nShutting down DFS in 1 sec...\n\n\n");
-      Thread.sleep(1000);
-      dfsCluster.shutdown();
-      System.err.println("\n\n\nDone with DFS shutdown\n\n\n");
-      dfsCluster = null;
-    }
-
-    // Stop ZK
-
-    if (zkCluster != null) {
-      System.err.println("\n\n\nShutting down ZK in 1 sec...\n\n\n");
-      Thread.sleep(1000);
-      zkCluster.shutdown();
-      System.err.println("\n\n\nDone with zk shutdown\n\n\n");
-      zkCluster = null;
-    }
-
-    for (File dir : tmpDirList) {
-      FileUtils.deleteDirectory(dir);
-    }
-  }
-
-  // Startup/shutdown helpers
-
-
-  public Path createHBaseRootDir(Configuration conf) throws IOException {
-    FileSystem fs = FileSystem.get(conf);
-    Path hbaseRootdir = new Path(
-        fs.makeQualified(fs.getHomeDirectory()), "hbase");
-    conf.set(HConstants.HBASE_DIR, hbaseRootdir.toString());
-    fs.mkdirs(hbaseRootdir);
-    FSUtils.setVersion(fs, hbaseRootdir);
-    return hbaseRootdir;
-  }
+  public abstract void stopHBase() throws Exception;
 
   // HRegion-level testing
 
@@ -238,9 +118,10 @@ public abstract class HBaseTestBase {
    */
   public abstract <T> Map<byte[], T> forEachRegion(byte[] tableName, Function<HRegion, T> function);
 
-  public MiniHBaseCluster getHBaseCluster() {
-    return hbaseCluster;
-  }
+  public abstract MiniHBaseCluster getHBaseCluster();
+
+  public abstract void waitUntilTableAvailable(byte[] tableName, long timeoutInMillis)
+      throws IOException, InterruptedException;
 
   public static void main(String[] args) throws Exception {
     HBaseTestBase tester = new HBaseTestFactory().get();

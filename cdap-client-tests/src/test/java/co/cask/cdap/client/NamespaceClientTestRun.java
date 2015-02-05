@@ -18,11 +18,12 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.AlreadyExistsException;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.CannotBeDeletedException;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,8 +55,15 @@ public class NamespaceClientTestRun extends ClientTestBase {
   @Test
   public void testNamespaces() throws IOException, UnAuthorizedAccessTokenException, CannotBeDeletedException,
     NotFoundException, AlreadyExistsException, BadRequestException {
+
     List<NamespaceMeta> namespaces = namespaceClient.list();
-    Assert.assertEquals(0, namespaces.size());
+    int initialNamespaceCount = namespaces.size();
+
+    if (namespaces.size() == 1) {
+      Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaces.get(0).getId());
+    } else {
+      Assert.assertEquals(0, namespaces.size());
+    }
 
     verifyDoesNotExist(DOES_NOT_EXIST);
     verifyReservedCreate();
@@ -68,7 +76,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
     // verify that the namespace got created correctly
     namespaces = namespaceClient.list();
-    Assert.assertEquals(1, namespaces.size());
+    Assert.assertEquals(initialNamespaceCount + 1, namespaces.size());
     NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_ID);
     Assert.assertEquals(TEST_NAMESPACE_ID, meta.getId());
     Assert.assertEquals(TEST_NAME, meta.getName());
@@ -92,7 +100,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     builder.setId(TEST_DEFAULT_FIELDS);
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
-    Assert.assertEquals(2, namespaces.size());
+    Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
     meta = namespaceClient.get(TEST_DEFAULT_FIELDS);
     Assert.assertEquals(TEST_DEFAULT_FIELDS, meta.getId());
     Assert.assertEquals(TEST_DEFAULT_FIELDS, meta.getName());
@@ -102,7 +110,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     namespaceClient.delete(TEST_NAMESPACE_ID);
     namespaceClient.delete(TEST_DEFAULT_FIELDS);
 
-    Assert.assertEquals(0, namespaceClient.list().size());
+    Assert.assertEquals(initialNamespaceCount, namespaceClient.list().size());
   }
 
   private void verifyDoesNotExist(String namespaceId)

@@ -61,6 +61,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   private static final Pattern SPACES = Pattern.compile("\\s+");
   public static final String POPULAR_PAGES = "total.popular.pages";
   public static final String UNPOPULAR_PAGES = "total.unpopular.pages";
+  public static final String REGULAR_PAGES = "total.regular.pages";
   public static final int POPULAR_PAGE_THRESHOLD = 10;
   public static final int UNPOPULAR_PAGE_THRESHOLD = 3;
 
@@ -145,6 +146,8 @@ public class SparkPageRankProgram implements JavaSparkProgram {
               sparkMetrics.count(POPULAR_PAGES, 1);
             } else if (Integer.parseInt(pr) <= UNPOPULAR_PAGE_THRESHOLD) {
               sparkMetrics.count(UNPOPULAR_PAGES, 1);
+            } else {
+              sparkMetrics.count(REGULAR_PAGES, 1);
             }
             return new Tuple2<byte[], Integer>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
           } finally {

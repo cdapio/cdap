@@ -27,22 +27,6 @@ import java.util.Map;
 
 /**
  * Specification for a {@link Workflow}
- *
- * <p>
- * Example WorkflowSpecification for a scheduled workflow:
- *
- *  <pre>
- *    <code>
- *      {@literal @}Override
- *      public void configure() {
- *        setName("PurchaseHistoryWorkflow");
- *        setDescription("PurchaseHistoryWorkflow description");
- *        addMapReduce("PurchaseHistoryBuilder");
- *      }
- *    </code>
- *  </pre>
- *
- * See the Purchase example application.
  */
 public final class WorkflowSpecification implements ProgramSpecification, PropertyProvider {
   private final String className;

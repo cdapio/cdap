@@ -20,7 +20,7 @@ import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
@@ -64,7 +64,7 @@ public class CLIConfig {
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    */
   public CLIConfig(String hostname) {
-    this.currentNamespace = "default";
+    this.currentNamespace = co.cask.cdap.common.conf.Constants.DEFAULT_NAMESPACE;
     this.hostnameProvided = hostname != null && !hostname.isEmpty();
     this.clientConfig = createClientConfig(hostname);
     this.resolver = new FilePathResolver();

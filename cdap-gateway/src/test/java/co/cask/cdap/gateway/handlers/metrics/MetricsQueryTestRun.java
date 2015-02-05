@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,7 +46,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testQueueLength() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("WordCount", "WordCounter", "counter", "queue");
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter", "counter",
+                                                "queue");
 
     // Insert queue metrics
     MetricsCollector enqueueCollector =

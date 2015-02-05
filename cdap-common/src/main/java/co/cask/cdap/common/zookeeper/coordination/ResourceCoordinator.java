@@ -300,8 +300,9 @@ public final class ResourceCoordinator extends AbstractService {
 
     ResourceAssigner<Discoverable> assigner = DefaultResourceAssigner.create(assignmentMap);
 
-    // Call the strategy for assignment only if there are some handlers.
-    if (!handlers.isEmpty()) {
+    // Call the strategy for assignment only if there are some handlers and the requirement is not empty.
+    // Otherwise the assignment will be just an empty assignment
+    if (!handlers.isEmpty() && !partitions.isEmpty()) {
       assignmentStrategy.assign(requirement, handlers, assigner);
     }
 

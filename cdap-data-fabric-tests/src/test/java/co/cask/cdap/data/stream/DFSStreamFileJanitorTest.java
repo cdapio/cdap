@@ -29,7 +29,8 @@ import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -78,18 +79,23 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
 
         @Override
         protected void configure() {
           // Tests are running in same process, hence no need to have ZK to coordinate
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
-          bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
           bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
         }
       }),
-      new DataSetsModules().getDistributedModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // We don't need notification in this test, hence inject an no-op one
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+        }
+      }
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

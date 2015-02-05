@@ -50,6 +50,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
@@ -59,6 +61,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +101,6 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private final ConcurrentMap<String, StreamSizeAggregator> aggregators;
   private Cancellable heartbeatsSubscription;
-  private boolean isInit;
 
   private Supplier<Discoverable> discoverableSupplier;
 
@@ -129,11 +131,10 @@ public class DistributedStreamService extends AbstractStreamService {
     this.feedManager = feedManager;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.heartbeatPublisher = heartbeatPublisher;
-    this.resourceCoordinatorClient = new ResourceCoordinatorClient(zkClient);
+    this.resourceCoordinatorClient = new ResourceCoordinatorClient(getCoordinatorZKClient());
     this.leaderListeners = Sets.newHashSet();
     this.instanceId = cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID);
     this.aggregators = Maps.newConcurrentMap();
-    this.isInit = true;
   }
 
   @Override
@@ -188,10 +189,12 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams()) {
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
       sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
     }
-    heartbeatPublisher.sendHeartbeat(new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build()));
+    StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
+    LOG.trace("Publishing heartbeat {}", heartbeat);
+    heartbeatPublisher.sendHeartbeat(heartbeat);
   }
 
   /**
@@ -210,6 +213,7 @@ public class DistributedStreamService extends AbstractStreamService {
       try {
         StreamConfig config = streamAdmin.getConfig(streamName);
         long filesSize = StreamUtils.fetchStreamFilesSize(config);
+        LOG.debug("Size of the files already present for stream {}: {}", streamName, filesSize);
         createSizeAggregator(streamName, filesSize, config.getNotificationThresholdMB());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamName);
@@ -220,10 +224,13 @@ public class DistributedStreamService extends AbstractStreamService {
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
     // but don't anymore
     for (String outdatedStream : existingAggregators) {
-      StreamSizeAggregator aggregator = aggregators.remove(outdatedStream);
+      // We need to first cancel the aggregator and then remove it from the map of aggregators,
+      // to avoid race conditions in createSizeAggregator
+      StreamSizeAggregator aggregator = aggregators.get(outdatedStream);
       if (aggregator != null) {
         aggregator.cancel();
       }
+      aggregators.remove(outdatedStream);
     }
   }
 
@@ -236,17 +243,17 @@ public class DistributedStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, final int threshold) {
-
+  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, int threshold) {
+    LOG.debug("Creating size aggregator for stream {}", streamName);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void thresholdChanged(String streamName, int threshold) {
           StreamSizeAggregator aggregator = aggregators.get(streamName);
-          if (aggregator == null) {
-            LOG.warn("StreamSizeAggregator should not be null for stream {}", streamName);
-            return;
+          while (aggregator == null) {
+            Thread.yield();
+            aggregator = aggregators.get(streamName);
           }
           aggregator.setStreamThresholdMB(threshold);
         }
@@ -258,11 +265,12 @@ public class DistributedStreamService extends AbstractStreamService {
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
         public void generationChanged(String streamName, int generation) {
-          Cancellable previousAggregator = aggregators.replace(streamName, createSizeAggregator(streamName, 0,
-                                                                                                threshold));
-          if (previousAggregator != null) {
-            previousAggregator.cancel();
+          StreamSizeAggregator aggregator = aggregators.get(streamName);
+          while (aggregator == null) {
+            Thread.yield();
+            aggregator = aggregators.get(streamName);
           }
+          aggregator.resetCount();
         }
       });
 
@@ -275,6 +283,10 @@ public class DistributedStreamService extends AbstractStreamService {
     });
     aggregators.put(streamName, newAggregator);
     return newAggregator;
+  }
+
+  private ZKClient getCoordinatorZKClient() {
+    return ZKClients.namespace(zkClient, Constants.Stream.STREAM_ZK_COORDINATION_NAMESPACE);
   }
 
   /**
@@ -291,6 +303,7 @@ public class DistributedStreamService extends AbstractStreamService {
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
+    LOG.trace("Subscribing to stream heartbeats notification feed");
     return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
       @Override
       public Type getNotificationFeedType() {
@@ -299,9 +312,11 @@ public class DistributedStreamService extends AbstractStreamService {
 
       @Override
       public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
+        LOG.trace("Received heartbeat {}", heartbeat);
         for (Map.Entry<String, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
           StreamSizeAggregator streamSizeAggregator = aggregators.get(entry.getKey());
           if (streamSizeAggregator == null) {
+            LOG.trace("Aggregator for stream {} is null", entry.getKey());
             continue;
           }
           streamSizeAggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
@@ -358,35 +373,15 @@ public class DistributedStreamService extends AbstractStreamService {
   private void performLeaderElection() {
     // Start the resource coordinator that will map Streams to Stream handlers
     leaderElection = new LeaderElection(
+      // TODO: Should unify this leader election with DistributedStreamFileJanitorService
       zkClient, "/election/" + STREAMS_COORDINATOR, new ElectionHandler() {
       @Override
       public void leader() {
         LOG.info("Became Stream handler leader. Starting resource coordinator.");
-        resourceCoordinator = new ResourceCoordinator(zkClient, discoveryServiceClient,
+        resourceCoordinator = new ResourceCoordinator(getCoordinatorZKClient(), discoveryServiceClient,
                                                       new BalancedAssignmentStrategy());
         resourceCoordinator.startAndWait();
-
-        resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, new ResourceModifier() {
-          @Nullable
-          @Override
-          public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
-            try {
-              // Create one requirement for the resource coordinator for all the streams.
-              // One stream is identified by one partition
-              ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-              for (StreamSpecification spec : streamMetaStore.listStreams()) {
-                LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
-                          spec.getName());
-                builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
-              }
-              return builder.build();
-            } catch (Throwable e) {
-              LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
-              Throwables.propagate(e);
-              return null;
-            }
-          }
-        });
+        updateRequirement();
       }
 
       @Override
@@ -397,14 +392,81 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       }
     });
+    leaderElection.start();
   }
 
   /**
-   * Call all the listeners that are interested in knowing that this coordinator is the leader of a set of Streams.
+   * Updates stream resource requirement. It will retry if failed to do so.
+   */
+  private void updateRequirement() {
+    final ResourceModifier modifier = createRequirementModifier();
+    Futures.addCallback(resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, modifier),
+                        new FutureCallback<ResourceRequirement>() {
+      @Override
+      public void onSuccess(ResourceRequirement result) {
+        // No-op
+        LOG.info("Stream resource requirement updated to {}", result);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.warn("Failed to update stream resource requirement.", t);
+        if (isRunning()) {
+          final FutureCallback<ResourceRequirement> callback = this;
+          // Retry in 2 seconds. Shouldn't sleep in this callback thread. Should start a new thread for the retry.
+          Thread retryThread = new Thread("stream-resource-update") {
+            @Override
+            public void run() {
+              try {
+                TimeUnit.SECONDS.sleep(2);
+                LOG.info("Retrying update stream resource requirement");
+                Futures.addCallback(resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, modifier),
+                                    callback);
+              } catch (InterruptedException e) {
+                LOG.warn("Stream resource retry thread interrupted", e);
+              }
+            }
+          };
+          retryThread.setDaemon(true);
+          retryThread.start();
+        }
+      }
+    });
+  }
+
+  /**
+   * Creates a {@link ResourceModifier} that updates stream resource requirement by consulting stream meta store.
+   */
+  private ResourceModifier createRequirementModifier() {
+    return new ResourceModifier() {
+      @Nullable
+      @Override
+      public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
+        try {
+          // Create one requirement for the resource coordinator for all the streams.
+          // One stream is identified by one partition
+          ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
+          for (StreamSpecification spec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
+            LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
+                      spec.getName());
+            builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
+          }
+          return builder.build();
+        } catch (Throwable e) {
+          LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
+
+  /**
+   * Call all the listeners that are interested in knowing that this Stream writer is the leader of a set of Streams.
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
   private void invokeLeaderListeners(Set<String> streamNames) {
+    LOG.debug("Stream writer is the leader of streams: {}", streamNames);
     Set<StreamLeaderListener> listeners;
     synchronized (this) {
       listeners = ImmutableSet.copyOf(leaderListeners);
@@ -425,6 +487,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
+      LOG.info("Stream leader requirement has changed to {}", partitionReplicas);
       Set<String> streamNames =
         ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, String>() {
           @Nullable
@@ -454,15 +517,18 @@ public class DistributedStreamService extends AbstractStreamService {
     private final Map<Integer, Long> streamWriterSizes;
     private final NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
+    private final AtomicLong countFromFiles;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
+    private boolean isInit;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB,
-                                   Cancellable cancellable) {
+    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
+      this.countFromFiles = new AtomicLong(baseCount);
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
+      this.isInit = true;
       this.streamFeed = new NotificationFeed.Builder()
         .setNamespace(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
@@ -485,6 +551,14 @@ public class DistributedStreamService extends AbstractStreamService {
     }
 
     /**
+     * Reset the counts of this {@link StreamSizeAggregator} to zero.
+     */
+    public void resetCount() {
+      streamBaseCount.set(0);
+      countFromFiles.set(0);
+    }
+
+    /**
      * Notify this aggregator that a certain number of bytes have been received from the stream writer with instance
      * {@code instanceId}.
      *
@@ -492,12 +566,8 @@ public class DistributedStreamService extends AbstractStreamService {
      * @param nbBytes number of bytes of data received
      */
     public void bytesReceived(int instanceId, long nbBytes) {
-      Long lastSize = streamWriterSizes.get(instanceId);
-      if (lastSize == null) {
-        streamWriterSizes.put(instanceId, nbBytes);
-        return;
-      }
-      streamWriterSizes.put(instanceId, lastSize + nbBytes);
+      LOG.trace("Bytes received from instanceId {}: {}B", instanceId, nbBytes);
+      streamWriterSizes.put(instanceId, nbBytes);
       checkSendNotification();
     }
 
@@ -505,18 +575,24 @@ public class DistributedStreamService extends AbstractStreamService {
      * Check if the current size of data is enough to trigger a notification.
      */
     private void checkSendNotification() {
-      long sum = 0;
+      long sum = countFromFiles.get();
       for (Long size : streamWriterSizes.values()) {
         sum += size;
       }
 
-      if (isInit || sum - streamBaseCount.get() > streamThresholdMB.get()) {
+      if (isInit || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
           streamBaseCount.set(sum);
+          countFromFiles.set(0);
         }
       }
+      isInit = false;
+    }
+
+    private long toBytes(int mb) {
+      return ((long) mb) * 1024 * 1024;
     }
 
     private void publishNotification(long absoluteSize) {

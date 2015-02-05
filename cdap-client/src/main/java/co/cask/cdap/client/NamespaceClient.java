@@ -17,13 +17,13 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.AlreadyExistsException;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.CannotBeDeletedException;
-import co.cask.cdap.client.exception.NotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;

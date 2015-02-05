@@ -137,7 +137,7 @@
       {{outlet}}
 
     </div>
-    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
+    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014-2015 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
 
     <a href="http://cask.co/company/terms" target="_blank" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
@@ -1122,7 +1122,7 @@
             </thead>
             <tbody>
             {{#each runs}}
-              <tr class="run-list" {{action "loadRun" runid}}>
+              <tr class="run-list">
                 <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
                 <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>
@@ -1611,7 +1611,7 @@
             </thead>
             <tbody>
             {{#each runs}}
-              <tr class="run-list" {{action "loadRun" runid}}>
+              <tr class="run-list">
                 <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
                 <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
                 <td>{{detail}}</td>

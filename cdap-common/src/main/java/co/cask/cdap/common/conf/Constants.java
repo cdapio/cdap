@@ -265,10 +265,11 @@ public final class Constants {
      * Contains HTTP headers used by Stream handler.
      */
     public static final class Headers {
-      public static final String CONSUMER_ID = "X-ConsumerId";
+      public static final String SCHEMA = "schema";
+      public static final String SCHEMA_HASH = "schema.hash";
     }
 
-    //max instances of stream handler service
+    // max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
     public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
@@ -276,6 +277,9 @@ public final class Constants {
 
     // Period in seconds between two heartbeats in a stream service
     public static final int HEARTBEAT_INTERVAL = 2;
+
+    // Zookeeper namespace in which to keep the coordination metadata
+    public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
   }
 
   /**
@@ -542,6 +546,7 @@ public final class Constants {
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
+    public static final String QUERY_ID = "explore.query.id";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
 

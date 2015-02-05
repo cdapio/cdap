@@ -19,11 +19,18 @@ package co.cask.cdap.app.services;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.ServiceDiscoveries;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * An abstract implementation of {@link ServiceDiscoverer}.
@@ -31,6 +38,8 @@ import java.util.concurrent.TimeUnit;
  * for {@link AbstractServiceDiscoverer#getDiscoveryServiceClient}.
  */
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
 
   protected String namespaceId;
   protected String applicationId;
@@ -44,12 +53,10 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   }
 
   @Override
-  public URL getServiceURL(final String applicationId, final String serviceId) {
+  public URL getServiceURL(String applicationId, String serviceId) {
     String discoveryName = String.format("service.%s.%s.%s", namespaceId, applicationId, serviceId);
-    String path = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
-                                Constants.Gateway.API_VERSION_3, namespaceId, applicationId, serviceId);
-    return ServiceDiscoveries.discoverURL(getDiscoveryServiceClient(),
-                                          discoveryName, "http", path, 1, TimeUnit.SECONDS);
+    ServiceDiscovered discovered = getDiscoveryServiceClient().discover(discoveryName);
+    return createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS), applicationId, serviceId);
   }
 
   @Override
@@ -61,4 +68,21 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
    * @return the {@link DiscoveryServiceClient} for Service Discovery
    */
   protected abstract DiscoveryServiceClient getDiscoveryServiceClient();
+
+  @Nullable
+  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
+    if (discoverable == null) {
+      return null;
+    }
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/",
+                                address.getHostName(), address.getPort(),
+                                Constants.Gateway.API_VERSION_3, namespaceId, applicationId, serviceId);
+    try {
+      return new URL(path);
+    } catch (MalformedURLException e) {
+      LOG.error("Got exception while creating serviceURL", e);
+      return null;
+    }
+  }
 }

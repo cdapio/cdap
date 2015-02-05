@@ -42,6 +42,8 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -56,6 +58,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -103,6 +106,10 @@ import java.util.concurrent.ExecutionException;
 public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements TwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillRunnable.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .create();
 
   private String name;
   private String hConfName;
@@ -187,9 +194,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(e);
       }
 
-      Arguments runtimeArguments
-        = new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.RUNTIME_ARGS), BasicArguments.class);
-      programOpts =  new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
+      programOpts = createProgramOptions(cmdLine, context, configs);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
       LOG.info("Runnable initialized: " + name);
@@ -287,7 +292,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private CommandLine parseArgs(String[] args) {
     Options opts = new Options()
       .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.RUNTIME_ARGS, "Runtime arguments"));
+      .addOption(createOption(RunnableOptions.PROGRAM_OPTIONS, "Program options"));
 
     try {
       return new PosixParser().parse(opts, args);
@@ -303,18 +308,24 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   /**
-   * Creates program arguments. It includes all configurations from the specification, excluding hConf and cConf.
+   * Creates program options. It contains program and user arguments as passed form the distributed program runner.
+   * Extra program arguments are inserted based on the environment information (e.g. host, instance id). Also all
+   * configs available through the TwillRunnable configs are also available through program arguments.
    */
-  private Arguments createProgramArguments(TwillContext context, Map<String, String> configs) {
-    Map<String, String> args = ImmutableMap.<String, String>builder()
-      .put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()))
-      .put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()))
-      .put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())
-      .put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName())
-      .putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))))
-      .build();
+  private ProgramOptions createProgramOptions(CommandLine cmdLine, TwillContext context, Map<String, String> configs) {
+    ProgramOptions original = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_OPTIONS),
+                                            ProgramOptions.class);
 
-    return new BasicArguments(args);
+    // Overwrite them with environmental information
+    Map<String, String> arguments = Maps.newHashMap(original.getArguments().asMap());
+    arguments.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()));
+    arguments.put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()));
+    arguments.put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId());
+    arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
+    arguments.putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))));
+
+    return new SimpleProgramOptions(context.getSpecification().getName(), new BasicArguments(arguments),
+                                    original.getUserArguments(), original.isDebug());
   }
 
   // TODO(terence) make this works for different mode

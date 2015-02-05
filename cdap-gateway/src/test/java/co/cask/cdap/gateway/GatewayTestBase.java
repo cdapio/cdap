@@ -25,11 +25,11 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
@@ -163,7 +163,7 @@ public abstract class GatewayTestBase {
 
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
         }

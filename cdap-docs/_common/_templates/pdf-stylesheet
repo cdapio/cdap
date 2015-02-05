@@ -1,5 +1,5 @@
 # Cask Stylesheet for PDF Generation
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 
 # List the fonts you would like to embed in the PDF here
 embeddedFonts: [["SourceSansPro-Regular.ttf","SourceSansPro-Bold.ttf","SourceSansPro-Italic.ttf","SourceSansPro-BoldItalic.ttf"]]
@@ -47,7 +47,7 @@ pageTemplates:
             [0cm, 0cm, 100%, 100%]
         showHeader : false
         showFooter : true
-        defaultFooter : ".. class:: right\n\n###Title### • © 2014 Cask Data, Inc. • Page ###Page###"
+        defaultFooter : ".. class:: right\n\n###Title### • Copyright © 2015 Cask Data, Inc. • Page ###Page###"
         
     twoColumn:
         frames: []
