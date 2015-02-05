@@ -24,7 +24,7 @@ import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
+import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -231,7 +231,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
    * @param config The new configuration.
    */
   private void saveConfig(StreamConfig config) throws IOException {
-    Location configLocation = config.getLocation().append(AbstractStreamFileAdmin.CONFIG_FILE_NAME);
+    Location configLocation = config.getLocation().append(FileStreamAdmin.CONFIG_FILE_NAME);
     Location tempLocation = configLocation.getTempFile("tmp");
     try {
       CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(

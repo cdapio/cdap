@@ -58,8 +58,9 @@ public class InMemoryQueueTest extends QueueTest {
         .with(new AbstractModule() {
           @Override
           protected void configure() {
+            // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
+            bind(StreamAdmin.class).to(InMemoryStreamAdmin.class);
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
-            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           }
         }));
     // transaction manager is a "service" and must be started
