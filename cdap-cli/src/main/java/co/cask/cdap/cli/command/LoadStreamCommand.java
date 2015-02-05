@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
@@ -33,7 +35,7 @@ import java.util.Map;
 /**
  * Command for sending file to stream
  */
-public class LoadStreamCommand extends AbstractAuthCommand {
+public class LoadStreamCommand extends AbstractAuthCommand implements Categorized {
 
   // A map from file extension to content type
   private static final Map<String, String> CONTENT_TYPE_MAP;
@@ -92,5 +94,10 @@ public class LoadStreamCommand extends AbstractAuthCommand {
   private String getContentType(String extension) {
     String contentType = CONTENT_TYPE_MAP.get(extension);
     return contentType == null ? "" : contentType;
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.INGEST.getName();
   }
 }
