@@ -69,24 +69,22 @@ You can now examine the contents of your stream by executing a SQL query::
   +==================================================================================================================+
   | cdap_stream_trades.ts: BIGINT | cdap_stream_trades.headers: map<string,string> | cdap_stream_trades.body: STRING |
   +==================================================================================================================+
-  | 1422924257559                 | {}                                             | NFLX,441.07,50                  |
-  | 1422924261588                 | {}                                             | AAPL,118.63,100                 |
-  | 1422924265441                 | {}                                             | GOOG,528.48,10                  |
-  | 1422924291009                 | {"content.type":"text/csv"}                    | GOOG,538.53,18230               |
-  | 1422924291009                 | {"content.type":"text/csv"}                    | GOOG,538.17,100                 |
+  | 1423165506100                 | {}                                             | NFLX,441.07,50                  |
+  | 1423165511026                 | {}                                             | AAPL,118.63,100                 |
+  | 1423165516222                 | {}                                             | GOOG,528.48,10                  |
   +==================================================================================================================+
 
 You can also attach a schema to your stream to enable more powerful queries::
 
   > set stream format trades csv 'ticker string, price double, trades int'
   > execute 'select ticker, sum(price * trades) / 1000000 as millions from cdap_stream_trades group by ticker order by millions desc'
-  +=====================================+
-  | ticker: STRING | millions: DOUBLE   |
-  +=====================================+
-  | AAPL           | 3121.8966341143905 |
-  | NFLX           | 866.0789117408007  |
-  | GOOG           | 469.01340359839986 |
-  +=====================================+
+  +===================================+
+  | ticker: STRING | millions: DOUBLE |
+  +===================================+
+  | NFLX           | 0.0220535        |
+  | AAPL           | 0.011863         |
+  | GOOG           | 0.0052848        |
+  +===================================+
 
 On one of our test clusters, the above query took just about two minutes to complete.
 Data in CDAP is integrated with Apache Hive, and the above query above translates to a Hive query.
@@ -114,9 +112,9 @@ cluster, use the Impala shell to connect to Impala::
   +--------+-------------------+
   | ticker | millions          |
   +--------+-------------------+
-  | AAPL   | 3121.88477111439  |
-  | NFLX   | 866.0568582408006 |
-  | GOOG   | 469.0081187983999 |
+  | NFLX   | 0.0220535         |
+  | AAPL   | 0.011863          |
+  | GOOG   | 0.0052848         |
   +--------+-------------------+
   Fetched 3 row(s) in 1.03s
 
