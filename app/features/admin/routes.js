@@ -130,10 +130,13 @@ angular.module(PKG.name + '.feature.admin')
               templateUrl: '/assets/features/admin/templates/namespace/apps.html',
               controller: 'AdminNamespaceAppController'
             })
-              .state('admin.namespace.detail.apps.detail', {
-                parent: 'admin.namespace',
+              .state('admin.namespace.detail.apps.metadata', {
+                parent: 'admin.namespace.detail',
                 url: '/:appId',
-                templateUrl: '/assets/features/admin/templates/namespace/app-detail.html',
-                controller: 'AdminNamespaceAppDetailController'
+                templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
+                controller: 'AdminNamespaceAppMetadataController'
               });
   });
+
+
+
