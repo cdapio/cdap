@@ -3,6 +3,30 @@
   <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
   <small> <em>Type: Flows </em></small>
 </h2>
-<my-tabs
-  data-tabs-list="['Runs','Schedules','Metadata','History','Resources']"
-  data-tabs-partial-path="/assets/features/flows/templates/tabs/"></my-tabs>
+<div role="tabpanel">
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" ng-class="{'active': $state.includes('**.runs.**')}">
+      <a href="" ui-sref="flows.detail.runs" ui-sref-opts="{reload: true}" aria-controls="home" role="tab" data-toggle="tab">Runs</a>
+    </li>
+    <li role="presentation" ng-class="{'active': $state.includes('**.schedules')}">
+      <a href="" ui-sref="flows.detail.schedules" aria-controls="profile" role="tab" data-toggle="tab">Schedules</a>
+    </li>
+    <li role="presentation" ng-class="{'active': $state.includes('**.metadata')}">
+      <a href="" ui-sref="flows.detail.metadata" aria-controls="messages" role="tab" data-toggle="tab">Metadata</a>
+    </li>
+    <li role="presentation" ng-class="{'active': $state.includes('**.history')}">
+      <a href="" ui-sref="flows.detail.history" aria-controls="settings" role="tab" data-toggle="tab">History</a>
+    </li>
+    <li role="presentation" ng-class="{'active': $state.includes('**.resources')}">
+      <a href="" ui-sref="flows.detail.resources" aria-controls="settings" role="tab" data-toggle="tab">Resources</a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active">
+      <ui-view/>
+    </div>
+  </div>
+
+</div>
