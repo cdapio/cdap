@@ -25,6 +25,14 @@ import com.google.common.base.Preconditions;
  */
 public final class Id  {
 
+  private static boolean isId(String name) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
+  }
+
   /**
    * Represents ID of a namespace.
    */
@@ -207,11 +215,6 @@ public final class Id  {
    */
   public static class NotificationFeed {
 
-    /**
-     * Id is composed of: [namespaceId].[category].[name]
-     */
-    private final String id;
-
     private final Namespace namespace;
     private final String category;
     private final String name;
@@ -244,16 +247,7 @@ public final class Id  {
       this.namespace = Namespace.from(namespace);
       this.category = category;
       this.name = name;
-      this.id = String.format("%s.%s.%s", namespace, category, name);
       this.description = description;
-    }
-
-    private boolean isId(String name) {
-      return CharMatcher.inRange('A', 'Z')
-        .or(CharMatcher.inRange('a', 'z'))
-        .or(CharMatcher.is('-'))
-        .or(CharMatcher.is('_'))
-        .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
     }
 
     public String getCategory() {
@@ -261,7 +255,7 @@ public final class Id  {
     }
 
     public String getId() {
-      return id;
+      return String.format("%s.%s.%s", namespace, category, name);
     }
 
     public String getNamespaceId() {
@@ -328,7 +322,9 @@ public final class Id  {
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("id", id)
+        .add("namespace", namespace)
+        .add("category", category)
+        .add("name", name)
         .add("description", description)
         .toString();
     }
@@ -343,12 +339,14 @@ public final class Id  {
       }
 
       NotificationFeed that = (NotificationFeed) o;
-      return Objects.equal(this.id, that.id);
+      return Objects.equal(this.namespace, that.namespace)
+        && Objects.equal(this.category, that.category)
+        && Objects.equal(this.name, that.name);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(id);
+      return Objects.hashCode(namespace, category, name);
     }
   }
 }

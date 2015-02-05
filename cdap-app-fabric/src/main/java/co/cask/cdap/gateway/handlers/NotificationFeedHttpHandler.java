@@ -65,9 +65,9 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/feeds/categories/{feed-category}/names/{feed-name}")
   public void createFeed(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") final String namespaceId,
-                         @PathParam("feed-category") final String category,
-                         @PathParam("feed-name") final String name) {
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("feed-category") String category,
+                         @PathParam("feed-name") String name) {
     try {
       Id.NotificationFeed combinedFeed;
       try {
@@ -103,9 +103,9 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   @DELETE
   @Path("/feeds/categories/{feed-category}/names/{feed-name}")
   public void deleteFeed(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") final String namespaceId,
-                         @PathParam("feed-category") final String category,
-                         @PathParam("feed-name") final String name) {
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("feed-category") String category,
+                         @PathParam("feed-name") String name) {
     try {
       Id.NotificationFeed feed;
       try {
@@ -131,9 +131,9 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/feeds/categories/{feed-category}/names/{feed-name}")
   public void getFeed(HttpRequest request, HttpResponder responder,
-                      @PathParam("namespace-id") final String namespaceId,
-                      @PathParam("feed-category") final String category,
-                      @PathParam("feed-name") final String name) {
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("feed-category") String category,
+                      @PathParam("feed-name") String name) {
     try {
       Id.NotificationFeed feed;
       try {
@@ -159,7 +159,7 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/feeds")
   public void listFeeds(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") final String namespaceId) {
+                        @PathParam("namespace-id") String namespaceId) {
     try {
       List<Id.NotificationFeed> feeds = feedManager.listFeeds(Id.Namespace.from(namespaceId));
       responder.sendJson(HttpResponseStatus.OK, feeds);

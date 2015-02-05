@@ -303,7 +303,6 @@ public class FileStreamAdmin implements StreamAdmin {
    * @param config config of the stream to create feeds for
    */
   private void createStreamFeeds(StreamConfig config) {
-    // TODO use accountID as namespace?
     try {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(Constants.DEFAULT_NAMESPACE)
