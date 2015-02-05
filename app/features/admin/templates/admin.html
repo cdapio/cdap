@@ -3,46 +3,46 @@
 
     <ul class="list-group list-unstyled">
       <li class="list-group-item">
-        <a ui-sref="admin.system.overview">
+        <a ui-sref="admin.system.overview" href="">
           System Configuration
         </a>
         <ul class="list-unstyled"
             ng-show="submenu.system">
           <li>
-            <a ui-sref="admin.system.instance">
+            <a ui-sref="admin.system.instance" href="">
               Instance
             </a>
           </li>
           <li>
-            <a ui-sref="admin.system.services">
+            <a ui-sref="admin.system.services" href="">
               Services
             </a>
           </li>
           <li>
-            <a ui-sref="admin.system.notifications">
+            <a ui-sref="admin.system.notifications" href="">
               Notifications
             </a>
           </li>
         </ul>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.security.overview">
+        <a ui-sref="admin.security.overview" href="">
           Systemwide Security
         </a>
         <ul class="list-unstyled"
             ng-show="submenu.security">
           <li>
-            <a ui-sref="admin.security.permissions">
+            <a ui-sref="admin.security.permissions" href="">
               Global Permissions
             </a>
           </li>
           <li>
-            <a ui-sref="admin.security.tokens">
+            <a ui-sref="admin.security.tokens" href="">
               Access Tokens
             </a>
           </li>
           <li>
-            <a ui-sref="admin.security.logs">
+            <a ui-sref="admin.security.logs" href="">
               Audit Logs
             </a>
           </li>
@@ -53,12 +53,12 @@
         class="list-group-item"
         data-start-collapsed="1"
         bs-collapse>
-        <a bs-collapse-toggle>
+        <a bs-collapse-toggle href="">
           Namespaces
         </a>
         <ul class="list-unstyled" bs-collapse-target>
           <li>
-            <a ui-sref="admin.namespace.create">
+            <a ui-sref="admin.namespace.create" href="">
               Create Namespace
             </a>
           </li>
