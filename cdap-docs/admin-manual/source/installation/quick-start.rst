@@ -16,8 +16,8 @@ CDAP on a Hadoop cluster, through the running of a verification application in C
 Deployment
 -------------
 
-- Determine your deployment architecture, following :ref:`the suggested setups <deployment-architectures>`.
-- Check that you have :ref:`the required hardware <install-hardware-requirements>`.
+- Determine your deployment architecture, following the :ref:`suggested setups <deployment-architectures>`.
+- Check that you have the :ref:`required hardware <install-hardware-requirements>`.
 
 Software Prerequisites
 ----------------------
@@ -36,7 +36,7 @@ Preparing the Cluster
 
 .. "To prepare your cluster"
 
-.. include:: installation.rst 
+.. include:: ../../build/_includes/installation.rst 
    :start-after: .. _install-preparing-the-cluster:
    :end-before:  .. _install-preparing-the-cluster-defaults:
 
@@ -61,7 +61,7 @@ the packages, and prior to starting services.
 Configuring Package Managers
 ----------------------------
 
-.. include:: installation.rst 
+.. include:: ../../build/_includes/installation.rst 
    :start-after: .. _install-rpm-using-yum:
    :end-before:  .. _install-configuration:
 
@@ -70,24 +70,24 @@ Configuring Package Managers
 
 .. "Configuration title"
 
-.. include:: installation.rst 
+.. include:: ../../build/_includes/installation.rst 
    :start-after: .. _install-configuration:
    :end-before:  .. _install-alternatives:
 
 .. "To configure your particular installation"
 
-.. include:: installation.rst 
+.. include:: ../../build/_includes/installation.rst 
    :start-after: .. _install-configuration-options:
    :end-before:  .. _install-configuring-explore-service:
 
 .. "Starting Services title"
 
-.. include:: installation.rst 
+.. include:: ../../build/_includes/installation.rst 
    :start-after: .. _install-starting-services:
    :end-before:  .. _install-highly-available:
 
 .. "Verification"
 
-.. include:: installation.rst 
+.. include:: ../../build/_includes/installation.rst 
    :start-after: .. _install-verification:
    :end-before:  .. _install-upgrade:
