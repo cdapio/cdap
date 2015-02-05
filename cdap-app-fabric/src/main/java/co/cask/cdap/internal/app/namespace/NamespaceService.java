@@ -105,29 +105,22 @@ public final class NamespaceService extends AbstractIdleService {
 
     @Override
     public void run() {
-      Thread thread = new Thread("retry-with-sleep-thread") {
-        @Override
-        public void run() {
-          int retries = 0;
-          while (true) {
-            try {
-              toRetry.run();
-              // if run() does not throw exception, break
-              break;
-            } catch (Exception e) {
-              retries++;
-              LOG.warn("Error during retry# {} - {}", retries, e.getMessage());
-              try {
-                waitUnit.sleep(waitBetweenRetries);
-              } catch (InterruptedException e1) {
-                LOG.warn("Interrupted during retry# - {}", retries, e1.getMessage());
-              }
-            }
+      int retries = 0;
+      while (true) {
+        try {
+          toRetry.run();
+          // if run() does not throw exception, break
+          break;
+        } catch (Exception e) {
+          retries++;
+          LOG.warn("Error during retry# {} - {}", retries, e.getMessage());
+          try {
+            waitUnit.sleep(waitBetweenRetries);
+          } catch (InterruptedException e1) {
+            LOG.warn("Interrupted during retry# - {}", retries, e1.getMessage());
           }
         }
-      };
-      thread.setDaemon(true);
-      thread.start();
+      }
     }
   }
 
