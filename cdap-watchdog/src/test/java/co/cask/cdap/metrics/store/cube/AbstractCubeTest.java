@@ -71,8 +71,8 @@ public abstract class AbstractCubeTest {
     // now let's query!
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1"), ImmutableList.of("tag2"),
                      ImmutableList.of(
-                       new TimeSeries("metric1", tagValuesWithNulls("tag2", "1"), timeValues(1, 2, 7, 3, 10, 2, 11, 3)),
-                       new TimeSeries("metric1", tagValuesWithNulls("tag2", "2"), timeValues(3, 8))));
+                       new TimeSeries("metric1", tagValues("tag2", "1"), timeValues(1, 2, 7, 3, 10, 2, 11, 3)),
+                       new TimeSeries("metric1", tagValues("tag2", "2"), timeValues(3, 8))));
 
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      new ArrayList<String>(),
@@ -81,9 +81,9 @@ public abstract class AbstractCubeTest {
 
     verifyCountQuery(cube, 0, 15, 1, "metric1", new HashMap<String, String>(), ImmutableList.of("tag1"),
                      ImmutableList.of(
-                       new TimeSeries("metric1", tagValuesWithNulls("tag1", "1"),
+                       new TimeSeries("metric1", tagValues("tag1", "1"),
                                       timeValues(1, 2, 3, 8, 4, 4, 6, 6, 7, 3, 10, 2, 11, 3)),
-                       new TimeSeries("metric1", tagValuesWithNulls("tag1", "2"),
+                       new TimeSeries("metric1", tagValues("tag1", "2"),
                                       timeValues(3, 7, 12, 4))));
 
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag3", "3"), new ArrayList<String>(),
@@ -93,10 +93,10 @@ public abstract class AbstractCubeTest {
   }
 
   private void writeInc(Cube cube, String measureName, long ts, long value, String... tags) throws Exception {
-    cube.add(new CubeFact(tagValues(tags), MeasureType.COUNTER, measureName, new TimeValue(ts, value)));
+    cube.add(new CubeFact(tagValuesByValues(tags), MeasureType.COUNTER, measureName, new TimeValue(ts, value)));
   }
 
-  private Map<String, String> tagValues(String... tags) {
+  private Map<String, String> tagValuesByValues(String... tags) {
     Map<String, String> tagValues = Maps.newHashMap();
     for (int i = 0; i < tags.length; i++) {
       if (tags[i] != null) {
@@ -128,7 +128,7 @@ public abstract class AbstractCubeTest {
     return timeValues;
   }
 
-  private Map<String, String> tagValuesWithNulls(String... tags) {
+  private Map<String, String> tagValues(String... tags) {
     Map<String, String> tagValues = Maps.newTreeMap();
     for (int i = 0; i < tags.length; i += 2) {
       tagValues.put(tags[i], tags[i + 1]);

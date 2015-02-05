@@ -32,6 +32,9 @@ public class DefaultAggregation implements Aggregation {
 
   /**
    * Creates instance of {@link DefaultAggregation}.
+   * <p/>
+   * See also {@link Aggregation#getTagNames()} for more info on aggregateTags.
+   *
    * @param aggregateTags tags to be included in aggregation.
    * @param requiredTags tags that must be present in {@link CubeFact} for aggregated value to be stored.
    */

@@ -163,10 +163,11 @@ public class DefaultCube implements Cube {
           if (tagName.equals(tagValue.getTagName())) {
             if (tagValue.getValue() == null) {
               // Currently, we do NOT return null as grouped by value.
-              // Depending on whether tag is required or not the records with null value in it may or may not
-              // aggregation. At this moment, the choosing of the aggregation for query doesn't look at this,
+              // Depending on whether tag is required or not the records with null value in it may or may not be in
+              // aggregation. At this moment, the choosing of the aggregation for query doesn't look at this, so
               // potentially null may or may not be included in results, depending on the aggregation selected
-              // querying. We don't want to produce inconsistent results, so don't return nulls in any of the
+              // querying. We don't want to produce inconsistent results varying due to different aggregations selected,
+              // so don't return nulls in any of those cases.
               skip = true;
               continue;
             }

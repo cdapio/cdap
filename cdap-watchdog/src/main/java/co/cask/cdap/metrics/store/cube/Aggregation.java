@@ -27,6 +27,12 @@ import java.util.List;
  */
 public interface Aggregation {
   /**
+   * Defines the tags to do the aggregation for.
+   * <p/>
+   * Depending on the implementation of a {@link Cube}, the order of the tag names can be used as is to form a row key.
+   * That in turn may affect the performance of the querying. Usually you want to put most frequently defined tags
+   * (tags with values to slice by in {@link CubeQuery} to be in front.
+   *
    * @return list of tags (dimensions) to aggregate by
    */
   List<String> getTagNames();
