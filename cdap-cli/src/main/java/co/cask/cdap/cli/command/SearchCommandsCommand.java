@@ -87,7 +87,7 @@ public class SearchCommandsCommand extends HelpCommand {
 
   @Override
   public String getPattern() {
-    return String.format("search <%s>", ArgumentName.QUERY);
+    return String.format("search commands <%s>", ArgumentName.QUERY);
   }
 
   @Override
