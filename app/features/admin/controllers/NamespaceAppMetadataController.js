@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminNamespaceAppMetadataController', function ($scope, $state, $dropdown, $alert, $timeout, MyDataSource) {
+  .controller('AdminNamespaceAppMetadataController', function ($scope, $state, $alert, $timeout, MyDataSource) {
 
     var data = new MyDataSource($scope);
 
@@ -10,36 +10,6 @@ angular.module(PKG.name + '.feature.admin')
         $scope.apps = apps;
 
       });
-
-  $scope.appDdClick = function (event) {
-
-    var toggle = angular.element(event.target);
-    if(!toggle.hasClass('dropdown-toggle')) {
-      toggle = toggle.parent();
-    }
-
-    if(toggle.parent().hasClass('open')) {
-      return;
-    }
-
-    var scope = $scope.$new(),
-        dd = $dropdown(toggle, {
-          template: 'assets/features/admin/templates/partials/app-dd.html',
-          animation: 'am-flip-x',
-          trigger: 'manual',
-          prefixEvent: 'nsadmin-app-dd.hide',
-          scope: scope
-        });
-
-    dd.$promise.then(function(){
-      dd.show();
-    });
-
-    scope.$on('nsadmin-app-dd.hide', function () {
-      dd.destroy();
-    });
-
-  };
 
     $scope.deleteApp = function(app) {
       data.request({
