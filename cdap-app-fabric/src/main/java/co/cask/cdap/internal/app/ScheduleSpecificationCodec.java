@@ -16,8 +16,10 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.schedule.DataSchedule;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -36,7 +38,13 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
   public JsonElement serialize(ScheduleSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
-    jsonObj.add("schedule", context.serialize(src.getSchedule(), Schedule.class));
+    jsonObj.add("scheduleType", context.serialize(src.getSchedule().getScheduleType(), Schedule.ScheduleType.class));
+    if (src.getSchedule().getScheduleType().equals(Schedule.ScheduleType.TIME)) {
+      jsonObj.add("schedule", context.serialize(src.getSchedule(), TimeSchedule.class));
+    } else if (src.getSchedule().getScheduleType().equals(Schedule.ScheduleType.DATA)) {
+      jsonObj.add("schedule", context.serialize(src.getSchedule(), DataSchedule.class));
+    }
+
     jsonObj.add("program", context.serialize(src.getProgram(), ScheduleProgramInfo.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     return jsonObj;
@@ -47,7 +55,25 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
-    Schedule schedule = context.deserialize(jsonObj.get("schedule"), Schedule.class);
+    JsonElement scheduleTypeJson = jsonObj.get("scheduleType");
+    Schedule.ScheduleType scheduleType;
+    if (scheduleTypeJson == null) {
+      // For backwards compatibility with spec persisted with older versions than 2.8, we need these lines
+      scheduleType = Schedule.ScheduleType.TIME;
+    } else {
+      scheduleType = context.deserialize(jsonObj.get("scheduleType"), Schedule.ScheduleType.class);
+    }
+
+    Schedule schedule = null;
+    switch (scheduleType) {
+      case TIME:
+        schedule = context.deserialize(jsonObj.get("schedule"), TimeSchedule.class);
+        break;
+      case DATA:
+        schedule = context.deserialize(jsonObj.get("schedule"), DataSchedule.class);
+        break;
+    }
+
     ScheduleProgramInfo program = context.deserialize(jsonObj.get("program"), ScheduleProgramInfo.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     return new ScheduleSpecification(schedule, program, properties);

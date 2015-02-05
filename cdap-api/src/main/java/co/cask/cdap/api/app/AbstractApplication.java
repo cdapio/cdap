@@ -26,6 +26,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -237,7 +238,7 @@ public abstract class AbstractApplication implements Application {
    */
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    scheduleWorkflow(new Schedule(scheduleName, scheduleDescription, cronTab), workflowName,
+    scheduleWorkflow(new TimeSchedule(scheduleName, scheduleDescription, cronTab), workflowName,
                      Collections.<String, String>emptyMap());
   }
 
@@ -251,7 +252,7 @@ public abstract class AbstractApplication implements Application {
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName,
                                   Map<String, String> properties) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    scheduleWorkflow(new Schedule(scheduleName, scheduleDescription, cronTab), workflowName, properties);
+    scheduleWorkflow(new TimeSchedule(scheduleName, scheduleDescription, cronTab), workflowName, properties);
   }
 
   /**

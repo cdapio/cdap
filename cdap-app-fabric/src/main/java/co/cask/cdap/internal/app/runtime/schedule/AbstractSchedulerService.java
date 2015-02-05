@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -185,8 +186,10 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         throw Throwables.propagate(e);
       }
       for (Schedule schedule : schedules) {
-        String scheduleName = schedule.getName();
-        String cronEntry = schedule.getCronEntry();
+        Preconditions.checkArgument(schedule instanceof TimeSchedule);
+        TimeSchedule timeSchedule = (TimeSchedule) schedule;
+        String scheduleName = timeSchedule.getName();
+        String cronEntry = timeSchedule.getCronEntry();
         String triggerKey = getScheduleId(programId, programType, scheduleName);
 
         LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);

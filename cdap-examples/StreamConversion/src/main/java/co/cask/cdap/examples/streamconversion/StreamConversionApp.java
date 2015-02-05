@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.TimeSchedule;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
@@ -41,7 +41,7 @@ public class StreamConversionApp extends AbstractApplication {
     addStream(new Stream("events"));
     addMapReduce(new StreamConversionMapReduce());
     addWorkflow(new StreamConversionWorkflow());
-    scheduleWorkflow(new Schedule("every5min", "runs every 5 minutes", "*/5 * * * *"),
+    scheduleWorkflow(new TimeSchedule("every5min", "runs every 5 minutes", "*/5 * * * *"),
                      "StreamConversionWorkflow");
 
     // create the time-partitioned file set, configure it to work with MapReduce and with Explore
