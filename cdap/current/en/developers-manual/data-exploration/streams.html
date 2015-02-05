@@ -1,0 +1,428 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Stream Exploration &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../index.html" />
+    <link rel="up" title="Data Exploration" href="index.html" />
+    <link rel="next" title="Fileset Exploration" href="filesets.html" />
+    <link rel="prev" title="Data Exploration" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="filesets.html" title="Fileset Exploration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Data Exploration"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Data Exploration</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="stream-exploration">
+<span id="id1"></span><h1>Stream Exploration<a class="headerlink" href="#stream-exploration" title="Permalink to this headline">¶</a></h1>
+<p>Streams are the primary method of ingesting real-time data into CDAP.
+It is often useful to be able to examine data in a Stream in an ad-hoc manner through
+SQL-like queries</p>
+<p>Each event in a Stream contains a timestamp, a map of headers, and a body. When a Stream
+is created, a corresponding Hive table is created that allows queries to be run over
+those three columns. Many times, stream event bodies are also structured and have
+a format and schema of their own. For example, event bodies may be comma-delimited
+text or Avro-encoded binary data. In those cases, it is possible to set a format and schema
+on a Stream, enabling more powerful queries.</p>
+<p>Let&#8217;s take a closer look at attaching format and schema on Streams.</p>
+<div class="section" id="stream-format">
+<h2>Stream Format<a class="headerlink" href="#stream-format" title="Permalink to this headline">¶</a></h2>
+<p>A format defines how the bytes in an event body can be read as a higher level object.
+For example, the CSV (comma separated values) format can read each value in comma-delimited text
+as a separate column of some given type. Each format has
+a schema that describes the structure of data the format can read. Some formats, such as the Avro format,
+require a schema to be explicitly given. Other formats, such as the CSV format, have a default schema.</p>
+<p>Format is a configuration setting that can be set on a stream. This can be done either through the
+HTTP RESTful API or by using the CDAP Command Line Interface (CLI):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="o">&lt;</span><span class="n">stream</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">format</span><span class="o">-</span><span class="n">name</span><span class="o">&gt;</span> <span class="o">[&lt;</span><span class="n">schema</span><span class="o">&gt;]</span> <span class="o">[&lt;</span><span class="n">settings</span><span class="o">&gt;]</span>
+<span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">mystream</span> <span class="n">csv</span> <span class="s">&quot;f1 int, f2 string&quot;</span>
+</pre></div>
+</div>
+<p>As mentioned above, a format may support different schemas, which will be discussed in more detail
+in the next section.</p>
+<p>It is important to note that formats are applied at read time.
+When events are added to a stream, there are no checks performed to enforce that
+all events added to the stream are readable by the format you have set on a stream.
+If any stream event cannot be read by the format you have set, your entire query will fail and you
+will not get any results.</p>
+</div>
+<div class="section" id="schema">
+<h2>Schema<a class="headerlink" href="#schema" title="Permalink to this headline">¶</a></h2>
+<p>CDAP schemas are adopted from the <a class="reference external" href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema Declaration</a>
+with a few differences:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Map keys do not have to be strings, but can be of any type.</li>
+<li>No &#8220;name&#8221; property for the enum type.</li>
+<li>No support of &#8220;doc&#8221; and &#8220;aliases&#8221; in record and enum types.</li>
+<li>No support of &#8220;doc&#8221; and &#8220;default&#8221; in record fields.</li>
+<li>No &#8220;fixed&#8221; type.</li>
+</ul>
+</div></blockquote>
+<p>There are a few additional limitations on the types of schemas that can be used for exploration:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Schemas must be a record of at least one field.</li>
+<li>Enums are not supported.</li>
+<li>Unions are not supported, unless it is a union of a null and another type, representing a nullable type.</li>
+<li>Recursive types are not supported. This means you cannot have a record field that references itself in one of its fields.</li>
+</ul>
+</div></blockquote>
+<p>Data exploration using Impala has additional limitations:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Fields must be a scalar type (no maps, arrays, or records).</li>
+</ul>
+</div></blockquote>
+<p>On top of these general limitations, each format has its own restrictions on the types
+of schemas they support. For example, the CSV format does not support maps or records as
+data types.</p>
+</div>
+<div class="section" id="schema-syntax">
+<h2>Schema Syntax<a class="headerlink" href="#schema-syntax" title="Permalink to this headline">¶</a></h2>
+<p>Schemas are represented as JSON Objects, following the same format as <a class="reference external" href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro schemas</a>.
+The JSON representation is used by the HTTP RESTful APIs, while the CDAP CLI supports a SQL-like syntax.</p>
+<p>For example, the SQL-like schema:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">f1</span> <span class="kt">int</span><span class="o">,</span> <span class="n">f2</span> <span class="n">string</span><span class="o">,</span> <span class="n">f3</span> <span class="n">array</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">not</span> <span class="kc">null</span><span class="o">,</span> <span class="n">f4</span> <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">not</span> <span class="kc">null</span><span class="o">,</span> <span class="n">f5</span> <span class="n">record</span><span class="o">&lt;</span><span class="nl">x:</span><span class="kt">int</span><span class="o">,</span> <span class="nl">y:</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">not</span> <span class="kc">null</span>
+</pre></div>
+</div>
+<p>is equivalent to the Avro-like JSON schema:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;record&quot;</span><span class="o">,</span>
+  <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;rec&quot;</span><span class="o">,</span>
+  <span class="s">&quot;fields&quot;</span><span class="o">:</span> <span class="o">[</span>
+    <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;f1&quot;</span><span class="o">,</span>
+      <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;int&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">]</span>
+    <span class="o">},</span>
+    <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;f2&quot;</span><span class="o">,</span>
+      <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;string&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">]</span>
+    <span class="o">},</span>
+    <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;f3&quot;</span><span class="o">,</span>
+      <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">{</span> <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;array&quot;</span><span class="o">,</span> <span class="s">&quot;items&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;int&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">]</span> <span class="o">}</span>
+    <span class="o">},</span>
+    <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;f4&quot;</span><span class="o">,</span>
+      <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;map&quot;</span><span class="o">,</span> <span class="s">&quot;keys&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;string&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">],</span> <span class="s">&quot;values&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;int&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">]</span>
+      <span class="o">}</span>
+    <span class="o">},</span>
+    <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;f5&quot;</span><span class="o">,</span>
+      <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;record&quot;</span><span class="o">,</span>
+        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;rec1&quot;</span><span class="o">,</span>
+        <span class="s">&quot;fields&quot;</span><span class="o">:</span> <span class="o">[</span>
+          <span class="o">{</span> <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;x&quot;</span><span class="o">,</span> <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;int&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">]</span> <span class="o">},</span>
+          <span class="o">{</span> <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;y&quot;</span><span class="o">,</span> <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="o">[</span> <span class="s">&quot;double&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span> <span class="o">]</span> <span class="o">}</span>
+        <span class="o">]</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">]</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="text-format">
+<h2>Text Format<a class="headerlink" href="#text-format" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">text</span></tt> format simply interprets each event body as a string. The format supports a very limited
+schema, namely a record with just one field of type <tt class="docutils literal"><span class="pre">string</span></tt>. The format supports a <tt class="docutils literal"><span class="pre">charset</span></tt> setting
+that allows you to specify the charset of the text. It defaults to <tt class="docutils literal"><span class="pre">utf-8</span></tt>.</p>
+<p>For example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">mystream</span> <span class="n">text</span> <span class="s">&quot;data string not null&quot;</span> <span class="s">&quot;charset=ISO-8859-1&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="csv-and-tsv-formats">
+<h2>CSV and TSV Formats<a class="headerlink" href="#csv-and-tsv-formats" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">csv</span></tt> (comma separated values) and <tt class="docutils literal"><span class="pre">tsv</span></tt> (tab separated values) formats read event bodies as delimited text.
+They have two settings, <tt class="docutils literal"><span class="pre">charset</span></tt> for the text charset, and <tt class="docutils literal"><span class="pre">delimiter</span></tt> for the delimiter.
+The <tt class="docutils literal"><span class="pre">charset</span></tt> setting defaults to <tt class="docutils literal"><span class="pre">utf-8</span></tt>. The <tt class="docutils literal"><span class="pre">delimiter</span></tt> setting defaults to a comma
+for the <tt class="docutils literal"><span class="pre">csv</span></tt> format and to a tab for the <tt class="docutils literal"><span class="pre">tsv</span></tt> format.</p>
+<p>These formats only support scalars as column types, except for the very last column, which can be an array of strings.
+All types can be nullable. If no schema is given, the default schema is an array of strings.</p>
+<p>For example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">mystream</span> <span class="n">csv</span> <span class="s">&quot;col1 string, col2 int not null, col3 array&lt;string&gt;&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="avro-format">
+<h2>Avro Format<a class="headerlink" href="#avro-format" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">avro</span></tt> format reads event bodies as binary encoded Avro. The format requires a schema to be given,
+and has no settings.</p>
+<p>For example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">mystream</span> <span class="n">avro</span> <span class="s">&quot;col1 string, col2 map&lt;string,int&gt; not null, col3 record&lt;x:double, y:float&gt;&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="end-to-end-example">
+<h2>End-to-end Example<a class="headerlink" href="#end-to-end-example" title="Permalink to this headline">¶</a></h2>
+<p>In the following example, we will create a Stream, send data to it, attach a format
+and schema to the Stream, then query the Stream.</p>
+<p>Suppose we want to create a Stream for stock trades. We first create the stream
+and send some data to it as comma-delimited text:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">create</span> <span class="n">stream</span> <span class="n">trades</span>
+<span class="o">&gt;</span> <span class="n">send</span> <span class="n">stream</span> <span class="n">trades</span> <span class="s">&quot;AAPL,50,112.98&quot;</span>
+<span class="o">&gt;</span> <span class="n">send</span> <span class="n">stream</span> <span class="n">trades</span> <span class="s">&quot;AAPL,100,112.87&quot;</span>
+<span class="o">&gt;</span> <span class="n">send</span> <span class="n">stream</span> <span class="n">trades</span> <span class="s">&quot;AAPL,8,113.02&quot;</span>
+<span class="o">&gt;</span> <span class="n">send</span> <span class="n">stream</span> <span class="n">trades</span> <span class="s">&quot;NFLX,10,437.45&quot;</span>
+</pre></div>
+</div>
+<p>If we run a query over the Stream, we can see each event as text:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">execute</span> <span class="s">&quot;select * from cdap_stream_trades&quot;</span>
+<span class="o">+==================================================================================================================+</span>
+<span class="o">|</span> <span class="n">cdap_stream_trades</span><span class="o">.</span><span class="na">ts</span><span class="o">:</span> <span class="n">BIGINT</span> <span class="o">|</span> <span class="n">cdap_stream_trades</span><span class="o">.</span><span class="na">headers</span><span class="o">:</span> <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="o">,</span><span class="n">string</span><span class="o">&gt;</span> <span class="o">|</span> <span class="n">cdap_stream_trades</span><span class="o">.</span><span class="na">body</span><span class="o">:</span> <span class="n">STRING</span> <span class="o">|</span>
+<span class="o">+==================================================================================================================+</span>
+<span class="o">|</span> <span class="mi">1422493022983</span>                 <span class="o">|</span> <span class="o">{}</span>                                             <span class="o">|</span> <span class="n">AAPL</span><span class="o">,</span><span class="mi">50</span><span class="o">,</span><span class="mf">112.98</span>                  <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1422493027358</span>                 <span class="o">|</span> <span class="o">{}</span>                                             <span class="o">|</span> <span class="n">AAPL</span><span class="o">,</span><span class="mi">100</span><span class="o">,</span><span class="mf">112.87</span>                 <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1422493031802</span>                 <span class="o">|</span> <span class="o">{}</span>                                             <span class="o">|</span> <span class="n">AAPL</span><span class="o">,</span><span class="mi">8</span><span class="o">,</span><span class="mf">113.02</span>                   <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1422493036080</span>                 <span class="o">|</span> <span class="o">{}</span>                                             <span class="o">|</span> <span class="n">NFLX</span><span class="o">,</span><span class="mi">10</span><span class="o">,</span><span class="mf">437.45</span>                  <span class="o">|</span>
+<span class="o">+==================================================================================================================+</span>
+</pre></div>
+</div>
+<p>Since we know the body of every event is comma separated text and that each event
+contains three fields, we can set a format and schema on the stream to allow us to run more
+complicated queries:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">trades</span> <span class="n">csv</span> <span class="s">&quot;ticker string, num_traded int, price double&quot;</span>
+<span class="o">&gt;</span> <span class="n">execute</span> <span class="s">&quot;select ticker, count(*) as transactions, sum(num_traded) as volume from cdap_stream_trades group by ticker order by volume desc&quot;</span>
+<span class="o">+========================================================+</span>
+<span class="o">|</span> <span class="nl">ticker:</span> <span class="n">STRING</span> <span class="o">|</span> <span class="nl">transactions:</span> <span class="n">BIGINT</span> <span class="o">|</span> <span class="nl">volume:</span> <span class="n">BIGINT</span> <span class="o">|</span>
+<span class="o">+========================================================+</span>
+<span class="o">|</span> <span class="n">AAPL</span>           <span class="o">|</span> <span class="mi">3</span>                    <span class="o">|</span> <span class="mi">158</span>            <span class="o">|</span>
+<span class="o">|</span> <span class="n">NFLX</span>           <span class="o">|</span> <span class="mi">1</span>                    <span class="o">|</span> <span class="mi">10</span>             <span class="o">|</span>
+<span class="o">+========================================================+</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="formulating-queries">
+<h2>Formulating Queries<a class="headerlink" href="#formulating-queries" title="Permalink to this headline">¶</a></h2>
+<p>When creating your queries, keep these limitations in mind:</p>
+<ul class="simple">
+<li>The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.</li>
+<li>Writing into a Stream using SQL is not supported.</li>
+<li>The SQL command <tt class="docutils literal"><span class="pre">DELETE</span></tt> is not supported.</li>
+<li>When addressing your streams in queries, you need to prefix the stream name with the CDAP
+namespace <tt class="docutils literal"><span class="pre">cdap_stream_</span></tt>. For example, if your Stream is named <tt class="docutils literal"><span class="pre">Purchases</span></tt>, then the corresponding table
+name is <tt class="docutils literal"><span class="pre">cdap_stream_purchases</span></tt>. Note that the table name is all lower-case, regardless of how it was defined.</li>
+<li>CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
+CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
+Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
+create an Adapter that converts Stream data into a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>, as described in <a class="reference internal" href="../advanced/adapters.html#advanced-adapters"><em>Adapters (Beta)</em></a>.</li>
+<li>Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
+If you are seeing permission errors, try setting <tt class="docutils literal"><span class="pre">hive.exec.stagingdir</span></tt> in your Hive configuration to <tt class="docutils literal"><span class="pre">/tmp/hive-staging</span></tt>.</li>
+</ul>
+<p>For more examples of queries, please refer to the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual">Hive language manual</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Data Exploration</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Stream Exploration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stream-format">Stream Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#schema">Schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#schema-syntax">Schema Syntax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#text-format">Text Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#csv-and-tsv-formats">CSV and TSV Formats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#avro-format">Avro Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#end-to-end-example">End-to-end Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#formulating-queries">Formulating Queries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="filesets.html"> Fileset Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-datasets.html"> Custom Dataset Exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Data Exploration</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="filesets.html"
+                        title="Next Chapter">Fileset Exploration</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Data Exploration" href="index.html" />Data Exploration</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Fileset Exploration" href="filesets.html" />Fileset Exploration</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

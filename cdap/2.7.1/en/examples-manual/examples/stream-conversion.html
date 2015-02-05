@@ -1,0 +1,550 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform WordCount Application" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Stream Conversion &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="User Profiles" href="user-profiles.html" />
+    <link rel="prev" title="Spark Page Rank Example" href="spark-page-rank.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="user-profiles.html" title="User Profiles"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="spark-page-rank.html" title="Spark Page Rank Example"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="stream-conversion">
+<span id="examples-stream-conversion"></span><h1>Stream Conversion<a class="headerlink" href="#stream-conversion" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) Example demonstrating Time-Partitioned File Sets.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This application receives simple events through a stream, and periodically converts these events into
+partitions of a time-partitioned file set. These partitions can be queried with SQL. These are the
+components of the application:</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">events</span></tt> stream receives simple events, where each event body is a number.</li>
+<li>The <tt class="docutils literal"><span class="pre">converted</span></tt> dataset is a time-partitioned file set in Avro format.</li>
+<li>The <tt class="docutils literal"><span class="pre">StreamConversionMapReduce</span></tt> reads the last five minutes of events from the
+stream and writes them to a new partition in the <tt class="docutils literal"><span class="pre">converted</span></tt> dataset.</li>
+<li>The <tt class="docutils literal"><span class="pre">StreamConversionWorkflow</span></tt> is scheduled every five minutes and only runs the
+<tt class="docutils literal"><span class="pre">StreamConversionMapReduce</span></tt>.</li>
+</ul>
+<p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
+<div class="section" id="the-stream-conversion-application">
+<h3>The Stream Conversion Application<a class="headerlink" href="#the-stream-conversion-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><em>examples,</em></a> the components
+of the Application are tied together by the class <tt class="docutils literal"><span class="pre">StreamConversionApp</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SCHEMA_STRING</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;streamEvent&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">))).</span><span class="na">toString</span><span class="o">();</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;events&quot;</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamConversionMapReduce</span><span class="o">());</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamConversionWorkflow</span><span class="o">());</span>
+    <span class="n">scheduleWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">Schedule</span><span class="o">(</span><span class="s">&quot;every5min&quot;</span><span class="o">,</span> <span class="s">&quot;runs every 5 minutes&quot;</span><span class="o">,</span> <span class="s">&quot;*/5 * * * *&quot;</span><span class="o">),</span>
+                     <span class="s">&quot;StreamConversionWorkflow&quot;</span><span class="o">);</span>
+
+    <span class="c1">// create the time-partitioned file set, configure it to work with MapReduce and with Explore</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;converted&quot;</span><span class="o">,</span> <span class="n">TimePartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// properties for file set</span>
+      <span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="s">&quot;/converted&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">AvroKeyInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">AvroKeyOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="s">&quot;schema&quot;</span><span class="o">,</span> <span class="n">SCHEMA_STRING</span><span class="o">)</span>
+        <span class="c1">// properties for explore (to create a partitioned hive table)</span>
+      <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setSerDe</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.serde2.avro.AvroSerDe&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreInputFormat</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreOutputFormat</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setTableProperty</span><span class="o">(</span><span class="s">&quot;avro.schema.literal&quot;</span><span class="o">,</span> <span class="n">SCHEMA_STRING</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The interesting part is the creation of the dataset <tt class="docutils literal"><span class="pre">converted</span></tt>:</p>
+<ul class="simple">
+<li>It is a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>. This is an experimental new dataset type, introduced in CDAP 2.7.0. This
+dataset manages the files in a <tt class="docutils literal"><span class="pre">FileSet</span></tt> by associating each file with a time stamp.</li>
+<li>The properties are divided in two sections:<ul>
+<li>The first set of properties configures the underlying FileSet, as documented in the
+<a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/fileset.html#datasets-fileset" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">FileSet</em></a> section.</li>
+<li>The second set of properties configures how the dataset is queryable with SQL. Here we can enable the
+dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: The Avro
+SerDe, an input and an output format, and an additional table property, namely the schema for the Avro SerDe.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="the-mapreduce-program">
+<h3>The MapReduce Program<a class="headerlink" href="#the-mapreduce-program" title="Permalink to this headline">¶</a></h3>
+<p>In its <tt class="docutils literal"><span class="pre">beforeSubmit</span></tt> method, the <tt class="docutils literal"><span class="pre">StreamConversionMapReduce</span></tt> determines its logical start time,
+and it configures the <tt class="docutils literal"><span class="pre">events</span></tt> stream as its input and the <tt class="docutils literal"><span class="pre">converted</span></tt> dataset as its output:</p>
+<ul>
+<li><p class="first">This is a map-only MapReduce program; in other words, it has no reducers,
+and the mappers write directly to the output in Avro format:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+<span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">StreamConversionMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+<span class="n">job</span><span class="o">.</span><span class="na">setMapOutputKeyClass</span><span class="o">(</span><span class="n">AvroKey</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">job</span><span class="o">.</span><span class="na">setMapOutputValueClass</span><span class="o">(</span><span class="n">NullWritable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">AvroJob</span><span class="o">.</span><span class="na">setOutputKeySchema</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="n">SCHEMA</span><span class="o">);</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Based on the logical start time, the MapReduce determines the range of events to read from the stream:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// read 5 minutes of events from the stream, ending at the logical start time of this run</span>
+<span class="kt">long</span> <span class="n">logicalTime</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getLogicalStartTime</span><span class="o">();</span>
+<span class="n">StreamBatchReadable</span><span class="o">.</span><span class="na">useStreamInput</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="s">&quot;events&quot;</span><span class="o">,</span> <span class="n">logicalTime</span> <span class="o">-</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MINUTES</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="mi">5</span><span class="o">),</span> <span class="n">logicalTime</span><span class="o">);</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Each MapReduce run writes its output to a partition with the logical start time:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">TimePartitionedFileSetArguments</span><span class="o">.</span><span class="na">setOutputPartitionTime</span><span class="o">(</span><span class="n">dsArguments</span><span class="o">,</span> <span class="n">logicalTime</span><span class="o">);</span>
+<span class="n">TimePartitionedFileSet</span> <span class="n">partitionedFileSet</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;converted&quot;</span><span class="o">,</span> <span class="n">dsArguments</span><span class="o">);</span>
+<span class="n">context</span><span class="o">.</span><span class="na">setOutput</span><span class="o">(</span><span class="s">&quot;converted&quot;</span><span class="o">,</span> <span class="n">partitionedFileSet</span><span class="o">);</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Note that the output file path is derived from the output partition time by the dataset itself:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Output location for new partition is: {}&quot;</span><span class="o">,</span>
+         <span class="n">partitionedFileSet</span><span class="o">.</span><span class="na">getUnderlyingFileSet</span><span class="o">().</span><span class="na">getOutputLocation</span><span class="o">().</span><span class="na">toURI</span><span class="o">().</span><span class="na">toString</span><span class="o">());</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>The Mapper itself is straight-forward: for each event, it emits an Avro record:</p>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="n">LongWritable</span> <span class="n">timestamp</span><span class="o">,</span> <span class="n">StreamEvent</span> <span class="n">streamEvent</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+      <span class="n">GenericRecordBuilder</span> <span class="n">recordBuilder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GenericRecordBuilder</span><span class="o">(</span><span class="n">SCHEMA</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">,</span> <span class="n">streamEvent</span><span class="o">.</span><span class="na">getTimestamp</span><span class="o">())</span>
+        <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">streamEvent</span><span class="o">.</span><span class="na">getBody</span><span class="o">()));</span>
+      <span class="n">GenericRecord</span> <span class="n">record</span> <span class="o">=</span> <span class="n">recordBuilder</span><span class="o">.</span><span class="na">build</span><span class="o">();</span>
+      <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="n">AvroKey</span><span class="o">&lt;</span><span class="n">GenericRecord</span><span class="o">&gt;(</span><span class="n">record</span><span class="o">),</span> <span class="n">NullWritable</span><span class="o">.</span><span class="na">get</span><span class="o">());</span>
+    <span class="o">}</span>
+</pre></div>
+</div>
+<p>In the <tt class="docutils literal"><span class="pre">afterSubmit</span></tt> method of the MapReduce program, if the run succeeds, the output file is
+registered as a new partition in the <tt class="docutils literal"><span class="pre">converted</span></tt> dataset. This is due to a limitation in the
+implementation of <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>; itself should add the partition in the output
+committer of its output format (this will be addressed in a future CDAP release):</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">succeeded</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// TODO this should be done by the output committer (CDAP-1227)</span>
+      <span class="n">TimePartitionedFileSet</span> <span class="n">converted</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;converted&quot;</span><span class="o">,</span> <span class="n">dsArguments</span><span class="o">);</span>
+      <span class="n">String</span> <span class="n">outputPath</span> <span class="o">=</span> <span class="n">FileSetArguments</span><span class="o">.</span><span class="na">getOutputPath</span><span class="o">(</span><span class="n">converted</span><span class="o">.</span><span class="na">getUnderlyingFileSet</span><span class="o">().</span><span class="na">getRuntimeArguments</span><span class="o">());</span>
+      <span class="n">Long</span> <span class="n">partitionTime</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getLogicalStartTime</span><span class="o">();</span>
+
+      <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Adding partition for time {} with path {} to dataset &#39;{}&#39;&quot;</span><span class="o">,</span> <span class="n">partitionTime</span><span class="o">,</span> <span class="n">outputPath</span><span class="o">,</span> <span class="s">&quot;converted&quot;</span><span class="o">);</span>
+      <span class="n">converted</span><span class="o">.</span><span class="na">addPartition</span><span class="o">(</span><span class="n">partitionTime</span><span class="o">,</span> <span class="n">outputPath</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>) or use the pre-built JAR file included in the CDAP SDK.</li>
+<li>Start CDAP and deploy the application as described below in <a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.</li>
+<li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
+</ul>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the
+example code that is running on it as an &#8220;Application&#8221;.</p>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+<p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Dragging and dropping the application JAR file (<tt class="docutils literal"><span class="pre">example/target/&lt;example&gt;-2.7.1.jar</span></tt>) onto the CDAP Console
+running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
+</li>
+<li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface (CLI):</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP Console by clicking on the
+Application&#8217;s name in the <em>Overview</em> page. (It can be reached by clicking on the
+<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
+of the Processes or Queries associated with the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface</em></a>.
+In each CDAP example, the CLI commands for that particular example are provided.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Name of the Application being called</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
+the Process and Query lists, if the application has either of them; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all Processes (Flows, MapReduce programs, Workflows,
+etc.), Queries, and Services are stopped—you can click the <em>Delete</em> button on the
+Application&#8217;s detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.</p>
+<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Java Client API</em></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">StreamConversionWorkflow</span></tt> will run automatically every five minutes based on its schedule.
+To give it some data, you can use a provided script to send events to the stream, for example,
+to send 10000 events at a rate of roughly two per second:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">bin/send-events.sh --events 10000 --delay 0.5</span>
+</pre></div>
+</div>
+<p>You can now wait for the Workflow to run, after which you can query the partitions in the
+<tt class="docutils literal"><span class="pre">converted</span></tt> dataset:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh execute <span class="se">\&quot;</span>show partitions cdap_user_converted<span class="se">\&quot;</span>
+<span class="go">+============================================+</span>
+<span class="go">| partition: STRING                          |</span>
+<span class="go">+============================================+</span>
+<span class="go">| year=2015/month=1/day=28/hour=17/minute=30 |</span>
+<span class="go">| year=2015/month=1/day=28/hour=17/minute=35 |</span>
+<span class="go">| year=2015/month=1/day=28/hour=17/minute=40 |</span>
+<span class="go">+============================================+</span>
+</pre></div>
+</div>
+<p>Note that in the Hive meta store, the partitions are registered with multiple dimensions rather
+than the time since the Epoch: the year, month, day of the month, hour and minute of the day.</p>
+<p>You can also query the data in the dataset. For example, to find the five most frequent body texts, issue:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh execute <span class="s1">&#39;&quot;select count(*) as count, body from cdap_user_converted group by body order by count desc limit 5&quot;&#39;</span>
+<span class="go">+==============================+</span>
+<span class="go">| count: BIGINT | body: STRING |</span>
+<span class="go">+==============================+</span>
+<span class="go">| 86            | 53           |</span>
+<span class="go">| 81            | 92           |</span>
+<span class="go">| 75            | 45           |</span>
+<span class="go">| 73            | 24           |</span>
+<span class="go">| 70            | 63           |</span>
+<span class="go">+==============================+</span>
+</pre></div>
+</div>
+<p>Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
+of the query. For example, to run the same query for only the month of January, use the query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">select count(*) as count, body from cdap_user_converted where month=1 group by body order by count desc limit 5</span>
+</pre></div>
+</div>
+<div class="section" id="stopping-the-application">
+<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
+<p>The only thing you need to do to stop the application is suspend the schedule. This is not possible
+with the CLI; instead you can use <tt class="docutils literal"><span class="pre">curl</span></tt> to make a RESTful request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -X POST http://localhost:10000/v2/apps/StreamConversionApp/schedules/every5min/suspend</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Stream Conversion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="spark-page-rank.html"
+                        title="Previous Chapter">Spark Page Rank Example</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="user-profiles.html"
+                        title="Next Chapter">User Profiles</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Spark Page Rank Example" href="spark-page-rank.html" />Spark Page Rank Example</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="User Profiles" href="user-profiles.html" />User Profiles</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

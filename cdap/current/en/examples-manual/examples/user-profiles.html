@@ -1,0 +1,570 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform WordCount Application" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>User Profiles &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Web Analytics Application" href="web-analytics.html" />
+    <link rel="prev" title="Stream Conversion" href="stream-conversion.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="web-analytics.html" title="Web Analytics Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="stream-conversion.html" title="Stream Conversion"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="user-profiles">
+<span id="examples-user-profiles"></span><h1>User Profiles<a class="headerlink" href="#user-profiles" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating column-level conflict
+detection in Datasets using the example of managing user profiles in a Table.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This application demonstrates the use of the column-level conflict detection in a Dataset,
+through the example of an application that manages user profiles in a Table.
+The fields of a user profile are updated in different ways:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Attributes such as name and email address are changed through a RESTful call when the
+user updates their profile.</li>
+<li>The time of the last login is updated by a sign-on service every
+time the user logs in, also through a RESTful call.</li>
+<li>The time of the last activity is updated by a Flow that processes
+events whenever it encounters an event from that user.</li>
+</ul>
+</div></blockquote>
+<p>This application illustrates both row-level and column-level conflict detection for a Table.</p>
+<p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
+</div>
+<div class="section" id="introducing-a-feature-column-level-conflict-detection">
+<h2>Introducing a Feature: Column-Level Conflict Detection<a class="headerlink" href="#introducing-a-feature-column-level-conflict-detection" title="Permalink to this headline">¶</a></h2>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><em>examples,</em></a> the components
+of the Application are tied together by a class <tt class="docutils literal"><span class="pre">UserProfiles</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserProfiles</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;UserProfiles&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstrates the use of column-level conflict detection.&quot;</span><span class="o">);</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;events&quot;</span><span class="o">));</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">ActivityFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">UserProfileService</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;counters&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="c1">// create the profiles table with column-level conflict detection</span>
+    <span class="n">Tables</span><span class="o">.</span><span class="na">createTable</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="s">&quot;profiles&quot;</span><span class="o">,</span> <span class="n">ConflictDetection</span><span class="o">.</span><span class="na">COLUMN</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This application uses a Table with conflict detection either at the row level or
+at the column level.</p>
+<p>A conflict occurs if two transactions that overlap in time modify the same data in a table.
+For example, a Flowlet&#8217;s process method might overlap with a Service handler.
+Such a conflict is detected at the time that the transactions are committed,
+and the transaction that attempts to commit last is rolled back.</p>
+<p>By default, the granularity of the conflict detection is at the row-level.
+That means it is sufficient for two overlapping transactions writing to
+the same row of a table to cause a conflict, even if they write to different
+columns.</p>
+<p>Specifying a conflict detection level of <tt class="docutils literal"><span class="pre">COLUMN</span></tt> means that a conflict is
+only detected if both transactions modify the same column of the same row.
+This is more precise, but it requires more book-keeping in the transaction
+system and thus can impact performance.</p>
+<p>Column-level conflict detection should be enabled if it is known that different
+transactions frequently modify different columns of the same row concurrently.</p>
+<div class="section" id="userprofiles-application">
+<h3>UserProfiles Application<a class="headerlink" href="#userprofiles-application" title="Permalink to this headline">¶</a></h3>
+<p>This application uses:</p>
+<ul class="simple">
+<li>a Stream <tt class="docutils literal"><span class="pre">events</span></tt> to receive events of user activity;</li>
+<li>a Dataset <tt class="docutils literal"><span class="pre">profiles</span></tt> to store user profiles with conflict detection at either the row or column level;</li>
+<li>a Dataset <tt class="docutils literal"><span class="pre">counters</span></tt> to count events by URL (this is not essential for the purpose of the example);</li>
+<li>a Service <tt class="docutils literal"><span class="pre">UserProfileService</span></tt> to create, delete, and update profiles; and</li>
+<li>a Flow <tt class="docutils literal"><span class="pre">ActivityFlow</span></tt> to count events and record the time of last activity for the users.</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">UserProfileService</span></tt> is a Service for creating and modifying user profiles. It has
+handlers to create, update, and retrieve user profiles.</p>
+<p>A script (<tt class="docutils literal"><span class="pre">add-users.sh</span></tt>) is used to populate the <tt class="docutils literal"><span class="pre">profiles</span></tt> Dataset. Two additional
+scripts (<tt class="docutils literal"><span class="pre">update-login.sh</span></tt> and <tt class="docutils literal"><span class="pre">send-events.sh</span></tt>) are used to create a conflict by attempting
+to write to two different columns of the same row at the same time.</p>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<p>To observe conflict detection at both the row-level and column-level, you will need to modify
+and build this example twice:</p>
+<ul class="simple">
+<li>The first time, you will use row-level conflict detection, and see errors appearing in a log;</li>
+<li>The second time, you will use column-level conflict detection and see the scripts complete successfully without errors.</li>
+</ul>
+<div class="section" id="build-the-application-with-row-level-conflict-detection">
+<h3>Build the Application with Row-level Conflict Detection<a class="headerlink" href="#build-the-application-with-row-level-conflict-detection" title="Permalink to this headline">¶</a></h3>
+<p>Before building the application, set the <tt class="docutils literal"><span class="pre">ConflictDetection</span></tt> appropriately in the class <tt class="docutils literal"><span class="pre">UserProfiles</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="c1">// create the profiles table with column-level conflict detection</span>
+    <span class="n">Tables</span><span class="o">.</span><span class="na">createTable</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="s">&quot;profiles&quot;</span><span class="o">,</span> <span class="n">ConflictDetection</span><span class="o">.</span><span class="na">COLUMN</span><span class="o">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>The first time you build the application, set the <tt class="docutils literal"><span class="pre">tableProperties</span></tt> to <tt class="docutils literal"><span class="pre">ConflictDetection.ROW</span></tt>.</li>
+<li>Build the example (as described <a class="reference external" href="#building-an-example-application">below</a>).</li>
+<li>Start CDAP, deploy and start the application and its component as described below in
+<a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.
+Make sure you start the Flow and Service as described below.</li>
+<li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
+<li>You should observe errors as described.</li>
+</ul>
+</div>
+<div class="section" id="re-build-the-application-with-column-level-conflict-detection">
+<h3>Re-build the Application with Column-level Conflict Detection<a class="headerlink" href="#re-build-the-application-with-column-level-conflict-detection" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Stop the Application&#8217;s Flow and Service (as described <a class="reference external" href="#stopping-the-application">below</a>).</p>
+</li>
+<li><p class="first">Delete the <tt class="docutils literal"><span class="pre">profiles</span></tt> Dataset, either through the CDAP Command Line Interface or
+by making a <tt class="docutils literal"><span class="pre">curl</span></tt> call:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">curl</span> <span class="o">-</span><span class="n">w</span> <span class="sc">&#39;\n&#39;</span> <span class="o">-</span><span class="n">v</span> <span class="nl">localhost:</span><span class="mi">10000</span><span class="o">/</span><span class="n">v2</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">profiles</span> <span class="o">-</span><span class="n">XDELETE</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Now, rebuild the application, setting the <tt class="docutils literal"><span class="pre">tableProperties</span></tt> back to its original value, <tt class="docutils literal"><span class="pre">ConflictDetection.COLUMN</span></tt>.</p>
+</li>
+<li><p class="first">Re-deploy and re-run the application. You should not see any errors now in the log.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the
+example code that is running on it as an &#8220;Application&#8221;.</p>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+<p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Dragging and dropping the application JAR file (<tt class="docutils literal"><span class="pre">example/target/&lt;example&gt;-2.7.1.jar</span></tt>) onto the CDAP Console
+running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
+</li>
+<li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface (CLI):</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP Console by clicking on the
+Application&#8217;s name in the <em>Overview</em> page. (It can be reached by clicking on the
+<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
+of the Processes or Queries associated with the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface</em></a>.
+In each CDAP example, the CLI commands for that particular example are provided.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Name of the Application being called</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
+the Process and Query lists, if the application has either of them; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all Processes (Flows, MapReduce programs, Workflows,
+etc.), Queries, and Services are stopped—you can click the <em>Delete</em> button on the
+Application&#8217;s detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.</p>
+<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Java Client API</em></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="deleting-an-existing-dataset">
+<h3>Deleting an Existing Dataset<a class="headerlink" href="#deleting-an-existing-dataset" title="Permalink to this headline">¶</a></h3>
+<p>If it has been created from an earlier run of the example, delete the <tt class="docutils literal"><span class="pre">profiles</span></tt>
+Dataset, either through the CDAP Command Line Interface or by making a <tt class="docutils literal"><span class="pre">curl</span></tt> call:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -w &#39;\n&#39; -v localhost:10000/v2/data/datasets/profiles -XDELETE</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-the-service-and-the-flow">
+<h3>Starting the Service and the Flow<a class="headerlink" href="#starting-the-service-and-the-flow" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">UserProfiles</span></tt> in the Overview page of the CDAP Console to get to the
+Application detail page, click:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">ActivityFlow</span></tt> in the <em>Flow</em> pane to get to the Flow detail page, then click the <em>Start</em> button; or</li>
+<li><tt class="docutils literal"><span class="pre">UserProfileService</span></tt> in the <em>Service</em> pane to get to the Service detail page, then click the <em>Start</em> button; and</li>
+</ul>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">UserProfiles.ActivityFlow</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">UserProfiles.UserProfileService</span></tt></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="populate-the-profiles-table">
+<h3>Populate the <tt class="docutils literal"><span class="pre">profiles</span></tt> Table<a class="headerlink" href="#populate-the-profiles-table" title="Permalink to this headline">¶</a></h3>
+<p>Populate the <tt class="docutils literal"><span class="pre">profiles</span></tt> tables with users using a script. From the example&#8217;s directory, use:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/add-users.sh</span></tt></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="create-a-conflict">
+<h3>Create a Conflict<a class="headerlink" href="#create-a-conflict" title="Permalink to this headline">¶</a></h3>
+<p>Now, from two
+different terminals, run the following commands concurrently:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">bin/update-login.sh</span></tt> to randomly update the time of last login for users; and</li>
+<li><tt class="docutils literal"><span class="pre">bin/send-events.sh</span></tt> to generate random user activity events and send them to the stream.</li>
+</ul>
+<p>If both scripts are running at the same time, then some user profiles will be updated at
+the same time by the Service and by the Flow. With row-level conflict detection, you would
+see transaction conflicts in the logs. But when the <tt class="docutils literal"><span class="pre">profiles</span></tt> table uses
+column-level conflict detection, these conflicts are avoided.</p>
+<p>To see the behavior with row-level conflict detection, set
+the dataset creation statement at the bottom of <tt class="docutils literal"><span class="pre">UserProfiles.java</span></tt> to use <tt class="docutils literal"><span class="pre">ConflictDetection.ROW</span></tt>
+and run the steps as above. You should see transaction conflicts in the logs. For example, such
+a conflict would show as (reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">2015-01-26 21:00:20,084 - ERROR</span>
+<span class="go">[FlowletProcessDriver-updater-0-executor:c.c.c.i.a.r.f.FlowletProcessDriver@279]</span>
+<span class="go"> - Transaction operation failed: Conflict detected for transaction 1422334820080000000.</span>
+<span class="go">co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1422334820080000000.</span>
+<span class="go">  at co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:166) ~[tephra-core-0.3.4.jar:na]</span>
+<span class="go">  at co.cask.tephra.TransactionContext.finish(TransactionContext.java:78) ~[tephra-core-0.3.4.jar:na]</span>
+</pre></div>
+</div>
+<p>Note that in order to see this happen (and to change from row- to column- and vice-versa),
+you need to delete the <tt class="docutils literal"><span class="pre">profiles</span></tt> dataset before redeploying the application, to force
+its recreation with the new properties.</p>
+<p>Running the example with <tt class="docutils literal"><span class="pre">ConflictDetection.COLUMN</span></tt> will result in the two scripts running
+concurrently without transaction conflicts.</p>
+</div>
+<div class="section" id="stopping-the-application">
+<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the step:</p>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">UserProfiles</span></tt> in the Overview page of the CDAP Console to get to the
+Application detail page, click <tt class="docutils literal"><span class="pre">ActivityFlow</span></tt> in the <em>Flow</em> section of the <em>Process</em> pane
+to get to the Flow&#8217;s detail page, and then click the <em>Stop</em> button; repeat these steps for
+the <tt class="docutils literal"><span class="pre">FileSetService</span></tt> in the <em>Service</em> pane; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">UserProfiles.ActivityFlow</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">UserProfiles.UserProfileService</span></tt></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">User Profiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#introducing-a-feature-column-level-conflict-detection">Introducing a Feature: Column-Level Conflict Detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="stream-conversion.html"
+                        title="Previous Chapter">Stream Conversion</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="web-analytics.html"
+                        title="Next Chapter">Web Analytics Application</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Stream Conversion" href="stream-conversion.html" />Stream Conversion</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Web Analytics Application" href="web-analytics.html" />Web Analytics Application</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Cloudera Add Service Wizard, Step-by-Step &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../../index.html" />
+    <link rel="up" title="Cloudera" href="index.html" />
+    <link rel="next" title="Ingestion and Exploration" href="ingesting.html" />
+    <link rel="prev" title="Configuring and Installing CDAP using Cloudera Manager" href="configuring.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="ingesting.html" title="Ingestion and Exploration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="configuring.html" title="Configuring and Installing CDAP using Cloudera Manager"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Integrations</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cloudera</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cloudera-add-service-wizard-step-by-step">
+<span id="step-by-step-cloudera-add-service"></span><h1>Cloudera <em>Add Service</em> Wizard, Step-by-Step<a class="headerlink" href="#cloudera-add-service-wizard-step-by-step" title="Permalink to this headline">¶</a></h1>
+<p>As described in <a class="reference internal" href="configuring.html#cloudera-configuring"><em>Configuring and Installing CDAP using Cloudera Manager</em></a>, you can use <a class="reference external" href="http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html">Cloudera Manager</a>
+to integrate CDAP into a Hadoop cluster by
+<a class="reference internal" href="configuring.html#cloudera-configuring-download"><em>downloading and installing a CDAP CSD (Custom
+Service Descriptor)</em></a>. These instructions show you how to use that CSD with the
+Cloudera Manager Admin Console <em>Add Service</em> Wizard to install CDAP.</p>
+<div class="section" id="add-a-service">
+<h2>Add A Service<a class="headerlink" href="#add-a-service" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-01.png"><img alt="../../_images/cloudera-csd-01.png" class="bordered-image" src="../../_images/cloudera-csd-01.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Cloudera Manager:</strong> Starting the <em>Add Service</em> Wizard.</p>
+</div>
+</div>
+<div class="section" id="the-add-service-wizard">
+<h2>The &#8220;Add Service&#8221; Wizard<a class="headerlink" href="#the-add-service-wizard" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-02.png"><img alt="../../_images/cloudera-csd-02.png" class="bordered-image" src="../../_images/cloudera-csd-02.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Add Service Wizard, Page 1:</strong> Selecting CDAP (Cask DAP) as the service to be added.</p>
+</div>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-03.png"><img alt="../../_images/cloudera-csd-03.png" class="bordered-image" src="../../_images/cloudera-csd-03.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Add Service Wizard, Page 2:</strong> Setting the dependencies (in this case, including Hive).</p>
+</div>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-04.png"><img alt="../../_images/cloudera-csd-04.png" class="bordered-image" src="../../_images/cloudera-csd-04.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Add Service Wizard, Page 3:</strong> When customizing Role Assignments, CDAP <strong>Security
+Auth</strong> Service can be added later.</p>
+</div>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-06.png"><img alt="../../_images/cloudera-csd-06.png" class="bordered-image" src="../../_images/cloudera-csd-06.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Add Service Wizard, Page 4:</strong> Reviewing configurations; as Hive was included, CDAP Explore can be enabled.</p>
+</div>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-07.png"><img alt="../../_images/cloudera-csd-07.png" class="bordered-image" src="../../_images/cloudera-csd-07.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Add Service Wizard, Page 5:</strong> Finishing first run of commands to install CDAP.</p>
+</div>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-08.png"><img alt="../../_images/cloudera-csd-08.png" class="bordered-image" src="../../_images/cloudera-csd-08.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Add Service Wizard, Page 6:</strong> Congratulations screen, though there is still work to be done.</p>
+</div>
+</div>
+<div class="section" id="startup">
+<h2>Startup<a class="headerlink" href="#startup" title="Permalink to this headline">¶</a></h2>
+<p>After the Cloudera Manager Admin Console&#8217;s <em>Add Service</em> Wizard completes, <em>Cask DAP</em> will
+show in the list for the cluster where you installed it. You can select it, and go to the
+<em>Cask DAP</em> page, with <em>Quick Links</em> and <em>Status Summary</em>. The lights of the <em>Status
+Summary</em> should all turn green, showing completion of startup.</p>
+<p>The <em>Quick Links</em> includes a link to the <strong>CDAP Console</strong>, which by default is running on
+port <tt class="docutils literal"><span class="pre">9999</span></tt> of the host where the Web-App role instance is running.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-09.png"><img alt="../../_images/cloudera-csd-09.png" class="bordered-image" src="../../_images/cloudera-csd-09.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Cloudera Manager:</strong> CDAP (Cask DAP) now added to the cluster.</p>
+</div>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/cloudera-csd-10.png"><img alt="../../_images/cloudera-csd-10.png" class="bordered-image" src="../../_images/cloudera-csd-10.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>Cloudera Manager:</strong> CDAP completed startup: all lights green!</p>
+</div>
+</div>
+<div class="section" id="cdap-console">
+<h2>CDAP Console<a class="headerlink" href="#cdap-console" title="Permalink to this headline">¶</a></h2>
+<p>The CDAP Console may initially show errors while all of the CDAP YARN containers are
+starting up. Allow for up to a few minutes for this. The <em>Services</em> link in the CDAP
+Console in the upper right will show the status of the CDAP services.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/console_01_overview.png"><img alt="../../_images/console_01_overview.png" class="bordered-image" src="../../_images/console_01_overview.png" style="width: 800px; height: 526px;" /></a>
+<p class="caption"><strong>CDAP Console:</strong> Showing started-up with two applications deployed.</p>
+</div>
+<p>Further instructions, including verifying your installation, are contained in <a class="reference internal" href="configuring.html#cloudera-verification"><em>Configuring
+and Installing: Verification</em></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cloudera</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="configuring.html"> Configuring and Installing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Add Service Wizard</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#add-a-service">Add A Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-add-service-wizard">The &#8220;Add Service&#8221; Wizard</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#startup">Startup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-console">CDAP Console</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ingesting.html"> Ingestion and Exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../squirrel.html"> SquirrelSQL</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="configuring.html"
+                        title="Previous Chapter">Configuring and Installing CDAP using Cloudera Manager</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="ingesting.html"
+                        title="Next Chapter">Ingestion and Exploration</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Configuring and Installing CDAP using Cloudera Manager" href="configuring.html" />Configuring and Installing CDAP using Cloudera Manager</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Ingestion and Exploration" href="ingesting.html" />Ingestion and Exploration</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

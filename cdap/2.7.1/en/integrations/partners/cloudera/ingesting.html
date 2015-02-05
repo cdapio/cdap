@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Ingestion and Exploration &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../../index.html" />
+    <link rel="up" title="Cloudera" href="index.html" />
+    <link rel="next" title="CDAP JDBC Driver" href="../../jdbc.html" />
+    <link rel="prev" title="Cloudera Add Service Wizard, Step-by-Step" href="step-by-step-cloudera.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../../jdbc.html" title="CDAP JDBC Driver"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="step-by-step-cloudera.html" title="Cloudera Add Service Wizard, Step-by-Step"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Integrations</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cloudera</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ingestion-and-exploration">
+<span id="cloudera-ingesting"></span><h1>Ingestion and Exploration<a class="headerlink" href="#ingestion-and-exploration" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="integrating-cdap-with-impala">
+<span id="integrations-impala"></span><h2>Integrating CDAP with Impala<a class="headerlink" href="#integrating-cdap-with-impala" title="Permalink to this headline">¶</a></h2>
+<p>When using CDAP with Impala:</p>
+<ul class="simple">
+<li><a class="reference external" href="../../../developers-manual/advanced/adapters.html"><strong>CDAP Adapters:</strong></a> <strong>Stream-conversion</strong> and <strong>custom adapter</strong> types</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="../../../developers-manual/data-exploration/streams.html"><strong>Stream Exploration:</strong></a> It is often useful to be able to <strong>examine data in a Stream</strong> in an ad-hoc manner through SQL-like queries</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="../../../developers-manual/data-exploration/filesets.html"><strong>Fileset Exploration:</strong></a> The <strong>CDAP FileSet Datasets</strong> can be explored through ad-hoc SQL-like queries.</li>
+</ul>
+</div>
+<div class="section" id="ingesting-and-exploring-data-with-impala">
+<h2>Ingesting and Exploring Data with Impala<a class="headerlink" href="#ingesting-and-exploring-data-with-impala" title="Permalink to this headline">¶</a></h2>
+<p>Streams are the primary means of bringing data from external systems into the CDAP in
+realtime. They are ordered, time-partitioned sequences of data, usable for realtime
+collection and consumption of data.</p>
+<p>They can easily be created by using the CDAP Command Line Interface (CLI).
+First, connect to your CDAP instance using the CLI:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">connect</span> <span class="o">&lt;</span><span class="n">hostname</span><span class="o">&gt;:</span><span class="mi">11015</span>
+</pre></div>
+</div>
+<p>Next, create a Stream:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">create</span> <span class="n">stream</span> <span class="n">trades</span>
+</pre></div>
+</div>
+<p>You can then add events to a Stream, one-by-one:</p>
+<div class="highlight-java"><div class="highlight"><pre>&gt; send stream trades &#39;NFLX,441.07,50&#39;
+&gt; send stream trades &#39;AAPL,118.63,100&#39;
+&gt; send stream trades &#39;GOOG,528.48,10&#39;
+</pre></div>
+</div>
+<p>Or, you can add the entire contents of a file:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">load</span> <span class="n">stream</span> <span class="n">trades</span> <span class="o">/</span><span class="n">my</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">trades</span><span class="o">.</span><span class="na">csv</span>
+</pre></div>
+</div>
+<p>Or you can use the other tools and APIs available to ingest data in real-time or batch.
+For more information on what are other ways of ingesting data into CDAP, see the links at
+the top of this page.</p>
+<p>You can now examine the contents of your stream by executing a SQL query:</p>
+<div class="highlight-java"><div class="highlight"><pre>&gt; execute &#39;select * from cdap_stream_trades limit 5&#39;
++==================================================================================================================+
+| cdap_stream_trades.ts: BIGINT | cdap_stream_trades.headers: map&lt;string,string&gt; | cdap_stream_trades.body: STRING |
++==================================================================================================================+
+| 1422924257559                 | {}                                             | NFLX,441.07,50                  |
+| 1422924261588                 | {}                                             | AAPL,118.63,100                 |
+| 1422924265441                 | {}                                             | GOOG,528.48,10                  |
+| 1422924291009                 | {&quot;content.type&quot;:&quot;text/csv&quot;}                    | GOOG,538.53,18230               |
+| 1422924291009                 | {&quot;content.type&quot;:&quot;text/csv&quot;}                    | GOOG,538.17,100                 |
++==================================================================================================================+
+</pre></div>
+</div>
+<p>You can also attach a schema to your stream to enable more powerful queries:</p>
+<div class="highlight-java"><div class="highlight"><pre>&gt; set stream format trades csv &#39;ticker string, price double, trades int&#39;
+&gt; execute &#39;select ticker, sum(price * trades) / 1000000 as millions from cdap_stream_trades group by ticker order by millions desc&#39;
++=====================================+
+| ticker: STRING | millions: DOUBLE   |
++=====================================+
+| AAPL           | 3121.8966341143905 |
+| NFLX           | 866.0789117408007  |
+| GOOG           | 469.01340359839986 |
++=====================================+
+</pre></div>
+</div>
+<p>On one of our test clusters, the above query took just about two minutes to complete.
+Data in CDAP is integrated with Apache Hive, and the above query above translates to a Hive query.
+As such, it will launch two MapReduce jobs in order to calculate the query results, which
+is why it takes minutes instead of seconds.</p>
+<p>To reduce query time, you can use Impala to query the data instead of Hive. Since Streams
+are written in a custom format, they cannot be directly queried through Impala. Instead,
+you can create an Adapter that regularly reads Stream events and writes those events into
+files on HDFS that can then be queried by Impala. You can also do this through the CLI:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">create</span> <span class="n">stream</span><span class="o">-</span><span class="n">conversion</span> <span class="n">adapter</span> <span class="n">ticks_adapter</span> <span class="n">on</span> <span class="n">trades</span> <span class="n">frequency</span> <span class="mi">10</span><span class="n">m</span> <span class="n">format</span> <span class="n">csv</span> <span class="n">schema</span> <span class="s">&quot;ticker string, price double, trades int&quot;</span>
+</pre></div>
+</div>
+<p>This will create an Adapter that runs every ten minutes, reads the last ten minutes of
+events from the Stream, and writes them to a file set that can be queried through Impala.</p>
+<p>The next time the Adapter runs, it will spawn a MapReduce job that reads all events added
+in the past ten minutes, writes each event to Avro encoded files, and registers a new
+partition in the Hive Metastore. We can then query the contents using Impala. On a
+cluster, use the Impala shell to connect to Impala:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">$</span> <span class="n">impala</span><span class="o">-</span><span class="n">shell</span> <span class="o">-</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">impala</span><span class="o">-</span><span class="n">host</span><span class="o">&gt;</span>
+<span class="o">&gt;</span> <span class="n">invalidate</span> <span class="n">metadata</span>
+<span class="o">&gt;</span> <span class="n">select</span> <span class="n">ticker</span><span class="o">,</span> <span class="n">sum</span><span class="o">(</span><span class="n">price</span> <span class="o">*</span> <span class="n">trades</span><span class="o">)</span> <span class="o">/</span> <span class="mi">1000000</span> <span class="n">as</span> <span class="n">millions</span> <span class="n">from</span> <span class="n">cdap_user_trades_converted</span> <span class="n">group</span> <span class="n">by</span> <span class="n">ticker</span> <span class="n">order</span> <span class="n">by</span> <span class="n">millions</span> <span class="n">desc</span>
+<span class="o">+--------+-------------------+</span>
+<span class="o">|</span> <span class="n">ticker</span> <span class="o">|</span> <span class="n">millions</span>          <span class="o">|</span>
+<span class="o">+--------+-------------------+</span>
+<span class="o">|</span> <span class="n">AAPL</span>   <span class="o">|</span> <span class="mf">3121.88477111439</span>  <span class="o">|</span>
+<span class="o">|</span> <span class="n">NFLX</span>   <span class="o">|</span> <span class="mf">866.0568582408006</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">GOOG</span>   <span class="o">|</span> <span class="mf">469.0081187983999</span> <span class="o">|</span>
+<span class="o">+--------+-------------------+</span>
+<span class="n">Fetched</span> <span class="mi">3</span> <span class="n">row</span><span class="o">(</span><span class="n">s</span><span class="o">)</span> <span class="n">in</span> <span class="mf">1.03</span><span class="n">s</span>
+</pre></div>
+</div>
+<p>Since we are using Impala, no MapReduce jobs are launched, and the query comes back in
+about one second.</p>
+<p>Now that you have data in CDAP and are able to explore your data, you can use CDAP&#8217;s many
+useful and powerful services, such as the ability to dynamically scale processing units,
+distributed transactions, and service discovery, to write Applications that meet your
+business needs.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cloudera</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="configuring.html"> Configuring and Installing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="step-by-step-cloudera.html"> Add Service Wizard</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Ingestion and Exploration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#integrating-cdap-with-impala">Integrating CDAP with Impala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ingesting-and-exploring-data-with-impala">Ingesting and Exploring Data with Impala</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../squirrel.html"> SquirrelSQL</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="step-by-step-cloudera.html"
+                        title="Previous Chapter">Cloudera <em>Add Service</em> Wizard, Step-by-Step</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="../../jdbc.html"
+                        title="Next Chapter">CDAP JDBC Driver</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cloudera Add Service Wizard, Step-by-Step" href="step-by-step-cloudera.html" />Cloudera <em>Add Service</em> Wizard, Step-by-Step</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP JDBC Driver" href="../../jdbc.html" />CDAP JDBC Driver</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

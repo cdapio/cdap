@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>SquirrelSQL &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="index.html" />
+    <link rel="prev" title="Pentaho Data Integration" href="pentaho.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="pentaho.html" title="Pentaho Data Integration"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="table-of-contents.html">CDAP Integrations</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="squirrelsql">
+<span id="squirrel-integration"></span><h1>SquirrelSQL<a class="headerlink" href="#squirrelsql" title="Permalink to this headline">¶</a></h1>
+<p><em>SquirrelSQL</em> is a simple JDBC client which executes SQL queries against many different relational databases.
+Here&#8217;s how to add the <a class="reference internal" href="jdbc.html#cdap-jdbc"><em>CDAP JDBC driver</em></a> inside <em>SquirrelSQL</em>.</p>
+<ol class="arabic">
+<li><p class="first">Open the <tt class="docutils literal"><span class="pre">Drivers</span></tt> pane, located on the far left corner of <em>SquirrelSQL</em>.</p>
+</li>
+<li><p class="first">Click the <tt class="docutils literal"><span class="pre">+</span></tt> icon of the <tt class="docutils literal"><span class="pre">Drivers</span></tt> pane.</p>
+<a class="reference internal image-reference" href="_images/squirrel_drivers.png"><img alt="_images/squirrel_drivers.png" src="_images/squirrel_drivers.png" style="width: 4in;" /></a>
+</li>
+<li><p class="first">Add a new Driver by entering a <tt class="docutils literal"><span class="pre">Name</span></tt>, such as <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Driver</span></tt>. The <tt class="docutils literal"><span class="pre">Example</span> <span class="pre">URL</span></tt> is of the form
+<tt class="docutils literal"><span class="pre">jdbc:cdap://&lt;host&gt;:10000?auth.token=&lt;token&gt;</span></tt>. The <tt class="docutils literal"><span class="pre">Website</span> <span class="pre">URL</span></tt> can be left blank. In the <tt class="docutils literal"><span class="pre">Class</span> <span class="pre">Name</span></tt>
+field, enter <tt class="docutils literal"><span class="pre">co.cask.cdap.explore.jdbc.ExploreDriver</span></tt>.
+Click on the <tt class="docutils literal"><span class="pre">Extra</span> <span class="pre">Class</span> <span class="pre">Path</span></tt> tab, then on <tt class="docutils literal"><span class="pre">Add</span></tt>, and put the path to <tt class="docutils literal"><span class="pre">co.cask.cdap.cdap-explore-jdbc-&lt;version&gt;.jar</span></tt>.</p>
+<a class="reference internal image-reference" href="_images/squirrel_add_driver.png"><img alt="_images/squirrel_add_driver.png" src="_images/squirrel_add_driver.png" style="width: 6in;" /></a>
+</li>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">OK</span></tt>. You should now see <tt class="docutils literal"><span class="pre">Cask</span> <span class="pre">CDAP</span> <span class="pre">Driver</span></tt> in the list of drivers from the <tt class="docutils literal"><span class="pre">Drivers</span></tt> pane of
+<em>SquirrelSQL</em>.</p>
+</li>
+<li><p class="first">We can now create an alias to connect to a running instance of CDAP. Open the <tt class="docutils literal"><span class="pre">Aliases</span></tt> pane, and click on
+the <tt class="docutils literal"><span class="pre">+</span></tt> icon to create a new alias.</p>
+</li>
+<li><p class="first">In this example, we are going to connect to a standalone CDAP from the SDK.
+The name of our alias will be <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Standalone</span></tt>. Select the <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Driver</span></tt> in
+the list of available drivers. Our URL will be <tt class="docutils literal"><span class="pre">jdbc:cdap://localhost:10000</span></tt>. Our standalone instance
+does not require an authentication token, but if yours requires one, HTML-encode your token
+and pass it as a parameter of the <tt class="docutils literal"><span class="pre">URL</span></tt>. <tt class="docutils literal"><span class="pre">User</span> <span class="pre">Name</span></tt> and <tt class="docutils literal"><span class="pre">Password</span></tt> are left blank.</p>
+<a class="reference internal image-reference" href="_images/squirrel_add_alias.png"><img alt="_images/squirrel_add_alias.png" src="_images/squirrel_add_alias.png" style="width: 6in;" /></a>
+</li>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">OK</span></tt>. <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Standalone</span></tt> is now added to the list of aliases.</p>
+</li>
+<li><p class="first">A popup asks you to connect to your newly-added alias. Click on <tt class="docutils literal"><span class="pre">Connect</span></tt>, and <em>SquirrelSQL</em> will retrieve
+information about your running CDAP Datasets.</p>
+</li>
+<li><p class="first">To execute a SQL query on your CDAP Datasets, go to the <tt class="docutils literal"><span class="pre">SQL</span></tt> tab, enter a query in the center field, and click
+on the &#8220;running man&#8221; icon on top of the tab. Your results will show in the bottom half of the <em>SquirrelSQL</em> main view.</p>
+<a class="reference internal image-reference" href="_images/squirrel_sql_query.png"><img alt="_images/squirrel_sql_query.png" src="_images/squirrel_sql_query.png" style="width: 6in;" /></a>
+</li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partners/cloudera/index.html"> Cloudera</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> SquirrelSQL</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="pentaho.html"
+                        title="Previous Chapter">Pentaho Data Integration</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Pentaho Data Integration" href="pentaho.html" />Pentaho Data Integration</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

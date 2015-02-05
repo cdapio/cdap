@@ -10,7 +10,7 @@
  */
  
 var manuals = {
-"developers-manual":"Developers’ Manual","admin-manual":"Administration Manual","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual", };
+"developers-manual":"Developers’ Manual","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual", };
 
 
 /**

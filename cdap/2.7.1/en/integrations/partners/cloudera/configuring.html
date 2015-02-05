@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Configuring and Installing CDAP using Cloudera Manager &mdash; Cask Data Application Platform 2.7.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.7.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.7.1 Documentation" href="../../index.html" />
+    <link rel="up" title="Cloudera" href="index.html" />
+    <link rel="next" title="Cloudera Add Service Wizard, Step-by-Step" href="step-by-step-cloudera.html" />
+    <link rel="prev" title="Cloudera" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="step-by-step-cloudera.html" title="Cloudera Add Service Wizard, Step-by-Step"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cloudera"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.7.1');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Integrations</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cloudera</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="configuring-and-installing-cdap-using-cloudera-manager">
+<span id="cloudera-configuring"></span><h1>Configuring and Installing CDAP using Cloudera Manager<a class="headerlink" href="#configuring-and-installing-cdap-using-cloudera-manager" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>You can use <a class="reference external" href="http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html">Cloudera Manager</a>
+to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
+Service Descriptor). Once the CSD is installed, you will able to use Cloudera Manager to
+install, start and manage CDAP on Hadoop clusters.</p>
+<p>These instructions cover the steps to integrate CDAP using Cloudera Manager:</p>
+<ul class="simple">
+<li><strong>Prerequisites:</strong> Preparing your Hadoop cluster for CDAP.</li>
+<li><strong>Download:</strong> Downloading the CSD file.</li>
+<li><strong>Install, Setup, and Startup:</strong> Installing the CSD, running the <em>Add Service</em> Wizard, and starting CDAP.</li>
+<li><strong>Verification:</strong> Confirming that CDAP was installed and configured successfully.</li>
+<li><strong>Troubleshooting:</strong> Particular situations that can occur with Cloudera.</li>
+</ul>
+<div class="section" id="roles-and-dependencies">
+<h3>Roles and Dependencies<a class="headerlink" href="#roles-and-dependencies" title="Permalink to this headline">¶</a></h3>
+<p>The CDAP CSD consists of four mandatory roles:</p>
+<ul class="simple">
+<li>Master</li>
+<li>Gateway/Router</li>
+<li>Kafka-Server</li>
+<li>Web-App</li>
+</ul>
+<p>and an optional role—Security Auth Service—plus a Gateway client configuration.</p>
+<p>CDAP depends on HBase, YARN, HDFS, Zookeeper, and—optionally—Hive. All services run as
+the &#8216;cdap&#8217; user installed by the parcel.</p>
+</div>
+</div>
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Node.js (version 0.8.16 or greater) must be installed on the node(s) where the Web-App
+role instance will run. You can download the latest version of Node.js from <a class="reference external" href="http://nodejs.org">nodejs.org</a>.</p>
+</li>
+<li><p class="first">Zookeeper&#8217;s <tt class="docutils literal"><span class="pre">maxClientCnxns</span></tt> must be raised from its default.  We suggest setting it to zero
+(unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper,
+the number of connections required is a function of usage.</p>
+</li>
+<li><p class="first">For Kerberos-enabled Hadoop clusters:</p>
+<ul>
+<li><p class="first">The &#8216;cdap&#8217; user needs to be granted Hbase permissions to create tables.
+In an Hbase shell, enter:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">grant &#39;cdap&#39;, &#39;ACRW&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The &#8216;cdap&#8217; user must be able to launch YARN containers, either by adding it to the YARN
+<tt class="docutils literal"><span class="pre">allowed.system.users</span></tt> or by adjusting <tt class="docutils literal"><span class="pre">min.user.id</span></tt>.</p>
+</li>
+</ul>
+</li>
+<li><p class="first">Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
+ensuring that the HDFS <tt class="docutils literal"><span class="pre">/user/yarn</span></tt> directory exists with proper permissions.</p>
+</li>
+<li><p class="first">Ensure that YARN has sufficient memory capacity by lowering the default minimum container
+size. Lack of YARN memory capacity is the leading cause of apparent failures that we
+see reported.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="download">
+<span id="cloudera-configuring-download"></span><h2>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
+<p>Download the CDAP CSD (Custom Service Descriptor): <a class="reference external" href="http://repository.cask.co/downloads/co/cask/cdap/csd/2.7.0/CDAP-2.7.0-1.jar">download JAR file</a>.</p>
+<p>Details on CSDs and Cloudera Manager Extensions are <a class="reference external" href="https://github.com/cloudera/cm_ext/wiki">available online</a>.</p>
+</div>
+<div class="section" id="install-setup-and-startup">
+<h2>Install, Setup, and Startup<a class="headerlink" href="#install-setup-and-startup" title="Permalink to this headline">¶</a></h2>
+<p class="rubric">Install the CSD</p>
+<ol class="arabic simple">
+<li><a class="reference external" href="http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html">Install the CSD</a>.</li>
+<li>Download and distribute the CDAP-2.7.1 parcel.</li>
+</ol>
+<p class="rubric">Setup using the Cloudera Manager Admin Console <em>Add Service</em> Wizard</p>
+<p>Run the Cloudera Manager Admin Console <em>Add Service</em> Wizard and select <em>CDAP</em>.
+When completing the Wizard, these notes may help:</p>
+<blockquote>
+<div><ul class="simple">
+<li><em>Add Service</em> Wizard, Page 2: <strong>Optional Hive dependency</strong> is for the optional CDAP
+&#8220;Explore&#8221; component which can be enabled later.</li>
+<li><em>Add Service</em> Wizard, Page 3: CDAP <strong>Security Auth</strong> Service is an optional service
+for CDAP perimeter security; it can be configured and enabled post-wizard.</li>
+<li><em>Add Service</em> Wizard, Page 5: <strong>Kerberos Auth Enabled</strong> is needed if running against a
+secure Hadoop cluster.</li>
+<li><em>Add Service</em> Wizard, Page 5: <strong>Router Server Port:</strong> This should match the &#8220;Router Bind
+Port&#8221;; it’s used by the CDAP Console to connect to the Router service.</li>
+</ul>
+</div></blockquote>
+<p>Complete instructions, step-by-step, for using the Admin Console <em>Add Service</em> Wizard to install CDAP
+<a class="reference internal" href="step-by-step-cloudera.html#step-by-step-cloudera-add-service"><em>are available</em></a>.</p>
+</div>
+<div class="section" id="verification">
+<span id="cloudera-verification"></span><h2>Verification<a class="headerlink" href="#verification" title="Permalink to this headline">¶</a></h2>
+<p>After CDAP has started up, the best way to verify the installation is to deploy an application,
+ingest some data, run a MapReduce program on it, and then query the results out.  The following
+procedure describes how to do this primarily, via the CDAP Console, though this can all be done via
+command line.</p>
+<p>We provide in our SDK pre-built <tt class="docutils literal"><span class="pre">.JAR</span></tt> files for convenience.</p>
+<ol class="arabic">
+<li><p class="first">Download and install the latest <a class="reference external" href="http://cask.co/downloads/#cdap">CDAP Software Development Kit (SDK)</a>. The version should match the version you have installed.</p>
+</li>
+<li><p class="first">Extract to a folder (<tt class="docutils literal"><span class="pre">CDAP_HOME</span></tt>).</p>
+</li>
+<li><p class="first">Open a command prompt and navigate to <tt class="docutils literal"><span class="pre">CDAP_HOME/examples</span></tt>.</p>
+</li>
+<li><p class="first">Each example folder has a <tt class="docutils literal"><span class="pre">.jar</span></tt> file in its <tt class="docutils literal"><span class="pre">target</span></tt> directory.
+For verification, we&#8217;ll use the <tt class="docutils literal"><span class="pre">Purchase</span></tt> example and its jar, located in
+<tt class="docutils literal"><span class="pre">CDAP_HOME/examples/Purchase-2.7.1.jar</span></tt>. The <tt class="docutils literal"><span class="pre">Purchase</span></tt> example is documented
+in the CDAP <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.7.1)"><em class="xref std std-ref">examples manual</em></a>.</p>
+</li>
+<li><p class="first">Open a web browser to the CDAP Console. It is located on port <tt class="docutils literal"><span class="pre">9999</span></tt> of the box where
+you installed CDAP.</p>
+</li>
+<li><p class="first">From the CDAP Console Overview page, click &#8220;Load App” and navigate to the jar.
+(You can also drag-and-drop to the browser window)</p>
+</li>
+<li><p class="first">Once it is deployed, click on the <em>Process</em> button in the left sidebar of the CDAP Console,
+then click <em>PurchaseFlow</em> in the Process page to get to the <em>Flow</em> detail page, then
+click the <em>Start</em> button. (This will launch additional YARN containers.)</p>
+</li>
+<li><p class="first">Once the Flow is <em>RUNNING</em>, inject data by clicking on the <em>purchaseStream</em> icon in
+the Flow diagram.  In the dialog that pops up, type &#8220;Tom bought 5 apples for $3&#8221; and click
+<em>Inject</em>.  You should see activity in the graphs and the Flowlet counters increment.</p>
+</li>
+<li><p class="first">Run a MapReduce program against this data by click on the <em>Process</em> button in the left
+sidebar of the CDAP Console, select <em>PurchaseHistoryWorkflow_PurchaseHistoryBuilder</em>,
+and click the <em>Start</em> button.  This will launch an additional container and a MapReduce
+job in YARN.  After it starts you should see the Map and Reduce progress bars complete.
+Failures at this stage are often due to YARN MapReduce misconfiguration or a lack of
+YARN capacity.</p>
+</li>
+<li><p class="first">After the MapReduce job is complete, we can startup a query service which will read
+from the processed dataset.  Navigate to Application -&gt; PurchaseHistory -&gt;
+PurchaseHistoryService (under the “Service” section).  Click the Start button to start
+the Service.  (This will launch another YARN container)</p>
+</li>
+<li><p class="first">Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected.
+The API listens on the host where the Gateway/Router role instance is running, port
+11015 by default (though you may have changed it in the Wizard).  Make a <tt class="docutils literal"><span class="pre">curl</span></tt> request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -w &#39;\n&#39; -v \</span>
+<span class="go">  &#39;http://[router-host]:[router-port]/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">You should get back a response similar to:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;customer&quot;:&quot;Tom&quot;,&quot;purchases&quot;:[{&quot;customer&quot;:&quot;Tom&quot;,&quot;product&quot;:&quot;apple&quot;,&quot;quantity&quot;:5,&quot;price&quot;:3,</span>
+<span class="go"> &quot;purchaseTime&quot;:1421470224780,&quot;catalogId&quot;:&quot;&quot;}]}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">You have now completed verification of the installation.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<p>Some versions of Hive may try to create a temporary staging directory at the table
+location when executing queries. If you are seeing permissions errors when running a
+query, try setting <tt class="docutils literal"><span class="pre">hive.exec.stagingdir</span></tt> in your Hive configuration to
+<tt class="docutils literal"><span class="pre">/tmp/hive-staging</span></tt>.</p>
+<p>This can be done in Cloudera Manager using the &#8220;Hive Client
+Advanced Configuration Snippet (Safety Valve) for hive-site.xml&#8221; configuration field.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.7.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cloudera</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Configuring and Installing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#download">Download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-setup-and-startup">Install, Setup, and Startup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verification">Verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="step-by-step-cloudera.html"> Add Service Wizard</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ingesting.html"> Ingestion and Exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../squirrel.html"> SquirrelSQL</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Cloudera</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="step-by-step-cloudera.html"
+                        title="Next Chapter">Cloudera <em>Add Service</em> Wizard, Step-by-Step</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.7.1/cdap-docs-2.7.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cloudera" href="index.html" />Cloudera</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Cloudera Add Service Wizard, Step-by-Step" href="step-by-step-cloudera.html" />Cloudera <em>Add Service</em> Wizard, Step-by-Step</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
