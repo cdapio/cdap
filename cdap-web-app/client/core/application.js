@@ -73,10 +73,6 @@ function(Components, Embeddables, HTTP, Util) {
         var self = this;
 
 				Em.debug('Routing started');
-        this.set('namespaces', [
-          'default',
-          'namespace1'
-        ]);
         var selectedNamespace = C.Util.Cookie('selectedNamespace') || 'default';
         this.set('selectedNamespace', selectedNamespace);
 
@@ -86,10 +82,12 @@ function(Components, Embeddables, HTTP, Util) {
 				this.HTTP.get('version', this.checkVersion);
 
         // Load namespaces.
-        // this.HTTP.rest('namespaces', function (data) {
-
-        //   // self.get('namespaces', data);
-        // });
+        this.HTTP.rest('namespaces', function (data) {
+        	data = data.map(function (item) {
+        		return item.id;
+        	});
+          self.set('namespaces', data);
+        });
 			},
 
       setNamespace: function (namespace) {

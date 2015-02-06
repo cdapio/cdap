@@ -76,8 +76,12 @@ define([], function () {
             var self = this;
 
             var args = [].slice.call(arguments);
-            args.unshift(C.Util.Cookie('selectedNamespace'));
-            args.unshift('namespaces');
+            // Don't add namespaces to namespace call.
+            if (args.indexOf('namespaces') == -1) {
+                args.unshift(C.Util.Cookie('selectedNamespace'));
+                args.unshift('namespaces');    
+            }
+            
             args.unshift('rest');
             this.get.apply(this, args);
 
