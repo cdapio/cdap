@@ -84,10 +84,10 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
         return;
       }
       if (feedManager.createFeed(combinedFeed)) {
-        responder.sendStatus(HttpResponseStatus.OK);
+        responder.sendString(HttpResponseStatus.OK, "Notification Feed created successfully");
       } else {
         LOG.trace("Notification Feed already exists.");
-        responder.sendStatus(HttpResponseStatus.CONFLICT);
+        responder.sendString(HttpResponseStatus.OK, "Notification Feed already exists.");
       }
     } catch (NotificationFeedException e) {
       LOG.error("Could not create notification feed.", e);
