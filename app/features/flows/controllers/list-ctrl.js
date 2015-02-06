@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('CdapflowsListController', function($scope, $stateParams, MyDataSource) {
+  .controller('FlowsListController', function($scope, $stateParams, MyDataSource) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $stateParams.appId + '/flows';
     dataSrc.request({

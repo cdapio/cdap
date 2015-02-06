@@ -14,7 +14,7 @@ angular.module(PKG.name + '.feature.flows')
         .state('flows.list', {
           url: '/list',
           templateUrl: '/assets/features/flows/templates/list.html',
-          controller: 'CdapflowsListController',
+          controller: 'FlowsListController',
           ncyBreadcrumb: {
             skip: true
           }
