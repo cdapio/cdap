@@ -39,7 +39,7 @@ public class NamespaceServiceTest extends AppFabricTestBase {
     int initialCount = namespaceService.listNamespaces().size();
 
     // TEST_NAMESPACE_META1 is already created in AppFabricTestBase#beforeClass
-    Assert.assertTrue(namespaceService.hasNamespace(TEST_NAMESPACE1));
+    Assert.assertTrue(namespaceService.hasNamespace(Id.Namespace.from(TEST_NAMESPACE1)));
     try {
       namespaceService.createNamespace(TEST_NAMESPACE_META1);
       Assert.fail("Should not create duplicate namespace.");
@@ -66,7 +66,7 @@ public class NamespaceServiceTest extends AppFabricTestBase {
       }
 
       Assert.assertEquals(initialCount, namespaceService.listNamespaces().size());
-      Assert.assertFalse(namespaceService.hasNamespace(namespace));
+      Assert.assertFalse(namespaceService.hasNamespace(Id.Namespace.from(namespace)));
 
       try {
         namespaceService.createNamespace(builder.build());
@@ -76,7 +76,7 @@ public class NamespaceServiceTest extends AppFabricTestBase {
       }
 
       Assert.assertEquals(initialCount, namespaceService.listNamespaces().size());
-      Assert.assertFalse(namespaceService.hasNamespace(namespace));
+      Assert.assertFalse(namespaceService.hasNamespace(namespaceId));
 
       try {
         namespaceService.createNamespace(builder.setId(namespace).build());
@@ -86,7 +86,7 @@ public class NamespaceServiceTest extends AppFabricTestBase {
       }
 
       Assert.assertEquals(initialCount, namespaceService.listNamespaces().size());
-      Assert.assertFalse(namespaceService.hasNamespace(namespace));
+      Assert.assertFalse(namespaceService.hasNamespace(namespaceId));
 
       try {
         namespaceService.createNamespace(builder.setName(namespace).build());
@@ -105,7 +105,7 @@ public class NamespaceServiceTest extends AppFabricTestBase {
     }
 
     Assert.assertEquals(initialCount + 1, namespaceService.listNamespaces().size());
-    Assert.assertTrue(namespaceService.hasNamespace(namespace));
+    Assert.assertTrue(namespaceService.hasNamespace(namespaceId));
 
     try {
       NamespaceMeta namespaceMeta = namespaceService.getNamespace(namespaceId);

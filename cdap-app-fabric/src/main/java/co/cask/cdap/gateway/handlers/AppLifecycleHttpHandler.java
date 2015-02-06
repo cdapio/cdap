@@ -311,7 +311,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceService.hasNamespace(namespaceId)) {
+    if (!namespaceService.hasNamespace(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
@@ -403,7 +403,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("adapter-id") String adapterName) {
 
     try {
-      if (!namespaceService.hasNamespace(namespaceId)) {
+      if (!namespaceService.hasNamespace(Id.Namespace.from(namespaceId))) {
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
         return;
@@ -459,7 +459,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
-    if (!namespaceService.hasNamespace(namespaceId)) {
+    if (!namespaceService.hasNamespace(Id.Namespace.from(namespaceId))) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));

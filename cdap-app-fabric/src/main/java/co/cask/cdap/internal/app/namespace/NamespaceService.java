@@ -69,12 +69,13 @@ public final class NamespaceService extends AbstractIdleService {
    * Need a retry mechanism since {@link StoreFactory#create()} requires the dataset service to be running.
    */
   private void initializeStore() {
-    new RetryThread(new Runnable() {
+    RetryThread retryThread = new RetryThread(new Runnable() {
       @Override
       public void run() {
         store = storeFactory.create();
       }
-    }, 2, TimeUnit.SECONDS).run();
+    }, 1, TimeUnit.SECONDS);
+    retryThread.start();
   }
 
   /**
@@ -83,15 +84,16 @@ public final class NamespaceService extends AbstractIdleService {
    * Hence this method ensures that the default namespace exists in a separate thread, with multiple retries
    */
   private void ensureDefaultNamespaceExists() {
-    new RetryThread(new Runnable() {
+    RetryThread retryThread = new RetryThread(new Runnable() {
       @Override
       public void run() {
         createDefaultNamespace();
       }
-    }, 2, TimeUnit.SECONDS).run();
+    }, 1, TimeUnit.SECONDS);
+    retryThread.start();
   }
 
-  static class RetryThread implements Runnable {
+  private static class RetryThread extends Thread {
 
     private Runnable toRetry;
     private int waitBetweenRetries;
@@ -129,17 +131,37 @@ public final class NamespaceService extends AbstractIdleService {
    * It should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
    */
   private void createDefaultNamespace() {
+    // make sure store is initialized. Ok to throw unchecked exception since this is called in a retry thread which
+    // retries upon exception
+    if (store == null) {
+      throw new IllegalStateException("Error: Store is not initialized.");
+    }
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     NamespaceMeta defaultNamespace = builder.setId(Constants.DEFAULT_NAMESPACE)
       .setName(Constants.DEFAULT_NAMESPACE)
       .setDescription(Constants.DEFAULT_NAMESPACE)
       .build();
 
-    try {
-      createNamespace(defaultNamespace);
+    // Shouldn't use #createNamespace during initialization. That method should only be used after the service
+    // is initialized.
+    NamespaceMeta meta = store.createNamespace(defaultNamespace);
+    if (meta == null) {
       LOG.info("Successfully created 'default' namespace.");
-    } catch (AlreadyExistsException e) {
+    } else {
       LOG.info("'default' namespace already exists.");
+    }
+  }
+
+  private boolean isInitialized() {
+    return store != null && store.getNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE)) != null;
+  }
+
+  private void ensureInitialized() {
+    if (!isRunning()) {
+      throw new IllegalStateException("Error: Namespace service is not running.");
+    }
+    if (!isInitialized()) {
+      throw new IllegalStateException("Error: Namespace service is not initialized.");
     }
   }
 
@@ -149,17 +171,19 @@ public final class NamespaceService extends AbstractIdleService {
    * @return a list of {@link NamespaceMeta} for all namespaces
    */
   public List<NamespaceMeta> listNamespaces() {
+    ensureInitialized();
     return store.listNamespaces();
   }
 
   /**
    * Gets details of a namespace
    *
-   * @param namespaceId {@link Id.Namespace} of the requested namespace
+   * @param namespaceId the {@link Id.Namespace} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NotFoundException if the requested namespace is not found
    */
   public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NotFoundException {
+    ensureInitialized();
     NamespaceMeta ns = store.getNamespace(namespaceId);
     if (ns == null) {
       throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
@@ -170,12 +194,13 @@ public final class NamespaceService extends AbstractIdleService {
   /**
    * Checks if the specified namespace exists
    *
-   * @param namespace the namespace to check for existence
+   * @param namespaceId the {@link Id.Namespace} to check for existence
    * @return true, if the specifed namespace exists, false otherwise
    */
-  public boolean hasNamespace(String namespace) {
+  public boolean hasNamespace(Id.Namespace namespaceId) {
+    ensureInitialized();
     try {
-      getNamespace(Id.Namespace.from(namespace));
+      getNamespace(namespaceId);
       return true;
     } catch (NotFoundException e) {
       return false;
@@ -189,6 +214,7 @@ public final class NamespaceService extends AbstractIdleService {
    * @throws AlreadyExistsException if the specified namespace already exists
    */
   public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException {
+    ensureInitialized();
     NamespaceMeta existing = store.createNamespace(metadata);
     if (existing != null) {
       throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getId());
@@ -202,6 +228,9 @@ public final class NamespaceService extends AbstractIdleService {
    * @throws NotFoundException if the specified namespace does not exist
    */
   public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException {
+    ensureInitialized();
+
+    //TODO: CDAP-870. Delete should be in a single transaction.
     // Delete Preferences associated with this namespace
     preferencesStore.deleteProperties(namespaceId.getId());
 

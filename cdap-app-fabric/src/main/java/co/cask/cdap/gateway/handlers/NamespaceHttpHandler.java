@@ -63,7 +63,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, namespaceService.listNamespaces());
     } catch (Exception e) {
       LOG.error("Internal error while listing all namespaces", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -78,7 +78,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
     } catch (Exception e) {
       LOG.error("Internal error while getting namespace '{}'", namespaceId, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -93,7 +93,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     } catch (IOException e) {
       LOG.error("Failed to read namespace metadata request body.", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
       return;
     }
 
@@ -141,7 +141,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.OK, String.format("Namespace '%s' already exists.", namespaceId));
     } catch (Exception e) {
       LOG.error("Internal error while creating namespace.", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -164,7 +164,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace.", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
