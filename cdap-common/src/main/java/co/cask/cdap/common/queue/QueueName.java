@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.queue;
 
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -90,11 +91,23 @@ public final class QueueName {
   /**
    * Generates an QueueName for the stream.
    *
-   * @param stream  connected to flow
+   * @param stream name of the
    * @return An {@link QueueName} with schema as stream
    */
   public static QueueName fromStream(String stream) {
-    URI uri = URI.create(String.format("stream:///%s", stream));
+    //TODO: remove this method, and always have an identifying entity that is created by providing both namespace + name
+    return fromStream(Constants.DEFAULT_NAMESPACE, stream);
+  }
+
+  /**
+   * Generates an QueueName for the stream.
+   *
+   * @param namespace of the stream
+   * @param stream name of the stream
+   * @return An {@link QueueName} with schema as stream
+   */
+  public static QueueName fromStream(String namespace, String stream) {
+    URI uri = URI.create(String.format("stream:///%s/%s", namespace, stream));
     return new QueueName(uri);
   }
 

@@ -47,8 +47,9 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
+      //TODO: namespace the tableName (have to modify tableNamePrefix)
       // <cdap namespace>.system.stream.<stream name>
-      return getTableNamePrefix() + "." + queueName.getFirstComponent();
+      return getTableNamePrefix() + "." + queueName.getSecondComponent();
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }

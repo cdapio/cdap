@@ -349,4 +349,68 @@ public final class Id  {
       return Objects.hashCode(namespace, category, name);
     }
   }
+
+
+  /**
+   * Id.Stream uniquely identifies a stream.
+   */
+  public static final class Stream {
+    private final Namespace namespace;
+    private final String streamName;
+
+    public Stream(final Namespace namespace, final String streamName) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
+      this.namespace = namespace;
+      this.streamName = streamName;
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    public String getId() {
+      return streamName;
+    }
+
+    public static Stream from(Namespace id, String application) {
+      return new Stream(id, application);
+    }
+
+    public static Stream from(String namespaceId, String streamName) {
+      return new Stream(Namespace.from(namespaceId), streamName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, streamName);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Stream that = (Stream) o;
+
+      return Objects.equal(this.namespace, that.namespace) &&
+        Objects.equal(this.streamName, that.streamName);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("streamName", streamName)
+        .toString();
+    }
+  }
 }
