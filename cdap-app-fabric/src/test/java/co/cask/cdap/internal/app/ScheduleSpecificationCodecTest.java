@@ -61,4 +61,22 @@ public class ScheduleSpecificationCodecTest {
 
     Assert.assertEquals(specification, deserialized);
   }
+
+  @Test
+  public void testBackwardsCompatibility() throws Exception {
+    // Before 2.8, the ScheduleSpecificationCodec used to have the same behavior as what Gson would do by
+    // default, and only TimeSchedules existed. We make sure that ScheduleSpecification persisted before
+    // 2.8 can still be deserialized using the new codec.
+    TimeSchedule timeSchedule = new TimeSchedule("foo", "bar", "cronEntry");
+    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
+    ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
+    ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
+
+    // Use default Gson to serialize
+    String jsonStr = new Gson().toJson(specification);
+    
+    ScheduleSpecification deserialized = GSON.fromJson(jsonStr, ScheduleSpecification.class);
+
+    Assert.assertEquals(specification, deserialized);
+  }
 }
