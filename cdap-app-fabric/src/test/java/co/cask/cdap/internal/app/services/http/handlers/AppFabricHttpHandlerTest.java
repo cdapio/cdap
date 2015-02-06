@@ -42,6 +42,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
+import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
@@ -997,6 +998,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // 5. Verify there are no runs after the suspend by looking at the history
     // 6. Resume the schedule
     // 7. Verify there are runs after the resume by looking at the history
+
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+      .create();
     HttpResponse response = deploy(AppWithSchedule.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -1010,9 +1015,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<ScheduleSpecification> schedules = new Gson().fromJson(json,
-                                                                new TypeToken<List<ScheduleSpecification>>()
-                                                                { }.getType());
+    List<ScheduleSpecification> schedules = gson.fromJson(json,
+                                                          new TypeToken<List<ScheduleSpecification>>()
+                                                          { }.getType());
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
@@ -1038,8 +1043,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = gson.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
@@ -1047,8 +1051,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
+    history = gson.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
