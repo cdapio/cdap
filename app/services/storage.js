@@ -1,0 +1,46 @@
+/**
+ * MyBrowserStorage
+ * replicates the MyPersistentStorage API
+ *
+ * makes it easy to promote state
+ * from _session_ to _local_ to _remotely stored_
+ */
+angular.module(PKG.name + '.services')
+
+  .factory('myLocalStorage', function (MyBrowserStorage) {
+    return new MyBrowserStorage('local');
+  })
+
+  .factory('mySessionStorage', function (MyBrowserStorage) {
+    return new MyBrowserStorage('session');
+  })
+
+  .factory('MyBrowserStorage', function MyBrowserStorageFactory($q, $localStorage, $sessionStorage, myHelpers) {
+
+    function MyBrowserStorage (type) {
+      this.data = type==='local' ? $localStorage : $sessionStorage;
+    }
+
+    /**
+     * set a value
+     * @param {string} key, can have a path like "foo.bar.baz"
+     * @param {mixed} value
+     * @return {promise} resolved with the response from server
+     */
+    MyBrowserStorage.prototype.set = function (key, value) {
+      myHelpers.deepSet(this.data, key, value);
+      return $q.when(this.data);
+    };
+
+    /**
+     * retrieve a value
+     * @param {string} key
+     * @param {boolean} force true to bypass cache
+     * @return {promise} resolved with the value
+     */
+    MyBrowserStorage.prototype.get = function (key, force) {
+      return $q.when(myHelpers.deepGet(this.data, key));
+    };
+
+    return MyBrowserStorage;
+  });
