@@ -32,11 +32,11 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -123,7 +123,7 @@ public class DFSStreamHeartbeatsTest {
 
           bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class)
             .in(Singleton.class);
-          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);

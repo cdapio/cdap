@@ -307,6 +307,42 @@ public class FactTableTest {
     assertScan(table, expected, scan);
   }
 
+  @Test
+  public void testMaxResolution() throws Exception {
+    // we use Integer.MAX_VALUE as resolution to compute all-time total values
+    InMemoryOrderedTableService.create("TotalsEntityTable");
+    InMemoryOrderedTableService.create("TotalsDataTable");
+    int resolution = Integer.MAX_VALUE;
+    // should not matter when resolution is max
+    int rollTimebaseInterval = 3600;
+
+    FactTable table = new FactTable(new InMemoryMetricsTable("TotalsDataTable"),
+                                    new EntityTable(new InMemoryMetricsTable("TotalsEntityTable")),
+                                    resolution, rollTimebaseInterval);
+
+
+    // ts is expected in seconds
+    long ts = System.currentTimeMillis() / 1000;
+    int count = 1000;
+    for (int i = 0; i < count; i++) {
+      for (int k = 0; k < 10; k++) {
+        // shift one day
+        writeInc(table, "metric" + k, ts + i * 60 * 60 * 24, i * k, "tag" + k, "value" + k);
+      }
+    }
+
+    for (int k = 0; k < 10; k++) {
+      // 0, 0 should match timestamp of all data points
+      FactScan scan = new FactScan(0, 0, "metric" + k, tagValues("tag" + k, "value" + k));
+
+      Table<String, List<TagValue>, List<TimeValue>> expected = HashBasedTable.create();
+      expected.put("metric" + k, tagValues("tag" + k, "value" + k),
+                   ImmutableList.of(new TimeValue(0, k * count * (count - 1) / 2)));
+
+      assertScan(table, expected, scan);
+    }
+  }
+
   private List<TimeValue> timeValues(long ts, int resolution, long... values) {
     List<TimeValue> timeValues = Lists.newArrayList();
     for (int i = 0; i < values.length; i++) {

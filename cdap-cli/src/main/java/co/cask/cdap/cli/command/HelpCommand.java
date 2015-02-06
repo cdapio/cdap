@@ -16,13 +16,24 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.Constants;
+import co.cask.cdap.cli.util.StringStyler;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import co.cask.common.cli.CommandSet;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
-import com.googlecode.concurrenttrees.common.Iterables;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 
 import java.io.PrintStream;
 import java.util.Collections;
@@ -34,44 +45,113 @@ import java.util.List;
  */
 public class HelpCommand implements Command {
 
-  private static final int COL_WIDTH = 80;
+  static final int COL_WIDTH = 80;
 
-  private final Supplier<Iterable<Command>> commands;
+  private final Supplier<Iterable<CommandSet<Command>>> commands;
   private final CLIConfig config;
 
-  public HelpCommand(Supplier<Iterable<Command>> commands, CLIConfig config) {
+  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands, CLIConfig config) {
     this.commands = commands;
     this.config = config;
   }
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    output.println("CLI version " + config.getVersion());
-    output.println(Constants.EV_HOSTNAME + "=" + config.getHost());
     output.println();
-    output.println("Available commands:");
-    List<Command> commandList = Iterables.toList(commands.get());
+    output.println();
+
+    if (arguments.hasArgument(ArgumentName.COMMAND_CATEGORY.getName())) {
+      // help with one category
+      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
+                                                                         Predicates.<Command>alwaysTrue());
+      String commandCategoryInput = arguments.get(ArgumentName.COMMAND_CATEGORY.getName());
+      CommandCategory category = CommandCategory.valueOfNameIgnoreCase(commandCategoryInput);
+
+      List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
+      if (commandList.isEmpty()) {
+        output.printf("No commands found in the %s category", category.getName());
+        output.println();
+        return;
+      }
+
+      printCommands(output, category.getName(), commandList);
+    } else {
+      // normal help
+
+      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
+                                                                         Predicates.<Command>alwaysTrue());
+      for (CommandCategory category : CommandCategory.values()) {
+        List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
+        if (commandList.isEmpty()) {
+          continue;
+        }
+
+        printCommands(output, category.getName(), commandList);
+      }
+    }
+  }
+
+  protected void printCommands(PrintStream output, String category, List<Command> commandList) {
     Collections.sort(commandList, new Comparator<Command>() {
       @Override
       public int compare(Command command, Command command2) {
         return command.getPattern().compareTo(command2.getPattern());
       }
     });
+
+    output.println(StringStyler.bold(category));
+    output.println();
+
     for (Command command : commandList) {
-      printPattern(command.getPattern(), output, COL_WIDTH);
-      wrappedPrint(command.getDescription(), output, COL_WIDTH, 2);
+      printPattern(command.getPattern(), output, COL_WIDTH, 2);
+      wrappedPrint(command.getDescription(), output, COL_WIDTH, 4);
       output.println();
     }
   }
 
+  protected Multimap<String, Command> categorizeCommands(Iterable<CommandSet<Command>> commandSets,
+                                                         CommandCategory defaultCategory, Predicate<Command> filter) {
+    Multimap<String, Command> result = HashMultimap.create();
+    for (CommandSet<Command> commandSet : commandSets) {
+      populate(result, commandSet, getCategory(commandSet), defaultCategory, filter);
+    }
+    return result;
+  }
+
+  /**
+   * Recursive helper for {@link #categorizeCommands(Iterable, CommandCategory, Predicate)}.
+   */
+  private void populate(Multimap<String, Command> result, CommandSet<Command> commandSet,
+                        Optional<String> parentCategory, CommandCategory defaultCategory,
+                        Predicate<Command> filter) {
+
+    for (Command childCommand : Iterables.filter(commandSet.getCommands(), filter)) {
+      Optional<String> commandCategory = getCategory(childCommand).or(parentCategory);
+      result.put(commandCategory.or(defaultCategory.getName()), childCommand);
+    }
+
+    for (CommandSet<Command> childCommandSet : commandSet.getCommandSets()) {
+      Optional<String> commandCategory = getCategory(childCommandSet).or(parentCategory);
+      populate(result, childCommandSet, commandCategory, defaultCategory, filter);
+    }
+  }
+
+  private Optional<String> getCategory(Object object) {
+    if (object instanceof Categorized) {
+      return Optional.of(((Categorized) object).getCategory());
+    }
+    return Optional.absent();
+  }
+
   @Override
   public String getPattern() {
-    return "help";
+    return String.format("help [<%s>]", ArgumentName.COMMAND_CATEGORY);
   }
 
   @Override
   public String getDescription() {
-    return "Prints this helper text";
+    return String.format("Prints this helper text. Optionally provide <%s> to get help with a specific category",
+                         ArgumentName.COMMAND_CATEGORY);
   }
 
   /**
@@ -86,10 +166,15 @@ public class HelpCommand implements Command {
    * @param pattern the command pattern to print
    * @param output the {@link PrintStream} to write to
    * @param colWidth width of the column
+   * @param prefixSpaces number of spaces as the prefix for each line printed
    */
-  private void printPattern(String pattern, PrintStream output, int colWidth) {
+  private void printPattern(String pattern, PrintStream output, int colWidth, int prefixSpaces) {
+    String prefix = Strings.repeat(" ", prefixSpaces);
+    colWidth -= prefixSpaces;
+
     if (pattern.length() <= colWidth) {
-      output.println(pattern);
+      output.printf("%s%s", prefix, pattern);
+      output.println();
       return;
     }
 
@@ -97,7 +182,8 @@ public class HelpCommand implements Command {
     int startIdx = pattern.indexOf('<');
     // If no '<', it shouldn't reach here (it should be a short command). If it does, just print it.
     if (startIdx < 0) {
-      output.println(pattern);
+      output.printf("%s%s", prefix, pattern);
+      output.println();
       return;
     }
 
@@ -113,11 +199,12 @@ public class HelpCommand implements Command {
     if (idx < pattern.length() && pattern.charAt(idx) == ']') {
       idx++;
     }
-    output.println(pattern.substring(0, idx));
+    output.printf("%s%s", prefix, pattern.substring(0, idx));
+    output.println();
 
     if ((idx + 1) < pattern.length()) {
       // For rest of the line, align them to the startIdx
-      wrappedPrint(pattern.substring(idx + 1), output, colWidth, startIdx);
+      wrappedPrint(pattern.substring(idx + 1), output, colWidth, startIdx + prefixSpaces);
     }
   }
 

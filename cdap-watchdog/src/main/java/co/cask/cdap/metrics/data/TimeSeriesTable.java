@@ -19,8 +19,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -112,11 +110,11 @@ public final class TimeSeriesTable {
    * {@link co.cask.cdap.metrics.transport.MetricType} is Counter, we would perform an increment and if its of
    * Gauge type we perform a put operation
    */
-  public void save(Iterable<MetricsRecord> records) throws OperationException {
+  public void save(Iterable<MetricsRecord> records) throws Exception {
     save(records.iterator());
   }
 
-  public void save(Iterator<MetricsRecord> records) throws OperationException {
+  public void save(Iterator<MetricsRecord> records) throws Exception {
     if (!records.hasNext()) {
       return;
     }
@@ -136,15 +134,11 @@ public final class TimeSeriesTable {
     NavigableMap<byte[], NavigableMap<byte[], Long>> convertedGaugesTable =
       Maps.transformValues(gaugesTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
 
-    try {
-      timeSeriesTable.put(convertedGaugesTable);
-      timeSeriesTable.increment(convertedIncrementsTable);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    timeSeriesTable.put(convertedGaugesTable);
+    timeSeriesTable.increment(convertedIncrementsTable);
   }
 
-  public MetricsScanner scan(MetricsScanQuery query) throws OperationException {
+  public MetricsScanner scan(MetricsScanQuery query) throws Exception {
     return scanFor(query, false);
   }
 
@@ -153,26 +147,22 @@ public final class TimeSeriesTable {
    * if the context is null , this returns the list of context at the first level.
    * @param query
    * @return List of contexts at a given level
-   * @throws OperationException
+   * @throws Exception
    */
-  public List<String> getNextLevelContexts(MetricsScanQuery query) throws OperationException {
+  public List<String> getNextLevelContexts(MetricsScanQuery query) throws Exception {
     return getAvailableContextAndMetrics(query, true);
   }
 
-  public List<String> getAllMetrics(MetricsScanQuery query) throws OperationException {
+  public List<String> getAllMetrics(MetricsScanQuery query) throws Exception {
     return getAvailableContextAndMetrics(query, false);
   }
 
   /**
    * If @param isContextQuery, is true we return the list of unique available contexts at the next level,
    * if its false, we would return the available unique metrics in a given context
-   * @param query
-   * @param isContextQuery
-   * @return
-   * @throws OperationException
    */
   private List<String> getAvailableContextAndMetrics(MetricsScanQuery query, boolean isContextQuery)
-    throws OperationException {
+    throws Exception {
     List<String> metricsScanResults = Lists.newArrayList();
     int targetOffset = -1, length = -1;
 
@@ -203,7 +193,7 @@ public final class TimeSeriesTable {
 
   private List<String> getUniqueContextAndMetrics(byte[] startRow, byte[] endRow, FuzzyRowFilter filter,
                                                   boolean isContextQuery, String contextPrefix,
-                                                  int targetOffset, int length) throws OperationException {
+                                                  int targetOffset, int length) throws Exception {
 
     List<String> metricsScanResults = Lists.newArrayList();
     Row rowResult;
@@ -221,13 +211,7 @@ public final class TimeSeriesTable {
     // returned from the scan.
     do {
       ScannerFields fields = new ScannerFields(startRow, endRow, null, filter);
-      Scanner scanner = null;
-      try {
-        scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
-      } catch (Exception e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-      }
-
+      Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
       rowResult = scanner.next();
       if (rowResult != null) {
         byte[] rowKey = rowResult.getRow();
@@ -282,7 +266,7 @@ public final class TimeSeriesTable {
     return nextRow;
   }
 
-  public MetricsScanner scanAllTags(MetricsScanQuery query) throws OperationException {
+  public MetricsScanner scanAllTags(MetricsScanQuery query) throws Exception {
     return scanFor(query, true);
   }
 
@@ -291,15 +275,11 @@ public final class TimeSeriesTable {
    *
    * @param contextPrefix Prefix of the context to match.  Must not be null, as full table deletes should be done
    *                      through the clear method.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
-  public void delete(String contextPrefix) throws OperationException {
+  public void delete(String contextPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null, "null context not allowed for delete");
-    try {
-      timeSeriesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    timeSeriesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
   }
 
   /**
@@ -308,9 +288,9 @@ public final class TimeSeriesTable {
    *
    * @param contextPrefix Prefix of the context to match, null means any context.
    * @param metricPrefix Prefix of the metric to match, null means any metric.
-   * @throws OperationException if there is an error in deleting entries.
+   * @throws Exception if there is an error in deleting entries.
    */
-  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
+  public void delete(String contextPrefix, String metricPrefix) throws Exception {
     Preconditions.checkArgument(contextPrefix != null || metricPrefix != null,
                                 "context and metric cannot both be null");
     if (metricPrefix == null) {
@@ -318,24 +298,20 @@ public final class TimeSeriesTable {
     } else {
       byte[] startRow = entityCodec.paddedEncode(contextPrefix, metricPrefix, null, 0, null, 0);
       byte[] endRow = entityCodec.paddedEncode(contextPrefix, metricPrefix, null, Integer.MAX_VALUE, null, 0xff);
-      try {
-        // Create fuzzy row filter
-        ImmutablePair<byte[], byte[]> contextPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.CONTEXT,
-                                                                                  contextPrefix, 0);
-        ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
-                                                                                 metricPrefix, 0);
-        ImmutablePair<byte[], byte[]> tagPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, null, 0);
-        ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, null, 0);
-        FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(ImmutablePair.of(
-          Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
-                       Bytes.toBytes(0), runIdPair.getFirst()),
-          Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
-                       FOUR_ONE_BYTES, runIdPair.getSecond()))));
+      // Create fuzzy row filter
+      ImmutablePair<byte[], byte[]> contextPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.CONTEXT,
+                                                                                contextPrefix, 0);
+      ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
+                                                                               metricPrefix, 0);
+      ImmutablePair<byte[], byte[]> tagPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, null, 0);
+      ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, null, 0);
+      FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(ImmutablePair.of(
+        Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
+                     Bytes.toBytes(0), runIdPair.getFirst()),
+        Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
+                     FOUR_ONE_BYTES, runIdPair.getSecond()))));
 
-        timeSeriesTable.deleteRange(startRow, endRow, null, filter);
-      } catch (Exception e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-      }
+      timeSeriesTable.deleteRange(startRow, endRow, null, filter);
     }
   }
 
@@ -345,22 +321,18 @@ public final class TimeSeriesTable {
    * @param query Query specifying context, metric, runid, tag, and time range of entries to delete.  A null value for
    *              context, metric, and runId will match any value for those fields.  A null value for tag will
    *              match untagged entries, which is the same as using MetricsConstants.EMPTY_TAG.
-   * @throws OperationException
+   * @throws Exception
    */
-  public void delete(MetricsScanQuery query) throws OperationException {
-    try {
-      ScannerFields fields = getScannerFields(query);
-      timeSeriesTable.deleteRange(fields.startRow, fields.endRow, fields.columns, fields.filter);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  public void delete(MetricsScanQuery query) throws Exception {
+    ScannerFields fields = getScannerFields(query);
+    timeSeriesTable.deleteRange(fields.startRow, fields.endRow, fields.columns, fields.filter);
   }
 
   /**
    * Deletes all row keys that has timestamp before the given time.
    * @param beforeTime All data before this timestamp will be removed (exclusive).
    */
-  public void deleteBefore(long beforeTime) throws OperationException {
+  public void deleteBefore(long beforeTime) throws Exception {
     // End time base is the last time base that is smaller than endTime.
     int endTimeBase = getTimeBase(beforeTime);
 
@@ -387,8 +359,6 @@ public final class TimeSeriesTable {
       if (!rows.isEmpty()) {
         timeSeriesTable.delete(rows);
       }
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     } finally {
       if (scanner != null) {
         scanner.close();
@@ -399,24 +369,16 @@ public final class TimeSeriesTable {
 
   /**
    * Clears the storage table.
-   * @throws OperationException If error in clearing data.
+   * @throws Exception If error in clearing data.
    */
-  public void clear() throws OperationException {
-    try {
-      timeSeriesTable.deleteAll(new byte[]{});
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  public void clear() throws Exception {
+    timeSeriesTable.deleteAll(new byte[]{});
   }
 
-  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags) throws OperationException {
-    try {
-      ScannerFields fields = getScannerFields(query, shouldMatchAllTags);
-      Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
-      return new MetricsScanner(query, scanner, entityCodec, resolution);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags) throws Exception {
+    ScannerFields fields = getScannerFields(query, shouldMatchAllTags);
+    Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
+    return new MetricsScanner(query, scanner, entityCodec, resolution);
   }
 
   /**

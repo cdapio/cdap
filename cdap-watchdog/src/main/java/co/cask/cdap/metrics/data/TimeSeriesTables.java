@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import com.google.common.cache.CacheBuilder;
@@ -46,41 +45,23 @@ public class TimeSeriesTables {
       });
   }
 
-  public void clear() throws OperationException {
-    for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.getUnchecked(resolution).clear();
-    }
-  }
-
-  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
-    for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.getUnchecked(resolution).delete(contextPrefix, metricPrefix);
-    }
-  }
-
-  public void delete(MetricsScanQuery scanQuery) throws OperationException {
-    for (int resolution : timeSeriesResolutions) {
-      metricsTableCaches.getUnchecked(resolution).delete(scanQuery);
-    }
-  }
-
   public void deleteBefore(long deleteBefore) {
     for (int resolution : timeSeriesResolutions) {
       try {
         metricsTableCaches.getUnchecked(resolution).deleteBefore(deleteBefore);
-      } catch (OperationException e) {
+      } catch (Exception e) {
         LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
       }
     }
   }
 
-  public void save(List<MetricsRecord> records) throws OperationException {
+  public void save(List<MetricsRecord> records) throws Exception {
     for (int resolution : timeSeriesResolutions) {
       metricsTableCaches.getUnchecked(resolution).save(records.iterator());
     }
   }
 
-  public MetricsScanner scan(int resolution, MetricsScanQuery scanQuery) throws OperationException {
+  public MetricsScanner scan(int resolution, MetricsScanQuery scanQuery) throws Exception {
     return metricsTableCaches.getUnchecked(resolution).scan(scanQuery);
   }
 }
