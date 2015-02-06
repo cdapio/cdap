@@ -15,5 +15,5 @@ function ($scope, $state, myAppUploader, MyDataSource) {
 
   $scope.onFileSelected = function(files) {
     myAppUploader.upload(files, $state.params.nsadmin);
-  }
+  };
 });

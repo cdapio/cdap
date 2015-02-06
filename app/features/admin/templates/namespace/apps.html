@@ -16,7 +16,7 @@
     <tbody>
         <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
             <td>
-                <a ui-sref="apps.detail.overview({appId: app.id})">
+                <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
                     <strong ng-bind="app.name"> </strong>
                 </a>
             </td>
