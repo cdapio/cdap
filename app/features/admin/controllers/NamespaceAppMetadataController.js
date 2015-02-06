@@ -13,7 +13,7 @@ function ($scope, $state, $alert, $timeout, MyDataSource) {
 
   $scope.deleteApp = function(app) {
     data.request({
-      _cdapPath: '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId,
+      _cdapPath: path,
       method: 'DELETE'
     }, function(res) {
       $alert({
