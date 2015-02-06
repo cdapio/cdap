@@ -89,13 +89,13 @@ public enum ElementType {
            ArgumentName.RUNNABLE,
            Capability.SCALE, Capability.RUNS, Capability.LOGS),
 
-  MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce program", "mapreduce programs",
+  MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  SPARK("Spark Program", "Spark Programs", "spark program", "spark programs",
+  SPARK("Spark Program", "Spark Programs", "spark", "spark programs",
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
