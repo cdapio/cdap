@@ -1,28 +1,50 @@
-<h3> Services </h3>
+<h2> Services </h2>
 
-<div ng-bind="service.name"></div>
+<h3>{{$state.params.serviceName | caskCapitalizeFilter}}</h3>
 
 <table class="table">
     <tbody>
         <tr>
-            <td>Description</td>
-            <td ng-bind="service.name"></td>
-        </tr>
-        <tr>
-            <td>Description</td>
-            <td ng-bind="service.description"></td>
-        </tr>
-        <tr>
-            <td>Zookeeper path</td>
-            <td ng-bind="service.zookeeper"></td>
-        </tr>
-        <tr>
-            <td>Host/port</td>
+            <th>Instances:</th>
             <td>
                 <table>
-                    <tr ng-repeat="hp in service.hostPort">
-                        <td ng-bind="hp.host"></td>
-                        <td ng-bind="hp.port"></td>
+                    <thead>
+                        <th>Provisioned</th>
+                        <th>Requested</th>
+                        <th>Request</th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td ng-bind="instances.provisioned"></td>
+                            <td ng-bind="instances.requested"></td>
+                            <td>
+                                <input type="text" value="" />
+                                <a class="btn btn-default">Set</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <th>Name:</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Description:</th>
+            <td ng-bind="description.description"></td>
+        </tr>
+        <tr>
+            <th>ZooKeeper Path:</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Host/Port:</th>
+            <td>
+                <table>
+                    <tr>
+                        <td></td>
+                        <td></td>
                     </tr>
                 </table>
             </td>
