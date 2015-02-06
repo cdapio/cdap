@@ -28,17 +28,15 @@ angular.module(PKG.name + '.services')
      * @return {promise} resolved with the response from server
      */
     MyBrowserStorage.prototype.set = function (key, value) {
-      myHelpers.deepSet(this.data, key, value);
-      return $q.when(this.data);
+      return $q.when(myHelpers.deepSet(this.data, key, value));
     };
 
     /**
      * retrieve a value
      * @param {string} key
-     * @param {boolean} force true to bypass cache
      * @return {promise} resolved with the value
      */
-    MyBrowserStorage.prototype.get = function (key, force) {
+    MyBrowserStorage.prototype.get = function (key) {
       return $q.when(myHelpers.deepGet(this.data, key));
     };
 
