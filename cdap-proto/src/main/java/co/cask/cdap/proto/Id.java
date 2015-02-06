@@ -255,7 +255,7 @@ public final class Id  {
     }
 
     public String getId() {
-      return String.format("%s.%s.%s", namespace, category, name);
+      return String.format("%s.%s.%s", namespace.getId(), category, name);
     }
 
     public String getNamespaceId() {
