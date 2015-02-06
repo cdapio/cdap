@@ -566,7 +566,7 @@ a, a:visited {
     margin-right: 140px;
 }
 
-#global a {
+#global>a {
     color: #5A5D6E;
     margin-left: 12px;
     float: right;
@@ -576,7 +576,7 @@ a, a:visited {
     border-right: 2px solid #ccc;
 }
 
-#global a:hover {
+#global>a:hover {
     color: #A0A5B9;
 }
 
