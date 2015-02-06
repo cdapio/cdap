@@ -24,9 +24,9 @@ import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
@@ -154,7 +154,7 @@ public class LocalStreamService extends AbstractStreamService {
    */
   private final class StreamSizeAggregator implements Cancellable {
     private final AtomicLong streamInitSize;
-    private final NotificationFeed streamFeed;
+    private final Id.NotificationFeed streamFeed;
     private final String streamName;
     private final AtomicLong streamBaseCount;
     private final AtomicInteger streamThresholdMB;
@@ -165,8 +165,8 @@ public class LocalStreamService extends AbstractStreamService {
       this.streamInitSize = new AtomicLong(baseCount);
       this.streamBaseCount = new AtomicLong(baseCount);
       this.cancellable = cancellable;
-      this.streamFeed = new NotificationFeed.Builder()
-        .setNamespace(Constants.DEFAULT_NAMESPACE)
+      this.streamFeed = new Id.NotificationFeed.Builder()
+        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(streamName)
         .build();

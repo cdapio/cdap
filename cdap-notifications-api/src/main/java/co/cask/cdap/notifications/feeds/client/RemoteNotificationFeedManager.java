@@ -19,10 +19,10 @@ package co.cask.cdap.notifications.feeds.client;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -76,8 +76,10 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
-    HttpRequest request = HttpRequest.put(resolve(String.format("feeds/%s", feed.getId())))
+  public boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+    HttpRequest request = HttpRequest.put(resolve(
+      String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                    feed.getNamespaceId(), feed.getCategory(), feed.getName())))
       .withBody(GSON.toJson(feed)).build();
     HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -89,8 +91,11 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.delete(resolve(String.format("feeds/%s", feed.getId()))).build());
+  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+    HttpResponse response = execute(HttpRequest.delete(resolve(
+      String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                    feed.getNamespaceId(), feed.getCategory(), feed.getName()))
+    ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(String.format("Notification feed %s was not found.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -99,22 +104,26 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.get(resolve(String.format("feeds/%s", feed.getId()))).build());
+  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+    HttpResponse response = execute(HttpRequest.get(resolve(
+      String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                    feed.getNamespaceId(), feed.getCategory(), feed.getName()))
+    ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(String.format("Notification feed %s was not found.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot get notification feed. Reason: " + getDetails(response));
     }
-    return ObjectResponse.fromJsonBody(response, NotificationFeed.class).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, Id.NotificationFeed.class).getResponseObject();
   }
 
   @Override
-  public List<NotificationFeed> listFeeds() throws NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.get(resolve("feeds")).build());
+  public List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException {
+    HttpResponse response = execute(HttpRequest.get(resolve(
+      String.format("namespaces/%s/feeds", namespace.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      ObjectResponse<List<NotificationFeed>> r =
-        ObjectResponse.fromJsonBody(response, new TypeToken<List<NotificationFeed>>() { }.getType());
+      ObjectResponse<List<Id.NotificationFeed>> r =
+        ObjectResponse.fromJsonBody(response, new TypeToken<List<Id.NotificationFeed>>() { }.getType());
       return r.getResponseObject();
     }
     throw new NotificationFeedException("Cannot list notification feeds. Reason: " + getDetails(response));

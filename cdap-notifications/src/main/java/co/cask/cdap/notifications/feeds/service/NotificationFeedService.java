@@ -16,10 +16,10 @@
 
 package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -28,6 +28,11 @@ import java.util.List;
  * Service side of the {@link NotificationFeedManager}.
  */
 public class NotificationFeedService implements NotificationFeedManager {
+  // TODO once [CDAP-903] is completed, then creating a namespace will create a store in that namespace,
+  // and any operation on that store will only be possible if it exists, hence there will be no need
+  // to check for the existence of a namespace.
+  // If we don't create one store per namespace, how do we check for the existence of a namespace
+  // when creating a feed?
   private final NotificationFeedStore store;
 
   @Inject
@@ -36,20 +41,20 @@ public class NotificationFeedService implements NotificationFeedManager {
   }
 
   @Override
-  public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
+  public boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException {
     return store.createNotificationFeed(feed) == null;
   }
 
   @Override
-  public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
+  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedException {
     if (store.deleteNotificationFeed(feed.getId()) == null) {
       throw new NotificationFeedNotFoundException("Feed did not exist in metadata store: " + feed);
     }
   }
 
   @Override
-  public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
-    NotificationFeed f = store.getNotificationFeed(feed.getId());
+  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+    Id.NotificationFeed f = store.getNotificationFeed(feed.getId());
     if (f == null) {
       throw new NotificationFeedNotFoundException("Feed did not exist in metadata store: " + feed);
     }
@@ -57,7 +62,7 @@ public class NotificationFeedService implements NotificationFeedManager {
   }
 
   @Override
-  public List<NotificationFeed> listFeeds() throws NotificationFeedException {
-    return store.listNotificationFeeds();
+  public List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException {
+    return store.listNotificationFeeds(namespace);
   }
 }

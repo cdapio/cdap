@@ -16,10 +16,9 @@
 
 package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -30,22 +29,22 @@ import java.util.List;
 public class NoOpNotificationFeedManager implements NotificationFeedManager {
 
   @Override
-  public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
+  public boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException {
     return true;
   }
 
   @Override
-  public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
+  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedException {
     // No-op
   }
 
   @Override
-  public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
+  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedException {
     return feed;
   }
 
   @Override
-  public List<NotificationFeed> listFeeds() throws NotificationFeedException {
+  public List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException {
     return ImmutableList.of();
   }
 }

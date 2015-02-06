@@ -18,9 +18,9 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
-import com.google.common.base.Preconditions;
+import co.cask.cdap.proto.Id;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -41,43 +41,54 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   private static final String CATEGORY_FIELD = "category";
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
+
+  // TODO when [CDAP-903] is done, those tests will fail because the following namespace will not have been created
+  // Modify the tests at that time to create the namespace, and test the behavior when using non-existant namespaces
   private static final String NAMESPACE = "namespaceTest";
   private static final String CATEGORY = "categoryTest";
   private static final String NAME = "test";
   private static final String DESCRIPTION = "test description";
-  private static final String ID = "namespaceTest.categoryTest.test";
 
-  private static final NotificationFeed METADATA_VALID = new NotificationFeed.Builder().setName(NAME)
-    .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
-  private static final NotificationFeed METADATA_MISSING_DESCRIPTION = new NotificationFeed.Builder().setName(NAME)
-    .setNamespace(NAMESPACE).setCategory(CATEGORY).build();
-  private static final NotificationFeed METADATA_EMPTY_DESCRIPTION = new NotificationFeed.Builder().setName(NAME)
-    .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription("").build();
+  private static final Id.NotificationFeed FEED_VALID = new Id.NotificationFeed.Builder()
+    .setNamespaceId(NAMESPACE)
+    .setCategory(CATEGORY)
+    .setName(NAME)
+    .setDescription(DESCRIPTION)
+    .build();
+  private static final Id.NotificationFeed FEED_MISSING_DESCRIPTION = new Id.NotificationFeed.Builder()
+    .setNamespaceId(NAMESPACE)
+    .setCategory(CATEGORY)
+    .setName(NAME)
+    .build();
+  private static final Id.NotificationFeed FEED_EMPTY_DESCRIPTION = new Id.NotificationFeed.Builder()
+    .setNamespaceId(NAMESPACE)
+    .setCategory(CATEGORY)
+    .setName(NAME)
+    .setDescription("")
+    .build();
   private static final String METADATA_INVALID_JSON = "invalid";
 
-  private HttpResponse createFeed(String id, JsonObject jsonObject) throws Exception {
-    return createFeed(id, GSON.toJson(jsonObject));
+  private HttpResponse createFeed(Id.NotificationFeed feed) throws Exception {
+    return createFeed(feed.getNamespaceId(), feed.getCategory(), feed.getName(), GSON.toJson(feed));
   }
 
-  private HttpResponse createFeed(NotificationFeed metadata) throws Exception {
-    return createFeed(metadata.getId(), GSON.toJson(metadata));
+  private HttpResponse createFeed(String namespace, String category, String name, String metadata) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/feeds/categories/%s/names/%s", Constants.Gateway.API_VERSION_3,
+                               namespace, category, name), metadata);
   }
 
-  private HttpResponse createFeed(String feedId, String metadata) throws Exception {
-    return doPut(String.format("%s/feeds/%s", Constants.Gateway.API_VERSION_3, feedId), metadata);
+  private HttpResponse listFeeds(String namespaceId) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/feeds", Constants.Gateway.API_VERSION_3, namespaceId));
   }
 
-  private HttpResponse listFeeds() throws Exception {
-    return doGet(String.format("%s/feeds", Constants.Gateway.API_VERSION_3));
+  private HttpResponse getFeed(String namespaceId, String category, String name) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/feeds/categories/%s/names/%s", Constants.Gateway.API_VERSION_3,
+                               namespaceId, category, name));
   }
 
-  private HttpResponse getFeed(String id) throws Exception {
-    Preconditions.checkArgument(id != null, "namespace name cannot be null");
-    return doGet(String.format("%s/feeds/%s", Constants.Gateway.API_VERSION_3, id));
-  }
-
-  private HttpResponse deleteFeed(String id) throws Exception {
-    return doDelete(String.format("%s/feeds/%s", Constants.Gateway.API_VERSION_3, id));
+  private HttpResponse deleteFeed(String namespaceId, String category, String name) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/feeds/categories/%s/names/%s", Constants.Gateway.API_VERSION_3,
+                                  namespaceId, category, name));
   }
 
   private void assertResponseCode(int expected, HttpResponse response) {
@@ -97,26 +108,28 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testFeedsValidFlows() throws Exception {
     // no feeds initially
-    HttpResponse response = listFeeds();
+    HttpResponse response = listFeeds(NAMESPACE);
     assertResponseCode(200, response);
     List<JsonObject> feeds = readListResponse(response);
     Assert.assertEquals(0, feeds.size());
     try {
       // create and verify
-      response = createFeed(METADATA_VALID);
+      response = createFeed(FEED_VALID);
       assertResponseCode(200, response);
-      response = listFeeds();
+      response = listFeeds(NAMESPACE);
       feeds = readListResponse(response);
       Assert.assertEquals(1, feeds.size());
       Assert.assertEquals(NAME, feeds.get(0).get(NAME_FIELD).getAsString());
-      Assert.assertEquals(NAMESPACE, feeds.get(0).get(NAMESPACE_FIELD).getAsString());
+      JsonElement namespace = feeds.get(0).get(NAMESPACE_FIELD);
+      Assert.assertTrue(namespace instanceof JsonObject);
+      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
       Assert.assertEquals(CATEGORY, feeds.get(0).get(CATEGORY_FIELD).getAsString());
       Assert.assertEquals(DESCRIPTION, feeds.get(0).get(DESCRIPTION_FIELD).getAsString());
     } finally {
       // cleanup
-      response = deleteFeed(ID);
+      response = deleteFeed(NAMESPACE, CATEGORY, NAME);
       assertResponseCode(200, response);
-      response = listFeeds();
+      response = listFeeds(NAMESPACE);
       feeds = readListResponse(response);
       Assert.assertEquals(0, feeds.size());
     }
@@ -126,30 +139,34 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   public void testCreateDuplicate() throws Exception {
     try {
       // prepare - create feed
-      HttpResponse response = createFeed(METADATA_VALID);
+      HttpResponse response = createFeed(FEED_VALID);
       assertResponseCode(200, response);
-      response = getFeed(ID);
+      response = getFeed(NAMESPACE, CATEGORY, NAME);
       JsonObject feed = readGetResponse(response);
       Assert.assertNotNull(feed);
       Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      Assert.assertEquals(NAMESPACE, feed.get(NAMESPACE_FIELD).getAsString());
+      JsonElement namespace = feed.get(NAMESPACE_FIELD);
+      Assert.assertTrue(namespace instanceof JsonObject);
+      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
       Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
       Assert.assertEquals(DESCRIPTION, feed.get(DESCRIPTION_FIELD).getAsString());
 
       // create again with the same name
-      response = createFeed(METADATA_EMPTY_DESCRIPTION);
+      response = createFeed(FEED_EMPTY_DESCRIPTION);
       assertResponseCode(409, response);
       // check that no updates happened
-      response = getFeed(ID);
+      response = getFeed(NAMESPACE, CATEGORY, NAME);
       feed = readGetResponse(response);
       Assert.assertNotNull(feed);
       Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      Assert.assertEquals(NAMESPACE, feed.get(NAMESPACE_FIELD).getAsString());
+      namespace = feed.get(NAMESPACE_FIELD);
+      Assert.assertTrue(namespace instanceof JsonObject);
+      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
       Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
       Assert.assertEquals(DESCRIPTION, feed.get(DESCRIPTION_FIELD).getAsString());
     } finally {
       // cleanup
-      HttpResponse response = deleteFeed(ID);
+      HttpResponse response = deleteFeed(NAMESPACE, CATEGORY, NAME);
       assertResponseCode(200, response);
     }
   }
@@ -157,10 +174,10 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateInvalidJson() throws Exception {
     // invalid json should return 400
-    HttpResponse response = createFeed("invalid", METADATA_INVALID_JSON);
+    HttpResponse response = createFeed(NAMESPACE, CATEGORY, NAME, METADATA_INVALID_JSON);
     assertResponseCode(400, response);
     // verify
-    response = getFeed(ID);
+    response = getFeed(NAMESPACE, CATEGORY, NAME);
     assertResponseCode(404, response);
   }
 
@@ -169,14 +186,12 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     // name must be non-null, non-empty
     JsonObject object = new JsonObject();
     object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
+    String metadata = GSON.toJson(object);
 
-    HttpResponse response = createFeed(String.format("%s.%s", NAMESPACE, CATEGORY), object);
-    assertResponseCode(400, response);
+    HttpResponse response = createFeed(NAMESPACE, CATEGORY, "", metadata);
+    assertResponseCode(404, response);
 
-    response = createFeed(String.format("%s.%s.%s", NAMESPACE, CATEGORY, ""), object);
-    assertResponseCode(400, response);
-
-    response = createFeed(String.format("%s.%s.%s", NAMESPACE, CATEGORY, "$.a"), object);
+    response = createFeed(NAMESPACE, CATEGORY, "$.a", metadata);
     assertResponseCode(400, response);
   }
 
@@ -185,14 +200,12 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     // namespace must be non-null, non-empty
     JsonObject object = new JsonObject();
     object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
+    String metadata = GSON.toJson(object);
 
-    HttpResponse response = createFeed(String.format("%s.%s", CATEGORY, NAME), object);
-    assertResponseCode(400, response);
+    HttpResponse response = createFeed("", CATEGORY, NAME, metadata);
+    assertResponseCode(404, response);
 
-    response = createFeed(String.format("%s.%s.%s", "", CATEGORY, NAME), object);
-    assertResponseCode(400, response);
-
-    response = createFeed(String.format("%s.%s.%s", "$.a", CATEGORY, NAME), object);
+    response = createFeed("$.a", CATEGORY, NAME, metadata);
     assertResponseCode(400, response);
   }
 
@@ -201,63 +214,62 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     // category must be non-null, non-empty
     JsonObject object = new JsonObject();
     object.add(DESCRIPTION_FIELD, GSON.toJsonTree(DESCRIPTION));
+    String metadata = GSON.toJson(object);
 
-    HttpResponse response = createFeed(String.format("%s.%s", NAMESPACE, NAME), object);
-    assertResponseCode(400, response);
+    HttpResponse response = createFeed(NAMESPACE, "", NAME, metadata);
+    assertResponseCode(404, response);
 
-    response = createFeed(String.format("%s.%s.%s", NAMESPACE, "", NAME), object);
-    assertResponseCode(400, response);
-
-    response = createFeed(String.format("%s.%s.%s", NAMESPACE, "$.a", NAME), object);
+    response = createFeed(NAMESPACE, "$.a", NAME, metadata);
     assertResponseCode(400, response);
   }
 
   @Test
   public void testCreateMissingOrEmptyDescription() throws Exception {
     // create with missing description
-    HttpResponse response = createFeed(METADATA_MISSING_DESCRIPTION);
+    HttpResponse response = createFeed(FEED_MISSING_DESCRIPTION);
     assertResponseCode(200, response);
     try {
       // verify
-      response = getFeed(ID);
+      response = getFeed(NAMESPACE, CATEGORY, NAME);
       JsonObject feed = readGetResponse(response);
       Assert.assertNotNull(feed);
       Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      Assert.assertEquals(NAMESPACE, feed.get(NAMESPACE_FIELD).getAsString());
+      JsonElement namespace = feed.get(NAMESPACE_FIELD);
+      Assert.assertTrue(namespace instanceof JsonObject);
+      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
       Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
       Assert.assertNull(feed.get(DESCRIPTION_FIELD));
       // cleanup
-      response = deleteFeed(ID);
+      response = deleteFeed(NAMESPACE, CATEGORY, NAME);
       assertResponseCode(200, response);
 
       // create with empty description
-      response = createFeed(METADATA_EMPTY_DESCRIPTION);
+      response = createFeed(FEED_EMPTY_DESCRIPTION);
       assertResponseCode(200, response);
       // verify
-      response = getFeed(ID);
+      response = getFeed(NAMESPACE, CATEGORY, NAME);
       feed = readGetResponse(response);
       Assert.assertNotNull(feed);
       Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      Assert.assertEquals(NAMESPACE, feed.get(NAMESPACE_FIELD).getAsString());
+      namespace = feed.get(NAMESPACE_FIELD);
+      Assert.assertTrue(namespace instanceof JsonObject);
+      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
       Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
       Assert.assertEquals("", feed.get(DESCRIPTION_FIELD).getAsString());
     } finally {
       // cleanup
-      response = deleteFeed(ID);
+      response = deleteFeed(NAMESPACE, CATEGORY, NAME);
       assertResponseCode(200, response);
     }
 
-    response = createFeed(String.format("%s.%s.%s", NAMESPACE, CATEGORY, NAME), "");
+    response = createFeed(NAMESPACE, CATEGORY, NAME, "");
     assertResponseCode(200, response);
   }
 
   @Test
   public void testDeleteMissingFeed() throws Exception {
     // test deleting non-existent feed
-    HttpResponse response = deleteFeed("does.not.exist");
+    HttpResponse response = deleteFeed("does", "not", "exist");
     assertResponseCode(404, response);
-    // Id has wrong format
-    response = deleteFeed("doesnotexist");
-    assertResponseCode(400, response);
   }
 }
