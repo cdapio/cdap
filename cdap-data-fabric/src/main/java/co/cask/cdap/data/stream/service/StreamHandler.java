@@ -390,7 +390,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     // if no threshold is given, use the existing threshold.
-    Integer newThreshold = properties.getThreshold();
+    Integer newThreshold = properties.getNotificationThresholdMB();
     if (newThreshold == null) {
       newThreshold = currConfig.getNotificationThresholdMB();
     } else {
@@ -478,7 +478,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       json.addProperty("name", src.getName());
       json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
-      json.addProperty("threshold", src.getThreshold());
+      json.addProperty("notification_threshold_mb", src.getNotificationThresholdMB());
       return json;
     }
   }

@@ -17,6 +17,7 @@ package co.cask.cdap.proto;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import com.google.common.base.Objects;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Represents the properties of a stream.
@@ -26,13 +27,15 @@ public final class StreamProperties {
   private final String name;
   private final Long ttl;
   private final FormatSpecification format;
-  private final Integer threshold;
 
-  public StreamProperties(String name, long ttl, FormatSpecification format, int threshold) {
+  @SerializedName("notification_threshold_mb")
+  private final Integer notificationThresholdMB;
+
+  public StreamProperties(String name, long ttl, FormatSpecification format, int notificationThresholdMB) {
     this.name = name;
     this.ttl = ttl;
     this.format = format;
-    this.threshold = threshold;
+    this.notificationThresholdMB = notificationThresholdMB;
   }
 
   /**
@@ -58,10 +61,10 @@ public final class StreamProperties {
 
   /**
    *
-   * @return The threshold of the stream
+   * @return The notification threshold of the stream
    */
-  public Integer getThreshold() {
-    return threshold;
+  public Integer getNotificationThresholdMB() {
+    return notificationThresholdMB;
   }
 
   @Override
@@ -78,12 +81,12 @@ public final class StreamProperties {
     return Objects.equal(name, that.name) &&
       Objects.equal(ttl, that.ttl) &&
       Objects.equal(format, that.format) &
-      Objects.equal(threshold, that.threshold);
+      Objects.equal(notificationThresholdMB, that.notificationThresholdMB);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, ttl, format, threshold);
+    return Objects.hashCode(name, ttl, format, notificationThresholdMB);
   }
 
   @Override
@@ -92,7 +95,7 @@ public final class StreamProperties {
       .add("name", name)
       .add("ttl", ttl)
       .add("format", format)
-      .add("threshold", threshold)
+      .add("notificationThresholdMB", notificationThresholdMB)
       .toString();
   }
 }
