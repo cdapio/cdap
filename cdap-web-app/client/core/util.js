@@ -1050,44 +1050,48 @@ define([], function () {
 
     },
 
-		reset: function () {
+    getNamespace: function () {
+    	
+    },
 
-			C.Modal.show(
-				"Reset CDAP",
-				"You are about to DELETE ALL DATA on CDAP." +
-					" Are you sure you would like to do this?",
-				function () {
+	reset: function () {
 
-					C.Util.interrupt();
+		C.Modal.show(
+			"Reset CDAP",
+			"You are about to DELETE ALL DATA on CDAP." +
+				" Are you sure you would like to do this?",
+			function () {
+
+				C.Util.interrupt();
 
 
-					$.ajax({
-						url: '/unrecoverable/reset',
-						type: 'POST'
-					}).done(function (response, status) {
+				$.ajax({
+					url: '/unrecoverable/reset',
+					type: 'POST'
+				}).done(function (response, status) {
 
-						if (response === "OK") {
-							window.location = '/';
-						} else {
-							C.Util.proceed(function () {
-								C.Modal.show("Reset Error", response);
-							});
-						}
-
-					}).fail(function (xhr, status, error) {
-
+					if (response === "OK") {
+						window.location = '/';
+					} else {
 						C.Util.proceed(function () {
-
-							setTimeout(function () {
-								C.Modal.show("Reset Error", xhr.responseText);
-							}, 500);
-
+							C.Modal.show("Reset Error", response);
 						});
-					});
+					}
 
+				}).fail(function (xhr, status, error) {
+
+					C.Util.proceed(function () {
+
+						setTimeout(function () {
+							C.Modal.show("Reset Error", xhr.responseText);
+						}, 500);
+
+					});
 				});
-			return false;
-		}
+
+			});
+		return false;
+	}
 	});
 
 	return Util.create();

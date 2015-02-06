@@ -54,8 +54,11 @@ WebAppServer.prototype.Api = Api;
 /**
  * API version.
  */
-WebAppServer.prototype.API_VERSION = 'v2';
-
+WebAppServer.prototype.API_VERSION = 'v3';
+/**
+ * Metrics API version.
+ */
+WebAppServer.prototype.METRICS_API_VERSION = 'v2';
 
 /**
  * Express app framework.
@@ -369,7 +372,7 @@ WebAppServer.prototype.bindRoutes = function() {
       host: self.routerBindAddress,
       port: self.routerBindPort,
       method: 'GET',
-      path: '/' + self.API_VERSION + '/metrics/available' + path,
+      path: '/' + self.METRICS_API_VERSION + '/metrics/available' + path,
       headers: {
         'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -571,7 +574,6 @@ WebAppServer.prototype.bindRoutes = function() {
 
     var url = self.routerBindAddress + ':' + self.routerBindPort;
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-
     var opts = {
       method: 'GET',
       url: self.transferProtocol + path,
@@ -622,7 +624,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.routerBindAddress,
       port: self.routerBindPort,
-      path: '/' + self.API_VERSION + '/metrics',
+      path: '/' + self.METRICS_API_VERSION + '/metrics',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

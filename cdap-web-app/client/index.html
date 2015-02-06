@@ -87,6 +87,18 @@
       </a>
 
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
+      <div class="pull-right" style="margin-top: 2px;position: relative; width: 210px;text-align: center;">
+        <div class="custom-dropdown" data-toggle="dropdown">
+          <div class="text-span">  <img id="loading-time-select-img" src="/assets/img/start-all-load.gif" />{{selectedNamespace}}</div>
+          <div class="image-span"></div>
+        </div>
+          <ul class="dropdown-menu" style="text-align: left; margin-top: -15px;">
+            {{#each namespace in namespaces}}
+            <li><a style="width: 100%" {{action setNamespace namespace}}>{{namespace}}</a></li>
+            {{/each}}
+          </ul>
+      </div>
+
       </div>
     </div>
     <div id="nav">
