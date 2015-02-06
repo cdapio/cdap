@@ -1,16 +1,15 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminServicesController',
-function ($scope, $state, MyDataSource) {
+function ($scope, MyDataSource) {
 
-    $scope.services = [];
+  $scope.services = [];
 
-    var myDataSrc = new MyDataSource($scope);
+  var myDataSrc = new MyDataSource($scope);
 
-    myDataSrc.request({
-        _cdapPathV2: '/system/services'
-    })
-        .then(function(response) {
-            $scope.services = response;
-
+  myDataSrc.request({
+    _cdapPathV2: '/system/services'
+  })
+    .then(function(response) {
+      $scope.services = response;
     });
 
 });
