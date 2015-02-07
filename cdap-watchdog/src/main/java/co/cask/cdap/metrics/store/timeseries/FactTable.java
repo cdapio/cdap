@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
@@ -57,6 +58,8 @@ public final class FactTable {
 
   private final MetricsTable timeSeriesTable;
   private final FactCodec codec;
+  private final int resolution;
+  private final int rollTime;
 
   /**
    * Creates an instance of {@link FactTable}.
@@ -76,6 +79,8 @@ public final class FactTable {
 
     this.timeSeriesTable = timeSeriesTable;
     this.codec = new FactCodec(entityTable, resolution, rollTime);
+    this.resolution = resolution;
+    this.rollTime = rollTime;
   }
 
   public void add(List<Fact> facts) throws Exception {
@@ -119,6 +124,35 @@ public final class FactTable {
 
     return new FactScanner(timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter), codec,
                              scan.getStartTs(), scan.getEndTs());
+  }
+
+  /**
+   * Delete entries in fact table. {@link FactScan} is used to specify the deletion parameters
+   * @param scan
+   * @throws Exception
+   */
+  public void delete(FactScan scan) throws Exception {
+    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs());
+    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs());
+    byte [][] columns = null;
+
+    if (Arrays.equals(startRow, endRow)) {
+      // If on the same timebase, we only need subset of columns
+      long timeBase = scan.getStartTs() / rollTime * rollTime;
+      int startCol = (int) (scan.getStartTs() - timeBase) / resolution;
+      int endCol = (int) (scan.getEndTs() - timeBase) / resolution;
+      columns = new byte[endCol - startCol + 1][];
+      for (int i = 0; i < columns.length; i++) {
+        columns[i] = Bytes.toBytes((short) (startCol + i));
+      }
+    }
+    endRow = Bytes.stopKeyForPrefix(endRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Deleting fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
+                timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
+    }
+    timeSeriesTable.deleteRange(startRow, endRow, columns, fuzzyRowFilter);
   }
 
   @Nullable

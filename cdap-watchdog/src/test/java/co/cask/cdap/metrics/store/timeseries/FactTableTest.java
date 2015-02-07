@@ -108,8 +108,29 @@ public class FactTableTest {
     // metric = null means "all"
     FactScan scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, null, tagValues);
     assertScan(table, expected, scan);
-  }
 
+    // delete metric test
+    expected.clear();
+
+    // delete the metrics data at (timestamp + 20) resolution
+    scan = new FactScan(ts + resolution * 2, ts + resolution * 3, null, tagValues);
+    table.delete(scan);
+    for (int k = 1; k < 4; k++) {
+      expected.put("metric" + k, tagValues, ImmutableList.of(new TimeValue(ts, 11 * k),
+                                                             new TimeValue(ts + resolution, 27 * k)));
+    }
+    //verify deletion
+    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, null, tagValues);
+    assertScan(table, expected, scan);
+
+    //delete metrics for "metric1" at ts0 and verify deletion
+    scan = new FactScan(ts, ts + 1, "metric1", tagValues);
+    table.delete(scan);
+    expected.clear();
+    expected.put("metric1", tagValues, ImmutableList.of(new TimeValue(ts + resolution, 27)));
+    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, "metric1", tagValues);
+    assertScan(table, expected, scan);
+  }
 
   @Test
   public void testQuery() throws Exception {

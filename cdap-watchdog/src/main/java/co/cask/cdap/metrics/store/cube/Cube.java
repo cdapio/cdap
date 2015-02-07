@@ -37,4 +37,10 @@ public interface Cube {
    * @return {@link List} of {@link TimeSeries} that are result of the query.
    */
   Collection<TimeSeries> query(CubeQuery query) throws Exception;
+
+  /**
+   * Deletes data in this {@link Cube}.
+   * @param query query to perform delete.
+   */
+  void delete(CubeQuery query) throws Exception;
 }
