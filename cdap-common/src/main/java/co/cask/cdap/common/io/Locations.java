@@ -15,13 +15,16 @@
  */
 package co.cask.cdap.common.io;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
@@ -38,6 +41,8 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -121,6 +126,52 @@ public final class Locations {
         }
       }
     };
+  }
+
+  /**
+   * Do some processing on locations contained in the {@code locationDir}, using the {@code processor}.
+   *
+   * @param locationDir location to start iterating from
+   * @param recursive true if this method should be called on the directory {@link Location}s found from
+   * {@code locationDir}
+   * @param processor used to process the locations that are not ruled out by the {@code predicate}
+   * @throws IOException if the locations could not be read
+   */
+  public static void processLocations(final Location locationDir, boolean recursive,
+                                      final Processor<LocationStatus> processor) throws IOException {
+    Preconditions.checkArgument(locationDir.isDirectory(), "Input location has to be a directory");
+    LocationFactory locationFactory = locationDir.getLocationFactory();
+    if (locationFactory instanceof HDFSLocationFactory) {
+      // Treat the HDFS case
+      Deque<Path> paths = Lists.newLinkedList();
+      paths.push(new Path(locationDir.toURI().toString()));
+      while (!paths.isEmpty()) {
+        Path currentPath = paths.poll();
+        FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+        final FileStatus[] statuses = fs.listStatus(currentPath);
+
+        for (FileStatus status : statuses) {
+          processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(), status.isDirectory()));
+          if (status.isDirectory() && recursive) {
+            paths.push(status.getPath());
+          }
+        }
+      }
+    } else {
+      // Treat the local FS case, we can directly use the Location class APIs
+      Deque<Location> locationStack = Lists.newLinkedList();
+      locationStack.push(locationDir);
+      while (!locationStack.isEmpty()) {
+        Location currentLocation = locationStack.poll();
+        List<Location> locations = currentLocation.list();
+        for (Location location : locations) {
+          if (location.isDirectory() && recursive) {
+            locationStack.push(location);
+          }
+          processor.process(new LocationStatus(location.toURI(), location.length(), location.isDirectory()));
+        }
+      }
+    }
   }
 
   /**

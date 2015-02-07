@@ -17,6 +17,9 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
+import co.cask.cdap.common.io.LocationStatus;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.base.CharMatcher;
@@ -32,6 +35,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Collection of helper methods.
@@ -382,7 +386,8 @@ public final class StreamUtils {
    */
   public static long fetchStreamFilesSize(StreamConfig streamConfig) throws IOException {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(), getGeneration(streamConfig));
-    long size = 0;
+    final AtomicLong size = new AtomicLong(0);
+
     List<Location> locations = streamPath.list();
     // All directories are partition directories
     for (Location location : locations) {
@@ -390,14 +395,16 @@ public final class StreamUtils {
         continue;
       }
 
-      List<Location> partitionFiles = location.list();
-      for (Location partitionFile : partitionFiles) {
-        if (!partitionFile.isDirectory() && StreamFileType.EVENT.isMatched(partitionFile.getName())) {
-          size += partitionFile.length();
+      Locations.processLocations(location, false, new Processor<LocationStatus>() {
+        @Override
+        public void process(LocationStatus input) {
+          if (!input.isDir() && StreamFileType.EVENT.isMatched(input.getUri().getPath())) {
+            size.addAndGet(input.getLength());
+          }
         }
-      }
+      });
     }
-    return size;
+    return size.get();
   }
 
   private StreamUtils() {
