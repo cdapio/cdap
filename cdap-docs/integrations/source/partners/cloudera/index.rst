@@ -18,6 +18,18 @@ Cloudera
     Ingestion and Exploration <ingesting>
 
 
+.. sidebar:: Cloudera Certified Technology
+  :class: sidebar30
+  
+  .. image:: ../../_images/logo-cloudera-certified.png
+   :height: 100px
+   :width: 100 px
+   :alt: Cloudera Certified
+   :align: center
+
+  CDAP |version| is certified on Cloudera 5.
+  
+  
 Today, Hadoop is frequently used as an offline analytics tool – generating insights that
 are then deployed operationally in other systems.  Greater business value is generated
 when organizations turn their data analytics directly into action.  Cask and Cloudera
