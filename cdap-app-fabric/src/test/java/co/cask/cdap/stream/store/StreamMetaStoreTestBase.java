@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import org.junit.After;
@@ -70,10 +70,8 @@ public abstract class StreamMetaStoreTestBase {
       new StreamSpecification.Builder().setName("bar").create()), streamMetaStore.listStreams("foo1"));
     Assert.assertEquals(
       ImmutableMultimap.builder()
-        .put(new NamespaceMeta.Builder().setId("foo1").build(),
-             new StreamSpecification.Builder().setName("bar").create())
-        .put(new NamespaceMeta.Builder().setId("foo2").build(),
-             new StreamSpecification.Builder().setName("bar").create())
+        .put(Id.Namespace.from("foo1"), new StreamSpecification.Builder().setName("bar").create())
+        .put(Id.Namespace.from("foo2"), new StreamSpecification.Builder().setName("bar").create())
         .build(),
       streamMetaStore.listStreams());
 
@@ -81,8 +79,7 @@ public abstract class StreamMetaStoreTestBase {
     Assert.assertFalse(streamMetaStore.streamExists("foo2", "bar"));
     Assert.assertEquals(
       ImmutableMultimap.builder()
-        .put(new NamespaceMeta.Builder().setId("foo1").build(),
-             new StreamSpecification.Builder().setName("bar").create())
+        .put(Id.Namespace.from("foo1"), new StreamSpecification.Builder().setName("bar").create())
         .build(),
       streamMetaStore.listStreams());
 
