@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.ReadFilters;
@@ -182,8 +181,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     this.txTimeoutNano = TimeUnit.SECONDS.toNanos(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
                                                                TxConstants.Manager.DEFAULT_TX_TIMEOUT));
-    //TODO: get the namespace from streamConfig:
-    this.streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamConfig.getName());
+    this.streamName = streamConfig.getStreamId();
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;

@@ -82,7 +82,8 @@ public abstract class StreamCoordinatorTestBase {
   }
 
   private StreamConfig createStreamConfig(Id.Stream stream) throws IOException {
-    return new StreamConfig(stream.getId(), 3600000, 10000, Long.MAX_VALUE,
+    return new StreamConfig(stream, 3600000, 10000, Long.MAX_VALUE,
+                            //TODO: namespace the created dir
                             new LocalLocationFactory(tmpFolder.newFolder()).create(stream.getId()),
                             null, 1000);
   }

@@ -497,7 +497,7 @@ public class DistributedStreamService extends AbstractStreamService {
           @Override
           public Id.Stream apply(@Nullable PartitionReplica input) {
             //TODO: verify the other end
-            return input != null ? Id.Stream.fromString(input.getName()) : null;
+            return input != null ? Id.Stream.from(input.getName()) : null;
           }
         }));
       invokeLeaderListeners(ImmutableSet.copyOf(streamNames));

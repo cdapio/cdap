@@ -109,7 +109,7 @@ public class StreamFileSizeFetcherTest {
     public StreamConfig getConfig(Id.Stream streamName) throws IOException {
       //TODO: namespace the location
       Location streamLocation = locationFactory.create(streamName.getId());
-      return new StreamConfig(streamName.getId(), partitionDuration, indexInterval,
+      return new StreamConfig(streamName, partitionDuration, indexInterval,
                               Long.MAX_VALUE, streamLocation, null, 1000);
     }
 

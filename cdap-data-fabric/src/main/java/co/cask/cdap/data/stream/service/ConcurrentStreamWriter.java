@@ -336,7 +336,7 @@ public final class ConcurrentStreamWriter implements Closeable {
      * @throws IOException if failed to append the file to the stream
      */
     void appendFile(StreamConfig config, Location eventFile, Location indexFile, long timestamp) throws IOException {
-      Integer generation = generations.get(config.getName());
+      Integer generation = generations.get(config.getStreamId());
       if (generation == null) {
         generation = StreamUtils.getGeneration(config);
       }

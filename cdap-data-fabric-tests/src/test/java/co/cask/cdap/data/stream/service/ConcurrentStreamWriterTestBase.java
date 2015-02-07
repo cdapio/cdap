@@ -321,9 +321,9 @@ public abstract class ConcurrentStreamWriterTestBase {
 
     @Override
     public StreamConfig getConfig(Id.Stream streamName) throws IOException {
-      //TODO: update the actual location it gets it from
+      //TODO: update the actual location it gets it from (namespace the location)
       Location streamLocation = locationFactory.create(streamName.getId());
-      return new StreamConfig(streamName.getId(), partitionDuration, indexInterval,
+      return new StreamConfig(streamName, partitionDuration, indexInterval,
                               Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }

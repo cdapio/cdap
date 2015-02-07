@@ -46,16 +46,14 @@ public final class FileContentWriterFactory implements ContentWriterFactory {
     Location location = streamConfig.getLocation();
     if (location == null) {
       // Should never happen
-      throw new IllegalArgumentException("Unknown stream location for stream " + streamConfig.getName());
+      throw new IllegalArgumentException("Unknown stream location for stream " + streamConfig.getStreamId());
     }
     this.streamTmpLocation = location.append("tmp");
   }
 
   @Override
   public Id.Stream getStream() {
-    return null;
-    //TODO:
-//    return streamConfig.getStreamId();
+    return streamConfig.getStreamId();
   }
 
   @Override

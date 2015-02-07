@@ -164,7 +164,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       StreamProperties streamProperties =
-        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat(),
+        new StreamProperties(streamConfig.getStreamId().getId(), streamConfig.getTTL(), streamConfig.getFormat(),
                              streamConfig.getNotificationThresholdMB());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
@@ -409,7 +409,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
-    return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
+    return new StreamConfig(currConfig.getStreamId(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
                             newTTL, currConfig.getLocation(), newFormatSpec, newThreshold);
   }
 

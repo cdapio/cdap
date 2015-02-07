@@ -210,14 +210,14 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public void updateConfig(StreamConfig config) throws IOException {
     Location streamLocation = config.getLocation();
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", config.getName());
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", config.getStreamId());
 
     // Check only TTL, format or threshold is changed, as only TTL, format or threshold changes are supported.
     StreamConfig originalConfig = loadConfig(streamLocation);
     Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
                                 "Configuration update for stream '%s' was not valid " +
                                   "(can only update ttl, format or threshold)",
-                                config.getName());
+                                config.getStreamId());
 
     // It's a temp fix to avoid async update (through stream coordinator client overwrites changes in here.
     // It works only if there is no concurrent updates from multiple clients
@@ -229,13 +229,11 @@ public class FileStreamAdmin implements StreamAdmin {
     if (formatChanged || ttlChanged || thresholdChanged) {
       saveConfig(config);
     }
-    //TODO: get namespace from originalConfig
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, originalConfig.getName());
     if (ttlChanged) {
-      streamCoordinatorClient.changeTTL(streamId, config.getTTL());
+      streamCoordinatorClient.changeTTL(originalConfig.getStreamId(), config.getTTL());
     }
     if (thresholdChanged) {
-      streamCoordinatorClient.changeThreshold(streamId, config.getNotificationThresholdMB());
+      streamCoordinatorClient.changeThreshold(originalConfig.getStreamId(), config.getNotificationThresholdMB());
     }
     if (formatChanged) {
       // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
@@ -243,8 +241,8 @@ public class FileStreamAdmin implements StreamAdmin {
       Schema currSchema = originalConfig.getFormat().getSchema();
       Schema newSchema = config.getFormat().getSchema();
       if (!currSchema.equals(newSchema)) {
-        alterExploreStream(config.getName(), false);
-        alterExploreStream(config.getName(), true);
+        alterExploreStream(config.getStreamId().getId(), false);
+        alterExploreStream(config.getStreamId().getId(), true);
       }
     }
   }
@@ -290,7 +288,7 @@ public class FileStreamAdmin implements StreamAdmin {
     int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
                                                             cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-    StreamConfig config = new StreamConfig(name.getId(), partitionDuration, indexInterval, ttl, streamLocation,
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation,
                                            null, threshold);
     saveConfig(config);
 
@@ -309,15 +307,15 @@ public class FileStreamAdmin implements StreamAdmin {
   private void createStreamFeeds(StreamConfig config) {
     try {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+        .setNamespaceId(config.getStreamId().getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getName()))
+        .setName(String.format("%sSize", config.getStreamId().getId()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
-                                      config.getName(), config.getNotificationThresholdMB()))
+                                      config.getStreamId(), config.getNotificationThresholdMB()))
         .build();
       notificationFeedManager.createFeed(streamFeed);
     } catch (NotificationFeedException e) {
-      LOG.error("Cannot create feed for Stream {}", config.getName(), e);
+      LOG.error("Cannot create feed for Stream {}", config.getStreamId(), e);
     }
   }
 
@@ -334,7 +332,8 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private void saveConfig(StreamConfig config) throws IOException {
-    Location configLocation = streamBaseLocation.append(config.getName()).append(CONFIG_FILE_NAME);
+    //TODO: namespace the location
+    Location configLocation = streamBaseLocation.append(config.getStreamId().getId()).append(CONFIG_FILE_NAME);
     Location tmpConfigLocation = configLocation.getTempFile(null);
     CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
       Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
@@ -344,7 +343,8 @@ public class FileStreamAdmin implements StreamAdmin {
       if (OSDetector.isWindows()) {
         configLocation.delete();
       }
-      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getName()).append(CONFIG_FILE_NAME));
+    //TODO: namespace the location
+      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getStreamId().getId()).append(CONFIG_FILE_NAME));
     } finally {
       if (tmpConfigLocation.exists()) {
         tmpConfigLocation.delete();
@@ -364,7 +364,9 @@ public class FileStreamAdmin implements StreamAdmin {
       threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
     }
 
-    return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+    //TODO: construct namespace, streamName from location (parent.getname)
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
+    return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
                             config.getTTL(), streamLocation, config.getFormat(), threshold);
   }
 

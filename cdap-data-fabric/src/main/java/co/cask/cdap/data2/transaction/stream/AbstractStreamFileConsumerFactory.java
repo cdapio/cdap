@@ -202,7 +202,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,
                                                  StreamConsumerState consumerState) throws IOException {
     Location streamLocation = streamConfig.getLocation();
-    Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
+    Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getStreamId());
 
     // Look for the latest stream generation
     final int generation = StreamUtils.getGeneration(streamConfig);

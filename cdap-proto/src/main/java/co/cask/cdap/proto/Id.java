@@ -19,6 +19,10 @@ package co.cask.cdap.proto;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+
+import java.net.URI;
 
 /**
  * Contains collection of classes representing different types of Ids.
@@ -413,8 +417,25 @@ public final class Id  {
         .toString();
     }
 
-    public static Stream fromString(String string) {
-      return Stream.from("yum", "yum");
+    public URI toURI() {
+      return URI.create(String.format("stream:///%s/%s", namespace, streamName));
+    }
+
+    public String toURIString() {
+      return URI.create(String.format("stream:///%s/%s", namespace, streamName)).toString();
+    }
+
+    public static Stream from(URI uri) {
+      Iterable<String> comps = Splitter.on('/').omitEmptyStrings().split(uri.getPath());
+      Preconditions.checkArgument(2 == Iterables.size(comps));
+
+      String namespace = Iterables.get(comps, 0);
+      String streamName = Iterables.get(comps, 1);
+      return from(namespace, streamName);
+    }
+
+    public static Stream from(String string) {
+      return from(URI.create(string));
     }
   }
 }

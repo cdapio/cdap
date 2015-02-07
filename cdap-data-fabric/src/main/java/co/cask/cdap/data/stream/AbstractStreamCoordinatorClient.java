@@ -90,7 +90,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public ListenableFuture<Integer> nextGeneration(final StreamConfig streamConfig, final int lowerBound) {
-    return Futures.transform(propertyStore.get().update(streamConfig.getName(), new PropertyUpdater<StreamProperty>() {
+    return Futures.transform(propertyStore.get().update(streamConfig.getStreamId().toURIString(),
+                                                        new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
         final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
@@ -125,8 +126,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public ListenableFuture<Long> changeTTL(final Id.Stream streamName, final long newTTL) {
-    //TODO: do something other than streamName.toString
-    return Futures.transform(propertyStore.get().update(streamName.toString(), new PropertyUpdater<StreamProperty>() {
+    return Futures.transform(propertyStore.get().update(streamName.toURIString(),
+                                                        new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
         final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
@@ -160,8 +161,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public ListenableFuture<Integer> changeThreshold(final Id.Stream streamName, final int newThreshold) {
-    //TODO: do something other than streamName.toString
-    return Futures.transform(propertyStore.get().update(streamName.toString(), new PropertyUpdater<StreamProperty>() {
+    return Futures.transform(propertyStore.get().update(streamName.toURIString(),
+                                                        new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
         final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
@@ -195,8 +196,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public Cancellable addListener(Id.Stream streamName, StreamPropertyListener listener) {
-    //TODO: do something other than streamName.toString()
-    return propertyStore.get().addChangeListener(streamName.toString(),
+    return propertyStore.get().addChangeListener(streamName.toURIString(),
                                                  new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
@@ -304,8 +304,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
     @Override
     public void onChange(String name, StreamProperty newProperty) {
-      //TODO: parse the property name to a streamID. (currently using toString on the other end, but need to use toURI?)
-      Id.Stream streamId = Id.Stream.fromString(name);
+      Id.Stream streamId = Id.Stream.from(name);
       try {
         if (newProperty != null) {
           if (currentProperty == null || currentProperty.getGeneration() < newProperty.getGeneration()) {
