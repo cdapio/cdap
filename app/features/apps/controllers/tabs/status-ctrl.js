@@ -48,8 +48,8 @@ angular.module(PKG.name + '.feature.apps')
     $scope.goToDetail = function(programType, program) {
       $state.go(programType.toLowerCase() + '.detail', {
         programId: program
-      })
-    }
+      });
+    };
 
     //ui-sref="programs.type({programType: (program.type_plural | lowercase)})"
     $scope.goToList = function(programType) {

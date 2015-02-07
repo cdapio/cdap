@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.flows')
     dataSrc.poll({
       _cdapNsPath: basePath + '/status'
     }, function(res) {
-      $scope.status = res.status
+      $scope.status = res.status;
     });
 
     $scope.toggleFlow = function(action) {
