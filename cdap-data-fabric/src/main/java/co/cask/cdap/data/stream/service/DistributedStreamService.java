@@ -497,7 +497,7 @@ public class DistributedStreamService extends AbstractStreamService {
           @Override
           public Id.Stream apply(@Nullable PartitionReplica input) {
             //TODO: verify the other end
-            return input != null ? Id.Stream.from(input.getName()) : null;
+            return input != null ? Id.Stream.fromId(input.getName()) : null;
           }
         }));
       invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
@@ -536,7 +536,7 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamId.getId())
+        .setName(streamId.getName())
         .build();
     }
 

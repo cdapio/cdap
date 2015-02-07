@@ -196,7 +196,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   private String getTableName(Id.Stream streamName, String namespace) {
-    return String.format("%s.%s.%s", tablePrefix, streamName.getId(), namespace);
+    return String.format("%s.%s.%s", tablePrefix, streamName.getName(), namespace);
   }
 
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,

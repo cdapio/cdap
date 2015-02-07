@@ -91,7 +91,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
             partitions = ImmutableSet.of();
           }
 
-          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName.toURIString(), 1);
+          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName.toId(), 1);
           if (partitions.contains(newPartition)) {
             return null;
           }

@@ -202,7 +202,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig getConfig(Id.Stream streamName) throws IOException {
-    Location streamLocation = streamBaseLocation.append(streamName.getId());
+    Location streamLocation = streamBaseLocation.append(streamName.getName());
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
     return loadConfig(streamLocation);
   }
@@ -241,8 +241,8 @@ public class FileStreamAdmin implements StreamAdmin {
       Schema currSchema = originalConfig.getFormat().getSchema();
       Schema newSchema = config.getFormat().getSchema();
       if (!currSchema.equals(newSchema)) {
-        alterExploreStream(config.getStreamId().getId(), false);
-        alterExploreStream(config.getStreamId().getId(), true);
+        alterExploreStream(config.getStreamId().getName(), false);
+        alterExploreStream(config.getStreamId().getName(), true);
       }
     }
   }
@@ -255,7 +255,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public boolean exists(Id.Stream name) throws Exception {
     try {
-      return streamBaseLocation.append(name.getId()).append(CONFIG_FILE_NAME).exists();
+      return streamBaseLocation.append(name.getName()).append(CONFIG_FILE_NAME).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -269,7 +269,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void create(Id.Stream name, @Nullable Properties props) throws Exception {
-    Location streamLocation = streamBaseLocation.append(name.getId());
+    Location streamLocation = streamBaseLocation.append(name.getName());
     Locations.mkdirsIfNotExists(streamLocation);
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
@@ -296,7 +296,7 @@ public class FileStreamAdmin implements StreamAdmin {
     createStreamFeeds(config);
 
     streamCoordinatorClient.streamCreated(name);
-    alterExploreStream(name.getId(), true);
+    alterExploreStream(name.getName(), true);
   }
 
   /**
@@ -309,7 +309,7 @@ public class FileStreamAdmin implements StreamAdmin {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(config.getStreamId().getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getStreamId().getId()))
+        .setName(String.format("%sSize", config.getStreamId().getName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
                                       config.getStreamId(), config.getNotificationThresholdMB()))
         .build();
@@ -333,7 +333,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private void saveConfig(StreamConfig config) throws IOException {
     //TODO: namespace the location
-    Location configLocation = streamBaseLocation.append(config.getStreamId().getId()).append(CONFIG_FILE_NAME);
+    Location configLocation = streamBaseLocation.append(config.getStreamId().getName()).append(CONFIG_FILE_NAME);
     Location tmpConfigLocation = configLocation.getTempFile(null);
     CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
       Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
@@ -344,7 +344,7 @@ public class FileStreamAdmin implements StreamAdmin {
         configLocation.delete();
       }
     //TODO: namespace the location
-      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getStreamId().getId()).append(CONFIG_FILE_NAME));
+      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getStreamId().getName()).append(CONFIG_FILE_NAME));
     } finally {
       if (tmpConfigLocation.exists()) {
         tmpConfigLocation.delete();

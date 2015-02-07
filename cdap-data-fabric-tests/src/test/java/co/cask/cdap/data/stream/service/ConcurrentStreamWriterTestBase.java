@@ -193,7 +193,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     streamConfig.getLocation().mkdirs();
 
     StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
-    streamMetaStore.addStream(streamId.getNamespaceId(), streamId.getId());
+    streamMetaStore.addStream(streamId.getNamespaceId(), streamId.getName());
     StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(CConfiguration.create(),
                                                                                           streamAdmin);
     return new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore,
@@ -322,7 +322,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     @Override
     public StreamConfig getConfig(Id.Stream streamName) throws IOException {
       //TODO: update the actual location it gets it from (namespace the location)
-      Location streamLocation = locationFactory.create(streamName.getId());
+      Location streamLocation = locationFactory.create(streamName.getName());
       return new StreamConfig(streamName, partitionDuration, indexInterval,
                               Long.MAX_VALUE, streamLocation, null, 1000);
     }

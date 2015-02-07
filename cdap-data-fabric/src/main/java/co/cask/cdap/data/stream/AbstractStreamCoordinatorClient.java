@@ -90,7 +90,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public ListenableFuture<Integer> nextGeneration(final StreamConfig streamConfig, final int lowerBound) {
-    return Futures.transform(propertyStore.get().update(streamConfig.getStreamId().toURIString(),
+    return Futures.transform(propertyStore.get().update(streamConfig.getStreamId().toId(),
                                                         new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
@@ -126,7 +126,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public ListenableFuture<Long> changeTTL(final Id.Stream streamName, final long newTTL) {
-    return Futures.transform(propertyStore.get().update(streamName.toURIString(),
+    return Futures.transform(propertyStore.get().update(streamName.toId(),
                                                         new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
@@ -161,7 +161,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public ListenableFuture<Integer> changeThreshold(final Id.Stream streamName, final int newThreshold) {
-    return Futures.transform(propertyStore.get().update(streamName.toURIString(),
+    return Futures.transform(propertyStore.get().update(streamName.toId(),
                                                         new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
@@ -196,7 +196,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   @Override
   public Cancellable addListener(Id.Stream streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName.toURIString(),
+    return propertyStore.get().addChangeListener(streamName.toId(),
                                                  new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
@@ -304,7 +304,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
     @Override
     public void onChange(String name, StreamProperty newProperty) {
-      Id.Stream streamId = Id.Stream.from(name);
+      Id.Stream streamId = Id.Stream.fromId(name);
       try {
         if (newProperty != null) {
           if (currentProperty == null || currentProperty.getGeneration() < newProperty.getGeneration()) {

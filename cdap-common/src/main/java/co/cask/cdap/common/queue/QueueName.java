@@ -114,7 +114,7 @@ public final class QueueName {
 
   //TODO: figure out if this is to be here, or not (used for the streamAdmins that extend QueueAdmin.
   public static QueueName fromStream(Id.Stream streamId) {
-    return fromStream(streamId.getNamespaceId(), streamId.getId());
+    return fromStream(streamId.getNamespaceId(), streamId.getName());
   }
   public Id.Stream toStreamId() {
     return Id.Stream.from(getFirstComponent(), getSecondComponent());

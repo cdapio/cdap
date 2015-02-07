@@ -377,7 +377,7 @@ public final class Id  {
       return namespace.getId();
     }
 
-    public String getId() {
+    public String getName() {
       return streamName;
     }
 
@@ -412,30 +412,22 @@ public final class Id  {
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("namespace", namespace)
+        .add("namespace", namespace.getId())
         .add("streamName", streamName)
         .toString();
     }
 
-    public URI toURI() {
-      return URI.create(String.format("stream:///%s/%s", namespace, streamName));
+    public String toId() {
+      return URI.create(String.format("%s.%s", namespace.getId(), streamName)).toString();
     }
 
-    public String toURIString() {
-      return URI.create(String.format("stream:///%s/%s", namespace, streamName)).toString();
-    }
-
-    public static Stream from(URI uri) {
-      Iterable<String> comps = Splitter.on('/').omitEmptyStrings().split(uri.getPath());
+    public static Stream fromId(String id) {
+      Iterable<String> comps = Splitter.on('.').omitEmptyStrings().split(id);
       Preconditions.checkArgument(2 == Iterables.size(comps));
 
       String namespace = Iterables.get(comps, 0);
       String streamName = Iterables.get(comps, 1);
       return from(namespace, streamName);
-    }
-
-    public static Stream from(String string) {
-      return from(URI.create(string));
     }
   }
 }
