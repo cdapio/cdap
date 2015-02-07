@@ -21,7 +21,7 @@ import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.app.namespace.NamespaceService;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
@@ -48,19 +48,19 @@ import javax.ws.rs.PathParam;
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 
-  private final NamespaceService namespaceService;
+  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, NamespaceService namespaceService) {
+  public NamespaceHttpHandler(Authenticator authenticator, NamespaceAdmin namespaceAdmin) {
     super(authenticator);
-    this.namespaceService = namespaceService;
+    this.namespaceAdmin = namespaceAdmin;
   }
 
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, namespaceService.listNamespaces());
+      responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.listNamespaces());
     } catch (Exception e) {
       LOG.error("Internal error while listing all namespaces", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -72,7 +72,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
     try {
-      NamespaceMeta ns = namespaceService.getNamespace(Id.Namespace.from(namespaceId));
+      NamespaceMeta ns = namespaceAdmin.getNamespace(Id.Namespace.from(namespaceId));
       responder.sendJson(HttpResponseStatus.OK, ns);
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
@@ -134,7 +134,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       .build();
 
     try {
-      namespaceService.createNamespace(builder.build());
+      namespaceAdmin.createNamespace(builder.build());
       responder.sendString(HttpResponseStatus.OK,
                            String.format("Namespace '%s' created successfully.", namespaceId));
     } catch (AlreadyExistsException e) {
@@ -158,7 +158,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
-      namespaceService.deleteNamespace(namespaceId);
+      namespaceAdmin.deleteNamespace(namespaceId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));

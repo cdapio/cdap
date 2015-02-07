@@ -44,7 +44,8 @@ import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.internal.app.deploy.LocalManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
-import co.cask.cdap.internal.app.namespace.NamespaceService;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
@@ -259,7 +260,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(StoreFactory.class).to(DefaultStoreFactory.class);
       bind(AdapterService.class).in(Scopes.SINGLETON);
-      bind(NamespaceService.class).in(Scopes.SINGLETON);
+      bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));

@@ -43,7 +43,6 @@ import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
-import co.cask.cdap.internal.app.namespace.NamespaceService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -61,7 +60,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
@@ -377,13 +375,7 @@ public class StandaloneMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(NamespaceService.class).in(Scopes.SINGLETON);
-        }
-      }
+      new StreamAdminModules().getStandaloneModules()
     );
   }
 }
