@@ -35,6 +35,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -158,9 +159,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountID, stream);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      StreamConfig streamConfig = streamAdmin.getConfig(stream);
+      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       StreamProperties streamProperties =
         new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat(),
                              streamConfig.getNotificationThresholdMB());
@@ -176,6 +178,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                      @PathParam("stream") String stream) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountID, stream);
 
     // Verify stream name
     if (!isValidName(stream)) {
@@ -185,7 +188,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     // TODO: Modify the REST API to support custom configurations.
-    streamAdmin.create(stream);
+    streamAdmin.create(streamId);
     streamMetaStore.addStream(accountID, stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
@@ -198,9 +201,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                       @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountId, stream);
 
     try {
-      streamWriter.enqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer());
+      streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -215,9 +219,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    streamWriter.asyncEnqueue(accountId, stream, getHeaders(request, stream),
+    streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
                               request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
@@ -228,13 +233,15 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                             @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
+    Id.Stream streamId = Id.Stream.from(accountId, stream);
+
     if (!streamMetaStore.streamExists(accountId, stream)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return null;
     }
 
     try {
-      return streamBodyConsumerFactory.create(request, createContentWriterFactory(accountId, stream, request));
+      return streamBodyConsumerFactory.create(request, createContentWriterFactory(streamId, request));
     } catch (UnsupportedOperationException e) {
       responder.sendString(HttpResponseStatus.NOT_ACCEPTABLE, e.getMessage());
       return null;
@@ -246,6 +253,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountId, stream);
 
     if (!streamMetaStore.streamExists(accountId, stream)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -253,7 +261,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     try {
-      streamAdmin.truncate(stream);
+      streamAdmin.truncate(streamId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -266,6 +274,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                         @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountId, stream);
 
     if (!streamMetaStore.streamExists(accountId, stream)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
@@ -274,7 +283,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     StreamConfig currConfig;
     try {
-      currConfig = streamAdmin.getConfig(stream);
+      currConfig = streamAdmin.getConfig(streamId);
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream " + stream + " does not exist.");
       return;
@@ -294,9 +303,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {
     return new StreamMetricsCollectorFactory() {
       @Override
-      public StreamMetricsCollector createMetricsCollector(final String streamName) {
+      public StreamMetricsCollector createMetricsCollector(final Id.Stream streamName) {
         final MetricsCollector childCollector =
-          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName);
+          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName.getId());
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -451,21 +460,20 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   /**
    * Creates a {@link ContentWriterFactory} based on the request size. Used by the batch endpoint.
    */
-  private ContentWriterFactory createContentWriterFactory(String accountId,
-                                                          String stream, HttpRequest request) throws IOException {
+  private ContentWriterFactory createContentWriterFactory(Id.Stream streamId, HttpRequest request) throws IOException {
     long contentLength = HttpHeaders.getContentLength(request, -1L);
     String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
 
     // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
-    Map<String, String> headers = getHeaders(request, stream,
+    Map<String, String> headers = getHeaders(request, streamId.getId(),
                                              ImmutableMap.<String, String>builder().put("content.type", contentType));
 
     if (contentLength >= 0 && contentLength <= batchBufferThreshold) {
-      return new BufferedContentWriterFactory(accountId, stream, streamWriter, headers);
+      return new BufferedContentWriterFactory(streamId, streamWriter, headers);
     }
 
-    StreamConfig config = streamAdmin.getConfig(stream);
-    return new FileContentWriterFactory(accountId, config, streamWriter, headers);
+    StreamConfig config = streamAdmin.getConfig(streamId);
+    return new FileContentWriterFactory(config, streamWriter, headers);
   }
 
   /**

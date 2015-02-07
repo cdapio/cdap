@@ -20,6 +20,7 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data.stream.service.MutableStreamEventData;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -35,16 +36,13 @@ import java.util.Map;
  */
 final class BufferedContentWriter implements ContentWriter {
 
-  private final String accountId;
-  private final String stream;
+  private final Id.Stream streamId;
   private final ConcurrentStreamWriter streamWriter;
   private final Map<String, String> headers;
   private final List<ByteBuffer> bodies;
 
-  BufferedContentWriter(String accountId, String stream,
-                        ConcurrentStreamWriter streamWriter, Map<String, String> headers) {
-    this.accountId = accountId;
-    this.stream = stream;
+  BufferedContentWriter(Id.Stream streamId, ConcurrentStreamWriter streamWriter, Map<String, String> headers) {
+    this.streamId = streamId;
     this.streamWriter = streamWriter;
     this.headers = ImmutableMap.copyOf(headers);
     this.bodies = Lists.newLinkedList();
@@ -68,7 +66,7 @@ final class BufferedContentWriter implements ContentWriter {
 
   @Override
   public void close() throws IOException {
-    streamWriter.enqueue(accountId, stream, new StreamEventDataIterator(headers, bodies.iterator()));
+    streamWriter.enqueue(streamId, new StreamEventDataIterator(headers, bodies.iterator()));
   }
 
   @Override

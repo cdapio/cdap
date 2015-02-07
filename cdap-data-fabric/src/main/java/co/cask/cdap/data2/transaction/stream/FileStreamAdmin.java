@@ -121,7 +121,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
     LOG.info("Configure instances: {} {}", groupId, instances);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name.getId());
+    StreamConfig config = StreamUtils.ensureExists(this, name);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -152,7 +152,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
     LOG.info("Configure groups for {}: {}", name, groupInfo);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name.getId());
+    StreamConfig config = StreamUtils.ensureExists(this, name);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -201,8 +201,8 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
-    Location streamLocation = streamBaseLocation.append(streamName);
+  public StreamConfig getConfig(Id.Stream streamName) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamName.getId());
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
     return loadConfig(streamLocation);
   }
@@ -229,11 +229,13 @@ public class FileStreamAdmin implements StreamAdmin {
     if (formatChanged || ttlChanged || thresholdChanged) {
       saveConfig(config);
     }
+    //TODO: get namespace from originalConfig
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, originalConfig.getName());
     if (ttlChanged) {
-      streamCoordinatorClient.changeTTL(originalConfig.getName(), config.getTTL());
+      streamCoordinatorClient.changeTTL(streamId, config.getTTL());
     }
     if (thresholdChanged) {
-      streamCoordinatorClient.changeThreshold(originalConfig.getName(), config.getNotificationThresholdMB());
+      streamCoordinatorClient.changeThreshold(streamId, config.getNotificationThresholdMB());
     }
     if (formatChanged) {
       // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
@@ -253,9 +255,9 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
+  public boolean exists(Id.Stream name) throws Exception {
     try {
-      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists();
+      return streamBaseLocation.append(name.getId()).append(CONFIG_FILE_NAME).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -263,16 +265,16 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void create(String name) throws Exception {
+  public void create(Id.Stream name) throws Exception {
     create(name, null);
   }
 
   @Override
-  public void create(String name, @Nullable Properties props) throws Exception {
-    Location streamLocation = streamBaseLocation.append(name);
+  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
+    Location streamLocation = streamBaseLocation.append(name.getId());
     Locations.mkdirsIfNotExists(streamLocation);
 
-    Location configLocation = streamBaseLocation.append(name).append(CONFIG_FILE_NAME);
+    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     if (!configLocation.createNew()) {
       // Stream already exists
       return;
@@ -288,7 +290,7 @@ public class FileStreamAdmin implements StreamAdmin {
     int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
                                                             cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation,
+    StreamConfig config = new StreamConfig(name.getId(), partitionDuration, indexInterval, ttl, streamLocation,
                                            null, threshold);
     saveConfig(config);
 
@@ -296,7 +298,7 @@ public class FileStreamAdmin implements StreamAdmin {
     createStreamFeeds(config);
 
     streamCoordinatorClient.streamCreated(name);
-    alterExploreStream(name, true);
+    alterExploreStream(name.getId(), true);
   }
 
   /**
@@ -320,20 +322,15 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void truncate(String name) throws Exception {
+  public void truncate(Id.Stream name) throws Exception {
     StreamConfig config = getConfig(name);
     streamCoordinatorClient.nextGeneration(config, StreamUtils.getGeneration(config)).get();
   }
 
   @Override
-  public void drop(String name) throws Exception {
+  public void drop(Id.Stream name) throws Exception {
     // Same as truncate
     truncate(name);
-  }
-
-  @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // No-op
   }
 
   private void saveConfig(StreamConfig config) throws IOException {

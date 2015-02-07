@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Factory for creating {@link StreamMetricsCollector}s.
  */
@@ -41,5 +43,5 @@ public interface StreamMetricsCollectorFactory {
    * @param streamName stream name to create a collector for
    * @return a {@link StreamMetricsCollector} for the given {@code streamName}
    */
-  StreamMetricsCollector createMetricsCollector(String streamName);
+  StreamMetricsCollector createMetricsCollector(Id.Stream streamName);
 }

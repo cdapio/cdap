@@ -412,5 +412,9 @@ public final class Id  {
         .add("streamName", streamName)
         .toString();
     }
+
+    public static Stream fromString(String string) {
+      return Stream.from("yum", "yum");
+    }
   }
 }

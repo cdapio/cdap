@@ -15,7 +15,9 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
@@ -45,9 +47,10 @@ public abstract class StreamCoordinatorTestBase {
     coordinator.startAndWait();
 
     final CountDownLatch genIdChanged = new CountDownLatch(1);
-    coordinator.addListener("testGen", new StreamPropertyListener() {
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "testGen");
+    coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void generationChanged(String streamName, int generation) {
+      public void generationChanged(Id.Stream streamName, int generation) {
         if (generation == 10) {
           genIdChanged.countDown();
         }
@@ -63,7 +66,7 @@ public abstract class StreamCoordinatorTestBase {
           try {
             barrier.await();
             for (int i = 0; i < 5; i++) {
-              coordinator.nextGeneration(createStreamConfig("testGen"), 0);
+              coordinator.nextGeneration(createStreamConfig(streamId), 0);
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -78,9 +81,9 @@ public abstract class StreamCoordinatorTestBase {
     coordinator.stopAndWait();
   }
 
-  private StreamConfig createStreamConfig(String stream) throws IOException {
-    return new StreamConfig(stream, 3600000, 10000, Long.MAX_VALUE,
-                            new LocalLocationFactory(tmpFolder.newFolder()).create(stream),
+  private StreamConfig createStreamConfig(Id.Stream stream) throws IOException {
+    return new StreamConfig(stream.getId(), 3600000, 10000, Long.MAX_VALUE,
+                            new LocalLocationFactory(tmpFolder.newFolder()).create(stream.getId()),
                             null, 1000);
   }
 }

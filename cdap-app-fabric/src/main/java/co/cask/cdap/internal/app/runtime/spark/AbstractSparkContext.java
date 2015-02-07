@@ -33,6 +33,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
+import co.cask.cdap.proto.Id;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
@@ -198,7 +199,8 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   private void configureStreamInput(Configuration hConf, StreamBatchReadable stream, Class<?> vClass)
     throws IOException {
-    StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(stream.getStreamName());
+    Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), stream.getStreamName());
+    StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(streamId);
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     StreamInputFormat.setTTL(hConf, streamConfig.getTTL());

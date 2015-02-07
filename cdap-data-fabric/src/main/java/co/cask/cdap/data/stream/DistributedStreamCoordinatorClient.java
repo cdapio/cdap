@@ -25,6 +25,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
@@ -75,7 +76,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   }
 
   @Override
-  public ListenableFuture<Void> streamCreated(final String streamName) {
+  public ListenableFuture<Void> streamCreated(final Id.Stream streamName) {
     // modify the requirement to add the new stream as a new partition of the existing requirement
     ListenableFuture<ResourceRequirement> future = resourceCoordinatorClient.modifyRequirement(
       Constants.Service.STREAMS, new ResourceModifier() {
@@ -90,7 +91,8 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
             partitions = ImmutableSet.of();
           }
 
-          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName, 1);
+          //TODO: use something other than streamName.toString()
+          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName.toString(), 1);
           if (partitions.contains(newPartition)) {
             return null;
           }

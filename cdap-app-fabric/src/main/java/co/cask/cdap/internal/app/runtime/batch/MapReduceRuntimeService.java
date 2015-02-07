@@ -526,7 +526,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * @throws IOException If fails to configure the job
    */
   private void configureStreamInput(Job job, StreamBatchReadable stream) throws IOException {
-    StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
+    Id.Stream streamId = Id.Stream.from(context.getNamespaceId(), stream.getStreamName());
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     StreamInputFormat.setTTL(job, streamConfig.getTTL());

@@ -31,6 +31,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.Id;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -109,7 +110,8 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    Id.Stream streamId = Id.Stream.from(accountID, stream);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());
     endTime = Math.min(endTime, now);

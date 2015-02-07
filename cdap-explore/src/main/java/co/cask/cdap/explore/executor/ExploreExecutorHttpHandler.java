@@ -35,6 +35,7 @@ import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -96,11 +97,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                            @PathParam("stream") final String streamName) {
     try {
+      //TODO: get this from path in v3 stream api
+      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
       String streamLocationURI;
       StreamConfig streamConfig;
       try {
-        streamConfig = streamAdmin.getConfig(streamName);
+        streamConfig = streamAdmin.getConfig(streamId);
         Location streamLocation = streamConfig.getLocation();
         if (streamLocation == null) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find location of stream " + streamName);
@@ -116,7 +119,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocationURI);
       String createStatement;
       try {
-        createStatement = generateStreamCreateStatement(streamName, streamLocationURI,
+        createStatement = generateStreamCreateStatement(streamId, streamLocationURI,
                                                         streamConfig.getFormat().getSchema());
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for stream {}", streamName, e);
@@ -141,18 +144,21 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void disableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("stream") final String streamName) {
     try {
+      //TODO: get this from path in v3 stream api
+      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+
       LOG.debug("Disabling explore for stream {}", streamName);
 
       try {
         // throws io exception if there is no stream
-        streamAdmin.getConfig(streamName);
+        streamAdmin.getConfig(streamId);
       } catch (IOException e) {
         LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
         return;
       }
 
-      String deleteStatement = generateDeleteStatement(getStreamTableName(streamName));
+      String deleteStatement = generateDeleteStatement(getStreamTableName(streamId));
       LOG.debug("Running delete statement for stream {} - {}", streamName, deleteStatement);
 
       QueryHandle handle = exploreService.execute(deleteStatement);
@@ -372,8 +378,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private static String getStreamTableName(String streamName) {
-    return getHiveTableName("cdap_stream_" + streamName);
+  private static String getStreamTableName(Id.Stream streamId) {
+    //TODO: use hive namespace
+    return getHiveTableName(String.format("cdap_stream_%s_%s", streamId.getNamespaceId(), streamId.getId()));
   }
 
   public static String getHiveTableName(String name) {
@@ -387,13 +394,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * in a dummy value for an external table if it is not given in the create statement, which will result in a
    * table that cannot be queried. As such, the location must be given and accurate.
    *
-   * @param name name of the stream
+   * @param streamId name of the stream
    * @param location location of the stream
    * @param bodySchema schema for the body of a stream event
    * @return hive statement to use when creating the external table for querying the stream
    * @throws UnsupportedTypeException
    */
-  public static String generateStreamCreateStatement(String name, String location, Schema bodySchema)
+  public static String generateStreamCreateStatement(Id.Stream streamId, String location, Schema bodySchema)
     throws UnsupportedTypeException {
     // schema of a stream is always timestamp, headers, and then the schema of the body.
     List<Schema.Field> fields = Lists.newArrayList(
@@ -402,15 +409,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     fields.addAll(bodySchema.getFields());
     Schema schema = Schema.recordOf("streamEvent", fields);
     String hiveSchema = SchemaConverter.toHiveSchema(schema);
-    String tableName = getStreamTableName(name);
+    String tableName = getStreamTableName(streamId);
     return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Stream\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\", \"%s\" = \"%s\") " +
                            "LOCATION \"%s\"" +
                            "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.STREAM_NAME, name, location,
+                         Constants.Explore.STREAM_NAME, streamId.getId(),
+                         Constants.Explore.STREAM_NAMESPACE, streamId.getNamespaceId(),
+                         location,
                          // this is set so we know what stream it is created from, and so we know it's from CDAP
-                         Constants.Explore.CDAP_NAME, name);
+                         Constants.Explore.CDAP_NAME, streamId);
   }
 
   public static String generateCreateStatement(String name, Dataset dataset)

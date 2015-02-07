@@ -27,6 +27,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -123,8 +124,9 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public ListenableFuture<Long> changeTTL(final String streamName, final long newTTL) {
-    return Futures.transform(propertyStore.get().update(streamName, new PropertyUpdater<StreamProperty>() {
+  public ListenableFuture<Long> changeTTL(final Id.Stream streamName, final long newTTL) {
+    //TODO: do something other than streamName.toString
+    return Futures.transform(propertyStore.get().update(streamName.toString(), new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
         final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
@@ -157,8 +159,9 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public ListenableFuture<Integer> changeThreshold(final String streamName, final int newThreshold) {
-    return Futures.transform(propertyStore.get().update(streamName, new PropertyUpdater<StreamProperty>() {
+  public ListenableFuture<Integer> changeThreshold(final Id.Stream streamName, final int newThreshold) {
+    //TODO: do something other than streamName.toString
+    return Futures.transform(propertyStore.get().update(streamName.toString(), new PropertyUpdater<StreamProperty>() {
       @Override
       public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
         final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
@@ -191,8 +194,9 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName,
+  public Cancellable addListener(Id.Stream streamName, StreamPropertyListener listener) {
+    //TODO: do something other than streamName.toString()
+    return propertyStore.get().addChangeListener(streamName.toString(),
                                                  new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
@@ -284,7 +288,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     // Callback from PropertyStore is
     private StreamProperty currentProperty;
 
-    private StreamPropertyChangeListener(StreamAdmin streamAdmin, String streamName, StreamPropertyListener listener) {
+    private StreamPropertyChangeListener(StreamAdmin streamAdmin, Id.Stream streamName,
+                                         StreamPropertyListener listener) {
       this.listener = listener;
       try {
         StreamConfig streamConfig = streamAdmin.getConfig(streamName);
@@ -299,23 +304,25 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
     @Override
     public void onChange(String name, StreamProperty newProperty) {
+      //TODO: parse the property name to a streamID. (currently using toString on the other end, but need to use toURI?)
+      Id.Stream streamId = Id.Stream.fromString(name);
       try {
         if (newProperty != null) {
           if (currentProperty == null || currentProperty.getGeneration() < newProperty.getGeneration()) {
-            generationChanged(name, newProperty.getGeneration());
+            generationChanged(streamId, newProperty.getGeneration());
           }
 
           if (currentProperty == null || currentProperty.getTTL() != newProperty.getTTL()) {
-            ttlChanged(name, newProperty.getTTL());
+            ttlChanged(streamId, newProperty.getTTL());
           }
 
           if (currentProperty == null || currentProperty.getThreshold() != newProperty.getThreshold()) {
-            thresholdChanged(name, newProperty.getThreshold());
+            thresholdChanged(streamId, newProperty.getThreshold());
           }
 
         } else {
-          generationDeleted(name);
-          ttlDeleted(name);
+          generationDeleted(streamId);
+          ttlDeleted(streamId);
         }
       } finally {
         currentProperty = newProperty;
@@ -328,7 +335,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void generationChanged(String streamName, int generation) {
+    public void generationChanged(Id.Stream streamName, int generation) {
       try {
         listener.generationChanged(streamName, generation);
       } catch (Throwable t) {
@@ -337,7 +344,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void generationDeleted(String streamName) {
+    public void generationDeleted(Id.Stream streamName) {
       try {
         listener.generationDeleted(streamName);
       } catch (Throwable t) {
@@ -346,7 +353,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void ttlChanged(String streamName, long ttl) {
+    public void ttlChanged(Id.Stream streamName, long ttl) {
       try {
         listener.ttlChanged(streamName, ttl);
       } catch (Throwable t) {
@@ -355,7 +362,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void ttlDeleted(String streamName) {
+    public void ttlDeleted(Id.Stream streamName) {
       try {
         listener.ttlDeleted(streamName);
       } catch (Throwable t) {
@@ -364,7 +371,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void thresholdChanged(String streamName, int threshold) {
+    public void thresholdChanged(Id.Stream streamName, int threshold) {
       try {
         listener.thresholdChanged(streamName, threshold);
       } catch (Throwable t) {

@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -52,7 +53,7 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
   }
 
   @Override
-  public ListenableFuture<Void> streamCreated(String streamName) {
+  public ListenableFuture<Void> streamCreated(Id.Stream streamName) {
     return Futures.immediateFuture(null);
   }
 }

@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 import java.util.Map;
@@ -29,7 +30,7 @@ public interface ContentWriterFactory {
   /**
    * Returns the name of the stream that all {@link ContentWriter} created by this factory will write to.
    */
-  String getStream();
+  Id.Stream getStream();
 
   /**
    * Creates a {@link ContentWriter} with the given set of event headers added to each {@link StreamEvent}

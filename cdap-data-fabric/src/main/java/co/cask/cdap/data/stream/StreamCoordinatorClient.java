@@ -16,6 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
@@ -44,7 +45,7 @@ public interface StreamCoordinatorClient extends Service {
    * @return A future that will be completed when the update of TTL is done. The future result will carry
    *         the TTL updated by this method.
    */
-  ListenableFuture<Long> changeTTL(String streamName, long ttl);
+  ListenableFuture<Long> changeTTL(Id.Stream streamName, long ttl);
 
   /**
    * Changes the notification threshold of the given stream.
@@ -54,7 +55,7 @@ public interface StreamCoordinatorClient extends Service {
    * @return A future that will be completed when the update of threshold is done. The future result will carry
    *         the threshold updated by this method.
    */
-  ListenableFuture<Integer> changeThreshold(String streamName, int threshold);
+  ListenableFuture<Integer> changeThreshold(Id.Stream streamName, int threshold);
 
   /**
    * Receives event for changes in stream properties.
@@ -62,7 +63,7 @@ public interface StreamCoordinatorClient extends Service {
    * @param listener listener to get called when there is change in stream properties.
    * @return A {@link Cancellable} to cancel the watch
    */
-  Cancellable addListener(String streamName, StreamPropertyListener listener);
+  Cancellable addListener(Id.Stream streamName, StreamPropertyListener listener);
 
   /**
    * Called whenever a new stream is created.
@@ -71,5 +72,5 @@ public interface StreamCoordinatorClient extends Service {
    * @param streamName name of the stream.
    * @return A {@link ListenableFuture} describing the progress of the operation.
    */
-  ListenableFuture<Void> streamCreated(String streamName);
+  ListenableFuture<Void> streamCreated(Id.Stream streamName);
 }

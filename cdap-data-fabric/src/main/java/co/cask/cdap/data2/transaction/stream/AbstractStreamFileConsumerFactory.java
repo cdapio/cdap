@@ -124,7 +124,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   public final StreamConsumer create(Id.Stream streamName, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
 
-    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName.getId());
+    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName);
 
     String tableName = getTableName(streamName, namespace);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
@@ -137,12 +137,12 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     try {
       // The old stream admin uses full URI of queue name as the name for checking existence
       //TODO: why is this code here? its queue-related, but we're in stream stuff.
-      QueueName queueName = QueueName.fromStream(streamName);
-      if (!oldStreamAdmin.exists(queueName.toURI().toString())) {
+      if (!oldStreamAdmin.exists(streamName)) {
         return newConsumer;
       }
 
       // For old stream consumer, the group size doesn't matter in queue based stream.
+      QueueName queueName = QueueName.fromStream(streamName);
       StreamConsumer oldConsumer = new QueueToStreamConsumer(streamName, consumerConfig,
                                                              queueClientFactory.createConsumer(queueName,
                                                                                                consumerConfig, -1)
@@ -169,7 +169,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
       //TODO: why is this code here? its queue-related, but we're in stream stuff.
       if (oldStreamAdmin instanceof QueueAdmin
-        && !oldStreamAdmin.exists(QueueName.fromStream(streamName).toURI().toString())) {
+        && !oldStreamAdmin.exists(streamName)) {
         // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
         // String namespace = String.format("%s.%s.%s",
         //                                  programId.getNamespaceId(),

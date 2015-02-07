@@ -33,6 +33,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * admin for streams in hbase.
@@ -86,7 +88,7 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
+  public StreamConfig getConfig(Id.Stream streamName) throws IOException {
     return null;
   }
 
@@ -99,4 +101,34 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
     return 0;
   }
+
+  private String fromStream(Id.Stream streamId) {
+    return QueueName.fromStream(streamId).toURI().toString();
+  }
+
+  @Override
+  public boolean exists(Id.Stream name) throws Exception {
+    return exists(fromStream(name));
+  }
+
+  @Override
+  public void create(Id.Stream name) throws Exception {
+    create(fromStream(name));
+  }
+
+  @Override
+  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
+    create(fromStream(name), props);
+  }
+
+  @Override
+  public void truncate(Id.Stream name) throws Exception {
+    truncate(fromStream(name));
+  }
+
+  @Override
+  public void drop(Id.Stream name) throws Exception {
+    drop(fromStream(name));
+  }
+
 }

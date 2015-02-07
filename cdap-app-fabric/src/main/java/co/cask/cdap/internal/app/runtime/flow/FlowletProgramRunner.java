@@ -616,11 +616,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
    */
   private Service createServiceHook(String flowletName, Iterable<ConsumerSupplier<?>> consumerSuppliers,
                                     AtomicReference<FlowletProgramController> controller) {
-    final List<String> streams = Lists.newArrayList();
+    final List<Id.Stream> streams = Lists.newArrayList();
     for (ConsumerSupplier<?> consumerSupplier : consumerSuppliers) {
       QueueName queueName = consumerSupplier.getQueueName();
       if (queueName.isStream()) {
-        streams.add(queueName.getSimpleName());
+        streams.add(queueName.toStreamId());
       }
     }
 
@@ -664,7 +664,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private static final class FlowletServiceHook extends AbstractService {
 
     private final StreamCoordinatorClient streamCoordinatorClient;
-    private final List<String> streams;
+    private final List<Id.Stream> streams;
     private final AtomicReference<FlowletProgramController> controller;
     private final Executor executor;
     private final Lock suspendLock = new ReentrantLock();
@@ -672,32 +672,32 @@ public final class FlowletProgramRunner implements ProgramRunner {
     private Cancellable cancellable;
 
     private FlowletServiceHook(final String flowletName, StreamCoordinatorClient streamCoordinatorClient,
-                               List<String> streams, AtomicReference<FlowletProgramController> controller) {
+                               List<Id.Stream> streams, AtomicReference<FlowletProgramController> controller) {
       this.streamCoordinatorClient = streamCoordinatorClient;
       this.streams = streams;
       this.controller = controller;
       this.executor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("flowlet-stream-update-%d"));
       this.propertyListener = new StreamPropertyListener() {
         @Override
-        public void ttlChanged(String streamName, long ttl) {
+        public void ttlChanged(Id.Stream streamName, long ttl) {
           LOG.debug("TTL for stream '{}' changed to {} for flowlet '{}'", streamName, ttl, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void ttlDeleted(String streamName) {
+        public void ttlDeleted(Id.Stream streamName) {
           LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamName, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationChanged(String streamName, int generation) {
+        public void generationChanged(Id.Stream streamName, int generation) {
           LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamName, generation, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationDeleted(String streamName) {
+        public void generationDeleted(Id.Stream streamName) {
           LOG.debug("Generation for stream '{}' deleted for flowlet '{}'", streamName, flowletName);
           suspendAndResume();
         }
@@ -716,7 +716,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
       };
 
-      for (String stream : streams) {
+      for (Id.Stream stream : streams) {
         cancellables.add(streamCoordinatorClient.addListener(stream, propertyListener));
       }
       notifyStarted();

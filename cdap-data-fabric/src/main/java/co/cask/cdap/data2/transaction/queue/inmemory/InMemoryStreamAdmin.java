@@ -25,6 +25,8 @@ import com.google.inject.Singleton;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * admin for queues in memory.
@@ -53,7 +55,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) {
+  public StreamConfig getConfig(Id.Stream streamName) {
     // TODO: add support for queue-based stream
     throw new UnsupportedOperationException("Not yet supported");
   }
@@ -67,4 +69,34 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
+
+  private String fromStream(Id.Stream streamId) {
+    return QueueName.fromStream(streamId).toURI().toString();
+  }
+
+  @Override
+  public boolean exists(Id.Stream name) throws Exception {
+    return exists(fromStream(name));
+  }
+
+  @Override
+  public void create(Id.Stream name) throws Exception {
+    create(fromStream(name));
+  }
+
+  @Override
+  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
+    create(fromStream(name), props);
+  }
+
+  @Override
+  public void truncate(Id.Stream name) throws Exception {
+    truncate(fromStream(name));
+  }
+
+  @Override
+  public void drop(Id.Stream name) throws Exception {
+    drop(fromStream(name));
+  }
+
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
+import co.cask.cdap.proto.Id;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
@@ -40,14 +41,14 @@ final class TextStreamBodyConsumer extends BodyConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(TextStreamBodyConsumer.class);
 
-  private final String streamName;
+  private final Id.Stream streamId;
   private final ContentWriterFactory contentWriterFactory;
   private ContentWriter contentWriter;
   private boolean failed;
   private ChannelBuffer buffer = ChannelBuffers.EMPTY_BUFFER;
 
   TextStreamBodyConsumer(ContentWriterFactory contentWriterFactory) {
-    this.streamName = contentWriterFactory.getStream();
+    this.streamId = contentWriterFactory.getStream();
     this.contentWriterFactory = contentWriterFactory;
   }
 
@@ -70,7 +71,7 @@ final class TextStreamBodyConsumer extends BodyConsumer {
       }
     } catch (Exception e) {
       failed = true;
-      LOG.error("Failed to write upload content to stream {}", streamName, e);
+      LOG.error("Failed to write upload content to stream {}", streamId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to write uploaded content");
 
       // Propagate the exception so that the netty http service will terminate the handling
@@ -94,7 +95,7 @@ final class TextStreamBodyConsumer extends BodyConsumer {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       // Just log and response. No need to propagate since it's the end of upload already.
-      LOG.error("Failed to write upload content to stream {}", streamName, e);
+      LOG.error("Failed to write upload content to stream {}", streamId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to write uploaded content");
     }
   }
@@ -102,7 +103,7 @@ final class TextStreamBodyConsumer extends BodyConsumer {
   @Override
   public void handleError(Throwable cause) {
     // Nothing other than log
-    LOG.warn("Failed to handle upload to stream {}", streamName, cause);
+    LOG.warn("Failed to handle upload to stream {}", streamId, cause);
   }
 
   private void processChunk(final ChannelBuffer chunk) throws IOException {

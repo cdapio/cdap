@@ -37,7 +37,6 @@ import java.util.Map;
  */
 final class FileContentWriter implements ContentWriter {
 
-  private final String accountId;
   private final StreamConfig streamConfig;
   private final ConcurrentStreamWriter streamWriter;
   private final MutableStreamEventData streamEventData;
@@ -47,9 +46,8 @@ final class FileContentWriter implements ContentWriter {
   private final StreamDataFileWriter writer;
   private long eventCount;
 
-  FileContentWriter(String accountId, StreamConfig streamConfig, ConcurrentStreamWriter streamWriter,
+  FileContentWriter(StreamConfig streamConfig, ConcurrentStreamWriter streamWriter,
                     Location directory, Map<String, String> headers) throws IOException {
-    this.accountId = accountId;
     this.streamConfig = streamConfig;
     this.streamWriter = streamWriter;
     this.streamEventData = new MutableStreamEventData();
@@ -100,7 +98,8 @@ final class FileContentWriter implements ContentWriter {
   public void close() throws IOException {
     try {
       writer.flush();
-      streamWriter.appendFile(accountId, streamConfig.getName(), eventFile, indexFile, eventCount, writer);
+      //TODO: pass in streamConfig.getStreamId() in place of the null below.
+      streamWriter.appendFile(null, eventFile, indexFile, eventCount, writer);
     } finally {
       Locations.deleteQuietly(Locations.getParent(eventFile), true);
     }

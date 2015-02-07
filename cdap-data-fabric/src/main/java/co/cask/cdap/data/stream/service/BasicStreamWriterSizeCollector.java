@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -37,7 +38,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
   private static final Logger LOG = LoggerFactory.getLogger(BasicStreamWriterSizeCollector.class);
 
   private final StreamCoordinatorClient streamCoordinatorClient;
-  private final ConcurrentMap<String, AtomicLong> streamSizes;
+  private final ConcurrentMap<Id.Stream, AtomicLong> streamSizes;
   private final List<Cancellable> truncationSubscriptions;
 
   @Inject
@@ -60,13 +61,13 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
   }
 
   @Override
-  public long getTotalCollected(String streamName) {
+  public long getTotalCollected(Id.Stream streamName) {
     AtomicLong collected = streamSizes.get(streamName);
     return collected != null ? collected.get() : 0;
   }
 
   @Override
-  public synchronized void received(String streamName, long dataSize) {
+  public synchronized void received(Id.Stream streamName, long dataSize) {
     AtomicLong value = streamSizes.get(streamName);
     if (value == null) {
       value = streamSizes.putIfAbsent(streamName, new AtomicLong(dataSize));
@@ -74,7 +75,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
         // This is the first time that we've seen this stream, we subscribe to generation changes to track truncation
         truncationSubscriptions.add(streamCoordinatorClient.addListener(streamName, new StreamPropertyListener() {
           @Override
-          public void generationChanged(String streamName, int generation) {
+          public void generationChanged(Id.Stream streamName, int generation) {
             // Handle stream truncation by resetting the size aggregated so far
             streamSizes.put(streamName, new AtomicLong(0));
           }

@@ -99,7 +99,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private Cancellable leaderListenerCancellable;
 
-  private final ConcurrentMap<String, StreamSizeAggregator> aggregators;
+  private final ConcurrentMap<Id.Stream, StreamSizeAggregator> aggregators;
   private Cancellable heartbeatsSubscription;
 
   private Supplier<Discoverable> discoverableSupplier;
@@ -148,7 +148,7 @@ public class DistributedStreamService extends AbstractStreamService {
     heartbeatsSubscription = subscribeToHeartbeatsFeed();
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
-      public void leaderOf(Set<String> streamNames) {
+      public void leaderOf(Set<Id.Stream> streamNames) {
         aggregate(streamNames);
       }
     });
@@ -188,9 +188,11 @@ public class DistributedStreamService extends AbstractStreamService {
   @Override
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
-    ImmutableMap.Builder<String, Long> sizes = ImmutableMap.builder();
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
-      sizes.put(streamSpec.getName(), streamWriterSizeCollector.getTotalCollected(streamSpec.getName()));
+    ImmutableMap.Builder<Id.Stream, Long> sizes = ImmutableMap.builder();
+    String namespace = Constants.DEFAULT_NAMESPACE;
+    for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
+      Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
+      sizes.put(streamId, streamWriterSizeCollector.getTotalCollected(streamId));
     }
     StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
     LOG.trace("Publishing heartbeat {}", heartbeat);
@@ -203,9 +205,9 @@ public class DistributedStreamService extends AbstractStreamService {
    *
    * @param streamNames names of the streams to perform data sizes aggregation on
    */
-  private void aggregate(Set<String> streamNames) {
-    Set<String> existingAggregators = Sets.newHashSet(aggregators.keySet());
-    for (String streamName : streamNames) {
+  private void aggregate(Set<Id.Stream> streamNames) {
+    Set<Id.Stream> existingAggregators = Sets.newHashSet(aggregators.keySet());
+    for (Id.Stream streamName : streamNames) {
       if (existingAggregators.remove(streamName)) {
         continue;
       }
@@ -223,7 +225,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
     // but don't anymore
-    for (String outdatedStream : existingAggregators) {
+    for (Id.Stream outdatedStream : existingAggregators) {
       // We need to first cancel the aggregator and then remove it from the map of aggregators,
       // to avoid race conditions in createSizeAggregator
       StreamSizeAggregator aggregator = aggregators.get(outdatedStream);
@@ -243,13 +245,13 @@ public class DistributedStreamService extends AbstractStreamService {
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, int threshold) {
+  private StreamSizeAggregator createSizeAggregator(Id.Stream streamName, long baseCount, int threshold) {
     LOG.debug("Creating size aggregator for stream {}", streamName);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
-        public void thresholdChanged(String streamName, int threshold) {
+        public void thresholdChanged(Id.Stream streamName, int threshold) {
           StreamSizeAggregator aggregator = aggregators.get(streamName);
           while (aggregator == null) {
             Thread.yield();
@@ -264,7 +266,7 @@ public class DistributedStreamService extends AbstractStreamService {
     final Cancellable truncationSubscription =
       getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
         @Override
-        public void generationChanged(String streamName, int generation) {
+        public void generationChanged(Id.Stream streamName, int generation) {
           StreamSizeAggregator aggregator = aggregators.get(streamName);
           while (aggregator == null) {
             Thread.yield();
@@ -314,7 +316,7 @@ public class DistributedStreamService extends AbstractStreamService {
       @Override
       public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
         LOG.trace("Received heartbeat {}", heartbeat);
-        for (Map.Entry<String, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
+        for (Map.Entry<Id.Stream, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
           StreamSizeAggregator streamSizeAggregator = aggregators.get(entry.getKey());
           if (streamSizeAggregator == null) {
             LOG.trace("Aggregator for stream {} is null", entry.getKey());
@@ -466,7 +468,7 @@ public class DistributedStreamService extends AbstractStreamService {
    *
    * @param streamNames set of Streams that this coordinator is the leader of
    */
-  private void invokeLeaderListeners(Set<String> streamNames) {
+  private void invokeLeaderListeners(Set<Id.Stream> streamNames) {
     LOG.debug("Stream writer is the leader of streams: {}", streamNames);
     Set<StreamLeaderListener> listeners;
     synchronized (this) {
@@ -489,12 +491,13 @@ public class DistributedStreamService extends AbstractStreamService {
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
       LOG.info("Stream leader requirement has changed to {}", partitionReplicas);
-      Set<String> streamNames =
-        ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, String>() {
+      Set<Id.Stream> streamNames =
+        ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, Id.Stream>() {
           @Nullable
           @Override
-          public String apply(@Nullable PartitionReplica input) {
-            return input != null ? input.getName() : null;
+          public Id.Stream apply(@Nullable PartitionReplica input) {
+            //TODO: verify the other end
+            return input != null ? Id.Stream.fromString(input.getName()) : null;
           }
         }));
       invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
@@ -523,7 +526,7 @@ public class DistributedStreamService extends AbstractStreamService {
     private final Cancellable cancellable;
     private boolean isInit;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB, Cancellable cancellable) {
+    protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
       this.countFromFiles = new AtomicLong(baseCount);
@@ -531,9 +534,9 @@ public class DistributedStreamService extends AbstractStreamService {
       this.cancellable = cancellable;
       this.isInit = true;
       this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+        .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamName)
+        .setName(streamId.getId())
         .build();
     }
 

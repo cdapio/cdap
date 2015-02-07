@@ -43,9 +43,10 @@ public abstract class StreamConsumerStateTestBase {
   public void testStateExists() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStateExists";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    streamAdmin.create(streamId);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(streamId);
     StreamConsumerStateStore stateStore = createStateStore(config);
 
     streamAdmin.configureInstances(Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName), 0L, 1);
@@ -63,9 +64,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStore";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates a state with 4 offsets
     StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
@@ -83,9 +86,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testMultiStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testMultiStore";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates 4 states of 2 groups, each with 4 offsets
     Set<StreamConsumerState> states = Sets.newHashSet();
@@ -107,9 +112,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testRemove() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testRemove";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates 4 states of 2 groups, each with 4 offsets
     Set<StreamConsumerState> states = Sets.newHashSet();
@@ -151,9 +158,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testChangeInstance() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testChangeInstance";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates a state with 4 offsets
     StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
@@ -162,7 +171,6 @@ public abstract class StreamConsumerStateTestBase {
     // Save the state.
     stateStore.save(state);
 
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     // Increase the number of instances
     streamAdmin.configureInstances(streamId, 0L, 2);
 

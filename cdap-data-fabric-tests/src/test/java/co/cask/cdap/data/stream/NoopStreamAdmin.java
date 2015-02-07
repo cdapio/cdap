@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -48,7 +47,7 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
+  public StreamConfig getConfig(Id.Stream streamName) throws IOException {
     throw new IllegalStateException("Stream " + streamName + " not exists.");
   }
 
@@ -62,27 +61,24 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
+  public boolean exists(Id.Stream name) throws Exception {
     return false;
   }
 
   @Override
-  public void create(String name) throws Exception {
+  public void create(Id.Stream name) throws Exception {
   }
 
   @Override
-  public void create(String name, @Nullable Properties props) throws Exception {
+  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
   }
 
   @Override
-  public void truncate(String name) throws Exception {
+  public void truncate(Id.Stream name) throws Exception {
   }
 
   @Override
-  public void drop(String name) throws Exception {
+  public void drop(Id.Stream name) throws Exception {
   }
 
-  @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-  }
 }

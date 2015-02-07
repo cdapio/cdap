@@ -16,16 +16,17 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.data2.transaction.EntityAdmin;
 import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-public interface StreamAdmin extends EntityAdmin {
+public interface StreamAdmin {
 
   /**
    * Deletes all entries for all streams.
@@ -58,7 +59,7 @@ public interface StreamAdmin extends EntityAdmin {
    * @return A {@link StreamConfig} instance.
    * @throws IOException If the stream doesn't exists.
    */
-  StreamConfig getConfig(String streamName) throws IOException;
+  StreamConfig getConfig(Id.Stream streamName) throws IOException;
 
   /**
    * Overwrites existing configuration for the given stream.
@@ -74,4 +75,42 @@ public interface StreamAdmin extends EntityAdmin {
    * @throws IOException in case of any error in fetching the size
    */
   long fetchStreamSize(StreamConfig streamConfig) throws IOException;
+
+  /////////////////////////
+  /**
+   * @param name entity name
+   * @return true if entity with given name exists, otherwise false
+   * @throws Exception if check fails
+   */
+  boolean exists(Id.Stream name) throws Exception;
+
+  /**
+   * Creates entity if doesn't exist. If entity exists does nothing.
+   * @param name name of the entity to create
+   * @throws Exception if creation fails
+   */
+  void create(Id.Stream name) throws Exception;
+
+  /**
+   * Creates entity if doesn't exist. If entity exists does nothing.
+   * @param name name of the entity to create
+   * @param props additional properties
+   * @throws Exception if creation fails
+   */
+  void create(Id.Stream name, @Nullable Properties props) throws Exception;
+
+  /**
+   * Wipes out entity data.
+   * @param name entity name
+   * @throws Exception if cleanup fails
+   */
+  void truncate(Id.Stream name) throws Exception;
+
+  /**
+   * Deletes entity from the system completely.
+   * @param name entity name
+   * @throws Exception if deletion fails
+   */
+  void drop(Id.Stream name) throws Exception;
+
 }
