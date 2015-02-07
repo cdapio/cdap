@@ -19,6 +19,7 @@ package co.cask.cdap.notifications.service;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
@@ -88,13 +89,13 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
 
   @Override
   public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler)
-    throws NotificationFeedException {
+    throws NotificationFeedNotFoundException, NotificationFeedException {
     return subscribe(feed, handler, Threads.SAME_THREAD_EXECUTOR);
   }
 
   @Override
   public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
-    throws NotificationFeedException {
+    throws NotificationFeedNotFoundException, NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 

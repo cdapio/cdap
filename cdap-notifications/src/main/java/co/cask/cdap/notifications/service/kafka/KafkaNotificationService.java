@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
@@ -128,7 +129,8 @@ public class KafkaNotificationService extends AbstractNotificationService {
 
   @Override
   public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler,
-                                   Executor executor) throws NotificationFeedException {
+                                   Executor executor)
+    throws NotificationFeedNotFoundException, NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
@@ -165,7 +167,8 @@ public class KafkaNotificationService extends AbstractNotificationService {
     }
 
     public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler,
-                                     Executor executor) throws NotificationFeedException {
+                                     Executor executor)
+      throws NotificationFeedNotFoundException, NotificationFeedException {
       final Cancellable cancellable = KafkaNotificationService.super.subscribe(feed, handler, executor);
       synchronized (KafkaNotificationService.this) {
         if (subscriptions == 0) {
