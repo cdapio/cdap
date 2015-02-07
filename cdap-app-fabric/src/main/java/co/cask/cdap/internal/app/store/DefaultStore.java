@@ -759,7 +759,7 @@ public class DefaultStore implements Store {
   @Override
   @Nullable
   public NamespaceMeta getNamespace(final Id.Namespace id) {
-    Preconditions.checkArgument(id != null && id.getId() != null, "Namespace id cannot be null.");
+    Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -771,7 +771,7 @@ public class DefaultStore implements Store {
   @Override
   @Nullable
   public NamespaceMeta deleteNamespace(final Id.Namespace id) {
-    Preconditions.checkArgument(id != null && id.getId() != null, "Namespace id cannot be null.");
+    Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
