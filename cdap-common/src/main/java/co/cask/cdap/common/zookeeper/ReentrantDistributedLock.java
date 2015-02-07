@@ -297,7 +297,7 @@ public final class ReentrantDistributedLock implements Lock {
           // This is for the case of tryLock() without timeout.
           completion.cancel(true);
         }
-        // If the lock acquisition is completed, due to whatever reason, we need to watch for any other nodes
+        // If the lock acquisition is completed, due to whatever reason, we don't need to watch for any other nodes
         if (completion.isDone()) {
           return;
         }
