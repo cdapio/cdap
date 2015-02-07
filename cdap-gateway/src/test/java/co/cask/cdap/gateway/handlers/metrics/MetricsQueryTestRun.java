@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -37,12 +38,44 @@ import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class MetricsQueryTestRun extends MetricsSuiteTestBase {
+  protected static List<String> validResources;
+  protected static List<String> malformedResources;
+
+  static {
+    validResources = ImmutableList.of(
+      "/system/my.reads?aggregate=true",
+      "/system/apps/WordCount/my.reads?aggregate=true",
+      "/system/apps/WordCount/flows/my.reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/my.reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlets/counter/my.reads?aggregate=true",
+      "/system/datasets/wordStats/my.reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/my.reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/my.reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/my.reads?aggregate=true",
+      "/system/streams/wordStream/collect.my.events?aggregate=true",
+      "/system/cluster/resources.total.my.storage?aggregate=true"
+    );
+
+    malformedResources = ImmutableList.of(
+      "/syste/reads?aggregate=true",
+      "/system/app/WordCount/reads?aggregate=true",
+      "/system/apps/WordCount/flow/WordCounter/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
+      "/system/dataset/wordStats/reads?aggregate=true",
+      "/system/datasets/wordStats/app/WordCount/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
+    );
+
+  }
 
   @Test
   public void testQueueLength() throws Exception {
@@ -125,25 +158,6 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     testSingleMetric(handlerRequest, 1);
     testSingleMetric(serviceRequest, 1);
   }
-
-  @Test
-  public void testingInvalidSystemMetrics() throws Exception {
-    //appfabrics service does not exist
-    String methodRequest =
-      "/system/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
-        "request.received?aggregate=true";
-
-    HttpResponse response = doGet("/v2/metrics" + methodRequest);
-    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-    try {
-      Assert.assertEquals("GET " + methodRequest + " did not return 404 NOT-FOUND status.",
-                          HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
-    } finally {
-      reader.close();
-    }
-
-  }
-
 
   @Test
   public void testingUserServiceMetrics() throws Exception {
@@ -339,17 +353,17 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testGetMetric() throws Exception {
     // Insert some metric
     MetricsCollector collector =
-      collectionService.getCollector(getFlowletQueueContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
-                                                            "counter", "wordStats"));
-    collector.increment("reads", 10);
-    collector =
-      collectionService.getCollector(getFlowletQueueContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
-                                                            "counter", "wordStream"));
-    collector.increment("collect.events", 10);
+      collectionService.getCollector(getFlowletDatasetContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
+                                                              "counter", "wordStats"));
+    collector.increment("my.reads", 10);
+
+    collector = collectionService.getCollector(getStreamHandlerContext("wordStream", "0"));
+    collector.increment("collect.my.events", 10);
+
     collector = collectionService.getCollector(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
                       Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
-    collector.increment("resources.total.storage", 10);
+    collector.increment("resources.total.my.storage", 10);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);

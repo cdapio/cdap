@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -29,6 +30,14 @@ import java.util.Set;
 public class DefaultAggregation implements Aggregation {
   private final List<String> aggregateTags;
   private final Set<String> requiredTags;
+
+  /**
+   * Creates instance of {@link DefaultAggregation} with all tags being optional.
+   * @param aggregateTags tags to be included in aggregation.
+   */
+  public DefaultAggregation(List<String> aggregateTags) {
+    this(aggregateTags, new HashSet<String>());
+  }
 
   /**
    * Creates instance of {@link DefaultAggregation}.

@@ -17,10 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTables;
-import co.cask.cdap.metrics.process.MetricRecordsWrapper;
-import co.cask.cdap.metrics.process.MetricsProcessor;
+import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -31,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,25 +42,26 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   private static final Logger LOG = LoggerFactory.getLogger(LocalMetricsCollectionService.class);
 
   private final CConfiguration cConf;
-  private final Set<MetricsProcessor> processors;
-  private final MetricsTableFactory tableFactory;
-  private final TimeSeriesTables timeSeriesTables;
+  private final MetricStore metricStore;
   private ScheduledExecutorService scheduler;
 
   @Inject
-  public LocalMetricsCollectionService(CConfiguration cConf, MetricsTableFactory tableFactory,
-                                       Set<MetricsProcessor> processors) {
+  public LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
     this.cConf = cConf;
-    this.processors = processors;
-    this.tableFactory = tableFactory;
-    this.timeSeriesTables = new TimeSeriesTables(tableFactory);
+    this.metricStore = metricStore;
   }
 
   @Override
   protected void publish(Iterator<MetricValue> metrics) throws Exception {
     List<MetricValue> records = ImmutableList.copyOf(metrics);
-    for (MetricsProcessor processor : processors) {
-      processor.process(new MetricRecordsWrapper(records.iterator()));
+
+    for (MetricValue value : records) {
+      // todo: change method signature to allow adding multiple at once?
+      try {
+        metricStore.add(value);
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to add metric data to a store", e);
+      }
     }
   }
 
@@ -98,20 +95,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       @Override
       public void run() {
         // Only do cleanup if the underlying table doesn't supports TTL.
-        try {
-          if (tableFactory.isTTLSupported()) {
-            return;
-          }
-        } catch (Exception e) {
-          // If we cannot determine that ttl is supported then try again in 1 second
-          scheduler.schedule(this, 1, TimeUnit.SECONDS);
-          return;
-        }
-
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
 
-        timeSeriesTables.deleteBefore(deleteBefore);
+        metricStore.deleteBefore(deleteBefore);
         scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };
