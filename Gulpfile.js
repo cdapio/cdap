@@ -104,10 +104,10 @@ gulp.task('js:lib', function() {
       './bower_components/d3/d3.min.js',
       './bower_components/epoch/epoch.min.js',
 
-      'bower_components/lodash/dist/lodash.js',
-      'bower_components/graphlib/dist/graphlib.core.js',
-      'bower_components/dagre/dist/dagre.core.js',
-      'bower_components/dagre-d3/dist/dagre-d3.core.js'
+      './bower_components/lodash/dist/lodash.js',
+      './bower_components/graphlib/dist/graphlib.core.js',
+      './bower_components/dagre/dist/dagre.core.js',
+      './bower_components/dagre-d3/dist/dagre-d3.core.js'
 
 
     ].concat([
