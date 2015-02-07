@@ -17,28 +17,28 @@ angular.module(PKG.name+'.feature.foo')
         controller: function ($scope) {
           $scope.data = {
             nodes: [
-              { id: 'one', value: { label: 'one' } },
-              { id: 'two', value: { label: 'two' } },
-              { id: 'three', value: { label: 'three' } },
-              { id: 'four', value: { label: 'four' } },
-              { id: 'five', value: { label: 'five' } },
-              { id: 'whew', value: { label: 'whew' } },
-              { id: 'err', value: { label: 'err' } },
-              { id: 'six', value: { label: 'six' } },
-              { id: 'seven', value: { label: 'seven' } }
+              'one',
+              'two',
+              'three',
+              'four',
+              'five',
+              'whew',
+              'err',
+              'six',
+              'seven'
             ],
-            links: [
-              { u: 'one', v: 'three' },
-              { u: 'two', v: 'three' },
-              { u: 'three', v: 'four' },
-              { u: 'three', v: 'five'},
-              { u: 'whew', v: 'seven'},
-              { u: 'four', v: 'seven' },
-              { u: 'six', v: 'seven'},
-              { u: 'err', v: 'seven'},
-              { u: 'five', v: 'six' },
-              { u: 'two', v: 'seven'},
-              { u: 'four', v: 'six'}
+            edges: [
+              { sourceName: 'one', targetName: 'three' },
+              { sourceName: 'two', targetName: 'three' },
+              { sourceName: 'three', targetName: 'four' },
+              { sourceName: 'three', targetName: 'five'},
+              { sourceName: 'whew', targetName: 'seven'},
+              { sourceName: 'four', targetName: 'seven' },
+              { sourceName: 'six', targetName: 'seven'},
+              { sourceName: 'err', targetName: 'seven'},
+              { sourceName: 'five', targetName: 'six' },
+              { sourceName: 'two', targetName: 'seven'},
+              { sourceName: 'four', targetName: 'six'}
             ]
           };
         }
