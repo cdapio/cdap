@@ -30,6 +30,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -103,6 +104,7 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
   protected static StreamHttpService streamHttpService;
+  protected static StreamService streamService;
 
   protected static ExploreClient exploreClient;
 
@@ -143,6 +145,8 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
   }
@@ -154,6 +158,7 @@ public class BaseHiveExploreServiceTest {
     }
 
     streamHttpService.stopAndWait();
+    streamService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();

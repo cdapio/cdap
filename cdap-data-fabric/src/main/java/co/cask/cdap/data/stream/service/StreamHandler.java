@@ -45,8 +45,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
@@ -272,22 +275,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    StreamConfig currConfig;
-    try {
-      currConfig = streamAdmin.getConfig(stream);
-    } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream " + stream + " does not exist.");
-      return;
-    }
-
-    StreamConfig requestedConfig = getAndValidateConfig(currConfig, request, responder);
+    StreamProperties properties = getAndValidateConfig(stream, request, responder);
     // null is returned if the requested config is invalid. An appropriate response will have already been written
     // to the responder so we just need to return.
-    if (requestedConfig == null) {
+    if (properties == null) {
       return;
     }
 
-    streamAdmin.updateConfig(requestedConfig);
+    streamAdmin.updateConfig(properties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -329,14 +324,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
-  
-  // given the current config for a stream and requested config for a stream, get the new stream config
-  // with defaults in place of missing settings, and validation performed on the requested fields.
-  // If a field is missing or invalid, this method will write an appropriate response to the responder and
-  // return a null config.
-  private StreamConfig getAndValidateConfig(StreamConfig currConfig, HttpRequest request, HttpResponder responder) {
-    // get new config settings from the request. Only TTL and format spec can be changed, which is
-    // why the StreamProperties object is used instead of a StreamConfig object.
+
+  /**
+   * Gets stream properties from the request. If there is request is invalid, response will be made and {@code null}
+   * will be return.
+   */
+  private StreamProperties getAndValidateConfig(String stream, HttpRequest request, HttpResponder responder) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     StreamProperties properties;
     try {
@@ -347,25 +340,17 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return null;
     }
 
-    // if no ttl is given, use the existing ttl.
-    Long newTTL = properties.getTTL();
-    if (newTTL == null) {
-      newTTL = currConfig.getTTL();
-    } else {
-      if (newTTL < 0) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive.");
-        return null;
-      }
-      // TTL in the REST API is in seconds. Convert it to ms for the config.
-      newTTL = TimeUnit.SECONDS.toMillis(newTTL);
+    // Validate ttl
+    Long ttl = properties.getTTL();
+    if (ttl != null && ttl < 0) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive.");
+      return null;
     }
 
-    FormatSpecification newFormatSpec = properties.getFormat();
-    // if no format spec is given, use the existing format spec.
-    if (newFormatSpec == null) {
-      newFormatSpec = currConfig.getFormat();
-    } else {
-      String formatName = newFormatSpec.getName();
+    // Validate format
+    FormatSpecification formatSpec = properties.getFormat();
+    if (formatSpec != null) {
+      String formatName = formatSpec.getName();
       if (formatName == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "A format name must be specified.");
         return null;
@@ -373,11 +358,11 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       try {
         // if a format is given, make sure it is a valid format,
         // check that we can instantiate the format class
-        RecordFormat<?, ?> format = RecordFormats.createInitializedFormat(newFormatSpec);
+        RecordFormat<?, ?> format = RecordFormats.createInitializedFormat(formatSpec);
         // the request may contain a null schema, in which case the default schema of the format should be used.
         // create a new specification object that is guaranteed to have a non-null schema.
-        newFormatSpec = new FormatSpecification(newFormatSpec.getName(),
-                                                format.getSchema(), newFormatSpec.getSettings());
+        formatSpec = new FormatSpecification(formatSpec.getName(),
+                                                format.getSchema(), formatSpec.getSettings());
       } catch (UnsupportedTypeException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Format " + formatName + " does not support the requested schema.");
@@ -389,19 +374,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
-    // if no threshold is given, use the existing threshold.
-    Integer newThreshold = properties.getThreshold();
-    if (newThreshold == null) {
-      newThreshold = currConfig.getNotificationThresholdMB();
-    } else {
-      if (newThreshold <= 0) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
-        return null;
-      }
+    // Validate notification threshold
+    Integer threshold = properties.getThreshold();
+    if (threshold != null && threshold <= 0) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
+      return null;
     }
 
-    return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
-                            newTTL, currConfig.getLocation(), newFormatSpec, newThreshold);
+    return new StreamProperties(stream, ttl, formatSpec, threshold);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -469,17 +449,39 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *  Adapter class for {@link co.cask.cdap.proto.StreamProperties}
+   *  Adapter class for {@link co.cask.cdap.proto.StreamProperties}. Its main purpose is to transform
+   *  the unit of TTL, which is second in JSON, but millisecond in the StreamProperties object.
    */
-  private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties> {
+  private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties>,
+                                                                JsonDeserializer<StreamProperties> {
     @Override
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
       json.addProperty("name", src.getName());
-      json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
-      json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
-      json.addProperty("threshold", src.getThreshold());
+      if (src.getTTL() != null) {
+        json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
+      }
+      if (src.getFormat() != null) {
+        json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
+      }
+      if (src.getThreshold() != null) {
+        json.addProperty("threshold", src.getThreshold());
+      }
       return json;
+    }
+
+    @Override
+    public StreamProperties deserialize(JsonElement json, Type typeOfT,
+                                        JsonDeserializationContext context) throws JsonParseException {
+      JsonObject jsonObj = json.getAsJsonObject();
+      String name = jsonObj.getAsJsonPrimitive("name").getAsString();
+      Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
+      FormatSpecification format = null;
+      if (jsonObj.has("format")) {
+        format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
+      }
+      Integer threshold = jsonObj.has("threshold") ? jsonObj.get("threshold").getAsInt() : null;
+      return new StreamProperties(name, ttl, format, threshold);
     }
   }
 }
