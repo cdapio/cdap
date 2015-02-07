@@ -16,6 +16,8 @@
 package co.cask.cdap.metrics.store.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -24,11 +26,15 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.SortedSet;
 import javax.annotation.Nullable;
 
 /**
@@ -104,13 +110,13 @@ public final class FactTable {
   }
 
   public FactScanner scan(FactScan scan) throws Exception {
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs());
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs());
+    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
+    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
     endRow = Bytes.stopKeyForPrefix(endRow);
 
     // todo: if searching within same row, we can also provide start and end columns or list of columns
 
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow, false);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
@@ -121,11 +127,98 @@ public final class FactTable {
                              scan.getStartTs(), scan.getEndTs());
   }
 
+  /**
+   * Given the list of tag values, return sorted collection of tagValues that appear next to the given tagValues
+   * (on first position right after given ones) in any of the written facts in specified time range.
+   * @param tags - list of tags , we need to return the tags at the next position after these list of tags.
+   * @param startTs
+   * @param endTs
+   * @return Sorted collection of tags
+   * @throws Exception
+   */
+  public Collection<TagValue> getNextTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
+    //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
+    //todo: pass a limit on number of tags returned
+    byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
+    byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
+    endRow = Bytes.stopKeyForPrefix(endRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
+                                                                startRow, true);
+    Row rowResult;
+    int targetIndex = tags.size();
+    SortedSet<TagValue> result = Sets.newTreeSet(new Comparator<TagValue>() {
+      @Override
+      public int compare(TagValue t1, TagValue t2) {
+        int cmp = t1.getTagName().compareTo(t2.getTagName());
+        if (cmp != 0) {
+          return cmp;
+        }
+        return t1.getValue().compareTo(t2.getValue());
+      }
+    });
+    Scanner scanner = null;
+    try {
+      do {
+        scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        rowResult = scanner.next();
+        if (rowResult != null) {
+          //add item to list and increment the start row
+          List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
+          if (tagValues.size() > targetIndex) {
+            result.add(tagValues.get(targetIndex));
+          }
+          startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
+        }
+      } while (rowResult != null);
+    } finally {
+      scanner.close();
+    }
+
+    return result;
+  }
+
+  /**
+   * Given a list of {@link co.cask.cdap.metrics.store.timeseries.TagValue} and time range,
+   * return all measure names of the Facts that have given tagValues and are in the given time range.
+   * @param tags - list of tags to match, we return the measureNames that match this tags list.
+   * @param startTs
+   * @param endTs
+   * @return Sorted collection of measureNames
+   * @throws Exception
+   */
+  public Collection<String> getMeasureNames(List<TagValue> tags, long startTs, long endTs) throws Exception {
+    //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
+    //todo: pass a limit on number of tags returned
+    byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
+    byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
+    endRow = Bytes.stopKeyForPrefix(endRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
+                                                                startRow, true);
+    Row rowResult;
+    SortedSet<String> measureNames = Sets.newTreeSet();
+    Scanner scanner = null;
+    try {
+      do {
+        scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        rowResult = scanner.next();
+        if (rowResult != null) {
+          //add item to list and increment the start row
+          measureNames.add(codec.getMeasureName(rowResult.getRow()));
+          startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
+        }
+      } while (rowResult != null);
+    } finally {
+      scanner.close();
+    }
+    return measureNames;
+  }
+
+
   @Nullable
-  private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
+  private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow, boolean isSearch) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
-    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName());
+    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName(), isSearch);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
   }
