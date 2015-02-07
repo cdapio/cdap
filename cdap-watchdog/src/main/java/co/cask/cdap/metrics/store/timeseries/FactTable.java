@@ -127,14 +127,14 @@ public final class FactTable {
   }
 
   /**
-   * Delete entries in fact table. {@link FactScan} is used to specify the deletion parameters
+   * Delete entries in fact table.
    * @param scan
    * @throws Exception
    */
   public void delete(FactScan scan) throws Exception {
     byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs());
     byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs());
-    byte [][] columns = null;
+    byte[][] columns = null;
 
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns

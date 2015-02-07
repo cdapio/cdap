@@ -130,15 +130,10 @@ public class DefaultCube implements Cube {
     return convertToQueryResult(query, resultTable);
   }
 
-  /**
-   * Deletes the data specified by {@link CubeQuery} from all the fact tables.
-   * @param query query specifies parameters for deletion. groupByTags and resolution fields are not used.
-   * @throws Exception
-   */
   @Override
   public void delete(CubeQuery query) throws Exception {
+    //this may be very inefficient and its better to use TTL, this is to only support existing old functionality.
     List<TagValue> tagValues = Lists.newArrayList();
-
     // find all the aggregations that match the sliceByTags in the query and
     // use the tag values of the aggregation to delete entries in all the fact-tables.
     for (Aggregation agg : aggregations) {
