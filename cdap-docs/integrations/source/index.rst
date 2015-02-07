@@ -11,6 +11,8 @@ Integrations
 
 .. rubric:: Cloudera
 
+.. include:: /_includes/cloudera-certified.rst
+
 .. |cloudera-introduction| replace:: **Introduction:**
 .. _cloudera-introduction: partners/cloudera/index.html
 

@@ -17,18 +17,7 @@ Cloudera
     Add Service Wizard <step-by-step-cloudera>
     Ingestion and Exploration <ingesting>
 
-
-.. sidebar:: Cloudera Certified Technology
-  :class: sidebar30
-  
-  .. image:: ../../_images/logo-cloudera-certified.png
-   :height: 100px
-   :width: 100 px
-   :alt: Cloudera Certified
-   :align: center
-
-  CDAP |version| is certified on Cloudera 5.
-  
+.. include:: /_includes/cloudera-certified.rst
   
 Today, Hadoop is frequently used as an offline analytics tool – generating insights that
 are then deployed operationally in other systems.  Greater business value is generated
@@ -79,7 +68,7 @@ results.
 
 .. rubric:: CDAP and Cloudera Architecture Schematic
 
-.. figure:: ../../_images/cloudera-integration-arch.png
+.. figure:: /_images/cloudera-integration-arch.png
    :figwidth: 100%
    :width: 800px
    :align: center
