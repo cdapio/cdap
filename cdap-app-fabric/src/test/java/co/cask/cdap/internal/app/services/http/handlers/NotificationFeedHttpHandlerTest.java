@@ -153,7 +153,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
 
       // create again with the same name
       response = createFeed(FEED_EMPTY_DESCRIPTION);
-      assertResponseCode(409, response);
+      assertResponseCode(200, response);
       // check that no updates happened
       response = getFeed(NAMESPACE, CATEGORY, NAME);
       feed = readGetResponse(response);
