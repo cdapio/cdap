@@ -15,10 +15,11 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -47,7 +48,7 @@ public abstract class StreamConsumerStateTestBase {
     StreamConfig config = streamAdmin.getConfig(streamName);
     StreamConsumerStateStore stateStore = createStateStore(config);
 
-    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 1);
+    streamAdmin.configureInstances(Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName), 0L, 1);
 
     // Get a consumer state that is configured
     StreamConsumerState state = stateStore.get(0L, 0);
@@ -161,8 +162,9 @@ public abstract class StreamConsumerStateTestBase {
     // Save the state.
     stateStore.save(state);
 
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     // Increase the number of instances
-    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 2);
+    streamAdmin.configureInstances(streamId, 0L, 2);
 
     StreamConsumerState newState = stateStore.get(0L, 1);
     // Get the state of the new instance, should be the same as the existing one
@@ -182,7 +184,7 @@ public abstract class StreamConsumerStateTestBase {
     Assert.assertEquals(newOffset, Iterables.get(state.getState(), 0).getOffset());
 
     // Increase the number of instances again
-    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 3);
+    streamAdmin.configureInstances(streamId, 0L, 3);
 
     // Verify that instance 0 has offset getting resetted to lowest
     state = stateStore.get(0L, 0);

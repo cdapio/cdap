@@ -27,6 +27,7 @@ import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -81,7 +82,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testFIFORollback() throws Exception {
     String stream = "testFIFORollback";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(stream);
     StreamConfig streamConfig = streamAdmin.getConfig(stream);
@@ -166,7 +167,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testFIFOReconfigure() throws Exception {
     String stream = "testReconfigure";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(stream);
     StreamConfig streamConfig = streamAdmin.getConfig(stream);
@@ -260,7 +261,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testCombineConsumer() throws Exception {
     String stream = "testCombineConsumer";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(stream);
     StreamConfig streamConfig = streamAdmin.getConfig(stream);
@@ -272,7 +273,7 @@ public abstract class StreamConsumerTestBase {
 
     // Write 10 messages to old stream
     StreamEventCodec streamEventCodec = new StreamEventCodec();
-    QueueProducer producer = oldStreamFactory.createProducer(streamName);
+    QueueProducer producer = oldStreamFactory.createProducer(QueueName.fromStream(streamName));
     TransactionContext txContext = createTxContext((TransactionAware) producer);
     for (int i = 0; i < 10; i++) {
       txContext.start();
@@ -335,7 +336,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTL() throws Exception {
     String stream = "testTTL";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -392,7 +393,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
     String stream = "testTTLMultipleEventsWithSameTimestamp";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -451,7 +452,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLStartingFile() throws Exception {
     String stream = "testTTLStartingFile";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamName = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 3 seconds and partition duration of 3 seconds

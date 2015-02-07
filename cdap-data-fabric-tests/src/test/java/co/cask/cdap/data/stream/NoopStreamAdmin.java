@@ -19,6 +19,7 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 import java.util.Map;
@@ -35,11 +36,11 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(QueueName streamName, long groupId, int instances) throws Exception {
+  public void configureInstances(Id.Stream streamName, long groupId, int instances) throws Exception {
   }
 
   @Override
-  public void configureGroups(QueueName streamName, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(Id.Stream streamName, Map<Long, Integer> groupInfo) throws Exception {
   }
 
   @Override

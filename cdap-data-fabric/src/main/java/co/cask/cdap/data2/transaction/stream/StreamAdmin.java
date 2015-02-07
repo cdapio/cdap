@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.EntityAdmin;
+import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 import java.util.Map;
@@ -38,15 +38,14 @@ public interface StreamAdmin extends EntityAdmin {
    * @param groupId The consumer group to alter.
    * @param instances Number of instances.
    */
-  void configureInstances(QueueName streamName, long groupId, int instances) throws Exception;
-
+  void configureInstances(Id.Stream streamName, long groupId, int instances) throws Exception;
 
   /**
    * Sets the consumer groups information for the given stream.
    * @param streamName Name of the stream.
    * @param groupInfo A map from groupId to number of instances of each group.
    */
-  void configureGroups(QueueName streamName, Map<Long, Integer> groupInfo) throws Exception;
+  void configureGroups(Id.Stream streamName, Map<Long, Integer> groupInfo) throws Exception;
 
   /**
    * Performs upgrade action for all streams.

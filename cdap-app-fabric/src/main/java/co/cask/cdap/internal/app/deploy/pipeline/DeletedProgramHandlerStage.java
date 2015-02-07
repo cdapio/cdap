@@ -22,7 +22,6 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -115,7 +114,8 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
                                          programId.getApplicationId(),
                                          programId.getId());
         for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-          streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
+          streamConsumerFactory.dropAll(Id.Stream.from(appSpec.getId().getNamespaceId(), entry.getKey()),
+                                        namespace, entry.getValue());
         }
 
         queueAdmin.dropAllForFlow(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());

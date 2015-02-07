@@ -17,6 +17,7 @@
 package co.cask.cdap.common.queue;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -111,6 +112,13 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
+  //TODO: figure out if this is to be here, or not (used for the streamAdmins that extend QueueAdmin.
+  public static QueueName fromStream(Id.Stream streamId) {
+    return fromStream(streamId.getNamespaceId(), streamId.getId());
+  }
+  public Id.Stream toStreamId() {
+    return Id.Stream.from(getFirstComponent(), getSecondComponent());
+  }
 
   /**
    * Called from static method {@code QueueName#from(URI)} and {@code QueueName#from(bytes[])}.

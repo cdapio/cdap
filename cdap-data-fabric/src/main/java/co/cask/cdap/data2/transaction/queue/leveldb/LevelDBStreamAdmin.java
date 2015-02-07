@@ -22,10 +22,12 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * admin for streams in leveldb.
@@ -59,6 +61,16 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   public boolean doTruncateTable(QueueName queueName) {
     // separate table for each stream, ok to truncate
     return true;
+  }
+
+  @Override
+  public void configureInstances(Id.Stream streamName, long groupId, int instances) throws Exception {
+    configureInstances(QueueName.fromStream(streamName), groupId, instances);
+  }
+
+  @Override
+  public void configureGroups(Id.Stream streamName, Map<Long, Integer> groupInfo) throws Exception {
+    configureGroups(QueueName.fromStream(streamName), groupInfo);
   }
 
   @Override

@@ -101,7 +101,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public StreamConsumer createStreamConsumer(QueueName streamName, ConsumerConfig consumerConfig) throws IOException {
+  public StreamConsumer createStreamConsumer(Id.Stream streamName, ConsumerConfig consumerConfig) throws IOException {
     String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
     final StreamConsumer consumer = streamConsumerFactory.create(streamName, namespace, consumerConfig);
 

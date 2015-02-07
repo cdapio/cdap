@@ -23,13 +23,13 @@ import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueService;
 import co.cask.cdap.data2.transaction.stream.QueueToStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * In memory implementation of StreamConsumer would be using the in memory queue implementation.
@@ -46,15 +46,16 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
   }
 
   @Override
-  public StreamConsumer create(QueueName streamName, String namespace,
+  public StreamConsumer create(Id.Stream streamName, String namespace,
                                ConsumerConfig consumerConfig) throws IOException {
 
-    QueueConsumer consumer = queueClientFactory.createConsumer(streamName, consumerConfig, -1);
+    QueueName queueName = QueueName.fromStream(streamName);
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, -1);
     return new QueueToStreamConsumer(streamName, consumerConfig, consumer);
   }
 
   @Override
-  public void dropAll(QueueName streamName, String namespace, Iterable<Long> groupIds) throws IOException {
+  public void dropAll(Id.Stream streamName, String namespace, Iterable<Long> groupIds) throws IOException {
     // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
     // String namespace = String.format("%s.%s.%s",
     //                                  programId.getNamespaceId(),

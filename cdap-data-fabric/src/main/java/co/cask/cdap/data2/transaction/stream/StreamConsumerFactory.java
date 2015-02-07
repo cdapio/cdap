@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 
@@ -33,7 +33,7 @@ public interface StreamConsumerFactory {
    * @param consumerConfig consumer configuration.
    * @return a new instance of {@link StreamConsumer}.
    */
-  StreamConsumer create(QueueName streamName, String namespace, ConsumerConfig consumerConfig) throws IOException;
+  StreamConsumer create(Id.Stream streamName, String namespace, ConsumerConfig consumerConfig) throws IOException;
 
   /**
    * Deletes all consumer states for the given namespace and group ids.
@@ -42,5 +42,5 @@ public interface StreamConsumerFactory {
    * @param namespace application namespace for the state table.
    * @param groupIds set of group id that needs to have states cleared.
    */
-  void dropAll(QueueName streamName, String namespace, Iterable<Long> groupIds) throws IOException;
+  void dropAll(Id.Stream streamName, String namespace, Iterable<Long> groupIds) throws IOException;
 }
