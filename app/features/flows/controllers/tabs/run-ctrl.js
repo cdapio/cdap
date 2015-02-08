@@ -22,7 +22,7 @@ angular.module(PKG.name + '.feature.flows')
     $scope.$watch('runTabs.activeTab', function(newVal, oldVal) {
       var toState;
 
-      if (newVal) {
+      if (angular.isDefined(newVal)) {
         // Use the new active tab clicked on the UI.
         toState = newVal;
       } else if (currentRunTab() > 0) {
