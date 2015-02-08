@@ -5,17 +5,65 @@ angular.module(PKG.name + '.feature.services')
 
     $scope.logTabs = ['all', 'info', 'warn', 'error', 'debug', 'other'];
     $scope.logs = null;
+    $scope.infoLogs = [];
+    $scope.warnLogs = [];
+    $scope.debugLogs = [];
+    $scope.errorLogs = [];
+    $scope.otherLogs = [];
 
     dataSrc.poll({
       _cdapNsPath: basePath + '/logs/next?fromOffset=-1&maxSize=50'
     }, function(res) {
-      console.log("Logs: ", res);
+
+      /*
+        This should be temporary. Backend should make this filter and
+        make it more 'REST' fied.
+      */
+      $scope.infoLogs = res.filter(function(res) {
+        return res.log.indexOf('- INFO') > 0;
+      })
+        .map(function(logs) {
+          return logs.log.trim();
+        });
+
+      $scope.debugLogs = res.filter(function(res) {
+        return res.log.indexOf('- DEBUG') > 0;
+      })
+        .map(function(logs) {
+          return logs.log.trim();
+        });
+
+      $scope.warnLogs = res.filter(function(res) {
+        return res.log.indexOf('- WARN') > 0;
+      })
+        .map(function(logs) {
+          return logs.log.trim();
+        });
+
+      $scope.errorLogs = res.filter(function(res) {
+        return res.log.indexOf('- ERROR') > 0;
+      })
+        .map(function(logs) {
+          return logs.log.trim();
+        });
+
+      $scope.otherLogs = res.filter(function(res) {
+        return res.log.indexOf('- OTHER') > 0;
+      })
+        .map(function(logs) {
+          return logs.log.trim();
+        });
+
+      $scope.allLogs = res.map(function(res) {
+        res.log = res.log.replace(/[\r?\n]/g, " ");
+        return res.log.trim();
+      });
     });
 
     $scope.$watch('logTabs.activeTab', function(newVal, oldVal) {
       var toState;
 
-      if (newVal) {
+      if (angular.isDefined(newVal) ) {
         // Use the new active tab clicked on the UI.
         toState = newVal;
       } else if (currentlogTab() > 0) {
