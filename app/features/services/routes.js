@@ -14,7 +14,7 @@ angular.module(PKG.name + '.feature.services')
       .state('services.list', {
         url: '/list',
         templateUrl: '/assets/features/services/templates/list.html',
-        controller: 'CdapServicesListController',
+        controller: 'ServicesListController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview',
           label: 'Services'
