@@ -113,11 +113,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     // Handle optional params
-    // name defaults to id
-    String name = namespaceId;
-    // description defaults to empty
-    String description = "";
-    // override optional params if they are provided in the request
+    String name = null;
+    String description = null;
     if (metadata != null) {
       if (metadata.getName() != null) {
         name = metadata.getName();

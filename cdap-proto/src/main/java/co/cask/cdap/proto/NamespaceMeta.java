@@ -70,8 +70,12 @@ public final class NamespaceMeta {
 
     public NamespaceMeta build() {
       Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-      Preconditions.checkArgument(name != null, "Namespace name cannot be null.");
-      Preconditions.checkArgument(description != null, "Namespace description cannot be null.");
+      if (name == null) {
+        name = id;
+      }
+      if (description == null) {
+        description = "";
+      }
       return new NamespaceMeta(id, name, description);
     }
   }

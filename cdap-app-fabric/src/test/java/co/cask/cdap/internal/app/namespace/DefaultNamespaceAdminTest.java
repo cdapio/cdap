@@ -25,9 +25,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link NamespaceAdmin}
+ * Tests for {@link DefaultNamespaceAdmin}
  */
-public class NamespaceAdminTest extends AppFabricTestBase {
+public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
 
   @Test
