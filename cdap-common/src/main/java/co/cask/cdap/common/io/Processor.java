@@ -19,14 +19,23 @@ package co.cask.cdap.common.io;
 /**
  * Process input values.
  *
+ * {@link #process} will be called for each input, and should return {@code false} when the processing should stop.
+ *
  * @param <T> type of the input values
+ * @param <R> type of the result value
  */
-public interface Processor<T> {
+public interface Processor<T, R> {
 
   /**
-   * Process an input value.
+   * Process one input value.
    *
    * @param input input value to process
+   * @return true to continue processing, false to stop
    */
-  void process(T input);
+  boolean process(T input);
+
+  /**
+   * @return the result of processing all the inputs
+   */
+  R getResult();
 }

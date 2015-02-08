@@ -35,7 +35,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Collection of helper methods.
@@ -386,7 +385,22 @@ public final class StreamUtils {
    */
   public static long fetchStreamFilesSize(StreamConfig streamConfig) throws IOException {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(), getGeneration(streamConfig));
-    final AtomicLong size = new AtomicLong(0);
+
+    Processor<LocationStatus, Long> processor = new Processor<LocationStatus, Long>() {
+      private long size = 0;
+      @Override
+      public boolean process(LocationStatus input) {
+        if (!input.isDir() && StreamFileType.EVENT.isMatched(input.getUri().getPath())) {
+          size += input.getLength();
+        }
+        return true;
+      }
+
+      @Override
+      public Long getResult() {
+        return size;
+      }
+    };
 
     List<Location> locations = streamPath.list();
     // All directories are partition directories
@@ -394,17 +408,9 @@ public final class StreamUtils {
       if (!location.isDirectory() || !isPartition(location.getName())) {
         continue;
       }
-
-      Locations.processLocations(location, false, new Processor<LocationStatus>() {
-        @Override
-        public void process(LocationStatus input) {
-          if (!input.isDir() && StreamFileType.EVENT.isMatched(input.getUri().getPath())) {
-            size.addAndGet(input.getLength());
-          }
-        }
-      });
+      Locations.processLocations(location, false, processor);
     }
-    return size.get();
+    return processor.getResult();
   }
 
   private StreamUtils() {

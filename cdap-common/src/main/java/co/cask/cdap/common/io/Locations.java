@@ -133,27 +133,34 @@ public final class Locations {
    *
    * @param locationDir location to start iterating from
    * @param recursive true if this method should be called on the directory {@link Location}s found from
-   * {@code locationDir}
-   * @param processor used to process the locations that are not ruled out by the {@code predicate}
+   *                  {@code locationDir}
+   * @param processor used to process the locations contained by the {@code locationDir}, whether they are directories
+   *                  or not. If the {@link Processor#process} method returns false on any {@link Location} object
+   *                  processed, this method will return the current result of the processor.
+   * @param <R> Type of the return value
    * @throws IOException if the locations could not be read
    */
-  public static void processLocations(final Location locationDir, boolean recursive,
-                                      final Processor<LocationStatus> processor) throws IOException {
+  public static <R> R processLocations(Location locationDir, boolean recursive, Processor<LocationStatus, R> processor)
+    throws IOException {
     Preconditions.checkArgument(locationDir.isDirectory(), "Input location has to be a directory");
     LocationFactory locationFactory = locationDir.getLocationFactory();
     if (locationFactory instanceof HDFSLocationFactory) {
       // Treat the HDFS case
-      Deque<Path> paths = Lists.newLinkedList();
-      paths.push(new Path(locationDir.toURI().toString()));
-      while (!paths.isEmpty()) {
-        Path currentPath = paths.poll();
+      Deque<Path> pathStack = Lists.newLinkedList();
+      pathStack.push(new Path(locationDir.toURI().toString()));
+      while (!pathStack.isEmpty()) {
+        Path currentPath = pathStack.poll();
         FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
         final FileStatus[] statuses = fs.listStatus(currentPath);
 
         for (FileStatus status : statuses) {
-          processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(), status.isDirectory()));
-          if (status.isDirectory() && recursive) {
-            paths.push(status.getPath());
+          boolean process = processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(),
+                                                                 status.isDirectory()));
+          if (!process) {
+            return processor.getResult();
+          }
+          if (recursive && status.isDirectory()) {
+            pathStack.push(status.getPath());
           }
         }
       }
@@ -165,13 +172,18 @@ public final class Locations {
         Location currentLocation = locationStack.poll();
         List<Location> locations = currentLocation.list();
         for (Location location : locations) {
-          if (location.isDirectory() && recursive) {
+          boolean process = processor.process(new LocationStatus(location.toURI(), location.length(),
+                                                                 location.isDirectory()));
+          if (!process) {
+            return processor.getResult();
+          }
+          if (recursive && location.isDirectory()) {
             locationStack.push(location);
           }
-          processor.process(new LocationStatus(location.toURI(), location.length(), location.isDirectory()));
         }
       }
     }
+    return processor.getResult();
   }
 
   /**

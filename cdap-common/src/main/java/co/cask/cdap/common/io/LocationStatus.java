@@ -25,12 +25,12 @@ public class LocationStatus {
 
   private final URI uri;
   private final long length;
-  private final boolean isDir;
+  private final boolean dir;
 
-  public LocationStatus(URI uri, long length, boolean isDir) {
+  public LocationStatus(URI uri, long length, boolean dir) {
     this.uri = uri;
     this.length = length;
-    this.isDir = isDir;
+    this.dir = dir;
   }
 
   public URI getUri() {
@@ -42,6 +42,6 @@ public class LocationStatus {
   }
 
   public boolean isDir() {
-    return isDir;
+    return dir;
   }
 }
