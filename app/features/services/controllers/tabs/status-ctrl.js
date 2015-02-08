@@ -47,6 +47,6 @@ angular.module(PKG.name + '.feature.services')
         _cdapNsPath: path + '/stop',
         method: 'POST'
       });
-    }
+    };
 
   });

@@ -28,7 +28,7 @@ angular.module(PKG.name + '.feature.datasets')
           });
           try {
             $scope.schema = (
-              query(JSON.parse( query(match, 0, "properties", "schema") || null ),"fields") || []
+              query(JSON.parse( query(match, 0, 'properties', 'schema') || null ),'fields') || []
             )
               .map(function(field) {
                 if (angular.isArray(field.type)) {
@@ -37,7 +37,7 @@ angular.module(PKG.name + '.feature.datasets')
                 return field;
               });
           } catch(e) {
-            $log.error("Parsing 'schema' for datasets failed! - " + e);
+            $log.error('Parsing schema for datasets failed! - ' + e);
           }
         });
 

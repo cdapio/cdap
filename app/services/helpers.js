@@ -104,5 +104,5 @@ angular.module(PKG.name+'.services')
     deepSet: deepSet,
     deepGet: deepGet,
     objectQuery: objectQuery
-  }
+  };
 });
