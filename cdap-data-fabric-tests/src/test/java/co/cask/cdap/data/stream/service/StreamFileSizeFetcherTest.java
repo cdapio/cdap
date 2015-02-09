@@ -67,13 +67,11 @@ public class StreamFileSizeFetcherTest {
 
     // Creates a stream file that has no event inside
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
-    StreamDataFileWriter writer =
-      new StreamDataFileWriter(
-        Locations.newOutputSupplier(StreamUtils.createStreamLocation(partitionLocation, "writer", 0,
-                                                                     StreamFileType.EVENT)),
-        Locations.newOutputSupplier(StreamUtils.createStreamLocation(partitionLocation, "writer", 0,
-                                                                     StreamFileType.INDEX)),
-        10000L);
+    Location dataLocation = StreamUtils.createStreamLocation(partitionLocation, "writer", 0, StreamFileType.EVENT);
+    Location idxLocation = StreamUtils.createStreamLocation(partitionLocation, "writer", 0, StreamFileType.INDEX);
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(dataLocation),
+                                                           Locations.newOutputSupplier(idxLocation),
+                                                           10000L);
 
     // Write 100 events to the stream
     for (int i = 0; i < nbEvents; i++) {
@@ -82,8 +80,9 @@ public class StreamFileSizeFetcherTest {
 
     writer.close();
 
-    long size = StreamUtils.fetchStreamFilesSize(config);
+    long size = streamAdmin.fetchStreamSize(config);
     Assert.assertTrue(size > 0);
+    Assert.assertEquals(dataLocation.length(), size);
   }
 
   private static final class TestStreamAdmin extends NoopStreamAdmin {
@@ -107,6 +106,11 @@ public class StreamFileSizeFetcherTest {
     public StreamConfig getConfig(String streamName) throws IOException {
       Location streamLocation = locationFactory.create(streamName);
       return new StreamConfig(streamName, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
+    }
+
+    @Override
+    public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
+      return StreamUtils.fetchStreamFilesSize(streamConfig);
     }
   }
 
