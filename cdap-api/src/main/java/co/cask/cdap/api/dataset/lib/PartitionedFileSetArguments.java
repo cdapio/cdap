@@ -67,8 +67,7 @@ public class PartitionedFileSetArguments {
       FieldType fieldType = entry.getValue();
       String stringValue = keyArguments.get(fieldName);
       Comparable fieldValue = convertFieldValue("key", "value", fieldName, fieldType, stringValue, false);
-      @SuppressWarnings({ "unchecked", "unused" }) // we know it's type safe, but Java does not
-      PartitionKey.Builder unused = builder.addField(fieldName, fieldValue);
+      builder.addField(fieldName, fieldValue);
     }
     return builder.build();
   }

@@ -94,7 +94,7 @@ public class PartitionKey {
      * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
      *         or if the value is null.
      */
-    public <T extends Comparable<T>> Builder addField(String name, T value) {
+    public Builder addField(String name, Comparable value) {
       Preconditions.checkArgument(name != null && !name.isEmpty(), "field name cannot be null or empty.");
       Preconditions.checkArgument(value != null, "field name cannot be null.");
       if (fields.containsKey(name)) {
