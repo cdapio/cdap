@@ -9,9 +9,9 @@ angular.module(PKG.name + '.feature.flows')
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
-        $scope.activeRuns = res.map(function(r) {
+        $scope.activeRuns = (res.map(function(r) {
           return (r.status === 'RUNNING'? 1: 0);
-        })
+        }) || [])
           .reduce(function(prev, curr) {
             return prev + curr;
           });
