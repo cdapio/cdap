@@ -14,33 +14,36 @@ angular.module(PKG.name+'.feature.foo')
       .state('test-edwin', {
         url: '/test/edwin',
         templateUrl: '/assets/features/foo/edwin.html',
-        controller: function ($scope) {
-          $scope.data = {
-            nodes: [
-              'one',
-              'two',
-              'three',
-              'four',
-              'five',
-              'whew',
-              'err',
-              'six',
-              'seven'
-            ],
-            edges: [
-              { sourceName: 'one', targetName: 'three' },
-              { sourceName: 'two', targetName: 'three' },
-              { sourceName: 'three', targetName: 'four' },
-              { sourceName: 'three', targetName: 'five'},
-              { sourceName: 'whew', targetName: 'seven'},
-              { sourceName: 'four', targetName: 'seven' },
-              { sourceName: 'six', targetName: 'seven'},
-              { sourceName: 'err', targetName: 'seven'},
-              { sourceName: 'five', targetName: 'six' },
-              { sourceName: 'two', targetName: 'seven'},
-              { sourceName: 'four', targetName: 'six'}
-            ]
-          };
+        controller: function ($scope, $timeout) {
+          $scope.data = {};
+          $timeout(function() {
+            $scope.data = {
+              nodes: [
+                'one',
+                'two',
+                'three',
+                'four',
+                'five',
+                'whew',
+                'err',
+                'six',
+                'seven'
+              ],
+              edges: [
+                { sourceName: 'one', targetName: 'three' },
+                { sourceName: 'two', targetName: 'three' },
+                { sourceName: 'three', targetName: 'four' },
+                { sourceName: 'three', targetName: 'five'},
+                { sourceName: 'whew', targetName: 'seven'},
+                { sourceName: 'four', targetName: 'seven' },
+                { sourceName: 'six', targetName: 'seven'},
+                { sourceName: 'err', targetName: 'seven'},
+                { sourceName: 'five', targetName: 'six' },
+                { sourceName: 'two', targetName: 'seven'},
+                { sourceName: 'four', targetName: 'six'}
+              ]
+            };
+          }, 3000);
         }
       })
 
