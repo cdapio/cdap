@@ -96,6 +96,7 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
         String sep = "";
         for (String fieldName : partitioning.getFields().keySet()) {
           builder.append(sep).append(key.getField(fieldName).toString());
+          sep = "/";
         }
         String path = builder.toString();
         arguments = Maps.newHashMap(arguments);
