@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Joiner;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Helper to build properties for files datasets.
@@ -41,7 +42,9 @@ public class PartitionedFileSetProperties extends FileSetProperties {
    * Read the partitioning for a PartitionedFileSet from its properties.
    *
    * @param properties the dataset properties
+   * @return the partitioning found in the properties, or null if the properties contain no partitioning.
    */
+  @Nullable
   public static Partitioning getPartitioning(Map<String, String> properties) {
     String fieldList = properties.get(PARTITIONING_FIELDS);
     if (null == fieldList) {
