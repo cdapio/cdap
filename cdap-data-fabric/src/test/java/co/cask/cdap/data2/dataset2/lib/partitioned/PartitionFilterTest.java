@@ -157,7 +157,7 @@ public class PartitionFilterTest {
     PartitionFilter.Condition<? extends Comparable> condition = filter.getCondition(field);
     Assert.assertNotNull(condition);
     Assert.assertEquals(single, condition.isSingleValue());
-    Assert.assertTrue(type.validateType(condition.getValue()));
+    Assert.assertTrue(FieldTypes.validateType(condition.getValue(), type));
     boolean expectMatch = true;
     for (T value : values) {
       if (value == null) {
