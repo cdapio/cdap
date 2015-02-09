@@ -135,8 +135,6 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
                                         new TTLReadFilter(streamConfig.getTTL()));
 
     try {
-      // The old stream admin uses full URI of queue name as the name for checking existence
-      //TODO: why is this code here? its queue-related, but we're in stream stuff.
       if (!oldStreamAdmin.exists(streamName)) {
         return newConsumer;
       }

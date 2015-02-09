@@ -22,8 +22,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
-import java.net.URI;
-
 /**
  * Contains collection of classes representing different types of Ids.
  */
@@ -365,6 +363,10 @@ public final class Id  {
     public Stream(final Namespace namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
+
+      Preconditions.checkArgument(isId(namespace.getId()), "Namespace has an incorrect format.");
+      Preconditions.checkArgument(isId(streamName), "Stream name has an incorrect format.");
+
       this.namespace = namespace;
       this.streamName = streamName;
     }
@@ -387,6 +389,19 @@ public final class Id  {
 
     public static Stream from(String namespaceId, String streamName) {
       return new Stream(Namespace.from(namespaceId), streamName);
+    }
+
+    public String toId() {
+      return String.format("%s.%s", namespace.getId(), streamName);
+    }
+
+    public static Stream fromId(String id) {
+      Iterable<String> comps = Splitter.on('.').omitEmptyStrings().split(id);
+      Preconditions.checkArgument(2 == Iterables.size(comps));
+
+      String namespace = Iterables.get(comps, 0);
+      String streamName = Iterables.get(comps, 1);
+      return from(namespace, streamName);
     }
 
     @Override
@@ -415,19 +430,6 @@ public final class Id  {
         .add("namespace", namespace.getId())
         .add("streamName", streamName)
         .toString();
-    }
-
-    public String toId() {
-      return URI.create(String.format("%s.%s", namespace.getId(), streamName)).toString();
-    }
-
-    public static Stream fromId(String id) {
-      Iterable<String> comps = Splitter.on('.').omitEmptyStrings().split(id);
-      Preconditions.checkArgument(2 == Iterables.size(comps));
-
-      String namespace = Iterables.get(comps, 0);
-      String streamName = Iterables.get(comps, 1);
-      return from(namespace, streamName);
     }
   }
 }

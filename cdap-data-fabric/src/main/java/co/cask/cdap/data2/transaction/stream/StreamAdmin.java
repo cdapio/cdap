@@ -76,7 +76,6 @@ public interface StreamAdmin {
    */
   long fetchStreamSize(StreamConfig streamConfig) throws IOException;
 
-  /////////////////////////
   /**
    * @param name entity name
    * @return true if entity with given name exists, otherwise false

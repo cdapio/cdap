@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.queue;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -92,30 +91,20 @@ public final class QueueName {
   /**
    * Generates an QueueName for the stream.
    *
-   * @param stream name of the
-   * @return An {@link QueueName} with schema as stream
-   */
-  public static QueueName fromStream(String stream) {
-    //TODO: remove this method, and always have an identifying entity that is created by providing both namespace + name
-    return fromStream(Constants.DEFAULT_NAMESPACE, stream);
-  }
-
-  /**
-   * Generates an QueueName for the stream.
-   *
    * @param namespace of the stream
    * @param stream name of the stream
    * @return An {@link QueueName} with schema as stream
    */
   public static QueueName fromStream(String namespace, String stream) {
+    // The old stream admin uses full URI of queue name as the name
     URI uri = URI.create(String.format("stream:///%s/%s", namespace, stream));
     return new QueueName(uri);
   }
 
-  //TODO: figure out if this is to be here, or not (used for the streamAdmins that extend QueueAdmin.
   public static QueueName fromStream(Id.Stream streamId) {
     return fromStream(streamId.getNamespaceId(), streamId.getName());
   }
+
   public Id.Stream toStreamId() {
     return Id.Stream.from(getFirstComponent(), getSecondComponent());
   }

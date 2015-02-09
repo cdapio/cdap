@@ -71,7 +71,6 @@ public interface QueueAdmin {
    */
   void upgrade() throws Exception;
 
-  ////////////////////////
   /**
    * @param name entity name
    * @return true if entity with given name exists, otherwise false

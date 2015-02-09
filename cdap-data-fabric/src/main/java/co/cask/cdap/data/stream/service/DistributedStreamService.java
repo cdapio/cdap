@@ -496,7 +496,6 @@ public class DistributedStreamService extends AbstractStreamService {
           @Nullable
           @Override
           public Id.Stream apply(@Nullable PartitionReplica input) {
-            //TODO: verify the other end
             return input != null ? Id.Stream.fromId(input.getName()) : null;
           }
         }));
