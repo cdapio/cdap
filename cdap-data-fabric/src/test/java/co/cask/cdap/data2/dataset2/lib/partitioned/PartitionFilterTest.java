@@ -70,11 +70,6 @@ public class PartitionFilterTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testBuilderEqualRange() {
-    PartitionFilter.builder().addRangeCondition("x", "a", "a").build();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
   public void testBuilderDuplicateField() {
     PartitionFilter.builder()
       .addValueCondition("x", 10)

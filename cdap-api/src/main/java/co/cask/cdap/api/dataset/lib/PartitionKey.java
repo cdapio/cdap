@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.LinkedHashMap;
@@ -34,13 +35,13 @@ public class PartitionKey {
    * Private constructor to force use of the builder.
    */
   private PartitionKey(@Nonnull Map<String, Comparable> fields) {
-    this.fields = fields;
+    this.fields = ImmutableMap.copyOf(fields);
   }
 
   /**
    * @return all field names and their values in a map.
    */
-  public Map<String, ? extends Comparable> getFields() {
+  public Map<String, Comparable> getFields() {
     return fields;
   }
 

@@ -30,9 +30,9 @@ public class PartitionFilter {
 
   private final Map<String, Condition<? extends Comparable>> conditions;
 
-  // we only allow creating an filter through the builder.
+  // we only allow creating a filter through the builder.
   private PartitionFilter(Map<String, Condition<? extends Comparable>> conditions) {
-    this.conditions = conditions;
+    this.conditions = ImmutableMap.copyOf(conditions);
   }
 
   /**
@@ -42,7 +42,7 @@ public class PartitionFilter {
    * @return the individual conditions of this filter.
    */
   public Map<String, Condition<? extends Comparable>> getConditions() {
-    return ImmutableMap.copyOf(conditions);
+    return conditions;
   }
 
   /**
@@ -102,8 +102,6 @@ public class PartitionFilter {
                                                                @Nullable T lower,
                                                                @Nullable T upper) {
       Preconditions.checkArgument(field != null && !field.isEmpty(), "field name cannot be null or empty.");
-      Preconditions.checkArgument(lower == null || !lower.equals(upper), "Unsatisfiable condition: " +
-        "lower bound and upper bound have equal value: '" + lower + "'");
       if (map.containsKey(field)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition filter.", field));
       }
@@ -209,13 +207,11 @@ public class PartitionFilter {
     public <V extends Comparable> boolean match(V value) {
       try {
         // if lower and upper are identical, then this represents an equality condition.
-        if (isSingleValue()) {
-          return getValue().equals(value);
-        }
         @SuppressWarnings("unchecked")
-        boolean matches =
-          (lower == null || lower.compareTo((T) value) <= 0) &&
-            (upper == null || upper.compareTo((T) value) > 0);
+        boolean matches = // the variable is redundant but required in order to suppress the warning
+          isSingleValue()
+            ? getValue().compareTo((T) value) == 0
+            : (lower == null || lower.compareTo((T) value) <= 0) && (upper == null || upper.compareTo((T) value) > 0);
         return matches;
 
       } catch (ClassCastException e) {
