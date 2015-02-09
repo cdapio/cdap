@@ -146,12 +146,12 @@ public final class Locations {
     LocationFactory locationFactory = locationDir.getLocationFactory();
     if (locationFactory instanceof HDFSLocationFactory) {
       // Treat the HDFS case
+      FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
       Deque<Path> pathStack = Lists.newLinkedList();
-      pathStack.push(new Path(locationDir.toURI().toString()));
+      pathStack.push(new Path(locationDir.toURI()));
       while (!pathStack.isEmpty()) {
         Path currentPath = pathStack.poll();
-        FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
-        final FileStatus[] statuses = fs.listStatus(currentPath);
+        FileStatus[] statuses = fs.listStatus(currentPath);
 
         for (FileStatus status : statuses) {
           boolean process = processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(),
