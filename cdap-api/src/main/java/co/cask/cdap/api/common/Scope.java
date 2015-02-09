@@ -21,10 +21,13 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * Enum for the different types of scopes. For now, only "dataset", but more will come.
+ * Enum for the different types of scopes.
  */
 public enum Scope {
-  DATASET("dataset");
+  DATASET("dataset"),
+  MAPREDUCE("mapreduce"),
+  SPARK("spark"),
+  CUSTOM_ACTION("custom_action");
 
   private final String displayName;
 

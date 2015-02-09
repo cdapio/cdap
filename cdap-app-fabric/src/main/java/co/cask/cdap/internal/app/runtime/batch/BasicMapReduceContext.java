@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -36,6 +38,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
@@ -82,7 +85,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
                                CConfiguration conf) {
-    super(program, runId, runtimeArguments, datasets,
+    super(program, runId, extractScope(program.getName(), runtimeArguments), datasets,
           getMetricCollector(metricsCollectionService, program, type, runId.getId(), taskId),
           dsFramework, conf, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
@@ -101,6 +104,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
     this.outputDatasetName = spec.getOutputDataSet();
+  }
+
+  private static Arguments extractScope(String programName, Arguments argument) {
+    return new BasicArguments(RuntimeArguments.extractScope(Scope.MAPREDUCE, programName, argument.asMap()));
   }
 
   @Override

@@ -20,5 +20,22 @@ package co.cask.cdap.api.schedule;
  * Defines types of programs that can be scheduled by the Application.
  */
 public enum SchedulableProgramType {
-  WORKFLOW, MAPREDUCE, SPARK, CUSTOM_ACTION
+  WORKFLOW("workflows"),
+  MAPREDUCE("mapreduce"),
+  SPARK("spark"),
+  CUSTOM_ACTION("custom_action");
+
+  private final String displayName;
+
+  /**
+   * Private constructor to force using the enum values.
+   */
+  private SchedulableProgramType(String name) {
+    displayName = name;
+  }
+
+  @Override
+  public String toString() {
+    return displayName;
+  }
 }
