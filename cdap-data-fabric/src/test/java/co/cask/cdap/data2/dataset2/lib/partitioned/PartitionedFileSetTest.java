@@ -32,7 +32,6 @@ import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -59,20 +58,6 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     .addLongField("l")
     .addStringField("x")
     .build();
-
-  static final List<PartitionFilter> FILTERS = Lists.newArrayList();
-
-  @BeforeClass
-  public static void generateFilters() {
-    addSingleConditionFilters(FILTERS, "s", S_CONDITIONS);
-    addSingleConditionFilters(FILTERS, "i", I_CONDITIONS);
-    addSingleConditionFilters(FILTERS, "l", L_CONDITIONS);
-    addTwoConditionFilters(FILTERS, "s", S_CONDITIONS, "i", I_CONDITIONS);
-    addTwoConditionFilters(FILTERS, "s", S_CONDITIONS, "l", L_CONDITIONS);
-    addTwoConditionFilters(FILTERS, "i", I_CONDITIONS, "l", L_CONDITIONS);
-    addThreeConditionFilters(FILTERS, "s", S_CONDITIONS, "i", I_CONDITIONS, "l", L_CONDITIONS);
-    LOG.info("Generated " + FILTERS.size() + " filters.");
-  }
 
   @Before
   public void before() throws Exception {
@@ -129,7 +114,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
 
     final PartitionKey[][][] keys = new PartitionKey[4][4][4];
     final String[][][] paths = new String[4][4][4];
-    final Map<PartitionKey, String> all = Maps.newHashMap();
+    final Map<PartitionKey, String> allPartitions = Maps.newHashMap();
 
     // add a bunch of partitions
     for (int s = 0; s < 4; s++) {
@@ -149,7 +134,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
           });
           keys[s][i][l] = key;
           paths[s][i][l] = path;
-          all.put(key, path);
+          allPartitions.put(key, path);
         }
       }
     }
@@ -168,7 +153,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
           });
           // also test getPartitionPaths() and getPartitions() for the filter matching this
           @SuppressWarnings({"unchecked", "unused"})
-          boolean success = testFilter(dataset, all,
+          boolean success = testFilter(dataset, allPartitions,
                                        PartitionFilter.builder()
                                          .addValueCondition("l", key.getField("l"))
                                          .addValueCondition("s", key.getField("s"))
@@ -178,8 +163,11 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
       }
     }
 
+    // generate an list of partition filters with exhaustive coverage
+    List<PartitionFilter> filters = generateFilters();
+
     // test all kinds of filters
-    testAllFilters(dataset, all);
+    testAllFilters(dataset, allPartitions, filters);
 
     // remove a few of the partitions and test again, repeatedly
     PartitionKey[] keysToRemove = { keys[1][2][3], keys[0][1][0], keys[2][3][2], keys[3][1][2] };
@@ -194,16 +182,18 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
       }, key);
 
       // test all filters
-      all.remove(key);
-      testAllFilters(dataset, all);
+      allPartitions.remove(key);
+      testAllFilters(dataset, allPartitions, filters);
     }
 
   }
 
-  private void testAllFilters(PartitionedFileSet dataset, Map<PartitionKey, String> all) throws Exception {
-    for (PartitionFilter filter : FILTERS) {
+  private void testAllFilters(PartitionedFileSet dataset,
+                              Map<PartitionKey, String> allPartitions,
+                              List<PartitionFilter> filters) throws Exception {
+    for (PartitionFilter filter : filters) {
       try {
-        testFilter(dataset, all, filter);
+        testFilter(dataset, allPartitions, filter);
       } catch (Exception e) {
         throw new Exception("testFilter() failed for filter: " + filter, e);
       }
@@ -233,6 +223,19 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     return true;
+  }
+
+  public static List<PartitionFilter> generateFilters() {
+    List<PartitionFilter> filters = Lists.newArrayList();
+    addSingleConditionFilters(filters, "s", S_CONDITIONS);
+    addSingleConditionFilters(filters, "i", I_CONDITIONS);
+    addSingleConditionFilters(filters, "l", L_CONDITIONS);
+    addTwoConditionFilters(filters, "s", S_CONDITIONS, "i", I_CONDITIONS);
+    addTwoConditionFilters(filters, "s", S_CONDITIONS, "l", L_CONDITIONS);
+    addTwoConditionFilters(filters, "i", I_CONDITIONS, "l", L_CONDITIONS);
+    addThreeConditionFilters(filters, "s", S_CONDITIONS, "i", I_CONDITIONS, "l", L_CONDITIONS);
+    LOG.info("Generated " + filters.size() + " filters.");
+    return filters;
   }
 
   private static <T extends Comparable<T>>
