@@ -134,8 +134,9 @@ public final class Locations {
    * {@code startLocation} is not a directory, this method will return the result of the processing of that location.
    *
    * @param startLocation location to start the processing from
-   * @param recursive true if this method should be called on the directory {@link Location}s found from
-   *                  {@code startLocation}
+   * @param recursive {@code true} if this method should be called on the directory {@link Location}s found from
+   *                  {@code startLocation}. If the {@code startLocation} is a directory, all the locations under it
+   *                  will be processed, regardless of the value of {@code recursive}
    * @param processor used to process locations. If the {@link Processor#process} method returns false on any
    *                  {@link Location} object processed, this method will return the current result of the processor.
    * @param <R> Type of the return value
@@ -143,31 +144,29 @@ public final class Locations {
    */
   public static <R> R processLocations(Location startLocation, boolean recursive,
                                        Processor<LocationStatus, R> processor) throws IOException {
-    boolean process = processor.process(new LocationStatus(startLocation.toURI(), startLocation.length(),
-                                                           startLocation.isDirectory()));
-    if (!process || !startLocation.isDirectory()) {
-      return processor.getResult();
-    }
+    // Becomes true after adding the locations under the startLocation to the processing stack
+    boolean firstPass = false;
+    boolean process;
 
     LocationFactory locationFactory = startLocation.getLocationFactory();
     if (locationFactory instanceof HDFSLocationFactory) {
       // Treat the HDFS case
       FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
-      Deque<Path> pathStack = Lists.newLinkedList();
-      pathStack.push(new Path(startLocation.toURI()));
-      while (!pathStack.isEmpty()) {
-        Path currentPath = pathStack.poll();
-        FileStatus[] statuses = fs.listStatus(currentPath);
-
-        for (FileStatus status : statuses) {
-          process = processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(),
-                                                         status.isDirectory()));
-          if (!process) {
-            return processor.getResult();
+      Deque<FileStatus> statusStack = Lists.newLinkedList();
+      statusStack.push(fs.getFileLinkStatus(new Path(startLocation.toURI())));
+      while (!statusStack.isEmpty()) {
+        FileStatus currentStatus = statusStack.poll();
+        process = processor.process(new LocationStatus(currentStatus.getPath().toUri(), currentStatus.getLen(),
+                                                       currentStatus.isDirectory()));
+        if (!process) {
+          return processor.getResult();
+        }
+        if (currentStatus.isDirectory() && (!firstPass || recursive)) {
+          FileStatus[] statuses = fs.listStatus(currentStatus.getPath());
+          for (FileStatus status : statuses) {
+            statusStack.push(status);
           }
-          if (recursive && status.isDirectory()) {
-            pathStack.push(status.getPath());
-          }
+          firstPass = true;
         }
       }
     } else {
@@ -176,15 +175,17 @@ public final class Locations {
       locationStack.push(startLocation);
       while (!locationStack.isEmpty()) {
         Location currentLocation = locationStack.poll();
-        List<Location> locations = currentLocation.list();
-        for (Location location : locations) {
-          process = processor.process(new LocationStatus(location.toURI(), location.length(), location.isDirectory()));
-          if (!process) {
-            return processor.getResult();
-          }
-          if (recursive && location.isDirectory()) {
+        process = processor.process(new LocationStatus(currentLocation.toURI(), currentLocation.length(),
+                                                       currentLocation.isDirectory()));
+        if (!process) {
+          return processor.getResult();
+        }
+        if (currentLocation.isDirectory() && (!firstPass || recursive)) {
+          List<Location> locations = currentLocation.list();
+          for (Location location : locations) {
             locationStack.push(location);
           }
+          firstPass = true;
         }
       }
     }
