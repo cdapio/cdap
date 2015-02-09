@@ -17,15 +17,30 @@
 package co.cask.cdap.api.schedule;
 
 /**
- *
+ * Defines a cron-based schedule for running a program.
  */
-public class TimeSchedule extends Schedule {
+public class TimeSchedule implements Schedule {
+
+  private final String name;
+
+  private final String description;
 
   private final String cronEntry;
 
   public TimeSchedule(String name, String description, String cronEntry) {
-    super(ScheduleType.TIME, name, description);
+    this.name = name;
+    this.description = description;
     this.cronEntry = cronEntry;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
   }
 
   /**
@@ -46,8 +61,8 @@ public class TimeSchedule extends Schedule {
 
     TimeSchedule schedule = (TimeSchedule) o;
 
-    if (cronEntry.equals(schedule.cronEntry) && getDescription().equals(schedule.getDescription())
-      && getName().equals(schedule.getName())) {
+    if (cronEntry.equals(schedule.cronEntry) && description.equals(schedule.description)
+      && name.equals(schedule.name)) {
       return true;
     }
     return false;
@@ -55,8 +70,8 @@ public class TimeSchedule extends Schedule {
 
   @Override
   public int hashCode() {
-    int result = getName().hashCode();
-    result = 31 * result + getDescription().hashCode();
+    int result = name.hashCode();
+    result = 31 * result + description.hashCode();
     result = 31 * result + cronEntry.hashCode();
     return result;
   }
@@ -64,8 +79,8 @@ public class TimeSchedule extends Schedule {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("TimeSchedule{");
-    sb.append("name='").append(getName()).append('\'');
-    sb.append(", description='").append(getDescription()).append('\'');
+    sb.append("name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
     sb.append(", cronEntry='").append(cronEntry).append('\'');
     sb.append('}');
     return sb.toString();

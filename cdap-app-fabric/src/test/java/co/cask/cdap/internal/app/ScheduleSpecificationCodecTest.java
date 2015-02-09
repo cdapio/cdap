@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.schedule.DataSchedule;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.StreamSizeSchedule;
 import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import com.google.common.collect.ImmutableMap;
@@ -49,9 +49,8 @@ public class ScheduleSpecificationCodecTest {
   }
 
   @Test
-  public void testDataSchedule() throws Exception {
-    DataSchedule dataSchedule = new DataSchedule("foo", "bar", DataSchedule.SourceType.STREAM,
-                                                 "namespace", "stream", 10);
+  public void testStreamSizeSchedule() throws Exception {
+    StreamSizeSchedule dataSchedule = new StreamSizeSchedule("foo", "bar", "namespace", "stream", 10);
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(dataSchedule, programInfo, properties);

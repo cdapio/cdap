@@ -17,43 +17,52 @@
 package co.cask.cdap.api.schedule;
 
 /**
- *
+ * Defines a schedule based on data availability in a stream for running a program.
  */
-public class DataSchedule extends Schedule {
-  /**
-   * Source type, in case the {@link ScheduleType} of this schedule is {@code DATA}.
-   */
-  public enum SourceType { STREAM, DATASET }
+public class StreamSizeSchedule implements NotificationSchedule {
+
+  private final String name;
+
+  private final String description;
 
   private final String sourceNamespaceId;
 
   private final String sourceName;
 
-  private final SourceType sourceType;
-
   private final int dataTriggerMB;
 
-  public DataSchedule(String name, String description, SourceType sourceType, String sourceNamespaceId,
-                      String sourceName, int dataTriggerMB) {
-    super(ScheduleType.DATA, name, description);
+  public StreamSizeSchedule(String name, String description, String sourceNamespaceId, String sourceName,
+                            int dataTriggerMB) {
+    this.name = name;
+    this.description = description;
     this.sourceNamespaceId = sourceNamespaceId;
     this.sourceName = sourceName;
-    this.sourceType = sourceType;
     this.dataTriggerMB = dataTriggerMB;
   }
 
-  public String getSourceNamespaceId() {
+  @Override
+  public String getNotificationSourceNamespaceId() {
     return sourceNamespaceId;
   }
 
-  public String getSourceName() {
+  @Override
+  public String getNotificationSourceName() {
     return sourceName;
   }
 
-  public SourceType getSourceType() {
-    return sourceType;
+  @Override
+  public String getName() {
+    return name;
   }
 
+  @Override
+  public String getDescription() {
+    return description;
+  }
+
+  /**
+   * @return the size of data, in MB, that a stream has to receive for the program to be run
+   */
   public int getDataTriggerMB() {
     return dataTriggerMB;
   }
@@ -67,13 +76,12 @@ public class DataSchedule extends Schedule {
       return false;
     }
 
-    DataSchedule schedule = (DataSchedule) o;
+    StreamSizeSchedule schedule = (StreamSizeSchedule) o;
 
-    if (getDescription().equals(schedule.getDescription())
-      && getName().equals(schedule.getName())
+    if (description.equals(description)
+      && name.equals(name)
       && sourceNamespaceId.equals(schedule.sourceNamespaceId)
       && sourceName.equals(schedule.sourceName)
-      && sourceType.equals(schedule.sourceType)
       && dataTriggerMB == schedule.dataTriggerMB) {
       return true;
     }
@@ -82,11 +90,10 @@ public class DataSchedule extends Schedule {
 
   @Override
   public int hashCode() {
-    int result = getName().hashCode();
-    result = 31 * result + getDescription().hashCode();
+    int result = name.hashCode();
+    result = 31 * result + description.hashCode();
     result = 31 * result + sourceNamespaceId.hashCode();
     result = 31 * result + sourceName.hashCode();
-    result = 31 * result + sourceType.hashCode();
     result = 31 * result + dataTriggerMB;
     return result;
   }
@@ -94,11 +101,10 @@ public class DataSchedule extends Schedule {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("DataSchedule{");
-    sb.append("name='").append(getName()).append('\'');
-    sb.append(", description='").append(getDescription()).append('\'');
+    sb.append("name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
     sb.append(", sourceNamespaceId='").append(sourceNamespaceId).append('\'');
     sb.append(", sourceName='").append(sourceName).append('\'');
-    sb.append(", sourceType='").append(sourceType).append('\'');
     sb.append(", dataTriggerMB='").append(dataTriggerMB).append('\'');
     sb.append('}');
     return sb.toString();

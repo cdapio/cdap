@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,18 @@
 
 package co.cask.cdap.api.schedule;
 
-
 /**
- * Defines a generic schedule for running a program.
+ * A schedule based on the reception of notifications.
  */
-public interface Schedule {
+public interface NotificationSchedule extends Schedule {
 
   /**
-   * @return Name of the schedule
+   * @return Namespace of the emitting source of the notifications
    */
-  String getName();
+  String getNotificationSourceNamespaceId();
 
   /**
-   * @return Schedule description
+   * @return Name of the emitting source of the notifications
    */
-  String getDescription();
+  String getNotificationSourceName();
 }
