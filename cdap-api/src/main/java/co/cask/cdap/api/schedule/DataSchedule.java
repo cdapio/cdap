@@ -31,10 +31,10 @@ public class DataSchedule extends Schedule {
 
   private final SourceType sourceType;
 
-  private final Integer dataTriggerMB;
+  private final int dataTriggerMB;
 
   public DataSchedule(String name, String description, SourceType sourceType, String sourceNamespaceId,
-                      String sourceName, Integer dataTriggerMB) {
+                      String sourceName, int dataTriggerMB) {
     super(ScheduleType.DATA, name, description);
     this.sourceNamespaceId = sourceNamespaceId;
     this.sourceName = sourceName;
@@ -54,7 +54,7 @@ public class DataSchedule extends Schedule {
     return sourceType;
   }
 
-  public Integer getDataTriggerMB() {
+  public int getDataTriggerMB() {
     return dataTriggerMB;
   }
 
@@ -74,7 +74,7 @@ public class DataSchedule extends Schedule {
       && sourceNamespaceId.equals(schedule.sourceNamespaceId)
       && sourceName.equals(schedule.sourceName)
       && sourceType.equals(schedule.sourceType)
-      && dataTriggerMB.equals(schedule.dataTriggerMB)) {
+      && dataTriggerMB == schedule.dataTriggerMB) {
       return true;
     }
     return false;
@@ -87,7 +87,7 @@ public class DataSchedule extends Schedule {
     result = 31 * result + sourceNamespaceId.hashCode();
     result = 31 * result + sourceName.hashCode();
     result = 31 * result + sourceType.hashCode();
-    result = 31 * result + dataTriggerMB.hashCode();
+    result = 31 * result + dataTriggerMB;
     return result;
   }
 
