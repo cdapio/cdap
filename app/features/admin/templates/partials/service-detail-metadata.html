@@ -1,46 +1,63 @@
-<table class="table">
-    <tbody>
-        <tr>
-            <th>Instances:</th>
-            <td>
-                <table>
-                    <thead>
-                        <th>Provisioned</th>
-                        <th></th>
-                        <th></th>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td ng-bind="instances.provisioned"></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-        <tr>
-            <th>Name:</th>
-            <td></td>
-        </tr>
-        <tr>
-            <th>Description:</th>
-            <td ng-bind="description.description"></td>
-        </tr>
-        <tr>
-            <th>ZooKeeper Path:</th>
-            <td></td>
-        </tr>
-        <tr>
-            <th>Host/Port:</th>
-            <td>
-                <table>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<div class="form form-horizontal">
+
+  <div class="form-group">
+      <div class="col-sm-2 control-label">
+        Instances:
+      </div>
+      <div class="col-sm-10">
+        <form class="form-inline">
+            <label>
+              Provisioned
+              <p class="form-control-static" ng-bind="instances.provisioned"></p>
+            </label>
+            <label>
+              Requested
+              <input disabled placeholder="{{instances.requested}}" type="number" name="requested" class="form-control"/>
+            </label>
+            <button type="button" class="btn btn-default">Set</button>
+        </form>
+      </div>
+  </div>
+
+  <div class="form-group">
+      <div class="col-sm-2 control-label">
+        Name:
+      </div>
+      <div class="col-sm-10">
+        <p class="form-control-static"></p>
+      </div>
+  </div>
+
+  <div class="form-group">
+      <div class="col-sm-2 control-label">
+        Description:
+      </div>
+      <div class="col-sm-10">
+        <p class="form-control-static"></p>
+      </div>
+  </div>
+
+  <div class="form-group">
+      <div class="col-sm-2 control-label">
+        ZooKeeper Path:
+      </div>
+      <div class="col-sm-10">
+        <p class="form-control-static"></p>
+      </div>
+  </div>
+
+  <div class="form-group">
+      <div class="col-sm-2 control-label">
+        Host/Port:
+      </div>
+      <div class="col-sm-10">
+        <table>
+            <tr>
+                <td class="form-control-static"></td>
+                <td class="form-control-static"></td>
+            </tr>
+        </table>
+      </div>
+  </div>
+
+</div>
