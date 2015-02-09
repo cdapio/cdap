@@ -47,40 +47,40 @@ angular.module(PKG.name + '.feature.mapreduce')
           }
         })
 
-          .state('mapreduce.detail.runs.detail', {
+          .state('mapreduce.detail.runs.tab', {
             url: '/:runId',
             template: '<ui-view/>',
             abstract: true
           })
-            .state('mapreduce.detail.runs.detail.status', {
+            .state('mapreduce.detail.runs.tab.status', {
               url: '/status',
               template: '<div> Status: {{$state.params.runId}} </div>',
               ncyBreadcrumb: {
                 skip: true
               }
             })
-            .state('mapreduce.detail.runs.detail.distribution', {
+            .state('mapreduce.detail.runs.tab.distribution', {
               url: '/distribution',
               template: '<div> Distribution: {{$state.params.runId}} </div>',
               ncyBreadcrumb: {
                 skip: true
               }
             })
-            .state('mapreduce.detail.runs.detail.list', {
+            .state('mapreduce.detail.runs.tab.list', {
               url: '/list',
               template: '<div> List: {{$state.params.runId}} </div>',
               ncyBreadcrumb: {
                 skip: true
               }
             })
-            .state('mapreduce.detail.runs.detail.data', {
+            .state('mapreduce.detail.runs.tab.data', {
               url: '/data',
               template: '<div> Data: {{$state.params.runId}} </div>',
               ncyBreadcrumb: {
                 skip: true
               }
             })
-            .state('mapreduce.detail.runs.detail.configuration', {
+            .state('mapreduce.detail.runs.tab.configuration', {
               url: '/configuration',
               template: '<div> Configuration: {{$state.params.runId}} </div>',
               ncyBreadcrumb: {
@@ -116,56 +116,48 @@ angular.module(PKG.name + '.feature.mapreduce')
             skip: true
           }
         })
-          .state('mapreduce.detail.logs.detail', {
-            url: '',
-            abstract: true,
-            template: '<ui-view/>',
+          .state('mapreduce.detail.logs.all', {
+            url: '/all',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/all.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
-            .state('mapreduce.detail.logs.detail.all', {
-              url: '/all',
-              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/all.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('mapreduce.detail.logs.detail.info', {
-              url: '/info',
-              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/info.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('mapreduce.detail.logs.detail.warn', {
-              url: '/warn',
-              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/warn.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('mapreduce.detail.logs.detail.error', {
-              url: '/error',
-              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/error.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('mapreduce.detail.logs.detail.debug', {
-              url: '/debug',
-              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/debug.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('mapreduce.detail.logs.detail.other', {
-              url: '/other',
-              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/other.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
+          .state('mapreduce.detail.logs.info', {
+            url: '/info',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/info.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('mapreduce.detail.logs.warn', {
+            url: '/warn',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/warn.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('mapreduce.detail.logs.error', {
+            url: '/error',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/error.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('mapreduce.detail.logs.debug', {
+            url: '/debug',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/debug.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('mapreduce.detail.logs.other', {
+            url: '/other',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/other.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
         .state('mapreduce.detail.resources', {
           url: '/resources',
           templateUrl: '/assets/features/mapreduce/templates/tabs/resources.html',
