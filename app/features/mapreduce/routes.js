@@ -108,13 +108,64 @@ angular.module(PKG.name + '.feature.mapreduce')
             skip: true
           }
         })
-        .state('mapreduce.detail.log', {
+        .state('mapreduce.detail.logs', {
           url: '/log',
           templateUrl: '/assets/features/mapreduce/templates/tabs/log.html',
+          controller: 'MapreduceLogsController',
           ncyBreadcrumb: {
             skip: true
           }
         })
+          .state('mapreduce.detail.logs.detail', {
+            url: '',
+            abstract: true,
+            template: '<ui-view/>',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+            .state('mapreduce.detail.logs.detail.all', {
+              url: '/all',
+              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/all.html',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
+            .state('mapreduce.detail.logs.detail.info', {
+              url: '/info',
+              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/info.html',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
+            .state('mapreduce.detail.logs.detail.warn', {
+              url: '/warn',
+              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/warn.html',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
+            .state('mapreduce.detail.logs.detail.error', {
+              url: '/error',
+              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/error.html',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
+            .state('mapreduce.detail.logs.detail.debug', {
+              url: '/debug',
+              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/debug.html',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
+            .state('mapreduce.detail.logs.detail.other', {
+              url: '/other',
+              templateUrl: '/assets/features/mapreduce/templates/tabs/logs/other.html',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
         .state('mapreduce.detail.resources', {
           url: '/resources',
           templateUrl: '/assets/features/mapreduce/templates/tabs/resources.html',
