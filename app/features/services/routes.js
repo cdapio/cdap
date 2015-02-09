@@ -73,56 +73,48 @@ angular.module(PKG.name + '.feature.services')
             skip: true
           }
         })
-          .state('services.detail.logs.detail', {
-            url: '',
-            abstract: true,
-            template: '<ui-view/>',
+          .state('services.detail.logs.all', {
+            url: '/all',
+            templateUrl: '/assets/features/services/templates/tabs/logs/all.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
-            .state('services.detail.logs.detail.all', {
-              url: '/all',
-              templateUrl: '/assets/features/services/templates/tabs/logs/all.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('services.detail.logs.detail.info', {
-              url: '/info',
-              templateUrl: '/assets/features/services/templates/tabs/logs/info.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('services.detail.logs.detail.warn', {
-              url: '/warn',
-              templateUrl: '/assets/features/services/templates/tabs/logs/warn.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('services.detail.logs.detail.error', {
-              url: '/error',
-              templateUrl: '/assets/features/services/templates/tabs/logs/error.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('services.detail.logs.detail.debug', {
-              url: '/debug',
-              templateUrl: '/assets/features/services/templates/tabs/logs/debug.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
-            .state('services.detail.logs.detail.other', {
-              url: '/other',
-              templateUrl: '/assets/features/services/templates/tabs/logs/other.html',
-              ncyBreadcrumb: {
-                skip: true
-              }
-            })
+          .state('services.detail.logs.info', {
+            url: '/info',
+            templateUrl: '/assets/features/services/templates/tabs/logs/info.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('services.detail.logs.warn', {
+            url: '/warn',
+            templateUrl: '/assets/features/services/templates/tabs/logs/warn.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('services.detail.logs.error', {
+            url: '/error',
+            templateUrl: '/assets/features/services/templates/tabs/logs/error.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('services.detail.logs.debug', {
+            url: '/debug',
+            templateUrl: '/assets/features/services/templates/tabs/logs/debug.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
+          .state('services.detail.logs.other', {
+            url: '/other',
+            templateUrl: '/assets/features/services/templates/tabs/logs/other.html',
+            ncyBreadcrumb: {
+              skip: true
+            }
+          })
         .state('services.detail.resources', {
           url: '/resource',
           templateUrl: "/assets/features/services/templates/tabs/resources.html",
