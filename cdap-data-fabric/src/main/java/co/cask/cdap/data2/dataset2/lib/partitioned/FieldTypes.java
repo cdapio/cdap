@@ -122,8 +122,9 @@ public class FieldTypes {
       default:
         throw new IllegalArgumentException("Unhandled field type: " + type.name());
     }
-    throw new IllegalArgumentException(String.format(
-      "Incompatible value %s of type %s for field type %s.", value, value.getClass(), type.name()));
+    @SuppressWarnings("unchecked")
+    T t = (T) value;
+    return t;
   }
 
   /**
