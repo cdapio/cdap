@@ -74,13 +74,13 @@ angular.module(PKG.name + '.feature.mapreduce')
         toState = 0;
       }
       $timeout(function() {
-        $state.go('mapreduce.detail.logs.detail.' + $scope.logTabs[toState]);
+        $state.go('mapreduce.detail.logs.' + $scope.logTabs[toState]);
       });
     });
 
     $scope.$on('$stateChangeSuccess', function(event, toState) {
       var tab;
-      if ($state.includes('mapreduce.detail.logs.detail.*')) {
+      if ($state.includes('mapreduce.detail.logs.*')) {
         tab = $scope.logTabs.indexOf(toState.name.split('.').slice(-1).pop())
         $scope.logTabs.activeTab = (tab > 0? tab: 0);
       }
