@@ -19,17 +19,16 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.file.FileAdmin;
 
 /**
- * {@link co.cask.cdap.api.dataset.module.DatasetModule}
- * for {@link co.cask.cdap.api.dataset.lib.TimePartitionedFileSet}.
+ * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.PartitionedFileSet}.
  */
-public class TimePartitionedFileSetModule implements DatasetModule {
+public class PartitionedFileSetModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
 
@@ -37,7 +36,7 @@ public class TimePartitionedFileSetModule implements DatasetModule {
     DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get("table");
 
     // file dataset
-    registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.class.getName(), fileSetDef, tableDef));
-    registry.add(new TimePartitionedFileSetDefinition("timePartitionedFileSet", fileSetDef, tableDef));
+    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef, tableDef));
+    registry.add(new PartitionedFileSetDefinition("partitionedFileSet", fileSetDef, tableDef));
   }
 }
