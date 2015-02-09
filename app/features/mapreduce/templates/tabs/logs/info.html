@@ -1,1 +1,10 @@
-<h2> Logs -> Info </h2>
+<div class="terminal pre-scrollable">
+  <pre ng-repeat="log in infoLogs" ng-show="infoLogs.length > 0" >
+    <code ng-bind="log"></code>
+  </pre>
+  <pre ng-show="infoLogs.length < 1">
+    <code>
+      [No Logs]
+    </code>
+  </pre>
+</div>
