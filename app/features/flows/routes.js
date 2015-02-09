@@ -53,7 +53,8 @@ angular.module(PKG.name + '.feature.flows')
             })
               .state('flows.detail.runs.detail.status', {
                 url: '/status',
-                template: '<div> Status: {{$state.params.runId}} </div>',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/status.html',
+                controller: 'FlowsDetailRunStatusController',
                 ncyBreadcrumb: {
                   skip: true
                 }
