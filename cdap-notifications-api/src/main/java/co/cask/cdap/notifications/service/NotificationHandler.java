@@ -16,12 +16,12 @@
 
 package co.cask.cdap.notifications.service;
 
-import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.proto.Id;
 
 import java.lang.reflect.Type;
 
 /**
- * Notification handler passed when subscribing to a {@link NotificationFeed} using
+ * Notification handler passed when subscribing to a {@link Id.NotificationFeed} using
  * {@link co.cask.cdap.notifications.service.NotificationService#subscribe}.
  *
  * @param <N> Type of the Notification to handle

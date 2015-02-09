@@ -19,7 +19,6 @@ package co.cask.cdap.cli.util;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.common.cli.Command;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 

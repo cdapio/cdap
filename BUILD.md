@@ -28,7 +28,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     MAVEN_OPTS="-Xmx512m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
 
 ### Build Standalone distribution ZIP
-    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
     
 ### Build the limited set of Javadocs used in distribution ZIP
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release

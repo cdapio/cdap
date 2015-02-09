@@ -293,7 +293,7 @@ function pandoc_includes() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {
@@ -310,6 +310,7 @@ function version() {
   PROJECT_VERSION=`grep "<version>" pom.xml`
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
+  PROJECT_SHORT_VERSION=`expr "$PROJECT_VERSION" : '\([0-9]*\.[0-9]*\)'`
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
   GIT_BRANCH_TYPE="${branch[0]}"
   GIT_BRANCH="${branch[1]}"
@@ -320,6 +321,7 @@ function display_version() {
   echo ""
   echo "PROJECT_PATH: $PROJECT_PATH"
   echo "PROJECT_VERSION: $PROJECT_VERSION"
+  echo "PROJECT_SHORT_VERSION: $PROJECT_SHORT_VERSION"
   echo "GIT_BRANCH_TYPE: $GIT_BRANCH_TYPE"
   echo "GIT_BRANCH: $GIT_BRANCH"
   echo ""

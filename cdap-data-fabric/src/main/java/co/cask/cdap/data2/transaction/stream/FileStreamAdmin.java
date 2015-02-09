@@ -26,9 +26,9 @@ import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -56,11 +56,11 @@ import javax.annotation.Nullable;
 /**
  * An abstract base {@link StreamAdmin} for File based stream.
  */
-public abstract class AbstractStreamFileAdmin implements StreamAdmin {
+public class FileStreamAdmin implements StreamAdmin {
 
   public static final String CONFIG_FILE_NAME = "config.json";
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileAdmin.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileStreamAdmin.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -72,23 +72,19 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final NotificationFeedManager notificationFeedManager;
   private ExploreFacade exploreFacade;
 
-  // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
-  // TODO: Remove usage of this when no longer needed
-  private final StreamAdmin oldStreamAdmin;
-
-  protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                                    StreamCoordinatorClient streamCoordinatorClient,
-                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                    NotificationFeedManager notificationFeedManager,
-                                    StreamAdmin oldStreamAdmin) {
+  @Inject
+  public FileStreamAdmin(LocationFactory locationFactory, CConfiguration cConf,
+                         StreamCoordinatorClient streamCoordinatorClient,
+                         StreamConsumerStateStoreFactory stateStoreFactory,
+                         NotificationFeedManager notificationFeedManager) {
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
-    this.oldStreamAdmin = oldStreamAdmin;
   }
 
+  @SuppressWarnings("unused")
   @Inject(optional = true)
   public void setExploreFacade(ExploreFacade exploreFacade) {
     // Optional injection is used to simplify Guice injection since ExploreFacade is only need when explore is enabled
@@ -97,12 +93,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    try {
-      oldStreamAdmin.dropAll();
-    } catch (Exception e) {
-      LOG.error("Failed to to truncate old stream.", e);
-    }
-
     // Simply increment the generation of all streams. The actual deletion of file, just like truncate case,
     // is done external to this class.
     List<Location> locations;
@@ -156,11 +146,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     } finally {
       stateStore.close();
     }
-
-    // Also configure the old stream if it exists
-    if (oldStreamAdmin.exists(name.toURI().toString())) {
-      oldStreamAdmin.configureInstances(name, groupId, instances);
-    }
   }
 
   @Override
@@ -211,17 +196,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     } finally {
       stateStore.close();
     }
-
-    // Also configure the old stream if it exists
-    if (oldStreamAdmin.exists(name.toURI().toString())) {
-      oldStreamAdmin.configureGroups(name, groupInfo);
-    }
   }
 
   @Override
   public void upgrade() throws Exception {
     // No-op
-    oldStreamAdmin.upgrade();
   }
 
   @Override
@@ -243,17 +222,23 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                   "(can only update ttl, format or threshold)",
                                 config.getName());
 
-    if (originalConfig.getTTL() != config.getTTL()) {
-      // This call will also save the config
-      streamCoordinatorClient.changeTTL(originalConfig, config.getTTL());
-    }
-    if (originalConfig.getNotificationThresholdMB() != config.getNotificationThresholdMB()) {
-      // This call will also save the config
-      streamCoordinatorClient.changeThreshold(originalConfig, config.getNotificationThresholdMB());
-    }
-    if (!originalConfig.getFormat().equals(config.getFormat())) {
-      saveConfig(config);
+    // It's a temp fix to avoid async update (through stream coordinator client overwrites changes in here.
+    // It works only if there is no concurrent updates from multiple clients
+    // A proper fix needs to be done to make concurrent updates from multiple threads/processes safe.
+    boolean formatChanged = !originalConfig.getFormat().equals(config.getFormat());
+    boolean ttlChanged = originalConfig.getTTL() != config.getTTL();
+    boolean thresholdChanged = !originalConfig.getNotificationThresholdMB().equals(config.getNotificationThresholdMB());
 
+    if (formatChanged || ttlChanged || thresholdChanged) {
+      saveConfig(config);
+    }
+    if (ttlChanged) {
+      streamCoordinatorClient.changeTTL(originalConfig.getName(), config.getTTL());
+    }
+    if (thresholdChanged) {
+      streamCoordinatorClient.changeThreshold(originalConfig.getName(), config.getNotificationThresholdMB());
+    }
+    if (formatChanged) {
       // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
       // a hive change, as they are just properties used by the stream storage handler.
       Schema currSchema = originalConfig.getFormat().getSchema();
@@ -268,8 +253,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public boolean exists(String name) throws Exception {
     try {
-      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists()
-        || oldStreamAdmin.exists(QueueName.fromStream(name).toURI().toString());
+      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -314,15 +298,14 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   /**
-   * Create the public {@link NotificationFeed}s that concerns the stream with configuration {@code config}.
+   * Create the public {@link Id.NotificationFeed}s that concerns the stream with configuration {@code config}.
    *
    * @param config config of the stream to create feeds for
    */
   private void createStreamFeeds(StreamConfig config) {
-    // TODO use accountID as namespace?
     try {
-      NotificationFeed streamFeed = new NotificationFeed.Builder()
-        .setNamespace(Constants.DEFAULT_NAMESPACE)
+      Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
+        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(String.format("%sSize", config.getName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
@@ -336,11 +319,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void truncate(String name) throws Exception {
-    String streamName = QueueName.fromStream(name).toURI().toString();
-    if (oldStreamAdmin.exists(streamName)) {
-      oldStreamAdmin.truncate(streamName);
-    }
-
     StreamConfig config = getConfig(name);
     streamCoordinatorClient.nextGeneration(config, StreamUtils.getGeneration(config)).get();
   }
@@ -353,10 +331,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void upgrade(String name, Properties properties) throws Exception {
-    String streamName = QueueName.fromStream(name).toURI().toString();
-    if (oldStreamAdmin.exists(streamName)) {
-      oldStreamAdmin.upgrade(streamName, properties);
-    }
+    // No-op
   }
 
   private void saveConfig(StreamConfig config) throws IOException {

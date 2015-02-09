@@ -35,13 +35,13 @@ import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.NotificationContext;
-import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -295,11 +295,12 @@ public class DistributedStreamService extends AbstractStreamService {
    * of.
    *
    * @return a {@link Cancellable} to cancel the subscription
-   * @throws NotificationException if the heartbeat feed does not exist
+   * @throws NotificationFeedNotFoundException if the heartbeat feed does not exist
+   * @throws NotificationFeedException in case of any other error concerning the feed
    */
-  private Cancellable subscribeToHeartbeatsFeed() throws NotificationException {
-    final NotificationFeed heartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace(Constants.DEFAULT_NAMESPACE)
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, NotificationFeedException {
+    final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
+      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
@@ -353,8 +354,8 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
     // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
-    NotificationFeed streamHeartbeatsFeed = new NotificationFeed.Builder()
-      .setNamespace(Constants.DEFAULT_NAMESPACE)
+    Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
+      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Stream heartbeats feed.")
@@ -362,7 +363,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     try {
       feedManager.getFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
+    } catch (NotificationFeedNotFoundException e) {
       feedManager.createFeed(streamHeartbeatsFeed);
     }
   }
@@ -515,7 +516,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private final class StreamSizeAggregator implements Cancellable {
 
     private final Map<Integer, Long> streamWriterSizes;
-    private final NotificationFeed streamFeed;
+    private final Id.NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
     private final AtomicLong countFromFiles;
     private final AtomicInteger streamThresholdMB;
@@ -529,8 +530,8 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
       this.isInit = true;
-      this.streamFeed = new NotificationFeed.Builder()
-        .setNamespace(Constants.DEFAULT_NAMESPACE)
+      this.streamFeed = new Id.NotificationFeed.Builder()
+        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(streamName)
         .build();
