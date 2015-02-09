@@ -127,6 +127,16 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.apps', {
               url: '/apps',
-              templateUrl: '/assets/features/admin/templates/namespace/apps.html'
-            });
+              templateUrl: '/assets/features/admin/templates/namespace/apps.html',
+              controller: 'AdminNamespaceAppController'
+            })
+              .state('admin.namespace.detail.apps.metadata', {
+                parent: 'admin.namespace.detail',
+                url: '/:appId',
+                templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
+                controller: 'AdminNamespaceAppMetadataController'
+              });
   });
+
+
+

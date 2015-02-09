@@ -58,7 +58,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
 
     render();
 
-    if(type.indexOf('time.')===0) {
+    if(attr.stream) { // presence of attribute determines "liveness"
       $scope.$watch('stream', function (newVal) {
         if(!$scope.me) {
           return;
@@ -100,7 +100,7 @@ ngEpoch.directive('epochPie', function () {
 ngEpoch.directive('epochBar', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'bar', attr);
+      scope.initEpoch(elem, 'time.bar', attr);
     }
   }, baseDirective);
 });
@@ -118,7 +118,7 @@ ngEpoch.directive('epochLiveBar', function () {
 ngEpoch.directive('epochLine', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'line', attr);
+      scope.initEpoch(elem, 'time.line', attr);
     }
   }, baseDirective);
 });
@@ -139,7 +139,7 @@ ngEpoch.directive('epochLiveLine', function () {
 ngEpoch.directive('epochArea', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'area', attr);
+      scope.initEpoch(elem, 'time.area', attr);
     }
   }, baseDirective);
 });

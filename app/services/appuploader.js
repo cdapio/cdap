@@ -1,10 +1,12 @@
 angular.module(PKG.name + '.services')
   .factory('myAppUploader', function(myFileUploader, $state, $alert) {
-    function upload(files) {
+    function upload(files, namespace) {
+
       for (var i = 0; i < files.length; i++) {
         myFileUploader.upload({
-          path: '/namespaces/' + $state.params.namespace + '/apps',
+          path: '/namespaces/' + ($state.params.namespace || namespace) + '/apps',
           file: files[i]
+
         })
           .then(success,error);
       }

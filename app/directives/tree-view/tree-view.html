@@ -3,9 +3,9 @@
     bs-collapse>
   <a ui-sref="{{menu.state || 'home'}}"
      ng-show="menu.children.length == 0"
-     ng-bind="menu.label">
+     ng-bind="menu.label" href="">
   </a>
-  <a ng-show="menu.children.length > 0">
+  <a ng-show="menu.children.length > 0" href="">
     <span ng-bind="menu.label" bs-collapse-toggle></span>
   </a>
   <ul class="list-unstyled" bs-collapse-target>

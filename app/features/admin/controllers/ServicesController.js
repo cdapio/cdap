@@ -1,9 +1,15 @@
-angular.module(PKG.name + '.feature.admin')
-  .controller('AdminServicesController', function ($scope) {
-    $scope.services = [{
-      name: 'appfabric',
-      status: 'active',
-      provisioned: '2',
-      requested: '2'
-    }];
-  });
+angular.module(PKG.name + '.feature.admin').controller('AdminServicesController',
+function ($scope, MyDataSource) {
+
+  $scope.services = [];
+
+  var myDataSrc = new MyDataSource($scope);
+
+  myDataSrc.request({
+    _cdapPathV2: '/system/services'
+  })
+    .then(function(response) {
+      $scope.services = response;
+    });
+
+});
