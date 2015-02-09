@@ -18,6 +18,8 @@ package co.cask.cdap.stream.store;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -41,7 +43,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -72,7 +73,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
         @Override
         protected void configure() {
           bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Singleton.class);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -99,13 +100,16 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   }
 
   @Override
-  protected void createNamespace(String namespaceId) {
-    store.createNamespace(new NamespaceMeta.Builder().setId(namespaceId).build());
+  protected void createNamespace(String namespaceId) throws AlreadyExistsException {
+    store.createNamespace(new NamespaceMeta.Builder()
+                            .setId(namespaceId)
+                            .setName(namespaceId)
+                            .setDescription(namespaceId)
+                            .build());
   }
 
   @Override
-  protected void deleteNamespace(String namespaceId) {
+  protected void deleteNamespace(String namespaceId) throws NotFoundException {
     store.deleteNamespace(new Id.Namespace(namespaceId));
   }
-
 }

@@ -31,6 +31,7 @@ import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -152,16 +153,16 @@ public class NamespaceClient {
     try {
       config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
       URL url = config.resolveURL(String.format("namespaces/%s", namespaceMeta.getId()));
-      NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
+      JsonObject jsonObject = new JsonObject();
       String name = namespaceMeta.getName();
       String description = namespaceMeta.getDescription();
       if (name != null) {
-        builder.setName(name);
+        jsonObject.addProperty("name", name);
       }
       if (description != null) {
-        builder.setDescription(description);
+        jsonObject.addProperty("description", description);
       }
-      String body = GSON.toJson(builder.build());
+      String body = GSON.toJson(jsonObject);
       HttpRequest request = HttpRequest.put(url).withBody(body).build();
       HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
       String responseBody = response.getResponseBodyAsString();

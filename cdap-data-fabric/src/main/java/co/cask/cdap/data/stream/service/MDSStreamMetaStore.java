@@ -28,7 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
-import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -135,12 +135,12 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
+  public Multimap<Id.Namespace, StreamSpecification> listStreams() throws Exception {
     return txnl.executeUnchecked(
-      new TransactionExecutor.Function<StreamMds, Multimap<NamespaceMeta, StreamSpecification>>() {
+      new TransactionExecutor.Function<StreamMds, Multimap<Id.Namespace, StreamSpecification>>() {
         @Override
-        public Multimap<NamespaceMeta, StreamSpecification> apply(StreamMds mds) throws Exception {
-          ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+        public Multimap<Id.Namespace, StreamSpecification> apply(StreamMds mds) throws Exception {
+          ImmutableMultimap.Builder<Id.Namespace, StreamSpecification> builder = ImmutableMultimap.builder();
           Map<MetadataStoreDataset.Key, StreamSpecification> streamSpecs =
             mds.streams.listKV(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
                                StreamSpecification.class);
@@ -148,7 +148,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
             List<byte[]> keyParts = streamSpecEntry.getKey().split();
             // Namespace id is the key part with index 1.
             String namespaceId = Bytes.toString(keyParts.get(1));
-            builder.put(new NamespaceMeta.Builder().setId(namespaceId).build(), streamSpecEntry.getValue());
+            builder.put(Id.Namespace.from(namespaceId), streamSpecEntry.getValue());
           }
           return builder.build();
         }
