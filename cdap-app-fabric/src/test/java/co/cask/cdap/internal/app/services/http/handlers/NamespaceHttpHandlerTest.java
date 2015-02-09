@@ -19,9 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -37,7 +35,6 @@ import java.util.List;
  */
 public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
-  private static final Gson GSON = new Gson();
   private static final String EMPTY = "";
   private static final String ID_FIELD = "id";
   private static final String NAME_FIELD = "name";
@@ -45,20 +42,15 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String ID = "test";
   private static final String NAME = "display test";
   private static final String DESCRIPTION = "test description";
-  private static final NamespaceMeta METADATA_VALID = new NamespaceMeta.Builder().setName(NAME)
-    .setDescription(DESCRIPTION).build();
-  private static final NamespaceMeta METADATA_MISSING_FIELDS = new NamespaceMeta.Builder().build();
-  private static final NamespaceMeta METADATA_EMPTY_FIELDS = new NamespaceMeta.Builder()
-    .setName(EMPTY).setDescription(EMPTY).build();
+  private static final String METADATA_VALID =
+    String.format("{\"name\":\"%s\", \"description\":\"%s\"}", NAME, DESCRIPTION);
+  private static final String METADATA_MISSING_FIELDS = "{}";
+  private static final String METADATA_EMPTY_FIELDS = "{\"name\":\"\", \"description\":\"\"}";
   private static final String METADATA_INVALID_JSON = "invalid";
   private static final String INVALID_ID = "!nv@l*d/";
 
   private HttpResponse createNamespace(String id) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
-  }
-
-  private HttpResponse createNamespace(NamespaceMeta metadata, String id) throws Exception {
-    return createNamespace(GSON.toJson(metadata), id);
   }
 
   private HttpResponse createNamespace(String metadata, String id) throws Exception {
