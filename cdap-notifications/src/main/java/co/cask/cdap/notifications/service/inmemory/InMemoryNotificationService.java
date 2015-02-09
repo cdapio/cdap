@@ -17,10 +17,10 @@
 package co.cask.cdap.notifications.service.inmemory;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -58,7 +58,8 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, final Type notificationType)
+  public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
+                                         final Type notificationType)
     throws NotificationException {
     return executorService.submit(new Callable<N>() {
       @Override
