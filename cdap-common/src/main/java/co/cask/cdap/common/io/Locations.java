@@ -18,10 +18,12 @@ package co.cask.cdap.common.io;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
@@ -38,6 +40,8 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -121,6 +125,71 @@ public final class Locations {
         }
       }
     };
+  }
+
+  /**
+   * Do some processing on the locations contained in the {@code startLocation}, using the {@code processor}. If this
+   * location is a directory, all the locations contained in it will also be processed. If the {@code recursive} tag
+   * is set to true, those locations that are directories will also be processed recursively. If the
+   * {@code startLocation} is not a directory, this method will return the result of the processing of that location.
+   *
+   * @param startLocation location to start the processing from
+   * @param recursive {@code true} if this method should be called on the directory {@link Location}s found from
+   *                  {@code startLocation}. If the {@code startLocation} is a directory, all the locations under it
+   *                  will be processed, regardless of the value of {@code recursive}
+   * @param processor used to process locations. If the {@link Processor#process} method returns false on any
+   *                  {@link Location} object processed, this method will return the current result of the processor.
+   * @param <R> Type of the return value
+   * @throws IOException if the locations could not be read
+   */
+  public static <R> R processLocations(Location startLocation, boolean recursive,
+                                       Processor<LocationStatus, R> processor) throws IOException {
+    // Becomes true after adding the locations under the startLocation to the processing stack
+    boolean firstPass = false;
+    boolean process;
+
+    LocationFactory locationFactory = startLocation.getLocationFactory();
+    if (locationFactory instanceof HDFSLocationFactory) {
+      // Treat the HDFS case
+      FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+      Deque<FileStatus> statusStack = Lists.newLinkedList();
+      statusStack.push(fs.getFileLinkStatus(new Path(startLocation.toURI())));
+      while (!statusStack.isEmpty()) {
+        FileStatus currentStatus = statusStack.poll();
+        process = processor.process(new LocationStatus(currentStatus.getPath().toUri(), currentStatus.getLen(),
+                                                       currentStatus.isDirectory()));
+        if (!process) {
+          return processor.getResult();
+        }
+        if (currentStatus.isDirectory() && (!firstPass || recursive)) {
+          FileStatus[] statuses = fs.listStatus(currentStatus.getPath());
+          for (FileStatus status : statuses) {
+            statusStack.push(status);
+          }
+          firstPass = true;
+        }
+      }
+    } else {
+      // Treat the local FS case, we can directly use the Location class APIs
+      Deque<Location> locationStack = Lists.newLinkedList();
+      locationStack.push(startLocation);
+      while (!locationStack.isEmpty()) {
+        Location currentLocation = locationStack.poll();
+        process = processor.process(new LocationStatus(currentLocation.toURI(), currentLocation.length(),
+                                                       currentLocation.isDirectory()));
+        if (!process) {
+          return processor.getResult();
+        }
+        if (currentLocation.isDirectory() && (!firstPass || recursive)) {
+          List<Location> locations = currentLocation.list();
+          for (Location location : locations) {
+            locationStack.push(location);
+          }
+          firstPass = true;
+        }
+      }
+    }
+    return processor.getResult();
   }
 
   /**

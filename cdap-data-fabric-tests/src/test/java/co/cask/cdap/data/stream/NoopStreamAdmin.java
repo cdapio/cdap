@@ -56,6 +56,11 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
+    return 0;
+  }
+
+  @Override
   public boolean exists(String name) throws Exception {
     return false;
   }

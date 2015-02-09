@@ -17,6 +17,9 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
+import co.cask.cdap.common.io.LocationStatus;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import com.google.common.base.CharMatcher;
@@ -382,22 +385,32 @@ public final class StreamUtils {
    */
   public static long fetchStreamFilesSize(StreamConfig streamConfig) throws IOException {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(), getGeneration(streamConfig));
-    long size = 0;
+
+    Processor<LocationStatus, Long> processor = new Processor<LocationStatus, Long>() {
+      private long size = 0;
+      @Override
+      public boolean process(LocationStatus input) {
+        if (!input.isDir() && StreamFileType.EVENT.isMatched(input.getUri().getPath())) {
+          size += input.getLength();
+        }
+        return true;
+      }
+
+      @Override
+      public Long getResult() {
+        return size;
+      }
+    };
+
     List<Location> locations = streamPath.list();
     // All directories are partition directories
     for (Location location : locations) {
       if (!location.isDirectory() || !isPartition(location.getName())) {
         continue;
       }
-
-      List<Location> partitionFiles = location.list();
-      for (Location partitionFile : partitionFiles) {
-        if (!partitionFile.isDirectory() && StreamFileType.EVENT.isMatched(partitionFile.getName())) {
-          size += partitionFile.length();
-        }
-      }
+      Locations.processLocations(location, false, processor);
     }
-    return size;
+    return processor.getResult();
   }
 
   private StreamUtils() {
