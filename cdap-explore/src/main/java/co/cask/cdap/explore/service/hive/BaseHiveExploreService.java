@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,6 +68,8 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.shims.ShimLoader;
+import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -121,6 +123,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
+  public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -190,7 +193,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    return new HiveConf();
+    HiveConf conf = new HiveConf();
+    // Read delegation token if security is enabled.
+    if (ShimLoader.getHadoopShims().isSecurityEnabled()) {
+      conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
+
+      // mapreduce.job.credentials.binary is added by Hive only if Kerberos credentials are present and impersonation
+      // is enabled. However, in our case we don't have Kerberos credentials for Explore service.
+      // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
+      // TODO: When Explore does secure impersonation this has to be the tokens of the user,
+      // TODO: ... and not the tokens of the service itself.
+      String hadoopAuthToken = System.getenv(ShimLoader.getHadoopShims().getTokenFileLocEnvName());
+      if (hadoopAuthToken != null) {
+        conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
+      }
+    }
+    return conf;
   }
 
   protected CLIService getCliService() {
@@ -200,7 +218,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private IMetaStoreClient getMetaStoreClient() throws ExploreException {
     if (metastoreClientLocal.get() == null) {
       try {
-        IMetaStoreClient client = new HiveMetaStoreClient(new HiveConf());
+        IMetaStoreClient client = new HiveMetaStoreClient(getHiveConf());
         Supplier<IMetaStoreClient> supplier = Suppliers.ofInstance(client);
         metastoreClientLocal.set(supplier);
 
@@ -211,9 +229,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // We can use the weak reference, which is retrieved through polling the ReferenceQueue,
         // to get back the client and call close() on it.
         metastoreClientReferences.put(
-          new WeakReference<Supplier<IMetaStoreClient>>(supplier, metastoreClientReferenceQueue),
-          client
-        );
+          new WeakReference<Supplier<IMetaStoreClient>>(supplier, metastoreClientReferenceQueue), client);
       } catch (MetaException e) {
         throw new ExploreException("Error initializing Hive Metastore client", e);
       }
@@ -232,6 +248,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
+
     cliService.init(getHiveConf());
     cliService.start();
 
@@ -600,7 +617,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       String namespaceId = namespace.getId();
       Map<String, String> sessionConf = startSession();
-      // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
 
       // "IF NOT EXISTS" so that this operation is idempotent.
