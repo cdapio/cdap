@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.common.io;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -129,33 +128,40 @@ public final class Locations {
   }
 
   /**
-   * Do some processing on locations contained in the {@code locationDir}, using the {@code processor}.
+   * Do some processing on the locations contained in the {@code startLocation}, using the {@code processor}. If this
+   * location is a directory, all the locations contained in it will also be processed. If the {@code recursive} tag
+   * is set to true, those locations that are directories will also be processed recursively. If the
+   * {@code startLocation} is not a directory, this method will return the result of the processing of that location.
    *
-   * @param locationDir location to start iterating from
+   * @param startLocation location to start the processing from
    * @param recursive true if this method should be called on the directory {@link Location}s found from
-   *                  {@code locationDir}
-   * @param processor used to process the locations contained by the {@code locationDir}, whether they are directories
-   *                  or not. If the {@link Processor#process} method returns false on any {@link Location} object
-   *                  processed, this method will return the current result of the processor.
+   *                  {@code startLocation}
+   * @param processor used to process locations. If the {@link Processor#process} method returns false on any
+   *                  {@link Location} object processed, this method will return the current result of the processor.
    * @param <R> Type of the return value
    * @throws IOException if the locations could not be read
    */
-  public static <R> R processLocations(Location locationDir, boolean recursive, Processor<LocationStatus, R> processor)
-    throws IOException {
-    Preconditions.checkArgument(locationDir.isDirectory(), "Input location has to be a directory");
-    LocationFactory locationFactory = locationDir.getLocationFactory();
+  public static <R> R processLocations(Location startLocation, boolean recursive,
+                                       Processor<LocationStatus, R> processor) throws IOException {
+    boolean process = processor.process(new LocationStatus(startLocation.toURI(), startLocation.length(),
+                                                           startLocation.isDirectory()));
+    if (!process || !startLocation.isDirectory()) {
+      return processor.getResult();
+    }
+
+    LocationFactory locationFactory = startLocation.getLocationFactory();
     if (locationFactory instanceof HDFSLocationFactory) {
       // Treat the HDFS case
       FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
       Deque<Path> pathStack = Lists.newLinkedList();
-      pathStack.push(new Path(locationDir.toURI()));
+      pathStack.push(new Path(startLocation.toURI()));
       while (!pathStack.isEmpty()) {
         Path currentPath = pathStack.poll();
         FileStatus[] statuses = fs.listStatus(currentPath);
 
         for (FileStatus status : statuses) {
-          boolean process = processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(),
-                                                                 status.isDirectory()));
+          process = processor.process(new LocationStatus(status.getPath().toUri(), status.getLen(),
+                                                         status.isDirectory()));
           if (!process) {
             return processor.getResult();
           }
@@ -167,13 +173,12 @@ public final class Locations {
     } else {
       // Treat the local FS case, we can directly use the Location class APIs
       Deque<Location> locationStack = Lists.newLinkedList();
-      locationStack.push(locationDir);
+      locationStack.push(startLocation);
       while (!locationStack.isEmpty()) {
         Location currentLocation = locationStack.poll();
         List<Location> locations = currentLocation.list();
         for (Location location : locations) {
-          boolean process = processor.process(new LocationStatus(location.toURI(), location.length(),
-                                                                 location.isDirectory()));
+          process = processor.process(new LocationStatus(location.toURI(), location.length(), location.isDirectory()));
           if (!process) {
             return processor.getResult();
           }
