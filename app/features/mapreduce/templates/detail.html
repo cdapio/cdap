@@ -1,4 +1,30 @@
 <div ncy-breadcrumb></div>
-<my-tabs
-    data-tabs-list="['Runs','Schedules','Metadata','History','Resources']"
-    data-tabs-partial-path="/assets/features/mapreduce/templates/tabs/"></my-tabs>
+<h2>
+  <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+  <small> <em>Type: Mapreduce </em></small>
+</h2>
+
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab" data-toggle="tab">Runs</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="mapreduce.detail.schedules" role="tab" data-toggle="tab">Schedules</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="mapreduce.detail.metadata" role="tab" data-toggle="tab">Metadata</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="mapreduce.detail.history" role="tab" data-toggle="tab">History</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="mapreduce.detail.resources" role="tab" data-toggle="tab">Resources</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="mapreduce.detail.log" role="tab" data-toggle="tab">Log</a>
+  </li>
+</ul>
+
+<div role="tablist">
+  <ui-view role="tabpanel"/>
+</div>
