@@ -73,7 +73,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   /**
    * @return the underlying (embedded) file set.
    */
-  public FileSet getUnderlyingFileSet();
+  public FileSet getEmbeddedFileSet();
 
   /**
    * Allow direct access to the runtime arguments of this partitioned file set.
