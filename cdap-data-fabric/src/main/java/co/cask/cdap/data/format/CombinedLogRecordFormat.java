@@ -44,7 +44,7 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
   public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
     String bodyAsStr = Bytes.toString(event.getBody(), charset);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
-    List<String> parts = parse(bodyAsStr);
+    List<String> parts = getLogEntries(bodyAsStr);
     List<Schema.Field> fields = schema.getFields();
     int index = 0;
     while (index < fields.size()) {
@@ -91,7 +91,7 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
   }
 
   // parse CLF logEvent and get the record values.
-  private List<String> parse(String logEvent) {
+  private List<String> getLogEntries(String logEvent) {
     List<String> parts = Lists.newArrayList();
     boolean  done = false;
     int start = 0;
@@ -100,27 +100,7 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
         // Skip empty spaces
         start++;
       } else {
-        int end = -1;
-        if (logEvent.charAt(start) == '"') {
-          // Find the closing '"' and extract values within
-          start = start + 1;
-          end = findNext(logEvent, start, '"');
-        } else if (logEvent.charAt(start) == '[') {
-          // find the closing ']' and extract values
-          start = start + 1;
-          end = findNext(logEvent, start, ']');
-        } else {
-          // find the next ' ' and extract values
-          end = findNext(logEvent, start + 1, ' ');
-        }
-
-        if (end == -1) {
-          throw new UnexpectedFormatException(String.format("Could not parse data in CLF format. Entry %s", logEvent));
-        }
-
-        String part = logEvent.substring(start, end);
-        parts.add(part);
-        start = end + 1;
+        start = addNextLogEntry(logEvent, start, parts);
       }
 
       if (start >= logEvent.length()) {
@@ -128,6 +108,30 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
       }
     }
     return parts;
+  }
+
+  // addNextLogEntry and return the last next position continue parsing.
+  private int addNextLogEntry(String data, int start, List<String> parts) {
+    int end = -1;
+    if (data.charAt(start) == '"') {
+      // Find the closing '"' and extract values within
+      start = start + 1;
+      end = findNext(data, start, '"');
+    } else if (data.charAt(start) == '[') {
+      // find the closing ']' and extract values
+      start = start + 1;
+      end = findNext(data, start, ']');
+    } else {
+      // find the next ' ' and extract values
+      end = findNext(data, start + 1, ' ');
+    }
+
+    if (end == -1) {
+      throw new UnexpectedFormatException(String.format("Could not parse data in CLF format. Entry %s", data));
+    }
+
+    parts.add(data.substring(start, end));
+    return end + 1;
   }
 
   // Find the next character matching the "entry". Skip the entry that is escaped.
