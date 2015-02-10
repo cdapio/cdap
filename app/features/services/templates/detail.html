@@ -3,6 +3,27 @@
   <span ng-bind="$state.params.programId | caskCapitalizeFilter"> </span>
   <small> Type: Service </small>
 </h2>
-<my-tabs
-    data-tabs-list="['Status','Data','Metadata','History', 'Logs', 'Resources']"
-    data-tabs-partial-path="/assets/features/services/templates/tabs/"></my-tabs>
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="services.detail.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="services.detail.data" role="tab">Data</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="services.detail.metadata" role="tab">Metadata</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="services.detail.history" role="tab">History</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="services.detail.logs" ui-sref-opts="{reload: true}" role="tab">Logs</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a href="" ui-sref="services.detail.resources" role="tab">Resources</a>
+  </li>
+</ul>
+
+<div role="tablist">
+  <ui-view role="tabpanel"/>
+</div>

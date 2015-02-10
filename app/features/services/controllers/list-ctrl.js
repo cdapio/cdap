@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('CdapServicesListController', function($scope, $stateParams, MyDataSource) {
+  .controller('ServicesListController', function($scope, $stateParams, MyDataSource) {
     var datasrc = new MyDataSource($scope),
         basePath = '/apps/' + $stateParams.appId + '/services';
 
