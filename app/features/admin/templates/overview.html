@@ -1,3 +1,48 @@
-<div>
-  <h3> Admin Overview </h3>
+<div ng-hide="hideWelcomeMessage">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <div class="panel-title pull-left">
+      <p>Welcome CDAP Admin!</p>
+      <p>This is your control console for <span>{{$stateParams.nsadmin}}</span></p>
+      <p>Here, you can view and manage your system configuration and deploy and manage data and apps.</p>
+      <p>Begin by configuring your default namespace.</p>
+      </div>
+      <button class="pull-right btn btn-default" ng-click="hideWelcomeMessage=true">
+        <span class="fa fa-close"></span>
+        <span class="sr-only"> Hide Welcome Message </span>
+      </button>
+    </div>
+  </div>
 </div>
+
+<div>
+  <h3>System Configuration</h3>
+    <a ui-sref="admin.system.instance" href="">Instance Config</a>
+    <a ui-sref="admin.system.services" href="">Services</a>
+</div>
+<div>
+  <h3>Namespaces</h3>
+  <div class="btn-group">
+    <a ui-sref="admin.namespace.create" href="" class="btn btn-default">Add Namespace</a>
+  </div>
+  <table class="table table-striped table-responsive">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Data Types</th>
+        <th>Datasets</th>
+        <th>Apps</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
