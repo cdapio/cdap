@@ -24,13 +24,13 @@ isolation. This is an intial step towards introducing `multi-tenancy
 Namespace Rules
 ===============
 
-A Namespace consists of a name identifier and a description.
+A Namespace consists of a namespace identifier (the namespace ID), a display name, and a description.
 
-Namespace names are composed from a limited set of characters; they are restricted to
+Namespace IDs are composed from a limited set of characters; they are restricted to
 letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
-on the length of a namespace name nor on the number of namespaces.
+on the length of a namespace ID nor on the number of namespaces.
 
-The namespaces ``cdap``, ``default``, and ``system`` are reserved. The ``default``
+The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.
 
@@ -50,6 +50,8 @@ HTTP RESTful API v3.
 
 For this first version, certain limitations apply and are not allowed or implemented:
 
+- Once created, namespace properties (ID, display name, description) cannot be altered, 
+  only deleted;
 - Inter-namespace operations: for example, an application from one namespace using
   datasets from a different namespace;
 - Moving applications and/or data from one namespace to another;
