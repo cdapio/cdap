@@ -29,6 +29,8 @@ import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
+
 /**
  *
  */
@@ -37,7 +39,9 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
   private static Injector injector;
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws IOException {
+    StreamCoordinatorTestBase.init();
+
     injector = Guice.createInjector(
       new ConfigModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),

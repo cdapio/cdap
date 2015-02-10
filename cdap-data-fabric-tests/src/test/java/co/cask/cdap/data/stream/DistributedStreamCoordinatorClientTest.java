@@ -49,6 +49,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
 
   @BeforeClass
   public static void init() throws IOException {
+    StreamCoordinatorTestBase.init();
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
 

@@ -20,7 +20,10 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -40,6 +43,13 @@ public abstract class StreamCoordinatorTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected abstract StreamCoordinatorClient createStreamCoordinator();
+
+  private static LocationFactory locationFactory;
+
+  @BeforeClass
+  public static void init() throws IOException {
+    locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+  }
 
   @Test
   public void testGeneration() throws ExecutionException, InterruptedException, IOException {
@@ -82,9 +92,7 @@ public abstract class StreamCoordinatorTestBase {
   }
 
   private StreamConfig createStreamConfig(Id.Stream stream) throws IOException {
-    return new StreamConfig(stream, 3600000, 10000, Long.MAX_VALUE,
-                            //TODO: namespace the created dir
-                            new LocalLocationFactory(tmpFolder.newFolder()).create(stream.getName()),
-                            null, 1000);
+    Location location = StreamFileTestUtils.constructStreamLocation(locationFactory, stream);
+    return new StreamConfig(stream, 3600000, 10000, Long.MAX_VALUE, location, null, 1000);
   }
 }

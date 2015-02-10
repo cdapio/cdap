@@ -54,8 +54,7 @@ public final class StreamFileJanitor {
       return;
     }
     for (Location streamLocation : streamBaseLocation.list()) {
-      //TODO: construct namespace from streamLocation (Locations.parent.getname)
-      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
+      Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
       clean(streamAdmin.getConfig(streamId), System.currentTimeMillis());
     }
   }

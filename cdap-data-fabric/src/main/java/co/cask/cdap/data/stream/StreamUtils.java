@@ -424,6 +424,24 @@ public final class StreamUtils {
     return String.format("cdap.%s.%s.state.store", namespace.getId(), QueueConstants.STREAM_TABLE_PREFIX);
   }
 
+  /**
+   * Constructs a {@link Id.Stream} given a stream's base directory.
+   * @param streamBaseLocation the location of the stream's directory
+   * @return Id of the stream associated with the location
+   */
+  public static Id.Stream getStreamIdFromLocation(Location streamBaseLocation) {
+    Location parentDir = Locations.getParent(streamBaseLocation);
+    Preconditions.checkNotNull(parentDir, "Parent directory of stream base location %s was null.", streamBaseLocation);
+
+    Location grandParentDir = Locations.getParent(parentDir);
+    Preconditions.checkNotNull(grandParentDir, "Grandparent directory of stream base location %s was null.",
+                               streamBaseLocation);
+
+    String namespace = grandParentDir.getName();
+    String streamName = streamBaseLocation.getName();
+    return Id.Stream.from(namespace, streamName);
+  }
+
   private StreamUtils() {
   }
 }

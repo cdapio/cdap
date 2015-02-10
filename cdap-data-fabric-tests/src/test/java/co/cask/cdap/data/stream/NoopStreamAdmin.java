@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
-  public void dropAll() throws Exception {
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
   }
 
   @Override

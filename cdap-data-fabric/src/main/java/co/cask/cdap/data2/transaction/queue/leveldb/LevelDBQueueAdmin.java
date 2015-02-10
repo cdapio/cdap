@@ -24,6 +24,7 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;

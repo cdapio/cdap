@@ -17,6 +17,9 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.proto.Id;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,6 +38,21 @@ public class StreamUtilsTest {
 
     Assert.assertFalse(StreamUtils.isPartition("12345"));
     Assert.assertFalse(StreamUtils.isPartition("abc.123"));
+  }
+
+  @Test
+  public void testStreamIdFromLocation() {
+    LocationFactory locationFactory = new LocalLocationFactory();
+    String path = "/cdap/default/streams/fooStream";
+    Location streamBaseLocation = locationFactory.create(path);
+    Id.Stream expectedId = Id.Stream.from("default", "fooStream");
+    Assert.assertEquals(expectedId, StreamUtils.getStreamIdFromLocation(streamBaseLocation));
+
+
+    path = "/cdap/othernamespace/streams/otherstream";
+    streamBaseLocation = locationFactory.create(path);
+    expectedId = Id.Stream.from("othernamespace", "otherstream");
+    Assert.assertEquals(expectedId, StreamUtils.getStreamIdFromLocation(streamBaseLocation));
   }
 
   @Test

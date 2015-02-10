@@ -338,7 +338,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   private void deleteConsumerConfigurations(String namespaceId) throws IOException {
-    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespace(namespaceId));
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
   }
 
   private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {

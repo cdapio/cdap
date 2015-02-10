@@ -64,11 +64,12 @@ public class FileStreamAdmin implements StreamAdmin {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
-  private final Location streamBaseLocation;
+  private final LocationFactory locationFactory;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
+  private final String streamBaseDirPath;
   private ExploreFacade exploreFacade;
 
   @Inject
@@ -78,7 +79,8 @@ public class FileStreamAdmin implements StreamAdmin {
                          NotificationFeedManager notificationFeedManager) {
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
-    this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.locationFactory = locationFactory;
+    this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
   }
@@ -91,12 +93,12 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void dropAll() throws Exception {
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
     // Simply increment the generation of all streams. The actual deletion of file, just like truncate case,
     // is done external to this class.
     List<Location> locations;
     try {
-      locations = streamBaseLocation.list();
+      locations = getStreamBaseLocation(namespace).list();
     } catch (FileNotFoundException e) {
       // If the stream base doesn't exists, nothing need to be deleted
       locations = ImmutableList.of();
@@ -112,8 +114,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     // Also drop the state table
-    //TODO: once streams are namespaced, this will need to change.
-    stateStoreFactory.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
+    stateStoreFactory.dropAllInNamespace(namespace);
   }
 
   @Override
@@ -203,7 +204,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig getConfig(Id.Stream streamId) throws IOException {
-    Location streamLocation = streamBaseLocation.append(streamId.getName());
+    Location streamLocation = getStreamBaseLocation(streamId);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
     return loadConfig(streamLocation);
   }
@@ -256,7 +257,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public boolean exists(Id.Stream streamId) throws Exception {
     try {
-      return streamBaseLocation.append(streamId.getName()).append(CONFIG_FILE_NAME).exists();
+      return getStreamConfigLocation(streamId).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -270,10 +271,10 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
-    Location streamLocation = streamBaseLocation.append(streamId.getName());
+    Location streamLocation = getStreamBaseLocation(streamId);
     Locations.mkdirsIfNotExists(streamLocation);
 
-    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
+    Location configLocation = getStreamConfigLocation(streamId);
     if (!configLocation.createNew()) {
       // Stream already exists
       return;
@@ -332,9 +333,21 @@ public class FileStreamAdmin implements StreamAdmin {
     truncate(streamId);
   }
 
+  private Location getStreamConfigLocation(Id.Stream streamId) throws IOException {
+    return getStreamBaseLocation(streamId).append(CONFIG_FILE_NAME);
+  }
+
+  private Location getStreamBaseLocation(Id.Stream streamId) throws IOException {
+    return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getName());
+  }
+
+  private Location getStreamBaseLocation(Id.Namespace namespace) throws IOException {
+    return locationFactory.create(namespace.getId()).append(streamBaseDirPath);
+  }
+
   private void saveConfig(StreamConfig config) throws IOException {
-    //TODO: namespace the location
-    Location configLocation = streamBaseLocation.append(config.getStreamId().getName()).append(CONFIG_FILE_NAME);
+    Id.Stream streamId = config.getStreamId();
+    Location configLocation = getStreamConfigLocation(streamId);
     Location tmpConfigLocation = configLocation.getTempFile(null);
     CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
       Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
@@ -344,8 +357,7 @@ public class FileStreamAdmin implements StreamAdmin {
       if (OSDetector.isWindows()) {
         configLocation.delete();
       }
-    //TODO: namespace the location
-      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getStreamId().getName()).append(CONFIG_FILE_NAME));
+      tmpConfigLocation.renameTo(configLocation);
     } finally {
       if (tmpConfigLocation.exists()) {
         tmpConfigLocation.delete();
@@ -365,8 +377,7 @@ public class FileStreamAdmin implements StreamAdmin {
       threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
     }
 
-    //TODO: construct namespace, streamName from location (parent.getname)
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
+    Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
     return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
                             config.getTTL(), streamLocation, config.getFormat(), threshold);
   }

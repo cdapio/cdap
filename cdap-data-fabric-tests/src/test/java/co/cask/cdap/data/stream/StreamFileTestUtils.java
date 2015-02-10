@@ -16,6 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +31,11 @@ import java.io.IOException;
 public class StreamFileTestUtils {
 
   private StreamFileTestUtils() {
+  }
+
+  public static Location constructStreamLocation(LocationFactory locationFactory,
+                                                 Id.Stream streamId) throws IOException {
+    return locationFactory.create(streamId.getNamespaceId()).append(streamId.getName());
   }
 
   public static StreamEvent createEvent(long timestamp, String body) {

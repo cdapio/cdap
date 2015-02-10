@@ -40,8 +40,8 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void dropAll() throws Exception {
-    queueService.resetStreams();
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
+    queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
   }
 
   @Override
