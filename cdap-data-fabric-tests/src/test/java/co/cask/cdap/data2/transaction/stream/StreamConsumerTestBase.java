@@ -80,6 +80,82 @@ public abstract class StreamConsumerTestBase {
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
   @Test
+  public void testNamespacedStreamConsumers() throws Exception {
+    // Test two consumers for two streams with the same name, but in different namespaces. Their consumption should be
+    // independent of the other.
+    String stream = "testNamespacedStreamConsumers";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", stream);
+
+    StreamAdmin streamAdmin = getStreamAdmin();
+    streamAdmin.create(streamId);
+    streamAdmin.create(otherStreamId);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    StreamConfig otherStreamConfig = streamAdmin.getConfig(otherStreamId);
+
+    // Writes 5 events to both streams
+    writeEvents(streamConfig, "Testing ", 5);
+    writeEvents(otherStreamConfig, "Testing ", 5);
+
+    streamAdmin.configureInstances(streamId, 0L, 1);
+    streamAdmin.configureInstances(otherStreamId, 0L, 1);
+
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+    StreamConsumer consumer = consumerFactory.create(streamId, "fifo.rollback",
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    StreamConsumer otherConsumer = consumerFactory.create(otherStreamId, "fifo.rollback",
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+
+    // Try to dequeue using both consumers
+    TransactionContext context = createTxContext(consumer);
+    TransactionContext otherContext = createTxContext(otherConsumer);
+
+    context.start();
+    otherContext.start();
+
+    // Consume events from the stream in the default namespace
+    DequeueResult<StreamEvent> result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 0", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+
+    context.finish();
+    context.start();
+
+    result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 1", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+
+    context.finish();
+    context.start();
+
+    result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 2", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+
+    context.finish();
+    context.start();
+
+    // Even though a stream with the same name has already consumed 3 events, the otherConsumer is for a stream in a
+    // different namespace, so it will still be on the initial event.
+    DequeueResult<StreamEvent> result1 = otherConsumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 0", Charsets.UTF_8.decode(result1.iterator().next().getBody()).toString());
+
+    otherContext.finish();
+    otherContext.start();
+
+    result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    result1 = otherConsumer.poll(1, 1, TimeUnit.SECONDS);
+
+    Assert.assertEquals("Testing 3", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+    Assert.assertEquals("Testing 1", Charsets.UTF_8.decode(result1.iterator().next().getBody()).toString());
+
+    // Commit both
+    context.finish();
+    otherContext.finish();
+
+    consumer.close();
+    otherConsumer.close();
+  }
+
+  @Test
   public void testFIFORollback() throws Exception {
     String stream = "testFIFORollback";
     Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
@@ -134,34 +210,6 @@ public abstract class StreamConsumerTestBase {
 
     consumer0.close();
     consumer1.close();
-  }
-
-  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix,
-                                        int count, Clock clock) throws IOException {
-
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
-    try {
-      return writeEvents(writer, msgPrefix, count, clock);
-    } finally {
-      writer.close();
-    }
-  }
-
-  private List<StreamEvent> writeEvents(FileWriter<StreamEvent> streamWriter,
-                                        String msgPrefix, int count, Clock clock) throws IOException {
-    Map<String, String> headers = ImmutableMap.of();
-    List<StreamEvent> result = Lists.newLinkedList();
-    for (int i = 0; i < count; i++) {
-      String msg = msgPrefix + i;
-      StreamEvent event = new StreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
-      result.add(event);
-      streamWriter.append(event);
-    }
-    return result;
-  }
-
-  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
-    return writeEvents(streamConfig, msgPrefix, count, new Clock());
   }
 
   @Test
@@ -555,6 +603,34 @@ public abstract class StreamConsumerTestBase {
     } finally {
       consumer.close();
     }
+  }
+
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix,
+                                        int count, Clock clock) throws IOException {
+
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
+    try {
+      return writeEvents(writer, msgPrefix, count, clock);
+    } finally {
+      writer.close();
+    }
+  }
+
+  private List<StreamEvent> writeEvents(FileWriter<StreamEvent> streamWriter,
+                                        String msgPrefix, int count, Clock clock) throws IOException {
+    Map<String, String> headers = ImmutableMap.of();
+    List<StreamEvent> result = Lists.newLinkedList();
+    for (int i = 0; i < count; i++) {
+      String msg = msgPrefix + i;
+      StreamEvent event = new StreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
+      result.add(event);
+      streamWriter.append(event);
+    }
+    return result;
+  }
+
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+    return writeEvents(streamConfig, msgPrefix, count, new Clock());
   }
 
   private void verifyEvents(StreamConsumer consumer, Collection<StreamEvent> expectedEvents) throws Exception {

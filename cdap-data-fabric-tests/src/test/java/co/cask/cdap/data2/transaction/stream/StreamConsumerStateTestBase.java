@@ -83,6 +83,42 @@ public abstract class StreamConsumerStateTestBase {
   }
 
   @Test
+  public void testNamespacedStore() throws Exception {
+    // Store different offsets for two streams using the same StateStoreFactory to show that
+    // StateStoreFactory is capable of storing distinct states for streams with same name but different namespace
+    StreamAdmin streamAdmin = getStreamAdmin();
+    String streamName = "testNamespacedStore";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", streamName);
+
+    streamAdmin.create(streamId);
+    streamAdmin.create(otherStreamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
+    StreamConfig otherConfig = streamAdmin.getConfig(otherStreamId);
+
+    // Creates a state with 4 offsets
+    StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
+    StreamConsumerStateStore stateStore = createStateStore(config);
+
+    // Create another state with more offsets for stream in different namespace
+    StreamConsumerState otherState = generateState(0L, 0, otherConfig, 0L, 8);
+    StreamConsumerStateStore otherStateStore = createStateStore(otherConfig);
+
+    // Save the states.
+    stateStore.save(state);
+    otherStateStore.save(otherState);
+
+    // Read the state back
+    StreamConsumerState readState = stateStore.get(0, 0);
+    StreamConsumerState otherReadState = otherStateStore.get(0, 0);
+    Assert.assertEquals(state, readState);
+    Assert.assertEquals(otherState, otherReadState);
+
+    Assert.assertNotEquals(state, otherState);
+  }
+
+  @Test
   public void testMultiStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testMultiStore";
