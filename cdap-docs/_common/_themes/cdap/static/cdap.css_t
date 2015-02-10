@@ -270,6 +270,16 @@ p.rubric {
     text-shadow: 0px 1px 0 white
 }
 
+.sidebar20.sidebar {
+  width: 20%;
+  text-align: center;
+}
+
+.sidebar30.sidebar {
+  width: 30%;
+  text-align: center;
+}
+
 em {
     font-style: italic;
 }
