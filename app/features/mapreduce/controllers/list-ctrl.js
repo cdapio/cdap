@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('CdapMapreduceListController', function($scope, $state, $stateParams, MyDataSource) {
+  .controller('MapreduceListController', function($scope, $state, $stateParams, MyDataSource) {
     var datasrc = new MyDataSource($scope),
         basePath = '/apps/' + $stateParams.appId + '/mapreduce';
 
