@@ -35,7 +35,7 @@ To create a namespace, submit an HTTP PUT request::
    * - ``<namespace-id>``
      - Namespace ID
 
-The ``<namespace-id> must be of the limited character set for namespaces, as 
+The ``<namespace-id>`` must be of the limited character set for namespaces, as 
 described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
 Properties for the namespace are passed in the JSON request body:
 
