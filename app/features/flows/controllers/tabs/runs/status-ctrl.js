@@ -29,13 +29,13 @@ angular.module(PKG.name + '.feature.flows')
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
-        var match = res.filter(function(run) {
-          return run.runid === $state.params.runId;
-        })[0];
-        console.log("run status: ", match.status);
-        $scope.status = match.status;
-        $scope.duration = (match.end? match.end - match.start: Date.now() - match.start);
-        $scope.startTime = match.start;
+        angular.forEach(res, function(run) {
+          if (run.runid === $state.params.runId) {
+            $scope.status = run.status;
+            $scope.duration = (run.end? run.end - run.start: Date.now() - run.start);
+            $scope.startTime = run.start;
+          }
+        });
       });
 
   });

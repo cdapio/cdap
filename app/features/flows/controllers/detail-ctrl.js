@@ -6,15 +6,18 @@ angular.module(PKG.name + '.feature.flows')
             '/flows/' +
             $state.params.programId;
 
+    $scope.activeRuns = 0;
+
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
-        $scope.activeRuns = (res.map(function(r) {
-          return (r.status === 'RUNNING'? 1: 0);
-        }) || [])
-          .reduce(function(prev, curr) {
-            return prev + curr;
-          });
+        var count = 0;
+        angular.forEach(res, function(runs) {
+          if (runs.status === 'RUNNING') {
+            count += 1;
+          }
+        });
+        $scope.activeRuns = count;
       });
 
     dataSrc.poll({
