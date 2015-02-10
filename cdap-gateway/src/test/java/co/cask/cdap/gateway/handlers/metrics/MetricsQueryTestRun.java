@@ -138,7 +138,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     // Insert system metric
     MetricsCollector collector =
       collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                     Constants.Metrics.Tag.COMPONENT, "appfabric",
+                                                     Constants.Metrics.Tag.COMPONENT, "appfabric2",
                                                      Constants.Metrics.Tag.HANDLER, "AppFabricHttpHandler",
                                                      Constants.Metrics.Tag.METHOD, "getAllApps"));
     collector.increment("request.received", 1);
@@ -147,12 +147,12 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     String methodRequest =
-      "/system/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+      "/system/services/appfabric2/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
     String handlerRequest =
-      "/system/services/appfabric/handlers/AppFabricHttpHandler/request.received?aggregate=true";
+      "/system/services/appfabric2/handlers/AppFabricHttpHandler/request.received?aggregate=true";
     String serviceRequest =
-      "/system/services/appfabric/request.received?aggregate=true";
+      "/system/services/appfabric2/request.received?aggregate=true";
 
     testSingleMetric(methodRequest, 1);
     testSingleMetric(handlerRequest, 1);

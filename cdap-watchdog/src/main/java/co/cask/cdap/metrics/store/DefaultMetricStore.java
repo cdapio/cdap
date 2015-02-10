@@ -70,6 +70,7 @@ public class DefaultMetricStore implements MetricStore {
       }
     });
 
+    // NOTE: to reduce number of aggregations we rename some of the emitted tags to "canonical" names
     this.tagMapping = ImmutableMap.of(
       // flow
       Constants.Metrics.Tag.FLOWLET, PROGRAM_LEVEL2,
@@ -93,12 +94,19 @@ public class DefaultMetricStore implements MetricStore {
       Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
       // todo: do we even need program type? seems like program name unique within app across program types
       Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.RUN_ID,
-      PROGRAM_LEVEL2, PROGRAM_LEVEL3, PROGRAM_LEVEL4, Constants.Metrics.Tag.DATASET)));
+      PROGRAM_LEVEL2, PROGRAM_LEVEL3, PROGRAM_LEVEL4, Constants.Metrics.Tag.DATASET),
+                                    // i.e. for programs only
+                                    ImmutableList.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+      Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM)));
 
     // component, handler, method
     aggs.add(new DefaultAggregation(ImmutableList.of(
       Constants.Metrics.Tag.NAMESPACE,
-      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD)));
+      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
+                                    // i.e. for components only
+                                    ImmutableList.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
     // component, handler, method, stream (for stream only) todo: seems like emitted context is wrong, review...
     aggs.add(new DefaultAggregation(ImmutableList.of(
@@ -109,7 +117,9 @@ public class DefaultMetricStore implements MetricStore {
                                     ImmutableList.of(Constants.Metrics.Tag.STREAM)));
 
     // dataset
-    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
+    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
+                                    // i.e. for datasets only
+                                    ImmutableList.of(Constants.Metrics.Tag.DATASET)));
 
     return aggs;
   }
@@ -126,7 +136,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private Map<String, String> replaceTagsIfNeeded(Map<String, String> original) {
-    // replace tags using mapping if needed todo: hacky and not efficient?
+    // replace emitted tag names to the ones expected by aggregations
     Map<String, String> tags = Maps.newHashMap();
     for (Map.Entry<String, String> tagValue : original.entrySet()) {
       String tagNameReplacement = tagMapping.get(tagValue.getKey());
@@ -153,7 +163,7 @@ public class DefaultMetricStore implements MetricStore {
       case GAUGE:
         return MeasureType.GAUGE;
       default:
-        // should never ha
+        // should never happen
         throw new IllegalArgumentException("Unknown MetricType: " + type);
     }
   }
