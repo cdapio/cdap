@@ -40,8 +40,6 @@ Integrations
 
 .. - |cloudera-faq|_ for Cloudera and Impala
 
-**CDAP** |bold-version| is certified on Cloudera 5.
-
 
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools
 
