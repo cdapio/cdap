@@ -38,11 +38,10 @@ import java.util.List;
  *
  */
 public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
-  private Charset charset = Charsets.UTF_8;
 
   @Override
   public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
-    String bodyAsStr = Bytes.toString(event.getBody(), charset);
+    String bodyAsStr = Bytes.toString(event.getBody());
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     List<String> parts = getLogEntries(bodyAsStr);
     List<Schema.Field> fields = schema.getFields();
@@ -63,15 +62,15 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
   @Override
   protected Schema getDefaultSchema() {
     return Schema.recordOf("streamEvent",
-           Schema.Field.of("remote_host", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("remote_login ", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("auth_user", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("date", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("request", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("status", Schema.unionOf(Schema.of(Schema.Type.INT), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("content_length", Schema.unionOf(Schema.of(Schema.Type.INT), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("referrer", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))),
-           Schema.Field.of("user_agent", Schema.unionOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.NULL))));
+             Schema.Field.of("remote_host", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("remote_login ", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("auth_user", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("date", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("request", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("status", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+             Schema.Field.of("content_length", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+             Schema.Field.of("referrer", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("user_agent", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
   }
 
 
@@ -93,24 +92,19 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
   // parse CLF logEvent and get the record values.
   private List<String> getLogEntries(String logEvent) {
     List<String> parts = Lists.newArrayList();
-    boolean  done = false;
     int start = 0;
-    while (!done) {
+    while (start < logEvent.length()) {
       if (logEvent.charAt(start) == ' ') {
         // Skip empty spaces
         start++;
       } else {
         start = addNextLogEntry(logEvent, start, parts);
       }
-
-      if (start >= logEvent.length()) {
-        done = true;
-      }
     }
     return parts;
   }
 
-  // addNextLogEntry and return the last next position continue parsing.
+  // addNextLogEntry and return the start position of next entry.
   private int addNextLogEntry(String data, int start, List<String> parts) {
     int end = -1;
     if (data.charAt(start) == '"') {
