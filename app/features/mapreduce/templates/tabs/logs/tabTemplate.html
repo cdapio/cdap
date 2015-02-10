@@ -1,0 +1,10 @@
+<div class="terminal pre-scrollable">
+  <pre ng-repeat="log in currentLogs" ng-show="currentLogs.length > 0" >
+    <code ng-bind="log"></code>
+  </pre>
+  <pre ng-show="currentLogs.length < 1">
+    <code>
+      [No Logs]
+    </code>
+  </pre>
+</div>

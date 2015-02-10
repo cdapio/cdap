@@ -1,1 +1,31 @@
-<h2> MapReduce -> Runs </h2>
+<div ng-show="runs.length > 0">
+  <div class="row h2">
+    <div class="col-sm-4">
+      <button type="button"
+              class="btn btn-default"
+              ng-model="currentRun"
+              placeholder="Please Select a Run"
+              ng-options="run.runid as run.runid for run in runs" bs-select>
+        <span class="caret"></span>
+      </button>
+    </div>
+    <div class="col-sm-8 text-right">
+      <div class="btn-group" ng-model="runTabs.activeTab" bs-radio-group>
+        <label class="btn btn-default" ng-repeat="tab in runTabs">
+          <input type="radio" class="btn btn-default" value="{{ $index }}">
+          {{tab}}
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <ui-view/>
+    </div>
+  </div>
+</div>
+<div ng-show="runs.length == 0" class="h2">
+  <div class="well well-md  text-center">
+    <h3> This Mapreduce hasn't run once. Start a run! </h3>
+  </div>
+</div>

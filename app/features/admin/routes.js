@@ -44,6 +44,14 @@ angular.module(PKG.name + '.feature.admin')
               templateUrl: '/assets/features/admin/templates/system/service-detail.html',
               controller: 'AdminServiceDetailController'
             })
+              .state('admin.system.services.detail.metadata', {
+                url: '/metadata',
+                templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html'
+              })
+              .state('admin.system.services.detail.logs', {
+                url: '/logs',
+                templateUrl: '/assets/features/admin/templates/partials/service-detail-logs.html'
+              })
 
           .state('admin.system.notifications', {
             url: '/notifications',
