@@ -7,4 +7,4 @@
    :alt: Cloudera Certified
    :align: center
 
-  CDAP |version| is certified on Cloudera 5.
+  CDAP |version| is certified on Cloudera 5

@@ -117,6 +117,8 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # file. 
 rst_epilog = """
 .. |italic-version| replace:: *%(version)s*
+
+.. |bold-version| replace:: **%(version)s**
 """ % {'version': version}
 
 # There are two options for replacing |today|: either, you set today to some

@@ -42,6 +42,8 @@ Configurations that include Cloudera Manager can be easily configured to ingest 
 a cluster, specify schema, or run interactive queries using Impala with CDAP for faster
 results.
 
+**CDAP** |bold-version| is certified on Cloudera 5.
+
 .. |cloudera-configuring| replace:: **Configuring and Installing:**
 .. _cloudera-configuring: configuring.html
 
