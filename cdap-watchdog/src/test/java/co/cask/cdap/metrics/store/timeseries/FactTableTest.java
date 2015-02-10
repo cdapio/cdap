@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Test base for {@link co.cask.cdap.metrics.data.TimeSeriesTable}.
+ * Test base for {@link co.cask.cdap.metrics.store.timeseries.FactTable}.
  */
 public class FactTableTest {
 
@@ -172,7 +172,7 @@ public class FactTableTest {
     Assert.assertEquals(ImmutableSet.of("metric2", "metric3"), metricNames);
 
     metricNames = table.getMeasureNames(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
-    Assert.assertEquals(ImmutableSet.of("metric", "metric2"), metricNames);
+    Assert.assertEquals(ImmutableSet.of("metric", "metric2", "metric3"), metricNames);
 
   }
 

@@ -19,6 +19,7 @@ package co.cask.cdap.metrics.store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
+import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeFact;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.DefaultAggregation;
@@ -27,6 +28,7 @@ import co.cask.cdap.metrics.store.cube.FactTableSupplier;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricValue;
@@ -77,6 +79,7 @@ public class DefaultMetricStore implements MetricStore {
       Constants.Metrics.Tag.FLOWLET_QUEUE, PROGRAM_LEVEL3,
       // mapreduce
       Constants.Metrics.Tag.MR_TASK_TYPE, PROGRAM_LEVEL2,
+      Constants.Metrics.Tag.INSTANCE_ID, PROGRAM_LEVEL3,
       // service
       Constants.Metrics.Tag.SERVICE_RUNNABLE, PROGRAM_LEVEL2
     );
@@ -154,6 +157,28 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteBefore(long timestamp) {
     // todo: implement metric ttl
+  }
+
+  private void replaceTagsInListIfNeeded(List<TagValue> tagValues) {
+    for (int i = 0; i < tagValues.size(); i++) {
+      TagValue tagValue = tagValues.get(i);
+      String tagNameReplacement = tagMapping.get(tagValue.getTagName());
+      if (tagNameReplacement != null) {
+        tagValues.set(i, new TagValue(tagNameReplacement, tagValue.getValue()));
+      }
+    }
+  }
+
+  @Override
+  public Collection<TagValue> getNextTags(CubeExploreQuery query) throws Exception {
+    replaceTagsInListIfNeeded(query.getTagValues());
+    return cube.get().getNextTags(query);
+  }
+
+  @Override
+  public Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception {
+    replaceTagsInListIfNeeded(query.getTagValues());
+    return cube.get().getMeasureNames(query);
   }
 
   private MeasureType toMeasureType(MetricType type) {

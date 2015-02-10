@@ -19,20 +19,26 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
+import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.commons.lang.CharEncoding;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -51,7 +57,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
   private final MetricStore metricStore;
-
+  private final List<String> tagMappings;
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
     PROCEDURES("p"),
@@ -119,6 +125,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
   public MetricsDiscoveryHandler(Authenticator authenticator, MetricStore metricStore) {
     super(authenticator);
     this.metricStore = metricStore;
+    tagMappings = ImmutableList.of("app", "ptp", "prg", "pr2", "pr3", "pr4", "ds");
   }
 
   @Override
@@ -181,24 +188,39 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private void getMetrics(HttpRequest request, HttpResponder responder, String metricPrefix) {
     String contextPrefix = null;
+    Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     try {
       String path = request.getUri();
       String base = Constants.Gateway.API_VERSION_2 + "/metrics/available/apps";
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
-
-        Map<String, String> tagValues = Maps.newHashMap();
+        // using LinkedHashMap, so we can iterate and construct TagValue Pairs used for constructing CubeExploreQuery.
+        Map<String, String> tagValues = Maps.newLinkedHashMap();
         tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.APP, URLDecoder.decode(pathParts.next(), CharEncoding.UTF_8));
         MetricQueryParser.parseSubContext(pathParts, tagValues);
+
+        List<TagValue> tagsList = Lists.newArrayList();
+        for (Map.Entry<String, String> tag : tagValues.entrySet()) {
+          tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
+        }
+        List<List<TagValue>> resultSet = Lists.newArrayList();
+        getAllPossibleTags(tagsList, resultSet);
+        for (List<TagValue> tagValueList : resultSet) {
+          CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
+          Collection<String> measureNames = metricStore.getMeasureNames(query);
+          for (String measureName : measureNames) {
+            addContext(getContext(tagValueList), measureName, metricContextsMap);
+          }
+        }
       }
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
+    } catch (Exception e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      return;
     }
-
-    Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-
-    // todo: fill metricContextsMap
 
     // return the metrics sorted by metric name so it can directly be displayed to the user.
     JsonArray output = new JsonArray();
@@ -214,6 +236,35 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
     }
 
     responder.sendJson(HttpResponseStatus.OK, output);
+  }
+
+  private String getContext(List<TagValue> tagValueList) {
+    String contextPrefix = "default"; //default namespace
+    Map<String, String> tagValueMappings  = Maps.newHashMap();
+    for (TagValue tag : tagValueList) {
+      tagValueMappings.put(tag.getTagName(), tag.getValue());
+    }
+    for (String tagKey : tagMappings) {
+      contextPrefix = tagValueMappings.get(tagKey) != null ? contextPrefix + "." +
+        tagValueMappings.get(tagKey) : contextPrefix;
+    }
+    return contextPrefix;
+  }
+
+  private void getAllPossibleTags(List<TagValue> tagsList, List<List<TagValue>> resultSet) throws Exception {
+    //todo: which resolution table to use?
+    CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
+    Collection<TagValue> nextTags = metricStore.getNextTags(query);
+    if (nextTags.isEmpty()) {
+      resultSet.add(Lists.newArrayList(tagsList));
+    } else {
+      for (TagValue tagValue : nextTags) {
+        List<TagValue> nextLevelTags = Lists.newArrayList();
+        nextLevelTags.addAll(tagsList);
+        nextLevelTags.add(tagValue);
+        getAllPossibleTags(nextLevelTags, resultSet);
+      }
+    }
   }
 
   /**

@@ -145,22 +145,25 @@ final class MetricQueryParser {
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
     builder.setMetricName(urlDecode(uriPath.substring(index + 1)));
-
+    String strippedPath = null;
     // strip the metric from the end of the path
-    String strippedPath = uriPath.substring(0, index);
+    if (index != -1) {
+      strippedPath = uriPath.substring(0, index);
 
-    if (strippedPath.startsWith("/system/cluster")) {
-      builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                  Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
-      builder.setScope("system");
-    } else if (strippedPath.startsWith("/system/transactions")) {
-      builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                  Constants.Metrics.Tag.COMPONENT, TRANSACTION_METRICS_CONTEXT));
-      builder.setScope("system");
+      if (strippedPath.startsWith("/system/cluster")) {
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                                                    Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+        builder.setScope("system");
+      } else if (strippedPath.startsWith("/system/transactions")) {
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                                                    Constants.Metrics.Tag.COMPONENT, TRANSACTION_METRICS_CONTEXT));
+        builder.setScope("system");
+      } else {
+        parseContext(strippedPath, builder);
+      }
     } else {
-      parseContext(strippedPath, builder);
+      builder.setSliceByTagValues(Maps.<String, String>newHashMap());
     }
-
     parseQueryString(requestURI, builder);
 
     return builder.build();
@@ -382,6 +385,8 @@ final class MetricQueryParser {
       } else {
         return;
       }
+    } else {
+      tagValues.put(Constants.Metrics.Tag.RUN_ID, null);
     }
     if (!nextPath.equals(componentType)) {
       String exception = String.format("Expecting '%s' after the %s name ", componentType,

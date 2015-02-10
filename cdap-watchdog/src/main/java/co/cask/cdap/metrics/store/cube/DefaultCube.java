@@ -150,6 +150,17 @@ public class DefaultCube implements Cube {
     }
   }
 
+  public Collection<TagValue> getNextTags(CubeExploreQuery query) throws Exception {
+    return resolutionToFactTable.get(query.getResolution()).getNextTags(query.getTagValues(),
+                                                                        query.getStartTs(), query.getEndTs());
+  }
+
+  @Override
+  public Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception {
+    return resolutionToFactTable.get(query.getResolution()).getMeasureNames(query.getTagValues(),
+                                                                            query.getStartTs(), query.getEndTs());
+  }
+
   @Nullable
   private Aggregation findAggregation(CubeQuery query) {
     Aggregation currentBest = null;
