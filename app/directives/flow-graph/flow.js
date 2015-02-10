@@ -16,7 +16,6 @@ module.directive('myFlowGraph', function () {
       });
 
       scope.render = function (){
-        debugger;
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
 

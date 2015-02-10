@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.flows')
     })
       .then(function(res) {
         var nodes = [];
-        res.connections.forEach(function(conn) {
+        angular.forEach(res.connections, function(conn) {
           if (conn.sourceType === 'STREAM') {
             nodes.push(conn.sourceName);
           }
