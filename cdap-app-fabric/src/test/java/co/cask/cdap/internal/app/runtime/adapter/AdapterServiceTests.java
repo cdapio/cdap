@@ -65,9 +65,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
   @Test
   public void testAdapters() throws Exception {
-    //Basic adapter service tests.
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-
     ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
     ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
     ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
@@ -79,35 +76,35 @@ public class AdapterServiceTests extends AppFabricTestBase {
                                ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
 
     // Create Adapter
-    adapterService.createAdapter(namespaceId, adapterSpecification);
+    adapterService.createAdapter(TEST_NAMESPACE1, adapterSpecification);
     PreferencesStore preferencesStore = getInjector().getInstance(PreferencesStore.class);
-    Map<String, String> prop = preferencesStore.getResolvedProperties(namespaceId, adapterSpecification.getType());
+    Map<String, String> prop = preferencesStore.getResolvedProperties(TEST_NAMESPACE1, adapterSpecification.getType());
     Assert.assertTrue(Boolean.parseBoolean(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED)));
     try {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
-      adapterService.createAdapter(namespaceId, adapterSpecification);
+      adapterService.createAdapter(TEST_NAMESPACE1, adapterSpecification);
       Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
     } catch (AdapterAlreadyExistsException expected) {
     }
 
-    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(TEST_NAMESPACE1, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
     Assert.assertEquals(adapterSpecification, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification> adapters = adapterService.getAdapters(namespaceId);
+    Collection<AdapterSpecification> adapters = adapterService.getAdapters(TEST_NAMESPACE1);
     Assert.assertArrayEquals(new AdapterSpecification[] {adapterSpecification}, adapters.toArray());
 
     // Delete Adapter
-    adapterService.removeAdapter(namespaceId, "myAdapter");
+    adapterService.removeAdapter(TEST_NAMESPACE1, "myAdapter");
     // verify that the adapter is deleted
     try {
-      adapterService.getAdapter(namespaceId, adapterName);
+      adapterService.getAdapter(TEST_NAMESPACE1, adapterName);
       Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapterName));
     } catch (AdapterNotFoundException expected) {
     }
 
-    adapters = adapterService.getAdapters(namespaceId);
+    adapters = adapterService.getAdapters(TEST_NAMESPACE1);
     Assert.assertTrue(adapters.isEmpty());
   }
 
