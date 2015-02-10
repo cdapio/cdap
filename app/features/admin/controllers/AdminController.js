@@ -1,6 +1,8 @@
 angular.module(PKG.name + '.feature.admin')
   .controller('AdminController', function ($scope, $state, myNamespace) {
 
+    $scope.hideWelcomeMessage = false;
+
     myNamespace.getList()
       .then(function(list) {
         $scope.nsList = list.map(generateNsObject);
