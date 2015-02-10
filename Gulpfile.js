@@ -294,7 +294,7 @@ gulp.task('default', ['lint', 'build']);
 /*
   watch
  */
-gulp.task('watch', ['build'], function() {
+gulp.task('watch', ['tpl', 'html'], function() {
   plug.livereload.listen();
 
   gulp.watch('./dist/**/*')
