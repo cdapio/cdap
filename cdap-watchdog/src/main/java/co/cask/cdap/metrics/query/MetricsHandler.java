@@ -19,15 +19,13 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.data.MetricsScanQuery;
-import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
+import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
+import co.cask.cdap.metrics.store.cube.TimeSeries;
+import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -36,8 +34,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.ws.rs.POST;
@@ -51,26 +50,14 @@ import javax.ws.rs.QueryParam;
 public class MetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
-  private final MetricsRequestExecutor requestExecutor;
-  private final Supplier<TimeSeriesTable> timeSeriesTables;
-
-  // NOTE: Hour is the lowest resolution and also has the highest TTL compared to minute and second resolutions.
-  // highest TTL ensures, this is good for searching all available metrics and also has fewer rows of data points.
-  private static final int LOWEST_RESOLUTION = 3600;
+  private final MetricStore metricStore;
 
   @Inject
   public MetricsHandler(Authenticator authenticator,
-                        final MetricsTableFactory metricsTableFactory) {
+                        final MetricStore metricStore) {
     super(authenticator);
 
-    this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
-
-    this.timeSeriesTables = Suppliers.memoize(new Supplier<TimeSeriesTable>() {
-      @Override
-      public TimeSeriesTable get() {
-        return metricsTableFactory.createTimeSeries(LOWEST_RESOLUTION);
-      }
-    });
+    this.metricStore = metricStore;
   }
 
   @POST
@@ -98,14 +85,28 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
                      @QueryParam("context") String context,
                      @QueryParam("metric") String metric) throws Exception {
     try {
-      MetricsRequestBuilder builder =
-        new MetricsRequestBuilder(null)
-          .setContextPrefix(context)
-          .setMetricPrefix(metric);
+      // todo: refactor parsing time range params
       // sets time range, query type, etc.
-      MetricsRequestParser.parseQueryString(new URI(request.getUri()), builder);
-      JsonElement queryResult = requestExecutor.executeQuery(builder.build());
-      responder.sendJson(HttpResponseStatus.OK, queryResult);
+      MetricQueryParser.CubeQueryBuilder builder = new MetricQueryParser.CubeQueryBuilder();
+      MetricQueryParser.parseQueryString(new URI(request.getUri()), builder);
+      CubeQuery queryTimeParams = builder.build();
+
+      // todo: what if context is null?
+      String[] tagValues = context.split("\\.");
+      // todo: validate even number of parts?
+  
+      Map<String, String> tagsSliceBy = Maps.newHashMap();
+      for (int i = 0; i < tagValues.length - 1; i += 2) {
+        tagsSliceBy.put(tagValues[i], tagValues[i + 1]);
+      }
+  
+      CubeQuery query = new CubeQuery(queryTimeParams.getStartTs(), queryTimeParams.getEndTs(),
+                                      queryTimeParams.getResolution(), metric,
+                                          // todo: figure out MeasureType
+                                      MeasureType.COUNTER, tagsSliceBy, new ArrayList<String>());
+  
+      Collection<TimeSeries> result = metricStore.query(query);
+      responder.sendJson(HttpResponseStatus.OK, result);
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
@@ -132,24 +133,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     SortedSet<String> nextLevelContexts = Sets.newTreeSet();
-    TimeSeriesTable table = timeSeriesTables.get();
-    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
-      allowEmptyMetric().build(-1, -1);
 
-    List<String> results = table.getNextLevelContexts(query);
-    for (String context : results) {
-      int nextPartEnd = context.indexOf(".", contextPrefix == null ? 0 : contextPrefix.length() + 1);
-      nextLevelContexts.add(nextPartEnd == -1 ? context : context.substring(0, nextPartEnd));
-    }
+    // todo: implement
+
     return nextLevelContexts;
   }
 
   private Set<String> searchMetric(String contextPrefix) throws Exception {
     SortedSet<String> metrics = Sets.newTreeSet();
-    TimeSeriesTable table = timeSeriesTables.get();
-    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
-      allowEmptyMetric().build(-1, -1);
-    metrics.addAll(table.getAllMetrics(query));
+
+    // todo: implement
+
     return metrics;
   }
 }

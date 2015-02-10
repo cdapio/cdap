@@ -24,6 +24,7 @@ import java.util.List;
  * <p/>
  * Basic operations include adding {@link CubeFact}s and querying data.
  */
+// todo: methods should throw IOException instead of Exception
 public interface Cube {
   /**
    * Adds {@link CubeFact} to this {@link Cube}.

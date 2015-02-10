@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,42 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.data;
+
+package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import co.cask.cdap.metrics.store.timeseries.FactTable;
 
 /**
- * Factory to encapsulate creation of {@link TimeSeriesTable}.
+ * Manages metric system datasets.
  */
-public interface MetricsTableFactory {
+public interface MetricDatasetFactory {
 
   /**
-   * Creates a new instance of {@link TimeSeriesTable} with the given resolution.
-   *
-   * @param resolution The resolution that the table represents.
-   * @return A new instance of {@link TimeSeriesTable}.
+   * @param resolution resolution of {@link FactTable}
+   * @return A new instance of {@link FactTable}.
    */
-  TimeSeriesTable createTimeSeries(int resolution);
+  FactTable get(int resolution);
 
   /**
-   * Creates a new instance of {@link AggregatesTable}.
-   * @return A new instance of {@link AggregatesTable}.
-   */
-  AggregatesTable createAggregates();
-
-  /**
-   * Creates a new instance of {@link KafkaConsumerMetaTable}.
    * @return A new instance of {@link KafkaConsumerMetaTable}.
    */
   KafkaConsumerMetaTable createKafkaConsumerMeta();
 
   /**
-   * Returns whether the underlying table supports TTL.
-   */
-  boolean isTTLSupported();
-
-  /**
-   * Performs upgrade of metrics tables.
+   * Upgrade all metric system datasets.
+   * @throws Exception
    */
   void upgrade() throws Exception;
 }

@@ -38,10 +38,12 @@ import java.util.Map;
  * </pre>
  * See also {@link Cube#query(CubeQuery)}.
  */
+// todo: should support interpolator
 public final class CubeQuery {
   private final long startTs;
   private final long endTs;
   private final int resolution;
+  private final int limit;
   private final String measureName;
   // todo: should be aggregation? e.g. also support min/max, etc.
   private final MeasureType measureType;
@@ -51,13 +53,34 @@ public final class CubeQuery {
   public CubeQuery(long startTs, long endTs, int resolution,
                    String measureName, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(startTs, endTs, resolution, -1,
+         measureName, measureType,
+         sliceByTagValues, groupByTags);
+  }
+
+  public CubeQuery(long startTs, long endTs, int resolution, int limit,
+                   String measureName, MeasureType measureType,
+                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
+    this.limit = limit;
     this.measureName = measureName;
     this.measureType = measureType;
     this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
     this.groupByTags = ImmutableList.copyOf(groupByTags);
+  }
+
+  public CubeQuery(CubeQuery query, String measureName) {
+    this(query.startTs, query.endTs, query.resolution, query.limit,
+         measureName, query.measureType,
+         query.sliceByTagValues, query.groupByTags);
+  }
+
+  public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues) {
+    this(query.startTs, query.endTs, query.resolution, query.limit,
+         query.measureName, query.measureType,
+         sliceByTagValues, query.groupByTags);
   }
 
   public long getStartTs() {
@@ -86,6 +109,11 @@ public final class CubeQuery {
 
   public List<String> getGroupByTags() {
     return groupByTags;
+  }
+
+  // todo: push down limit support to Cube
+  public int getLimit() {
+    return limit;
   }
 
   @Override

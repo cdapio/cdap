@@ -16,17 +16,12 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.data.AggregatesScanResult;
-import co.cask.cdap.metrics.data.AggregatesScanner;
-import co.cask.cdap.metrics.data.AggregatesTable;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -51,11 +46,11 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
 //todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
-public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
+public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
-  private final Supplier<AggregatesTable> aggregatesTable;
+  private final MetricStore metricStore;
 
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
@@ -121,15 +116,9 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   @Inject
-  public MetricsDiscoveryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+  public MetricsDiscoveryHandler(Authenticator authenticator, MetricStore metricStore) {
     super(authenticator);
-
-    this.aggregatesTable = Suppliers.memoize(new Supplier<AggregatesTable>() {
-      @Override
-      public AggregatesTable get() {
-        return metricsTableFactory.createAggregates();
-      }
-    });
+    this.metricStore = metricStore;
   }
 
   @Override
@@ -197,32 +186,19 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       String base = Constants.Gateway.API_VERSION_2 + "/metrics/available/apps";
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
-        MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();
-        builder.setNamespaceId(Constants.DEFAULT_NAMESPACE);
-        MetricsRequestParser.parseSubContext(pathParts, builder);
-        MetricsRequestContext metricsRequestContext = builder.build();
-        contextPrefix = metricsRequestContext.getContextPrefix();
-        validatePathElements(request, metricsRequestContext);
+
+        Map<String, String> tagValues = Maps.newHashMap();
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        MetricQueryParser.parseSubContext(pathParts, tagValues);
       }
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
-    } catch (ServerException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
-      return;
     }
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-    AggregatesTable table = aggregatesTable.get();
-    AggregatesScanner scanner = table.scanRowsOnly(contextPrefix, metricPrefix);
 
-    // scanning through all metric rows in the aggregates table
-    // row has context plus metric info
-    // each metric can show up in multiple contexts
-    while (scanner.hasNext()) {
-      AggregatesScanResult result = scanner.next();
-      addContext(result.getContext(), result.getMetric(), metricContextsMap);
-    }
+    // todo: fill metricContextsMap
 
     // return the metrics sorted by metric name so it can directly be displayed to the user.
     JsonArray output = new JsonArray();
