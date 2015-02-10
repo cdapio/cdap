@@ -10,7 +10,8 @@ CDAP Reference Manual Table of Contents
    :maxdepth: 3
 
     Introduction <index>
-    HTTP RESTful API <http-restful-api/index>
+    HTTP RESTful API v3 <http-restful-api-v3/index>
+    HTTP RESTful API v2 <http-restful-api-v2/index>
     Javadocs <javadocs/index>
     Java Client API <java-client-api>
     Command Line Interface API <cli-api>

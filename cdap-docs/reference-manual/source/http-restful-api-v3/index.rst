@@ -1,19 +1,21 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
 :hide-toc: true
 
+.. _http-restful-api-v3:
 .. _restful-api:
 
 ===========================================================
-CDAP HTTP RESTful API
+CDAP HTTP RESTful API v3
 ===========================================================
 
 .. toctree::
    
     Introduction <introduction>
+    Namespace <namespace>
     Lifecycle <lifecycle>
     Stream <stream>
     Dataset <dataset>
@@ -30,6 +32,7 @@ CDAP HTTP RESTful API
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
 - :doc:`Introduction: <introduction>` conventions, status codes, and working with CDAP Security
+- :doc:`Namespace: <namespace>` creating, deleting and listing existing namespaces
 - :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the lifecycle of Flows,
   Procedures, MapReduce Programs, Workflows, and Custom Services
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream

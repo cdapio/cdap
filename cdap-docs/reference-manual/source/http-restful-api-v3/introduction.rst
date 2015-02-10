@@ -23,10 +23,23 @@ In this API, *client* refers to an external application that is calling CDAP usi
 
 All URLs referenced in this API have this base URL::
 
-  http://<host>:<port>/v2
+  http://<host>:<port>/v3/namespaces/<namespace-id>
 
-where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port that is set as the ``router.bind.port``
-in ``cdap-site.xml`` (default: ``10000``).
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<host>``
+     - Host name of the CDAP server
+   * - ``<port>``
+     - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``)
+   * - ``<namespace-id>``
+     - Namespace ID, a valid and existing namespace in the CDAP instance
+
 
 **Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
 as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
@@ -41,7 +54,16 @@ For example::
 
 means::
 
-  PUT http://<host>:<port>/v2/streams/<new-stream-id>
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
+
+
+.. rubric:: Converting from V2 APIs
+
+If you are converting code from the :ref:`HTTP RESTful API v2 <http-restful-api-v2>`, the
+simplest way to convert your code is to use the ``default`` namespace, which is pre-existing
+in CDAP. Example::
+
+  PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
 
 
 .. rubric:: Variable Replacement
@@ -70,6 +92,23 @@ In general, any character that is not a letter, a digit, or one of ``$-_.+!*'()`
 See the section on :ref:`Path Parameters<services-path-parameters>` for suggested approaches to
 encoding parameters.
 
+Additionally, there are further restrictions on the characters used in certain parameters such as
+namespaces.
+
+.. _http-restful-api-namespace-characters:
+
+Names and Characters for Namespaces
+===================================
+Namespaces have a limited set of characters allowed; they are restricted to letters (a-z,
+A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
+length of namespaces nor on the number of them.
+
+The namespaces ``cdap``, ``default``, and ``system`` are reserved. The ``default``
+namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
+be deleted.
+
+
+.. _http-restful-api-status-codes:
 
 Status Codes
 ============
