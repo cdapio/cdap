@@ -50,6 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of partitioned datasets using a Table to store the meta data.
@@ -150,7 +151,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public Set<String> getPartitionPaths(PartitionFilter filter) {
+  public Set<String> getPartitionPaths(@Nullable PartitionFilter filter) {
     // this is the same as getPartitions(startTime, endTime).values(), but we want to avoid construction of the map
     final byte[] startKey = generateStartKey(filter);
     final byte[] endKey = generateStopKey(filter);
@@ -162,7 +163,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         if (row == null) {
           break;
         }
-        if (!validateFilter(filter, row)) {
+        if (filter != null && !validateFilter(filter, row)) {
           continue;
         }
         byte[] pathBytes = row.get(RELATIVE_PATH);
@@ -177,7 +178,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public Map<PartitionKey, String> getPartitions(PartitionFilter filter) {
+  public Map<PartitionKey, String> getPartitions(@Nullable PartitionFilter filter) {
     final byte[] startKey = generateStartKey(filter);
     final byte[] endKey = generateStopKey(filter);
     Map<PartitionKey, String> paths = Maps.newHashMap();
@@ -188,7 +189,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         if (row == null) {
           break;
         }
-        if (!validateFilter(filter, row)) {
+        if (filter != null && !validateFilter(filter, row)) {
           continue;
         }
         PartitionKey key = parseRowKey(row.getRow(), partitioning);
@@ -306,6 +307,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   private byte[] generateStartKey(PartitionFilter filter) {
+    if (null == filter) {
+      return null;
+    }
     // validate partition filter, convert values, and compute size of output
     Map<String, FieldType> partitionFields = partitioning.getFields();
     int totalSize = 0;
@@ -348,6 +352,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   private byte[] generateStopKey(PartitionFilter filter) {
+    if (null == filter) {
+      return null;
+    }
     // validate partition filter, convert values, and compute size of output
     Map<String, FieldType> partitionFields = partitioning.getFields();
     int totalSize = 0;

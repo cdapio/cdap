@@ -61,14 +61,20 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * @return the relative paths of all partitions matching a filter.
+   *
+   * @param filter If non null, only partitions that match this filter are returned. If null,
+   *               all partitions are returned.
    */
-  public Set<String> getPartitionPaths(PartitionFilter filter);
+  public Set<String> getPartitionPaths(@Nullable PartitionFilter filter);
 
   /**
    * @return a mapping from the partition key to the relative path, of all partitions whose
    *  partitions keys match the filter.
+   *
+   * @param filter If non null, only partitions that match this filter are returned. If null,
+   *               all partitions are returned.
    */
-  public Map<PartitionKey, String> getPartitions(PartitionFilter filter);
+  public Map<PartitionKey, String> getPartitions(@Nullable PartitionFilter filter);
 
   /**
    * @return the underlying (embedded) file set.

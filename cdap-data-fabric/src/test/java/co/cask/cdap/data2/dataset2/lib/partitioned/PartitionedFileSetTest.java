@@ -163,6 +163,9 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
       }
     }
 
+    // test whether query works without filter
+    testFilter(dataset, allPartitions, null);
+
     // generate an list of partition filters with exhaustive coverage
     List<PartitionFilter> filters = generateFilters();
 
@@ -194,19 +197,19 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     for (PartitionFilter filter : filters) {
       try {
         testFilter(dataset, allPartitions, filter);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         throw new Exception("testFilter() failed for filter: " + filter, e);
       }
     }
   }
 
   private boolean testFilter(final PartitionedFileSet dataset,
-                             Map<PartitionKey, String> all,
+                             Map<PartitionKey, String> allPartitions,
                              final PartitionFilter filter) throws Exception {
 
     // determine the keys and paths that match the filter
-    final Map<PartitionKey, String> matching = Maps.filterEntries(
-      all, new Predicate<Map.Entry<PartitionKey, String>>() {
+    final Map<PartitionKey, String> matching = filter == null ? allPartitions :
+      Maps.filterEntries(allPartitions, new Predicate<Map.Entry<PartitionKey, String>>() {
         @Override
         public boolean apply(Map.Entry<PartitionKey, String> entry) {
           return filter.match(entry.getKey());
