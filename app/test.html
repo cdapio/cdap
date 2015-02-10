@@ -16,7 +16,15 @@
     <hr />
   </header>
 
-  <div class="container" ng-init="testObj={metric:'whatever'}">
+  <div class="container" ng-init="logArr=[1,2,3]">
+
+      <my-log-viewer
+        data-model="logArr"
+      ></my-log-viewer>
+
+  </div>
+
+<!--   <div class="container" ng-init="testObj={metric:'whatever'}">
 
     <form class="form-horizontal" novalidate>
 
@@ -42,7 +50,7 @@
       </div>
     </div>
 
-  </div>
+  </div> -->
 
   <script type="text/javascript" src="/assets/bundle/lib.js"></script>
   <script type="text/javascript" src="/config.js"></script>
