@@ -24,23 +24,29 @@ import java.util.Map;
  * Enum for the different types of scopes.
  */
 public enum Scope {
-  DATASET("dataset"),
-  MAPREDUCE("mapreduce"),
-  SPARK("spark"),
-  CUSTOM_ACTION("custom_action");
+  DATASET("dataset", true),
+  MAPREDUCE("mapreduce", false),
+  SPARK("spark", false),
+  CUSTOM_ACTION("custom_action", false);
 
   private final String displayName;
+  private final boolean retainScope;
 
   /**
    * Private constructor to force using the enum values.
    */
-  private Scope(String name) {
-    displayName = name;
+  private Scope(String name, boolean retainScope) {
+    this.displayName = name;
+    this.retainScope = retainScope;
   }
 
   @Override
   public String toString() {
     return displayName;
+  }
+
+  public boolean retainableScope() {
+    return this.retainScope;
   }
 
   // helper map for efficient implementation of scopeFor()

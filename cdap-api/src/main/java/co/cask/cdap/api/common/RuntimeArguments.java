@@ -107,7 +107,6 @@ public final class RuntimeArguments {
     Map<String, String> result = Maps.newHashMap();
     Map<String, String> prefixMatchedArgs = Maps.newHashMap();
     Map<String, String> wildCardPrefixMatchedArgs = Maps.newHashMap();
-    Map<String, String> noMatchArgs = Maps.newHashMap();
 
     // Group the arguments into different categories based on wild card prefix match, named prefix match or no match
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
@@ -118,34 +117,42 @@ public final class RuntimeArguments {
         // Argument is prefixed with "<scope>.<name>."
         prefixMatchedArgs.put(entry.getKey().substring(prefix.length()), entry.getValue());
       } else {
-        // Arguments specified for other scopes or without any scope
-        noMatchArgs.put(entry.getKey(), entry.getValue());
+        // Add global or retainable arguments
+        addGlobalArgument(entry.getKey(), entry.getValue(), scope, result);
       }
     }
 
-    // Remove the arguments specified by other scopes. e.g. If the current scope is "MAPREDUCE.myMapReduce", remove
-    // the arguments specified with other scopes(except DATASET) such as "MAPREDUCE.yourMapReduce", "SPARK.somespark.".
-    // Note that DATASET scope requires special handling. If the current scope is "MAPREDUCE.myMapReduce", we still want
-    // to pass all the arguments scoped by DATASET. Arguments scoped by DATASET will only get filtered if current scope
-    // is DATASET.
-    Iterator<Map.Entry<String, String>> it = noMatchArgs.entrySet().iterator();
-    while (it.hasNext()) {
-      Map.Entry<String, String> entry = it.next();
-      for (Scope s : Scope.values()) {
-        String scopePrefix = s + DOT;
-        if (entry.getKey().startsWith(scopePrefix)) {
-          if (!s.equals(Scope.DATASET) || scope.equals(Scope.DATASET)) {
-            it.remove();
-            break;
-          }
-        }
-      }
-    }
-
-    result.putAll(noMatchArgs);
     result.putAll(wildCardPrefixMatchedArgs);
     result.putAll(prefixMatchedArgs);
     return result;
+  }
+
+  /**
+   * Adds a key to the scoped argument map.
+   * Key is added if -
+   * 1. It is not prefixed with any scope e.g. read.timeout=30
+   * 2. It is prefixed with the retainable scope. In this case key is retained in the argument map till the scope the
+   * key becomes current. e.g. dataset.read.timeout=30. The key is prefixed with the DATASET scope which is retainable.
+   * This key is retained in the argument map till the current scope becomes DATASET at which point it will be removed.
+   * @param key key of the argument to be added
+   * @param value value of the argument to be added
+   * @param currentScope current scope
+   * @param result map which holds the scoped arguments
+   */
+  private static void addGlobalArgument(String key, String value, Scope currentScope, Map<String, String> result) {
+    boolean addArgument = true;
+    for (Scope s : Scope.values()) {
+      String prefix = s + DOT;
+      if (key.startsWith(prefix)) {
+        if (!s.retainableScope() || s.equals(currentScope)) {
+          addArgument = false;
+        }
+        break;
+      }
+    }
+    if (addArgument) {
+      result.put(key, value);
+    }
   }
 
   /**
