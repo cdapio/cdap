@@ -1,32 +1,22 @@
-<h3> Services </h3>
+<h2> Services </h2>
 
-<div ng-bind="service.name"></div>
+<h3>{{$state.params.serviceName | caskCapitalizeFilter}}</h3>
 
-<table class="table">
-    <tbody>
-        <tr>
-            <td>Description</td>
-            <td ng-bind="service.name"></td>
-        </tr>
-        <tr>
-            <td>Description</td>
-            <td ng-bind="service.description"></td>
-        </tr>
-        <tr>
-            <td>Zookeeper path</td>
-            <td ng-bind="service.zookeeper"></td>
-        </tr>
-        <tr>
-            <td>Host/port</td>
-            <td>
-                <table>
-                    <tr ng-repeat="hp in service.hostPort">
-                        <td ng-bind="hp.host"></td>
-                        <td ng-bind="hp.port"></td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<div class="row">
+   <div class="col-sm-12 text-right">
+        <div class="btn-group" ng-model="tabs.activeTab" bs-radio-group>
+            <label class="btn btn-default">
+                <input type="radio" class="btn btn-default" value="0" />
+                Metadata
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" class="btn btn-default" value="1" />
+                Logs
+            </label>
+        </div>
+   </div>
+</div>
+
+<ui-view />
+
 
