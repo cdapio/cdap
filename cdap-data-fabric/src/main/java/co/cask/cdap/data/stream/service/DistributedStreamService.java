@@ -37,8 +37,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.NotificationContext;
-import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
@@ -295,9 +295,10 @@ public class DistributedStreamService extends AbstractStreamService {
    * of.
    *
    * @return a {@link Cancellable} to cancel the subscription
-   * @throws NotificationException if the heartbeat feed does not exist
+   * @throws NotificationFeedNotFoundException if the heartbeat feed does not exist
+   * @throws NotificationFeedException in case of any other error concerning the feed
    */
-  private Cancellable subscribeToHeartbeatsFeed() throws NotificationException {
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, NotificationFeedException {
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
@@ -362,7 +363,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     try {
       feedManager.getFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedException e) {
+    } catch (NotificationFeedNotFoundException e) {
       feedManager.createFeed(streamHeartbeatsFeed);
     }
   }

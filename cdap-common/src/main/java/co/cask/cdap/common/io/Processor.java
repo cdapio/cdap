@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.feeds;
-
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.proto.Id;
+package co.cask.cdap.common.io;
 
 /**
- * Exception thrown when a {@link Id.NotificationFeed} object is not found.
+ * Process input values.
+ *
+ * {@link #process} will be called for each input, and should return {@code false} when the processing should stop.
+ *
+ * @param <T> type of the input values
+ * @param <R> type of the result value
  */
-public class NotificationFeedNotFoundException extends NotFoundException {
-
-  public NotificationFeedNotFoundException(String elementId) {
-    super("feed", elementId);
-  }
+public interface Processor<T, R> {
 
   /**
-   * @return The name of the feed that could not be found
+   * Process one input value.
+   *
+   * @param input input value to process
+   * @return true to continue processing, false to stop
    */
-  public String getFeedName() {
-    return getElementId();
-  }
+  boolean process(T input);
+
+  /**
+   * @return the result of processing all the inputs
+   */
+  R getResult();
 }

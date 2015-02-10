@@ -251,6 +251,11 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
+    return StreamUtils.fetchStreamFilesSize(streamConfig);
+  }
+
+  @Override
   public boolean exists(String name) throws Exception {
     try {
       return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists();

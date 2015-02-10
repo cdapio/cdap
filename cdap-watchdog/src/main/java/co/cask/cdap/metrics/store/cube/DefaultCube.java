@@ -130,6 +130,26 @@ public class DefaultCube implements Cube {
     return convertToQueryResult(query, resultTable);
   }
 
+  @Override
+  public void delete(CubeQuery query) throws Exception {
+    //this may be very inefficient and its better to use TTL, this is to only support existing old functionality.
+    List<TagValue> tagValues = Lists.newArrayList();
+    // find all the aggregations that match the sliceByTags in the query and
+    // use the tag values of the aggregation to delete entries in all the fact-tables.
+    for (Aggregation agg : aggregations) {
+      if (agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
+        tagValues.clear();
+        for (String tagName : agg.getTagNames()) {
+          tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
+        }
+        for (FactTable factTable : resolutionToFactTable.values()) {
+          FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+          factTable.delete(scan);
+        }
+      }
+    }
+  }
+
   @Nullable
   private Aggregation findAggregation(CubeQuery query) {
     Aggregation currentBest = null;

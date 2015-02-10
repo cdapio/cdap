@@ -41,8 +41,9 @@ public interface NotificationFeedManager {
    *
    * @param feed the {@link Id.NotificationFeed} to delete
    * @throws NotificationFeedNotFoundException if the feed does not exist
+   * @throws NotificationFeedException in case of unforeseen error
    */
-  void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedException;
+  void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException, NotificationFeedException;
 
   /**
    * Get a {@link Id.NotificationFeed} based on the {@code feed.getId()} method of the {@code feed} argument.
@@ -50,8 +51,10 @@ public interface NotificationFeedManager {
    * @param feed feed containing the feed Id of the feed to retrieve
    * @return {@link Id.NotificationFeed} of the feed which ID is the same as {@code feed}
    * @throws NotificationFeedNotFoundException if the feed does not exist
+   * @throws NotificationFeedException in case of unforeseen error
    */
-  Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedException;
+  Id.NotificationFeed getFeed(Id.NotificationFeed feed)
+    throws NotificationFeedNotFoundException, NotificationFeedException;
 
   /**
    * List all the {@link Id.NotificationFeed}s present in the manager store for a {@code namespace}.

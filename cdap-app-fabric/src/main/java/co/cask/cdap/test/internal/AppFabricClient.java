@@ -240,6 +240,7 @@ public class AppFabricClient {
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder, archiveName);
+    Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
     try {

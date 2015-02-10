@@ -179,7 +179,7 @@ public class FileSetProperties {
     protected final DatasetProperties.Builder delegate = DatasetProperties.builder();
 
     /**
-     * Package visible default constructor, to allow subclassing by other datasets in this package.
+     * Package visible default constructor, to allow sub-classing by other datasets in this package.
      */
     Builder() { }
 

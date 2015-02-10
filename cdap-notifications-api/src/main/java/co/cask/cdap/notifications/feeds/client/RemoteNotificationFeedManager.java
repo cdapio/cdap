@@ -91,26 +91,27 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException, NotificationFeedException {
     HttpResponse response = execute(HttpRequest.delete(resolve(
       String.format("namespaces/%s/feeds/categories/%s/names/%s",
                     feed.getNamespaceId(), feed.getCategory(), feed.getName()))
     ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(String.format("Notification feed %s was not found.", feed.getId()));
+      throw new NotificationFeedNotFoundException(feed.getId());
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
     }
   }
 
   @Override
-  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public Id.NotificationFeed getFeed(Id.NotificationFeed feed)
+    throws NotificationFeedNotFoundException, NotificationFeedException {
     HttpResponse response = execute(HttpRequest.get(resolve(
       String.format("namespaces/%s/feeds/categories/%s/names/%s",
                     feed.getNamespaceId(), feed.getCategory(), feed.getName()))
     ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(String.format("Notification feed %s was not found.", feed.getId()));
+      throw new NotificationFeedNotFoundException(feed.getId());
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot get notification feed. Reason: " + getDetails(response));
     }

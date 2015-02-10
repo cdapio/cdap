@@ -81,4 +81,9 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   public void updateConfig(StreamConfig config) throws IOException {
 
   }
+
+  @Override
+  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
+    return 0;
+  }
 }

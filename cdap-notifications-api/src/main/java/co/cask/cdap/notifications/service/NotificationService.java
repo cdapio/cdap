@@ -79,7 +79,7 @@ public interface NotificationService extends Service {
    * @throws NotificationFeedException in case of any other error concerning the feed
    */
   <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler)
-    throws NotificationFeedException;
+    throws NotificationFeedNotFoundException, NotificationFeedException;
 
   /**
    * Subscribe to the notification received on the {@code feed}, and handle the notifications with the {@code handler}.
@@ -98,5 +98,5 @@ public interface NotificationService extends Service {
    * @throws NotificationFeedException in case of any other error concerning the feed
    */
   <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
-    throws NotificationFeedException;
+    throws NotificationFeedNotFoundException, NotificationFeedException;
 }

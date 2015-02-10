@@ -66,4 +66,13 @@ public interface StreamAdmin extends EntityAdmin {
    * @param config New configuration of the stream.
    */
   void updateConfig(StreamConfig config) throws IOException;
+
+  /**
+   * Get the size of the data persisted for the stream with config {@code streamConfig}.
+   *
+   * @param streamConfig configuration of the stream to get the size of data for
+   * @return the size of the data persisted for the stream which config is the {@code streamName}
+   * @throws IOException in case of any error in fetching the size
+   */
+  long fetchStreamSize(StreamConfig streamConfig) throws IOException;
 }

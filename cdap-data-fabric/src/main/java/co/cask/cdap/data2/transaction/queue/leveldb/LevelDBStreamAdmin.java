@@ -69,4 +69,9 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   public void updateConfig(StreamConfig config) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
+
+  @Override
+  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
+    throw new UnsupportedOperationException("Not yet supported");
+  }
 }
