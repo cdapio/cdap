@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.proto.Id;
+
 import java.io.IOException;
 
 /**
@@ -33,5 +35,5 @@ public interface StreamConsumerStateStoreFactory {
   /**
    * Deletes all consumer state stores.
    */
-  void dropAll() throws IOException;
+  void dropAllInNamespace(Id.Namespace namespace) throws IOException;
 }

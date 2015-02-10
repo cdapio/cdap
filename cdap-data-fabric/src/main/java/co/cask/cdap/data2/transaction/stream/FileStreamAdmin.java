@@ -112,7 +112,8 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     // Also drop the state table
-    stateStoreFactory.dropAll();
+    //TODO: once streams are namespaced, this will need to change.
+    stateStoreFactory.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
   }
 
   @Override

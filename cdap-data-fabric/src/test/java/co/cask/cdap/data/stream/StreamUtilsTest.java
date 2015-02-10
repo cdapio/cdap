@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,5 +35,12 @@ public class StreamUtilsTest {
 
     Assert.assertFalse(StreamUtils.isPartition("12345"));
     Assert.assertFalse(StreamUtils.isPartition("abc.123"));
+  }
+
+  @Test
+  public void testConstructStateStoreTableName() {
+    Id.Namespace namespace = Id.Namespace.from("foonamespace");
+    String expected = "cdap.foonamespace.stream.state.store";
+    Assert.assertEquals(expected, StreamUtils.constructStateStoreTableName(namespace));
   }
 }
