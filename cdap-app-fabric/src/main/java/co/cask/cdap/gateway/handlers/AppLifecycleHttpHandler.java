@@ -49,6 +49,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
@@ -59,7 +60,6 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
@@ -163,14 +163,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
   private final StreamConsumerFactory streamConsumerFactory;
-
   private final QueueAdmin queueAdmin;
-
   private final DiscoveryServiceClient discoveryServiceClient;
-
   private final PreferencesStore preferencesStore;
-
   private final AdapterService adapterService;
+  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -179,10 +176,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService) {
+                                 AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
+    this.namespaceAdmin = namespaceAdmin;
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.archiveDir = this.appFabricDir + "/archive";
     this.locationFactory = locationFactory;
@@ -312,7 +310,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceExists(namespaceId)) {
+    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
@@ -404,7 +402,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("adapter-id") String adapterName) {
 
     try {
-      if (!namespaceExists(namespaceId)) {
+      if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
         return;
@@ -460,7 +458,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
-    if (!namespaceExists(namespaceId)) {
+    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));
@@ -518,32 +516,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn(e.getMessage(), e);
       throw new Exception(e.getMessage());
     }
-  }
-
-  private boolean namespaceExists(String namespace) {
-    boolean isValid = false;
-    if (namespace != null && !namespace.isEmpty()) {
-      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
-        isValid = true;
-      } else {
-        // null namespace found. check if this is default, and try to create it.
-        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
-        // time during the initialization of CDAP.
-        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
-          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
-                                                           .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setName(Constants.DEFAULT_NAMESPACE)
-                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
-          if (existing != null) {
-            LOG.trace("Default namespace already exists.");
-          } else {
-            LOG.trace("Created default namespace.");
-          }
-          isValid = true;
-        }
-      }
-    }
-    return isValid;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)

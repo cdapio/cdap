@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.feeds;
+package co.cask.cdap.common.io;
 
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.proto.Id;
+import java.net.URI;
 
 /**
- * Exception thrown when a {@link Id.NotificationFeed} object is not found.
+ * Status of a location.
  */
-public class NotificationFeedNotFoundException extends NotFoundException {
+public class LocationStatus {
 
-  public NotificationFeedNotFoundException(String elementId) {
-    super("feed", elementId);
+  private final URI uri;
+  private final long length;
+  private final boolean dir;
+
+  public LocationStatus(URI uri, long length, boolean dir) {
+    this.uri = uri;
+    this.length = length;
+    this.dir = dir;
   }
 
-  /**
-   * @return The name of the feed that could not be found
-   */
-  public String getFeedName() {
-    return getElementId();
+  public URI getUri() {
+    return uri;
+  }
+
+  public long getLength() {
+    return length;
+  }
+
+  public boolean isDir() {
+    return dir;
   }
 }

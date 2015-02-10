@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
@@ -68,12 +68,12 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public synchronized Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
-    ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+  public synchronized Multimap<Id.Namespace, StreamSpecification> listStreams() throws Exception {
+    ImmutableMultimap.Builder<Id.Namespace, StreamSpecification> builder = ImmutableMultimap.builder();
     for (String namespaceId : streams.keySet()) {
       synchronized (streams) {
         Collection<String> streamNames = streams.get(namespaceId);
-        builder.putAll(new NamespaceMeta.Builder().setId(namespaceId).build(),
+        builder.putAll(Id.Namespace.from(namespaceId),
                        Collections2.transform(streamNames, new Function<String, StreamSpecification>() {
                          @Nullable
                          @Override

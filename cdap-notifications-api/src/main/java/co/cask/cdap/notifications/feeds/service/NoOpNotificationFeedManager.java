@@ -18,6 +18,7 @@ package co.cask.cdap.notifications.feeds.service;
 
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 
@@ -34,12 +35,12 @@ public class NoOpNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
     // No-op
   }
 
   @Override
-  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
     return feed;
   }
 
