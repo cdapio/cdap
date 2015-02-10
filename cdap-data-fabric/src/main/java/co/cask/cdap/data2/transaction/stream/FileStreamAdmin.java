@@ -116,12 +116,12 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(Id.Stream name, long groupId, int instances) throws Exception {
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
     LOG.info("Configure instances: {} {}", groupId, instances);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name);
+    StreamConfig config = StreamUtils.ensureExists(this, streamId);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -147,12 +147,12 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureGroups(Id.Stream name, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    LOG.info("Configure groups for {}: {}", name, groupInfo);
+    LOG.info("Configure groups for {}: {}", streamId, groupInfo);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name);
+    StreamConfig config = StreamUtils.ensureExists(this, streamId);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -201,9 +201,9 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(Id.Stream streamName) throws IOException {
-    Location streamLocation = streamBaseLocation.append(streamName.getName());
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamId.getName());
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
     return loadConfig(streamLocation);
   }
 
@@ -253,9 +253,9 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(Id.Stream name) throws Exception {
+  public boolean exists(Id.Stream streamId) throws Exception {
     try {
-      return streamBaseLocation.append(name.getName()).append(CONFIG_FILE_NAME).exists();
+      return streamBaseLocation.append(streamId.getName()).append(CONFIG_FILE_NAME).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -263,13 +263,13 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void create(Id.Stream name) throws Exception {
-    create(name, null);
+  public void create(Id.Stream streamId) throws Exception {
+    create(streamId, null);
   }
 
   @Override
-  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
-    Location streamLocation = streamBaseLocation.append(name.getName());
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+    Location streamLocation = streamBaseLocation.append(streamId.getName());
     Locations.mkdirsIfNotExists(streamLocation);
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
@@ -288,15 +288,15 @@ public class FileStreamAdmin implements StreamAdmin {
     int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
                                                             cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation,
+    StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval, ttl, streamLocation,
                                            null, threshold);
     saveConfig(config);
 
     // Create the notification feeds linked to that stream
     createStreamFeeds(config);
 
-    streamCoordinatorClient.streamCreated(name);
-    alterExploreStream(name.getName(), true);
+    streamCoordinatorClient.streamCreated(streamId);
+    alterExploreStream(streamId.getName(), true);
   }
 
   /**
@@ -320,15 +320,15 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void truncate(Id.Stream name) throws Exception {
-    StreamConfig config = getConfig(name);
+  public void truncate(Id.Stream streamId) throws Exception {
+    StreamConfig config = getConfig(streamId);
     streamCoordinatorClient.nextGeneration(config, StreamUtils.getGeneration(config)).get();
   }
 
   @Override
-  public void drop(Id.Stream name) throws Exception {
+  public void drop(Id.Stream streamId) throws Exception {
     // Same as truncate
-    truncate(name);
+    truncate(streamId);
   }
 
   private void saveConfig(StreamConfig config) throws IOException {

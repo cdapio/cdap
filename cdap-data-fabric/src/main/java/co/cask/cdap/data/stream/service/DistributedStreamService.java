@@ -148,8 +148,8 @@ public class DistributedStreamService extends AbstractStreamService {
     heartbeatsSubscription = subscribeToHeartbeatsFeed();
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
-      public void leaderOf(Set<Id.Stream> streamNames) {
-        aggregate(streamNames);
+      public void leaderOf(Set<Id.Stream> streamIds) {
+        aggregate(streamIds);
       }
     });
 
@@ -200,25 +200,25 @@ public class DistributedStreamService extends AbstractStreamService {
   }
 
   /**
-   * Perform aggregation on the Streams described by the {@code streamNames}, and no other Streams.
+   * Perform aggregation on the Streams described by the {@code streamIds}, and no other Streams.
    * If aggregation was previously done on other Streams, those must be cancelled.
    *
-   * @param streamNames names of the streams to perform data sizes aggregation on
+   * @param streamIds Ids of the streams to perform data sizes aggregation on
    */
-  private void aggregate(Set<Id.Stream> streamNames) {
+  private void aggregate(Set<Id.Stream> streamIds) {
     Set<Id.Stream> existingAggregators = Sets.newHashSet(aggregators.keySet());
-    for (Id.Stream streamName : streamNames) {
-      if (existingAggregators.remove(streamName)) {
+    for (Id.Stream streamId : streamIds) {
+      if (existingAggregators.remove(streamId)) {
         continue;
       }
 
       try {
-        StreamConfig config = streamAdmin.getConfig(streamName);
+        StreamConfig config = streamAdmin.getConfig(streamId);
         long filesSize = StreamUtils.fetchStreamFilesSize(config);
-        LOG.debug("Size of the files already present for stream {}: {}", streamName, filesSize);
-        createSizeAggregator(streamName, filesSize, config.getNotificationThresholdMB());
+        LOG.debug("Size of the files already present for stream {}: {}", streamId, filesSize);
+        createSizeAggregator(streamId, filesSize, config.getNotificationThresholdMB());
       } catch (IOException e) {
-        LOG.error("Could not compute sizes of files for stream {}", streamName);
+        LOG.error("Could not compute sizes of files for stream {}", streamId);
         Throwables.propagate(e);
       }
     }
@@ -237,25 +237,25 @@ public class DistributedStreamService extends AbstractStreamService {
   }
 
   /**
-   * Create a new aggregator for the {@code streamName}, and add it to the existing map of {@link Cancellable}
+   * Create a new aggregator for the {@code streamId}, and add it to the existing map of {@link Cancellable}
    * {@code aggregators}. This method does not cancel previously existing aggregator associated to the
-   * {@code streamName}.
+   * {@code streamId}.
    *
-   * @param streamName stream name to create a new aggregator for
+   * @param streamId stream Id to create a new aggregator for
    * @param baseCount stream size from which to start aggregating
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(Id.Stream streamName, long baseCount, int threshold) {
-    LOG.debug("Creating size aggregator for stream {}", streamName);
+  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, long baseCount, int threshold) {
+    LOG.debug("Creating size aggregator for stream {}", streamId);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
-      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+      getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
         @Override
-        public void thresholdChanged(Id.Stream streamName, int threshold) {
-          StreamSizeAggregator aggregator = aggregators.get(streamName);
+        public void thresholdChanged(Id.Stream streamId, int threshold) {
+          StreamSizeAggregator aggregator = aggregators.get(streamId);
           while (aggregator == null) {
             Thread.yield();
-            aggregator = aggregators.get(streamName);
+            aggregator = aggregators.get(streamId);
           }
           aggregator.setStreamThresholdMB(threshold);
         }
@@ -264,26 +264,26 @@ public class DistributedStreamService extends AbstractStreamService {
     // Handle stream truncation, by creating creating a new empty aggregator for the stream
     // and cancelling the existing one
     final Cancellable truncationSubscription =
-      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+      getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
         @Override
-        public void generationChanged(Id.Stream streamName, int generation) {
-          StreamSizeAggregator aggregator = aggregators.get(streamName);
+        public void generationChanged(Id.Stream streamId, int generation) {
+          StreamSizeAggregator aggregator = aggregators.get(streamId);
           while (aggregator == null) {
             Thread.yield();
-            aggregator = aggregators.get(streamName);
+            aggregator = aggregators.get(streamId);
           }
           aggregator.resetCount();
         }
       });
 
-    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, threshold, new Cancellable() {
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamId, baseCount, threshold, new Cancellable() {
       @Override
       public void cancel() {
         thresholdSubscription.cancel();
         truncationSubscription.cancel();
       }
     });
-    aggregators.put(streamName, newAggregator);
+    aggregators.put(streamId, newAggregator);
     return newAggregator;
   }
 
@@ -466,16 +466,16 @@ public class DistributedStreamService extends AbstractStreamService {
   /**
    * Call all the listeners that are interested in knowing that this Stream writer is the leader of a set of Streams.
    *
-   * @param streamNames set of Streams that this coordinator is the leader of
+   * @param streamIds set of Streams that this coordinator is the leader of
    */
-  private void invokeLeaderListeners(Set<Id.Stream> streamNames) {
-    LOG.debug("Stream writer is the leader of streams: {}", streamNames);
+  private void invokeLeaderListeners(Set<Id.Stream> streamIds) {
+    LOG.debug("Stream writer is the leader of streams: {}", streamIds);
     Set<StreamLeaderListener> listeners;
     synchronized (this) {
       listeners = ImmutableSet.copyOf(leaderListeners);
     }
     for (StreamLeaderListener listener : listeners) {
-      listener.leaderOf(streamNames);
+      listener.leaderOf(streamIds);
     }
   }
 
@@ -491,7 +491,7 @@ public class DistributedStreamService extends AbstractStreamService {
     @Override
     public void onChange(Collection<PartitionReplica> partitionReplicas) {
       LOG.info("Stream leader requirement has changed to {}", partitionReplicas);
-      Set<Id.Stream> streamNames =
+      Set<Id.Stream> streamIds =
         ImmutableSet.copyOf(Iterables.transform(partitionReplicas, new Function<PartitionReplica, Id.Stream>() {
           @Nullable
           @Override
@@ -499,7 +499,7 @@ public class DistributedStreamService extends AbstractStreamService {
             return input != null ? Id.Stream.fromId(input.getName()) : null;
           }
         }));
-      invokeLeaderListeners(ImmutableSet.copyOf(streamNames));
+      invokeLeaderListeners(ImmutableSet.copyOf(streamIds));
     }
 
     @Override

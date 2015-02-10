@@ -35,18 +35,18 @@ public interface StreamAdmin {
 
   /**
    * Sets the number of consumer instances for the given consumer group in a stream.
-   * @param streamName Name of the stream.
+   * @param streamId Id of the stream.
    * @param groupId The consumer group to alter.
    * @param instances Number of instances.
    */
-  void configureInstances(Id.Stream streamName, long groupId, int instances) throws Exception;
+  void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception;
 
   /**
    * Sets the consumer groups information for the given stream.
-   * @param streamName Name of the stream.
+   * @param streamId Id of the stream.
    * @param groupInfo A map from groupId to number of instances of each group.
    */
-  void configureGroups(Id.Stream streamName, Map<Long, Integer> groupInfo) throws Exception;
+  void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception;
 
   /**
    * Performs upgrade action for all streams.
@@ -55,11 +55,11 @@ public interface StreamAdmin {
 
   /**
    * Returns the configuration of the given stream.
-   * @param streamName Name of the stream.
+   * @param streamId Id of the stream.
    * @return A {@link StreamConfig} instance.
    * @throws IOException If the stream doesn't exists.
    */
-  StreamConfig getConfig(Id.Stream streamName) throws IOException;
+  StreamConfig getConfig(Id.Stream streamId) throws IOException;
 
   /**
    * Overwrites existing configuration for the given stream.
@@ -71,45 +71,45 @@ public interface StreamAdmin {
    * Get the size of the data persisted for the stream with config {@code streamConfig}.
    *
    * @param streamConfig configuration of the stream to get the size of data for
-   * @return the size of the data persisted for the stream which config is the {@code streamName}
+   * @return the size of the data persisted for the stream which config is the {@code streamId}
    * @throws IOException in case of any error in fetching the size
    */
   long fetchStreamSize(StreamConfig streamConfig) throws IOException;
 
   /**
-   * @param name entity name
-   * @return true if entity with given name exists, otherwise false
+   * @param streamId Id of the stream.
+   * @return true if stream with given Id exists, otherwise false
    * @throws Exception if check fails
    */
-  boolean exists(Id.Stream name) throws Exception;
+  boolean exists(Id.Stream streamId) throws Exception;
 
   /**
-   * Creates entity if doesn't exist. If entity exists does nothing.
-   * @param name name of the entity to create
+   * Creates stream if doesn't exist. If stream exists does nothing.
+   * @param streamId Id of the stream to create
    * @throws Exception if creation fails
    */
-  void create(Id.Stream name) throws Exception;
+  void create(Id.Stream streamId) throws Exception;
 
   /**
-   * Creates entity if doesn't exist. If entity exists does nothing.
-   * @param name name of the entity to create
+   * Creates stream if doesn't exist. If stream exists, does nothing.
+   * @param streamId Id of the stream to create
    * @param props additional properties
    * @throws Exception if creation fails
    */
-  void create(Id.Stream name, @Nullable Properties props) throws Exception;
+  void create(Id.Stream streamId, @Nullable Properties props) throws Exception;
 
   /**
-   * Wipes out entity data.
-   * @param name entity name
+   * Wipes out stream data.
+   * @param streamId Id of the stream to truncate
    * @throws Exception if cleanup fails
    */
-  void truncate(Id.Stream name) throws Exception;
+  void truncate(Id.Stream streamId) throws Exception;
 
   /**
-   * Deletes entity from the system completely.
-   * @param name entity name
+   * Deletes stream from the system completely.
+   * @param streamId Id of the stream to delete
    * @throws Exception if deletion fails
    */
-  void drop(Id.Stream name) throws Exception;
+  void drop(Id.Stream streamId) throws Exception;
 
 }

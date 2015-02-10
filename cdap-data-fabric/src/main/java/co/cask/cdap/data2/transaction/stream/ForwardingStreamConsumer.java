@@ -37,8 +37,8 @@ public abstract class ForwardingStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public Id.Stream getStreamName() {
-    return delegate.getStreamName();
+  public Id.Stream getStreamId() {
+    return delegate.getStreamId();
   }
 
   @Override

@@ -46,16 +46,16 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
   }
 
   @Override
-  public StreamConsumer create(Id.Stream streamName, String namespace,
+  public StreamConsumer create(Id.Stream streamId, String namespace,
                                ConsumerConfig consumerConfig) throws IOException {
 
-    QueueName queueName = QueueName.fromStream(streamName);
+    QueueName queueName = QueueName.fromStream(streamId);
     QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, -1);
-    return new QueueToStreamConsumer(streamName, consumerConfig, consumer);
+    return new QueueToStreamConsumer(streamId, consumerConfig, consumer);
   }
 
   @Override
-  public void dropAll(Id.Stream streamName, String namespace, Iterable<Long> groupIds) throws IOException {
+  public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
     // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
     // String namespace = String.format("%s.%s.%s",
     //                                  programId.getNamespaceId(),

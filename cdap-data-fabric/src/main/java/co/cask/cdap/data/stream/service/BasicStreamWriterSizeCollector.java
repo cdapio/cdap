@@ -61,23 +61,23 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
   }
 
   @Override
-  public long getTotalCollected(Id.Stream streamName) {
-    AtomicLong collected = streamSizes.get(streamName);
+  public long getTotalCollected(Id.Stream streamId) {
+    AtomicLong collected = streamSizes.get(streamId);
     return collected != null ? collected.get() : 0;
   }
 
   @Override
-  public synchronized void received(Id.Stream streamName, long dataSize) {
-    AtomicLong value = streamSizes.get(streamName);
+  public synchronized void received(Id.Stream streamId, long dataSize) {
+    AtomicLong value = streamSizes.get(streamId);
     if (value == null) {
-      value = streamSizes.putIfAbsent(streamName, new AtomicLong(dataSize));
+      value = streamSizes.putIfAbsent(streamId, new AtomicLong(dataSize));
       if (value == null) {
         // This is the first time that we've seen this stream, we subscribe to generation changes to track truncation
-        truncationSubscriptions.add(streamCoordinatorClient.addListener(streamName, new StreamPropertyListener() {
+        truncationSubscriptions.add(streamCoordinatorClient.addListener(streamId, new StreamPropertyListener() {
           @Override
-          public void generationChanged(Id.Stream streamName, int generation) {
+          public void generationChanged(Id.Stream streamId, int generation) {
             // Handle stream truncation by resetting the size aggregated so far
-            streamSizes.put(streamName, new AtomicLong(0));
+            streamSizes.put(streamId, new AtomicLong(0));
           }
         }));
       }
@@ -85,7 +85,7 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     if (value != null) {
       value.addAndGet(dataSize);
     }
-    LOG.trace("Received data for stream {}: {}B. Total size is now {}", streamName, dataSize,
+    LOG.trace("Received data for stream {}: {}B. Total size is now {}", streamId, dataSize,
               value == null ? dataSize : value.get());
   }
 }

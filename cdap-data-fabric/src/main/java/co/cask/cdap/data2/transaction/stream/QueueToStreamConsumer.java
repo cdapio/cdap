@@ -47,19 +47,19 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
   private static final StreamEventCodec STREAM_EVENT_CODEC = new StreamEventCodec();
 
-  private final Id.Stream streamName;
+  private final Id.Stream streamId;
   private final ConsumerConfig consumerConfig;
   private final QueueConsumer consumer;
 
-  public QueueToStreamConsumer(Id.Stream streamName, ConsumerConfig consumerConfig, QueueConsumer consumer) {
-    this.streamName = streamName;
+  public QueueToStreamConsumer(Id.Stream streamId, ConsumerConfig consumerConfig, QueueConsumer consumer) {
+    this.streamId = streamId;
     this.consumerConfig = consumerConfig;
     this.consumer = consumer;
   }
 
   @Override
-  public Id.Stream getStreamName() {
-    return streamName;
+  public Id.Stream getStreamId() {
+    return streamId;
   }
 
   @Override
@@ -162,7 +162,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   @Override
   public String getTransactionAwareName() {
     return Objects.toStringHelper(this)
-      .add("queue", streamName)
+      .add("queue", streamId)
       .add("config", consumerConfig)
       .toString();
   }

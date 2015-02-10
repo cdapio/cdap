@@ -47,7 +47,7 @@ public final class StreamQueueReader<T> implements QueueReader<T> {
   @Override
   public InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws IOException, InterruptedException {
     StreamConsumer consumer = consumerSupplier.get();
-    return new BasicInputDatum<StreamEvent, T>(QueueName.fromStream(consumer.getStreamName()),
+    return new BasicInputDatum<StreamEvent, T>(QueueName.fromStream(consumer.getStreamId()),
                                                consumer.poll(batchSize, timeout, timeoutUnit), eventTransform);
   }
 }

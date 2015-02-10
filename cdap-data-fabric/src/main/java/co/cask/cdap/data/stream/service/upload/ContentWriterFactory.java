@@ -28,7 +28,7 @@ import java.util.Map;
 public interface ContentWriterFactory {
 
   /**
-   * Returns the name of the stream that all {@link ContentWriter} created by this factory will write to.
+   * Returns the Id of the stream that all {@link ContentWriter} created by this factory will write to.
    */
   Id.Stream getStream();
 

@@ -38,10 +38,10 @@ public interface StreamMetricsCollectorFactory {
   }
 
   /**
-   * Create a {@link StreamMetricsCollector} for the given {@code streamName}.
+   * Create a {@link StreamMetricsCollector} for the given {@code streamId}.
    *
-   * @param streamName stream name to create a collector for
-   * @return a {@link StreamMetricsCollector} for the given {@code streamName}
+   * @param streamId stream name to create a collector for
+   * @return a {@link StreamMetricsCollector} for the given {@code streamId}
    */
-  StreamMetricsCollector createMetricsCollector(Id.Stream streamName);
+  StreamMetricsCollector createMetricsCollector(Id.Stream streamId);
 }

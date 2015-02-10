@@ -27,9 +27,9 @@ public interface StreamLeaderListener {
 
   /**
    * This method is called to specify that the Stream handler it is called from
-   * is the leader of all {@code streamNames}.
+   * is the leader of all {@code streamIds}.
    *
-   * @param streamNames stream names of which the current Stream handler became leader
+   * @param streamIds stream Ids of which the current Stream handler became leader
    */
-  void leaderOf(Set<Id.Stream> streamNames);
+  void leaderOf(Set<Id.Stream> streamIds);
 }

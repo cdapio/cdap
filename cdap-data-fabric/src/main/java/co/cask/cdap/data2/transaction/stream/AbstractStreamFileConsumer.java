@@ -210,7 +210,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   protected abstract StateScanner scanStates(byte[] startRow, byte[] endRow) throws IOException;
 
   @Override
-  public final Id.Stream getStreamName() {
+  public final Id.Stream getStreamId() {
     return streamName;
   }
 
@@ -464,7 +464,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
         lastPersistedState = new StreamConsumerState(consumerState);
       }
     } catch (IOException e) {
-      LOG.error("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamName(), e);
+      LOG.error("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamId(), e);
     }
   }
 

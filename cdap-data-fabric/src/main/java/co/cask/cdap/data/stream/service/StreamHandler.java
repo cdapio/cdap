@@ -303,15 +303,15 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {
     return new StreamMetricsCollectorFactory() {
       @Override
-      public StreamMetricsCollector createMetricsCollector(final Id.Stream streamName) {
+      public StreamMetricsCollector createMetricsCollector(final Id.Stream streamId) {
         final MetricsCollector childCollector =
-          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamName.getName());
+          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamId.getName());
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
             if (bytesWritten > 0) {
               childCollector.increment("collect.bytes", bytesWritten);
-              sizeCollector.received(streamName, bytesWritten);
+              sizeCollector.received(streamId, bytesWritten);
             }
             if (eventsWritten > 0) {
               childCollector.increment("collect.events", eventsWritten);

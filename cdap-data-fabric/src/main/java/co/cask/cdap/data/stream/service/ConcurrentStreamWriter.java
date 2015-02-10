@@ -282,11 +282,11 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
 
     @Override
-    public void generationChanged(Id.Stream streamName, int generation) {
-      LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamName, generation);
-      generations.put(streamName, generation);
+    public void generationChanged(Id.Stream streamId, int generation) {
+      LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamId, generation);
+      generations.put(streamId, generation);
 
-      EventQueue eventQueue = eventQueues.remove(streamName);
+      EventQueue eventQueue = eventQueues.remove(streamId);
       if (eventQueue != null) {
         try {
           eventQueue.close();
@@ -297,11 +297,11 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
 
     @Override
-    public void generationDeleted(Id.Stream streamName) {
+    public void generationDeleted(Id.Stream streamId) {
       // Generation deleted. Remove the cache.
       // This makes creation of file writer resort to scanning the stream directory for generation id.
-      LOG.debug("Generation for stream '{}' deleted for stream writer", streamName);
-      generations.remove(streamName);
+      LOG.debug("Generation for stream '{}' deleted for stream writer", streamId);
+      generations.remove(streamId);
     }
 
     /**
@@ -374,7 +374,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    */
   private final class EventQueue implements Closeable {
 
-    private final Id.Stream streamName;
+    private final Id.Stream streamId;
     private final StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector;
     private final Queue<WriteRequest> queue;
     private final AtomicBoolean writerFlag;
@@ -384,8 +384,8 @@ public final class ConcurrentStreamWriter implements Closeable {
     private FileWriter<StreamEventData> fileWriter;
     private boolean closed;
 
-    EventQueue(Id.Stream streamName, StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector) {
-      this.streamName = streamName;
+    EventQueue(Id.Stream streamId, StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector) {
+      this.streamId = streamId;
       this.streamEvent = new MutableStreamEvent();
       this.queue = new ConcurrentLinkedQueue<WriteRequest>();
       this.writerFlag = new AtomicBoolean(false);
@@ -499,7 +499,7 @@ public final class ConcurrentStreamWriter implements Closeable {
           eventsWritten = metrics.eventsWritten;
         } catch (Throwable t) {
           // On exception, remove this EventQueue from the map and close this event queue
-          eventQueues.remove(streamName, this);
+          eventQueues.remove(streamId, this);
           doClose();
 
           for (WriteRequest processed : processQueue) {
@@ -523,7 +523,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         throw new IOException("Stream writer already closed");
       }
       if (fileWriter == null) {
-        fileWriter = FileWriters.transform(streamFileFactory.create(streamName), eventTransformer);
+        fileWriter = FileWriters.transform(streamFileFactory.create(streamId), eventTransformer);
       }
       return fileWriter;
     }

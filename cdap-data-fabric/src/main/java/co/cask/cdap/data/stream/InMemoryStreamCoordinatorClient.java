@@ -53,7 +53,7 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
   }
 
   @Override
-  public ListenableFuture<Void> streamCreated(Id.Stream streamName) {
+  public ListenableFuture<Void> streamCreated(Id.Stream streamId) {
     return Futures.immediateFuture(null);
   }
 }

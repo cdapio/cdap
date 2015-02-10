@@ -27,20 +27,20 @@ public interface StreamWriterSizeCollector extends Service {
   // TODO have one implementation of this
 
   /**
-   * Get the total amount of bytes collected for the stream {@code streamName} so far.
+   * Get the total amount of bytes collected for the stream {@code streamId} so far.
    *
-   * @param streamName stream name to get the total amount of data collected for
-   * @return the total amount of bytes collected for the stream {@code streamName} so far
+   * @param streamId stream Id to get the total amount of data collected for
+   * @return the total amount of bytes collected for the stream {@code streamId} so far
    */
-  long getTotalCollected(Id.Stream streamName);
+  long getTotalCollected(Id.Stream streamId);
 
   /**
    * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream
-   * {@code streamName} using the stream handler from which this code is executed. The {@code dataSize}
+   * {@code streamId} using the stream handler from which this code is executed. The {@code dataSize}
    * is an incremental size.
    *
-   * @param streamName name of the stream that ingested data.
+   * @param streamId Id of the stream that ingested data.
    * @param dataSize amount of data ingested in bytes.
    */
-  void received(Id.Stream streamName, long dataSize);
+  void received(Id.Stream streamId, long dataSize);
 }

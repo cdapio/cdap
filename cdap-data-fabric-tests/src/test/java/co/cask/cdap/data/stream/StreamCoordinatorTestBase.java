@@ -50,7 +50,7 @@ public abstract class StreamCoordinatorTestBase {
     final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "testGen");
     coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void generationChanged(Id.Stream streamName, int generation) {
+      public void generationChanged(Id.Stream streamId, int generation) {
         if (generation == 10) {
           genIdChanged.countDown();
         }

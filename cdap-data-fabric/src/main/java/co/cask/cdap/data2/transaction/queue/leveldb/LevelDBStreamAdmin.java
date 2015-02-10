@@ -66,17 +66,17 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public void configureInstances(Id.Stream streamName, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamName), groupId, instances);
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+    configureInstances(QueueName.fromStream(streamId), groupId, instances);
   }
 
   @Override
-  public void configureGroups(Id.Stream streamName, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamName), groupInfo);
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+    configureGroups(QueueName.fromStream(streamId), groupInfo);
   }
 
   @Override
-  public StreamConfig getConfig(Id.Stream streamName) throws IOException {
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
 
@@ -95,28 +95,28 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public boolean exists(Id.Stream name) throws Exception {
-    return exists(fromStream(name));
+  public boolean exists(Id.Stream streamId) throws Exception {
+    return exists(fromStream(streamId));
   }
 
   @Override
-  public void create(Id.Stream name) throws Exception {
-    create(fromStream(name));
+  public void create(Id.Stream streamId) throws Exception {
+    create(fromStream(streamId));
   }
 
   @Override
-  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
-    create(fromStream(name), props);
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+    create(fromStream(streamId), props);
   }
 
   @Override
-  public void truncate(Id.Stream name) throws Exception {
-    truncate(fromStream(name));
+  public void truncate(Id.Stream streamId) throws Exception {
+    truncate(fromStream(streamId));
   }
 
   @Override
-  public void drop(Id.Stream name) throws Exception {
-    drop(fromStream(name));
+  public void drop(Id.Stream streamId) throws Exception {
+    drop(fromStream(streamId));
   }
 
 }

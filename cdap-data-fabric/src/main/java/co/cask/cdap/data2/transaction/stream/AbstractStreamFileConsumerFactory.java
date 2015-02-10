@@ -121,12 +121,12 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public final StreamConsumer create(Id.Stream streamName, String namespace,
+  public final StreamConsumer create(Id.Stream streamId, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
 
-    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName);
+    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamId);
 
-    String tableName = getTableName(streamName, namespace);
+    String tableName = getTableName(streamId, namespace);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
@@ -135,13 +135,13 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
                                         new TTLReadFilter(streamConfig.getTTL()));
 
     try {
-      if (!oldStreamAdmin.exists(streamName)) {
+      if (!oldStreamAdmin.exists(streamId)) {
         return newConsumer;
       }
 
       // For old stream consumer, the group size doesn't matter in queue based stream.
-      QueueName queueName = QueueName.fromStream(streamName);
-      StreamConsumer oldConsumer = new QueueToStreamConsumer(streamName, consumerConfig,
+      QueueName queueName = QueueName.fromStream(streamId);
+      StreamConsumer oldConsumer = new QueueToStreamConsumer(streamId, consumerConfig,
                                                              queueClientFactory.createConsumer(queueName,
                                                                                                consumerConfig, -1)
       );
@@ -153,9 +153,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public void dropAll(Id.Stream streamName, String namespace, Iterable<Long> groupIds) throws IOException {
+  public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
     // Delete the entry table
-    dropTable(getTableName(streamName, namespace));
+    dropTable(getTableName(streamId, namespace));
 
     // Cleanup state store
     Map<Long, Integer> groupInfo = Maps.newHashMap();
@@ -163,11 +163,11 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       groupInfo.put(groupId, 0);
     }
     try {
-      streamAdmin.configureGroups(streamName, groupInfo);
+      streamAdmin.configureGroups(streamId, groupInfo);
 
       //TODO: why is this code here? its queue-related, but we're in stream stuff.
       if (oldStreamAdmin instanceof QueueAdmin
-        && !oldStreamAdmin.exists(streamName)) {
+        && !oldStreamAdmin.exists(streamId)) {
         // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
         // String namespace = String.format("%s.%s.%s",
         //                                  programId.getNamespaceId(),
@@ -193,8 +193,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   }
 
-  private String getTableName(Id.Stream streamName, String namespace) {
-    return String.format("%s.%s.%s", tablePrefix, streamName.getName(), namespace);
+  private String getTableName(Id.Stream streamId, String namespace) {
+    return String.format("%s.%s.%s", tablePrefix, streamId.getName(), namespace);
   }
 
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,

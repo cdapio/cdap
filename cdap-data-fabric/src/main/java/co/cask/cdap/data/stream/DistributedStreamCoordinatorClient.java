@@ -76,14 +76,14 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   }
 
   @Override
-  public ListenableFuture<Void> streamCreated(final Id.Stream streamName) {
+  public ListenableFuture<Void> streamCreated(final Id.Stream streamId) {
     // modify the requirement to add the new stream as a new partition of the existing requirement
     ListenableFuture<ResourceRequirement> future = resourceCoordinatorClient.modifyRequirement(
       Constants.Service.STREAMS, new ResourceModifier() {
         @Nullable
         @Override
         public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
-          LOG.debug("Modifying requirement to add stream {} as a resource", streamName);
+          LOG.debug("Modifying requirement to add stream {} as a resource", streamId);
           Set<ResourceRequirement.Partition> partitions;
           if (existingRequirement != null) {
             partitions = existingRequirement.getPartitions();
@@ -91,7 +91,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
             partitions = ImmutableSet.of();
           }
 
-          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName.toId(), 1);
+          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamId.toId(), 1);
           if (partitions.contains(newPartition)) {
             return null;
           }

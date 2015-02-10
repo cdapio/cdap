@@ -54,7 +54,7 @@ public final class CombineStreamConsumer implements StreamConsumer {
   public CombineStreamConsumer(StreamConsumer firstConsumer, StreamConsumer secondConsumer) {
     Preconditions.checkArgument(firstConsumer != secondConsumer,
                                 "First and second consumers cannot be the same instance");
-    Preconditions.checkArgument(firstConsumer.getStreamName().equals(secondConsumer.getStreamName()),
+    Preconditions.checkArgument(firstConsumer.getStreamId().equals(secondConsumer.getStreamId()),
                                 "Stream not match between %s and %s", firstConsumer, secondConsumer);
     Preconditions.checkArgument(firstConsumer.getConsumerConfig().equals(secondConsumer.getConsumerConfig()),
                                 "Consumer config not match between %s and %s", firstConsumer, secondConsumer);
@@ -65,8 +65,8 @@ public final class CombineStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public Id.Stream getStreamName() {
-    return activeConsumer.getStreamName();
+  public Id.Stream getStreamId() {
+    return activeConsumer.getStreamId();
   }
 
   @Override

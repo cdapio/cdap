@@ -40,37 +40,38 @@ public interface StreamCoordinatorClient extends Service {
   /**
    * Changes the TTL of the given stream.
    *
-   * @param streamName name of the stream
+   * @param streamId id of the stream
    * @param ttl the new TTL
    * @return A future that will be completed when the update of TTL is done. The future result will carry
    *         the TTL updated by this method.
    */
-  ListenableFuture<Long> changeTTL(Id.Stream streamName, long ttl);
+  ListenableFuture<Long> changeTTL(Id.Stream streamId, long ttl);
 
   /**
    * Changes the notification threshold of the given stream.
    *
-   * @param streamName name of the stream
+   * @param streamId id of the stream
    * @param threshold the new notification threshold
    * @return A future that will be completed when the update of threshold is done. The future result will carry
    *         the threshold updated by this method.
    */
-  ListenableFuture<Integer> changeThreshold(Id.Stream streamName, int threshold);
+  ListenableFuture<Integer> changeThreshold(Id.Stream streamId, int threshold);
 
   /**
    * Receives event for changes in stream properties.
    *
+   * @param streamId id of the stream
    * @param listener listener to get called when there is change in stream properties.
    * @return A {@link Cancellable} to cancel the watch
    */
-  Cancellable addListener(Id.Stream streamName, StreamPropertyListener listener);
+  Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener);
 
   /**
    * Called whenever a new stream is created.
    * Affect a Stream handler leader to a stream.
    *
-   * @param streamName name of the stream.
+   * @param streamId id of the stream.
    * @return A {@link ListenableFuture} describing the progress of the operation.
    */
-  ListenableFuture<Void> streamCreated(Id.Stream streamName);
+  ListenableFuture<Void> streamCreated(Id.Stream streamId);
 }

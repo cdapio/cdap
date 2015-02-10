@@ -679,26 +679,26 @@ public final class FlowletProgramRunner implements ProgramRunner {
       this.executor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("flowlet-stream-update-%d"));
       this.propertyListener = new StreamPropertyListener() {
         @Override
-        public void ttlChanged(Id.Stream streamName, long ttl) {
-          LOG.debug("TTL for stream '{}' changed to {} for flowlet '{}'", streamName, ttl, flowletName);
+        public void ttlChanged(Id.Stream streamId, long ttl) {
+          LOG.debug("TTL for stream '{}' changed to {} for flowlet '{}'", streamId, ttl, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void ttlDeleted(Id.Stream streamName) {
-          LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamName, flowletName);
+        public void ttlDeleted(Id.Stream streamId) {
+          LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationChanged(Id.Stream streamName, int generation) {
-          LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamName, generation, flowletName);
+        public void generationChanged(Id.Stream streamId, int generation) {
+          LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamId, generation, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationDeleted(Id.Stream streamName) {
-          LOG.debug("Generation for stream '{}' deleted for flowlet '{}'", streamName, flowletName);
+        public void generationDeleted(Id.Stream streamId) {
+          LOG.debug("Generation for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
           suspendAndResume();
         }
       };

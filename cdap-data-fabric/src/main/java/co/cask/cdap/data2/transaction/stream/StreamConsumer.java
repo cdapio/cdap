@@ -35,9 +35,9 @@ import java.util.concurrent.TimeUnit;
 public interface StreamConsumer extends Closeable, TransactionAware {
 
   /**
-   * @return Name of the stream this consumer is consuming.
+   * @return Id of the stream this consumer is consuming.
    */
-  Id.Stream getStreamName();
+  Id.Stream getStreamId();
 
   /**
    * @return Configuration of this consumer.

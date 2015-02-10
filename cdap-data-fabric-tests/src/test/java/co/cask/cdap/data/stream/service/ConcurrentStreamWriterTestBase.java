@@ -315,22 +315,22 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
 
     @Override
-    public boolean exists(Id.Stream name) throws Exception {
+    public boolean exists(Id.Stream streamId) throws Exception {
       return true;
     }
 
     @Override
-    public StreamConfig getConfig(Id.Stream streamName) throws IOException {
+    public StreamConfig getConfig(Id.Stream streamId) throws IOException {
       //TODO: update the actual location it gets it from (namespace the location)
-      Location streamLocation = locationFactory.create(streamName.getName());
-      return new StreamConfig(streamName, partitionDuration, indexInterval,
+      Location streamLocation = locationFactory.create(streamId.getName());
+      return new StreamConfig(streamId, partitionDuration, indexInterval,
                               Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }
 
   private static final class TestMetricsCollectorFactory implements StreamMetricsCollectorFactory {
     @Override
-    public StreamMetricsCollector createMetricsCollector(Id.Stream streamName) {
+    public StreamMetricsCollector createMetricsCollector(Id.Stream streamId) {
       return new StreamMetricsCollector() {
         @Override
         public void emitMetrics(long bytesWritten, long eventsWritten) {

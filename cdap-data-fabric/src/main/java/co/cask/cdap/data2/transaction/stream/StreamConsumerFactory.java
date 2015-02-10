@@ -28,19 +28,19 @@ public interface StreamConsumerFactory {
   /**
    * Creates a {@link StreamConsumer}.
    *
-   * @param streamName name of the stream
+   * @param streamId Id of the stream
    * @param namespace application namespace for the state table.
    * @param consumerConfig consumer configuration.
    * @return a new instance of {@link StreamConsumer}.
    */
-  StreamConsumer create(Id.Stream streamName, String namespace, ConsumerConfig consumerConfig) throws IOException;
+  StreamConsumer create(Id.Stream streamId, String namespace, ConsumerConfig consumerConfig) throws IOException;
 
   /**
    * Deletes all consumer states for the given namespace and group ids.
    *
-   * @param streamName name of the stream
+   * @param streamId Id of the stream
    * @param namespace application namespace for the state table.
    * @param groupIds set of group id that needs to have states cleared.
    */
-  void dropAll(Id.Stream streamName, String namespace, Iterable<Long> groupIds) throws IOException;
+  void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException;
 }

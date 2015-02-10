@@ -394,7 +394,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * in a dummy value for an external table if it is not given in the create statement, which will result in a
    * table that cannot be queried. As such, the location must be given and accurate.
    *
-   * @param streamId name of the stream
+   * @param streamId Id of the stream
    * @param location location of the stream
    * @param bodySchema schema for the body of a stream event
    * @return hive statement to use when creating the external table for querying the stream

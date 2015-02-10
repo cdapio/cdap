@@ -35,11 +35,11 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(Id.Stream streamName, long groupId, int instances) throws Exception {
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
   }
 
   @Override
-  public void configureGroups(Id.Stream streamName, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
   }
 
   @Override
@@ -47,8 +47,8 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(Id.Stream streamName) throws IOException {
-    throw new IllegalStateException("Stream " + streamName + " not exists.");
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    throw new IllegalStateException("Stream " + streamId + " not exists.");
   }
 
   @Override
@@ -61,24 +61,24 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(Id.Stream name) throws Exception {
+  public boolean exists(Id.Stream streamId) throws Exception {
     return false;
   }
 
   @Override
-  public void create(Id.Stream name) throws Exception {
+  public void create(Id.Stream streamId) throws Exception {
   }
 
   @Override
-  public void create(Id.Stream name, @Nullable Properties props) throws Exception {
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
   }
 
   @Override
-  public void truncate(Id.Stream name) throws Exception {
+  public void truncate(Id.Stream streamId) throws Exception {
   }
 
   @Override
-  public void drop(Id.Stream name) throws Exception {
+  public void drop(Id.Stream streamId) throws Exception {
   }
 
 }
