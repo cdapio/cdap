@@ -118,42 +118,42 @@ angular.module(PKG.name + '.feature.mapreduce')
         })
           .state('mapreduce.detail.logs.all', {
             url: '/all',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/all.html',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('mapreduce.detail.logs.info', {
             url: '/info',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/info.html',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('mapreduce.detail.logs.warn', {
             url: '/warn',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/warn.html',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('mapreduce.detail.logs.error', {
             url: '/error',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/error.html',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('mapreduce.detail.logs.debug', {
             url: '/debug',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/debug.html',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('mapreduce.detail.logs.other', {
             url: '/other',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/other.html',
+            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
