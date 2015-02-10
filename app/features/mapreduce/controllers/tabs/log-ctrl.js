@@ -4,61 +4,44 @@ angular.module(PKG.name + '.feature.mapreduce')
         basePath = '/apps/' + $state.params.appId + '/mapreduce/' + $state.params.programId;
 
     $scope.logTabs = ['all', 'info', 'warn', 'error', 'debug', 'other'];
-    $scope.logs = null;
-    $scope.infoLogs = [];
-    $scope.warnLogs = [];
-    $scope.debugLogs = [];
-    $scope.errorLogs = [];
-    $scope.otherLogs = [];
+    $scope.logs = [];
+    $scope.currentLogs = [];
 
     dataSrc.poll({
       _cdapNsPath: basePath + '/logs/next?fromOffset=-1&maxSize=50'
     }, function(res) {
 
       /*
-        This should be temporary. Backend should make this filter and
-        make it more 'REST' fied.
+        TODO: Make my-log-viewer directive as it is used in multiple places.
       */
-      $scope.infoLogs = res.filter(function(res) {
-        return res.log.indexOf('- INFO') > 0;
-      })
-        .map(function(logs) {
-          return logs.log.trim();
-        });
+      $scope.logs = res;
 
-      $scope.debugLogs = res.filter(function(res) {
-        return res.log.indexOf('- DEBUG') > 0;
-      })
-        .map(function(logs) {
-          return logs.log.trim();
-        });
-
-      $scope.warnLogs = res.filter(function(res) {
-        return res.log.indexOf('- WARN') > 0;
-      })
-        .map(function(logs) {
-          return logs.log.trim();
-        });
-
-      $scope.errorLogs = res.filter(function(res) {
-        return res.log.indexOf('- ERROR') > 0;
-      })
-        .map(function(logs) {
-          return logs.log.trim();
-        });
-
-      $scope.otherLogs = res.filter(function(res) {
-        return res.log.indexOf('- OTHER') > 0;
-      })
-        .map(function(logs) {
-          return logs.log.trim();
-        });
-
-      $scope.allLogs = res.map(function(res) {
-        res.log = res.log.replace(/[\r?\n]/g, " ");
-        return res.log.trim();
-      });
     });
+
+    $scope.$watch('logs', function(newVal) {
+      if (newVal && newVal.length) {
+        updateCurrentLog();
+      }
+    });
+
+    function updateCurrentLog() {
+      var currentTab;
+
+      if (!$scope.logTabs.activeTab) {
+        $scope.currentLogs = $scope.logs.map(function(logObj) {
+          return logObj.log;
+        });
+        return;
+      }
+
+      currentTab  = $scope.logTabs[$scope.logTabs.activeTab].toUpperCase();
+      $scope.currentLogs = ($scope.logs.filter(function(logObj) {
+        return logObj.log.indexOf('- ' + currentTab) > 0;
+      }) || [])
+        .map(function(matchLog) {
+          return matchLog.log;
+        })
+    }
 
     $scope.$watch('logTabs.activeTab', function(newVal, oldVal) {
       var toState;
@@ -83,11 +66,11 @@ angular.module(PKG.name + '.feature.mapreduce')
       if ($state.includes('mapreduce.detail.logs.*')) {
         tab = $scope.logTabs.indexOf(toState.name.split('.').slice(-1).pop())
         $scope.logTabs.activeTab = (tab > 0? tab: 0);
+        updateCurrentLog();
       }
     });
 
     function currentlogTab() {
       return $scope.logTabs.indexOf( $state.current.name.split('.').slice(-1).pop() );
     }
-
   });
