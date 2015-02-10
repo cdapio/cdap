@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _namespaces:
+
 ============================================
 Namespaces
 ============================================
@@ -18,66 +20,46 @@ The primary motivation for namespaces in CDAP is to achieve application and data
 isolation. This is an intial step towards introducing `multi-tenancy
 <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
 
+
+Namespace Rules
+===============
+
+A Namespace consists of a name identifier and a description.
+
+Namespace names are composed from a limited set of characters; they are restricted to
+letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
+on the length of a namespace name nor on the number of namespaces.
+
+The namespaces ``cdap``, ``default``, and ``system`` are reserved. The ``default``
+namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
+be deleted.
+
+Namespaces are flat, with no hierarchy inside them. (Namespaces are not allowed inside
+another namespace.)
+
 Identifying Entities
-====================
-The ID of an entity is composed of a combination of the namespace ID plus the entity ID,
-since an entity cannot exist independently of a namespace.
+--------------------
+The ID of an entity in a namespace is composed of a combination of the namespace ID plus
+the entity ID, since an entity cannot exist independently of a namespace.
 
 
-Requirements
-
-R1: Administrators should be able to create new namespaces.
-
-R2: Administrators should be able to delete existing namespaces.
-
-R3: Users should be able to view existing namespaces.
-
-R4: We should be able to store the following metadata for namespaces: id, name,
-description. This metadata should be stored in a persistent store.
-
-R5: There should be a “default” namespace. All applications and data that a user deploys
-or accesses—without explicitly specifying a namespace—will exist in the default namespace.
-
-R6: Namespaces should be flat. There should not be any hierarchy in namespaces.
-
-R7: Namespaces should achieve complete isolation of applications and data.
-Partitioning/isolation should be clearly reflected in every entity, from application
-metadata to actual datasets in storage. Specific requirements for each entity are listed
-in subsequent sections in this document.
-
-
-Assumptions
-
-
-A1: This document assumes the existence of role-based authorization (or the existence of
-an admin role to manage/administer a namespace).
-
-A2: User management is separate from namespaces. This design will (should) not include
-membership of namespaces.
-
-A3: Every client request to a REST endpoint associated with an entity must include the
-namespace either in the REST path or in the headers.
-
-A4: A namespace is never inferred, there is no business logic to infer a namespace from
-some input. A namespace is always present in the client request, and is used as-is.
-
-
-First Versions and Limitations
+First Version Limitations
 ==============================
 The first version of namespaces was introduced in CDAP v2.8.0, and is part of the
 HTTP RESTful API v3.
 
-For this first version, these are out-of-scope:
+For this first version, certain limitations apply and are not allowed or implemented:
 
-- Inter-namespace operations: for example, an application from one namespace using datasets in a different namespace;
+- Inter-namespace operations: for example, an application from one namespace using
+  datasets from a different namespace;
 - Moving applications and/or data from one namespace to another;
 - Hierarchical namespaces; and
 - Quota management based on namespaces.
 
-Design
 
-The namespace system consists of four main components:
+.. rubric::  Examples of Using Namespaces
 
-Namespace Admin API
-Namespace Metadata
-Namespace-aware Entities
+- All examples, starting with :ref:`Hello World <examples-hello-world>`, demonstrate using
+  namespaces when using the CDAP HTTP RESTful API.
+  
+

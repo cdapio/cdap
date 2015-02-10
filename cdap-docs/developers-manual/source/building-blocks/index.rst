@@ -48,7 +48,7 @@ write to—the data virtualization layer in CDAP.
 - :doc:`Procedures <procedures>`
 - :doc:`Services <services>`
 
-:doc:`Namespaces <namespaces>` are a physical grouping of application and data in CDAP.
+A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
 All applications and data live in an explicit CDAP namespace.
 

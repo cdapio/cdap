@@ -21,7 +21,8 @@ In this API, *client* refers to an external application that is calling CDAP usi
 
 .. rubric:: Base URL
 
-All URLs referenced in this API have this base URL::
+All URLs referenced in this API (with the exception of those in the 
+Namespace API) have this base URL::
 
   http://<host>:<port>/v3/namespaces/<namespace-id>
 
@@ -57,15 +58,6 @@ means::
   PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
 
-.. rubric:: Converting from V2 APIs
-
-If you are converting code from the :ref:`HTTP RESTful API v2 <http-restful-api-v2>`, the
-simplest way to convert your code is to use the ``default`` namespace, which is pre-existing
-in CDAP. Example::
-
-  PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
-
-
 .. rubric:: Variable Replacement
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
@@ -76,6 +68,21 @@ indicates that—in addition to the ``<base-url>``—the text ``<new-stream-id>`
 and that you are to replace it with your value, perhaps in this case *mystream*::
 
   PUT <base-url>/streams/mystream
+
+
+Converting from V2 APIs
+=======================
+
+If you are converting code from the :ref:`HTTP RESTful API v2 <http-restful-api-v2>`, the
+simplest way to convert your code is to use the ``default`` namespace, which is pre-existing
+in CDAP. Example::
+
+  PUT http://<host>:<port>/v2/streams/<new-stream-id>
+
+can be replaced with::
+
+  PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
+
 
 
 .. _http-restful-api-conventions-reserved-unsafe-characters:
@@ -95,15 +102,17 @@ encoding parameters.
 Additionally, there are further restrictions on the characters used in certain parameters such as
 namespaces.
 
+
 .. _http-restful-api-namespace-characters:
 
-Names and Characters for Namespaces
-===================================
-Namespaces have a limited set of characters allowed; they are restricted to letters (a-z,
-A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
-length of namespaces nor on the number of them.
+Names and Characters for Namespace IDs
+======================================
 
-The namespaces ``cdap``, ``default``, and ``system`` are reserved. The ``default``
+Namespace IDs have a limited set of characters allowed; they are restricted to letters (a-z,
+A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
+on the length of a namespace ID nor on the number of namespaces.
+
+The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.
 

@@ -31,9 +31,10 @@ CDAP HTTP RESTful API v3
 
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
-- :doc:`Introduction: <introduction>` conventions, status codes, and working with CDAP Security
-- :doc:`Namespace: <namespace>` creating, deleting and listing existing namespaces
-- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the lifecycle of Flows,
+- :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2, 
+  naming restrictions, status codes, and working with CDAP Security
+- :doc:`Namespace: <namespace>` creating, listing, and deleting namespaces
+- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications, and managing the lifecycle of Flows,
   Procedures, MapReduce Programs, Workflows, and Custom Services
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
 - :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types

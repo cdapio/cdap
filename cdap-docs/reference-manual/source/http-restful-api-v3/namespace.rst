@@ -14,15 +14,17 @@ Namespace HTTP RESTful API
 
 Use the CDAP Namespace HTTP API to create, list or delete namespaces in the CDAP instance.
 
-Namespaces, their use and examples, are described in the :ref:`Developers' Manual: Building Blocks
-<>`.
+Namespaces, their use and examples, are described in the :ref:`Developers' Manual: Namespaces
+<namespaces>`.
 
+For the remainder of this API, it is assumed that the namespace you are using is defined
+by the ``<base-url>``, as descibed under :ref:`Conventions <http-restful-api-conventions>`. 
 
 Create a Namespace
 ------------------
 To create a namespace, submit an HTTP PUT request::
 
-  PUT <base-url>/<namespace-id>
+  PUT http://<host>:<port>/v3/<namespace-id>
 
 .. list-table::
    :widths: 20 80
@@ -31,7 +33,30 @@ To create a namespace, submit an HTTP PUT request::
    * - Parameter
      - Description
    * - ``<namespace-id>``
-     - Namespace
+     - Namespace ID
+
+The ``<namespace-id> must be of the limited character set for namespaces, as 
+described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
+Properties for the namespace are passed in the JSON request body:
+
+.. list-table::
+   :widths: 20 40 40
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+     - Default Value (if not defined)
+   * - ``name``
+     - Display name for the namespace
+     - The Namespace ID
+   * - ``description``
+     - Display description of the namespace
+     - An empty string ("")
+
+In this initial release of namespaces, once a namespace has been created with a particular
+ID and properties, its properties cannot be edited. To change the display name and
+description for a particular ID, you need to delete the namespace and recreate it. A
+future release od CDAP will allow these properties to be edited.
 
 HTTP Responses
 ..............
@@ -42,27 +67,36 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully called the method, and the body contains the results
+     - The event successfully called the method, and the namespace was created
+   * - ``409``
+     - A namespace with the specified name already exists
 
 
-Existing Namespaces
----------------------
+
+List Existing Namespaces
+------------------------
 
 To list all of the existing namespaces, issue an HTTP GET request::
 
-  GET <base-url>
+  GET http://<host>:<port>/v3/namespaces
 
-This will return a JSON String map that lists each namespace [ with its name and description].
+This will return a JSON String map that lists each namespace with its name and description
+(reformatted to fit)::
+
+  [{"id":"default","name":"default","description":"default"},
+   {"id":"myNamespace","name":"My Demo Namespace","description":"Demonstration of namespaces"}]
 
 
 Details of a Namespace
 ---------------------------------
 
-For detailed information on a namespace, use::
+For detailed information on a specific namespace, use::
 
-  GET <base-url>/<namespace-id>
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>
 
-The information will be returned in the body of the response.
+The information will be returned in the body of the response::
+
+  {"id":"myNamespace","name":"myNamespace Demo","description":"Demonstration of the namespace"}
 
 .. list-table::
    :widths: 20 80
@@ -71,7 +105,7 @@ The information will be returned in the body of the response.
    * - Parameter
      - Description
    * - ``<namespace-id>``
-     - Namespace
+     - Namespace ID
 
 HTTP Responses
 ..............
@@ -87,9 +121,10 @@ HTTP Responses
 
 Delete a Namespace
 ------------------
-To delete a Namespace together with all of its Flows, Procedures and MapReduce programs, submit an HTTP DELETE::
+To delete a Namespace—together with all of its Flows, Procedures, Datasets and MapReduce 
+programs, any and all entities associated with that namespace—submit an HTTP DELETE::
 
-  DELETE <base-url>/<namespace-id>
+  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>
 
 .. list-table::
    :widths: 20 80
@@ -98,47 +133,10 @@ To delete a Namespace together with all of its Flows, Procedures and MapReduce p
    * - Parameter
      - Description
    * - ``<namespace-id>``
-     - Namespace
+     - Namespace ID
 
-**Note:** The ``<namespace-id>`` in this URL is the ...
-
-
-
-Examples
-........
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``PUT <base-url>/myNamespace``
-   * - Description
-     - Creates a new namespace, identified as *myNamespace*
-   * - 
-     - 
-   * - HTTP Method
-     - ``GET <base-url>``
-   * - Description
-     - Gets a list of all existing namespaces
-   * - 
-     - 
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
-   * - Description
-     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
-   * - 
-     - 
-   * - HTTP Method
-     - ``POST <base-url>/status``
-   * - HTTP Body
-     - ``[{"appId": "MyApp", "programType": "flow", "programId": "MyFlow"},``
-       ``{"appId": "MyApp2", "programType": "procedure", "programId": "MyProcedure"}]``
-   * - HTTP Response
-     - ``[{"appId":"MyApp", "programType":"flow", "programId":"MyFlow", "status":"RUNNING", "statusCode":200},``
-       ``{"appId":"MyApp2", "programType":"procedure", "programId":"MyProcedure",``
-       ``"error":"Program not found", "statusCode":404}]``
-   * - Description
-     - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
-       in the Application *MyApp2*
-
+**Note:** This is an **unrecoverable operation**. As the deletion of a namespace occurs in
+a transaction, if a delete for any of the entities that a namespace contains fails, the
+result is a failure of the namespace deletion. The transaction will be rolled back and it
+will be as if the deletion had not be attempted.
+     
