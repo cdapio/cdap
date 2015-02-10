@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.queue;
 
-import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -67,14 +66,14 @@ public class QueueNameTest {
   @Test
   public void testQueueNameForStream() {
     // create a queue name
-    QueueName queueName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "mystream");
-    verifyStreamName(queueName, Constants.DEFAULT_NAMESPACE, "mystream");
+    QueueName queueName = QueueName.fromStream("fooNamespace", "mystream");
+    verifyStreamName(queueName, "fooNamespace", "mystream");
 
-    queueName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "audi_test_stream");
-    verifyStreamName(queueName, Constants.DEFAULT_NAMESPACE, "audi_test_stream");
+    queueName = QueueName.fromStream("otherNamespace", "audi_test_stream");
+    verifyStreamName(queueName, "otherNamespace", "audi_test_stream");
 
-    queueName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "audi_-test_stream");
-    verifyStreamName(queueName, Constants.DEFAULT_NAMESPACE, "audi_-test_stream");
+    queueName = QueueName.fromStream("barSpace", "audi_-test_stream");
+    verifyStreamName(queueName, "barSpace", "audi_-test_stream");
   }
 
   private void verifyStreamName(QueueName queueName, String namespace, String streamName) {

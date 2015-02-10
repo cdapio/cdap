@@ -43,6 +43,7 @@ public final class Id  {
 
     public Namespace(String id) {
       Preconditions.checkNotNull(id, "Namespace cannot be null.");
+      Preconditions.checkArgument(isId(id), "Namespace has an incorrect format.");
       this.id = id;
     }
 
@@ -360,11 +361,10 @@ public final class Id  {
     private final Namespace namespace;
     private final String streamName;
 
-    public Stream(final Namespace namespace, final String streamName) {
+    private Stream(final Namespace namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(namespace.getId()), "Namespace has an incorrect format.");
       Preconditions.checkArgument(isId(streamName), "Stream name has an incorrect format.");
 
       this.namespace = namespace;

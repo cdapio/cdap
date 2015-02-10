@@ -194,9 +194,9 @@ public class MetricsRequestExecutor {
       if (queueName.isStream()) {
         //TODO: namespace stream metrics
         String context = String.format("%s.%s.%s",
-                                     Constants.SYSTEM_NAMESPACE,
-                                     Constants.Gateway.METRICS_CONTEXT,
-                                     Constants.Gateway.STREAM_HANDLER_NAME);
+                                       Constants.SYSTEM_NAMESPACE,
+                                       Constants.Gateway.METRICS_CONTEXT,
+                                       Constants.Gateway.STREAM_HANDLER_NAME);
         streamNameContexts.add(new ImmutablePair<String, String>(queueName.getSimpleName(), context));
       } else if (queueName.isQueue()) {
         String context = String.format("%s.%s.f.%s.%s",

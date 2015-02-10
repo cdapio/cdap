@@ -166,8 +166,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       streamAdmin.configureGroups(streamId, groupInfo);
 
       //TODO: why is this code here? its queue-related, but we're in stream stuff.
-      if (oldStreamAdmin instanceof QueueAdmin
-        && !oldStreamAdmin.exists(streamId)) {
+      if (oldStreamAdmin instanceof QueueAdmin && !oldStreamAdmin.exists(streamId)) {
         // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
         // String namespace = String.format("%s.%s.%s",
         //                                  programId.getNamespaceId(),
