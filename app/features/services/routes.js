@@ -75,42 +75,42 @@ angular.module(PKG.name + '.feature.services')
         })
           .state('services.detail.logs.all', {
             url: '/all',
-            templateUrl: '/assets/features/services/templates/tabs/logs/all.html',
+            templateUrl: '/assets/features/services/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('services.detail.logs.info', {
             url: '/info',
-            templateUrl: '/assets/features/services/templates/tabs/logs/info.html',
+            templateUrl: '/assets/features/services/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('services.detail.logs.warn', {
             url: '/warn',
-            templateUrl: '/assets/features/services/templates/tabs/logs/warn.html',
+            templateUrl: '/assets/features/services/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('services.detail.logs.error', {
             url: '/error',
-            templateUrl: '/assets/features/services/templates/tabs/logs/error.html',
+            templateUrl: '/assets/features/services/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('services.detail.logs.debug', {
             url: '/debug',
-            templateUrl: '/assets/features/services/templates/tabs/logs/debug.html',
+            templateUrl: '/assets/features/services/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
           })
           .state('services.detail.logs.other', {
             url: '/other',
-            templateUrl: '/assets/features/services/templates/tabs/logs/other.html',
+            templateUrl: '/assets/features/services/templates/tabs/logs/tabTemplate.html',
             ncyBreadcrumb: {
               skip: true
             }
