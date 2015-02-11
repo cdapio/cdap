@@ -20,12 +20,18 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -36,9 +42,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -51,6 +56,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
   private final MetricStore metricStore;
+  private final List<String> tagMappings;
 
   @Inject
   public MetricsHandler(Authenticator authenticator,
@@ -58,6 +64,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     super(authenticator);
 
     this.metricStore = metricStore;
+    tagMappings = ImmutableList.of("ns", "app", "ptp", "prg", "pr2", "pr3", "pr4", "ds");
   }
 
   @POST
@@ -131,19 +138,40 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Collection<String> searchChildContext(String contextPrefix) throws Exception {
-    SortedSet<String> nextLevelContexts = Sets.newTreeSet();
+  private List<TagValue> getContext(String contextPrefix) throws Exception {
+    List<String> contextParts = Lists.newArrayList();
+    if (contextPrefix != null) {
+      contextParts = Lists.newArrayList(Splitter.on('.').split(contextPrefix));
+    }
+    List<TagValue> contextTags = Lists.newArrayList();
+    for (int i = 0; i < contextParts.size(); i++) {
+      contextTags.add(new TagValue(tagMappings.get(i), contextParts.get(i)));
+    }
 
-    // todo: implement
-
-    return nextLevelContexts;
+    if (contextTags.size() > 3) {
+      //todo : adding null for runId,should we support searching with runId ?
+      contextTags.add(4, new TagValue("run", null));
+    }
+    return contextTags;
   }
 
-  private Set<String> searchMetric(String contextPrefix) throws Exception {
-    SortedSet<String> metrics = Sets.newTreeSet();
+  private Collection<String> searchChildContext(String contextPrefix) throws Exception {
+    CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, getContext(contextPrefix));
+    Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
+    Collection<String> result = Lists.newArrayList();
+    for (TagValue tag : nextTags) {
+      if (tag.getValue() == null) {
+        continue;
+      }
+      String resultTag = contextPrefix == null ? tag.getValue() : contextPrefix + "." + tag.getValue();
+      result.add(resultTag);
+    }
+    return result;
+  }
 
-    // todo: implement
-
-    return metrics;
+  private Collection<String> searchMetric(String contextPrefix) throws Exception {
+    CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, getContext(contextPrefix));
+    Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
+    return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }
 }
