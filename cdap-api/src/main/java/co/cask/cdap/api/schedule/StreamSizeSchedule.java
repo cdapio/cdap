@@ -25,29 +25,25 @@ public class StreamSizeSchedule implements NotificationSchedule {
 
   private final String description;
 
-  private final String sourceNamespaceId;
-
-  private final String sourceName;
+  private final String streamName;
 
   private final int dataTriggerMB;
 
-  public StreamSizeSchedule(String name, String description, String sourceNamespaceId, String sourceName,
-                            int dataTriggerMB) {
+  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
     this.name = name;
     this.description = description;
-    this.sourceNamespaceId = sourceNamespaceId;
-    this.sourceName = sourceName;
+    this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;
   }
 
   @Override
-  public String getNotificationSourceNamespaceId() {
-    return sourceNamespaceId;
+  public String getFeedCategory() {
+    return "stream";
   }
 
   @Override
-  public String getNotificationSourceName() {
-    return sourceName;
+  public String getFeedName() {
+    return streamName;
   }
 
   @Override
@@ -80,8 +76,7 @@ public class StreamSizeSchedule implements NotificationSchedule {
 
     if (description.equals(description)
       && name.equals(name)
-      && sourceNamespaceId.equals(schedule.sourceNamespaceId)
-      && sourceName.equals(schedule.sourceName)
+      && streamName.equals(schedule.streamName)
       && dataTriggerMB == schedule.dataTriggerMB) {
       return true;
     }
@@ -92,8 +87,7 @@ public class StreamSizeSchedule implements NotificationSchedule {
   public int hashCode() {
     int result = name.hashCode();
     result = 31 * result + description.hashCode();
-    result = 31 * result + sourceNamespaceId.hashCode();
-    result = 31 * result + sourceName.hashCode();
+    result = 31 * result + streamName.hashCode();
     result = 31 * result + dataTriggerMB;
     return result;
   }
@@ -103,8 +97,7 @@ public class StreamSizeSchedule implements NotificationSchedule {
     StringBuilder sb = new StringBuilder("DataSchedule{");
     sb.append("name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
-    sb.append(", sourceNamespaceId='").append(sourceNamespaceId).append('\'');
-    sb.append(", sourceName='").append(sourceName).append('\'');
+    sb.append(", sourceName='").append(streamName).append('\'');
     sb.append(", dataTriggerMB='").append(dataTriggerMB).append('\'');
     sb.append('}');
     return sb.toString();

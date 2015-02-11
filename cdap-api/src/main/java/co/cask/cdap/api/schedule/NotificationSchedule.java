@@ -17,17 +17,17 @@
 package co.cask.cdap.api.schedule;
 
 /**
- * A schedule based on the reception of notifications.
+ * A schedule based on notifications.
  */
 public interface NotificationSchedule extends Schedule {
 
   /**
-   * @return Namespace of the emitting source of the notifications
+   * @return Category of the notification feed to subscribe to
    */
-  String getNotificationSourceNamespaceId();
+  String getFeedCategory();
 
   /**
-   * @return Name of the emitting source of the notifications
+   * @return Name of the notification feed to subscribe to
    */
-  String getNotificationSourceName();
+  String getFeedName();
 }
