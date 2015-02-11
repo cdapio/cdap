@@ -25,6 +25,7 @@ import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -145,10 +146,19 @@ public final class FactTable {
    * @param scan
    * @throws Exception
    */
-  public void delete(FactScan scan) throws Exception {
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
+  public void delete(FactScan scan, boolean measurePrefixMatch) throws Exception {
+    byte[] startRow, endRow;
+
+    if (measurePrefixMatch) {
+      startRow = codec.createStartRowKey(scan.getTagValues(), null, scan.getStartTs(), false);
+      endRow = codec.createEndRowKey(scan.getTagValues(), null, scan.getEndTs(), false);
+    } else {
+      startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
+      endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
+    }
+
     byte[][] columns = null;
+    Collection<byte[]> rowsToDelete = Lists.newArrayList();
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
       long timeBase = scan.getStartTs() / rollTime * rollTime;
@@ -159,13 +169,37 @@ public final class FactTable {
         columns[i] = Bytes.toBytes((short) (startCol + i));
       }
     }
-    endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow, false);
+    if (!measurePrefixMatch) {
+      endRow = Bytes.stopKeyForPrefix(endRow);
+    }
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow, false, measurePrefixMatch);
     if (LOG.isTraceEnabled()) {
       LOG.trace("Deleting fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
                 timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
     }
-    timeSeriesTable.deleteRange(startRow, endRow, columns, fuzzyRowFilter);
+    if (!measurePrefixMatch) {
+      timeSeriesTable.deleteRange(startRow, endRow, columns, fuzzyRowFilter);
+    } else {
+      // scan and delete matching measureName prefix
+      Scanner scanner = null;
+      Row rowResult;
+      try {
+        scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        while ((rowResult = scanner.next()) != null) {
+          byte[] rowKey = rowResult.getRow();
+          if (codec.getMeasureName(rowKey).startsWith(scan.getMeasureName())) {
+            //add this to rowsToDelete list
+            rowsToDelete.add(rowKey);
+            startRow = codec.getNextRowKey(rowResult.getRow(), codec.getTagValues(rowKey).size());
+            scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+          }
+        }
+      } finally {
+        scanner.close();
+      }
+      //finally delete the matched rows
+      timeSeriesTable.delete(rowsToDelete);
+    }
   }
 
   /*
@@ -294,6 +328,18 @@ public final class FactTable {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName(), anyAggGroup);
+    // note: we can use startRow, as it will contain all "fixed" parts of the key needed
+    return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
+  }
+
+
+  @Nullable
+  private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow, boolean anyAggGroup,
+                                              boolean fuzzyMeasureName) {
+    // we need to always use a fuzzy row filter as it is the only one to do the matching of values
+
+    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), fuzzyMeasureName ? null : scan.getMeasureName(),
+                                                   anyAggGroup);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
   }

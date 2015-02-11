@@ -19,6 +19,7 @@ package co.cask.cdap.metrics.store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeFact;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.DefaultAggregation;
@@ -152,8 +153,19 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void deleteBefore(long timestamp) {
-    // todo: implement metric ttl
+  public void deleteBefore(long timestamp) throws Exception {
+    //delete all data before the timestamp.
+    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp,  null, null, Maps.<String, String>newHashMap(), false);
+    cube.get().delete(query);
+  }
+
+  @Override
+  public void delete(CubeDeleteQuery query) throws Exception {
+    CubeDeleteQuery transformedQuery = new CubeDeleteQuery(query.getStartTs(), query.getEndTs(),
+                                               query.getMeasureName(), query.getMeasureType(),
+                                               replaceTagsIfNeeded(query.getSliceByTags()),
+                                               query.isMeasurePrefixMatch());
+    cube.get().delete(transformedQuery);
   }
 
   private MeasureType toMeasureType(MetricType type) {

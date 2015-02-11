@@ -18,7 +18,9 @@ package co.cask.cdap.metrics.collect;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.transport.MetricValue;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -97,8 +99,11 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
         // Only do cleanup if the underlying table doesn't supports TTL.
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
-
-        metricStore.deleteBefore(deleteBefore);
+        try {
+          metricStore.deleteBefore(deleteBefore);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
         scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };

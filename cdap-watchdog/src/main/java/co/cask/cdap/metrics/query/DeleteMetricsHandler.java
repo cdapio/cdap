@@ -19,6 +19,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
@@ -130,10 +131,8 @@ public class DeleteMetricsHandler extends AuthenticatedHttpHandler {
   private void handleDelete(HttpRequest request, HttpResponder responder, String metricPrefix) {
     try {
       URI uri = new URI(MetricQueryParser.stripVersionAndMetricsFromPath(request.getUri()));
-      CubeQuery query = MetricQueryParser.parse(uri);
-      // todo: implement
-      // cube.delete(query)
-
+      CubeDeleteQuery query = MetricQueryParser.parseDelete(uri, metricPrefix);
+      metricStore.delete(query);
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());

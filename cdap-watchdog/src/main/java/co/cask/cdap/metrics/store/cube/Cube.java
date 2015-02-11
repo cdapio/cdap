@@ -44,6 +44,5 @@ public interface Cube {
    * @param query query specifies parameters for deletion. groupByTags and resolution fields are not used.
    * @throws Exception
    */
-  //todo: create separate DeleteCubeQuery class
-  void delete(CubeQuery query) throws Exception;
+  void delete(CubeDeleteQuery query) throws Exception;
 }

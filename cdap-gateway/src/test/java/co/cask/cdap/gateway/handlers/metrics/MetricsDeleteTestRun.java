@@ -165,6 +165,6 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
 
   @After
   public void clearMetrics() throws Exception {
-    doDelete("/v2/metrics");
+    //doDelete("/v2/metrics");
   }
 }

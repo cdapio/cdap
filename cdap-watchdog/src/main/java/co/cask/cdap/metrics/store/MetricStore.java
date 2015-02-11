@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.transport.MetricValue;
@@ -47,5 +48,11 @@ public interface MetricStore {
    * Deletes all metric data before given timestamp. Used for applying TTL policy.
    * @param timestamp time up to which to delete metrics data, in ms since epoch
    */
-  void deleteBefore(long timestamp);
+  void deleteBefore(long timestamp) throws Exception;
+
+  /**
+   * Deletes all metric data specified by the {@link CubeQuery}
+   * @param query
+   */
+  void delete(CubeDeleteQuery query) throws Exception;
 }
