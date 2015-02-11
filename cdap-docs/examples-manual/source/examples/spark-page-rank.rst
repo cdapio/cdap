@@ -117,8 +117,8 @@ There are three ways to start the Spark program:
 
 #. Send a query via an HTTP request using the ``curl`` command::
 
-    curl -w '\n' -v -d '{args="3"}' \
-      'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
+    curl -w'\n' -v -d '{args="3"}' \
+      http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/spark/SparkPageRankProgram/start
 
    **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
    SDK in ``libexec\bin\curl.exe``
@@ -140,8 +140,8 @@ Querying the Results
 To query the *ranks* ObjectStore through the ``RanksService``,
 send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w '\n' -v \
-      'http://localhost:10000/v2/apps/SparkPageRank/services/RanksService/methods/rank?url=http://example.com/page1'
+    curl -w'\n' -v \
+      http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/RanksService/methods/rank?url=http://example.com/page1
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``

@@ -142,7 +142,7 @@ Injecting Log Events
 To inject a log event, you can use the ``curl`` command::
 
   $ curl -d '192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] "GET /products HTTP/1.1" 500 182 \
-       "http://www.example.org" "Mozilla/5.0"' http://localhost:10000/v2/streams/log
+       "http://www.example.org" "Mozilla/5.0"' http://localhost:10000/v3/namespaces/default/streams/log
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``

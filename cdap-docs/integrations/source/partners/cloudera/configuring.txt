@@ -156,8 +156,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    The API listens on the host where the Gateway/Router role instance is running, port
    11015 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
 
-     curl -w '\n' -v \
-       'http://[router-host]:[router-port]/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
+     curl -w'\n' -v \
+       'http://[router-host]:[router-port]/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
 
 #. You should get back a response similar to::
 
