@@ -360,6 +360,7 @@ public final class Id  {
   public static final class Stream {
     private final Namespace namespace;
     private final String streamName;
+    private final int hashCode;
 
     private Stream(final Namespace namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
@@ -369,6 +370,8 @@ public final class Id  {
 
       this.namespace = namespace;
       this.streamName = streamName;
+
+      hashCode = 31 * namespace.hashCode() + streamName.hashCode();
     }
 
     public Namespace getNamespace() {
@@ -406,7 +409,7 @@ public final class Id  {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(namespace, streamName);
+      return hashCode;
     }
 
     @Override
@@ -420,8 +423,8 @@ public final class Id  {
 
       Stream that = (Stream) o;
 
-      return Objects.equal(this.namespace, that.namespace) &&
-        Objects.equal(this.streamName, that.streamName);
+      return this.namespace.equals(that.namespace) &&
+        this.streamName.equals(that.streamName);
     }
 
     @Override
