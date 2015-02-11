@@ -32,7 +32,7 @@ public class StreamServiceModule extends PrivateModule {
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Stream.STREAM_HANDLER));
-    handlerBinder.addBinding().to(StreamHandler.class);
+    handlerBinder.addBinding().to(StreamHandlerV2.class);
     handlerBinder.addBinding().to(StreamFetchHandler.class);
     CommonHandlers.add(handlerBinder);
 
