@@ -21,7 +21,9 @@ import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -42,6 +44,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+        bind(MetricStore.class).to(DefaultMetricStore.class);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }

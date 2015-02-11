@@ -44,8 +44,6 @@ public class MetricsHandlerModule extends PrivateModule {
   protected void configure() {
     bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
     bind(MetricStore.class).to(DefaultMetricStore.class);
-    expose(MetricStore.class);
-
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
 

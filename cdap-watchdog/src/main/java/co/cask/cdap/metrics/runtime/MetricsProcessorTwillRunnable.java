@@ -40,7 +40,9 @@ import co.cask.cdap.metrics.process.MessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.metrics.store.MetricStore;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -129,6 +131,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
    @Override
     protected void configure() {
       bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+      bind(MetricStore.class).to(DefaultMetricStore.class);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
