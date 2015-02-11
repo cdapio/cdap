@@ -1,18 +1,17 @@
 <div ng-hide="hideWelcomeMessage">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
-      <div class="panel-title">
-        <button class="pull-right btn btn-default" ng-click="hideWelcomeMessage=true">
-          <span class="fa fa-close"></span>
-          <span class="sr-only"> Hide Welcome Message </span>
-        </button>
-        <p>Welcome CDAP Admin!</p>
-      </div>
-      <div class="panel-body">
-        <p>This is your control console for <span>{{$stateParams.nsadmin}}</span></p>
-        <p>Here, you can view and manage your system configuration and deploy and manage data and apps.</p>
-        <p>Begin by configuring your default namespace.</p>
-      </div>
+      <button class="pull-right btn btn-default btn-xs" ng-click="hideWelcomeMessage=true">
+        <span class="fa fa-close"></span>
+        <span class="sr-only"> Hide Welcome Message </span>
+      </button>
+      <h3>
+        Welcome CDAP Admin!
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>Here, you can view and manage your system configuration and deploy and manage data and apps.</p>
+      <p>Begin by configuring your default namespace.</p>
     </div>
   </div>
 </div>
