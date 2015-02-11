@@ -50,6 +50,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
@@ -474,7 +475,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     public StreamProperties deserialize(JsonElement json, Type typeOfT,
                                         JsonDeserializationContext context) throws JsonParseException {
       JsonObject jsonObj = json.getAsJsonObject();
-      String name = jsonObj.getAsJsonPrimitive("name").getAsString();
+      String name = jsonObj.has("name") ? jsonObj.getAsJsonPrimitive("name").getAsString() : null;
       Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
       FormatSpecification format = null;
       if (jsonObj.has("format")) {
