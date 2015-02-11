@@ -24,7 +24,7 @@ Create a Namespace
 ------------------
 To create a namespace, submit an HTTP PUT request::
 
-  PUT http://<host>:<port>/v3/<namespace-id>
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>
 
 .. list-table::
    :widths: 20 80
@@ -56,7 +56,10 @@ Properties for the namespace are passed in the JSON request body:
 In this initial release of namespaces, once a namespace has been created with a particular
 ID and properties, its properties cannot be edited. To change the display name and
 description for a particular ID, you need to delete the namespace and recreate it. A
-future release od CDAP will allow these properties to be edited.
+future release of CDAP will allow these properties to be edited.
+
+If a namespace with the same ID already exists, the method will still return ``200 OK``,
+but with a message that the ``Namespace '<namespace-id>' already exists``.
 
 HTTP Responses
 ..............
@@ -68,8 +71,6 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - The event successfully called the method, and the namespace was created
-   * - ``409``
-     - A namespace with the specified name already exists
 
 
 
