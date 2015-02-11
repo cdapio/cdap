@@ -15,7 +15,8 @@ angular.module(PKG.name + '.feature.admin')
 
         .state('admin.overview', {
           url: '',
-          templateUrl: '/assets/features/admin/templates/overview.html'
+          templateUrl: '/assets/features/admin/templates/overview.html',
+          controller: 'AdminOverviewController'
         })
 
         .state('admin.system', {
