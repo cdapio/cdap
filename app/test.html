@@ -13,8 +13,19 @@
 
   <header class="container">
     <h1>Directives' Playground</h1>
-    <hr />
   </header>
+
+  <hr />
+
+  <div class="container" ng-init='logArr=[]'>
+
+      <my-log-viewer
+        data-model="logArr"
+      ></my-log-viewer>
+
+  </div>
+
+  <hr />
 
   <div class="container" ng-init="testObj={metric:'whatever'}">
 

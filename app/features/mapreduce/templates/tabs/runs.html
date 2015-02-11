@@ -1,5 +1,5 @@
 <div ng-show="runs.length > 0">
-  <div class="row h2">
+  <div class="row">
     <div class="col-sm-4">
       <button type="button"
               class="btn btn-default"
@@ -24,8 +24,9 @@
     </div>
   </div>
 </div>
-<div ng-show="runs.length == 0" class="h2">
-  <div class="well well-md  text-center">
+
+<div ng-show="runs.length == 0">
+  <div class="well well-md text-center">
     <h3> This Mapreduce hasn't run once. Start a run! </h3>
   </div>
 </div>

@@ -39,8 +39,12 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     event.preventDefault();
 
     // and go to login instead
-    var path = $location.path();
-    $state.go('login', {next: path});
+    $state.go('login', {
+      next: angular.toJson({
+        path: $location.path(),
+        search: $location.search()
+      })
+    });
 
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
