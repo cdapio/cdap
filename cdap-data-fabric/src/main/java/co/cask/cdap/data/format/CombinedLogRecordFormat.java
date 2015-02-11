@@ -22,10 +22,8 @@ import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 
-import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 
@@ -51,7 +49,7 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
       String val = (parts.size() < index || (parts.get(index).equals("-") &&
                                              field.getSchema().getType() != Schema.Type.STRING))
                     ? null : parts.get(index);
-      builder.convertAndSet(fields.get(index).getName(), val);
+      builder.convertAndSet(field.getName(), val);
       index++;
     }
 
