@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
@@ -72,6 +73,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+    INMEMORY_DATASET_MODULES.put("partitionedFileSet", new PartitionedFileSetModule());
     INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
   }
 
@@ -87,6 +89,7 @@ public class DataSetServiceModules {
         defaultModules.put("aclTable", new ACLTableModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -129,6 +132,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
         defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -174,6 +178,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
         defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })

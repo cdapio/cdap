@@ -47,11 +47,13 @@ public class PartitioningTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testBuilderNullName() {
+    //noinspection ConstantConditions
     Partitioning.builder().addField(null, FieldType.STRING).build();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testBuilderNullType() {
+    //noinspection ConstantConditions
     Partitioning.builder().addField("x", null).build();
   }
 
