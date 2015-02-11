@@ -60,22 +60,26 @@ public final class Programs {
    * Get program location
    *
    * @param factory  location factory
-   * @param filePath app fabric output directory path
+   * @param appFabricDir app fabric output directory path
    * @param id       program id
    * @param type     type of the program
    * @return         Location corresponding to the program id
    * @throws IOException incase of errors
    */
-  public static Location programLocation(LocationFactory factory, String filePath, Id.Program id, ProgramType type)
+  public static Location programLocation(LocationFactory factory, String appFabricDir, Id.Program id, ProgramType type)
                                          throws IOException {
-    Location allAppsLocation = factory.create(filePath);
+    Location namespaceHome = factory.create(id.getNamespaceId());
+    if (!namespaceHome.exists()) {
+      throw new FileNotFoundException("Unable to locate the Program, namespace location doesn't exist: " +
+                                        namespaceHome.toURI().getPath());
+    }
+    Location appFabricLocation = namespaceHome.append(appFabricDir);
 
-    Location accountAppsLocation = allAppsLocation.append(id.getNamespaceId());
-    String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
-    Location applicationProgramsLocation = accountAppsLocation.append(name);
+    String name = String.format(Locale.ENGLISH, "%s/%s", id.getApplicationId(), type.toString());
+    Location applicationProgramsLocation = appFabricLocation.append(name);
     if (!applicationProgramsLocation.exists()) {
-      throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: "
-                                   + applicationProgramsLocation.toURI().getPath());
+      throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: " +
+                                        applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {
