@@ -581,11 +581,11 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   /* -----------------  helpers to return Json consistently -------------- */
 
-  protected final static DatasetRecord makeDataSetRecord(String name, String classname) {
+  protected static final DatasetRecord makeDataSetRecord(String name, String classname) {
     return new DatasetRecord("Dataset", name, name, classname);
   }
 
-  protected final static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
+  protected static final StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
     return new StreamRecord("Stream", name, name, GSON.toJson(specification));
   }
 }
