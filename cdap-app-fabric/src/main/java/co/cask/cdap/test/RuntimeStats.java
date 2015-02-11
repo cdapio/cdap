@@ -22,6 +22,7 @@ import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -170,8 +172,14 @@ public final class RuntimeStats {
       if (result.isEmpty()) {
         return 0;
       }
-      // since it is totals query and not groupBy specified, we know there's one time series with one time value
-      return result.iterator().next().getTimeValues().get(0).getValue();
+      // since it is totals query and not groupBy specified, we know there's one time series
+      List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+      if (timeValues.isEmpty()) {
+        return 0;
+      }
+
+      // since it is totals, we know there's one value only
+      return timeValues.get(0).getValue();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
