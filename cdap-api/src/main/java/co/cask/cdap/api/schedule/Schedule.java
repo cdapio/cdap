@@ -39,7 +39,7 @@ public class Schedule {
     this.isTimeSchedule = true;
   }
 
-  public Schedule(String name, String description) {
+  Schedule(String name, String description) {
     this.name = name;
     this.description = description;
     this.cronEntry = null;
