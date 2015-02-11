@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.admin')
               .state('admin.system.services.detail.logs', {
                 url: '/logs?filter',
                 reloadOnSearch: false,
-                template: '<my-log-viewer data-model="logs" />',
+                template: '<my-log-viewer data-model="logs">',
                 controller: 'AdminServiceLogController'
               })
 
