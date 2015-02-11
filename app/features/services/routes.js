@@ -68,7 +68,7 @@ angular.module(PKG.name + '.feature.services')
         .state('services.detail.logs', {
           url: '/logs',
           controller: 'ServicesLogsController',
-          templateUrl: "/assets/features/services/templates/tabs/logs.html",
+          template: '<my-log-viewer data-model="logs"></my-log-viewer>',
           ncyBreadcrumb: {
             skip: true
           }

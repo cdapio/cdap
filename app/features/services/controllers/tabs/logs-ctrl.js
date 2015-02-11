@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesLogsController', function($scope, $state, $timeout, MyDataSource) {
+  .controller('ServicesLogsController', function($scope, $state, MyDataSource) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/services/' + $state.params.programId;
 
