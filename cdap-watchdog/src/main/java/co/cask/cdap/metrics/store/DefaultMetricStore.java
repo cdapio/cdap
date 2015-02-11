@@ -135,25 +135,41 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().add(fact);
   }
 
-  private Map<String, String> replaceTagsIfNeeded(Map<String, String> original) {
-    // replace emitted tag names to the ones expected by aggregations
-    Map<String, String> tags = Maps.newHashMap();
-    for (Map.Entry<String, String> tagValue : original.entrySet()) {
-      String tagNameReplacement = tagMapping.get(tagValue.getKey());
-      tags.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
-    }
-    return tags;
-  }
-
   @Override
   public Collection<TimeSeries> query(CubeQuery query) throws Exception {
-    CubeQuery q = new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
-    return cube.get().query(q);
+    CubeQuery q =
+      new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()), replaceTagsIfNeeded(query.getGroupByTags()));
+    Collection<TimeSeries> cubeResult = cube.get().query(q);
+    List<TimeSeries> result = Lists.newArrayList();
+    for (TimeSeries timeSeries : cubeResult) {
+      result.add(new TimeSeries(timeSeries, replaceTagsIfNeeded(timeSeries.getTagValues())));
+    }
+    return result;
   }
 
   @Override
   public void deleteBefore(long timestamp) {
     // todo: implement metric ttl
+  }
+
+  private Map<String, String> replaceTagsIfNeeded(Map<String, String> tagValues) {
+    // replace emitted tag names to the ones expected by aggregations
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
+      String tagNameReplacement = tagMapping.get(tagValue.getKey());
+      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
+    }
+    return result;
+  }
+
+  private List<String> replaceTagsIfNeeded(List<String> tagNames) {
+    // replace emitted tag names to the ones expected by aggregations
+    List<String> result = Lists.newArrayList();
+    for (String tagName : tagNames) {
+      String tagNameReplacement = tagMapping.get(tagName);
+      result.add(tagNameReplacement == null ? tagName : tagNameReplacement);
+    }
+    return result;
   }
 
   private MeasureType toMeasureType(MetricType type) {

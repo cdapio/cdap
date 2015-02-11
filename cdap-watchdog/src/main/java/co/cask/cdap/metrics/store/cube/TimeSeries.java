@@ -39,6 +39,10 @@ public final class TimeSeries {
     this.timeValues = ImmutableList.copyOf(timeValues);
   }
 
+  public TimeSeries(TimeSeries timeSeries, Map<String, String> tagValues) {
+    this (timeSeries.measureName, tagValues, timeSeries.timeValues);
+  }
+
   public String getMeasureName() {
     return measureName;
   }
