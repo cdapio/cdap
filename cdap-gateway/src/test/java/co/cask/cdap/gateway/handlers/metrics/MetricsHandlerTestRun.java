@@ -28,7 +28,9 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -41,8 +43,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static long emitTs;
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     setupMetrics();
   }
 
@@ -99,13 +101,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
-                       ImmutableList.<String>of("myspace", "system", "yourspace"));
-
-    // verify childContext in system context
-    verifySearchResultContains("/v3/metrics/search?target=childContext&context=system",
-                       ImmutableList.<String>of("system.-"));
-    verifySearchResultContains("/v3/metrics/search?target=childContext&context=system.-",
-                       ImmutableList.<String>of("system.-.cluster"));
+                       ImmutableList.<String>of("myspace", "yourspace"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace",
@@ -137,6 +133,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of());
   }
 
+//todo : failing test , metrics handler /query needs to be fixed
   @Test
   public void testQueryMetrics() throws Exception {
     // aggregate result, in the system namespace
@@ -145,7 +142,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // cluster metrics must have system in the context prefix
     verifyAggregateQueryResult(
       "/v3/metrics/query?context=-.cluster&metric=system.resources.total.storage&aggregate=true", 0);
-
     // aggregate result, in the right namespace
     verifyAggregateQueryResult(
       "/v3/metrics/query?context=yourspace.WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 3);
@@ -155,7 +151,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // aggregate result, in the wrong namespace
     verifyAggregateQueryResult(
       "/v3/metrics/query?context=myspace.WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 0);
-
     // time range
     // now-60s, now+60s
     verifyRangeQueryResult(
@@ -175,18 +170,16 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testSearchMetrics() throws Exception {
-    // metrics in system namespace
-    verifySearchResult("/v3/metrics/search?target=metric&context=system.-.cluster",
-                       ImmutableList.<String>of("system.resources.total.storage"));
-    // cluster metrics must have system prefix in context
-    verifySearchResult("/v3/metrics/search?target=metric&context=-.cluster", ImmutableList.<String>of());
-
     // metrics in myspace
     verifySearchResult("/v3/metrics/search?target=metric&context=myspace.WordCount1.f.WordCounter.splitter",
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchResult("/v3/metrics/search?target=metric&context=myspace.WordCount1.f.WordCounter.collector",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
+
+    verifySearchResult("/v3/metrics/search?target=metric&context=myspace.WordCount1.f.WordCounter",
+                       ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
+                                                "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
     verifySearchResult("/v3/metrics/search?target=metric&context=yourspace.WordCount1.f.WordCounter.splitter",

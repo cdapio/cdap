@@ -157,7 +157,6 @@ final class MetricQueryParser {
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
     builder.setMetricName(urlDecode(uriPath.substring(index + 1)));
-
     // strip the metric from the end of the path
     if (index != -1) {
       String strippedPath = uriPath.substring(0, index);
@@ -175,7 +174,6 @@ final class MetricQueryParser {
     } else {
       builder.setSliceByTagValues(Maps.<String, String>newHashMap());
     }
-
     parseQueryString(requestURI, builder);
 
     return builder.build();
