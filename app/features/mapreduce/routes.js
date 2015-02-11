@@ -109,55 +109,14 @@ angular.module(PKG.name + '.feature.mapreduce')
           }
         })
         .state('mapreduce.detail.logs', {
-          url: '/log',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/log.html',
+          url: '/logs?filter',
+          reloadOnSearch: false,
+          template: '<my-log-viewer data-model="logs"></my-log-viewer>',
           controller: 'MapreduceLogsController',
           ncyBreadcrumb: {
             skip: true
           }
         })
-          .state('mapreduce.detail.logs.all', {
-            url: '/all',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          })
-          .state('mapreduce.detail.logs.info', {
-            url: '/info',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          })
-          .state('mapreduce.detail.logs.warn', {
-            url: '/warn',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          })
-          .state('mapreduce.detail.logs.error', {
-            url: '/error',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          })
-          .state('mapreduce.detail.logs.debug', {
-            url: '/debug',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          })
-          .state('mapreduce.detail.logs.other', {
-            url: '/other',
-            templateUrl: '/assets/features/mapreduce/templates/tabs/logs/tabTemplate.html',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          })
         .state('mapreduce.detail.resources', {
           url: '/resources',
           templateUrl: '/assets/features/mapreduce/templates/tabs/resources.html',

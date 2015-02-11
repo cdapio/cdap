@@ -26,22 +26,21 @@
 
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
-    <a href="" ui-sref="flows.detail.runs" ui-sref-opts="{reload: true}" role="tab" data-toggle="tab">Runs</a>
+    <a ui-sref="flows.detail.runs" ui-sref-opts="{reload: true}" role="tab" data-toggle="tab">Runs</a>
   </li>
   <li role="presentation" ui-sref-active="active">
-    <a href="" ui-sref="flows.detail.schedules" role="tab" data-toggle="tab">Schedules</a>
+    <a ui-sref="flows.detail.schedules" role="tab" data-toggle="tab">Schedules</a>
   </li>
   <li role="presentation" ui-sref-active="active">
-    <a href="" ui-sref="flows.detail.metadata" role="tab" data-toggle="tab">Metadata</a>
+    <a ui-sref="flows.detail.metadata" role="tab" data-toggle="tab">Metadata</a>
   </li>
   <li role="presentation" ui-sref-active="active">
-    <a href="" ui-sref="flows.detail.history" role="tab" data-toggle="tab">History</a>
+    <a ui-sref="flows.detail.history" role="tab" data-toggle="tab">History</a>
   </li>
   <li role="presentation" ui-sref-active="active">
-    <a href="" ui-sref="flows.detail.resources" role="tab" data-toggle="tab">Resources</a>
+    <a ui-sref="flows.detail.resources" role="tab" data-toggle="tab">Resources</a>
   </li>
 </ul>
 
-<div role="tablist">
-  <ui-view role="tabpanel"/>
-</div>
+<br />
+<ui-view role="tabpanel"/>
