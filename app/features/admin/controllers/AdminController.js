@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminController', function ($scope, $state, MyDataSource, myNamespace) {
+  .controller('AdminController', function ($scope, $state, myNamespace) {
 
     myNamespace.getList()
       .then(function(list) {
