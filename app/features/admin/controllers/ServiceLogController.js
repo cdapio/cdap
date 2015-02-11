@@ -4,7 +4,7 @@ function ($scope, $state, MyDataSource) {
     var myDataSrc = new MyDataSource($scope);
 
     myDataSrc.request({
-      _cdapPathV2: '/system/services/' + $state.params.serviceName + '/logs/next?fromOffset=-1&maxSize=50'
+      _cdapPathV2: '/system/services/' + encodeURIComponent($state.params.serviceName) + '/logs/next?fromOffset=-1&maxSize=50'
     })
       .then(function(response) {
         $scope.logs = response;
