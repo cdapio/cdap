@@ -39,6 +39,8 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
    * Schedule Type.
    */
   private enum ScheduleType {
+    ORIGINAL_TIME,
+
     /**
      * Represents {@link TimeSchedule} objects.
      */
@@ -52,9 +54,12 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     private static ScheduleType fromSchedule(Schedule schedule) {
       if (schedule instanceof StreamSizeSchedule) {
         return STREAM_DATA;
-      } else {
+      } else if (schedule instanceof TimeSchedule) {
         return TIME;
+      } else if (schedule.isTimeSchedule()) {
+        return ORIGINAL_TIME;
       }
+      return null;
     }
   }
 
@@ -64,7 +69,9 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
 
     ScheduleType scheduleType = ScheduleType.fromSchedule(src.getSchedule());
     jsonObj.add("scheduleType", context.serialize(scheduleType, ScheduleType.class));
-    if (scheduleType.equals(ScheduleType.TIME)) {
+    if (scheduleType.equals(ScheduleType.ORIGINAL_TIME)) {
+      jsonObj.add("schedule", context.serialize(src.getSchedule(), Schedule.class));
+    } else if (scheduleType.equals(ScheduleType.TIME)) {
       jsonObj.add("schedule", context.serialize(src.getSchedule(), TimeSchedule.class));
     } else if (scheduleType.equals(ScheduleType.STREAM_DATA)) {
       jsonObj.add("schedule", context.serialize(src.getSchedule(), StreamSizeSchedule.class));
@@ -84,13 +91,16 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     ScheduleType scheduleType;
     if (scheduleTypeJson == null) {
       // For backwards compatibility with spec persisted with older versions than 2.8, we need these lines
-      scheduleType = ScheduleType.TIME;
+      scheduleType = ScheduleType.ORIGINAL_TIME;
     } else {
       scheduleType = context.deserialize(jsonObj.get("scheduleType"), ScheduleType.class);
     }
 
     Schedule schedule = null;
     switch (scheduleType) {
+      case ORIGINAL_TIME:
+        schedule = context.deserialize(jsonObj.get("schedule"), Schedule.class);
+        break;
       case TIME:
         schedule = context.deserialize(jsonObj.get("schedule"), TimeSchedule.class);
         break;

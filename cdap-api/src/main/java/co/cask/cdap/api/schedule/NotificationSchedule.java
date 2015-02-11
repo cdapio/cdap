@@ -19,7 +19,7 @@ package co.cask.cdap.api.schedule;
 /**
  * A schedule based on notifications.
  */
-public interface NotificationSchedule extends Schedule {
+public interface NotificationSchedule {
 
   /**
    * @return Category of the notification feed to subscribe to

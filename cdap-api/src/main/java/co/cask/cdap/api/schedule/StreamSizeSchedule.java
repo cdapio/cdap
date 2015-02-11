@@ -19,19 +19,14 @@ package co.cask.cdap.api.schedule;
 /**
  * Defines a schedule based on data availability in a stream for running a program.
  */
-public class StreamSizeSchedule implements NotificationSchedule {
-
-  private final String name;
-
-  private final String description;
+public class StreamSizeSchedule extends Schedule implements NotificationSchedule {
 
   private final String streamName;
 
   private final int dataTriggerMB;
 
   public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
-    this.name = name;
-    this.description = description;
+    super(name, description);
     this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;
   }
@@ -44,16 +39,6 @@ public class StreamSizeSchedule implements NotificationSchedule {
   @Override
   public String getFeedName() {
     return streamName;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   /**
@@ -74,8 +59,8 @@ public class StreamSizeSchedule implements NotificationSchedule {
 
     StreamSizeSchedule schedule = (StreamSizeSchedule) o;
 
-    if (description.equals(description)
-      && name.equals(name)
+    if (getDescription().equals(schedule.getDescription())
+      && getName().equals(schedule.getName())
       && streamName.equals(schedule.streamName)
       && dataTriggerMB == schedule.dataTriggerMB) {
       return true;
@@ -85,8 +70,8 @@ public class StreamSizeSchedule implements NotificationSchedule {
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + description.hashCode();
+    int result = getName().hashCode();
+    result = 31 * result + getDescription().hashCode();
     result = 31 * result + streamName.hashCode();
     result = 31 * result + dataTriggerMB;
     return result;
@@ -95,8 +80,8 @@ public class StreamSizeSchedule implements NotificationSchedule {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("DataSchedule{");
-    sb.append("name='").append(name).append('\'');
-    sb.append(", description='").append(description).append('\'');
+    sb.append("name='").append(getName()).append('\'');
+    sb.append(", description='").append(getDescription()).append('\'');
     sb.append(", sourceName='").append(streamName).append('\'');
     sb.append(", dataTriggerMB='").append(dataTriggerMB).append('\'');
     sb.append('}');
