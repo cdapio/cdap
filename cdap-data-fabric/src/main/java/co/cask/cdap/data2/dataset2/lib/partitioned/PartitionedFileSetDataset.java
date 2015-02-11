@@ -297,11 +297,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     int offset = 0;
     for (byte[] bytes : values) {
       System.arraycopy(bytes, 0, rowKey, offset, bytes.length);
-      offset += bytes.length;
-      if (offset < rowKey.length) {
-        rowKey[offset] = 0;
-        offset++;
-      }
+      offset += bytes.length + 1; // this leaves a \0 byte after the value
     }
     return rowKey;
   }
@@ -342,11 +338,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     int offset = 0;
     for (byte[] bytes : values) {
       System.arraycopy(bytes, 0, startKey, offset, bytes.length);
-      offset += bytes.length;
-      if (offset < startKey.length) {
-        startKey[offset] = 0;
-        offset++;
-      }
+      offset += bytes.length + 1; // this leaves a \0 byte after the value
     }
     return startKey;
   }
@@ -395,14 +387,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     int offset = 0;
     for (byte[] bytes : values) {
       System.arraycopy(bytes, 0, stopKey, offset, bytes.length);
-      offset += bytes.length;
-      if (offset < stopKey.length) {
-        if (allSingleValue && offset == stopKey.length - 1) {
-          stopKey[offset] = 1; // see above - append \1 to make sure scan is not empty
-        } else {
-          stopKey[offset] = 0;
-          offset++;
-        }
+      offset += bytes.length + 1; // this leaves a \0 byte after the value
+      if (allSingleValue && offset == stopKey.length) {
+        stopKey[offset - 1] = 1; // see above - we \1 instead of \0 at the end, to make sure scan is not empty
       }
     }
     return stopKey;
@@ -460,7 +447,4 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
     return filter.match(key);
   }
-
-
-
 }
