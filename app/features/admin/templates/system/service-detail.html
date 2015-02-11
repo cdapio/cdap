@@ -5,11 +5,11 @@
 <div class="row">
    <div class="col-sm-12 text-right">
         <div class="btn-group" ng-model="tabs.activeTab" bs-radio-group>
-            <label class="btn btn-default">
+            <label class="btn btn-default" role="tab">
                 <input type="radio" class="btn btn-default" value="0" />
                 Metadata
             </label>
-            <label class="btn btn-default">
+            <label class="btn btn-default" role="tab">
                 <input type="radio" class="btn btn-default" value="1" />
                 Logs
             </label>
@@ -17,6 +17,8 @@
    </div>
 </div>
 
-<ui-view />
+<br />
+
+<ui-view role="tabpanel"></ui-view>
 
 
