@@ -25,18 +25,13 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -46,7 +41,6 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricStreamHttpHandler.class);
 
   /**
    * Access Dataset Service
@@ -59,34 +53,18 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
 
-  private final StreamAdmin streamAdmin;
-
 
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
   public AppFabricStreamHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                    StoreFactory storeFactory, StreamAdmin streamAdmin, DatasetFramework dsFramework) {
+                                    StoreFactory storeFactory, DatasetFramework dsFramework) {
 
     super(authenticator);
-    this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
-  }
-
-  @DELETE
-  @Path("/streams")
-  public void deleteStreams(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
-    try {
-      streamAdmin.dropAll();
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Error while deleting streams", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
   }
 
   /**
@@ -97,17 +75,6 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStreams(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
     dataList(request, responder, store, dsFramework, Data.STREAM, null, null);
-  }
-
-  /**
-   * Returns a stream associated with account.
-   */
-  @GET
-  @Path("/streams/{stream-id}")
-  public void getStreamSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("stream-id") final String streamId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, streamId, null);
   }
 
   /**

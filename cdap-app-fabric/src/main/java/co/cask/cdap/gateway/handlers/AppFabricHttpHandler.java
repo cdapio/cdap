@@ -47,7 +47,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Closeables;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -795,7 +794,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/streams")
   public void deleteStreams(HttpRequest request, HttpResponder responder) {
-    appFabricStreamHttpHandler.deleteStreams(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    try {
+      streamAdmin.dropAll();
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Error while deleting streams", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   @GET
@@ -941,8 +946,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}")
   public void getStreamSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("stream-id") final String streamId) {
-    appFabricStreamHttpHandler.getStreamSpecification(rewriteRequest(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE, streamId);
+    dataList(request, responder, store, dsFramework, Data.STREAM, streamId, null);
   }
 
   /**
