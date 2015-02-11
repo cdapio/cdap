@@ -109,7 +109,8 @@ angular.module(PKG.name + '.feature.mapreduce')
           }
         })
         .state('mapreduce.detail.logs', {
-          url: '/log',
+          url: '/logs?filter',
+          reloadOnSearch: false,
           template: '<my-log-viewer data-model="logs"></my-log-viewer>',
           controller: 'MapreduceLogsController',
           ncyBreadcrumb: {

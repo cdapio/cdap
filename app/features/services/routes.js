@@ -66,7 +66,8 @@ angular.module(PKG.name + '.feature.services')
           }
         })
         .state('services.detail.logs', {
-          url: '/logs',
+          url: '/logs?filter',
+          reloadOnSearch: false,
           controller: 'ServicesLogsController',
           template: '<my-log-viewer data-model="logs"></my-log-viewer>',
           ncyBreadcrumb: {

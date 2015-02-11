@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myLogViewer', function ($filter, $timeout) {
+  .directive('myLogViewer', function ($filter, $timeout, $state, $location) {
 
     var capitalize = $filter('caskCapitalizeFilter'),
         filterFilter = $filter('filter');
@@ -38,26 +38,34 @@ angular.module(PKG.name + '.commons')
 
         $scope.$watch('model', function (newVal) {
           angular.forEach($scope.filters, function (one) {
-            one.entries = filterFilter($scope.model, one.predicate);
+            one.entries = filterFilter(newVal, one.predicate);
           });
         });
 
       },
 
       link: function (scope, element, attrs) {
-        var termEl = angular.element(element[0].querySelector('.terminal'));
+
+        var termEl = angular.element(element[0].querySelector('.terminal')),
+            QPARAM = 'filter';
 
         scope.setFilter = function (k) {
-
-          scope.activeFilter = filterFilter(scope.filters, {key:k})[0];
+          var f = filterFilter(scope.filters, {key:k});
+          scope.activeFilter = f.length ? f[0] : scope.filters[0];
 
           $timeout(function(){
             termEl.prop('scrollTop', termEl.prop('scrollHeight'));
+
+            if(false === $state.current.reloadOnSearch) {
+              var params = {};
+              params[QPARAM] = scope.activeFilter.key;
+              $location.search(params);
+            }
           });
 
         };
 
-        scope.setFilter('all');
+        scope.setFilter($state.params[QPARAM]);
       }
     };
   });
