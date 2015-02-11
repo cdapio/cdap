@@ -53,35 +53,36 @@ angular.module(PKG.name + '.feature.flows')
             })
               .state('flows.detail.runs.detail.status', {
                 url: '/status',
-                template: '<div> Status: {{$state.params.runId}} </div>',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/status.html',
+                controller: 'FlowsDetailRunStatusController',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
               .state('flows.detail.runs.detail.flowlets', {
                 url: '/flowlets',
-                template: '<div> Flowlets: {{$state.params.runId}} </div>',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets.html',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
               .state('flows.detail.runs.detail.data', {
                 url: '/data',
-                template: '<div> Data: {{$state.params.runId}} </div>',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/data.html',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
               .state('flows.detail.runs.detail.configuration', {
                 url: '/configuration',
-                template: '<div> Configuration: {{$state.params.runId}} </div>',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/configuration.html',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
               .state('flows.detail.runs.detail.log', {
                 url: '/log',
-                template: '<div> Log: {{$state.params.runId}} </div>',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/log.html',
                 ncyBreadcrumb: {
                   skip: true
                 }

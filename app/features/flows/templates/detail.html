@@ -10,16 +10,12 @@
     <h4 ng-if="activeRuns > 2" ng-bind="activeRuns + ' Active runs'"> </h4>
   </div>
   <div class="col-sm-6 text-right h4">
-    <div ng-show="status == 'RUNNING'"
-         class="btn btn-default btn-md"
-         ng-click="toggleFlow('stop')">
-      <span class="fa fa-stop"> </span>
-    </div>
 
-    <div ng-show="status == 'STOPPED'"
+    <div ng-show="status != 'start' && status != 'stop'"
+         ng-disabled = "status == 'RUNNING'"
          class="btn btn-default btn-md"
          ng-click="toggleFlow('start')">
-      <span class="fa fa-play"> </span>
+      <span class="fa fa-play"> Start a new run</span>
     </div>
     <div ng-show="status == 'start' || status == 'stop'"
          class="btn btn-default btn-md">
