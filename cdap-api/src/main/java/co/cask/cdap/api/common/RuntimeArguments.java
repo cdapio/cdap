@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -30,7 +29,7 @@ import java.util.Map;
 public final class RuntimeArguments {
 
   public static final Map<String, String> NO_ARGUMENTS = Collections.emptyMap();
-  private static final String STAR = "*";
+  private static final String ASTERISK = "*";
   private static final String DOT = ".";
 
   private RuntimeArguments() {
@@ -103,7 +102,7 @@ public final class RuntimeArguments {
     }
 
     String prefix = scope + DOT + name + DOT;
-    String wildCardPrefix = scope + DOT + STAR + DOT;
+    String wildCardPrefix = scope + DOT + ASTERISK + DOT;
     Map<String, String> result = Maps.newHashMap();
     Map<String, String> prefixMatchedArgs = Maps.newHashMap();
     Map<String, String> wildCardPrefixMatchedArgs = Maps.newHashMap();
