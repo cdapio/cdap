@@ -177,9 +177,10 @@ public final class FactTable {
    * @return Sorted collection of tags
    * @throws Exception
    */
-  public Collection<TagValue> getNextTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
+  public Collection<TagValue> findNextAvailableTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
     //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
     //todo: pass a limit on number of tags returned
+    //todo: go over aggregations that match the given tags as first tags in the same order.
     byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
     byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
     endRow = Bytes.stopKeyForPrefix(endRow);

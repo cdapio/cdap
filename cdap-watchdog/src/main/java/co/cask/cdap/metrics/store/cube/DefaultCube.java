@@ -150,9 +150,9 @@ public class DefaultCube implements Cube {
     }
   }
 
-  public Collection<TagValue> getNextTags(CubeExploreQuery query) throws Exception {
-    return resolutionToFactTable.get(query.getResolution()).getNextTags(query.getTagValues(),
-                                                                        query.getStartTs(), query.getEndTs());
+  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
+    return resolutionToFactTable.get(query.getResolution()).findNextAvailableTags(query.getTagValues(),
+                                                                                  query.getStartTs(), query.getEndTs());
   }
 
   @Override

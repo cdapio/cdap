@@ -142,12 +142,14 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // verify the next tags search
-    Collection<TagValue> nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
+    Collection<TagValue> nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1")),
+                                                                ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2")), nextTags);
     //assertTagValues(ImmutableList.of(new TagValue("tag2", "value2")), nextTags);
 
-    nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag2", "value2")),
-                                 ts, ts + 3);
+    nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1"),
+                                                            new TagValue("tag2", "value2")),
+                                           ts, ts + 3);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag3", "value3")), nextTags);
 
     // add new tag values
@@ -159,8 +161,8 @@ public class FactTableTest {
     table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric",
                                         new TimeValue(ts, 10))));
 
-    nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1")),
-                                 ts, ts + 1);
+    nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1")),
+                                           ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2"),
                                         new TagValue("tag2", "value5"), new TagValue("tag4", "value5")), nextTags);
     // search for metric names given tags list and verify

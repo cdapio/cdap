@@ -208,7 +208,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         getAllPossibleTags(tagsList, resultSet);
         for (List<TagValue> tagValueList : resultSet) {
           CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
-          Collection<String> measureNames = metricStore.getMeasureNames(query);
+          Collection<String> measureNames = metricStore.findMetricNames(query);
           for (String measureName : measureNames) {
             addContext(getContext(tagValueList), measureName, metricContextsMap);
           }
@@ -254,7 +254,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
   private void getAllPossibleTags(List<TagValue> tagsList, List<List<TagValue>> resultSet) throws Exception {
     //todo: which resolution table to use?
     CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
-    Collection<TagValue> nextTags = metricStore.getNextTags(query);
+    Collection<TagValue> nextTags = metricStore.findNextAvailableTags(query);
     if (nextTags.isEmpty()) {
       resultSet.add(Lists.newArrayList(tagsList));
     } else {

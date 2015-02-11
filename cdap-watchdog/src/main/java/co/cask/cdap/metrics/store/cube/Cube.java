@@ -57,7 +57,7 @@ public interface Cube {
    * @return {@link Collection} of {@link TagValue} that are result of the query
    * @throws Exception
    */
-  Collection<TagValue> getNextTags(CubeExploreQuery query) throws Exception;
+  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception;
 
   /**
    * Queries data for available measureNames for the query specified by {@link CubeExploreQuery}

@@ -52,17 +52,17 @@ public interface MetricStore {
   void deleteBefore(long timestamp);
 
   /**
-   * todo
+   * Given a list of tags in the {@link CubeExploreQuery}, returns the list of next available tags
    * @param query
    * @return
    */
-  Collection<TagValue> getNextTags(CubeExploreQuery query) throws Exception;
+  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception;
 
   /**
-   * todo
+   * Given a list of tags in the {@link CubeExploreQuery}, returns the list of measures available
    * @param query
    * @return
    */
-  Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception;
+  Collection<String> findMetricNames(CubeExploreQuery query) throws Exception;
 
 }

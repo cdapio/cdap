@@ -170,13 +170,13 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<TagValue> getNextTags(CubeExploreQuery query) throws Exception {
+  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
     replaceTagsInListIfNeeded(query.getTagValues());
-    return cube.get().getNextTags(query);
+    return cube.get().findNextAvailableTags(query);
   }
 
   @Override
-  public Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception {
+  public Collection<String> findMetricNames(CubeExploreQuery query) throws Exception {
     replaceTagsInListIfNeeded(query.getTagValues());
     return cube.get().getMeasureNames(query);
   }
