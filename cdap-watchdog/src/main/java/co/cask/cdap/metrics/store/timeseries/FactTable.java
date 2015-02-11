@@ -144,6 +144,8 @@ public final class FactTable {
   /**
    * Delete entries in fact table.
    * @param scan
+   * @param measurePrefixMatch - we have this to support V2 API for deleting data whose
+   *                           measure matches the given prefix.
    * @throws Exception
    */
   public void delete(FactScan scan, boolean measurePrefixMatch) throws Exception {

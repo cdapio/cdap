@@ -200,7 +200,6 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         tagValues.put(Constants.Metrics.Tag.APP, URLDecoder.decode(pathParts.next(), CharEncoding.UTF_8));
         MetricQueryParser.parseSubContext(pathParts, tagValues);
 
-
         List<TagValue> tagsList = Lists.newArrayList();
         for (Map.Entry<String, String> tag : tagValues.entrySet()) {
           tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
