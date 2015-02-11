@@ -29,17 +29,17 @@
     <thead>
       <tr>
         <th></th>
-        <th>Data Types</th>
-        <th>Datasets</th>
         <th>Apps</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+      <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
+        <td>
+          <a ng-bind="namespace.name"></a>
+        </td>
+        <td>
+          <a ng-bind="namespace.appsCount"></a>
+        </td>
       </tr>
     </tbody>
   </table>
