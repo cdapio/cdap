@@ -1,3 +1,49 @@
-<div>
-  <h3> Admin Overview </h3>
+<div ng-hide="hideWelcomeMessage">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <button class="pull-right btn btn-default btn-xs" ng-click="hideWelcomeMessage=true">
+        <span class="fa fa-close"></span>
+        <span class="sr-only"> Hide Welcome Message </span>
+      </button>
+      <h3>
+        Welcome CDAP Admin!
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>Here, you can view and manage your system configuration and deploy and manage data and apps.</p>
+      <p>Begin by configuring your default namespace.</p>
+    </div>
+  </div>
 </div>
+
+<div>
+  <h3>System Configuration</h3>
+    <a ui-sref="admin.system.instance" href="">Instance Config</a>
+    <a ui-sref="admin.system.services" href="">Services</a>
+</div>
+<div>
+  <h3>Namespaces</h3>
+  <div class="btn-group">
+    <a ui-sref="admin.namespace.create" href="" class="btn btn-default">Add Namespace</a>
+  </div>
+  <table class="table table-striped table-responsive">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Apps</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
+        <td>
+          <a ng-bind="namespace.name"></a>
+        </td>
+        <td>
+          <a ng-bind="namespace.appsCount"></a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
