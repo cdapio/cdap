@@ -21,6 +21,7 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -58,7 +59,7 @@ public interface NamespaceAdmin {
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws AlreadyExistsException if the specified namespace already exists
    */
-  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException;
+  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException, IOException;
 
   /**
    * Deletes the specified namespace
@@ -66,5 +67,5 @@ public interface NamespaceAdmin {
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
    * @throws NotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException;
+  public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException, IOException;
 }

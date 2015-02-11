@@ -17,7 +17,8 @@ Cloudera
     Add Service Wizard <step-by-step-cloudera>
     Ingestion and Exploration <ingesting>
 
-
+.. include:: /_includes/cloudera-certified.rst
+  
 Today, Hadoop is frequently used as an offline analytics tool – generating insights that
 are then deployed operationally in other systems.  Greater business value is generated
 when organizations turn their data analytics directly into action.  Cask and Cloudera
@@ -40,6 +41,8 @@ The Cask™ Data Application Platform (CDAP) integrates with the `Cloudera Manag
 Configurations that include Cloudera Manager can be easily configured to ingest data into
 a cluster, specify schema, or run interactive queries using Impala with CDAP for faster
 results.
+
+**CDAP** |bold-version| is certified on Cloudera 5.
 
 .. |cloudera-configuring| replace:: **Configuring and Installing:**
 .. _cloudera-configuring: configuring.html
@@ -67,7 +70,7 @@ results.
 
 .. rubric:: CDAP and Cloudera Architecture Schematic
 
-.. figure:: ../../_images/cloudera-integration-arch.png
+.. figure:: /_images/cloudera-integration-arch.png
    :figwidth: 100%
    :width: 800px
    :align: center

@@ -120,6 +120,8 @@ public final class Constants {
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
+
+    public static final String ARCHIVE_DIR = "archive";
   }
 
   /**
