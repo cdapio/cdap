@@ -25,10 +25,13 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
 
   private final int dataTriggerMB;
 
-  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
+  private final int pollingDelay;
+
+  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB, int pollingDelay) {
     super(name, description);
     this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;
+    this.pollingDelay = pollingDelay;
   }
 
   @Override
@@ -38,6 +41,13 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
 
   @Override
   public String getFeedName() {
+    return String.format("%sSize", streamName);
+  }
+
+  /**
+   * @return Name of the stream this {@link StreamSizeSchedule} is based on
+   */
+  public String getStreamName() {
     return streamName;
   }
 
@@ -46,6 +56,14 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
    */
   public int getDataTriggerMB() {
     return dataTriggerMB;
+  }
+
+  /**
+   * @return Delay, in minutes, after which the stream should be polled to retrieve the size of its data if
+   * no notifications has been received
+   */
+  public int getPollingDelay() {
+    return pollingDelay;
   }
 
   @Override
@@ -62,7 +80,8 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     if (getDescription().equals(schedule.getDescription())
       && getName().equals(schedule.getName())
       && streamName.equals(schedule.streamName)
-      && dataTriggerMB == schedule.dataTriggerMB) {
+      && dataTriggerMB == schedule.dataTriggerMB
+      && pollingDelay == schedule.pollingDelay) {
       return true;
     }
     return false;
@@ -74,6 +93,7 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     result = 31 * result + getDescription().hashCode();
     result = 31 * result + streamName.hashCode();
     result = 31 * result + dataTriggerMB;
+    result = 31 * result + pollingDelay;
     return result;
   }
 
@@ -84,6 +104,7 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     sb.append(", description='").append(getDescription()).append('\'');
     sb.append(", sourceName='").append(streamName).append('\'');
     sb.append(", dataTriggerMB='").append(dataTriggerMB).append('\'');
+    sb.append(", pollingDelay='").append(pollingDelay).append('\'');
     sb.append('}');
     return sb.toString();
   }
