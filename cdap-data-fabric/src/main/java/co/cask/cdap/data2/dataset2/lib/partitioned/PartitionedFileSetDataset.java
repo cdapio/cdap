@@ -59,15 +59,17 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
 
-  private static final byte[] RELATIVE_PATH = { 'p' };
-  private static final byte[] FIELD_PREFIX = { 'f', '.' };
+  protected static final byte[] RELATIVE_PATH = { 'p' };
+  protected static final byte[] FIELD_PREFIX = { 'f', '.' };
 
-  private final FileSet files;
-  private final Table partitions;
-  private final Map<String, String> runtimeArguments;
-  private final DatasetSpecification spec;
-  private final Provider<ExploreFacade> exploreFacadeProvider;
-  private final Partitioning partitioning;
+  protected final FileSet files;
+  protected final Table partitions;
+  protected final Map<String, String> runtimeArguments;
+  protected final DatasetSpecification spec;
+  protected final Provider<ExploreFacade> exploreFacadeProvider;
+  protected final Partitioning partitioning;
+
+  protected boolean ignoreInvalidRowsSilently = false;
 
   public PartitionedFileSetDataset(String name, Partitioning partitioning,
                                    FileSet fileSet, Table partitionTable,
@@ -102,7 +104,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
               Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
     }
     partitions.put(put);
+    addPartitionToExplore(key, path);
+  }
 
+  protected void addPartitionToExplore(PartitionKey key, String path) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
@@ -120,7 +125,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   public void dropPartition(PartitionKey key) {
     final byte[] rowKey = generateRowKey(key, partitioning);
     partitions.delete(rowKey);
+    dropPartitionFromExplore(key);
+  }
 
+  private void dropPartitionFromExplore(PartitionKey key) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
@@ -150,10 +158,31 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public Set<String> getPartitionPaths(@Nullable PartitionFilter filter) {
-    // this is the same as getPartitions(startTime, endTime).values(), but we want to avoid construction of the map
+    final Set<String> paths = Sets.newHashSet();
+    getPartitions(filter, new PartitionConsumer() {
+      @Override
+      public void consume(PartitionKey key, String path) {
+        paths.add(path);
+      }
+    });
+    return paths;
+  }
+
+  @Override
+  public Map<PartitionKey, String> getPartitions(@Nullable PartitionFilter filter) {
+    final Map<PartitionKey, String> paths = Maps.newHashMap();
+    getPartitions(filter, new PartitionConsumer() {
+      @Override
+      public void consume(PartitionKey key, String path) {
+        paths.put(key, path);
+      }
+    });
+    return paths;
+  }
+
+  protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer) {
     final byte[] startKey = generateStartKey(filter);
     final byte[] endKey = generateStopKey(filter);
-    Set<String> paths = Sets.newHashSet();
     Scanner scanner = partitions.scan(startKey, endKey);
     try {
       while (true) {
@@ -161,45 +190,31 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         if (row == null) {
           break;
         }
-        if (filter != null && !validateFilter(filter, row)) {
+        PartitionKey key;
+        try {
+          key = parseRowKey(row.getRow(), partitioning);
+        } catch (IllegalArgumentException e) {
+          if (!ignoreInvalidRowsSilently) {
+            LOG.debug(String.format("Failed to parse row key for partitioned file set '%s': %s",
+                                    getName(), Bytes.toStringBinary(row.getRow())));
+          }
+          continue;
+        }
+        if (filter != null && !filter.match(key)) {
           continue;
         }
         byte[] pathBytes = row.get(RELATIVE_PATH);
         if (pathBytes != null) {
-          paths.add(Bytes.toString(pathBytes));
+          consumer.consume(key, Bytes.toString(pathBytes));
         }
       }
-      return paths;
     } finally {
       scanner.close();
     }
   }
 
-  @Override
-  public Map<PartitionKey, String> getPartitions(@Nullable PartitionFilter filter) {
-    final byte[] startKey = generateStartKey(filter);
-    final byte[] endKey = generateStopKey(filter);
-    Map<PartitionKey, String> paths = Maps.newHashMap();
-    Scanner scanner = partitions.scan(startKey, endKey);
-    try {
-      while (true) {
-        Row row = scanner.next();
-        if (row == null) {
-          break;
-        }
-        if (filter != null && !validateFilter(filter, row)) {
-          continue;
-        }
-        PartitionKey key = parseRowKey(row.getRow(), partitioning);
-        byte[] pathBytes = row.get(RELATIVE_PATH);
-        if (pathBytes != null) {
-          paths.put(key, Bytes.toString(pathBytes));
-        }
-      }
-      return paths;
-    } finally {
-      scanner.close();
-    }
+  private interface PartitionConsumer {
+    void consume(PartitionKey key, String path);
   }
 
   @Override
@@ -434,15 +449,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return builder.build();
   }
 
-  private boolean validateFilter(PartitionFilter filter, Row row) {
-    PartitionKey key;
-    try {
-      key = parseRowKey(row.getRow(), partitioning);
-    } catch (Exception e) {
-      LOG.debug(String.format("Failed to parse row key for partitioned file set '%s': %s",
-                              getName(), Bytes.toStringBinary(row.getRow())));
-      return false;
-    }
-    return filter.match(key);
+  protected Table getPartitionsTable() {
+    return partitions;
   }
 }
