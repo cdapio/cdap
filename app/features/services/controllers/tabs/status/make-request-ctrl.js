@@ -5,6 +5,8 @@ angular.module(PKG.name + '.feature.services')
     $scope.requestMethod = $state.params.requestMethod;
     $scope.urlParams = [];
     $scope.queryParams = [];
+    $scope.response = null;
+    $scope.postBody = {};
 
     var pattern = /\{([\s\S]*?)\}/g,
         dataSrc = new MyDataSource($scope);
@@ -58,28 +60,43 @@ angular.module(PKG.name + '.feature.services')
         }
       });
 
-      $scope.makeRequest = function() {
-        var compiledUrl = '/apps/' +
-          $state.params.appId + '/services/' +
-          $state.params.programId + '/methods';
+    $scope.makeRequest = function() {
+      var compiledUrl = '/apps/' +
+        $state.params.appId + '/services/' +
+        $state.params.programId + '/methods';
 
-        angular.forEach($scope.urlParams, function(param) {
-          compiledUrl = compiledUrl + '/' + param.value;
-        });
+      angular.forEach($scope.urlParams, function(param) {
+        compiledUrl = compiledUrl + '/' + param.value;
+      });
 
-        angular.forEach($scope.queryParams, function(param, index) {
-          compiledUrl += (index === 0 ? '?': '&') +
-                          param.key + '=' + encodeURIComponent(param.value);
-        });
+      angular.forEach($scope.queryParams, function(param, index) {
+        compiledUrl += (index === 0 ? '?': '&') +
+                        param.key + '=' + encodeURIComponent(param.value);
+      });
 
-        dataSrc.request({
-          _cdapNsPath: compiledUrl,
-          method: $scope.requestMethod.toUpperCase()
-        })
-          .then(function(res) {
-            $scope.response = res;
-          });
+      var requestObj = {
+        _cdapNsPath: compiledUrl,
+        method: $scope.requestMethod.toUpperCase()
       };
+
+      if ($scope.requestMethod === 'POST' || $scope.requestMethod === 'PUT') {
+        angular.extend(requestObj, {
+          body: $scope.postBody
+        });
+      }
+
+      $scope.$watch('queryParams', resetResponse, true);
+      $scope.$watch('urlParams', resetResponse, true);
+
+      function resetResponse() {
+        $scope.response = null;
+      }
+
+      dataSrc.request(requestObj)
+        .then(function(res) {
+          $scope.response = res;
+        });
+    };
 
 
   });

@@ -30,7 +30,7 @@
           <div class="form-group">
             <label class="col-sm-2 control-label"> Preview </label>
             <div class="col-sm-10">
-              <div class="form-control" ng-disabled="true">
+              <div class="form-control" disabled="true">
                 <em ng-repeat="urlParam in urlParams  track by urlParam.value">/{{urlParam.value}}</em>
                 <em ng-repeat="queryParam in queryParams track by queryParam.value">
                     <span ng-show="$first">?{{queryParam.key}}={{queryParam.value}}</span>
@@ -66,7 +66,12 @@
             </div>
           </div>
 
-
+          <div class="form-group" ng-show="requestMethod == 'POST'">
+            <label class="col-sm-2 control-label"> POST Body </label>
+            <div class="col-sm-10">
+              <textarea class="form-control" cask-json-edit="postBody" rows="5" cols="50"></textarea>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -86,8 +91,9 @@
               <textarea class="form-control"
                         rows="10"
                         cols="50"
-                        cask-json-edit="response"
-                        ng-disabled="true">
+                        ng-bind="response | json"
+                        disabled="true">
+
               </textarea>
             </div>
           </div>
