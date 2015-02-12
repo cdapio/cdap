@@ -3,7 +3,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/mapreduce/' + $state.params.programId;
 
-    $scope.runTabs = ['status', 'distribution', 'list', 'data', 'configuration'];
+    $scope.runTabs = ['status', 'distribution', 'list', 'data', 'configuration', 'logs'];
     $scope.runs = null;
     $scope.currentRun = null;
 

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceLogsController', function($scope, MyDataSource, $state) {
+  .controller('MapreduceRunLogController', function($scope, MyDataSource, $state) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/mapreduce/' + $state.params.programId;
 
