@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -64,23 +65,7 @@ public final class StreamFetchHandlerV2 extends AuthenticatedHttpHandler {
                     @QueryParam("start") long startTime,
                     @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
-    streamFetchHandler.fetch(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream,
-                             startTime, endTime, limit);
+    streamFetchHandler.fetch(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                             Constants.DEFAULT_NAMESPACE, stream, startTime, endTime, limit);
   }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated in LogHandler, but its ok since this temporary, till we
-   * support v2 APIs
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
-  }
-
 }

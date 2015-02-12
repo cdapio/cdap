@@ -16,6 +16,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.http.BodyConsumer;
@@ -51,63 +52,55 @@ public final class StreamHandlerV2 extends AuthenticatedHttpHandler {
   @Path("/{stream}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
-    streamHandler.getInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
+    streamHandler.getInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                          Constants.DEFAULT_NAMESPACE, stream);
   }
 
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("stream") String stream) throws Exception {
-    streamHandler.create(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
+    streamHandler.create(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                         Constants.DEFAULT_NAMESPACE, stream);
   }
 
   @POST
   @Path("/{stream}")
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
-    streamHandler.enqueue(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
+    streamHandler.enqueue(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                          Constants.DEFAULT_NAMESPACE, stream);
   }
 
   @POST
   @Path("/{stream}/async")
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("stream") String stream) throws Exception {
-    streamHandler.asyncEnqueue(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
+    streamHandler.asyncEnqueue(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                               Constants.DEFAULT_NAMESPACE, stream);
   }
 
   @POST
   @Path("/{stream}/batch")
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
                             @PathParam("stream") String stream) throws Exception {
-    return streamHandler.batch(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
+    return streamHandler.batch(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                               Constants.DEFAULT_NAMESPACE, stream);
   }
 
   @POST
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("stream") String stream) throws Exception {
-    streamHandler.truncate(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
+    streamHandler.truncate(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                           Constants.DEFAULT_NAMESPACE, stream);
   }
 
   @PUT
   @Path("/{stream}/config")
   public void setConfig(HttpRequest request, HttpResponder responder,
                         @PathParam("stream") String stream) throws Exception {
-    streamHandler.setConfig(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, stream);
-  }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated in LogHandler, but its ok since this temporary, till we
-   * support v2 APIs
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
+    streamHandler.setConfig(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                            Constants.DEFAULT_NAMESPACE, stream);
   }
 }

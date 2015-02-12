@@ -72,7 +72,7 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, null, null);
+    dataList(request, responder, store, dsFramework, Data.STREAM, namespaceId, null, null);
   }
 
   /**
@@ -83,7 +83,7 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-id") final String appId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, null, appId);
+    dataList(request, responder, store, dsFramework, Data.STREAM, namespaceId, null, appId);
   }
 
   /**
@@ -94,6 +94,7 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("stream-id") final String streamId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.STREAM, streamId);
+    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
+                            namespaceId, streamId);
   }
 }

@@ -22,6 +22,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
@@ -936,7 +937,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder) {
-    appFabricStreamHttpHandler.getStreams(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    appFabricStreamHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -946,7 +948,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}")
   public void getStreamSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("stream-id") final String streamId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, streamId, null);
+    dataList(request, responder, store, dsFramework, Data.STREAM, Constants.DEFAULT_NAMESPACE, streamId, null);
   }
 
   /**
@@ -956,7 +958,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId) {
-    appFabricStreamHttpHandler.getStreamsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
+    appFabricStreamHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -965,7 +968,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/datasets")
   public void getDatasets(HttpRequest request, HttpResponder responder) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, null, null);
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, null);
   }
 
   /**
@@ -975,7 +978,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("dataset-id") final String datasetId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, datasetId, null);
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, datasetId, null);
   }
 
   /**
@@ -985,7 +988,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/datasets")
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("app-id") final String appId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, null, appId);
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, appId);
   }
 
   /**
@@ -995,7 +998,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("stream-id") final String streamId) {
-    appFabricStreamHttpHandler.getFlowsByStream(rewriteRequest(request), responder,
+    appFabricStreamHttpHandler.getFlowsByStream(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                 Constants.DEFAULT_NAMESPACE, streamId);
   }
 
@@ -1006,7 +1009,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                 @PathParam("dataset-id") final String datasetId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET, datasetId);
+    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
+                            Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**

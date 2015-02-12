@@ -25,7 +25,7 @@ import java.net.URL;
 /**
  * Tests v3 stream endpoints with default namespace
  */
-public class V3StreamHandlerTest extends StreamHandlerTest {
+public class StreamHandlerTestV3 extends StreamHandlerTest {
   @Override
   protected URL constructPath(String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v3/namespaces/%s/%s", Constants.DEFAULT_NAMESPACE, path)).toURL();

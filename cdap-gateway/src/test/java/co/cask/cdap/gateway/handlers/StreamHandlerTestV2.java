@@ -23,7 +23,7 @@ import java.net.URL;
 /**
  * Tests v2 stream endpoints
  */
-public class V2StreamHandlerTest extends StreamHandlerTest {
+public class StreamHandlerTestV2 extends StreamHandlerTest {
   @Override
   protected URL constructPath(String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v2/%s", path)).toURL();

@@ -345,15 +345,14 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
 
   protected final void dataList(HttpRequest request, HttpResponder responder, Store store, DatasetFramework dsFramework,
-                        Data type, String name, String appId) {
+                                Data type, String namespace, String name, String appId) {
     try {
       if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided");
         return;
       }
 
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program program = Id.Program.from(accountId, appId == null ? "" : appId, "");
+      Id.Program program = Id.Program.from(namespace, appId == null ? "" : appId, "");
       String json = name != null ? getDataEntity(store, dsFramework, program, type, name) :
         appId != null ? listDataEntitiesByApp(store, dsFramework, program, type)
           : listDataEntities(store, dsFramework, program, type);
@@ -491,14 +490,13 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected final void programListByDataAccess(HttpRequest request, HttpResponder responder,
                                                Store store, DatasetFramework dsFramework,
-                                               ProgramType type, Data data, String name) {
+                                               ProgramType type, Data data, String namespace, String name) {
     try {
       if (name.isEmpty()) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, data.prettyName().toLowerCase() + " name is empty");
         return;
       }
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, "", "");
+      Id.Program programId = Id.Program.from(namespace, "", "");
       List<ProgramRecord> programRecords = listProgramsByDataAccess(store, dsFramework, programId, type, data, name);
       if (programRecords == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);

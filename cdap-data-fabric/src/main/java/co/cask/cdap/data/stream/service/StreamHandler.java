@@ -50,10 +50,10 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -83,6 +83,7 @@ import javax.ws.rs.PathParam;
  *
  * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
+@Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
