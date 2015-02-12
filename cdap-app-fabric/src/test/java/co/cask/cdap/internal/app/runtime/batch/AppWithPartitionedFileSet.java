@@ -19,9 +19,11 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -41,11 +43,11 @@ import java.io.IOException;
  * App used to test whether M/R works well with time-partitioned file sets.
  * It uses M/R to read from a table and write partitions, and another M/R to read partitions and write to a table.
  */
-public class AppWithTimePartitionedFileSet extends AbstractApplication {
+public class AppWithPartitionedFileSet extends AbstractApplication {
 
-  public static final String INPUT = "input";
-  public static final String TIME_PARTITIONED = "time-part-d";
-  public static final String OUTPUT = "output";
+  public static final String INPUT = "in-table";
+  public static final String PARTITIONED = "partitioned";
+  public static final String OUTPUT = "out-table";
   public static final byte[] ONLY_COLUMN = { 'x' };
   public static final String ROW_TO_WRITE = "row.to.write";
   private static final String SEPARATOR = ":";
@@ -58,13 +60,17 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
       createDataset(INPUT, "table");
       createDataset(OUTPUT, "table");
 
-      createDataset(TIME_PARTITIONED, "timePartitionedFileSet", FileSetProperties.builder()
-        // properties for file set
+      createDataset(PARTITIONED, "partitionedFileSet", PartitionedFileSetProperties.builder()
+        .setPartitioning(Partitioning.builder()
+                           .addStringField("type")
+                           .addLongField("time")
+                           .build())
+          // properties for file set
         .setBasePath("/partitioned")
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)
-        // don't configure properties for the Hive table - this is used in a context where explore is disabled
+          // don't configure properties for the Hive table - this is used in a context where explore is disabled
         .build());
       addMapReduce(new PartitionWriter());
       addMapReduce(new PartitionReader());
@@ -80,7 +86,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
     @Override
     public void configure() {
       setInputDataset(INPUT);
-      setOutputDataset(TIME_PARTITIONED);
+      setOutputDataset(PARTITIONED);
     }
 
     @Override
@@ -93,11 +99,12 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       if (succeeded) {
-        TimePartitionedFileSet ds = context.getDataset(TIME_PARTITIONED);
-        String outputPath = FileSetArguments.getOutputPath(ds.getUnderlyingFileSet().getRuntimeArguments());
-        Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());
-        Preconditions.checkNotNull(time, "Output partition time is null.");
-        ds.addPartition(time, outputPath);
+        PartitionedFileSet ds = context.getDataset(PARTITIONED);
+        String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
+        PartitionKey key = PartitionedFileSetArguments.
+          getOutputPartitionKey(ds.getRuntimeArguments(), ds.getPartitioning());
+        Preconditions.checkNotNull(key, "Output partition key is null.");
+        ds.addPartition(key, outputPath);
       }
     }
   }
@@ -119,7 +126,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
 
     @Override
     public void configure() {
-      setInputDataset(TIME_PARTITIONED);
+      setInputDataset(PARTITIONED);
       setOutputDataset(OUTPUT);
     }
 

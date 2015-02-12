@@ -41,7 +41,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -69,7 +71,19 @@ public abstract class ConcurrentStreamWriterTestBase {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
+  private static final StreamCoordinatorClient COORDINATOR_CLIENT = new InMemoryStreamCoordinatorClient();
+
   protected abstract LocationFactory getLocationFactory();
+
+  @BeforeClass
+  public static void startUp() {
+    COORDINATOR_CLIENT.startAndWait();
+  }
+
+  @AfterClass
+  public static void shutDown() {
+    COORDINATOR_CLIENT.stopAndWait();
+  }
 
   @Test
   public void testConcurrentWrite() throws Exception {
@@ -194,9 +208,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
     StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
     streamMetaStore.addStream(streamId.getNamespaceId(), streamId.getName());
-    StreamCoordinatorClient streamCoordinatorClient = new InMemoryStreamCoordinatorClient(CConfiguration.create(),
-                                                                                          streamAdmin);
-    return new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore,
+    return new ConcurrentStreamWriter(COORDINATOR_CLIENT, streamAdmin, streamMetaStore,
                                       writerFactory, threads, new TestMetricsCollectorFactory());
   }
 

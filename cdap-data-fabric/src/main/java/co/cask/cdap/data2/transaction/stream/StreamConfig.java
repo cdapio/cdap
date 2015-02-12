@@ -23,7 +23,6 @@ import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
 import java.util.Collections;
-import javax.annotation.Nullable;
 
 /**
  * Represents the configuration of a stream. This class needs to be GSON serializable.
@@ -41,16 +40,12 @@ public final class StreamConfig {
   private final long indexInterval;
   private final long ttl;
   private final FormatSpecification format;
-  private final Integer notificationThresholdMB;
+  private final int notificationThresholdMB;
 
   private final transient Location location;
 
-  public StreamConfig() {
-    this(null, 0, 0, Long.MAX_VALUE, null, null, null);
-  }
-
   public StreamConfig(Id.Stream streamId, long partitionDuration, long indexInterval, long ttl,
-                      Location location, FormatSpecification format, Integer notificationThresholdMB) {
+                      Location location, FormatSpecification format, int notificationThresholdMB) {
     this.streamId = streamId;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
@@ -89,9 +84,8 @@ public final class StreamConfig {
   }
 
   /**
-   * @return The location of the stream if it is file base stream, or {@code null} otherwise.
+   * @return The location of the stream.
    */
-  @Nullable
   public Location getLocation() {
     return location;
   }
@@ -103,14 +97,10 @@ public final class StreamConfig {
     return Objects.firstNonNull(format, DEFAULT_STREAM_FORMAT);
   }
 
-  public boolean hasFormat() {
-    return format != null;
-  }
-
   /**
    * @return The threshold of data, in MB, that the stream has to ingest for a notification to be sent.
    */
-  public Integer getNotificationThresholdMB() {
+  public int getNotificationThresholdMB() {
     return notificationThresholdMB;
   }
 
@@ -125,5 +115,44 @@ public final class StreamConfig {
       .add("format", format)
       .add("notificationThresholdMB", notificationThresholdMB)
       .toString();
+  }
+
+  public static Builder builder(StreamConfig config) {
+    return new Builder(config);
+  }
+
+  /**
+   * A builder to help building instance of {@link StreamConfig}.
+   */
+  public static final class Builder {
+
+    private final StreamConfig config;
+    private Long ttl;
+    private FormatSpecification formatSpec;
+    private Integer notificationThreshold;
+
+    private Builder(StreamConfig config) {
+      this.config = config;
+    }
+
+    public void setTTL(long ttl) {
+      this.ttl = ttl;
+    }
+
+    public void setFormatSpec(FormatSpecification formatSpec) {
+      this.formatSpec = formatSpec;
+    }
+
+    public void setNotificationThreshold(int notificationThreshold) {
+      this.notificationThreshold = notificationThreshold;
+    }
+
+    public StreamConfig build() {
+      return new StreamConfig(config.getStreamId(), config.getPartitionDuration(), config.getIndexInterval(),
+                              Objects.firstNonNull(ttl, config.getTTL()),
+                              config.getLocation(),
+                              Objects.firstNonNull(formatSpec, config.getFormat()),
+                              Objects.firstNonNull(notificationThreshold, config.getNotificationThresholdMB()));
+    }
   }
 }

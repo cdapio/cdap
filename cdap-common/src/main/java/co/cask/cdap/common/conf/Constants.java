@@ -608,12 +608,6 @@ public final class Constants {
       public static final String STREAM_FEED_CATEGORY = "stream";
       public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
       public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
-
-      /** Default number of bytes received by a stream after which a notification is sent */
-      public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
-
-      public static final int INIT_HEARTBEAT_AGGREGATION_DELAY = 2;
-      public static final int HEARTBEAT_AGGREGATION_INTERVAL = 5;
     }
   }
 

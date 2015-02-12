@@ -318,8 +318,17 @@ public final class StreamUtils {
    * @return the generation id
    */
   public static int getGeneration(StreamConfig config) throws IOException {
-    Location streamLocation = config.getLocation();
+    return getGeneration(config.getLocation());
+  }
 
+  /**
+   * Finds the current generation if of a stream. It scans the stream directory to look for largest generation
+   * number in directory name.
+   *
+   * @param streamLocation location to scan for generation id
+   * @return the generation id
+   */
+  public static int getGeneration(Location streamLocation) throws IOException {
     // Default generation is 0.
     int genId = 0;
     CharMatcher numMatcher = CharMatcher.inRange('0', '9');
