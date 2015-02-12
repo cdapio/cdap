@@ -68,8 +68,8 @@ angular.module(PKG.name + '.feature.services')
         });
 
         angular.forEach($scope.queryParams, function(param, index) {
-          compiledUrl += (index === 0 ? '?': '=') +
-                          param.key + '=' + param.value;
+          compiledUrl += (index === 0 ? '?': '&') +
+                          param.key + '=' + encodeURIComponent(param.value);
         });
 
         dataSrc.request({
