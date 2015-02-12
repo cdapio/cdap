@@ -16,17 +16,17 @@
 
 package co.cask.cdap.conversion.app;
 
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
  * Workflow that periodically reads data from a stream and writes it into a time partitioned fileset.
  */
-public class StreamConversionWorkflow implements Workflow {
+public class StreamConversionWorkflow extends AbstractWorkflow {
+
   @Override
-  public void configure(WorkflowConfigurer configurer) {
-    configurer.setName("StreamConversionWorkflow");
-    configurer.setDescription("Periodically reads stream data and writes it into a FileSet");
-    configurer.addMapReduce("StreamConversionMapReduce");
+  public void configure() {
+    setName("StreamConversionWorkflow");
+    setDescription("Periodically reads stream data and writes it into a FileSet");
+    addMapReduce("StreamConversionMapReduce");
   }
 }
