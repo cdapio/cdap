@@ -20,7 +20,6 @@ module.directive('myFlowGraph', function () {
         var edges = scope.model.edges;
 
         var inner = d3.select('g');
-
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
 
@@ -42,7 +41,7 @@ module.directive('myFlowGraph', function () {
         });
 
         renderer(inner, g);
-      }
+      };
 
     }
   };

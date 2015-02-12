@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.services')
       })
         .state('services.detail.status', {
           url: '/status',
-          templateUrl: "/assets/features/services/templates/tabs/status.html",
+          templateUrl: '/assets/features/services/templates/tabs/status.html',
           ncyBreadcrumb: {
             skip: true
           }
@@ -60,21 +60,21 @@ angular.module(PKG.name + '.feature.services')
           })
         .state('services.detail.data', {
           url: '/data',
-          templateUrl: "/assets/features/services/templates/tabs/data.html",
+          templateUrl: '/assets/features/services/templates/tabs/data.html',
           ncyBreadcrumb: {
             skip: true
           }
         })
         .state('services.detail.metadata', {
           url: '/metadata',
-          templateUrl: "/assets/features/services/templates/tabs/metadata.html",
+          templateUrl: '/assets/features/services/templates/tabs/metadata.html',
           ncyBreadcrumb: {
             skip: true
           }
         })
         .state('services.detail.history', {
           url: '/history',
-          templateUrl: "/assets/features/services/templates/tabs/history.html",
+          templateUrl: '/assets/features/services/templates/tabs/history.html',
           ncyBreadcrumb: {
             skip: true
           }
@@ -83,16 +83,16 @@ angular.module(PKG.name + '.feature.services')
           url: '/logs?filter',
           reloadOnSearch: false,
           controller: 'ServicesLogsController',
-          template: '<my-log-viewer data-model="logs"></my-log-viewer>',
+          template: '<my-log-viewer data-model=\'logs\'></my-log-viewer>',
           ncyBreadcrumb: {
             skip: true
           }
         })
         .state('services.detail.resources', {
           url: '/resource',
-          templateUrl: "/assets/features/services/templates/tabs/resources.html",
+          templateUrl: '/assets/features/services/templates/tabs/resources.html',
           ncyBreadcrumb: {
             skip: true
           }
-        })
+        });
   });

@@ -9,11 +9,11 @@ angular.module(PKG.name + '.feature.services')
     var pattern = /\{([\s\S]*?)\}/g,
         dataSrc = new MyDataSource($scope);
 
-    $scope.requestUrl.split("?")
+    $scope.requestUrl.split('?')
       .forEach(function(item, index) {
         if (index === 0) {
           // url params
-          item.split("/")
+          item.split('/')
             .forEach(function(item) {
               if (item.length === 0) { return;}
               $scope.urlParams.push({
@@ -30,10 +30,10 @@ angular.module(PKG.name + '.feature.services')
                 key: ( angular.isArray(item.match(pattern)) ? item.match(pattern): null),
                 value: item
               });
-            })
+            });
         } else {
           // query params
-          item.split("&")
+          item.split('&')
             .forEach(function(item) {
               var pat;
               if (item.length === 0) { return;}
@@ -78,7 +78,7 @@ angular.module(PKG.name + '.feature.services')
         })
           .then(function(res) {
             $scope.response = res;
-          })
+          });
       };
 
 
