@@ -365,6 +365,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       if (!(dataset instanceof PartitionedFileSet)) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
+        return;
       }
       Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
 
@@ -385,6 +386,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       if (partitionKey == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
+        return;
       }
 
       String addPartitionStatement = generateAddPartitionStatement(datasetName, partitionKey, fsPath);
@@ -432,6 +434,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       if (!(dataset instanceof PartitionedFileSet)) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
+        return;
       }
       Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
 
@@ -447,6 +450,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       if (partitionKey == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
+        return;
       }
 
       String dropPartitionStatement = generateDropPartitionStatement(datasetName, partitionKey);
