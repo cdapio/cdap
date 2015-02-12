@@ -67,25 +67,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
         String tableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      // todo: remove + ".v2"
                                      MetricsConstants.DEFAULT_ENTITY_TABLE_NAME) + ".v2";
-        MetricsTable table = null;
-        while (table == null) {
-          try {
-            table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-          } catch (DatasetManagementException e) {
-            // dataset service may be not up yet
-            // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
-            LOG.warn("Cannot access entityTable, will retry in 1 sec.");
-            try {
-              TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException ie) {
-              Thread.currentThread().interrupt();
-              break;
-            }
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-        return new EntityTable(table);
+        return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
       }
     });
   }
@@ -93,21 +75,16 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
   @Override
   public FactTable get(int resolution) {
-    try {
-      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                   // todo: remove + ".v2"
-                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".v2" + ".ts." + resolution;
-      int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
+    String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                 // todo: remove + ".v2"
+                                 MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".v2" + ".ts." + resolution;
+    int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-      DatasetProperties props = ttl > 0 ?
-        DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
-      MetricsTable table = getOrCreateMetricsTable(tableName, props);
-      LOG.info("FactTable created: {}", tableName);
-      return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
-    } catch (Exception e) {
-      LOG.error("Exception in creating FactTable.", e);
-      throw Throwables.propagate(e);
-    }
+    DatasetProperties props = ttl > 0 ?
+      DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
+    MetricsTable table = getOrCreateMetricsTable(tableName, props);
+    LOG.info("FactTable created: {}", tableName);
+    return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
   @Override
@@ -124,10 +101,30 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     }
   }
 
-  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props)
-    throws DatasetManagementException, IOException {
+  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
 
-    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null, null);
+    MetricsTable table = null;
+    while (table == null) {
+      try {
+        table = DatasetsUtil.getOrCreateDataset(dsFramework, tableName,
+                                                MetricsTable.class.getName(), props, null, null);
+      } catch (DatasetManagementException e) {
+        // dataset service may be not up yet
+        // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
+        LOG.warn("Cannot access or create table {}, will retry in 1 sec.", tableName);
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      } catch (IOException e) {
+        LOG.error("Exception while creating table {}.", tableName, e);
+        throw Throwables.propagate(e);
+      }
+    }
+
+    return table;
   }
 
   @Override
