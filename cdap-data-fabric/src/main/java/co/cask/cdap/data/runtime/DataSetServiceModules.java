@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
@@ -107,6 +108,7 @@ public class DataSetServiceModules {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
@@ -155,6 +157,7 @@ public class DataSetServiceModules {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
@@ -203,6 +206,7 @@ public class DataSetServiceModules {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
