@@ -66,6 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -95,8 +96,6 @@ public class AdapterService extends AbstractIdleService {
   private final Store store;
   private final PreferencesStore preferencesStore;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
-  private final String archiveDir;
-
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
@@ -111,7 +110,6 @@ public class AdapterService extends AbstractIdleService {
     this.store = storeFactory.create();
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
-    archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
     this.adapterTypeInfos = Maps.newHashMap();
     this.preferencesStore = preferencesStore;
   }
@@ -328,7 +326,17 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-      Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
+      Location namespaceHomeLocation = locationFactory.create(namespaceId);
+      if (!namespaceHomeLocation.exists()) {
+        String msg = String.format("Home directory %s for namespace %s not found",
+                                   namespaceHomeLocation.toURI().getPath(), namespaceId);
+        LOG.error(msg);
+        throw new FileNotFoundException(msg);
+      }
+
+      String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+      Location destination = namespaceHomeLocation.append(appFabricDir)
+        .append(Constants.AppFabric.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
       DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
                                                          ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =

@@ -26,7 +26,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.file.FileAdmin;
 
 /**
- * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.FileSet}.
+ * {@link co.cask.cdap.api.dataset.module.DatasetModule}
+ * for {@link co.cask.cdap.api.dataset.lib.TimePartitionedFileSet}.
  */
 public class TimePartitionedFileSetModule implements DatasetModule {
   @Override

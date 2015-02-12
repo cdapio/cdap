@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,14 +21,23 @@ import co.cask.cdap.data2.increment.hbase98.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase98.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase98.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase98.HBaseQueueRegionObserver;
+import co.cask.cdap.proto.Id;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.NamespaceNotFoundException;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
@@ -38,6 +47,62 @@ import java.util.Map;
  *
  */
 public class HBase98TableUtil extends HBaseTableUtil {
+
+  @Override
+  public boolean namespacesSupported() {
+    return true;
+  }
+
+  @Override
+  public HTable getHTable(Configuration conf, TableId tableId) throws IOException {
+    Preconditions.checkArgument(tableId != null, "Table id should not be null");
+    return new HTable(conf, TableName.valueOf(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName()));
+  }
+
+  @Override
+  public HTableDescriptor getHTableDescriptor(TableId tableId) {
+    Preconditions.checkArgument(tableId != null, "Table id should not be null");
+    return new HTableDescriptor(TableName.valueOf(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName()));
+  }
+
+  @Override
+  public boolean hasNamespace(HBaseAdmin admin, Id.Namespace namespace) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
+    try {
+      admin.getNamespaceDescriptor(toHBaseNamespace(namespace));
+      return true;
+    } catch (NamespaceNotFoundException e) {
+      return false;
+    }
+  }
+
+  @Override
+  public void createNamespaceIfNotExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
+    if (!hasNamespace(admin, namespace)) {
+      NamespaceDescriptor namespaceDescriptor =
+        NamespaceDescriptor.create(toHBaseNamespace(namespace)).build();
+      admin.createNamespace(namespaceDescriptor);
+    }
+  }
+
+  @Override
+  public void deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
+    if (hasNamespace(admin, namespace)) {
+      admin.deleteNamespace(toHBaseNamespace(namespace));
+    }
+  }
+
+  @Override
+  public String getTableNameWithNamespace(TableId tableId) {
+    Preconditions.checkArgument(tableId != null, "TableId should not be null.");
+    return Joiner.on(':').join(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+  }
+
   @Override
   public void setCompression(HColumnDescriptor columnDescriptor, CompressionType type) {
     switch (type) {

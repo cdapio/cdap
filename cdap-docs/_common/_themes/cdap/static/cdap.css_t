@@ -215,7 +215,6 @@ a.headerlink:hover {
 
 div.body p, div.body dd, div.body li {
     line-height: 1.5em;
-    margin-right: 15px;
 }
 
 div.admonition p.admonition-title + p {
@@ -272,9 +271,19 @@ p.rubric {
     font-size: 120%;
     font-weight: normal;
     color: #111;
-    margin: 30px 0px 10px -15px;
+    margin: 30px 0px 10px 0px;
     padding: 5px 0 5px 15px;
     text-shadow: 0px 1px 0 white
+}
+
+.sidebar20.sidebar {
+  width: 20%;
+  text-align: center;
+}
+
+.sidebar30.sidebar {
+  width: 30%;
+  text-align: center;
 }
 
 em {

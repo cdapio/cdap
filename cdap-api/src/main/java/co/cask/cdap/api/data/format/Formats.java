@@ -24,4 +24,5 @@ public final class Formats {
   public static final String CSV = "csv";
   public static final String TSV = "tsv";
   public static final String TEXT = "text";
+  public static final String COMBINED_LOG_FORMAT = "clf";
 }

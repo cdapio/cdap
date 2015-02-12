@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -141,11 +142,37 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
+  public ListenableFuture<Void> addPartition(final String datasetName, final PartitionKey key, final String path) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doAddPartition(datasetName, key, path);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
   public ListenableFuture<Void> dropPartition(final String datasetName, final long time) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
         return doDropPartition(datasetName, time);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> dropPartition(final String datasetName, final PartitionKey key) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDropPartition(datasetName, key);
       }
     });
 

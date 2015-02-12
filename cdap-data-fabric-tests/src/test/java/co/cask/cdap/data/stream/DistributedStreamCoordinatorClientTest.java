@@ -19,18 +19,23 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -45,25 +50,37 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
 
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
-  private static Injector injector;
+  private static MiniDFSCluster dfsCluster;
+  private static StreamAdmin streamAdmin;
+  private static StreamCoordinatorClient coordinatorClient;
 
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
 
+    Configuration hConf = new Configuration();
+    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
+    dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
+    final FileSystem fileSystem = dfsCluster.getFileSystem();
+
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
-    injector = Guice.createInjector(
+    Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new TransactionMetricsModule(),
-      new LocationRuntimeModule().getDistributedModules(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
+        }
+      },
       Modules.override(new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -75,16 +92,27 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
-  }
 
-  @Override
-  protected StreamCoordinatorClient createStreamCoordinator() {
-    return injector.getInstance(StreamCoordinatorClient.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    coordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void finish() {
+    coordinatorClient.stopAndWait();
+    dfsCluster.shutdown();
     zkClient.stopAndWait();
     zkServer.stopAndWait();
+  }
+
+  @Override
+  protected StreamCoordinatorClient getStreamCoordinator() {
+    return coordinatorClient;
+  }
+
+  @Override
+  protected StreamAdmin getStreamAdmin() {
+    return streamAdmin;
   }
 }
