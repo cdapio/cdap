@@ -2,6 +2,7 @@
  * Controllers for Operation 2.8
  */
 
+
 angular.module(PKG.name+'.feature.operation28')
   .controller('Op28CdapCtrl', function ($scope, MyDataSource) {
 
@@ -19,30 +20,40 @@ angular.module(PKG.name+'.feature.operation28')
           chart: {
             metric: d[2],
             context: 'system',
-            history: null
+            history: null,
+            stream: null,
+            lastValue: 0
           }
         }
       });
 
     angular.forEach($scope.panels, function (panel) {
-      var c = panel.chart;
-      dataSrc.request(
-        {
-          _cdapPathV2: '/metrics/system/'+c.metric+'?start=now-65s&end=now-5s',
+      var c = panel.chart,
+          path = '/metrics/system/' + c.metric,
+          firstTime = true;
+
+      dataSrc.poll({
+          _cdapPathV2: path + '?start=now-61s&end=now-1s',
           method: 'GET'
         },
         function (res) {
-          c.history = [
-            {
+          var v = res.data.map(function (o) {
+            return {
+              time: o.time,
+              y: o.value
+            };
+          });
+          if(firstTime) {
+            c.history = [{
               label: c.metric,
-              values: res.data.map(function (o) {
-                return {
-                  time: o.time,
-                  y: o.value
-                };
-              })
-            }
-          ];
+              values: v
+            }];
+            firstTime = false;
+          }
+          else {
+            c.stream = v.slice(-10);
+          }
+          c.lastValue = res.data.pop().y;
         }
       );
 

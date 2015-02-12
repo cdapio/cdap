@@ -67,7 +67,10 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
           $scope.me.update(newVal);
         }
         else if (newVal && newVal.length) {
-          $scope.me.push(newVal);
+          for (var i = 0; i < newVal.length; i++) {
+            $scope.me.push([newVal[i]]);
+          };
+
         }
       });
     }
@@ -105,31 +108,11 @@ ngEpoch.directive('epochBar', function () {
   }, baseDirective);
 });
 
-ngEpoch.directive('epochLiveBar', function () {
-  return angular.extend({
-    link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'time.bar', attr);
-    }
-  }, baseDirective);
-});
-
-
 
 ngEpoch.directive('epochLine', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initEpoch(elem, 'time.line', attr);
-    }
-  }, baseDirective);
-});
-
-ngEpoch.directive('epochLiveLine', function () {
-  return angular.extend({
-    link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'time.line', attr, {
-        axes: ['left', 'bottom'],
-        ticks: { left: 5, time: 15 }
-      });
     }
   }, baseDirective);
 });
@@ -143,16 +126,6 @@ ngEpoch.directive('epochArea', function () {
     }
   }, baseDirective);
 });
-
-ngEpoch.directive('epochLiveArea', function () {
-  return angular.extend({
-    link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'time.area', attr);
-    }
-  }, baseDirective);
-});
-
-
 
 
 ngEpoch.directive('epochGauge', function () {
