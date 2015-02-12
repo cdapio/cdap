@@ -1,4 +1,4 @@
-angular.module(PKG.name+'.feature.dashboard')
+angular.module(PKG.name+'.feature.operation28')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
     // $urlRouterProvider
@@ -18,19 +18,26 @@ angular.module(PKG.name+'.feature.dashboard')
         },
         url: '/operations',
         templateUrl: path + 'ops.html',
-        controller: 'OperationsCtrl'
+        controller: function ($state) {
+          if($state.is('operations')) {
+            $state.go('operations.cdap');
+          }
+        }
       })
         .state('operations.cdap', {
           url: '/cdap',
-          templateUrl: path + 'tab/cdap.html'
+          templateUrl: path + 'tab/charts.html',
+          controller: 'Op28CdapCtrl'
         })
         .state('operations.system', {
           url: '/system',
-          templateUrl: path + 'tab/system.html'
+          templateUrl: path + 'tab/charts.html',
+          controller: 'Op28SystemCtrl'
         })
         .state('operations.apps', {
           url: '/apps',
-          templateUrl: path + 'tab/apps.html'
+          templateUrl: path + 'tab/apps.html',
+          controller: 'Op28AppsCtrl'
         })
       ;
 

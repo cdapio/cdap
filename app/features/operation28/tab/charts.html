@@ -1,0 +1,29 @@
+<div class="row">
+  <div class="col-xs-3" ng-repeat="panel in panels">
+    <div class="panel panel-default">
+      <div class="panel-heading text-center">
+        <h4 class="panel-title"
+            ng-bind="panel.title"
+        ></h4>
+      </div>
+
+      <div class="panel-body">
+
+        <p class="text-center">
+          <span class="badge">{{panel.chart.history[panel.chart.history.length-1].value || '0'}}</span>
+          <strong>{{panel.unit}}</strong>
+        </p>
+
+        <epoch-line
+          data-history="panel.chart.history"
+          chart-height="200"
+          chart-ticks="{ bottom: 1 }"
+          chart-axes="['left', 'bottom']"
+        ></epoch-line>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
