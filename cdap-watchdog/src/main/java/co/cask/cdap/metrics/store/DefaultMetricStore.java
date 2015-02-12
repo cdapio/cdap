@@ -155,7 +155,7 @@ public class DefaultMetricStore implements MetricStore {
     // todo: implement metric ttl
   }
 
-  private void replaceTagsIfNeeded(List<TagValue> tagValues) {
+  private void replaceTagValuesIfNeeded(List<TagValue> tagValues) {
     for (int i = 0; i < tagValues.size(); i++) {
       TagValue tagValue = tagValues.get(i);
       String tagNameReplacement = tagMapping.get(tagValue.getTagName());
@@ -167,13 +167,13 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
-    replaceTagsIfNeeded(query.getTagValues());
+    replaceTagValuesIfNeeded(query.getTagValues());
     return cube.get().findNextAvailableTags(query);
   }
 
   @Override
   public Collection<String> findMetricNames(CubeExploreQuery query) throws Exception {
-    replaceTagsIfNeeded(query.getTagValues());
+    replaceTagValuesIfNeeded(query.getTagValues());
     return cube.get().getMeasureNames(query);
   }
 
