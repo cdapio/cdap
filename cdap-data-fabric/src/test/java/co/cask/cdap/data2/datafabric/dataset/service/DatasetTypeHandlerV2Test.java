@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,9 +39,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Unit-test for {@link DatasetTypeHandler}
+ * Unit-test for {@link DatasetTypeHandlerV2}
  */
-public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
+public class DatasetTypeHandlerV2Test extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {

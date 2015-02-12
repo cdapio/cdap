@@ -22,6 +22,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -96,6 +97,7 @@ public abstract class GatewayTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static NotificationService notificationService;
+  private static StreamService streamService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -179,6 +181,8 @@ public abstract class GatewayTestBase {
     metricsCollectionService.startAndWait();
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -193,6 +197,7 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
+    streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
