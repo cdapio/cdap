@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,10 +86,12 @@ public class DatasetService extends AbstractExecutionThreadService {
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, locationFactory, cConf);
     DatasetTypeHandlerV2 datasetTypeHandlerV2 = new DatasetTypeHandlerV2(datasetTypeHandler);
+    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
+                                                                               opExecutorClient, exploreFacade, cConf);
+    DatasetInstanceHandlerV2 datasetInstanceHandlerV2 = new DatasetInstanceHandlerV2(datasetInstanceHandler);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler, datasetTypeHandlerV2,
-                                             new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
-                                                                        exploreFacade, cConf)));
+                                             datasetInstanceHandler, datasetInstanceHandlerV2));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
