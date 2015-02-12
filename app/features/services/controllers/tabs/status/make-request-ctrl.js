@@ -13,11 +13,13 @@ angular.module(PKG.name + '.feature.services')
 
     $scope.requestUrl.split('?')
       .forEach(function(item, index) {
+        var patternMatch;
         if (index === 0) {
           // url params
           item.split('/')
             .forEach(function(item) {
               if (item.length === 0) { return;}
+              patternMatch = item.match(pattern);
               $scope.urlParams.push({
                 /* If the url param matches the pattern {param1}
                     then add that as key,
@@ -29,7 +31,7 @@ angular.module(PKG.name + '.feature.services')
                     usertyped value where as in the latter example null will
                     be added to key and will be just displayed in the template.
                  */
-                key: ( angular.isArray(item.match(pattern)) ? item.match(pattern): null),
+                key: ( angular.isArray(patternMatch) ? patternMatch: null),
                 value: item
               });
             });
@@ -37,7 +39,8 @@ angular.module(PKG.name + '.feature.services')
           // query params
           item.split('&')
             .forEach(function(item) {
-              var pat;
+              var pat,
+                  keyValArr;
               if (item.length === 0) { return;}
               pat = item.match(pattern);
               // Could be dynamic or static query params.
@@ -51,9 +54,10 @@ angular.module(PKG.name + '.feature.services')
                   value: pat[0]
                 });
               } else {
+                keyValArr = item.split('=');
                 $scope.queryParams.push({
-                  key: item.split('=')[0],
-                  value: item.split('=')[1]
+                  key: keyValArr[0],
+                  value: keyValArr[1]
                 });
               }
             });
@@ -85,18 +89,18 @@ angular.module(PKG.name + '.feature.services')
         });
       }
 
-      $scope.$watch('queryParams', resetResponse, true);
-      $scope.$watch('urlParams', resetResponse, true);
-
-      function resetResponse() {
-        $scope.response = null;
-      }
-
       dataSrc.request(requestObj)
         .then(function(res) {
           $scope.response = res;
         });
     };
+
+    $scope.$watch('queryParams', resetResponse, true);
+    $scope.$watch('urlParams', resetResponse, true);
+
+    function resetResponse() {
+      $scope.response = null;
+    }
 
 
   });
