@@ -465,7 +465,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     @Override
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
-      json.addProperty("streamId", GSON.toJson(src.getStreamId()));
+      json.add("streamId", GSON.toJsonTree(src.getStreamId()));
       if (src.getTTL() != null) {
         json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       }
