@@ -21,8 +21,8 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.Updates;
+import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.dataset2.lib.table.Updates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 

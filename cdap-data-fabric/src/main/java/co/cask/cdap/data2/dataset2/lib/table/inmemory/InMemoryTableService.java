@@ -17,10 +17,10 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.IncrementValue;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.Updates;
+import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
+import co.cask.cdap.data2.dataset2.lib.table.PutValue;
+import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.dataset2.lib.table.Updates;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;

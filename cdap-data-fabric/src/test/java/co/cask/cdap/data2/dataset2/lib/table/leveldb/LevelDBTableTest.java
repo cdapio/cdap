@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;

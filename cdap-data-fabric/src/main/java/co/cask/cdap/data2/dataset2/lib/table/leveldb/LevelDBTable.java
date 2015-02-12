@@ -19,10 +19,10 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingTable;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.IncrementValue;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
+import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
+import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
+import co.cask.cdap.data2.dataset2.lib.table.PutValue;
+import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
 

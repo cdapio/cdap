@@ -17,8 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
+import co.cask.cdap.data2.dataset2.lib.table.PutValue;
+import co.cask.cdap.data2.dataset2.lib.table.Update;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;

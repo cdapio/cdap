@@ -36,6 +36,12 @@ public interface OrderedTable extends Dataset {
   String PROPERTY_TTL = Table.PROPERTY_TTL;
 
   /**
+   * @deprecated since 2.8.0. Use {@link Table#PROPERTY_READLESS_INCREMENT} instead.
+   */
+  @Deprecated
+  String PROPERTY_READLESS_INCREMENT = Table.PROPERTY_READLESS_INCREMENT;
+
+  /**
    * Reads the values of the specified columns in the specified row.
    * <p>
    * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present

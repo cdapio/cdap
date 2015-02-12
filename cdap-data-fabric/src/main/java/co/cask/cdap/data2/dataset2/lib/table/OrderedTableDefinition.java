@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,13 +31,13 @@ import java.util.Map;
  * Defines Table data set
  */
 @Deprecated
-public class OrderedTableDefinition extends AbstractDatasetDefinition<Table, DatasetAdmin> {
+public class OrderedTableDefinition extends AbstractDatasetDefinition<OrderedTable, DatasetAdmin> {
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public OrderedTableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
+  public OrderedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDefinition) {
     super(name);
-    this.tableDef = orderedTableDefinition;
+    this.tableDef = tableDefinition;
   }
 
   @Override
@@ -54,8 +54,9 @@ public class OrderedTableDefinition extends AbstractDatasetDefinition<Table, Dat
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+  public OrderedTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
-    return tableDef.getDataset(spec.getSpecification(""), arguments, classLoader);
+    Table table = tableDef.getDataset(spec.getSpecification(""), arguments, classLoader);
+    return new OrderedTableDataset(spec.getName(), table);
   }
 }

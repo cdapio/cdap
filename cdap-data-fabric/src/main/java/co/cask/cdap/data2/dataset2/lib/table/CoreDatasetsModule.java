@@ -48,7 +48,8 @@ public class CoreDatasetsModule implements DatasetModule {
     DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
 
     // TODO: remove OrderedTable registration when OrderedTable is removed
-    DatasetDefinition<Table, DatasetAdmin> orderedTableDef = new OrderedTableDefinition("orderedTable", tableDef);
+    DatasetDefinition<OrderedTable, DatasetAdmin> orderedTableDef =
+        new OrderedTableDefinition("orderedTable", tableDef);
     registry.add(orderedTableDef);
     registry.add(new OrderedTableDefinition(OrderedTable.class.getName(), tableDef));
 

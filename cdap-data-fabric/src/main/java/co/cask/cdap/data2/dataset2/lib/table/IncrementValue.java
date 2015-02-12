@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,31 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.ordered;
+package co.cask.cdap.data2.dataset2.lib.table;
 
+import co.cask.cdap.api.common.Bytes;
 
 /**
- * Represents a normal (full) write to a datastore for in-memory buffering, overwriting the previously stored value.
+ * Represents an incremental write to a datastore for in-memory buffering.  To read the current value, all
+ * incremental writes for a field must be summed, along with the most recent {@link PutValue}, if any.
  */
-public class PutValue implements Update<byte[]> {
-  private final byte[] bytes;
+public class IncrementValue implements Update<Long> {
+  private final Long value;
 
-  public PutValue(byte[] bytes) {
-    this.bytes = bytes;
+  public IncrementValue(Long value) {
+    this.value = value;
   }
 
   @Override
-  public byte[] getValue() {
-    return bytes;
+  public Long getValue() {
+    return value;
   }
 
   @Override
   public byte[] getBytes() {
-    return bytes;
+    return Bytes.toBytes(value);
   }
 
   @Override
-  public Update<byte[]> deepCopy() {
-    return new PutValue(bytes == null ? null : bytes.clone());
+  public Update<Long> deepCopy() {
+    // it is immutable, safe to return itself
+    return this;
   }
 }

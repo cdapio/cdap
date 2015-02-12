@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,9 @@ import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
 /**
+ * A dataset exposing the {@link OrderedTable} interface.
  *
+ * @deprecated since 2.8.0, use {@link Table} datasets instead.
  */
 @Deprecated
 class OrderedTableDataset extends AbstractDataset implements OrderedTable {
