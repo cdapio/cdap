@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -66,11 +67,23 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
         String tableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      // todo: remove + ".v2"
                                      MetricsConstants.DEFAULT_ENTITY_TABLE_NAME) + ".v2";
-        MetricsTable table;
-        try {
-          table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
+        MetricsTable table = null;
+        while (table == null) {
+          try {
+            table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
+          } catch (DatasetManagementException e) {
+            // dataset service may be not up yet
+            // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
+            LOG.warn("Cannot access entityTable, will retry in 1 sec.");
+            try {
+              TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
         }
         return new EntityTable(table);
       }
@@ -92,7 +105,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       LOG.info("FactTable created: {}", tableName);
       return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
     } catch (Exception e) {
-      LOG.error("Exception in creating TimeSeriesTable.", e);
+      LOG.error("Exception in creating FactTable.", e);
       throw Throwables.propagate(e);
     }
   }
