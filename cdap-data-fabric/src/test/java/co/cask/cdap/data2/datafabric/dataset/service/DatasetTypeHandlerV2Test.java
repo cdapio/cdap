@@ -39,9 +39,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Unit-test for {@link DatasetTypeHandler}
+ * Unit-test for {@link DatasetTypeHandlerV2}
  */
-public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
+public class DatasetTypeHandlerV2Test extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
