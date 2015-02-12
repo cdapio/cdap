@@ -1,0 +1,21 @@
+<div class="pull-right">
+  <a class="btn btn-default" ui-sref="dashboard({namespace:'default'})">
+    <span class="fa fa-bar-chart"></span>
+    dashboard
+  </a>
+</div>
+
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="operations.cdap" role="tab">CDAP</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="operations.system" role="tab">System Resources</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="operations.apps" role="tab">App Resources</a>
+  </li>
+</ul>
+
+<br />
+<ui-view role="tabpanel"></ui-view>

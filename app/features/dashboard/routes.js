@@ -1,10 +1,6 @@
 angular.module(PKG.name+'.feature.dashboard')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
-    $urlRouterProvider
-      .when('/dashboard', '/dashboard/0');
-
-
     /**
      * State Configurations
      */

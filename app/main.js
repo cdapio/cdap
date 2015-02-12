@@ -8,6 +8,7 @@ angular
       PKG.name+'.feature.overview',
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
+      PKG.name+'.feature.operation28',
       PKG.name+'.feature.apps',
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
