@@ -21,7 +21,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Table;
@@ -71,15 +73,20 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
   }
 
   // if the arguments do not contain an output path, but an output partition time, generate an output path from that;
+  // also convert the output partition time to a partition key and add it to the arguments;
   // also call the super class' method to update arguments if it needs to
   protected Map<String, String> updateArgumentsIfNeeded(Map<String, String> arguments) {
-    if (FileSetArguments.getOutputPath(arguments) == null) {
-      Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(arguments);
-      if (time != null) {
+    Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(arguments);
+    if (time != null) {
+      // set the output path according to partition time
+      if (FileSetArguments.getOutputPath(arguments) == null) {
         String path = String.format("%tF/%tH-%tM.%d", time, time, time, time);
         arguments = Maps.newHashMap(arguments);
         FileSetArguments.setOutputPath(arguments, path);
       }
+      // add the corresponding partition key to the arguments
+      PartitionKey outputKey = TimePartitionedFileSetDataset.partitionKeyForTime(time);
+      PartitionedFileSetArguments.setOutputPartitionKey(arguments, outputKey);
     }
     // delegate to super class for anything it needs to do
     return updateArgumentsIfNeeded(arguments, TimePartitionedFileSetDataset.PARTITIONING);

@@ -33,7 +33,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -239,6 +238,10 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public Map<String, String> getInputFormatConfiguration() {
     Long startTime = TimePartitionedFileSetArguments.getInputStartTime(getRuntimeArguments());
     Long endTime = TimePartitionedFileSetArguments.getInputEndTime(getRuntimeArguments());
+    if (startTime == null && endTime == null) {
+      // no times specified, perhaps a partition filter was specified? super will deal with that
+      return super.getInputFormatConfiguration();
+    }
     if (startTime == null) {
       throw new DataSetException("Start time for input time range must be given as argument.");
     }
@@ -251,22 +254,6 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
       inputLocations.add(getEmbeddedFileSet().getLocation(path));
     }
     return getEmbeddedFileSet().getInputFormatConfiguration(inputLocations);
-  }
-
-  @Override
-  public Map<String, String> getOutputFormatConfiguration() {
-    // all runtime arguments are passed on to the file set, so we can expect the partition time in the file set's
-    // output format configuration. If it is not there, the output format will fail to register this partition.
-    Map<String, String> config = getEmbeddedFileSet().getOutputFormatConfiguration();
-    Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(getRuntimeArguments());
-    if (time == null) {
-      throw new DataSetException("Time must be given for the new output partition as a runtime argument.");
-    }
-    // add the output partition time to the output arguments of the embedded file set
-    Map<String, String> outputArgs = Maps.newHashMap();
-    outputArgs.putAll(config);
-    TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time);
-    return ImmutableMap.copyOf(outputArgs);
   }
 
   @Override

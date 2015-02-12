@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
@@ -159,16 +160,45 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
    */
   @Test
   public void testOutputPartitionPath() throws Exception {
+    // test specifying output time
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
     TimePartitionedFileSet ds = getInstance("tpfs", args);
 
-    String outputPath = ds.getUnderlyingFileSet().getOutputLocation().toURI().getPath();
+    String outputPath = ds.getEmbeddedFileSet().getOutputLocation().toURI().getPath();
     Assert.assertTrue(outputPath.endsWith("2015-01-01/20-42." + date.getTime()));
 
     Map<String, String> outputConfig = ds.getOutputFormatConfiguration();
     Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20-42." + date.getTime()));
+
+    // test specifying output time and partition key -> time should prevail
+    PartitionKey key = PartitionKey.builder()
+      .addIntField("year", 2014)
+      .addIntField("month", 1)
+      .addIntField("day", 1)
+      .addIntField("hour", 20)
+      .addIntField("minute", 54)
+      .build();
+    TimePartitionedFileSet ds1 = getInstance("tpfs", args);
+    TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
+    outputConfig = ds1.getOutputFormatConfiguration();
+    Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20-42." + date.getTime()));
+
+    args.clear();
+    TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
+    TimePartitionedFileSet ds2 = getInstance("tpfs", args);
+    outputConfig = ds2.getOutputFormatConfiguration();
+    Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("54"));
+
+    args.clear();
+    TimePartitionedFileSet ds3 = getInstance("tpfs", args);
+    try {
+      ds3.getOutputFormatConfiguration();
+      Assert.fail("getOutputFormatConfiguration should have failed with neither output time nor partition key");
+    } catch (DataSetException e) {
+      // expected
+    }
   }
 
   /**
@@ -543,4 +573,82 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   private static Set<String> pp(String... paths) {
     return ImmutableSet.copyOf(paths);
   }
+
+  @Test
+  public void testTimePartitionedInputArguments() throws Exception {
+
+    final long time8 = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
+    final long time9 = DATE_FORMAT.parse("10/17/2014 9:42 am").getTime();
+
+    final String path8 = "8:42";
+    final String path9 = "9:42";
+
+    final PartitionFilter filter9 = PartitionFilter.builder().addRangeCondition("hour", 9, null).build();
+
+    // add a few partitions
+    {
+      final TimePartitionedFileSet dataset = getInstance("tpfs");
+      newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          dataset.addPartition(time8, path8);
+          dataset.addPartition(time9, path9);
+        }
+      });
+    }
+
+    // test specifying time range for input
+    Map<String, String> arguments = Maps.newHashMap();
+    TimePartitionedFileSetArguments.setInputStartTime(arguments, time8 - 30 * MINUTE);
+    TimePartitionedFileSetArguments.setInputEndTime(arguments, time8 + 30 * MINUTE);
+    testInputConfiguration(arguments, path8);
+
+    // add a partition filter. it should not have an effect as long as there is a time range
+    TimePartitionedFileSetArguments.setInputPartitionFilter(arguments, filter9);
+    testInputConfiguration(arguments, path8);
+
+    // test specifying input with a partition filter
+    arguments.clear();
+    TimePartitionedFileSetArguments.setInputPartitionFilter(arguments, filter9);
+    testInputConfiguration(arguments, path9);
+
+    // test specifying only a start time or only an end time for input, or none
+    arguments.clear();
+    TimePartitionedFileSetArguments.setInputStartTime(arguments, time8 + 30 * MINUTE);
+    testInputConfigurationFailure(arguments, " with only a start time");
+    arguments.clear();
+    TimePartitionedFileSetArguments.setInputEndTime(arguments, time8 + 30 * MINUTE);
+    testInputConfigurationFailure(arguments, " with only an end time");
+    arguments.clear();
+    testInputConfigurationFailure(arguments, " without a time range");
+  }
+
+  private void testInputConfiguration(Map<String, String> arguments, final String expectedPath) throws Exception {
+    final TimePartitionedFileSet dataset = getInstance("tpfs", arguments);
+    newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Map<String, String> inputConf = dataset.getInputFormatConfiguration();
+        String input = inputConf.get("mapred.input.dir");
+        Assert.assertNotNull(input);
+        String[] inputs = input.split(",");
+        Assert.assertEquals(1, inputs.length);
+        Assert.assertTrue(inputs[0].endsWith(expectedPath));
+      }});
+  }
+
+  private void testInputConfigurationFailure(Map<String, String> arguments, final String why) throws Exception {
+    final TimePartitionedFileSet dataset = getInstance("tpfs", arguments);
+    newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        try {
+          dataset.getInputFormatConfiguration();
+          Assert.fail("getInputFormatConfiguration should fail " + why);
+        } catch (Exception e) {
+          // expected
+        }
+      }});
+  }
+
 }

@@ -28,7 +28,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -115,7 +114,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           exploreFacade.addPartition(getName(), key, files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
           throw new DataSetException(String.format(
-            "Unable to add partition for time %s with path %s to explore table.", key.toString(), path), e);
+            "Unable to add partition for key %s with path %s to explore table.", key.toString(), path), e);
         }
       }
     }
@@ -136,7 +135,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           exploreFacade.dropPartition(getName(), key);
         } catch (Exception e) {
           throw new DataSetException(String.format(
-            "Unable to drop partition for time %s from explore table.", key.toString()), e);
+            "Unable to drop partition for key %s from explore table.", key.toString()), e);
         }
       }
     }
@@ -249,7 +248,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public <T> Class<? extends T> getOutputFormatClass() {
-    // we verify that the output partition time is configured in getOutputFormatConfiguration()
+    // we verify that the output partition key is configured in getOutputFormatConfiguration()
     // todo use a wrapper that adds the new partition when the job is committed - that means we must serialize the
     //      cconf into the hadoop conf to be able to instantiate this dataset in the output committer
     return files.getOutputFormatClass();
@@ -257,17 +256,18 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
-    // all runtime arguments are passed on to the file set, so we can expect the partition time in the file set's
-    // output format configuration. If it is not there, the output format will fail to register this partition.
-    Map<String, String> config = files.getOutputFormatConfiguration();
-    Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(runtimeArguments);
-    if (time == null) {
-      throw new DataSetException("Time must be given for the new output partition as a runtime argument.");
+    // we set the fileset's output path in the definition's getDataset(), so there is no need to configure it again.
+    // here we just want to validate that an output partition key was specified in the arguments.
+    PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
+    if (outputKey == null) {
+      throw new DataSetException("Partition key must be given for the new output partition as a runtime argument.");
     }
-    // add the output partition time to the output arguments of the embedded file set
+    // copy the output partition key to the output arguments of the embedded file set
+    // this will be needed by the output format to register the new partition.
+    Map<String, String> config = files.getOutputFormatConfiguration();
     Map<String, String> outputArgs = Maps.newHashMap();
     outputArgs.putAll(config);
-    TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time);
+    PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
     return ImmutableMap.copyOf(outputArgs);
   }
 
