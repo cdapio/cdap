@@ -46,7 +46,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void updateConfig(StreamProperties properties) throws IOException {
+  public void updateConfig(String streamName, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 

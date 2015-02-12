@@ -69,7 +69,6 @@ public class StreamClientTestRun extends ClientTestBase {
     Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
     StreamProperties config = streamClient.getConfig(testStreamId);
     Assert.assertNotNull(config);
-    Assert.assertEquals(testStreamId, config.getName());
     // TODO: getting and setting config for stream is not supported with in-memory
 //    streamClient.setTTL(testStreamId, 123);
 //    streamClient.sendEvent(testStreamId, testStreamEvent);
