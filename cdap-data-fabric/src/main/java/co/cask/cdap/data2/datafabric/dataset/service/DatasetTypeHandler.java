@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset type management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path(Constants.Gateway.API_VERSION_2)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetTypeHandler extends AbstractHttpHandler {
   public static final String HEADER_CLASS_NAME = "X-Class-Name";
 
@@ -87,7 +87,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/modules")
-  public void listModules(HttpRequest request, final HttpResponder responder) {
+  public void listModules(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     // Sorting by name for convenience
     List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules());
     Collections.sort(list, new Comparator<DatasetModuleMeta>() {
@@ -101,7 +101,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/data/modules")
-  public void deleteModules(HttpRequest request, final HttpResponder responder) {
+  public void deleteModules(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
     try {
       manager.deleteModules();
       responder.sendStatus(HttpResponseStatus.OK);
@@ -112,8 +113,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @PUT
   @Path("/data/modules/{name}")
-  public BodyConsumer addModule(final HttpRequest request, final HttpResponder responder,
-                                @PathParam("name") final String name,
+  public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
                                 @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
 
     // Store uploaded content to a local temp file
@@ -186,7 +187,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/data/modules/{name}")
-  public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
+  public void deleteModule(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
     boolean deleted;
     try {
       deleted = manager.deleteModule(name);
@@ -205,7 +207,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/modules/{name}")
-  public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
+  public void getModuleInfo(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
     DatasetModuleMeta moduleMeta = manager.getModule(name);
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -216,7 +219,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/types")
-  public void listTypes(HttpRequest request, final HttpResponder responder) {
+  public void listTypes(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId) {
     // Sorting by name for convenience
     List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes());
     Collections.sort(list, new Comparator<DatasetTypeMeta>() {
@@ -230,8 +234,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/types/{name}")
-  public void getTypeInfo(HttpRequest request, final HttpResponder responder,
-                      @PathParam("name") String name) {
+  public void getTypeInfo(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
 
     DatasetTypeMeta typeMeta = manager.getTypeInfo(name);
     if (typeMeta == null) {

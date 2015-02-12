@@ -84,9 +84,10 @@ public class DatasetService extends AbstractExecutionThreadService {
                         Set<DatasetMetricsReporter> metricReporters) throws Exception {
 
     this.typeManager = typeManager;
-
+    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, locationFactory, cConf);
+    DatasetTypeHandlerV2 datasetTypeHandlerV2 = new DatasetTypeHandlerV2(datasetTypeHandler);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
-    builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
+    builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler, datasetTypeHandlerV2,
                                              new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
                                                                         exploreFacade, cConf)));
 

@@ -89,10 +89,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // type meta should have 2 modules that has to be loaded to create type's class and in the order they must be loaded
     List<DatasetModuleMeta> modules = datasetInfo.getType().getModules();
     Assert.assertEquals(2, modules.size());
-    DatasetTypeHandlerTest.verify(modules.get(0), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
-                                  Collections.<String>emptyList(), ImmutableList.of("module2"));
-    DatasetTypeHandlerTest.verify(modules.get(1), "module2", TestModule2.class, ImmutableList.of("datasetType2"),
-                                  ImmutableList.of("module1"), Collections.<String>emptyList());
+    DatasetTypeHandlerV2Test.verify(modules.get(0), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
+                                    Collections.<String>emptyList(), ImmutableList.of("module2"));
+    DatasetTypeHandlerV2Test.verify(modules.get(1), "module2", TestModule2.class, ImmutableList.of("datasetType2"),
+                                    ImmutableList.of("module1"), Collections.<String>emptyList());
 
     // try to retrieve non-existed instance
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());
