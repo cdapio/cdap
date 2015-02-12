@@ -37,7 +37,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *  HttpHandler class for app-fabric requests.
+ *  HttpHandler class for stream requests in app-fabric.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
@@ -53,14 +53,12 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
 
-
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
   public AppFabricStreamHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                     StoreFactory storeFactory, DatasetFramework dsFramework) {
-
     super(authenticator);
     this.store = storeFactory.create();
     this.dsFramework =

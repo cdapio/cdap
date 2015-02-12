@@ -63,7 +63,7 @@ import javax.ws.rs.QueryParam;
 /**
  * A HTTP handler for handling getting stream events.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();

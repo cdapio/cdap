@@ -17,9 +17,11 @@
 package co.cask.cdap.gateway.handlers.hooks;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.gateway.MockMetricsCollectionService;
+import com.google.common.base.Joiner;
 import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -60,7 +62,10 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String context = Constants.SYSTEM_NAMESPACE + "." + Constants.Stream.STREAM_HANDLER + ".StreamHandler.getInfo";
+    String context = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                         Constants.Stream.STREAM_HANDLER,
+                                         StreamHandlerV2.class.getSimpleName(),
+                                         "getInfo");
     long received = mockMetricsCollectionService.getMetrics(context, "request.received");
     long successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
     long clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
