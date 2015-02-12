@@ -8,7 +8,7 @@ angular.module(PKG.name + '.feature.services')
     $scope.response = null;
     $scope.postBody = {};
 
-    var pattern = /\{([\s\S]*?)\}/g,
+    var pattern = /\{([\w\-]+)\}/g,
         dataSrc = new MyDataSource($scope);
 
     $scope.requestUrl.split('?')
