@@ -23,13 +23,13 @@ import com.google.common.base.Objects;
  */
 public class StreamProperties {
 
-  private final String name;
+  private final Id.Stream streamId;
   private final Long ttl;
   private final FormatSpecification format;
   private final Integer threshold;
 
-  public StreamProperties(String name, Long ttl, FormatSpecification format, Integer threshold) {
-    this.name = name;
+  public StreamProperties(Id.Stream streamId, Long ttl, FormatSpecification format, Integer threshold) {
+    this.streamId = streamId;
     this.ttl = ttl;
     this.format = format;
     this.threshold = threshold;
@@ -38,8 +38,8 @@ public class StreamProperties {
   /**
    * @return Name of the stream.
    */
-  public String getName() {
-    return name;
+  public Id.Stream getStreamId() {
+    return streamId;
   }
 
   /**
@@ -75,7 +75,7 @@ public class StreamProperties {
 
     StreamProperties that = (StreamProperties) o;
 
-    return Objects.equal(name, that.name) &&
+    return Objects.equal(streamId, that.streamId) &&
       Objects.equal(ttl, that.ttl) &&
       Objects.equal(format, that.format) &
       Objects.equal(threshold, that.threshold);
@@ -83,13 +83,13 @@ public class StreamProperties {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, ttl, format, threshold);
+    return Objects.hashCode(streamId, ttl, format, threshold);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("name", name)
+      .add("streamId", streamId)
       .add("ttl", ttl)
       .add("format", format)
       .add("threshold", threshold)

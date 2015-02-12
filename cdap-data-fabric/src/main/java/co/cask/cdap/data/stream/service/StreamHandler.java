@@ -51,7 +51,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
@@ -168,7 +167,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       StreamProperties streamProperties =
-        new StreamProperties(streamConfig.getStreamId().getName(), streamConfig.getTTL(), streamConfig.getFormat(),
+        new StreamProperties(streamConfig.getStreamId(), streamConfig.getTTL(), streamConfig.getFormat(),
                              streamConfig.getNotificationThresholdMB());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
@@ -285,7 +284,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    StreamProperties properties = getAndValidateConfig(stream, request, responder);
+    StreamProperties properties = getAndValidateConfig(streamId, request, responder);
     // null is returned if the requested config is invalid. An appropriate response will have already been written
     // to the responder so we just need to return.
     if (properties == null) {
@@ -339,7 +338,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Gets stream properties from the request. If there is request is invalid, response will be made and {@code null}
    * will be return.
    */
-  private StreamProperties getAndValidateConfig(String stream, HttpRequest request, HttpResponder responder) {
+  private StreamProperties getAndValidateConfig(Id.Stream streamId, HttpRequest request, HttpResponder responder) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     StreamProperties properties;
     try {
@@ -391,7 +390,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return null;
     }
 
-    return new StreamProperties(stream, ttl, formatSpec, threshold);
+    return new StreamProperties(streamId, ttl, formatSpec, threshold);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -466,7 +465,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     @Override
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
-      json.addProperty("name", src.getName());
+      json.add("streamId", GSON.toJsonTree(src.getStreamId()));
       if (src.getTTL() != null) {
         json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       }
@@ -483,14 +482,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     public StreamProperties deserialize(JsonElement json, Type typeOfT,
                                         JsonDeserializationContext context) throws JsonParseException {
       JsonObject jsonObj = json.getAsJsonObject();
-      String name = jsonObj.has("name") ? jsonObj.getAsJsonPrimitive("name").getAsString() : null;
+      Id.Stream streamId = GSON.fromJson(jsonObj.get("streamId"), Id.Stream.class);
       Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
       FormatSpecification format = null;
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
       Integer threshold = jsonObj.has("threshold") ? jsonObj.get("threshold").getAsInt() : null;
-      return new StreamProperties(name, ttl, format, threshold);
+      return new StreamProperties(streamId, ttl, format, threshold);
     }
   }
 }

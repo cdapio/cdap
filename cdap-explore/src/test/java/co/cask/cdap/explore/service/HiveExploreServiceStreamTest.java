@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.SlowTests;
@@ -188,7 +189,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     );
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO, schema, Collections.<String, String>emptyMap());
-    StreamProperties properties = new StreamProperties("avroStream", Long.MAX_VALUE, formatSpecification, 1000);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "avroStream");
+    StreamProperties properties = new StreamProperties(streamId, Long.MAX_VALUE, formatSpecification, 1000);
     setStreamProperties("avroStream", properties);
 
     // our schemas are compatible

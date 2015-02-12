@@ -209,12 +209,10 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void updateConfig(final StreamProperties properties) throws IOException {
-    final String streamName = properties.getName();
-    //TODO: use actual namespace (from streamproperties?)
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    final Id.Stream streamId = properties.getStreamId();
     //TODO: namespace this location
-    Location streamLocation = streamBaseLocation.append(streamName);
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
+    Location streamLocation = streamBaseLocation.append(streamId.getName());
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
 
     try {
       streamCoordinatorClient.updateProperties(
@@ -236,7 +234,7 @@ public class FileStreamAdmin implements StreamAdmin {
               }
             }
 
-            return new CoordinatorStreamProperties(properties.getName(), properties.getTTL(),
+            return new CoordinatorStreamProperties(properties.getStreamId(), properties.getTTL(),
                                                    properties.getFormat(), properties.getThreshold(), null);
           }
         });
@@ -339,7 +337,7 @@ public class FileStreamAdmin implements StreamAdmin {
         public CoordinatorStreamProperties call() throws Exception {
           int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
           Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
-          return new CoordinatorStreamProperties(streamId.getName(), null, null, null, newGeneration);
+          return new CoordinatorStreamProperties(streamId, null, null, null, newGeneration);
         }
       });
     } catch (Exception e) {
@@ -348,8 +346,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private StreamProperties updateProperties(StreamProperties properties) throws IOException {
-    //TODO: use actual namespace
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, properties.getName());
+    Id.Stream streamId = properties.getStreamId();
 
     StreamConfig config = getConfig(streamId);
 
@@ -365,7 +362,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     writeConfig(builder.build());
-    return new StreamProperties(streamId.getName(), config.getTTL(), config.getFormat(),
+    return new StreamProperties(streamId, config.getTTL(), config.getFormat(),
                                 config.getNotificationThresholdMB());
   }
 

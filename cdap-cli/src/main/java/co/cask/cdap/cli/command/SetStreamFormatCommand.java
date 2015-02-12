@@ -23,6 +23,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Splitter;
@@ -42,17 +43,20 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
   private final StreamClient streamClient;
+  private final String namespace;
 
   @Inject
   public SetStreamFormatCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
+    this.namespace = cliConfig.getCurrentNamespace();
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
-    StreamProperties currentProperties = streamClient.getConfig(streamId);
+    String streamName = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(namespace, streamName);
+    StreamProperties currentProperties = streamClient.getConfig(streamName);
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
@@ -63,8 +67,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     StreamProperties streamProperties = new StreamProperties(streamId, currentProperties.getTTL(),
                                                              formatSpecification, currentProperties.getThreshold());
-    streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set format of stream '%s'\n", streamId);
+    streamClient.setStreamProperties(streamName, streamProperties);
+    output.printf("Successfully set format of stream '%s'\n", streamName);
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {
