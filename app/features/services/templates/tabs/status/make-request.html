@@ -22,7 +22,7 @@
             <div class="col-sm-10">
               <div class="input-group">
                 <span class="input-group-addon" ng-bind="requestMethod"></span>
-                <input type="text" ng-disabled="true" class="form-control" ng-model="requestUrl">
+                <input type="text" disabled="true" class="form-control" ng-model="requestUrl">
               </div>
             </div>
           </div>
@@ -31,15 +31,10 @@
             <label class="col-sm-2 control-label"> Preview </label>
             <div class="col-sm-10">
               <div class="form-control" ng-disabled="true">
-                <em ng-repeat="urlParam in urlParams  track by urlParam.value"
-                    ng-bind="'/' + urlParam.value"
-                    >
-                </em>
+                <em ng-repeat="urlParam in urlParams  track by urlParam.value">/{{urlParam.value}}</em>
                 <em ng-repeat="queryParam in queryParams track by queryParam.value">
-                    <span ng-show="$index == 0" ng-bind="'?' + queryParam.key + '=' + queryParam.value">
-                    </span>
-                    <span ng-show="$index > 0" ng-bind="'&' + queryParam.key + '=' + queryParam.value">
-                    </span>
+                    <span ng-show="$first">?{{queryParam.key}}={{queryParam.value}}</span>
+                    <span ng-show="!$first">&{{queryParam.key}}={{queryParam.value}}</span>
                 </em>
               </div>
             </div>
