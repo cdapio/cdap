@@ -32,6 +32,7 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.StreamSizeSchedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -204,6 +205,12 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
+    if (schedule instanceof StreamSizeSchedule) {
+      Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
+                                  "Schedule data trigger must be greater than 0.");
+      Preconditions.checkArgument(((StreamSizeSchedule) schedule).getPollingDelay() > 0,
+                                  "Schedule polling delay must be greater than 0.");
+    }
 
     ScheduleSpecification spec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName),
                                                            properties);
