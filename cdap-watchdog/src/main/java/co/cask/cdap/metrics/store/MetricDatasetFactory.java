@@ -34,10 +34,4 @@ public interface MetricDatasetFactory {
    * @return A new instance of {@link KafkaConsumerMetaTable}.
    */
   KafkaConsumerMetaTable createKafkaConsumerMeta();
-
-  /**
-   * Upgrade all metric system datasets.
-   * @throws Exception
-   */
-  void upgrade() throws Exception;
 }
