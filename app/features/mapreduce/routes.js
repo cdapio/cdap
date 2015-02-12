@@ -87,6 +87,15 @@ angular.module(PKG.name + '.feature.mapreduce')
                 skip: true
               }
             })
+            .state('mapreduce.detail.runs.tab.logs', {
+              url: '/logs?filter',
+              reloadOnSearch: false,
+              template: '<my-log-viewer data-model="logs"></my-log-viewer>',
+              controller: 'MapreduceRunLogController',
+              ncyBreadcrumb: {
+                skip: true
+              }
+            })
         .state('mapreduce.detail.schedules', {
           url: '/schedules',
           templateUrl: '/assets/features/mapreduce/templates/tabs/schedules.html',
@@ -104,15 +113,6 @@ angular.module(PKG.name + '.feature.mapreduce')
         .state('mapreduce.detail.history', {
           url: '/history',
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
-          ncyBreadcrumb: {
-            skip: true
-          }
-        })
-        .state('mapreduce.detail.logs', {
-          url: '/logs?filter',
-          reloadOnSearch: false,
-          template: '<my-log-viewer data-model="logs"></my-log-viewer>',
-          controller: 'MapreduceLogsController',
           ncyBreadcrumb: {
             skip: true
           }
