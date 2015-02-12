@@ -37,8 +37,8 @@ public class IOModule extends PrivateModule {
     bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
     expose(SchemaGenerator.class);
 
-    bind(FieldAccessorFactory.class).to(ASMFieldAccessorFactory.class).in(Scopes.SINGLETON);
-    bind(DatumWriterFactory.class).to(ASMDatumWriterFactory.class).in(Scopes.SINGLETON);
+    bind(FieldAccessorFactory.class).to(ASMFieldAccessorFactory.class);
+    bind(DatumWriterFactory.class).to(ASMDatumWriterFactory.class);
 
     expose(DatumWriterFactory.class);
 
