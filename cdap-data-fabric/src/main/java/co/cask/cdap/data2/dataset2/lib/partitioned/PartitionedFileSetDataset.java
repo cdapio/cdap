@@ -107,8 +107,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          // TODO add partition in Hive (next PR)
-          // exploreFacade.addPartition(getName(), key, files.getLocation(path).toURI().getPath());
+          exploreFacade.addPartition(getName(), key, files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to add partition for time %s with path %s to explore table.", key.toString(), path), e);
@@ -126,8 +125,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          // TODO drop partition in Hive (next PR)
-          // exploreFacade.dropPartition(getName(), key);
+          exploreFacade.dropPartition(getName(), key);
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to drop partition for time %s from explore table.", key.toString()), e);

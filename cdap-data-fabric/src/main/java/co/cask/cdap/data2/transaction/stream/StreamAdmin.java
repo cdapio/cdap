@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 
 import java.io.IOException;
 import java.util.Map;
@@ -63,9 +64,9 @@ public interface StreamAdmin {
 
   /**
    * Overwrites existing configuration for the given stream.
-   * @param config New configuration of the stream.
+   * @param properties New configuration of the stream.
    */
-  void updateConfig(StreamConfig config) throws IOException;
+  void updateConfig(StreamProperties properties) throws IOException;
 
   /**
    * Get the size of the data persisted for the stream with config {@code streamConfig}.

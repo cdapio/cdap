@@ -16,8 +16,10 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -27,11 +29,14 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,22 +47,21 @@ public abstract class StreamCoordinatorTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  protected abstract StreamCoordinatorClient createStreamCoordinator();
+  private static final Logger LOG = LoggerFactory.getLogger(StreamCoordinatorTestBase.class);
 
-  private static LocationFactory locationFactory;
+  protected abstract StreamCoordinatorClient getStreamCoordinator();
 
-  @BeforeClass
-  public static void init() throws IOException {
-    locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
-  }
+  protected abstract StreamAdmin getStreamAdmin();
 
   @Test
-  public void testGeneration() throws ExecutionException, InterruptedException, IOException {
-    final StreamCoordinatorClient coordinator = createStreamCoordinator();
-    coordinator.startAndWait();
+  public void testGeneration() throws Exception {
+    final StreamAdmin streamAdmin = getStreamAdmin();
+    final String streamName = "testGen";
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    streamAdmin.create(streamId);
 
+    StreamCoordinatorClient coordinator = getStreamCoordinator();
     final CountDownLatch genIdChanged = new CountDownLatch(1);
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "testGen");
     coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
       public void generationChanged(Id.Stream streamId, int generation) {
@@ -76,7 +80,7 @@ public abstract class StreamCoordinatorTestBase {
           try {
             barrier.await();
             for (int i = 0; i < 5; i++) {
-              coordinator.nextGeneration(createStreamConfig(streamId), 0);
+              streamAdmin.truncate(streamId);
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -87,12 +91,78 @@ public abstract class StreamCoordinatorTestBase {
     }
 
     Assert.assertTrue(genIdChanged.await(10, TimeUnit.SECONDS));
-
-    coordinator.stopAndWait();
   }
 
-  private StreamConfig createStreamConfig(Id.Stream stream) throws IOException {
-    Location location = StreamFileTestUtils.constructStreamLocation(locationFactory, stream);
-    return new StreamConfig(stream, 3600000, 10000, Long.MAX_VALUE, location, null, 1000);
+  @Test
+  public void testConfig() throws Exception {
+    final StreamAdmin streamAdmin = getStreamAdmin();
+    final String streamName = "testConfig";
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    streamAdmin.create(streamId);
+
+
+    StreamCoordinatorClient coordinator = getStreamCoordinator();
+    final BlockingDeque<Integer> thresholds = new LinkedBlockingDeque<Integer>();
+    final BlockingDeque<Long> ttls = new LinkedBlockingDeque<Long>();
+    coordinator.addListener(streamId, new StreamPropertyListener() {
+      @Override
+      public void thresholdChanged(Id.Stream streamId, int threshold) {
+        thresholds.add(threshold);
+      }
+
+      @Override
+      public void ttlChanged(Id.Stream streamId, long ttl) {
+        ttls.add(ttl);
+      }
+    });
+
+    // Have two threads, one update the threshold, one update the ttl
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    final CountDownLatch completeLatch = new CountDownLatch(2);
+    for (int i = 0; i < 2; i++) {
+      final int threadId = i;
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          try {
+            barrier.await();
+            for (int i = 0; i < 100; i++) {
+              Long ttl = (threadId == 0) ? (long) (i * 1000) : null;
+              Integer threshold = (threadId == 1) ? i : null;
+              streamAdmin.updateConfig(new StreamProperties(streamId, ttl, null, threshold));
+            }
+            completeLatch.countDown();
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+
+      t.start();
+    }
+
+    Assert.assertTrue(completeLatch.await(20, TimeUnit.SECONDS));
+
+    // Check the last threshold and ttl are correct. We don't check if the listener gets every update as it's
+    // possible that it doesn't see every updates, but only the latest value (that's what ZK watch guarantees).
+    Assert.assertTrue(validateLastElement(thresholds, 99));
+    Assert.assertTrue(validateLastElement(ttls, 99000L));
+
+    // Verify the config is right
+    StreamConfig config = streamAdmin.getConfig(streamId);
+    Assert.assertEquals(99, config.getNotificationThresholdMB());
+    Assert.assertEquals(99000L, config.getTTL());
+  }
+
+  private <T> boolean validateLastElement(BlockingDeque<T> deque, T value) throws InterruptedException {
+    int count = 0;
+    T peekValue = deque.peekLast();
+    while (!value.equals(peekValue) && count++ < 20) {
+      TimeUnit.MILLISECONDS.sleep(100);
+      LOG.info("Expected {}, got {}", value, peekValue);
+      peekValue = deque.peekLast();
+    }
+
+    return count < 20;
   }
 }

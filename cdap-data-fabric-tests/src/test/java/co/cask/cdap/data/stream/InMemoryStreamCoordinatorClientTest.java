@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -22,11 +24,13 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -36,14 +40,16 @@ import java.io.IOException;
  */
 public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBase {
 
-  private static Injector injector;
+  private static StreamAdmin streamAdmin;
+  private static StreamCoordinatorClient coordinatorClient;
 
   @BeforeClass
   public static void init() throws IOException {
-    StreamCoordinatorTestBase.init();
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
-    injector = Guice.createInjector(
-      new ConfigModule(),
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -57,10 +63,24 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
                 }
               })
     );
+
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    coordinatorClient.startAndWait();
+  }
+
+  @AfterClass
+  public static void finish() {
+    coordinatorClient.stopAndWait();
   }
 
   @Override
-  protected StreamCoordinatorClient createStreamCoordinator() {
-    return injector.getInstance(StreamCoordinatorClient.class);
+  protected StreamCoordinatorClient getStreamCoordinator() {
+    return coordinatorClient;
+  }
+
+  @Override
+  protected StreamAdmin getStreamAdmin() {
+    return streamAdmin;
   }
 }

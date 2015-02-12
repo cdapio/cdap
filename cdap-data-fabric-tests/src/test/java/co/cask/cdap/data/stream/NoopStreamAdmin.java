@@ -19,6 +19,7 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 
 import java.io.IOException;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
+  public void updateConfig(StreamProperties properties) throws IOException {
   }
 
   @Override
