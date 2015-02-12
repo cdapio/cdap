@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.metrics.data.Interpolator;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -50,17 +51,19 @@ public final class CubeQuery {
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
 
+  private final Interpolator interpolator;
+
   public CubeQuery(long startTs, long endTs, int resolution,
                    String measureName, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(startTs, endTs, resolution, -1,
          measureName, measureType,
-         sliceByTagValues, groupByTags);
+         sliceByTagValues, groupByTags, null);
   }
 
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+                   Map<String, String> sliceByTagValues, List<String> groupByTags, Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
@@ -69,18 +72,19 @@ public final class CubeQuery {
     this.measureType = measureType;
     this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
     this.groupByTags = ImmutableList.copyOf(groupByTags);
+    this.interpolator = interpolator;
   }
 
   public CubeQuery(CubeQuery query, String measureName) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          measureName, query.measureType,
-         query.sliceByTagValues, query.groupByTags);
+         query.sliceByTagValues, query.groupByTags, null);
   }
 
   public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          query.measureName, query.measureType,
-         sliceByTagValues, query.groupByTags);
+         sliceByTagValues, query.groupByTags, null);
   }
 
   public long getStartTs() {
@@ -114,6 +118,10 @@ public final class CubeQuery {
   // todo: push down limit support to Cube
   public int getLimit() {
     return limit;
+  }
+
+  public Interpolator getInterpolator() {
+    return interpolator;
   }
 
   @Override

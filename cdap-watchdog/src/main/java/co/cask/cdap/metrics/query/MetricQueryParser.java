@@ -527,8 +527,7 @@ final class MetricQueryParser {
         interpolator = new Interpolators.Linear(timeLimit);
       }
     }
-    // todo: support interpolator in CubeQuery
-//    builder.setInterpolator(interpolator);
+    builder.setInterpolator(interpolator);
   }
 
   static class CubeQueryBuilder {
@@ -540,6 +539,7 @@ final class MetricQueryParser {
     // todo: should be aggregation? e.g. also support min/max, etc.
     private Map<String, String> sliceByTagValues;
     private int limit;
+    private Interpolator interpolator;
 
     public void setStartTs(long startTs) {
       this.startTs = startTs;
@@ -572,7 +572,11 @@ final class MetricQueryParser {
     public CubeQuery build() {
       String measureName = (metricName != null && scope != null) ? scope + "." + metricName : null;
       return new CubeQuery(startTs, endTs, resolution, limit, measureName, MeasureType.COUNTER,
-                           sliceByTagValues, new ArrayList<String>());
+                           sliceByTagValues, new ArrayList<String>(), interpolator);
+    }
+
+    public void setInterpolator(Interpolator interpolator) {
+      this.interpolator = interpolator;
     }
   }
 }

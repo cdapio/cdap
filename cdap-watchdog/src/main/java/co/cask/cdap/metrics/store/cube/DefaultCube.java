@@ -16,24 +16,27 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.store.timeseries.Fact;
-import co.cask.cdap.metrics.store.timeseries.FactScan;
-import co.cask.cdap.metrics.store.timeseries.FactScanResult;
-import co.cask.cdap.metrics.store.timeseries.FactScanner;
-import co.cask.cdap.metrics.store.timeseries.FactTable;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
+  import co.cask.cdap.metrics.data.TimeSeriesInterpolator;
+  import co.cask.cdap.metrics.store.timeseries.Fact;
+  import co.cask.cdap.metrics.store.timeseries.FactScan;
+  import co.cask.cdap.metrics.store.timeseries.FactScanResult;
+  import co.cask.cdap.metrics.store.timeseries.FactScanner;
+  import co.cask.cdap.metrics.store.timeseries.FactTable;
+  import co.cask.cdap.metrics.store.timeseries.MeasureType;
+  import co.cask.cdap.metrics.store.timeseries.TagValue;
+  import co.cask.cdap.metrics.store.timeseries.TimeValue;
+  import com.google.common.collect.HashBasedTable;
+  import com.google.common.collect.Iterators;
+  import com.google.common.collect.Lists;
+  import com.google.common.collect.Maps;
+  import com.google.common.collect.PeekingIterator;
+  import com.google.common.collect.Table;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nullable;
+  import java.util.Collection;
+  import java.util.Collections;
+  import java.util.List;
+  import java.util.Map;
+  import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link Cube}.
@@ -231,15 +234,31 @@ public class DefaultCube implements Cube {
 
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
                                                       Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
-
     List<TimeSeries> result = Lists.newArrayList();
+    long count = (query.getEndTs() - query.getStartTs()) / query.getResolution() + 1;
+    if (query.getResolution() == Integer.MAX_VALUE) {
+      count = 1;
+    }
     for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
       List<TimeValue> timeValues = Lists.newArrayList();
       for (Map.Entry<Long, Long> timeValue : row.getValue().entrySet()) {
         timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
       }
       Collections.sort(timeValues);
-      result.add(new TimeSeries(query.getMeasureName(), row.getKey(), timeValues));
+      PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
+        new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
+      long resultTimeStamp = query.getStartTs();
+      List<TimeValue> resultTimeValues = Lists.newArrayList();
+      for (int i = 0; i < count; i++) {
+        if (timeValueItor.hasNext() && timeValueItor.peek().getTimestamp() == resultTimeStamp) {
+          resultTimeValues.add(new TimeValue(resultTimeStamp, timeValueItor.next().getValue()));
+        } else {
+          // If the scan result doesn't have value for a timestamp, we add 0 to the result-returned for that timestamp
+          resultTimeValues.add(new TimeValue(resultTimeStamp, 0));
+        }
+        resultTimeStamp += query.getResolution();
+      }
+      result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
     }
 
     return result;

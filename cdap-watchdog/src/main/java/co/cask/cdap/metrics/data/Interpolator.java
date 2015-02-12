@@ -14,6 +14,7 @@
  * the License.
  */
 package co.cask.cdap.metrics.data;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 
 /**
  * Interpolate a value between two other time values.
