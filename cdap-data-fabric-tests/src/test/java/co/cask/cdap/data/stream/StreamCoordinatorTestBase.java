@@ -124,7 +124,7 @@ public abstract class StreamCoordinatorTestBase {
             for (int i = 0; i < 100; i++) {
               Long ttl = (threadId == 0) ? (long) (i * 1000) : null;
               Integer threshold = (threadId == 1) ? i : null;
-              streamAdmin.updateConfig(new StreamProperties(streamName, ttl, null, threshold));
+              streamAdmin.updateConfig(new StreamProperties(streamId, ttl, null, threshold));
             }
             completeLatch.countDown();
           } catch (Exception e) {

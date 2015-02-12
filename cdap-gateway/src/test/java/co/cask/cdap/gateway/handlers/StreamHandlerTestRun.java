@@ -26,6 +26,7 @@ import co.cask.cdap.data.format.TextRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -144,7 +145,8 @@ public class StreamHandlerTestRun extends GatewayTestBase {
     formatSpecification = new FormatSpecification(TextRecordFormat.class.getCanonicalName(),
                             schema,
                             ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
-    StreamProperties streamProperties = new StreamProperties("stream_info", 2L, formatSpecification, 20);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "stream_info");
+    StreamProperties streamProperties = new StreamProperties(streamId, 2L, formatSpecification, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -175,7 +177,8 @@ public class StreamHandlerTestRun extends GatewayTestBase {
     urlConn.setDoOutput(true);
     // don't give the schema to make sure a default gets used
     FormatSpecification formatSpecification = new FormatSpecification(Formats.TEXT, null, null);
-    StreamProperties streamProperties = new StreamProperties("stream_defaults", 2L, formatSpecification, 20);
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "stream_defaults");
+    StreamProperties streamProperties = new StreamProperties(streamId, 2L, formatSpecification, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -188,7 +191,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                                        Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
 
-    StreamProperties expected = new StreamProperties("stream_defaults", 2L, StreamConfig.DEFAULT_STREAM_FORMAT, 20);
+    StreamProperties expected = new StreamProperties(streamId, 2L, StreamConfig.DEFAULT_STREAM_FORMAT, 20);
     Assert.assertEquals(expected, actual);
   }
 
@@ -214,7 +217,9 @@ public class StreamHandlerTestRun extends GatewayTestBase {
     urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_badconf/config",
                                     HOSTNAME, port), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    StreamProperties streamProperties = new StreamProperties("stream_badconf", -1L, null, 20);
+
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "stream_badconf");
+    StreamProperties streamProperties = new StreamProperties(streamId, -1L, null, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -224,7 +229,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                     HOSTNAME, port), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     FormatSpecification formatSpec = new FormatSpecification(null, null, null);
-    streamProperties = new StreamProperties("stream_badconf", 2L, formatSpec, 20);
+    streamProperties = new StreamProperties(streamId, 2L, formatSpec, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -234,7 +239,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
                                     HOSTNAME, port), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     formatSpec = new FormatSpecification("gibberish", null, null);
-    streamProperties = new StreamProperties("stream_badconf", 2L, formatSpec, 20);
+    streamProperties = new StreamProperties(streamId, 2L, formatSpec, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -245,7 +250,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("col", Schema.of(Schema.Type.DOUBLE)));
     formatSpec = new FormatSpecification(TextRecordFormat.class.getCanonicalName(), schema, null);
-    streamProperties = new StreamProperties("stream_badconf", 2L, formatSpec, 20);
+    streamProperties = new StreamProperties(streamId, 2L, formatSpec, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -254,7 +259,7 @@ public class StreamHandlerTestRun extends GatewayTestBase {
     urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_badconf/config",
                                     HOSTNAME, port), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    streamProperties = new StreamProperties("stream_badconf", 2L, null, -20);
+    streamProperties = new StreamProperties(streamId, 2L, null, -20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
