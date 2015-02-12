@@ -99,23 +99,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
+  private final PreferencesStore preferencesStore;
+  private final ConsoleSettingsStore consoleSettingsStore;
 
   private final QueueAdmin queueAdmin;
-
   private final StreamAdmin streamAdmin;
 
   /**
    * V3 API Handlers
    */
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
-
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
-
   private final AppFabricStreamHttpHandler appFabricStreamHttpHandler;
 
-  private final PreferencesStore preferencesStore;
-
-  private final ConsoleSettingsStore consoleSettingsStore;
 
   /**
    * Constructs an new instance. Parameters are binded by Guice.
