@@ -16,8 +16,10 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
+import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.cdap.metrics.transport.MetricValue;
 
 import java.util.Collection;
@@ -48,4 +50,19 @@ public interface MetricStore {
    * @param timestamp time up to which to delete metrics data, in ms since epoch
    */
   void deleteBefore(long timestamp);
+
+  /**
+   * Given a list of tags in the {@link CubeExploreQuery}, returns the list of next available tags
+   * @param query
+   * @return
+   */
+  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception;
+
+  /**
+   * Given a list of tags in the {@link CubeExploreQuery}, returns the list of measures available
+   * @param query
+   * @return
+   */
+  Collection<String> findMetricNames(CubeExploreQuery query) throws Exception;
+
 }

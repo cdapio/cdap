@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.metrics.store.timeseries.TagValue;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -40,10 +42,28 @@ public interface Cube {
   Collection<TimeSeries> query(CubeQuery query) throws Exception;
 
   /**
+
    * Deletes the data specified by {@link CubeQuery} from all the fact tables.
    * @param query query specifies parameters for deletion. groupByTags and resolution fields are not used.
    * @throws Exception
    */
   //todo: create separate DeleteCubeQuery class
   void delete(CubeQuery query) throws Exception;
+
+  /**
+   * Queries data for next available tags after the given list of tags specified by
+   * {@link CubeExploreQuery}
+   * @param query query to perform
+   * @return {@link Collection} of {@link TagValue} that are result of the query
+   * @throws Exception
+   */
+  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception;
+
+  /**
+   * Queries data for available measureNames for the query specified by {@link CubeExploreQuery}
+   * @param query query to perform
+   * @return {@link Collection} of measureName string that are result of the query
+   * @throws Exception
+   */
+  Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception;
 }
