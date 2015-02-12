@@ -70,6 +70,9 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
@@ -250,6 +253,7 @@ public class TestBase {
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },
+      // todo: do we need handler?
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
@@ -299,6 +303,8 @@ public class TestBase {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
     testManager = new UnitTestManager(injector, appFabricClient, datasetFramework, txSystemClient, discoveryClient);
+    // we use MetricStore directly, until RuntimeStats API changes
+    RuntimeStats.metricStore = new DefaultMetricStore(new DefaultMetricDatasetFactory(cConf, dsFramework));
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
