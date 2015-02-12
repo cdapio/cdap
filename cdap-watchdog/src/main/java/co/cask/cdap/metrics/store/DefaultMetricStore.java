@@ -138,20 +138,16 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().add(fact);
   }
 
-  private Map<String, String> replaceTagsIfNeeded(Map<String, String> original) {
-    // replace emitted tag names to the ones expected by aggregations
-    Map<String, String> tags = Maps.newHashMap();
-    for (Map.Entry<String, String> tagValue : original.entrySet()) {
-      String tagNameReplacement = tagMapping.get(tagValue.getKey());
-      tags.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
-    }
-    return tags;
-  }
-
   @Override
   public Collection<TimeSeries> query(CubeQuery query) throws Exception {
-    CubeQuery q = new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
-    return cube.get().query(q);
+    CubeQuery q =
+      new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()), replaceTagsIfNeeded(query.getGroupByTags()));
+    Collection<TimeSeries> cubeResult = cube.get().query(q);
+    List<TimeSeries> result = Lists.newArrayList();
+    for (TimeSeries timeSeries : cubeResult) {
+      result.add(new TimeSeries(timeSeries, replaceTagsIfNeeded(timeSeries.getTagValues())));
+    }
+    return result;
   }
 
   @Override
@@ -159,7 +155,7 @@ public class DefaultMetricStore implements MetricStore {
     // todo: implement metric ttl
   }
 
-  private void replaceTagsInListIfNeeded(List<TagValue> tagValues) {
+  private void replaceTagsIfNeeded(List<TagValue> tagValues) {
     for (int i = 0; i < tagValues.size(); i++) {
       TagValue tagValue = tagValues.get(i);
       String tagNameReplacement = tagMapping.get(tagValue.getTagName());
@@ -171,14 +167,34 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
-    replaceTagsInListIfNeeded(query.getTagValues());
+    replaceTagsIfNeeded(query.getTagValues());
     return cube.get().findNextAvailableTags(query);
   }
 
   @Override
   public Collection<String> findMetricNames(CubeExploreQuery query) throws Exception {
-    replaceTagsInListIfNeeded(query.getTagValues());
+    replaceTagsIfNeeded(query.getTagValues());
     return cube.get().getMeasureNames(query);
+  }
+
+  private Map<String, String> replaceTagsIfNeeded(Map<String, String> tagValues) {
+    // replace emitted tag names to the ones expected by aggregations
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
+      String tagNameReplacement = tagMapping.get(tagValue.getKey());
+      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
+    }
+    return result;
+  }
+
+  private List<String> replaceTagsIfNeeded(List<String> tagNames) {
+    // replace emitted tag names to the ones expected by aggregations
+    List<String> result = Lists.newArrayList();
+    for (String tagName : tagNames) {
+      String tagNameReplacement = tagMapping.get(tagName);
+      result.add(tagNameReplacement == null ? tagName : tagNameReplacement);
+    }
+    return result;
   }
 
   private MeasureType toMeasureType(MetricType type) {
