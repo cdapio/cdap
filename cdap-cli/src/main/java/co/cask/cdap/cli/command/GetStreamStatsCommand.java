@@ -24,6 +24,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
@@ -100,7 +101,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     // get a list of stream events and calculates various statistics about the events
     String timestampCol = getTimestampHiveColumn(streamId);
     ListenableFuture<ExploreExecutionResult> resultsFuture = queryClient.execute(
-      "SELECT * FROM cdap_stream_" + streamId
+      "SELECT * FROM " + getHiveTableName(streamId)
         + " WHERE " + timestampCol + " BETWEEN " + startTime + " AND " + endTime
         + " LIMIT " + limit);
     ExploreExecutionResult results = resultsFuture.get(1, TimeUnit.MINUTES);
@@ -164,7 +165,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
   }
 
   private String getHiveTableName(String streamId) {
-    return "cdap_stream_" + streamId;
+    return String.format("cdap_stream_%s_%s", Constants.DEFAULT_NAMESPACE, streamId);
   }
 
   private String cdapSchemaColumName2HiveColumnName(String streamId, String schemaColumName) {
