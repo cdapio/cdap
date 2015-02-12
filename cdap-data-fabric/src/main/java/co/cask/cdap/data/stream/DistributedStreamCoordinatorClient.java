@@ -15,20 +15,16 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.common.zookeeper.ReentrantDistributedLock;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.zookeeper.ZKClient;
@@ -37,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
 /**
@@ -51,14 +48,14 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   private final ZKClient zkClient;
 
   @Inject
-  public DistributedStreamCoordinatorClient(CConfiguration cConf, StreamAdmin streamAdmin, ZKClient zkClient) {
-    super(cConf, streamAdmin);
+  public DistributedStreamCoordinatorClient(ZKClient zkClient) {
+    super();
     this.zkClient = zkClient;
     this.resourceCoordinatorClient = new ResourceCoordinatorClient(getCoordinatorZKClient());
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void doStartUp() throws Exception {
     resourceCoordinatorClient.startAndWait();
   }
 
@@ -75,9 +72,15 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   }
 
   @Override
-  public ListenableFuture<Void> streamCreated(final String streamName) {
-    // modify the requirement to add the new stream as a new partition of the existing requirement
-    ListenableFuture<ResourceRequirement> future = resourceCoordinatorClient.modifyRequirement(
+  protected Lock getLock(String streamName) {
+    // It's ok to create new locks every time as it's backed by ZK for distributed lock
+    ZKClient lockZKClient = ZKClients.namespace(zkClient, "/" + Constants.Service.STREAMS + "/locks");
+    return new ReentrantDistributedLock(lockZKClient, streamName);
+  }
+
+  @Override
+  protected void streamCreated(final String streamName) {
+    resourceCoordinatorClient.modifyRequirement(
       Constants.Service.STREAMS, new ResourceModifier() {
         @Nullable
         @Override
@@ -103,7 +106,6 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
           return builder.build();
         }
       });
-    return Futures.transform(future, Functions.<Void>constant(null));
   }
 
   private ZKClient getCoordinatorZKClient() {

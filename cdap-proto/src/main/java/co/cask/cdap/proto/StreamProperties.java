@@ -21,14 +21,14 @@ import com.google.common.base.Objects;
 /**
  * Represents the properties of a stream.
  */
-public final class StreamProperties {
+public class StreamProperties {
 
   private final String name;
   private final Long ttl;
   private final FormatSpecification format;
   private final Integer threshold;
 
-  public StreamProperties(String name, long ttl, FormatSpecification format, int threshold) {
+  public StreamProperties(String name, Long ttl, FormatSpecification format, Integer threshold) {
     this.name = name;
     this.ttl = ttl;
     this.format = format;
