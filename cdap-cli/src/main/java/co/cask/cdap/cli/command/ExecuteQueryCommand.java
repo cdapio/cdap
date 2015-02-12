@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
@@ -45,7 +47,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Executes a dataset query.
  */
-public class ExecuteQueryCommand extends AbstractAuthCommand {
+public class ExecuteQueryCommand extends AbstractAuthCommand implements Categorized {
 
   private static final long TIMEOUT_MINS = TimeUnit.HOURS.toMinutes(1);
   private final QueryClient queryClient;
@@ -115,5 +117,10 @@ public class ExecuteQueryCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Executes a " + ElementType.QUERY.getPrettyName() + " with optional timeout (default = 60) in minutes";
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.EXPLORE.getName();
   }
 }

@@ -27,7 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -87,12 +87,12 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public NotificationFeed createNotificationFeed(final NotificationFeed feed) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, NotificationFeed>() {
+  public Id.NotificationFeed createNotificationFeed(final Id.NotificationFeed feed) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
-      public NotificationFeed apply(NotificationFeedMds input) throws Exception {
+      public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
         String feedId = feed.getId();
-        NotificationFeed existing = input.feeds.get(getKey(feedId), NotificationFeed.class);
+        Id.NotificationFeed existing = input.feeds.get(getKey(feedId), Id.NotificationFeed.class);
         if (existing != null) {
           return existing;
         }
@@ -103,21 +103,21 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public NotificationFeed getNotificationFeed(final String feedId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, NotificationFeed>() {
+  public Id.NotificationFeed getNotificationFeed(final String feedId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
-      public NotificationFeed apply(NotificationFeedMds input) throws Exception {
-        return input.feeds.get(getKey(feedId), NotificationFeed.class);
+      public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
+        return input.feeds.get(getKey(feedId), Id.NotificationFeed.class);
       }
     });
   }
 
   @Override
-  public NotificationFeed deleteNotificationFeed(final String feedId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, NotificationFeed>() {
+  public Id.NotificationFeed deleteNotificationFeed(final String feedId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
-      public NotificationFeed apply(NotificationFeedMds input) throws Exception {
-        NotificationFeed existing = input.feeds.get(getKey(feedId), NotificationFeed.class);
+      public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
+        Id.NotificationFeed existing = input.feeds.get(getKey(feedId), Id.NotificationFeed.class);
         if (existing != null) {
           input.feeds.deleteAll(getKey(feedId));
         }
@@ -127,18 +127,17 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public List<NotificationFeed> listNotificationFeeds() {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, List<NotificationFeed>>() {
+  public List<Id.NotificationFeed> listNotificationFeeds(final Id.Namespace namespace) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, List<Id.NotificationFeed>>() {
       @Override
-      public List<NotificationFeed> apply(NotificationFeedMds input) throws Exception {
-        return input.feeds.list(new MetadataStoreDataset.Key.Builder().add(TYPE_NOTIFICATION_FEED).build(),
-                                NotificationFeed.class);
+      public List<Id.NotificationFeed> apply(NotificationFeedMds input) throws Exception {
+        return input.feeds.list(getKey(namespace.getId()), Id.NotificationFeed.class);
       }
     });
   }
 
-  private MetadataStoreDataset.Key getKey(String feedId) {
-    return new MetadataStoreDataset.Key.Builder().add(TYPE_NOTIFICATION_FEED, feedId).build();
+  private MetadataStoreDataset.Key getKey(String id) {
+    return new MetadataStoreDataset.Key.Builder().add(TYPE_NOTIFICATION_FEED, id).build();
   }
 
   private static final class NotificationFeedMds implements Iterable<MetadataStoreDataset> {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,9 +45,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Unit-test for {@link co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler}
+ * Unit-test for {@link DatasetInstanceHandlerV2}
  */
-public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
+public class DatasetInstanceHandlerV2Test extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
@@ -89,10 +89,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // type meta should have 2 modules that has to be loaded to create type's class and in the order they must be loaded
     List<DatasetModuleMeta> modules = datasetInfo.getType().getModules();
     Assert.assertEquals(2, modules.size());
-    DatasetTypeHandlerTest.verify(modules.get(0), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
-                                  Collections.<String>emptyList(), ImmutableList.of("module2"));
-    DatasetTypeHandlerTest.verify(modules.get(1), "module2", TestModule2.class, ImmutableList.of("datasetType2"),
-                                  ImmutableList.of("module1"), Collections.<String>emptyList());
+    DatasetTypeHandlerV2Test.verify(modules.get(0), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
+                                    Collections.<String>emptyList(), ImmutableList.of("module2"));
+    DatasetTypeHandlerV2Test.verify(modules.get(1), "module2", TestModule2.class, ImmutableList.of("datasetType2"),
+                                    ImmutableList.of("module1"), Collections.<String>emptyList());
 
     // try to retrieve non-existed instance
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());

@@ -22,6 +22,7 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -62,11 +63,16 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
 
   @Override
   public StreamConfig getConfig(String streamName) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
+  public void updateConfig(StreamProperties properties) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
+  }
+
+  @Override
+  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
 }

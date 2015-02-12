@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
@@ -29,7 +31,7 @@ import javax.inject.Inject;
 /**
  * Sends an event to a stream.
  */
-public class SendStreamEventCommand extends AbstractAuthCommand {
+public class SendStreamEventCommand extends AbstractAuthCommand implements Categorized {
 
   private final StreamClient streamClient;
 
@@ -55,5 +57,10 @@ public class SendStreamEventCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Sends an event to a " + ElementType.STREAM.getPrettyName();
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.INGEST.getName();
   }
 }

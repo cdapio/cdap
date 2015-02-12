@@ -117,6 +117,8 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # file. 
 rst_epilog = """
 .. |italic-version| replace:: *%(version)s*
+
+.. |bold-version| replace:: **%(version)s**
 """ % {'version': version}
 
 # There are two options for replacing |today|: either, you set today to some
@@ -187,10 +189,12 @@ html_theme = 'cdap'
 # the inner-lists being the directory and a label
 #
 # manual_list is an ordered list of the manuals
+# Fields: directory, manual name, icon 
+# icon: "" for none, "new-icon" for the ico_new.png
 manuals_list = [
     ["developers-manual",   u"Developers’ Manual",             "",],
     ["admin-manual",        "Administration Manual",           "",],
-    ["integrations",        "Integrations",                    "new-icon",],
+    ["integrations",        "Integrations",                    "",],
     ["examples-manual",     "Examples, Guides, and Tutorials", "",],
     ["reference-manual",    "Reference Manual",                "",],
 ]

@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.EntityAdmin;
+import co.cask.cdap.proto.StreamProperties;
 
 import java.io.IOException;
 import java.util.Map;
@@ -63,7 +64,16 @@ public interface StreamAdmin extends EntityAdmin {
 
   /**
    * Overwrites existing configuration for the given stream.
-   * @param config New configuration of the stream.
+   * @param properties New configuration of the stream.
    */
-  void updateConfig(StreamConfig config) throws IOException;
+  void updateConfig(StreamProperties properties) throws IOException;
+
+  /**
+   * Get the size of the data persisted for the stream with config {@code streamConfig}.
+   *
+   * @param streamConfig configuration of the stream to get the size of data for
+   * @return the size of the data persisted for the stream which config is the {@code streamName}
+   * @throws IOException in case of any error in fetching the size
+   */
+  long fetchStreamSize(StreamConfig streamConfig) throws IOException;
 }

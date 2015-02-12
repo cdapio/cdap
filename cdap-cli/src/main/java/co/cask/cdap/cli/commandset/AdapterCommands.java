@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CreateAdapterCommand;
 import co.cask.cdap.cli.command.CreateStreamConversionAdapterCommand;
 import co.cask.cdap.cli.command.DeleteAdapterCommand;
@@ -29,7 +31,7 @@ import com.google.inject.Injector;
 /**
  * Adapter commands.
  */
-public class AdapterCommands extends CommandSet<Command> {
+public class AdapterCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public AdapterCommands(Injector injector) {
@@ -40,5 +42,10 @@ public class AdapterCommands extends CommandSet<Command> {
         .add(injector.getInstance(DeleteAdapterCommand.class))
         .add(injector.getInstance(CreateStreamConversionAdapterCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

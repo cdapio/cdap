@@ -76,7 +76,8 @@ public enum ArgumentName {
   ADAPTER_SOURCE_PROPS("adapter-source-config"),
   ADAPTER_SINK("adapter-sink"),
   ADAPTER_SINK_PROPS("adapter-sink-config"),
-  ADAPTER("adapter-name");
+  ADAPTER("adapter-name"),
+  COMMAND_CATEGORY("command-category");
 
   private final String name;
 

@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class FactCodec {
    */
   public byte[] createRowKey(List<TagValue> tagValues, String measureName, long ts) {
     // "false" would write null in tag values as "undefined"
-    return createRowKey(tagValues, measureName, ts, false);
+    return createRowKey(tagValues, measureName, ts, false, false);
   }
 
   /**
@@ -66,11 +67,13 @@ public class FactCodec {
    * @param tagValues tags
    * @param measureName measure name
    * @param ts timestamp
+   * @param anyAggGroup if true, then scan matches every aggregation group; if false,
+   *                    scan matches only aggregation group defined with list of tag values
    * @return row key
    */
-  public byte[] createStartRowKey(List<TagValue> tagValues, String measureName, long ts) {
+  public byte[] createStartRowKey(List<TagValue> tagValues, String measureName, long ts, boolean anyAggGroup) {
     // "false" would write null in tag values as "undefined"
-    return createRowKey(tagValues, measureName, ts, false);
+    return createRowKey(tagValues, measureName, ts, false, anyAggGroup);
   }
 
   /**
@@ -78,20 +81,28 @@ public class FactCodec {
    * @param tagValues tags
    * @param measureName measure name
    * @param ts timestamp
+   * @param anyAggGroup if true, then scan matches every aggregation group; if false,
+   *                    scan matches only aggregation group defined with list of tag values
    * @return row key
    */
-  public byte[] createEndRowKey(List<TagValue> tagValues, String measureName, long ts) {
+  public byte[] createEndRowKey(List<TagValue> tagValues, String measureName, long ts, boolean anyAggGroup) {
     // "false" would write null in tag values as "undefined"
-    return createRowKey(tagValues, measureName, ts, true);
+    return createRowKey(tagValues, measureName, ts, true, anyAggGroup);
   }
 
-  private byte[] createRowKey(List<TagValue> tagValues, String measureName, long ts, boolean stopKey) {
+  private byte[] createRowKey(List<TagValue> tagValues, String measureName, long ts, boolean stopKey,
+                              boolean anyAggGroup) {
     // Row key format: <encoded agg group><time base><encoded tag1 value>...<encoded tagN value><encoded measure name>.
     // todo: reserve first byte for versioning and other things for future
     // "+2" is for <encoded agg group> and <encoded measure name>
     byte[] rowKey = new byte[(tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
+    int offset;
 
-    int offset = writeEncodedAggGroup(tagValues, rowKey, 0);
+    if (anyAggGroup) {
+      offset = writeAnyEncoded(rowKey, 0, stopKey);
+    } else {
+      offset = writeEncodedAggGroup(tagValues, rowKey, 0);
+    }
 
     long timestamp = roundToResolution(ts);
     int timeBase = getTimeBase(timestamp);
@@ -118,16 +129,53 @@ public class FactCodec {
     return rowKey;
   }
 
+  /**
+   * For the given rowKey, return next rowKey that has different tagValue at given position.
+   * returns null if no next row key exist
+   * @param rowKey
+   * @param indexOfTagValueToChange
+   * @return
+   */
+  public byte[] getNextRowKey(byte[] rowKey, int indexOfTagValueToChange) {
+    /*
+    * 1) result row key length is determined by the tagValues to be included,
+    * which is indexOfTagValueToChange plus one: the last tagValue will be changing
+    * 2) the row key part up to the tagValue to be changed remains the same
+    * 3) to unchanged part we append incremented value of the key part at position of tagValue to be changed.
+    * We use Bytes.stopKeyForPrefix to increment that key part.
+    * 4) if key part cannot be incremented, then we return null, indicating "no next row key exist
+    */
+    byte[] newRowKey = new byte[rowKey.length];
+    int offset = entityTable.getIdSize() + Bytes.SIZEOF_INT +  entityTable.getIdSize() * indexOfTagValueToChange;
+    byte[] nextTagValueEncoded = Bytes.stopKeyForPrefix(Arrays.copyOfRange(rowKey,
+                                                               offset, offset + entityTable.getIdSize()));
+    if (nextTagValueEncoded == null) {
+      return null;
+    }
+    System.arraycopy(rowKey, 0, newRowKey, 0, offset);
+    System.arraycopy(nextTagValueEncoded, 0, newRowKey, offset, nextTagValueEncoded.length);
+    return newRowKey;
+  }
+
   private long roundToResolution(long ts) {
     return (ts / resolution) * resolution;
   }
 
   public byte[] createFuzzyRowMask(List<TagValue> tagValues, String measureName) {
+    return createFuzzyRowMask(tagValues, measureName, false);
+  }
+
+  public byte[] createFuzzyRowMask(List<TagValue> tagValues, String measureName, boolean anyAggGroup) {
     // See createRowKey for row format info
     byte[] mask = new byte[(tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
+    int offset;
 
     // agg group encoded is always provided for fuzzy row filter
-    int offset = writeEncodedFixedMask(mask, 0);
+    if (anyAggGroup) {
+      offset = writeEncodedFuzzyMask(mask, 0);
+    } else {
+      offset = writeEncodedFixedMask(mask, 0);
+    }
     // time is defined by start/stop keys when scanning - we never include it in fuzzy filter
     offset = writeFuzzyMask(mask, offset, Bytes.SIZEOF_INT);
 

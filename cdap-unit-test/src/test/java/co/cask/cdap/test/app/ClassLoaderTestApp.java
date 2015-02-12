@@ -29,8 +29,8 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Random;
