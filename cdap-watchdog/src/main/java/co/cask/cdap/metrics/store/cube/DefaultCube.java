@@ -144,7 +144,7 @@ public class DefaultCube implements Cube {
         }
         for (FactTable factTable : resolutionToFactTable.values()) {
           FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
-          factTable.delete(scan, query.isMeasurePrefixMatch());
+          factTable.delete(scan);
         }
       }
     }

@@ -153,17 +153,14 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public void deleteBefore(long timestamp) throws Exception {
-    //delete all data before the timestamp.
-    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp,  null, null, Maps.<String, String>newHashMap(), false);
+    // delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
+    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, null, Maps.<String, String>newHashMap());
     cube.get().delete(query);
   }
 
   @Override
   public void delete(CubeDeleteQuery query) throws Exception {
-    CubeDeleteQuery transformedQuery = new CubeDeleteQuery(query.getStartTs(), query.getEndTs(),
-                                               query.getMeasureName(), query.getMeasureType(),
-                                               replaceTagsIfNeeded(query.getSliceByTags()),
-                                               query.isMeasurePrefixMatch());
+    CubeDeleteQuery transformedQuery = new CubeDeleteQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
     cube.get().delete(transformedQuery);
   }
 

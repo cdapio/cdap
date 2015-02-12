@@ -17,7 +17,6 @@
 package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
-
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
@@ -72,4 +71,5 @@ public interface MetricStore {
    * @return
    */
   Collection<String> findMetricNames(CubeExploreQuery query) throws Exception;
+
 }

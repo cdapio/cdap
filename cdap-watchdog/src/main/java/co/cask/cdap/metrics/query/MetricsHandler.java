@@ -101,14 +101,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       // todo: what if context is null?
       String[] tagValues = context.split("\\.");
       // todo: validate even number of parts?
+
       Map<String, String> tagsSliceBy = Maps.newHashMap();
       for (int i = 0; i < tagValues.length - 1; i += 2) {
         tagsSliceBy.put(tagValues[i], tagValues[i + 1]);
       }
+
       CubeQuery query = new CubeQuery(queryTimeParams.getStartTs(), queryTimeParams.getEndTs(),
                                       queryTimeParams.getResolution(), metric,
                                           // todo: figure out MeasureType
                                       MeasureType.COUNTER, tagsSliceBy, new ArrayList<String>());
+
       Collection<TimeSeries> result = metricStore.query(query);
       responder.sendJson(HttpResponseStatus.OK, result);
     } catch (Exception e) {

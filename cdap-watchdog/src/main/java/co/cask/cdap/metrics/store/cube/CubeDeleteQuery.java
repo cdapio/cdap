@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -24,36 +23,25 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Query that specifies delete entries from cube
+ * Query that specifies parameters to delete entries from cube.
  */
 public class CubeDeleteQuery {
 
   private final long startTs;
   private final long endTs;
-  private final int limit;
   private final String measureName;
-  // todo: should be aggregation? e.g. also support min/max, etc.
-  private final MeasureType measureType;
   private final Map<String, String> sliceByTagValues;
-  private final boolean measurePrefixMatch;
 
-  public CubeDeleteQuery(long startTs, long endTs, String measureName, MeasureType measureType,
-                         Map<String, String> sliceByTagValues, boolean measurePrefixMatch) {
-    this(startTs, endTs, -1,
-         measureName, measureType,
-         sliceByTagValues, measurePrefixMatch);
-  }
-
-  public CubeDeleteQuery(long startTs, long endTs, int limit, String measureName,
-                         MeasureType measureType, Map<String, String> sliceByTagValues, boolean measurePrefixMatch) {
+  public CubeDeleteQuery(long startTs, long endTs, String measureName,
+                         Map<String, String> sliceByTagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
-    this.limit = limit;
     this.measureName = measureName;
-    this.measureType = measureType;
     this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
-    this.measurePrefixMatch = measurePrefixMatch;
+  }
 
+  public CubeDeleteQuery(CubeDeleteQuery query, Map<String, String> sliceByTagValues) {
+    this(query.getStartTs(), query.getEndTs(), query.getMeasureName(), sliceByTagValues);
   }
 
   public long getStartTs() {
@@ -64,27 +52,13 @@ public class CubeDeleteQuery {
     return endTs;
   }
 
-  // todo: push down limit support to Cube
-  public int getLimit() {
-    return limit;
-  }
-
   public String getMeasureName() {
     return measureName;
-  }
-
-  public MeasureType getMeasureType() {
-    return measureType;
   }
 
   public Map<String, String> getSliceByTags() {
     return sliceByTagValues;
   }
-
-  public boolean isMeasurePrefixMatch() {
-    return measurePrefixMatch;
-  }
-
 
   @Override
   public String toString() {
@@ -92,7 +66,6 @@ public class CubeDeleteQuery {
       .add("startTs", startTs)
       .add("endTs", endTs)
       .add("measureName", measureName)
-      .add("measureType", measureType)
       .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
       .toString();
   }

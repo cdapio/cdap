@@ -96,7 +96,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     return new Runnable() {
       @Override
       public void run() {
-        // Only do cleanup if the underlying table doesn't supports TTL.
+        // We perform CleanUp only in LocalMetricsCollectionService , where TTL is NOT supported
+        // by underlying data store.
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
         try {

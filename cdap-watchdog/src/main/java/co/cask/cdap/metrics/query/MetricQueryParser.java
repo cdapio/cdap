@@ -148,9 +148,9 @@ final class MetricQueryParser {
     builder.setMetricName(metricPrefix);
 
     CubeQuery query = builder.build();
-    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMeasureName(), query.getMeasureType(),
-                               query.getSliceByTags(), query.getMeasureName() != null);
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMeasureName(), query.getSliceByTags());
   }
+
   static CubeQuery parse(URI requestURI) throws MetricsPathException {
     CubeQueryBuilder builder = new CubeQueryBuilder();
     // metric will be at the end.
