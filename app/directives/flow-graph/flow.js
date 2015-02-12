@@ -1,6 +1,15 @@
 var module = angular.module(PKG.name+'.commons');
 
-module.directive('myFlowGraph', function () {
+module.factory('d3', function ($window) {
+  return $window.d3;
+});
+
+module.factory('dagreD3', function ($window) {
+  return $window.dagreD3;
+});
+
+
+module.directive('myFlowGraph', function (d3, dagreD3) {
   return {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
