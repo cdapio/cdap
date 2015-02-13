@@ -35,6 +35,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
@@ -124,6 +125,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private StreamCoordinatorClient streamCoordinatorClient;
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
@@ -182,6 +184,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+      streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -240,7 +243,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void run() {
     LOG.info("Starting metrics service");
     Futures.getUnchecked(
-      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
+      Services.chainStart(zkClientService, kafkaClientService,
+                          metricsCollectionService, streamCoordinatorClient, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
@@ -285,7 +289,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
     Futures.getUnchecked(
-      Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+      Services.chainStop(resourceReporter, streamCoordinatorClient,
+                         metricsCollectionService, kafkaClientService, zkClientService));
     LOG.info("Runnable stopped: {}", name);
   }
 

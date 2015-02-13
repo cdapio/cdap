@@ -28,7 +28,9 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -41,8 +43,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static long emitTs;
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     setupMetrics();
   }
 
@@ -131,7 +133,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of());
   }
 
-//todo : failing test , needs fix
+//todo : failing test , metrics handler /query needs to be fixed
   @Test
   public void testQueryMetrics() throws Exception {
     // aggregate result, in the system namespace
@@ -149,7 +151,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // aggregate result, in the wrong namespace
     verifyAggregateQueryResult(
       "/v3/metrics/query?context=myspace.WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 0);
-
     // time range
     // now-60s, now+60s
     verifyRangeQueryResult(

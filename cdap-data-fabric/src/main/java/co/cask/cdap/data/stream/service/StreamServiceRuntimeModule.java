@@ -22,6 +22,7 @@ import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatPublisher
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
@@ -45,6 +46,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+        bind(StreamService.class).to(NoopStreamService.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -72,6 +74,8 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
 
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                           Names.named(Constants.Stream.STREAM_HANDLER));
+        handlerBinder.addBinding().to(StreamHandlerV2.class);
+        handlerBinder.addBinding().to(StreamFetchHandlerV2.class);
         handlerBinder.addBinding().to(StreamHandler.class);
         handlerBinder.addBinding().to(StreamFetchHandler.class);
         CommonHandlers.add(handlerBinder);
@@ -98,6 +102,19 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
     @Override
     protected void doStop() {
       notifyStopped();
+    }
+  }
+
+  private static final class NoopStreamService extends AbstractIdleService implements StreamService {
+
+    @Override
+    protected void startUp() throws Exception {
+      // no-op
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      // no-op
     }
   }
 }

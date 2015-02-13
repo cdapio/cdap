@@ -96,9 +96,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
     uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input." + queueName.toString())
       .increment("process.events.processed", 6);
-    uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input.stream:///streamX")
-      .increment("process.events.processed", 2);
-    uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input.stream://developer/streamX")
+    uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input.stream://default/streamX")
       .increment("process.events.processed", 1);
 
     // Insert stream metrics
@@ -126,7 +124,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
       //   }
       // ]
       JsonObject resultObj = json.getAsJsonArray().get(0).getAsJsonObject().get("result").getAsJsonObject();
-      Assert.assertEquals(6, resultObj.getAsJsonPrimitive("data").getAsInt());
+      Assert.assertEquals(8, resultObj.getAsJsonPrimitive("data").getAsInt());
     } finally {
       reader.close();
     }

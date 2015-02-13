@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
@@ -83,10 +84,29 @@ public final class CubeQuery {
          query.sliceByTagValues, query.groupByTags, null);
   }
 
+  public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(query.startTs, query.endTs, query.resolution, query.limit,
+         query.measureName, query.measureType,
+         sliceByTagValues, groupByTags);
+  }
+
   public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          query.measureName, query.measureType,
          sliceByTagValues, query.groupByTags, null);
+  }
+
+  public CubeQuery(CubeQuery query, List<String> groupByTags) {
+    this(query.startTs, query.endTs, query.resolution, query.limit,
+         query.measureName, query.measureType,
+         query.sliceByTagValues, groupByTags);
+  }
+
+  public static CubeQuery addSliceByTag(CubeQuery query, String tagName, String tagValue) {
+    Map<String, String> sliceByTags = Maps.newHashMap();
+    sliceByTags.putAll(query.getSliceByTags());
+    sliceByTags.put(tagName, tagValue);
+    return new CubeQuery(query, sliceByTags);
   }
 
   public long getStartTs() {

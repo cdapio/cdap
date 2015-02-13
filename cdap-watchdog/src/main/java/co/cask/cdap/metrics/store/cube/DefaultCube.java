@@ -134,7 +134,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public void delete(CubeQuery query) throws Exception {
+  public void delete(CubeDeleteQuery query) throws Exception {
     //this may be very inefficient and its better to use TTL, this is to only support existing old functionality.
     List<TagValue> tagValues = Lists.newArrayList();
     // find all the aggregations that match the sliceByTags in the query and

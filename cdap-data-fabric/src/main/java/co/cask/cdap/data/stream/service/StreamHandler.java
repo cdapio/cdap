@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,11 +45,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -75,11 +79,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * The {@link HttpHandler} for handling REST call to stream endpoints.
+ * The {@link HttpHandler} for handling REST call to V3 stream APIs.
  *
  * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
-@Path(Constants.Gateway.API_VERSION_2 + "/streams")
+@Singleton
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
@@ -156,13 +161,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(stream);
       StreamProperties streamProperties =
-        new StreamProperties(streamConfig.getName(), streamConfig.getTTL(), streamConfig.getFormat(),
+        new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
                              streamConfig.getNotificationThresholdMB());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
@@ -173,6 +179,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
@@ -195,6 +202,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}")
   public void enqueue(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
@@ -213,6 +221,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/async")
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
@@ -225,6 +234,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/batch")
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
@@ -244,6 +254,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
+                       @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
@@ -263,6 +274,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/{stream}/config")
   public void setConfig(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
@@ -272,22 +284,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    StreamConfig currConfig;
-    try {
-      currConfig = streamAdmin.getConfig(stream);
-    } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream " + stream + " does not exist.");
-      return;
-    }
-
-    StreamConfig requestedConfig = getAndValidateConfig(currConfig, request, responder);
+    StreamProperties properties = getAndValidateConfig(stream, request, responder);
     // null is returned if the requested config is invalid. An appropriate response will have already been written
     // to the responder so we just need to return.
-    if (requestedConfig == null) {
+    if (properties == null) {
       return;
     }
 
-    streamAdmin.updateConfig(requestedConfig);
+    streamAdmin.updateConfig(stream, properties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -329,14 +333,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
-  
-  // given the current config for a stream and requested config for a stream, get the new stream config
-  // with defaults in place of missing settings, and validation performed on the requested fields.
-  // If a field is missing or invalid, this method will write an appropriate response to the responder and
-  // return a null config.
-  private StreamConfig getAndValidateConfig(StreamConfig currConfig, HttpRequest request, HttpResponder responder) {
-    // get new config settings from the request. Only TTL and format spec can be changed, which is
-    // why the StreamProperties object is used instead of a StreamConfig object.
+
+  /**
+   * Gets stream properties from the request. If there is request is invalid, response will be made and {@code null}
+   * will be return.
+   */
+  private StreamProperties getAndValidateConfig(String stream, HttpRequest request, HttpResponder responder) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     StreamProperties properties;
     try {
@@ -347,25 +349,17 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return null;
     }
 
-    // if no ttl is given, use the existing ttl.
-    Long newTTL = properties.getTTL();
-    if (newTTL == null) {
-      newTTL = currConfig.getTTL();
-    } else {
-      if (newTTL < 0) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive.");
-        return null;
-      }
-      // TTL in the REST API is in seconds. Convert it to ms for the config.
-      newTTL = TimeUnit.SECONDS.toMillis(newTTL);
+    // Validate ttl
+    Long ttl = properties.getTTL();
+    if (ttl != null && ttl < 0) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive.");
+      return null;
     }
 
-    FormatSpecification newFormatSpec = properties.getFormat();
-    // if no format spec is given, use the existing format spec.
-    if (newFormatSpec == null) {
-      newFormatSpec = currConfig.getFormat();
-    } else {
-      String formatName = newFormatSpec.getName();
+    // Validate format
+    FormatSpecification formatSpec = properties.getFormat();
+    if (formatSpec != null) {
+      String formatName = formatSpec.getName();
       if (formatName == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "A format name must be specified.");
         return null;
@@ -373,11 +367,11 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       try {
         // if a format is given, make sure it is a valid format,
         // check that we can instantiate the format class
-        RecordFormat<?, ?> format = RecordFormats.createInitializedFormat(newFormatSpec);
+        RecordFormat<?, ?> format = RecordFormats.createInitializedFormat(formatSpec);
         // the request may contain a null schema, in which case the default schema of the format should be used.
         // create a new specification object that is guaranteed to have a non-null schema.
-        newFormatSpec = new FormatSpecification(newFormatSpec.getName(),
-                                                format.getSchema(), newFormatSpec.getSettings());
+        formatSpec = new FormatSpecification(formatSpec.getName(),
+                                                format.getSchema(), formatSpec.getSettings());
       } catch (UnsupportedTypeException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Format " + formatName + " does not support the requested schema.");
@@ -389,19 +383,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
 
-    // if no threshold is given, use the existing threshold.
-    Integer newThreshold = properties.getThreshold();
-    if (newThreshold == null) {
-      newThreshold = currConfig.getNotificationThresholdMB();
-    } else {
-      if (newThreshold <= 0) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
-        return null;
-      }
+    // Validate notification threshold
+    Integer threshold = properties.getThreshold();
+    if (threshold != null && threshold <= 0) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
+      return null;
     }
 
-    return new StreamConfig(currConfig.getName(), currConfig.getPartitionDuration(), currConfig.getIndexInterval(),
-                            newTTL, currConfig.getLocation(), newFormatSpec, newThreshold);
+    return new StreamProperties(ttl, formatSpec, threshold);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -469,17 +458,37 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *  Adapter class for {@link co.cask.cdap.proto.StreamProperties}
+   *  Adapter class for {@link StreamProperties}. Its main purpose is to transform
+   *  the unit of TTL, which is second in JSON, but millisecond in the StreamProperties object.
    */
-  private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties> {
+  private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties>,
+                                                                JsonDeserializer<StreamProperties> {
     @Override
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
-      json.addProperty("name", src.getName());
-      json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
-      json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
-      json.addProperty("threshold", src.getThreshold());
+      if (src.getTTL() != null) {
+        json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
+      }
+      if (src.getFormat() != null) {
+        json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
+      }
+      if (src.getThreshold() != null) {
+        json.addProperty("threshold", src.getThreshold());
+      }
       return json;
+    }
+
+    @Override
+    public StreamProperties deserialize(JsonElement json, Type typeOfT,
+                                        JsonDeserializationContext context) throws JsonParseException {
+      JsonObject jsonObj = json.getAsJsonObject();
+      Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
+      FormatSpecification format = null;
+      if (jsonObj.has("format")) {
+        format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
+      }
+      Integer threshold = jsonObj.has("threshold") ? jsonObj.get("threshold").getAsInt() : null;
+      return new StreamProperties(ttl, format, threshold);
     }
   }
 }

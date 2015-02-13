@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers.hooks;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;

@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -41,13 +42,12 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public StreamConfig getConfig(String streamName) {
-    // TODO: add support for queue-based stream
-    throw new UnsupportedOperationException("Not yet supported");
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
+  public void updateConfig(String streamName, StreamProperties properties) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override

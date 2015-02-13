@@ -19,6 +19,7 @@ package co.cask.cdap.metrics.store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeFact;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
@@ -138,28 +139,32 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().add(fact);
   }
 
-  private Map<String, String> replaceTagsIfNeeded(Map<String, String> original) {
-    // replace emitted tag names to the ones expected by aggregations
-    Map<String, String> tags = Maps.newHashMap();
-    for (Map.Entry<String, String> tagValue : original.entrySet()) {
-      String tagNameReplacement = tagMapping.get(tagValue.getKey());
-      tags.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
-    }
-    return tags;
-  }
-
   @Override
   public Collection<TimeSeries> query(CubeQuery query) throws Exception {
-    CubeQuery q = new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
-    return cube.get().query(q);
+    CubeQuery q =
+      new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()), replaceTagsIfNeeded(query.getGroupByTags()));
+    Collection<TimeSeries> cubeResult = cube.get().query(q);
+    List<TimeSeries> result = Lists.newArrayList();
+    for (TimeSeries timeSeries : cubeResult) {
+      result.add(new TimeSeries(timeSeries, replaceTagsIfNeeded(timeSeries.getTagValues())));
+    }
+    return result;
   }
 
   @Override
-  public void deleteBefore(long timestamp) {
-    // todo: implement metric ttl
+  public void deleteBefore(long timestamp) throws Exception {
+    // delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
+    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, null, Maps.<String, String>newHashMap());
+    cube.get().delete(query);
   }
 
-  private void replaceTagsInListIfNeeded(List<TagValue> tagValues) {
+  @Override
+  public void delete(CubeDeleteQuery query) throws Exception {
+    CubeDeleteQuery transformedQuery = new CubeDeleteQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
+    cube.get().delete(transformedQuery);
+  }
+
+  private void replaceTagValuesIfNeeded(List<TagValue> tagValues) {
     for (int i = 0; i < tagValues.size(); i++) {
       TagValue tagValue = tagValues.get(i);
       String tagNameReplacement = tagMapping.get(tagValue.getTagName());
@@ -171,14 +176,34 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
-    replaceTagsInListIfNeeded(query.getTagValues());
+    replaceTagValuesIfNeeded(query.getTagValues());
     return cube.get().findNextAvailableTags(query);
   }
 
   @Override
   public Collection<String> findMetricNames(CubeExploreQuery query) throws Exception {
-    replaceTagsInListIfNeeded(query.getTagValues());
+    replaceTagValuesIfNeeded(query.getTagValues());
     return cube.get().getMeasureNames(query);
+  }
+
+  private Map<String, String> replaceTagsIfNeeded(Map<String, String> tagValues) {
+    // replace emitted tag names to the ones expected by aggregations
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
+      String tagNameReplacement = tagMapping.get(tagValue.getKey());
+      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
+    }
+    return result;
+  }
+
+  private List<String> replaceTagsIfNeeded(List<String> tagNames) {
+    // replace emitted tag names to the ones expected by aggregations
+    List<String> result = Lists.newArrayList();
+    for (String tagName : tagNames) {
+      String tagNameReplacement = tagMapping.get(tagName);
+      result.add(tagNameReplacement == null ? tagName : tagNameReplacement);
+    }
+    return result;
   }
 
   private MeasureType toMeasureType(MetricType type) {

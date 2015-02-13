@@ -16,9 +16,7 @@
 
 package co.cask.cdap.metrics.store;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
@@ -40,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -64,15 +63,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       @Override
       public EntityTable get() {
         String tableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                     // todo: remove + ".v2"
-                                     MetricsConstants.DEFAULT_ENTITY_TABLE_NAME) + ".v2";
-        MetricsTable table;
-        try {
-          table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-        return new EntityTable(table);
+                                     MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+        return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
       }
     });
   }
@@ -80,21 +72,15 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
   @Override
   public FactTable get(int resolution) {
-    try {
-      String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                   // todo: remove + ".v2"
-                                   MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".v2" + ".ts." + resolution;
-      int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
+    String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                 MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+    int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-      DatasetProperties props = ttl > 0 ?
-        DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
-      MetricsTable table = getOrCreateMetricsTable(tableName, props);
-      LOG.info("FactTable created: {}", tableName);
-      return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
-    } catch (Exception e) {
-      LOG.error("Exception in creating TimeSeriesTable.", e);
-      throw Throwables.propagate(e);
-    }
+    DatasetProperties props = ttl > 0 ?
+      DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
+    MetricsTable table = getOrCreateMetricsTable(tableName, props);
+    LOG.info("FactTable created: {}", tableName);
+    return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
   @Override
@@ -111,29 +97,52 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     }
   }
 
-  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props)
-    throws DatasetManagementException, IOException {
+  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
 
-    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null, null);
-  }
-
-  @Override
-  public void upgrade() throws Exception {
-    // todo: remove + ".v2"
-    String metricsPrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".v2";
-    for (DatasetSpecification spec : dsFramework.getInstances()) {
-      String dsName = spec.getName();
-      if (dsName.contains(metricsPrefix + ".ts.")) {
-        DatasetAdmin admin = dsFramework.getAdmin(dsName, null);
-        if (admin != null) {
-          admin.upgrade();
-        } else {
-          LOG.error("Could not obtain admin to upgrade metrics table: " + dsName);
-          // continue to best effort
+    MetricsTable table = null;
+    while (table == null) {
+      try {
+        table = DatasetsUtil.getOrCreateDataset(dsFramework, tableName,
+                                                MetricsTable.class.getName(), props, null, null);
+      } catch (DatasetManagementException e) {
+        // dataset service may be not up yet
+        // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
+        LOG.warn("Cannot access or create table {}, will retry in 1 sec.", tableName);
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          break;
         }
+      } catch (IOException e) {
+        LOG.error("Exception while creating table {}.", tableName, e);
+        throw Throwables.propagate(e);
       }
     }
+
+    return table;
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by metrics system.
+   * <p/>
+   * It is primarily used by upgrade tool.
+   *
+   * @param datasetFramework framework to add types and datasets to
+   */
+  public static void setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
+    throws IOException, DatasetManagementException {
+
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+
+    // adding all fact tables
+    factory.get(1);
+    factory.get(60);
+    factory.get(3600);
+    factory.get(Integer.MAX_VALUE);
+
+    // adding kafka consumer meta
+    factory.createKafkaConsumerMeta();
   }
 
   private int getRollTime(int resolution) {
