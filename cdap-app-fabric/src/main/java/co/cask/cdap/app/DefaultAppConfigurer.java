@@ -36,6 +36,8 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -44,6 +46,7 @@ import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
+import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
@@ -68,6 +71,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
   private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
+  private final Map<String, WorkerSpecification> workers = Maps.newHashMap();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
@@ -192,6 +196,15 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
     ServiceSpecification spec = configurer.createSpecification();
     services.put(spec.getName(), spec);
+  }
+
+  @Override
+  public void addWorker(Worker worker) {
+    Preconditions.checkArgument(worker != null, "Worker cannot be null.");
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    worker.configure(configurer);
+    WorkerSpecification spec = configurer.createSpecification();
+    workers.put(spec.getName(), spec);
   }
 
   @Override

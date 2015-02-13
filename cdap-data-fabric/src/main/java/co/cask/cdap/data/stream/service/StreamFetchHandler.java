@@ -197,19 +197,19 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   private boolean verifyGetEventsRequest(String accountID, String stream, long startTime, long endTime,
                                          int count, HttpResponder responder) throws Exception {
     if (startTime < 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
       return false;
     }
     if (endTime < 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "End time must be >= 0");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "End time must be >= 0");
       return false;
     }
     if (startTime >= endTime) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Start time must be smaller than end time");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be smaller than end time");
       return false;
     }
     if (count <= 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
     }
     if (!streamMetaStore.streamExists(accountID, stream)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);

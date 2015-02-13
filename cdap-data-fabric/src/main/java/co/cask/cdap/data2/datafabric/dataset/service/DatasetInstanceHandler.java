@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResp
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -64,7 +63,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset instance management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path(Constants.Gateway.API_VERSION_2)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new GsonBuilder()
@@ -91,13 +90,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/datasets/")
-  public void list(HttpRequest request, final HttpResponder responder) {
+  public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
   @GET
   @Path("/data/datasets/{name}")
-  public void getInfo(HttpRequest request, final HttpResponder responder,
+  public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                       @PathParam("name") String name) {
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
@@ -113,7 +112,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/data/datasets/{name}")
-  public void create(HttpRequest request, final HttpResponder responder,
+  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                   @PathParam("name") String name) {
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
@@ -125,7 +124,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
       LOG.info(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
+      responder.sendString(HttpResponseStatus.CONFLICT, message);
       return;
     }
 
@@ -133,11 +132,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (existing != null) {
       disableExplore(name);
     }
-    
+
     if (!createDatasetInstance(creationProperties, name, responder, "create")) {
       return;
     }
-    
+
     enableExplore(name, creationProperties);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -149,7 +148,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/data/datasets/{name}/properties")
-  public void update(HttpRequest request, final HttpResponder responder,
+  public void update(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
@@ -159,8 +158,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     if (existing == null) {
       // update is true , but dataset instance does not exist, return 404.
-      responder.sendError(HttpResponseStatus.NOT_FOUND,
-                          String.format("Dataset Instance %s does not exist to update", name));
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Dataset Instance %s does not exist to update", name));
       return;
     }
 
@@ -168,20 +167,20 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String  message = String.format("Cannot update dataset %s instance with a different type, existing type is %s",
                                       name, existing.getType());
       LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
+      responder.sendString(HttpResponseStatus.CONFLICT, message);
       return;
     }
 
     disableExplore(name);
-    
+
     if (!createDatasetInstance(creationProperties, name, responder, "update")) {
       return;
     }
 
     enableExplore(name, creationProperties);
-    
+
     //caling admin upgrade, after updating specification
-    executeAdmin(request, responder, name, "upgrade");
+    executeAdmin(request, responder, namespaceId, name, "upgrade");
   }
 
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
@@ -202,7 +201,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String message = String.format("Cannot %s dataset %s: unknown type %s",
                                      operation, name, creationProperties.getTypeName());
       LOG.warn(message);
-      responder.sendError(HttpResponseStatus.NOT_FOUND, message);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, message);
       return false;
     }
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
@@ -222,7 +221,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/data/datasets/{name}")
-  public void drop(HttpRequest request, final HttpResponder responder,
+  public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String name) {
     LOG.info("Deleting dataset {}", name);
 
@@ -249,9 +248,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/{method}")
-  public void executeAdmin(HttpRequest request, final HttpResponder responder,
-                           @PathParam("name") String instanceName,
-                           @PathParam("method") String method) {
+  public void executeAdmin(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                           @PathParam("name") String instanceName, @PathParam("method") String method) {
 
     try {
       Object result = null;
@@ -282,9 +280,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/data/{method}")
-  public void executeDataOp(HttpRequest request, final HttpResponder responder,
-                            @PathParam("name") String instanceName,
-                            @PathParam("method") String method) {
+  public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                            @PathParam("name") String instanceName, @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
@@ -299,7 +296,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     String name = spec.getName();
 
     disableExplore(name);
-    
+
     if (!instanceManager.delete(name)) {
       return false;
     }
@@ -307,7 +304,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
     return true;
   }
-  
+
   private void disableExplore(String name) {
     // Disable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
@@ -318,7 +315,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                                  name, e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
       //return;
     }
   }
@@ -333,13 +330,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                                  name, creationProperties.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
       //return;
     }
   }
-  
+
   /**
-   * Adapter for {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   * Adapter for {@link DatasetSpecification}
    */
   private static final class DatasetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
 
@@ -368,5 +365,4 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return jsonObject;
     }
   }
-
 }
