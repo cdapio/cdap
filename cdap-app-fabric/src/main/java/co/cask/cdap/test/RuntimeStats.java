@@ -47,8 +47,8 @@ public final class RuntimeStats {
   private RuntimeStats() {
   }
 
-  public static void resetAll() {
-    metricStore.deleteBefore(System.currentTimeMillis());
+  public static void resetAll() throws Exception {
+    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {

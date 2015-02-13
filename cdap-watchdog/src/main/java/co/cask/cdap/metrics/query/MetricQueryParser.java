@@ -20,6 +20,7 @@ import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.Interpolator;
 import co.cask.cdap.metrics.data.Interpolators;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Splitter;
@@ -139,17 +140,26 @@ final class MetricQueryParser {
     return path.substring(startPos, path.length());
   }
 
+  static CubeDeleteQuery parseDelete(URI requestURI, String metricPrefix) throws MetricsPathException {
+    CubeQueryBuilder builder = new CubeQueryBuilder();
+    parseContext(requestURI.getPath(), builder);
+    builder.setStartTs(0);
+    builder.setEndTs(Integer.MAX_VALUE - 1);
+    builder.setMetricName(metricPrefix);
+
+    CubeQuery query = builder.build();
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMeasureName(), query.getSliceByTags());
+  }
+
   static CubeQuery parse(URI requestURI) throws MetricsPathException {
     CubeQueryBuilder builder = new CubeQueryBuilder();
     // metric will be at the end.
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
     builder.setMetricName(urlDecode(uriPath.substring(index + 1)));
-    String strippedPath = null;
     // strip the metric from the end of the path
     if (index != -1) {
-      strippedPath = uriPath.substring(0, index);
-
+      String strippedPath = uriPath.substring(0, index);
       if (strippedPath.startsWith("/system/cluster")) {
         builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
                                                     Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
@@ -385,8 +395,6 @@ final class MetricQueryParser {
       } else {
         return;
       }
-    } else {
-      tagValues.put(Constants.Metrics.Tag.RUN_ID, null);
     }
     if (!nextPath.equals(componentType)) {
       String exception = String.format("Expecting '%s' after the %s name ", componentType,

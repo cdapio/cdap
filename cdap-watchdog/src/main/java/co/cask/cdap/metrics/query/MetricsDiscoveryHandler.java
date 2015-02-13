@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.timeseries.TagValue;
@@ -51,7 +52,7 @@ import javax.ws.rs.QueryParam;
  * Class for handling requests for aggregate application metrics.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
-//todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
+// todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
 public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
@@ -203,6 +204,10 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         List<TagValue> tagsList = Lists.newArrayList();
         for (Map.Entry<String, String> tag : tagValues.entrySet()) {
           tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
+        }
+        if (tagsList.size() > 3) {
+          // todo : adding null for runId,should we support searching with runId ?
+          tagsList.add(4, new TagValue(Constants.Metrics.Tag.RUN_ID, null));
         }
         List<List<TagValue>> resultSet = Lists.newArrayList();
         getAllPossibleTags(tagsList, resultSet);
