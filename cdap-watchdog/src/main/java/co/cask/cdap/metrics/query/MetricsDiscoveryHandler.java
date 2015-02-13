@@ -205,10 +205,10 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
         validatePathElements(request, metricsRequestContext);
       }
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
     } catch (ServerException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
       return;
     }
 

@@ -150,14 +150,14 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
                          metricsRequest.getTagPrefix());
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (ServerException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     } catch (Exception e) {
       LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     }
   }
 
