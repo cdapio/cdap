@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -53,6 +54,7 @@ public class EntityTableTest {
 
   private static DatasetFramework dsFramework;
   private static HBaseTestBase testHBase;
+  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   protected MetricsTable getTable(String name) throws Exception {
     return DatasetsUtil.getOrCreateDataset(dsFramework, name, MetricsTable.class.getName(),
@@ -143,7 +145,7 @@ public class EntityTableTest {
                                              });
 
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "metrics-hbase"), new HBaseMetricsTableModule());
   }
 
   @AfterClass

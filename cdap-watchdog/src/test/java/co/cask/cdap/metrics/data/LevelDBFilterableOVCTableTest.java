@@ -31,6 +31,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
@@ -56,6 +57,7 @@ public class LevelDBFilterableOVCTableTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
   private static MetricsTableFactory tableFactory;
   private static final int rollTime = 60;
+  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @Test
   public void testAggregatesQuery() throws Exception {
@@ -217,7 +219,7 @@ public class LevelDBFilterableOVCTableTest {
       });
     DatasetFramework dsFramework =
       new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-leveldb", new InMemoryMetricsTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "metrics-leveldb"), new InMemoryMetricsTableModule());
     tableFactory = new DefaultMetricsTableFactory(cConf, dsFramework);
   }
 }

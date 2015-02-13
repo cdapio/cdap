@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
@@ -66,7 +67,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
     exploreService = injector.getInstance(ExploreService.class);
 
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
@@ -103,7 +104,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
   @Test
