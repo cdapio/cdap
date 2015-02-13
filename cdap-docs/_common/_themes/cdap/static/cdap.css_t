@@ -190,7 +190,7 @@ div.body h6 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
 
 div.body h1 { background-color: #E0E0E0; }
 div.body h2 { background-color: #E0E0E0; }
-div.body h3 { background-color: #E0E0E0; }
+div.body h3 { background-color: #E0E0E0; margin: 30px 0px 10px 0px; }
 div.body h4 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
 div.body h5 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
 
@@ -227,9 +227,22 @@ div.note {
     border: 1px solid #ccc;
 }
 
+div.related ul {
+    margin-left: -5px;
+    padding-left: 0px;
+}
+
 div.seealso {
     background-color: #ffc;
     border: 1px solid #ff6;
+}
+
+li.versions {
+    width: 120px;
+    position: absolute;
+    margin-left: -135px;
+    text-align: right;
+    top: 6px;
 }
 
 div.topic {

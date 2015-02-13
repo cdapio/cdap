@@ -5,6 +5,7 @@
 
 .. _http-restful-api-summary:
 
+
 ===========================================================
 Summary of HTTP RESTful API
 ===========================================================
@@ -19,12 +20,29 @@ The **namespaced** APIs are those APIs that include a ``namespace`` in the HTTP 
 
 Namespace API
 =============
-
-:ref:`Namespace API <http-restful-api-v3-namespace>`
-
 All URLs referenced in this API have this base URL (``<base-url>``)::
 
   http://<host>:<port>/v3/
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<host>``
+     - Host name of the CDAP server
+   * - ``<port>``
+     - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``)
+
+.. rubric:: Namespace
+
+.. list-table::
+   :widths: 40 40 20
+   
+   * - **Namespace HTTP RESTful API**
+     - Description / HTTP Method
+     - :ref:`Reference Page <http-restful-api-v3-namespace>`
 
 
 Namespaced APIs
@@ -52,13 +70,16 @@ part of their URL. All URLs referenced in these APIs have this base URL (``<base
    
 .. |br-space| replace:: :raw-html:`<br />            `
 
-Lifecycle HTTP RESTful API
---------------------------
+.. |space| replace:: *            *
+
+Lifecycle
+---------
 
 .. list-table::
-   :widths: 80 20
+   :widths: 40 40 20
    
-   * - **Description** / HTTP Method
+   * - **Lifecycle HTTP RESTful API**
+     - Description / HTTP Method
      - :ref:`Reference Page <http-restful-api-lifecycle>`
 
 .. list-table::
@@ -108,13 +129,69 @@ Lifecycle HTTP RESTful API
        |br-space| ``POST <base-url>/apps/<app-id>/schedules/<schedule-name>/resume``
 
 
+Lifecycle
+---------
+
+.. list-table::
+   :widths: 40 40 20
+   
+   * - **Lifecycle HTTP RESTful API**
+     - Description / HTTP Method
+     - :ref:`Reference Page <http-restful-api-lifecycle>`
+
+.. list-table::
+   :widths: 100
+
+   * - | Deploy an Application ** **
+       | |space| ``POST <base-url>/apps``
+   * - | List of deployed Applications ** **
+       | |space| ``GET <base-url>/apps``
+   * - | Details of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>``
+   * - | Delete a deployed Application with all its elements ** **
+       | |space| ``DELETE <base-url>/apps/<application-name>``
+   * - | Operate (start or stop) a deployed Application ** **
+       | |space| ``POST <base-url>/apps/<app-id>/<program-type>/<program-id>/<operation>``
+   * - | Get the status of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>/<program-type>/<program-id>/status``
+   * - | Get the status of multiple deployed Applications ** **
+       | |space| ``POST <base-url>/status``
+   * - | Get the live-info of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>/<program-type>/<program-id>/live-info``
+   * - | Get the instance count of different elements of a deployed Application ** **
+       | |space| ``POST <base-url>/instances``
+   * - | Get the instance count of a given Flowlet of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances``
+   * - | Set the instance count of a given Flowlet of a deployed Application ** **
+       | |space| ``PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances``
+   * - | Get the instance count of a given Procedure of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances``
+   * - | Set the instance count of a given Procedure of a deployed Application ** **
+       | |space| ``PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances``
+   * - | Get the instance count of a given Service of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances``
+   * - | Set the instance count of a given Service of a deployed Application ** **
+       | |space| ``PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances``
+   * - | Get the runs of a selected program of a deployed Application ** **
+       | |space| ``GET <base-url>/apps/<app-id>/<program-type>/<program-id>/runs``
+   * - | Get the history of successfully completed Twill Services ** **
+       | |space| ``GET <base-url>/apps/<app-id>/services/<service-id>/runs?status=completed``
+   * - | Get the schedules defined for a Workflow ** **
+       | |space| ``GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules``
+   * - | Get the next time the schedule for a Workflow is to run ** **
+       | |space| ``GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime``
+   * - | Suspend a Schedule ** **
+       | |space| ``POST <base-url>/apps/<app-id>/schedules/<schedule-name>/suspend``
+   * - | Resume a Schedule ** **
+       | |space| ``POST <base-url>/apps/<app-id>/schedules/<schedule-name>/resume``
+
 
 Non-namespaced APIs
 ===================
 The APIs in this group **do not** use namespaces. All URLs referenced in these APIs have
 this base URL (``<base-url>``)::
 
-  http://<host>:<port>/v3/namespaces/<namespace-id>
+  http://<host>:<port>/v3/
 
 .. list-table::
    :widths: 20 80
@@ -126,5 +203,3 @@ this base URL (``<base-url>``)::
      - Host name of the CDAP server
    * - ``<port>``
      - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``)
-   * - ``<namespace-id>``
-     - Namespace ID, a valid and existing namespace in the CDAP instance
