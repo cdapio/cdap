@@ -32,7 +32,6 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.MemoryTable;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
@@ -46,12 +45,6 @@ public class CoreDatasetsModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
-
-    // TODO: remove OrderedTable registration when OrderedTable is removed
-    DatasetDefinition<OrderedTable, DatasetAdmin> orderedTableDef =
-        new OrderedTableDefinition("orderedTable", tableDef);
-    registry.add(orderedTableDef);
-    registry.add(new OrderedTableDefinition(OrderedTable.class.getName(), tableDef));
 
     DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition("keyValueTable", tableDef);
     registry.add(kvTableDef);
@@ -74,8 +67,7 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
-    InMemoryTableDefinition inMemoryOrderedTable = new InMemoryTableDefinition("inMemoryTable");
-    registry.add(new OrderedTableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
-    registry.add(new OrderedTableDefinition("memoryTable", inMemoryOrderedTable));
+    registry.add(new InMemoryTableDefinition(MemoryTable.class.getName()));
+    registry.add(new InMemoryTableDefinition("memoryTable"));
   }
 }

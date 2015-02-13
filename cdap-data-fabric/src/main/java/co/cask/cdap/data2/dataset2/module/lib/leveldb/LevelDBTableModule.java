@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.module.lib.leveldb;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
 
@@ -29,5 +30,7 @@ public class LevelDBTableModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new LevelDBTableDefinition("table"));
     registry.add(new LevelDBTableDefinition(Table.class.getName()));
+    registry.add(new LevelDBTableDefinition("orderedTable"));
+    registry.add(new LevelDBTableDefinition(OrderedTable.class.getName()));
   }
 }

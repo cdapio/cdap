@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.module.lib.inmemory;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
@@ -29,5 +30,7 @@ public class InMemoryTableModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new InMemoryTableDefinition("table"));
     registry.add(new InMemoryTableDefinition(Table.class.getName()));
+    registry.add(new InMemoryTableDefinition("orderedTable"));
+    registry.add(new InMemoryTableDefinition(OrderedTable.class.getName()));
   }
 }
