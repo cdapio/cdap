@@ -18,10 +18,10 @@ package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.metrics.data.TimeValue;
 import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -68,7 +68,7 @@ public class MetricStoreRequestExecutor {
         long resultTimeStamp = (query.getStartTs() / query.getResolution()) * query.getResolution();
 
         for (int i = 0; i < query.getLimit(); i++) {
-          if (timeValueItor.hasNext() && timeValueItor.peek().getTime() == resultTimeStamp) {
+          if (timeValueItor.hasNext() && timeValueItor.peek().getTimestamp() == resultTimeStamp) {
             builder.addData(resultTimeStamp, timeValueItor.next().getValue());
           } else {
             // If the scan result doesn't have value for a timestamp, we add 0 to the result-returned for that timestamp
@@ -103,10 +103,10 @@ public class MetricStoreRequestExecutor {
     for (int i = 0; i < query.getLimit(); i++) {
       long tupleRead = 0;
       long eventProcessed = 0;
-      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTimeStamp) {
+      if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTimestamp() == resultTimeStamp) {
         tupleRead = tuplesReadItor.next().getValue();
       }
-      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTime() == resultTimeStamp) {
+      if (eventsProcessedItor.hasNext() && eventsProcessedItor.peek().getTimestamp() == resultTimeStamp) {
         eventProcessed = eventsProcessedItor.next().getValue();
       }
       if (eventProcessed != 0) {
