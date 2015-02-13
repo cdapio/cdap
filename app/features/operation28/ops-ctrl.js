@@ -16,8 +16,8 @@ angular.module(PKG.name+'.feature.operation28')
           stream: null,
           lastValue: 0
         }
-      }
-    };
+      };
+    }
 
 
     function pollCb (res) {
@@ -35,7 +35,7 @@ angular.module(PKG.name+'.feature.operation28')
         values: v
       }];
       this.lastValue = res.data.pop().value;
-    };
+    }
 
     return {
       panelMap: panelMap,
@@ -57,8 +57,8 @@ angular.module(PKG.name+'.feature.operation28')
     angular.forEach($scope.panels, function (panel) {
       var c = panel.chart;
       dataSrc.poll({
-          _cdapPathV2: '/metrics/system/'
-            + c.metric + '?start=now-60s&end=now',
+          _cdapPathV2: '/metrics/system/' +
+              c.metric + '?start=now-60s&end=now',
           method: 'GET'
         },
         op28helper.pollCb.bind(c)
@@ -95,3 +95,4 @@ angular.module(PKG.name+'.feature.operation28')
 
   })
 
+  ;
