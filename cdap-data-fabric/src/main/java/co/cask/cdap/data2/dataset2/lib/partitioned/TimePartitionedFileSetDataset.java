@@ -257,6 +257,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   }
 
   @Override
+  @Deprecated
   public FileSet getUnderlyingFileSet() {
     return getEmbeddedFileSet();
   }

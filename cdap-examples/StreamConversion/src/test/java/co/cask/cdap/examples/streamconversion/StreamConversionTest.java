@@ -42,7 +42,7 @@ public class StreamConversionTest extends TestBase {
   public void testStreamConversion() throws Exception {
 
     // Deploy the PurchaseApp application
-    ApplicationManager appManager = deployApplication(StreamConversionApp.class);
+    ApplicationManager appManager = getTestManager().deployApplication(StreamConversionApp.class);
 
     // TODO: in unit tests, all schedules should be disabled at deploy time, to avoid race conditions.
     // make sure the workflow does not get started by the schedule.
@@ -65,7 +65,7 @@ public class StreamConversionTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
-    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getTestManager().getDataset("converted");
     TimePartitionedFileSet converted = fileSetManager.get();
     Map<Long, String> partitions = converted.getPartitions(startTime, System.currentTimeMillis());
     Assert.assertEquals(1, partitions.size());
@@ -91,7 +91,7 @@ public class StreamConversionTest extends TestBase {
     int minute = calendar.get(Calendar.MINUTE);
 
     // query with SQL
-    Connection connection = getQueryClient();
+    Connection connection = getTestManager().getQueryClient();
     ResultSet results = connection.prepareStatement("SELECT year, month, day, hour, minute " +
                                                       "FROM cdap_user_converted " +
                                                       "WHERE body = '17'").executeQuery();
