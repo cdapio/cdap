@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           $state.go(toState, {
             runId: newVal
           });
-        })
+        });
       } else {
         // Navigating using URL. Use the already existing runId and set the tab if present in the URL.
         $scope.currentRun = $state.params.runId;
@@ -64,7 +64,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     $scope.$on('$stateChangeSuccess', function(event, toState) {
       var tab;
       if ($state.includes('flows.detail.runs.tab.*')) {
-        tab = $scope.runTabs.indexOf(toState.name.split('.').slice(-1).pop())
+        tab = $scope.runTabs.indexOf(toState.name.split('.').slice(-1).pop());
         $scope.runTabs.activeTab = (tab > 0? tab: 0);
       }
     });
@@ -72,4 +72,4 @@ angular.module(PKG.name + '.feature.mapreduce')
     function currentRunTab() {
       return $scope.runTabs.indexOf( $state.current.name.split('.').slice(-1).pop() );
     }
-  })
+  });

@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.foo')
           $scope['doSave'+s.n] = (function() {
             this.v.set('test', $scope[this.n.toLowerCase()]);
           }).bind(s);
-        };
+        }
       });
 
 

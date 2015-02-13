@@ -30,4 +30,4 @@ angular.module(PKG.name + '.feature.mapreduce')
         _cdapNsPath: basePath + '/' + action
       });
     };
-  })
+  });
