@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +50,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
+
+  private ScheduledExecutorService executorService;
 
   public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
@@ -98,7 +101,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   @Override
   protected ScheduledExecutorService executor() {
-    return Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-collection"));
+    executorService = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("metrics-collection"));
+    return executorService;
   }
 
   @Override
@@ -114,7 +119,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   @Override
   protected void shutDown() throws Exception {
     // Flush the metrics when shutting down.
-    runOneIteration();
+    try {
+      runOneIteration();
+    } finally {
+      if (executorService != null) {
+        executorService.shutdownNow();
+      }
+    }
   }
 
   private Iterator<MetricValue> getMetrics(final long timestamp) {

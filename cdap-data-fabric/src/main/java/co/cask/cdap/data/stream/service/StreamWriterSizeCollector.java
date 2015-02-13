@@ -20,7 +20,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Service;
 
 /**
- * Keep track of the sizes of the files written by one {@link StreamHandler}.
+ * Keep track of the sizes of the files written by one {@link StreamHandlerV2}.
  */
 public interface StreamWriterSizeCollector extends Service {
 

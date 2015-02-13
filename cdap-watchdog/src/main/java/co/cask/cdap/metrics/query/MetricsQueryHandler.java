@@ -137,11 +137,11 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
       MetricsRequest metricsRequest = parseAndValidate(request, uri);
       responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(metricsRequest));
     } catch (URISyntaxException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Exception e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
     }
   }
 }

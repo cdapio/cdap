@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,6 +54,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -79,11 +80,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * The {@link HttpHandler} for handling REST call to stream endpoints.
+ * The {@link HttpHandler} for handling REST call to V3 stream APIs.
  *
  * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
-@Path(Constants.Gateway.API_VERSION_2 + "/streams")
+@Singleton
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
@@ -160,6 +162,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountID, stream);
@@ -177,6 +180,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
@@ -200,6 +204,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}")
   public void enqueue(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
@@ -219,6 +224,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/async")
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountId, stream);
@@ -232,6 +238,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/batch")
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
@@ -253,6 +260,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
+                       @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountId, stream);
@@ -273,6 +281,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/{stream}/config")
   public void setConfig(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
@@ -456,7 +465,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *  Adapter class for {@link co.cask.cdap.proto.StreamProperties}. Its main purpose is to transform
+   *  Adapter class for {@link StreamProperties}. Its main purpose is to transform
    *  the unit of TTL, which is second in JSON, but millisecond in the StreamProperties object.
    */
   private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties>,
