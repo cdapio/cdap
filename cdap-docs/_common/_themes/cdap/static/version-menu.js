@@ -35,17 +35,15 @@
     return versionsURL + dir + '/en/';
   });
   var writelink = (function(dir, label){
-//     document.write('<option value="' + versionsURL + dir + '/en/">Version ' + label + '</option>')
     document.write('<option value="' + buildURL(dir) + '">Version ' + label + '</option>');
   });
   window.versionscallback = (function(data){
     if (data) {
-//       document.write('<li style="width: 120px; position: absolute; margin-left: -165px; text-align: right; top: 6px;">');
       document.write('<li class="versions">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
     var ess = "s";
-    if (data.development) {
+    if (data.development && data.development.length > 0) {
       if (data.development.length == 1) {
         ess = "";
       }
@@ -57,11 +55,11 @@
       document.write('</optgroup>');
     }
       document.write('<optgroup label="Current Release">');
-    if (data.current) {
+    if (data.current && data.current.length > 0) {
       writelink(data.current[0], data.current[1]);
       document.write('</optgroup>');
     }
-    if (data.older) {
+    if (data.older && data.older.length > 0) {
       ess = "s";
       if (data.older.length == 1) {
         ess = "";

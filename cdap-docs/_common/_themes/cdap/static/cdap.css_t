@@ -207,6 +207,10 @@ a.headerlink:hover {
     color: white;
 }
 
+h2>a.reference.external {
+    color: #111;
+}
+
 div.body p, div.body dd, div.body li {
     line-height: 1.5em;
 }
