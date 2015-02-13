@@ -33,10 +33,10 @@ import java.util.UUID;
 /**
  * Reflection based reader.
  *
- * @param <SOURCE> type of object to read from
+ * @param <FROM> type of object to read from
  * @param <TO> type of object to read
  */
-public abstract class ReflectionReader<SOURCE, TO> {
+public abstract class ReflectionReader<FROM, TO> {
 
   private final Map<Class<?>, Instantiator<?>> creators;
   private final InstantiatorFactory creatorFactory;
@@ -60,12 +60,12 @@ public abstract class ReflectionReader<SOURCE, TO> {
    * @return the object of given type and schema
    * @throws IOException if there was some exception reading the object
    */
-  public TO read(SOURCE source, Schema sourceSchema) throws IOException {
+  public TO read(FROM source, Schema sourceSchema) throws IOException {
     return read(source, sourceSchema, schema, type);
   }
 
   @SuppressWarnings("unchecked")
-  protected TO read(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected TO read(FROM source, Schema sourceSchema, Schema targetSchema,
                     TypeToken<?> targetTypeToken) throws IOException {
     if (sourceSchema.getType() != Schema.Type.UNION && targetSchema.getType() == Schema.Type.UNION) {
       // Try every target schemas
@@ -81,39 +81,39 @@ public abstract class ReflectionReader<SOURCE, TO> {
     return (TO) doRead(source, sourceSchema, targetSchema, targetTypeToken);
   }
 
-  protected abstract Object readNull(SOURCE source) throws IOException;
+  protected abstract Object readNull(FROM source) throws IOException;
 
-  protected abstract boolean readBool(SOURCE source) throws IOException;
+  protected abstract boolean readBool(FROM source) throws IOException;
 
-  protected abstract int readInt(SOURCE source) throws IOException;
+  protected abstract int readInt(FROM source) throws IOException;
 
-  protected abstract long readLong(SOURCE source) throws IOException;
+  protected abstract long readLong(FROM source) throws IOException;
 
-  protected abstract float readFloat(SOURCE source) throws IOException;
+  protected abstract float readFloat(FROM source) throws IOException;
 
-  protected abstract double readDouble(SOURCE source) throws IOException;
+  protected abstract double readDouble(FROM source) throws IOException;
 
-  protected abstract String readString(SOURCE source) throws IOException;
+  protected abstract String readString(FROM source) throws IOException;
 
-  protected abstract ByteBuffer readBytes(SOURCE source) throws IOException;
+  protected abstract ByteBuffer readBytes(FROM source) throws IOException;
 
-  protected abstract Object readEnum(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected abstract Object readEnum(FROM source, Schema sourceSchema, Schema targetSchema,
                                      TypeToken<?> targetTypeToken) throws IOException;
 
-  protected abstract Object readArray(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected abstract Object readArray(FROM source, Schema sourceSchema, Schema targetSchema,
                                       TypeToken<?> targetTypeToken) throws IOException;
 
-  protected abstract Object readMap(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected abstract Object readMap(FROM source, Schema sourceSchema, Schema targetSchema,
                                     TypeToken<?> targetTypeToken) throws IOException;
 
-  protected abstract Object readUnion(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected abstract Object readUnion(FROM source, Schema sourceSchema, Schema targetSchema,
                                       TypeToken<?> targetTypeToken) throws IOException;
 
-  protected abstract Object readRecord(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected abstract Object readRecord(FROM source, Schema sourceSchema, Schema targetSchema,
                                        TypeToken<?> targetTypeToken) throws IOException;
 
 
-  protected Object doRead(SOURCE source, Schema sourceSchema, Schema targetSchema,
+  protected Object doRead(FROM source, Schema sourceSchema, Schema targetSchema,
                           TypeToken<?> targetTypeToken) throws IOException {
 
     Schema.Type sourceType = sourceSchema.getType();
@@ -167,7 +167,7 @@ public abstract class ReflectionReader<SOURCE, TO> {
     throw new IOException(String.format("Fails to resolve %s to %s", sourceSchema, targetSchema));
   }
 
-  private Object resolveType(SOURCE source, Schema.Type sourceType, Schema.Type targetType,
+  private Object resolveType(FROM source, Schema.Type sourceType, Schema.Type targetType,
                              TypeToken<?> targetTypeToken) throws IOException {
     switch(sourceType) {
       case BOOLEAN:

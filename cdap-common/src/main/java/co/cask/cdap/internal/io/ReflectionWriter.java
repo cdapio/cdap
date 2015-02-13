@@ -73,7 +73,7 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
 
   protected abstract void writeEnum(WRITER writer, String val, Schema schema) throws IOException;
 
-  protected abstract void writeArray(WRITER writer, Collection val, Schema componentSchema) throws IOException;
+  protected abstract void writeArray(WRITER writer, Collection<?> val, Schema componentSchema) throws IOException;
 
   protected abstract void writeArray(WRITER writer, Object val, Schema componentSchema) throws IOException;
 
@@ -139,7 +139,7 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
         break;
       case ARRAY:
         if (object instanceof Collection) {
-          writeArray(writer, (Collection) object, objSchema.getComponentSchema());
+          writeArray(writer, (Collection<?>) object, objSchema.getComponentSchema());
         } else {
           writeArray(writer, object, objSchema.getComponentSchema());
         }

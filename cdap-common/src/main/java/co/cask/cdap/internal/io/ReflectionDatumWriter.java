@@ -102,7 +102,7 @@ public final class ReflectionDatumWriter<T> extends ReflectionWriter<Encoder, T>
   }
 
   @Override
-  protected void writeArray(Encoder encoder, Collection col, Schema componentSchema) throws IOException {
+  protected void writeArray(Encoder encoder, Collection<?> col, Schema componentSchema) throws IOException {
     int size = col.size();
     encoder.writeInt(size);
     for (Object obj : col) {

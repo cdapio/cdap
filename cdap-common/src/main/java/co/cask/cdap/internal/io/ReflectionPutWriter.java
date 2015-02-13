@@ -124,7 +124,7 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
   }
 
   @Override
-  protected void writeArray(Put put, Collection val, Schema componentSchema) throws IOException {
+  protected void writeArray(Put put, Collection<?> val, Schema componentSchema) throws IOException {
     put.add(nextField(), encodeArray(val, componentSchema));
   }
 
