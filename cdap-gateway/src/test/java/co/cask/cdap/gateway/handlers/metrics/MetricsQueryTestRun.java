@@ -17,6 +17,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import com.google.common.base.Charsets;
@@ -94,9 +95,9 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
       collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
                                                        "unique"));
 
-    uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input." + queueName.toString())
+    uniqueFlowletMetrics.childCollector(MetricTags.FLOWLET_QUEUE.getCodeName(), "input." + queueName.toString())
       .increment("process.events.processed", 6);
-    uniqueFlowletMetrics.childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, "input.stream://default/streamX")
+    uniqueFlowletMetrics.childCollector(MetricTags.FLOWLET_QUEUE.getCodeName(), "input.stream://default/streamX")
       .increment("process.events.processed", 1);
 
     // Insert stream metrics
@@ -135,10 +136,10 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingSystemMetrics() throws Exception {
     // Insert system metric
     MetricsCollector collector =
-      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                     Constants.Metrics.Tag.COMPONENT, "appfabric2",
-                                                     Constants.Metrics.Tag.HANDLER, "AppFabricHttpHandler",
-                                                     Constants.Metrics.Tag.METHOD, "getAllApps"));
+      collectionService.getCollector(ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                                                     MetricTags.COMPONENT.getCodeName(), "appfabric2",
+                                                     MetricTags.HANDLER.getCodeName(), "AppFabricHttpHandler",
+                                                     MetricTags.METHOD.getCodeName(), "getAllApps"));
     collector.increment("request.received", 1);
 
     // Wait for collection to happen
@@ -336,8 +337,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testingTransactionMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)
     MetricsCollector collector =
-      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                     Constants.Metrics.Tag.COMPONENT, "transactions"));
+      collectionService.getCollector(ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                                                     MetricTags.COMPONENT.getCodeName(), "transactions"));
     collector.increment("inprogress", 1);
 
     // Wait for collection to happen
@@ -359,8 +360,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     collector.increment("collect.my.events", 10);
 
     collector = collectionService.getCollector(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                      Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+      ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                      MetricTags.CLUSTER_METRICS.getCodeName(), "true"));
     collector.increment("resources.total.my.storage", 10);
 
     // Wait for collection to happen

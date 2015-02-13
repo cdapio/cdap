@@ -26,8 +26,8 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.SerializableServiceDiscoverer;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -159,7 +159,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
+    tags.put(MetricTags.INSTANCE_ID.getCodeName(), "0");
 
     return service.getCollector(tags);
   }

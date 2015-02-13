@@ -25,6 +25,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -383,70 +384,70 @@ public abstract class MetricsSuiteTestBase {
 
   protected static Map<String, String> getFlowletContext(String namespaceId, String appName, String flowName,
                                                          String flowletName) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
-                           Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
-                           Constants.Metrics.Tag.PROGRAM, flowName,
-                           Constants.Metrics.Tag.FLOWLET, flowletName);
+    return ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), namespaceId,
+                           MetricTags.APP.getCodeName(), appName,
+                           MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.FLOW),
+                           MetricTags.PROGRAM.getCodeName(), flowName,
+                           MetricTags.FLOWLET.getCodeName(), flowletName);
   }
 
   protected static Map<String, String> getFlowletQueueContext(String namespaceId, String appName, String flowName,
                                                               String flowletName, String queueName) {
     return ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
-      .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW))
-      .put(Constants.Metrics.Tag.PROGRAM, flowName)
-      .put(Constants.Metrics.Tag.FLOWLET, flowletName)
-      .put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName)
+      .put(MetricTags.NAMESPACE.getCodeName(), namespaceId)
+      .put(MetricTags.APP.getCodeName(), appName)
+      .put(MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.FLOW))
+      .put(MetricTags.PROGRAM.getCodeName(), flowName)
+      .put(MetricTags.FLOWLET.getCodeName(), flowletName)
+      .put(MetricTags.FLOWLET_QUEUE.getCodeName(), queueName)
       .build();
   }
 
   protected static Map<String, String> getFlowletDatasetContext(String namespaceId, String appName, String flowName,
                                                                 String flowletName, String datasetName) {
     return ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
-      .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW))
-      .put(Constants.Metrics.Tag.PROGRAM, flowName)
-      .put(Constants.Metrics.Tag.FLOWLET, flowletName)
-      .put(Constants.Metrics.Tag.DATASET, datasetName)
+      .put(MetricTags.NAMESPACE.getCodeName(), namespaceId)
+      .put(MetricTags.APP.getCodeName(), appName)
+      .put(MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.FLOW))
+      .put(MetricTags.PROGRAM.getCodeName(), flowName)
+      .put(MetricTags.FLOWLET.getCodeName(), flowletName)
+      .put(MetricTags.DATASET.getCodeName(), datasetName)
       .build();
   }
 
   protected static Map<String, String> getStreamHandlerContext(String streamName, String instanceId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
-                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
-                           Constants.Metrics.Tag.INSTANCE_ID, instanceId,
-                           Constants.Metrics.Tag.STREAM, streamName);
+    return ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+                           MetricTags.COMPONENT.getCodeName(), Constants.Gateway.METRICS_CONTEXT,
+                           MetricTags.HANDLER.getCodeName(), Constants.Gateway.STREAM_HANDLER_NAME,
+                           MetricTags.INSTANCE_ID.getCodeName(), instanceId,
+                           MetricTags.STREAM.getCodeName(), streamName);
   }
 
   protected static Map<String, String> getProcedureContext(String namespaceId, String appName, String procedureName) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
-                           Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
-                           Constants.Metrics.Tag.PROGRAM, procedureName);
+    return ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), namespaceId,
+                           MetricTags.APP.getCodeName(), appName,
+                           MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.PROCEDURE),
+                           MetricTags.PROGRAM.getCodeName(), procedureName);
   }
 
   protected static Map<String, String> getUserServiceContext(String namespaceId, String appName, String serviceName,
                                                              String runnableName) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
-                           Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
-                           Constants.Metrics.Tag.PROGRAM, serviceName,
-                           Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
+    return ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), namespaceId,
+                           MetricTags.APP.getCodeName(), appName,
+                           MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SERVICE),
+                           MetricTags.PROGRAM.getCodeName(), serviceName,
+                           MetricTags.SERVICE_RUNNABLE.getCodeName(), runnableName);
   }
 
   protected static Map<String, String> getUserServiceContext(String namespaceId, String appName, String serviceName,
                                                              String runnableName, String runId) {
     return ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
-      .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE))
-      .put(Constants.Metrics.Tag.PROGRAM, serviceName)
-      .put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName)
-      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(MetricTags.NAMESPACE.getCodeName(), namespaceId)
+      .put(MetricTags.APP.getCodeName(), appName)
+      .put(MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SERVICE))
+      .put(MetricTags.PROGRAM.getCodeName(), serviceName)
+      .put(MetricTags.SERVICE_RUNNABLE.getCodeName(), runnableName)
+      .put(MetricTags.RUN_ID.getCodeName(), runId)
       .build();
   }
 
@@ -454,13 +455,13 @@ public abstract class MetricsSuiteTestBase {
                                                                MapReduceMetrics.TaskType type,
                                                                String runId, String instanceId) {
     return ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
-      .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.MAPREDUCE))
-      .put(Constants.Metrics.Tag.PROGRAM, jobName)
-      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
-      .put(Constants.Metrics.Tag.RUN_ID, runId)
-      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .put(MetricTags.NAMESPACE.getCodeName(), namespaceId)
+      .put(MetricTags.APP.getCodeName(), appName)
+      .put(MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.MAPREDUCE))
+      .put(MetricTags.PROGRAM.getCodeName(), jobName)
+      .put(MetricTags.MR_TASK_TYPE.getCodeName(), type.getId())
+      .put(MetricTags.RUN_ID.getCodeName(), runId)
+      .put(MetricTags.INSTANCE_ID.getCodeName(), instanceId)
       .build();
   }
 }

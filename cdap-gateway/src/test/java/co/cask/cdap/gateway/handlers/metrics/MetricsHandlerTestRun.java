@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -88,7 +88,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
-    collector = collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+    collector = collectionService.getCollector(ImmutableMap.of(MetricTags.CLUSTER_METRICS.getCodeName(), "true"));
     collector.increment("resources.total.storage", 10);
 
     // need a better way to do this

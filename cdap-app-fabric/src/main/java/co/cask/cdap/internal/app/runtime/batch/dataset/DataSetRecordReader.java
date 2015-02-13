@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import com.google.common.collect.ImmutableMap;
@@ -42,8 +43,8 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     this.splitReader = splitReader;
     this.context = context;
     this.dataSetMetrics = context.getMetricsCollectionService().getCollector(
-      ImmutableMap.of(Constants.Metrics.Tag.DATASET, dataSetName,
-                      Constants.Metrics.Tag.RUN_ID, context.getRunId().getId()));
+      ImmutableMap.of(MetricTags.DATASET.getCodeName(), dataSetName,
+                      MetricTags.RUN_ID.getCodeName(), context.getRunId().getId()));
   }
 
   @Override

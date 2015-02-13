@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
@@ -53,11 +54,11 @@ public final class RuntimeStats {
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
-      Constants.Metrics.Tag.PROGRAM, flowId,
-      Constants.Metrics.Tag.FLOWLET, flowletId);
+      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+      MetricTags.APP.getCodeName(), applicationId,
+      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.FLOW),
+      MetricTags.PROGRAM.getCodeName(), flowId,
+      MetricTags.FLOWLET.getCodeName(), flowletId);
 
     return getMetrics(
       context, "system.process.tuples.read", "system.process.events.processed", "system.process.errors");
@@ -65,20 +66,20 @@ public final class RuntimeStats {
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
     Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
-      Constants.Metrics.Tag.PROGRAM, procedureId);
+      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+      MetricTags.APP.getCodeName(), applicationId,
+      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.PROCEDURE),
+      MetricTags.PROGRAM.getCodeName(), procedureId);
 
     return getMetrics(context, "system.query.requests", "system.query.processed", "system.query.failures");
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
     Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
-      Constants.Metrics.Tag.PROGRAM, serviceId);
+      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+      MetricTags.APP.getCodeName(), applicationId,
+      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SERVICE),
+      MetricTags.PROGRAM.getCodeName(), serviceId);
 
     return getMetrics(
       context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
@@ -87,10 +88,10 @@ public final class RuntimeStats {
   // todo: Why is it different from others? Have we reviewed this API?
   public static long getSparkMetrics(String applicationId, String sparkId, String metricName) {
     Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SPARK),
-      Constants.Metrics.Tag.PROGRAM, sparkId);
+      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+      MetricTags.APP.getCodeName(), applicationId,
+      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SPARK),
+      MetricTags.PROGRAM.getCodeName(), sparkId);
 
     return getTotalCounter(context, metricName);
   }

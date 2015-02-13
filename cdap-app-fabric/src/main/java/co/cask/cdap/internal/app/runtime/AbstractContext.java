@@ -25,7 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -171,11 +171,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   public static Map<String, String> getMetricsContext(Program program, String runId) {
     Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
-    tags.put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));
-    tags.put(Constants.Metrics.Tag.PROGRAM, program.getName());
-    tags.put(Constants.Metrics.Tag.RUN_ID, runId);
+    tags.put(MetricTags.NAMESPACE.getCodeName(), program.getNamespaceId());
+    tags.put(MetricTags.APP.getCodeName(), program.getApplicationId());
+    tags.put(MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(program.getType()));
+    tags.put(MetricTags.PROGRAM.getCodeName(), program.getName());
+    tags.put(MetricTags.RUN_ID.getCodeName(), runId);
     return tags;
   }
 }

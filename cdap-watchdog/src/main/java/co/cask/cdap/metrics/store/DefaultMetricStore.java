@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
@@ -75,13 +76,13 @@ public class DefaultMetricStore implements MetricStore {
     // NOTE: to reduce number of aggregations we rename some of the emitted tags to "canonical" names
     this.tagMapping = ImmutableMap.of(
       // flow
-      Constants.Metrics.Tag.FLOWLET, PROGRAM_LEVEL2,
-      Constants.Metrics.Tag.FLOWLET_QUEUE, PROGRAM_LEVEL3,
+      MetricTags.FLOWLET.getCodeName(), PROGRAM_LEVEL2,
+      MetricTags.FLOWLET_QUEUE.getCodeName(), PROGRAM_LEVEL3,
       // mapreduce
-      Constants.Metrics.Tag.MR_TASK_TYPE, PROGRAM_LEVEL2,
-      Constants.Metrics.Tag.INSTANCE_ID, PROGRAM_LEVEL3,
+      MetricTags.MR_TASK_TYPE.getCodeName(), PROGRAM_LEVEL2,
+      MetricTags.INSTANCE_ID.getCodeName(), PROGRAM_LEVEL3,
       // service
-      Constants.Metrics.Tag.SERVICE_RUNNABLE, PROGRAM_LEVEL2
+      MetricTags.SERVICE_RUNNABLE.getCodeName(), PROGRAM_LEVEL2
     );
   }
 
@@ -90,52 +91,62 @@ public class DefaultMetricStore implements MetricStore {
 
     // <cluster metrics>, e.g. storage used
     aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.CLUSTER_METRICS)));
+      MetricTags.NAMESPACE.getCodeName(), MetricTags.CLUSTER_METRICS.getCodeName())));
 
     // app, prg type, prg name, ...
     aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+      MetricTags.NAMESPACE.getCodeName(), MetricTags.APP.getCodeName(),
       // todo: do we even need program type? seems like program name unique within app across program types
-      Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.RUN_ID,
-      PROGRAM_LEVEL2, PROGRAM_LEVEL3, PROGRAM_LEVEL4, Constants.Metrics.Tag.DATASET),
+      MetricTags.PROGRAM_TYPE.getCodeName(), MetricTags.PROGRAM.getCodeName(), MetricTags.RUN_ID.getCodeName(),
+      PROGRAM_LEVEL2, PROGRAM_LEVEL3, PROGRAM_LEVEL4, MetricTags.DATASET.getCodeName()),
                                     // i.e. for programs only
                                     ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-      Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM)));
+      MetricTags.NAMESPACE.getCodeName(), MetricTags.APP.getCodeName(),
+      MetricTags.PROGRAM_TYPE.getCodeName(), MetricTags.PROGRAM.getCodeName())));
 
     // component, handler, method
     aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE,
-      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
+      MetricTags.NAMESPACE.getCodeName(),
+      MetricTags.COMPONENT.getCodeName(), MetricTags.HANDLER.getCodeName(), MetricTags.METHOD.getCodeName()),
                                     // i.e. for components only
                                     ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+      MetricTags.NAMESPACE.getCodeName(), MetricTags.COMPONENT.getCodeName())));
 
     // component, handler, method, stream (for stream only) todo: seems like emitted context is wrong, review...
     aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE,
-      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD,
-      Constants.Metrics.Tag.STREAM),
+      MetricTags.NAMESPACE.getCodeName(),
+      MetricTags.COMPONENT.getCodeName(), MetricTags.HANDLER.getCodeName(), MetricTags.METHOD.getCodeName(),
+      MetricTags.STREAM.getCodeName()),
                                     // i.e. for stream only
-                                    ImmutableList.of(Constants.Metrics.Tag.STREAM)));
+                                    ImmutableList.of(MetricTags.STREAM.getCodeName())));
 
     // dataset
-    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
+    aggs.add(new DefaultAggregation(ImmutableList.of(MetricTags.NAMESPACE.getCodeName(),
+                                                     MetricTags.DATASET.getCodeName()),
                                     // i.e. for datasets only
-                                    ImmutableList.of(Constants.Metrics.Tag.DATASET)));
+                                    ImmutableList.of(MetricTags.DATASET.getCodeName())));
 
     return aggs;
   }
 
   @Override
   public void add(MetricValue metricValue) throws Exception {
-    String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
+    String scope = metricValue.getTags().get(MetricTags.SCOPE);
     String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
-
-    CubeFact fact = new CubeFact(replaceTagsIfNeeded(metricValue.getTags()),
+    Map<String, String> expandedTagNames = expandTagNames(metricValue.getTags());
+    CubeFact fact = new CubeFact(replaceTagsIfNeeded(expandedTagNames),
                                  toMeasureType(metricValue.getType()), measureName,
                                  new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
     cube.get().add(fact);
+  }
+
+  private Map<String, String> expandTagNames(Map<String, String> tagValues) {
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
+      String tagNameReplacement = MetricTags.valueOfCodeName(tagValue.getKey());
+      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
+    }
+    return result;
   }
 
   @Override

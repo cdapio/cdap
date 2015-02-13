@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
@@ -196,8 +197,8 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
         // using LinkedHashMap, so we can iterate and construct TagValue Pairs used for constructing CubeExploreQuery.
         Map<String, String> tagValues = Maps.newLinkedHashMap();
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
-        tagValues.put(Constants.Metrics.Tag.APP, URLDecoder.decode(pathParts.next(), CharEncoding.UTF_8));
+        tagValues.put(MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE);
+        tagValues.put(MetricTags.APP.getCodeName(), URLDecoder.decode(pathParts.next(), CharEncoding.UTF_8));
         MetricQueryParser.parseSubContext(pathParts, tagValues);
 
         List<TagValue> tagsList = Lists.newArrayList();

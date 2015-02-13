@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.Interpolator;
@@ -151,12 +152,12 @@ final class MetricQueryParser {
       strippedPath = uriPath.substring(0, index);
 
       if (strippedPath.startsWith("/system/cluster")) {
-        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                    Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+        builder.setSliceByTagValues(ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                                                    MetricTags.CLUSTER_METRICS.getCodeName(), "true"));
         builder.setScope("system");
       } else if (strippedPath.startsWith("/system/transactions")) {
-        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                    Constants.Metrics.Tag.COMPONENT, TRANSACTION_METRICS_CONTEXT));
+        builder.setSliceByTagValues(ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                                                    MetricTags.DATASET.getCodeName(), TRANSACTION_METRICS_CONTEXT));
         builder.setScope("system");
       } else {
         parseContext(strippedPath, builder);
@@ -213,37 +214,37 @@ final class MetricQueryParser {
     switch (pathType) {
       case APPS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
-        tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
+        tagValues.put(MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE);
+        tagValues.put(MetricTags.APP.getCodeName(), urlDecode(pathParts.next()));
         parseSubContext(pathParts, tagValues);
         break;
       case STREAMS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE);
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'streams' must be followed by a stream name");
         }
-        tagValues.put(Constants.Metrics.Tag.STREAM, urlDecode(pathParts.next()));
+        tagValues.put(MetricTags.DATASET.getCodeName(), urlDecode(pathParts.next()));
         break;
       case DATASETS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE);
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'datasets' must be followed by a dataset name");
         }
-        tagValues.put(Constants.Metrics.Tag.DATASET, urlDecode(pathParts.next()));
+        tagValues.put(MetricTags.DATASET.getCodeName(), urlDecode(pathParts.next()));
         // path can be /metric/scope/datasets/{dataset}/apps/...
         if (pathParts.hasNext()) {
           if (!pathParts.next().equals("apps")) {
             throw new MetricsPathException("expecting 'apps' after stream or dataset name");
           }
-          tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
+          tagValues.put(MetricTags.APP.getCodeName(), urlDecode(pathParts.next()));
           parseSubContext(pathParts, tagValues);
         }
         break;
       case SERVICES:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
+        tagValues.put(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE);
         parseSystemService(pathParts, tagValues);
         break;
     }
@@ -261,7 +262,7 @@ final class MetricQueryParser {
     if (!pathParts.hasNext()) {
       throw new MetricsPathException("'services must be followed by a service name");
     }
-    tagValues.put(Constants.Metrics.Tag.COMPONENT, urlDecode(pathParts.next()));
+    tagValues.put(MetricTags.DATASET.getCodeName(), urlDecode(pathParts.next()));
     if (!pathParts.hasNext()) {
       return;
     }
@@ -270,14 +271,14 @@ final class MetricQueryParser {
     if (!"handlers".equals(next)) {
       throw new MetricsPathException("'handlers must be followed by a service name");
     }
-    tagValues.put(Constants.Metrics.Tag.HANDLER, urlDecode(pathParts.next()));
+    tagValues.put(MetricTags.DATASET.getCodeName(), urlDecode(pathParts.next()));
     if (!pathParts.hasNext()) {
       return;
     }
     // skipping "/runs"
     next = pathParts.next();
     if (RUN_ID.equals(next)) {
-      tagValues.put(Constants.Metrics.Tag.RUN_ID, urlDecode(pathParts.next()));
+      tagValues.put(MetricTags.DATASET.getCodeName(), urlDecode(pathParts.next()));
       if (!pathParts.hasNext()) {
         return;
       }
@@ -285,7 +286,7 @@ final class MetricQueryParser {
       pathParts.next();
     }
 
-    tagValues.put(Constants.Metrics.Tag.METHOD, urlDecode(pathParts.next()));
+    tagValues.put(MetricTags.DATASET.getCodeName(), urlDecode(pathParts.next()));
   }
 
   /**
@@ -309,7 +310,7 @@ final class MetricQueryParser {
     ProgramType programType;
     try {
       programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
-      tagValues.put(Constants.Metrics.Tag.PROGRAM_TYPE, programType.getCode());
+      tagValues.put(MetricTags.DATASET.getCodeName(), programType.getCode());
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
@@ -318,7 +319,7 @@ final class MetricQueryParser {
     if (!pathParts.hasNext()) {
       return;
     }
-    tagValues.put(Constants.Metrics.Tag.PROGRAM, pathParts.next());
+    tagValues.put(MetricTags.DATASET.getCodeName(), pathParts.next());
 
     if (!pathParts.hasNext()) {
       return;
@@ -342,16 +343,16 @@ final class MetricQueryParser {
           throw new MetricsPathException("invalid mapreduce component: " + mrTypeStr
                                            + ".  must be 'mappers' or 'reducers'.");
         }
-        tagValues.put(Constants.Metrics.Tag.MR_TASK_TYPE, mrType.getId());
+        tagValues.put(MetricTags.DATASET.getCodeName(), mrType.getId());
         break;
       case FLOWS:
         buildFlowletContext(pathParts, tagValues);
         break;
       case HANDLERS:
-        buildComponentTypeContext(pathParts, tagValues, "methods", "handler", Constants.Metrics.Tag.METHOD);
+        buildComponentTypeContext(pathParts, tagValues, "methods", "handler", MetricTags.DATASET.getCodeName());
         break;
       case SERVICES:
-        buildComponentTypeContext(pathParts, tagValues, "runnables", "service", Constants.Metrics.Tag.SERVICE_RUNNABLE);
+        buildComponentTypeContext(pathParts, tagValues, "runnables", "service", MetricTags.DATASET.getCodeName());
         break;
       case PROCEDURES:
         if (pathParts.hasNext()) {
@@ -379,14 +380,14 @@ final class MetricQueryParser {
     String nextPath = pathParts.next();
 
     if (nextPath.equals(RUN_ID)) {
-      tagValues.put(Constants.Metrics.Tag.RUN_ID, pathParts.next());
+      tagValues.put(MetricTags.DATASET.getCodeName(), pathParts.next());
       if (pathParts.hasNext()) {
         nextPath = pathParts.next();
       } else {
         return;
       }
     } else {
-      tagValues.put(Constants.Metrics.Tag.RUN_ID, null);
+      tagValues.put(MetricTags.DATASET.getCodeName(), null);
     }
     if (!nextPath.equals(componentType)) {
       String exception = String.format("Expecting '%s' after the %s name ", componentType,
@@ -406,7 +407,7 @@ final class MetricQueryParser {
     if (!pathParts.hasNext()) {
       throw new MetricsPathException("expecting " + RUN_ID + " value after the identifier runs in path");
     }
-    tagValues.put(Constants.Metrics.Tag.RUN_ID, pathParts.next());
+    tagValues.put(MetricTags.DATASET.getCodeName(), pathParts.next());
   }
 
   /**
@@ -415,7 +416,7 @@ final class MetricQueryParser {
   private static void buildFlowletContext(Iterator<String> pathParts, Map<String, String> tagValues)
     throws MetricsPathException {
 
-    buildComponentTypeContext(pathParts, tagValues, "flowlets", "flows", Constants.Metrics.Tag.FLOWLET);
+    buildComponentTypeContext(pathParts, tagValues, "flowlets", "flows", MetricTags.FLOWLET.getCodeName());
     if (pathParts.hasNext()) {
       if (!pathParts.next().equals("queues")) {
         throw new MetricsPathException("expecting 'queues' after the flowlet name");
@@ -423,7 +424,7 @@ final class MetricQueryParser {
       if (!pathParts.hasNext()) {
         throw new MetricsPathException("'queues' must be followed by a queue name");
       }
-      tagValues.put(Constants.Metrics.Tag.FLOWLET_QUEUE, urlDecode(pathParts.next()));
+      tagValues.put(MetricTags.FLOWLET_QUEUE.getCodeName(), urlDecode(pathParts.next()));
     }
   }
 

@@ -27,6 +27,7 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -320,7 +321,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     }
     Map<String, String> tags = Maps.newHashMap(AbstractContext.getMetricsContext(program, runId));
     // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
+    tags.put(MetricTags.INSTANCE_ID.getCodeName(), "0");
 
     return service.getCollector(tags);
   }

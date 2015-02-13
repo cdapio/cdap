@@ -27,6 +27,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
@@ -349,8 +350,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
       super(metricsCollectionService.getCollector(
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                        Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
+        ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                        MetricTags.CLUSTER_METRICS.getCodeName(), "true")));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {
@@ -436,7 +437,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
           Map<String, String> runContext = ImmutableMap.<String, String>builder()
             .putAll(metricContext)
-            .put(Constants.Metrics.Tag.RUN_ID, controller.getRunId().getId()).build();
+            .put(MetricTags.RUN_ID.getCodeName(), controller.getRunId().getId()).build();
 
           sendMetrics(runContext, 1, memory, vcores);
         }
@@ -558,9 +559,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   private static Map<String, String> getMetricsContext(ProgramType type, Id.Program programId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.APP, programId.getApplicationId(),
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(type),
-                           Constants.Metrics.Tag.PROGRAM, programId.getId());
+    return ImmutableMap.of(MetricTags.APP.getCodeName(), programId.getApplicationId(),
+                           MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(type),
+                           MetricTags.PROGRAM.getCodeName(), programId.getId());
   }
 
   @Override

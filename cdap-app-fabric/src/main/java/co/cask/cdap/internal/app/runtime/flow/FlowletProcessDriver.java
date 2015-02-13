@@ -25,6 +25,7 @@ import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.internal.app.queue.SingleItemQueueReader;
@@ -39,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.apache.hadoop.metrics2.MetricsTag;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -327,7 +329,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         .build(new CacheLoader<String, MetricsCollector>() {
           @Override
           public MetricsCollector load(String key) throws Exception {
-            return flowletContext.getProgramMetrics().childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
+            return flowletContext.getProgramMetrics().childCollector(MetricTags.FLOWLET_QUEUE.getCodeName(), key);
           }
         });
 

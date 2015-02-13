@@ -30,8 +30,8 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -243,8 +243,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     //       strict limits by default (64 bytes), we simply can't risk overflowing it.
     if (type != null) {
       // in a task: put only task info
-      tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
-      tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
+      tags.put(MetricTags.MR_TASK_TYPE.getCodeName(), type.getId());
+      tags.put(MetricTags.INSTANCE_ID.getCodeName(), taskId);
     } else {
       // in a runner (container that submits the job): put program info
       tags.putAll(getMetricsContext(program, runId));

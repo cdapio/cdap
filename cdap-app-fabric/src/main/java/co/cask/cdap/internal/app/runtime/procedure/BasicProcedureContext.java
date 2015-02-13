@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -105,7 +106,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
+    tags.put(MetricTags.INSTANCE_ID.getCodeName(), String.valueOf(instanceId));
     return service.getCollector(tags);
   }
 
