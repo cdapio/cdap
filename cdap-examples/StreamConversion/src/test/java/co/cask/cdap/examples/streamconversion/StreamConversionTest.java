@@ -83,6 +83,7 @@ public class StreamConversionTest extends TestBase {
     Assert.assertTrue(partitionTime <= System.currentTimeMillis());
 
     // extract fields from partition time
+    calendar.setTimeInMillis(partitionTime);
     int year = calendar.get(Calendar.YEAR);
     int month = calendar.get(Calendar.MONTH) + 1;
     int day = calendar.get(Calendar.DAY_OF_MONTH);

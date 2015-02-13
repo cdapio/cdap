@@ -63,7 +63,7 @@ import javax.ws.rs.QueryParam;
 /**
  * A HTTP handler for handling getting stream events.
  */
-@Path(Constants.Gateway.API_VERSION_2 + "/streams")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
@@ -99,6 +99,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/events")
   public void fetch(HttpRequest request, HttpResponder responder,
+                    @PathParam("namespace-id") String namespaceId,
                     @PathParam("stream") String stream,
                     @QueryParam("start") long startTime,
                     @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
