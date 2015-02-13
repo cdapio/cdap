@@ -91,8 +91,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
       return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
-      // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
       // /v2/streams should go to AppFabricHttp
+      // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
       // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
       if (uriParts.length == 2) {
         return Constants.Service.APP_FABRIC_HTTP;
@@ -130,7 +130,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     }
   }
 
-  private String getV3RoutingService(String [] uriParts, AllowedMethod method, HttpRequest request) {
+  private String getV3RoutingService(String [] uriParts, AllowedMethod requestMethod, HttpRequest request) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
@@ -140,6 +140,20 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
       String serviceName = String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
       return serviceName;
+    } else if ((uriParts.length >= 4) && uriParts[3].equals("streams")) {
+      //     /v3/namespaces/<namespace>/streams goes to AppFabricHttp
+      //     /v3/namespaces/<namespace>/streams/<stream-id> PUT, POST should go to Stream Handler
+      // GET /v3/namespaces/<namespace>/streams/flows should go to AppFabricHttp
+      // All else go to Stream Handler
+      if (uriParts.length == 4) {
+        return Constants.Service.APP_FABRIC_HTTP;
+      } else if (uriParts.length == 5) {
+        return Constants.Service.STREAMS;
+      } else if ((uriParts.length == 6) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
+        return Constants.Service.APP_FABRIC_HTTP;
+      } else {
+        return Constants.Service.STREAMS;
+      }
     } else if (uriParts.length >= 8 && uriParts[7].equals("logs")) {
       //Log Handler Path /v3/namespaces/<namespaceid>apps/<appid>/<programid-type>/<programid>/logs
       return Constants.Service.METRICS;

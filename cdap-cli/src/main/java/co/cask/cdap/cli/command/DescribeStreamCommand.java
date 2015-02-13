@@ -50,13 +50,13 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
     StreamProperties config = streamClient.getConfig(streamId);
 
     new AsciiTable<StreamProperties>(
-      new String[] { "name", "ttl", "format", "schema" },
+      new String[] { "ttl", "format", "schema" },
       Lists.newArrayList(config),
       new RowMaker<StreamProperties>() {
         @Override
         public Object[] makeRow(StreamProperties object) {
           FormatSpecification format = object.getFormat();
-          return new Object[] { object.getName(), object.getTTL(), format.getName(), format.getSchema().toString() };
+          return new Object[] { object.getTTL(), format.getName(), format.getSchema().toString() };
         }
       }
     ).print(output);
