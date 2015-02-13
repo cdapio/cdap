@@ -35,7 +35,6 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -236,7 +235,7 @@ public class AdapterService extends AbstractIdleService {
 
     ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
-    validateSources(adapterName, adapterSpec.getSources());
+    validateSources(namespaceId, adapterName, adapterSpec.getSources());
     createSinks(adapterSpec.getSinks(), adapterTypeInfo);
 
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
@@ -403,20 +402,22 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Sources for all adapters should exists before creating the adapters.
-  private void validateSources(String adapterName, Set<Source> sources) throws IllegalArgumentException {
+  private void validateSources(String namespaceId, String adapterName,
+                               Set<Source> sources) throws IllegalArgumentException {
     // Ensure all sources exist
     for (Source source : sources) {
       Preconditions.checkArgument(Source.Type.STREAM.equals(source.getType()),
                                   String.format("Unknown Source type: %s", source.getType()));
-      Preconditions.checkArgument(streamExists(source.getName()),
+      Id.Stream streamId = Id.Stream.from(namespaceId, source.getName());
+      Preconditions.checkArgument(streamExists(streamId),
                                   String.format("Stream %s must exist during create of adapter: %s",
                                                 source.getName(), adapterName));
     }
   }
 
-  private boolean streamExists(String streamName) {
+  private boolean streamExists(Id.Stream streamId) {
     try {
-      return streamAdmin.exists(streamName);
+      return streamAdmin.exists(streamId);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

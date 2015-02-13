@@ -315,7 +315,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                                  name, e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
       //return;
     }
   }
@@ -330,7 +330,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                                  name, creationProperties.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
       //return;
     }
   }

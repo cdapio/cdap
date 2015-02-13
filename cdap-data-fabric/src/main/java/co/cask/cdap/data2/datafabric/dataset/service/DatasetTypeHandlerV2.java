@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -36,7 +37,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Handles dataset type management calls.
+ * Handles dataset type management v2 API calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_2)
@@ -64,13 +65,15 @@ public class DatasetTypeHandlerV2 extends AbstractHttpHandler {
   @GET
   @Path("/data/modules")
   public void listModules(HttpRequest request, HttpResponder responder) {
-    datasetTypeHandler.listModules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    datasetTypeHandler.listModules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                   Constants.DEFAULT_NAMESPACE);
   }
 
   @DELETE
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, HttpResponder responder) {
-    datasetTypeHandler.deleteModules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    datasetTypeHandler.deleteModules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                     Constants.DEFAULT_NAMESPACE);
   }
 
   @PUT
@@ -78,46 +81,35 @@ public class DatasetTypeHandlerV2 extends AbstractHttpHandler {
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
                                 @PathParam("name") String name,
                                 @HeaderParam(HEADER_CLASS_NAME) String className) throws IOException {
-    return datasetTypeHandler.addModule(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name,
-                                        className);
+    return datasetTypeHandler.addModule(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                        Constants.DEFAULT_NAMESPACE, name, className);
   }
 
   @DELETE
   @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, HttpResponder responder, @PathParam("name") String name) {
-    datasetTypeHandler.deleteModule(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
+    datasetTypeHandler.deleteModule(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                    Constants.DEFAULT_NAMESPACE, name);
   }
 
   @GET
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, HttpResponder responder, @PathParam("name") String name) {
-    datasetTypeHandler.getModuleInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
+    datasetTypeHandler.getModuleInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                     Constants.DEFAULT_NAMESPACE, name);
   }
 
   @GET
   @Path("/data/types")
   public void listTypes(HttpRequest request, HttpResponder responder) {
-    datasetTypeHandler.listTypes(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    datasetTypeHandler.listTypes(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                 Constants.DEFAULT_NAMESPACE);
   }
 
   @GET
   @Path("/data/types/{name}")
   public void getTypeInfo(HttpRequest request, HttpResponder responder, @PathParam("name") String name) {
-    datasetTypeHandler.getTypeInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
-  }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated in various handlers, but its ok since this temporary, till we
-   * support v2 APIs
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
+    datasetTypeHandler.getTypeInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                   Constants.DEFAULT_NAMESPACE, name);
   }
 }

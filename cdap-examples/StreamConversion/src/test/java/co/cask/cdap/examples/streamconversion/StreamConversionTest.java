@@ -77,7 +77,7 @@ public class StreamConversionTest extends TestBase {
 
     // extract fields from partition time
     Calendar calendar = Calendar.getInstance();
-    calendar.setTimeInMillis(startTime);
+    calendar.setTimeInMillis(partitionTime);
     int year = calendar.get(Calendar.YEAR);
     int month = calendar.get(Calendar.MONTH) + 1;
     int day = calendar.get(Calendar.DAY_OF_MONTH);

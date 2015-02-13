@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Map;
+import javax.ws.rs.HEAD;
 
 /**
  * Sets the Format Specification of a stream.
@@ -51,8 +52,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
-    StreamProperties currentProperties = streamClient.getConfig(streamId);
+    String streamName = arguments.get(ArgumentName.STREAM.toString());
+    StreamProperties currentProperties = streamClient.getConfig(streamName);
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
@@ -61,10 +62,11 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
       settings = Splitter.on(" ").withKeyValueSeparator("=").split(arguments.get(ArgumentName.SETTINGS.toString()));
     }
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
-    StreamProperties streamProperties = new StreamProperties(streamId, currentProperties.getTTL(),
-                                                             formatSpecification, currentProperties.getThreshold());
-    streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set format of stream '%s'\n", streamId);
+    StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
+                                                             formatSpecification,
+                                                             currentProperties.getNotificationThresholdMB());
+    streamClient.setStreamProperties(streamName, streamProperties);
+    output.printf("Successfully set format of stream '%s'\n", streamName);
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {
