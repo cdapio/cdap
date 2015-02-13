@@ -210,7 +210,6 @@ public final class ConcurrentStreamWriter implements Closeable {
   }
 
   private EventQueue getEventQueue(Id.Stream streamId) throws IOException {
-    String streamName = streamId.getName();
     EventQueue eventQueue = eventQueues.get(streamId);
     if (eventQueue != null) {
       return eventQueue;
@@ -224,7 +223,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         return eventQueue;
       }
 
-      if (!streamMetaStore.streamExists(streamId.getNamespaceId(), streamName)) {
+      if (!streamMetaStore.streamExists(streamId)) {
         throw new IllegalArgumentException("Stream not exists");
       }
       StreamUtils.ensureExists(streamAdmin, streamId);

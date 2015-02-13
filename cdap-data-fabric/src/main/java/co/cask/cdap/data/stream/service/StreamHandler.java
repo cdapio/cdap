@@ -167,7 +167,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountID, stream);
 
-    if (streamMetaStore.streamExists(accountID, stream)) {
+    if (streamMetaStore.streamExists(streamId)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
                                                                streamConfig.getNotificationThresholdMB());
@@ -195,7 +195,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(streamId);
-    streamMetaStore.addStream(accountID, stream);
+    streamMetaStore.addStream(streamId);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -244,7 +244,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     Id.Stream streamId = Id.Stream.from(accountId, stream);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return null;
     }
@@ -265,7 +265,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountId, stream);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return;
     }
@@ -287,7 +287,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountId, stream);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
       return;
     }
