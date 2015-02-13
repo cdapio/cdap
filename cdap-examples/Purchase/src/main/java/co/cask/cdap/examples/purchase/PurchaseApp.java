@@ -67,9 +67,9 @@ public class PurchaseApp extends AbstractApplication {
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
-      ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
+      ObjectStores.createObjectMappedTable(getConfigurer(), "purchases", Purchase.class);
     } catch (UnsupportedTypeException e) {
-      // This exception is thrown by ObjectStore if its parameter type cannot be 
+      // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
       // because PurchaseHistory and Purchase are actual classes.

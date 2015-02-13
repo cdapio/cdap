@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -29,6 +30,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -60,6 +62,7 @@ public class AbstractDatasetTest {
   private static final Id.DatasetModule fileSet = Id.DatasetModule.from(NAMESPACE_ID, "fileSet");
   private static final Id.DatasetModule tpfs = Id.DatasetModule.from(NAMESPACE_ID, "tpfs");
   private static final Id.DatasetModule pfs = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
+  private static final Id.DatasetModule omt = Id.DatasetModule.from(NAMESPACE_ID, "objectMappedTable");
 
   @BeforeClass
   public static void init() throws Exception {
@@ -85,10 +88,12 @@ public class AbstractDatasetTest {
     framework.addModule(fileSet, new FileSetModule());
     framework.addModule(tpfs, new TimePartitionedFileSetModule());
     framework.addModule(pfs, new PartitionedFileSetModule());
+    framework.addModule(omt, new ObjectMappedTableModule());
   }
 
   @AfterClass
   public static void destroy() throws Exception {
+    framework.deleteModule(omt);
     framework.deleteModule(pfs);
     framework.deleteModule(tpfs);
     framework.deleteModule(fileSet);
@@ -123,6 +128,10 @@ public class AbstractDatasetTest {
   protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
     throws DatasetManagementException, IOException {
     return framework.getDataset(datasetName, arguments, null);
+  }
+
+  protected DatasetSpecification getSpec(String datasetName) throws DatasetManagementException {
+    return framework.getDatasetSpec(datasetName);
   }
 
   protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
