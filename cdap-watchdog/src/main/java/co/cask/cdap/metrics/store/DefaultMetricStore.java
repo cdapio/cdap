@@ -106,8 +106,8 @@ public class DefaultMetricStore implements MetricStore {
 
     // component, handler, method
     aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE,
-      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
+      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+      Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
                                     // i.e. for components only
                                     ImmutableList.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
@@ -123,7 +123,7 @@ public class DefaultMetricStore implements MetricStore {
     // dataset
     aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
                                     // i.e. for datasets only
-                                    ImmutableList.of(Constants.Metrics.Tag.DATASET)));
+                                    ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
 
     return aggs;
   }
@@ -154,7 +154,10 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteBefore(long timestamp) throws Exception {
     // delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
-    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, null, Maps.<String, String>newHashMap());
+    // note: We are using 1 as start ts, so that we do not delete data from "totals". This method is applied in
+    //       in-memory and standalone modes, so it is fine to keep totals in these cases during TTL
+    //       todo: Cube and FactTable must use resolution when applying time range conditions
+    CubeDeleteQuery query = new CubeDeleteQuery(1, timestamp, null, Maps.<String, String>newHashMap());
     cube.get().delete(query);
   }
 
