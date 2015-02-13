@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -53,7 +54,9 @@ public final class StreamFileJanitor {
       return;
     }
     for (Location streamLocation : streamBaseLocation.list()) {
-      clean(streamAdmin.getConfig(streamLocation.getName()), System.currentTimeMillis());
+      //TODO: construct namespace from streamLocation (Locations.parent.getname)
+      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
+      clean(streamAdmin.getConfig(streamId), System.currentTimeMillis());
     }
   }
 

@@ -50,7 +50,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
 
   protected StreamConsumerStateStore(StreamConfig streamConfig) {
     this.streamConfig = streamConfig;
-    this.name = QueueName.fromStream(streamConfig.getName());
+    this.name = QueueName.fromStream(streamConfig.getStreamId());
   }
 
   @Override

@@ -16,6 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
 
@@ -30,34 +31,35 @@ public interface StreamCoordinatorClient extends Service {
   /**
    * Receives event for changes in stream properties.
    *
+   * @param streamId name of the stream
    * @param listener listener to get called when there is change in stream properties.
    * @return A {@link Cancellable} to cancel the watch
    */
-  Cancellable addListener(String streamName, StreamPropertyListener listener);
+  Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener);
 
   /**
    * Creates a stream by performing the given action. The execution of the action is protected by a lock
    * so that it is guaranteed that there is only one thread executing the given action for the given stream
    * across the whole system.
    *
-   * @param streamName name of the stream
+   * @param streamId name of the stream
    * @param action action to perform. If a new stream is created, it should returns a {@link StreamConfig} representing
    *               the configuration of the new stream; otherwise {@code null} should be returned.
    * @return The {@link StreamConfig} as returned by the action
    * @throws Exception if the action throws Exception
    */
   @Nullable
-  StreamConfig createStream(String streamName, Callable<StreamConfig> action) throws Exception;
+  StreamConfig createStream(Id.Stream streamId, Callable<StreamConfig> action) throws Exception;
 
   /**
    * Updates the stream properties by performing the given action. The execution of the action is protected by a lock
    * so that it is guaranteed that there is only one thread executing the given action for the given stream
    * across the whole system.
    *
-   * @param streamName name of the stream
+   * @param streamId name of the stream
    * @param action action to perform. It should returns a {@link CoordinatorStreamProperties} containing information
    *               about the update properties.
    * @throws Exception if failed to update properties
    */
-  void updateProperties(String streamName, Callable<CoordinatorStreamProperties> action) throws Exception;
+  void updateProperties(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception;
 }

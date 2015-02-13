@@ -27,6 +27,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
