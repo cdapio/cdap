@@ -65,6 +65,7 @@ public final class FactTable {
   private final MetricsTable timeSeriesTable;
   private final FactCodec codec;
   private final int resolution;
+  // todo: should not be used outside of codec
   private final int rollTime;
 
   /**
