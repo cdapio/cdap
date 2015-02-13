@@ -183,6 +183,7 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
         }
         break;
       case CONDITION:
+        // no-op
         break;
       default:
         break;

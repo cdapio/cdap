@@ -38,7 +38,6 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final Map<String, WorkflowFork> forks;
   private final Map<String, WorkflowActionSpecification> customActionMap;
 
-
   public WorkflowSpecification(String className, String name, String description,
                                       Map<String, String> properties, List<WorkflowNode> nodes,
                                       Map<String, WorkflowFork> forks,

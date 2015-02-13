@@ -21,17 +21,20 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * Represents fork in the {@link Workflow}.
  */
 public final class WorkflowFork {
 
   private final List<WorkflowForkBranch> forkBranches;
 
   public WorkflowFork(List<WorkflowForkBranch> forkBranches) {
-    // TODO: what if forkBranches is null
     this.forkBranches = Collections.unmodifiableList(new ArrayList<WorkflowForkBranch>(forkBranches));
   }
 
+  /**
+   *
+   * @return the list of {@link WorkflowForkBranch} for this fork
+   */
   public List<WorkflowForkBranch> getBranches() {
     return forkBranches;
   }

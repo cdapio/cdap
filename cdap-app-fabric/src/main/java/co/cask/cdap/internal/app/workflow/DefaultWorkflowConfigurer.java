@@ -147,15 +147,18 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   @Override
   public void addFork(List<String> branchList) {
     Preconditions.checkArgument(branchList != null, "List of branches for the fork is null.");
+    Preconditions.checkArgument(branchList.size() > 1, "Atleast two branches needed for fork.");
 
     List<WorkflowForkBranch> forkBranches = Lists.newArrayList();
 
     for (String branch : branchList) {
+      Preconditions.checkArgument(branches.containsKey(branch), "Fork branch '" + branch + "' is not found.");
       WorkflowForkBranch forkBranch = new WorkflowForkBranch(branch, branches.get(branch));
       forkBranches.add(forkBranch);
     }
 
     int forkSize = forks.size();
+    // Generate the id for the fork based on its occurrence in the Workflow
     String forkId = "fork_" + forkSize;
     forks.put(forkId, new WorkflowFork(forkBranches));
 

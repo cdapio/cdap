@@ -17,7 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 /**
- * Represents name and type of the nodes in the {@link Workflow}
+ * Represents type and program associated with the nodes in the {@link Workflow}
  */
 public final class WorkflowNode {
   private final WorkflowNodeType nodeType;
@@ -30,7 +30,7 @@ public final class WorkflowNode {
 
   /**
    * Return the name of the {@link WorkflowNode} which is same as the name of the encapsulated program.
-   * In the case of Fork node, returns the fork identifier
+   * In the case of Fork node, returns the fork identifier.
    * @return the name of the {@link WorkflowNode}
    */
   public String getName() {

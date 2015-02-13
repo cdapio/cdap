@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * Represents branch in the {@link WorkflowFork}.
  */
 public final class WorkflowForkBranch {
   private final String name;
@@ -32,9 +32,18 @@ public final class WorkflowForkBranch {
     this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
   }
 
+  /**
+   *
+   * @return the name of the branch
+   */
   public String getName() {
     return name;
   }
+
+  /**
+   *
+   * @return the list of {@link WorkflowNode} in the branch
+   */
   public List<WorkflowNode> getNodes() {
     return nodes;
   }
