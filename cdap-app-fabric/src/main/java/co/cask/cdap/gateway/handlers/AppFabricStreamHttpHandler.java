@@ -66,7 +66,7 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of streams associated with account.
+   * Returns a list of streams in a namespace.
    */
   @GET
   @Path("/streams")

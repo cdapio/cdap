@@ -792,7 +792,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams")
   public void deleteStreams(HttpRequest request, HttpResponder responder) {
     try {
-      //TODO: move this to namespaced-stream handler when v3 handler is implemented for streams
+      //TODO: move this to v3 namespaced-stream handler when delete is implemented for streams
       String namespace = getAuthenticatedAccountId(request);
       streamAdmin.dropAllInNamespace(Id.Namespace.from(namespace));
       responder.sendStatus(HttpResponseStatus.OK);
