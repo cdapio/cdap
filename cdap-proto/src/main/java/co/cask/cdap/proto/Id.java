@@ -408,10 +408,12 @@ public final class Id  {
 
     @Override
     public int hashCode() {
-      if (hashCode == 0) {
-        hashCode = 31 * namespace.hashCode() + streamName.hashCode();
+      int h = hashCode;
+      if (h == 0) {
+        h = 31 * namespace.hashCode() + streamName.hashCode();
+        hashCode = h;
       }
-      return hashCode;
+      return h;
     }
 
     @Override
