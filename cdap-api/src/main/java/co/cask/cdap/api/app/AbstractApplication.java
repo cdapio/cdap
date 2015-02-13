@@ -26,6 +26,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.StreamSizeSchedule;
 import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
@@ -226,12 +227,13 @@ public abstract class AbstractApplication implements Application {
    * @param schedule the schedule to be added for the Workflow
    * @param workflowName the name of the Workflow
    */
+  @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
     scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
   }
 
   /**
-   * Schedule the specified {@link Workflow}
+   * Schedules the specified {@link Workflow} using a time-based schedule.
    * @param scheduleName the name of the Schedule
    * @param cronTab the crontab entry for the Schedule
    * @param workflowName the name of the Workflow
@@ -243,7 +245,7 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * Schedule the specified {@link Workflow}
+   * Schedules the specified {@link Workflow} using a time-based schedule.
    * @param scheduleName the name of the Schedule
    * @param cronTab the crontab entry for the Schedule
    * @param workflowName the name of the Workflow
@@ -261,7 +263,75 @@ public abstract class AbstractApplication implements Application {
    * @param workflowName the name of the Workflow
    * @param properties properties to be added for the Schedule
    */
+  @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
     configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
   }
+
+  /**
+   * Schedules the specified {@link Workflow} using a time-based schedule.
+   * @param timeSchedule the time schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   */
+  protected void scheduleWorkflow(TimeSchedule timeSchedule, String workflowName) {
+    scheduleWorkflow(timeSchedule, workflowName, Collections.<String, String>emptyMap());
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} using a time-based schedule.
+   * @param timeSchedule the time schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   * @param properties properties to be added for the Schedule
+   */
+  protected void scheduleWorkflow(TimeSchedule timeSchedule, String workflowName, Map<String, String> properties) {
+    configurer.addSchedule(timeSchedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} based on data availability in a {@link Stream}.
+   * @param scheduleName the name of the Schedule
+   * @param streamName the name of the Stream
+   * @param dataTriggerMB the amount of data the Stream has to ingest for the Workflow to be triggered
+   * @param workflowName the name of the Workflow
+   */
+  protected void scheduleWorkflow(String scheduleName, String streamName, int dataTriggerMB, String workflowName) {
+    scheduleWorkflow(scheduleName, streamName, dataTriggerMB, workflowName, Collections.<String, String>emptyMap());
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} based on data availability in a {@link Stream}.
+   * @param scheduleName the name of the Schedule
+   * @param streamName the name of the Stream
+   * @param dataTriggerMB the amount of data the Stream has to ingest for the Workflow to be triggered
+   * @param workflowName the name of the Workflow
+   * @param properties properties to be added for the Schedule
+   */
+  protected void scheduleWorkflow(String scheduleName, String streamName, int dataTriggerMB,
+                                  String workflowName, Map<String, String> properties) {
+    String scheduleDescription = String.format("%s on stream %s with trigger %dMB", scheduleName, streamName,
+                                               dataTriggerMB);
+    scheduleWorkflow(new StreamSizeSchedule(scheduleName, scheduleDescription, streamName, dataTriggerMB),
+                     workflowName, properties);
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} based on data availability in a {@link Stream}.
+   * @param streamSizeSchedule the schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   */
+  protected void scheduleWorkflow(StreamSizeSchedule streamSizeSchedule, String workflowName) {
+    scheduleWorkflow(streamSizeSchedule, workflowName, Collections.<String, String>emptyMap());
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} based on data availability in a {@link Stream}.
+   * @param streamSizeSchedule the schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   * @param properties properties to be added for the Schedule
+   */
+  protected void scheduleWorkflow(StreamSizeSchedule streamSizeSchedule, String workflowName,
+                                  Map<String, String> properties) {
+    configurer.addSchedule(streamSizeSchedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
+  }
+
 }

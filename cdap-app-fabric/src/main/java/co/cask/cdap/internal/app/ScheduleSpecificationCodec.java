@@ -56,10 +56,9 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
         return STREAM_DATA;
       } else if (schedule instanceof TimeSchedule) {
         return TIME;
-      } else if (schedule.isTimeSchedule()) {
+      } else {
         return ORIGINAL_TIME;
       }
-      return null;
     }
   }
 

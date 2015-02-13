@@ -19,29 +19,16 @@ package co.cask.cdap.api.schedule;
 /**
  * Defines a schedule based on data availability in a stream for running a program.
  */
-public class StreamSizeSchedule extends Schedule implements NotificationSchedule {
+public final class StreamSizeSchedule extends Schedule {
 
   private final String streamName;
 
   private final int dataTriggerMB;
 
-  private final int pollingDelay;
-
-  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB, int pollingDelay) {
+  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
     super(name, description);
     this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;
-    this.pollingDelay = pollingDelay;
-  }
-
-  @Override
-  public String getFeedCategory() {
-    return "stream";
-  }
-
-  @Override
-  public String getFeedName() {
-    return String.format("%sSize", streamName);
   }
 
   /**
@@ -58,14 +45,6 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     return dataTriggerMB;
   }
 
-  /**
-   * @return Delay, in minutes, after which the stream should be polled to retrieve the size of its data if
-   * no notifications has been received
-   */
-  public int getPollingDelay() {
-    return pollingDelay;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -80,8 +59,7 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     if (getDescription().equals(schedule.getDescription())
       && getName().equals(schedule.getName())
       && streamName.equals(schedule.streamName)
-      && dataTriggerMB == schedule.dataTriggerMB
-      && pollingDelay == schedule.pollingDelay) {
+      && dataTriggerMB == schedule.dataTriggerMB) {
       return true;
     }
     return false;
@@ -93,7 +71,6 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     result = 31 * result + getDescription().hashCode();
     result = 31 * result + streamName.hashCode();
     result = 31 * result + dataTriggerMB;
-    result = 31 * result + pollingDelay;
     return result;
   }
 
@@ -104,7 +81,6 @@ public class StreamSizeSchedule extends Schedule implements NotificationSchedule
     sb.append(", description='").append(getDescription()).append('\'');
     sb.append(", sourceName='").append(streamName).append('\'');
     sb.append(", dataTriggerMB='").append(dataTriggerMB).append('\'');
-    sb.append(", pollingDelay='").append(pollingDelay).append('\'');
     sb.append('}');
     return sb.toString();
   }

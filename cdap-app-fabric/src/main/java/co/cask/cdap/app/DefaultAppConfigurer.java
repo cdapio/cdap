@@ -208,8 +208,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     if (schedule instanceof StreamSizeSchedule) {
       Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
                                   "Schedule data trigger must be greater than 0.");
-      Preconditions.checkArgument(((StreamSizeSchedule) schedule).getPollingDelay() > 0,
-                                  "Schedule polling delay must be greater than 0.");
     }
 
     ScheduleSpecification spec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName),

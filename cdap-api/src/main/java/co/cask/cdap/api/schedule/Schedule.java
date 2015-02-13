@@ -29,21 +29,17 @@ public class Schedule {
   // NOTE: the two below attributes are left for backwards compatibility
   private final String cronEntry;
 
-  private final transient boolean isTimeSchedule;
-
   @Deprecated
   public Schedule(String name, String description, String cronEntry) {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
-    this.isTimeSchedule = true;
   }
 
   Schedule(String name, String description) {
     this.name = name;
     this.description = description;
     this.cronEntry = null;
-    this.isTimeSchedule = false;
   }
 
   /**
@@ -66,10 +62,6 @@ public class Schedule {
   @Deprecated
   public String getCronEntry() {
     return cronEntry;
-  }
-
-  public boolean isTimeSchedule() {
-    return isTimeSchedule;
   }
 
   @Override

@@ -19,7 +19,7 @@ package co.cask.cdap.api.schedule;
 /**
  * Defines a cron-based schedule for running a program.
  */
-public class TimeSchedule extends Schedule {
+public final class TimeSchedule extends Schedule {
 
   private final String cronExpression;
 

@@ -18,10 +18,12 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.StreamSizeSchedule;
 import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -188,9 +190,9 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         throw Throwables.propagate(e);
       }
       for (Schedule schedule : schedules) {
-        Preconditions.checkArgument(schedule instanceof TimeSchedule || schedule.isTimeSchedule());
+        Preconditions.checkArgument(schedule instanceof TimeSchedule || !(schedule instanceof StreamSizeSchedule));
         TimeSchedule timeSchedule;
-        if (schedule.isTimeSchedule()) {
+        if (!(schedule instanceof TimeSchedule)) {
           timeSchedule = new TimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry());
         } else {
           timeSchedule = (TimeSchedule) schedule;
