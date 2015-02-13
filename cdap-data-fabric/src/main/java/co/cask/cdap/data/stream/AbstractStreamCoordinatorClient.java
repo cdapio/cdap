@@ -111,7 +111,6 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
           }
           // Merge the old and new properties.
           return new CoordinatorStreamProperties(
-            properties.getStreamId(),
             firstNotNull(properties.getTTL(), oldProperties.getTTL()),
             firstNotNull(properties.getFormat(), oldProperties.getFormat()),
             firstNotNull(properties.getThreshold(), oldProperties.getThreshold()),

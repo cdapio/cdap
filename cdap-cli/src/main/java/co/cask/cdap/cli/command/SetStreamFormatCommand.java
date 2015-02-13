@@ -65,7 +65,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
       settings = Splitter.on(" ").withKeyValueSeparator("=").split(arguments.get(ArgumentName.SETTINGS.toString()));
     }
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
-    StreamProperties streamProperties = new StreamProperties(streamId, currentProperties.getTTL(),
+    StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
                                                              formatSpecification, currentProperties.getThreshold());
     streamClient.setStreamProperties(streamName, streamProperties);
     output.printf("Successfully set format of stream '%s'\n", streamName);

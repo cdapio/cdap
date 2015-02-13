@@ -94,7 +94,7 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(StreamProperties properties) throws IOException {
+  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 

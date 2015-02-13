@@ -166,9 +166,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-      StreamProperties streamProperties =
-        new StreamProperties(streamConfig.getStreamId(), streamConfig.getTTL(), streamConfig.getFormat(),
-                             streamConfig.getNotificationThresholdMB());
+      StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
+                                                               streamConfig.getNotificationThresholdMB());
       responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -291,7 +290,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    streamAdmin.updateConfig(properties);
+    streamAdmin.updateConfig(streamId, properties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -390,7 +389,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return null;
     }
 
-    return new StreamProperties(streamId, ttl, formatSpec, threshold);
+    return new StreamProperties(ttl, formatSpec, threshold);
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -465,7 +464,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     @Override
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
-      json.add("streamId", GSON.toJsonTree(src.getStreamId()));
       if (src.getTTL() != null) {
         json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       }
@@ -482,14 +480,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     public StreamProperties deserialize(JsonElement json, Type typeOfT,
                                         JsonDeserializationContext context) throws JsonParseException {
       JsonObject jsonObj = json.getAsJsonObject();
-      Id.Stream streamId = GSON.fromJson(jsonObj.get("streamId"), Id.Stream.class);
       Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
       FormatSpecification format = null;
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
       Integer threshold = jsonObj.has("threshold") ? jsonObj.get("threshold").getAsInt() : null;
-      return new StreamProperties(streamId, ttl, format, threshold);
+      return new StreamProperties(ttl, format, threshold);
     }
   }
 }
