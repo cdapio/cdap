@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Defines a query to perform on {@link Cube} data.
@@ -63,7 +64,8 @@ public final class CubeQuery {
 
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags, Interpolator interpolator) {
+                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   @Nullable Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;

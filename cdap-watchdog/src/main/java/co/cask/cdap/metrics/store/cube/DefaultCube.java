@@ -16,27 +16,27 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-  import co.cask.cdap.metrics.data.TimeSeriesInterpolator;
-  import co.cask.cdap.metrics.store.timeseries.Fact;
-  import co.cask.cdap.metrics.store.timeseries.FactScan;
-  import co.cask.cdap.metrics.store.timeseries.FactScanResult;
-  import co.cask.cdap.metrics.store.timeseries.FactScanner;
-  import co.cask.cdap.metrics.store.timeseries.FactTable;
-  import co.cask.cdap.metrics.store.timeseries.MeasureType;
-  import co.cask.cdap.metrics.store.timeseries.TagValue;
-  import co.cask.cdap.metrics.store.timeseries.TimeValue;
-  import com.google.common.collect.HashBasedTable;
-  import com.google.common.collect.Iterators;
-  import com.google.common.collect.Lists;
-  import com.google.common.collect.Maps;
-  import com.google.common.collect.PeekingIterator;
-  import com.google.common.collect.Table;
+import co.cask.cdap.metrics.data.TimeSeriesInterpolator;
+import co.cask.cdap.metrics.store.timeseries.Fact;
+import co.cask.cdap.metrics.store.timeseries.FactScan;
+import co.cask.cdap.metrics.store.timeseries.FactScanResult;
+import co.cask.cdap.metrics.store.timeseries.FactScanner;
+import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.metrics.store.timeseries.TagValue;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.Table;
 
-  import java.util.Collection;
-  import java.util.Collections;
-  import java.util.List;
-  import java.util.Map;
-  import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link Cube}.
