@@ -168,10 +168,18 @@ public class SparkProgramWrapper {
    */
   public static void stopSparkProgram() {
     if (sparkContext != null) {
-      if (isScalaProgram()) {
-        ((org.apache.spark.SparkContext) sparkContext.getOriginalSparkContext()).stop();
-      } else {
-        ((org.apache.spark.api.java.JavaSparkContext) sparkContext.getOriginalSparkContext()).stop();
+      try {
+        if (isScalaProgram()) {
+          ((org.apache.spark.SparkContext) sparkContext.getOriginalSparkContext()).stop();
+        } else {
+          ((org.apache.spark.api.java.JavaSparkContext) sparkContext.getOriginalSparkContext()).stop();
+        }
+      } finally {
+        // Need to reset the spark context so that the program ClassLoader can be freed.
+        // It is needed because sparkContext is a static field.
+        // Same applies to basicSparkContext
+        sparkContext = null;
+        basicSparkContext = null;
       }
     }
   }

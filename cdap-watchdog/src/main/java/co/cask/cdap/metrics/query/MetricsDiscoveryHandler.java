@@ -16,9 +16,9 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.timeseries.TagValue;
@@ -220,10 +220,10 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
     } catch (Exception e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
       return;
     }
 

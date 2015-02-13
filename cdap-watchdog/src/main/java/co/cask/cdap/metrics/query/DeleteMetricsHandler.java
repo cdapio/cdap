@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
@@ -135,12 +136,14 @@ public class DeleteMetricsHandler extends AuthenticatedHttpHandler {
       metricStore.delete(query);
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (ServerException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     } catch (Exception e) {
       LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     }
   }
 }

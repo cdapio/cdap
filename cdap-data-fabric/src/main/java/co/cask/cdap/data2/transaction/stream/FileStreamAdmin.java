@@ -211,8 +211,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(final StreamProperties properties) throws IOException {
-    final String streamName = properties.getName();
+  public void updateConfig(final String streamName, final StreamProperties properties) throws IOException {
     Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
 
@@ -221,7 +220,7 @@ public class FileStreamAdmin implements StreamAdmin {
         streamName, new Callable<CoordinatorStreamProperties>() {
           @Override
           public CoordinatorStreamProperties call() throws Exception {
-            StreamProperties oldProperties = updateProperties(properties);
+            StreamProperties oldProperties = updateProperties(streamName, properties);
 
             FormatSpecification format = properties.getFormat();
             if (format != null) {
@@ -236,8 +235,8 @@ public class FileStreamAdmin implements StreamAdmin {
               }
             }
 
-            return new CoordinatorStreamProperties(properties.getName(), properties.getTTL(),
-                                                   properties.getFormat(), properties.getThreshold(), null);
+            return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
+                                                   properties.getThreshold(), null);
           }
         });
     } catch (Exception e) {
@@ -342,7 +341,7 @@ public class FileStreamAdmin implements StreamAdmin {
         public CoordinatorStreamProperties call() throws Exception {
           int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
           Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
-          return new CoordinatorStreamProperties(streamLocation.getName(), null, null, null, newGeneration);
+          return new CoordinatorStreamProperties(null, null, null, newGeneration);
         }
       });
     } catch (Exception e) {
@@ -350,8 +349,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
   }
 
-  private StreamProperties updateProperties(StreamProperties properties) throws IOException {
-    String streamName = properties.getName();
+  private StreamProperties updateProperties(String streamName, StreamProperties properties) throws IOException {
     StreamConfig config = getConfig(streamName);
 
     StreamConfig.Builder builder = StreamConfig.builder(config);
@@ -366,7 +364,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     writeConfig(builder.build());
-    return new StreamProperties(streamName, config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
+    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
   }
 
   private StreamConfig loadConfig(Location streamLocation) throws IOException {

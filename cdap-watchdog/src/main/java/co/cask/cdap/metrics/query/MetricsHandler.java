@@ -116,7 +116,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, result);
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     }
   }
 

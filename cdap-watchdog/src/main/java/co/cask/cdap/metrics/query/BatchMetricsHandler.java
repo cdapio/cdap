@@ -77,7 +77,7 @@ public final class BatchMetricsHandler extends AuthenticatedHttpHandler {
   @POST
   public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException {
     if (!CONTENT_TYPE_JSON.equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
-      responder.sendError(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
+      responder.sendString(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
       return;
     }
 
@@ -102,10 +102,10 @@ public final class BatchMetricsHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, output);
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     } finally {
       reader.close();
     }

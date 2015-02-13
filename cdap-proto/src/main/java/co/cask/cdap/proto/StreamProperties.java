@@ -23,23 +23,14 @@ import com.google.common.base.Objects;
  */
 public class StreamProperties {
 
-  private final String name;
   private final Long ttl;
   private final FormatSpecification format;
   private final Integer threshold;
 
-  public StreamProperties(String name, Long ttl, FormatSpecification format, Integer threshold) {
-    this.name = name;
+  public StreamProperties(Long ttl, FormatSpecification format, Integer threshold) {
     this.ttl = ttl;
     this.format = format;
     this.threshold = threshold;
-  }
-
-  /**
-   * @return Name of the stream.
-   */
-  public String getName() {
-    return name;
   }
 
   /**
@@ -75,21 +66,19 @@ public class StreamProperties {
 
     StreamProperties that = (StreamProperties) o;
 
-    return Objects.equal(name, that.name) &&
-      Objects.equal(ttl, that.ttl) &&
+    return Objects.equal(ttl, that.ttl) &&
       Objects.equal(format, that.format) &
       Objects.equal(threshold, that.threshold);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, ttl, format, threshold);
+    return Objects.hashCode(ttl, format, threshold);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("name", name)
       .add("ttl", ttl)
       .add("format", format)
       .add("threshold", threshold)

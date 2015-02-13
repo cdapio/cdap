@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,24 +25,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Extend this class to add workers to a custom Service.
- *
- * @deprecated As of version 2.8.0, replaced by {@link AbstractWorker}
+ * Extend this class to add workers.
  */
-@Deprecated
-public abstract class AbstractServiceWorker implements ServiceWorker {
+public abstract class AbstractWorker implements Worker {
 
-  private ServiceWorkerConfigurer configurer;
-  private ServiceWorkerContext context;
+  private WorkerConfigurer configurer;
+  private WorkerContext context;
 
   @Override
-  public final void configure(ServiceWorkerConfigurer configurer) {
+  public final void configure(WorkerConfigurer configurer) {
     this.configurer = configurer;
     configure();
   }
 
   /**
-   * Set description of the {@link ServiceWorker}.
+   * Set description of the {@link Worker}.
    * @param description the description
    */
   protected void setDescription(String description) {
@@ -50,25 +47,23 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   * Sets the resources requirements for the {@link ServiceWorker}.
-   * @param resources The requirements.
+   * Sets the resources requirements for the {@link Worker}.
+   * @param resources the requirements
    */
   protected void setResources(Resources resources) {
     configurer.setResources(resources);
   }
 
   /**
-   * Sets the number of instances needed for the {@link ServiceWorker}.
-   * @param instances Number of instances, must be > 0.
+   * Sets the number of instances needed for the {@link Worker}.
+   * @param instances number of instances, must be > 0
    */
   protected void setInstances(int instances) {
     configurer.setInstances(instances);
   }
 
   /**
-   * Sets a set of properties that will be available through the {@link ServiceWorkerSpecification#getProperties()}
-   * at runtime.
-   *
+   * Sets a set of properties that will be available through the {@link WorkerSpecification#getProperties()}.
    * @param properties the properties to set
    */
   protected void setProperties(Map<String, String> properties) {
@@ -76,10 +71,9 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the worker.
-   *
-   * @param dataset Dataset name
-   * @param datasets more Dataset names.
+   * Adds the names of {@link Dataset Datasets} used by the worker.
+   * @param dataset dataset name
+   * @param datasets more dataset names
    */
   protected void useDatasets(String dataset, String...datasets) {
     List<String> datasetList = new ArrayList<String>();
@@ -89,18 +83,17 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the worker.
-   *
-   * @param datasets Dataset names.
+   * Adds the names of {@link Dataset Datasets} used by the worker.
+   * @param datasets dataset names
    */
   protected void useDatasets(Iterable<String> datasets) {
     configurer.useDatasets(datasets);
   }
 
   /**
-   * Returns the {@link ServiceWorkerConfigurer} used for configuration. Only available during configuration time.
+   * Returns the {@link WorkerConfigurer} used for configuration. Only available during configuration time.
    */
-  protected final ServiceWorkerConfigurer getConfigurer() {
+  protected final WorkerConfigurer getConfigurer() {
     return configurer;
   }
 
@@ -112,11 +105,11 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   @Override
-  public void initialize(ServiceWorkerContext context) throws Exception {
+  public void initialize(WorkerContext context) throws Exception {
     this.context = context;
   }
 
-  protected ServiceWorkerContext getContext() {
+  protected WorkerContext getContext() {
     return context;
   }
 
