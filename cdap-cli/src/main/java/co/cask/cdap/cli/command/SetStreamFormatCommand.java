@@ -23,7 +23,6 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Splitter;
@@ -43,19 +42,16 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
   private final StreamClient streamClient;
-  private final String namespace;
 
   @Inject
   public SetStreamFormatCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
-    this.namespace = cliConfig.getCurrentNamespace();
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String streamName = arguments.get(ArgumentName.STREAM.toString());
-    Id.Stream streamId = Id.Stream.from(namespace, streamName);
     StreamProperties currentProperties = streamClient.getConfig(streamName);
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
