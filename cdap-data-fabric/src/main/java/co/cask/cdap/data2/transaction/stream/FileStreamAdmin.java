@@ -279,12 +279,16 @@ public class FileStreamAdmin implements StreamAdmin {
         }
 
         Properties properties = (props == null) ? new Properties() : props;
-        long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
-        long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
+        long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION,
+                                                                       cConf.get(Constants.Stream.PARTITION_DURATION)));
+        long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
+                                                                   cConf.get(Constants.Stream.INDEX_INTERVAL)));
         long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-        int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
+                                                                cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-        StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null, threshold);
+        StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation, null,
+                                               threshold);
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(name, true);
