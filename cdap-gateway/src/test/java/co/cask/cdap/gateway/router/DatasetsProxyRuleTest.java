@@ -33,7 +33,7 @@ public class DatasetsProxyRuleTest {
   private static DatasetsProxyRule rule = new DatasetsProxyRule(CConfiguration.create());
 
   @Test
-  public void testApplyingProxyRules() {
+  public void testApplyingProxyRulesV2() {
     assertChange("/v2/data/explore/datasets/cdap.user.myTable/schema",
                  "/v2/data/explore/datasets/myTable/schema");
     assertChange("/v2/data/datasets/cdap.user.myTable", "/v2/data/datasets/myTable");
@@ -43,6 +43,21 @@ public class DatasetsProxyRuleTest {
     assertSame("/v2/data/types/myType");
     assertSame("/v2/metrics");
     assertSame("/v2/metrics/data/datasets/myTable");
+  }
+
+  @Test
+  public void testApplyingProxyRulesV3() {
+    assertChange("/v3/namespaces/myspace/data/explore/datasets/cdap.user.myTable/schema",
+                 "/v3/namespaces/myspace/data/explore/datasets/myTable/schema");
+    assertChange("/v3/namespaces/myspace/data/datasets/cdap.user.myTable",
+                 "/v3/namespaces/myspace/data/datasets/myTable");
+    assertChange("/v3/namespaces/myspace/data/datasets/cdap.user.myTable/admin",
+                 "/v3/namespaces/myspace/data/datasets/myTable/admin");
+    assertChange("/v3/namespaces/myspace/data/datasets/cdap.user.myTable/admin/truncate",
+                 "/v3/namespaces/myspace/data/datasets/myTable/admin/truncate");
+    assertSame("/v3/namespaces/myspace/data/types/myType");
+    assertSame("/v3/namespaces/myspace/metrics");
+    assertSame("/v3/namespaces/myspace/metrics/data/datasets/myTable");
   }
 
   private void assertSame(String original) {

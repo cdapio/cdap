@@ -359,46 +359,42 @@ public final class Id  {
    * Id.Stream uniquely identifies a stream.
    */
   public static final class Stream {
-    private final Namespace namespace;
+    private final String namespace;
     private final String streamName;
-    private final int hashCode;
+    private transient int hashCode;
 
-    private final String id;
-    private final byte[] idBytes;
+    private transient String id;
+    private transient byte[] idBytes;
 
-    private Stream(final Namespace namespace, final String streamName) {
+    private Stream(final String namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
+      Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
       Preconditions.checkArgument(isId(streamName), "Stream name has an incorrect format.");
 
       this.namespace = namespace;
       this.streamName = streamName;
-
-      hashCode = 31 * namespace.hashCode() + streamName.hashCode();
-      id = String.format("%s.%s", namespace.getId(), streamName);
-      //TODO: would it be ok to simply use the hashcode of idBytes, instead of the hashCode value computed above.
-      idBytes = id.getBytes(Charsets.US_ASCII);
     }
 
     public Namespace getNamespace() {
-      return namespace;
+      return Id.Namespace.from(namespace);
     }
 
     public String getNamespaceId() {
-      return namespace.getId();
+      return namespace;
     }
 
     public String getName() {
       return streamName;
     }
 
-    public static Stream from(Namespace id, String application) {
-      return new Stream(id, application);
+    public static Stream from(Namespace id, String streamName) {
+      return new Stream(id.getId(), streamName);
     }
 
     public static Stream from(String namespaceId, String streamName) {
-      return new Stream(Namespace.from(namespaceId), streamName);
+      return new Stream(namespaceId, streamName);
     }
 
     public static Stream fromId(String id) {
@@ -411,16 +407,25 @@ public final class Id  {
     }
 
     public String toId() {
+      if (id == null) {
+        id = String.format("%s.%s", namespace, streamName);
+      }
       return id;
     }
 
     public byte[] toBytes() {
+      if (idBytes == null) {
+        idBytes = toId().getBytes(Charsets.US_ASCII);
+      }
       return idBytes;
     }
 
     @Override
     public int hashCode() {
-      return hashCode;
+      if (hashCode == 0) {
+        hashCode = 31 * namespace.hashCode() + streamName.hashCode();
+      }
+      return hashCode ;
     }
 
     @Override
@@ -441,7 +446,7 @@ public final class Id  {
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("namespace", namespace.getId())
+        .add("namespace", namespace)
         .add("streamName", streamName)
         .toString();
     }

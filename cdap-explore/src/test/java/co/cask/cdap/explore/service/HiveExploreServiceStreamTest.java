@@ -189,8 +189,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     );
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO, schema, Collections.<String, String>emptyMap());
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "avroStream");
-    StreamProperties properties = new StreamProperties(streamId, Long.MAX_VALUE, formatSpecification, 1000);
+    StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
     setStreamProperties("avroStream", properties);
 
     // our schemas are compatible

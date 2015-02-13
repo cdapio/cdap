@@ -28,9 +28,8 @@ public class CoordinatorStreamProperties extends StreamProperties {
 
   private final Integer generation;
 
-  public CoordinatorStreamProperties(Id.Stream streamId, Long ttl,
-                                     FormatSpecification format, Integer threshold, Integer generation) {
-    super(streamId, ttl, format, threshold);
+  public CoordinatorStreamProperties(Long ttl, FormatSpecification format, Integer threshold, Integer generation) {
+    super(ttl, format, threshold);
     this.generation = generation;
   }
 
@@ -41,7 +40,6 @@ public class CoordinatorStreamProperties extends StreamProperties {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("streamId", getStreamId())
       .add("ttl", getTTL())
       .add("format", getFormat())
       .add("threshold", getThreshold())

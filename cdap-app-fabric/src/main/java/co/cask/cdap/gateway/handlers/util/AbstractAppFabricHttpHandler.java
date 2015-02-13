@@ -21,6 +21,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -315,8 +316,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   /**
    * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated in LogHandler, but its ok since this temporary, till we
-   * support v2 APIs
+   * TODO: Should use {@link RESTMigrationUtils#rewriteV2RequestToV3} instead
    *
    * @param request the original {@link HttpRequest}
    * @return {@link HttpRequest} with modified URI

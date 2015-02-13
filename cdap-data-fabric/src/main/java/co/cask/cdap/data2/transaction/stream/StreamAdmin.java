@@ -64,9 +64,10 @@ public interface StreamAdmin {
 
   /**
    * Overwrites existing configuration for the given stream.
+   * @param streamId Id of the stream whose properties are being updated
    * @param properties New configuration of the stream.
    */
-  void updateConfig(StreamProperties properties) throws IOException;
+  void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException;
 
   /**
    * Get the size of the data persisted for the stream with config {@code streamConfig}.

@@ -53,7 +53,7 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(StreamProperties properties) throws IOException {
+  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
   }
 
   @Override
