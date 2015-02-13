@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package co.cask.cdap.api.workflow;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Defines types of programs that can be scheduled by the Application.
+ *
  */
-public enum SchedulableProgramType {
-  WORKFLOW, MAPREDUCE, SPARK, CUSTOM_ACTION, NONE
+public final class WorkflowFork {
+
+  private final List<WorkflowForkBranch> forkBranches;
+
+  public WorkflowFork(List<WorkflowForkBranch> forkBranches) {
+    // TODO: what if forkBranches is null
+    this.forkBranches = Collections.unmodifiableList(new ArrayList<WorkflowForkBranch>(forkBranches));
+  }
+
+  public List<WorkflowForkBranch> getBranches() {
+    return forkBranches;
+  }
 }

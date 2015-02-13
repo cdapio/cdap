@@ -32,20 +32,25 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final String className;
   private final String name;
   private final String description;
-  private final Map<String, WorkflowActionSpecification> customActionMap;
-  private final List<ScheduleProgramInfo> actions;
   private final Map<String, String> properties;
 
+  private final List<WorkflowNode> nodes;
+  private final Map<String, WorkflowFork> forks;
+  private final Map<String, WorkflowActionSpecification> customActionMap;
+
+
   public WorkflowSpecification(String className, String name, String description,
-                                      Map<String, String> properties,
-                                      List<ScheduleProgramInfo> actions,
+                                      Map<String, String> properties, List<WorkflowNode> nodes,
+                                      Map<String, WorkflowFork> forks,
                                       Map<String, WorkflowActionSpecification> customActionMap) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.actions = Collections.unmodifiableList(new ArrayList<ScheduleProgramInfo>(actions));
+    this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
+    this.forks = forks == null ? Collections.<String, WorkflowFork>emptyMap() :
+      Collections.unmodifiableMap(new HashMap<String, WorkflowFork>(forks));
     this.customActionMap = Collections.unmodifiableMap(new HashMap(customActionMap));
   }
 
@@ -74,8 +79,12 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     return properties.get(key);
   }
 
-  public List<ScheduleProgramInfo> getActions() {
-    return actions;
+  public List<WorkflowNode> getNodes() {
+    return nodes;
+  }
+
+  public Map<String, WorkflowFork> getForks() {
+    return forks;
   }
 
   public Map<String, WorkflowActionSpecification> getCustomActionMap() {
@@ -89,7 +98,8 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     sb.append(", name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
     sb.append(", customActionMap=").append(customActionMap);
-    sb.append(", actions=").append(actions);
+    sb.append(", nodes=").append(nodes);
+    sb.append(", forks=").append(forks);
     sb.append(", properties=").append(properties);
     sb.append('}');
     return sb.toString();
