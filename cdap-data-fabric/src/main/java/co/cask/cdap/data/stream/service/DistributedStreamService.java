@@ -190,6 +190,7 @@ public class DistributedStreamService extends AbstractStreamService {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<Id.Stream, Long> sizes = ImmutableMap.builder();
     String namespace = Constants.DEFAULT_NAMESPACE;
+    //TODO: use listStreams() across all namespaces, not just default namespace.
     for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
       Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
       sizes.put(streamId, streamWriterSizeCollector.getTotalCollected(streamId));
