@@ -81,25 +81,25 @@ public final class CubeQuery {
   public CubeQuery(CubeQuery query, String measureName) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          measureName, query.measureType,
-         query.sliceByTagValues, query.groupByTags, null);
+         query.sliceByTagValues, query.groupByTags, query.getInterpolator());
   }
 
   public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          query.measureName, query.measureType,
-         sliceByTagValues, groupByTags);
+         sliceByTagValues, groupByTags, query.getInterpolator());
   }
 
   public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          query.measureName, query.measureType,
-         sliceByTagValues, query.groupByTags, null);
+         sliceByTagValues, query.groupByTags, query.getInterpolator());
   }
 
   public CubeQuery(CubeQuery query, List<String> groupByTags) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          query.measureName, query.measureType,
-         query.sliceByTagValues, groupByTags);
+         query.sliceByTagValues, groupByTags, query.getInterpolator());
   }
 
   public static CubeQuery addSliceByTag(CubeQuery query, String tagName, String tagValue) {

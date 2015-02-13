@@ -235,10 +235,6 @@ public class DefaultCube implements Cube {
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
                                                       Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
     List<TimeSeries> result = Lists.newArrayList();
-    long count = (query.getEndTs() - query.getStartTs()) / query.getResolution() + 1;
-    if (query.getResolution() == Integer.MAX_VALUE) {
-      count = 1;
-    }
     for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
       List<TimeValue> timeValues = Lists.newArrayList();
       for (Map.Entry<Long, Long> timeValue : row.getValue().entrySet()) {
@@ -247,16 +243,10 @@ public class DefaultCube implements Cube {
       Collections.sort(timeValues);
       PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
         new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
-      long resultTimeStamp = query.getStartTs();
       List<TimeValue> resultTimeValues = Lists.newArrayList();
-      for (int i = 0; i < count; i++) {
-        if (timeValueItor.hasNext() && timeValueItor.peek().getTimestamp() == resultTimeStamp) {
-          resultTimeValues.add(new TimeValue(resultTimeStamp, timeValueItor.next().getValue()));
-        } else {
-          // If the scan result doesn't have value for a timestamp, we add 0 to the result-returned for that timestamp
-          resultTimeValues.add(new TimeValue(resultTimeStamp, 0));
-        }
-        resultTimeStamp += query.getResolution();
+      while (timeValueItor.hasNext()) {
+        TimeValue timeValue = timeValueItor.next();
+        resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
       }
       result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
     }

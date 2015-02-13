@@ -137,9 +137,8 @@ public abstract class AbstractCubeTest {
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
                      new Interpolators.Step());
 
-    CubeQuery query = new CubeQuery(startTs, endTs, 1, "metric1", MeasureType.COUNTER,
-                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
-                                    ImmutableList.<String>of());
+    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, "metric1",
+                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
     cube.delete(query);
     //test small-slope linear interpolation
     startTs = 1;
@@ -153,9 +152,7 @@ public abstract class AbstractCubeTest {
                                                                                            4, 4, 5, 3))),
                      new Interpolators.Linear());
 
-    query = new CubeQuery(startTs, endTs, 1, "metric1", MeasureType.COUNTER,
-                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
-                                    ImmutableList.<String>of());
+    query = new CubeDeleteQuery(startTs, endTs, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
     cube.delete(query);
 
     //test big-slope linear interpolation
@@ -218,29 +215,7 @@ public abstract class AbstractCubeTest {
                                     sliceByTagValues, groupByTags, interpolator);
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());
-    assertTimeSeries(startTs, endTs, resolution, expected, result);
-  }
-
-  private void assertTimeSeries(long startTs, long endTs, int resolution, Collection<TimeSeries> expected,
-                                Collection<TimeSeries> result) {
-    Iterator<TimeSeries> expectedItor = expected.iterator();
-    List<TimeSeries> resultList = Lists.newArrayList(result.iterator());
-
-    while (expectedItor.hasNext()) {
-      TimeSeries expectedTimeSeries = expectedItor.next();
-      TimeSeries resultTimeSeries = getTimeSeries(resultList, expectedTimeSeries.getTagValues());
-      Assert.assertNotNull(resultTimeSeries);
-      Map<Long, Long> mapTimeValues = Maps.newHashMap();
-      for (TimeValue timeValue: expectedTimeSeries.getTimeValues()) {
-        mapTimeValues.put(timeValue.getTimestamp(), timeValue.getValue());
-      }
-      Collection<TimeValue> expandedExpectedTimeSeries = Lists.newArrayList();
-      for (long j = startTs; j <= endTs; j = j + resolution) {
-        Long resultValue = mapTimeValues.get(j) == null ? 0 : mapTimeValues.get(j);
-        expandedExpectedTimeSeries.add(new TimeValue(j, resultValue));
-      }
-      Assert.assertTrue(expandedExpectedTimeSeries.containsAll(resultTimeSeries.getTimeValues()));
-    }
+    Assert.assertTrue(expected.containsAll(result));
   }
 
   private TimeSeries getTimeSeries(List<TimeSeries> resultList, Map<String, String> tagValues) {
