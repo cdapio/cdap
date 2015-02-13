@@ -49,6 +49,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
@@ -59,7 +60,6 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
@@ -136,16 +136,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
 
   /**
-   * App fabric output directory.
-   */
-  private final String appFabricDir;
-
-  /**
-   * The directory where the uploaded files would be placed.
-   */
-  private final String archiveDir;
-
-  /**
    * Factory for handling the location - can do both in either Distributed or Local mode.
    */
   private final LocationFactory locationFactory;
@@ -163,14 +153,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
   private final StreamConsumerFactory streamConsumerFactory;
-
   private final QueueAdmin queueAdmin;
-
   private final DiscoveryServiceClient discoveryServiceClient;
-
   private final PreferencesStore preferencesStore;
-
   private final AdapterService adapterService;
+  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -179,12 +166,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService) {
+                                 AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
-    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    this.archiveDir = this.appFabricDir + "/archive";
+    this.namespaceAdmin = namespaceAdmin;
     this.locationFactory = locationFactory;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
@@ -312,7 +298,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceExists(namespaceId)) {
+    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
@@ -404,7 +390,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("adapter-id") String adapterName) {
 
     try {
-      if (!namespaceExists(namespaceId)) {
+      if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
         return;
@@ -460,12 +446,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
-    if (!namespaceExists(namespaceId)) {
-      LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
-                                                                         "exist.", namespaceId));
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    if (!namespaceAdmin.hasNamespace(namespace)) {
+      LOG.warn("Namespace '{}' not found.", namespaceId);
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Deploy failed - namespace '%s' not found.", namespaceId));
       return null;
     }
+
+    Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    if (!namespaceHomeLocation.exists()) {
+      String msg = String.format("Home directory %s for namespace %s not found",
+                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
+      LOG.error(msg);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
+      return null;
+    }
+
 
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
@@ -474,13 +471,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     // Store uploaded content to a local temp file
-    File tempDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
+    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    final Location archive = locationFactory.create(this.archiveDir).append(namespaceId).append(archiveName);
+    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
+    final Location archive =
+      namespaceHomeLocation.append(appFabricDir).append(Constants.AppFabric.ARCHIVE_DIR).append(archiveName);
 
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
@@ -518,32 +518,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn(e.getMessage(), e);
       throw new Exception(e.getMessage());
     }
-  }
-
-  private boolean namespaceExists(String namespace) {
-    boolean isValid = false;
-    if (namespace != null && !namespace.isEmpty()) {
-      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
-        isValid = true;
-      } else {
-        // null namespace found. check if this is default, and try to create it.
-        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
-        // time during the initialization of CDAP.
-        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
-          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
-                                                           .setId(Constants.DEFAULT_NAMESPACE)
-                                                           .setName(Constants.DEFAULT_NAMESPACE)
-                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
-          if (existing != null) {
-            LOG.trace("Default namespace already exists.");
-          } else {
-            LOG.trace("Created default namespace.");
-          }
-          isValid = true;
-        }
-      }
-    }
-    return isValid;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)
@@ -814,6 +788,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private void deleteProgramLocations(Id.Application appId) throws IOException {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
+    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());

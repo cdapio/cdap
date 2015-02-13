@@ -16,45 +16,16 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
+
+import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * This class responsible for process coordination needed between stream writers and consumers.
  */
 public interface StreamCoordinatorClient extends Service {
-
-  /**
-   * Increments the generation of the given stream.
-   *
-   * @param streamConfig stream configuration
-   * @param lowerBound The minimum generation id to increment from. It is guaranteed that the resulting generation
-   *                   would be greater than this lower bound value.
-   * @return A future that will be completed when the update of generation is done. The future result will carry
-   *         the generation id updated by this method.
-   */
-  ListenableFuture<Integer> nextGeneration(StreamConfig streamConfig, int lowerBound);
-
-  /**
-   * Changes the TTL of the given stream.
-   *
-   * @param streamName name of the stream
-   * @param ttl the new TTL
-   * @return A future that will be completed when the update of TTL is done. The future result will carry
-   *         the TTL updated by this method.
-   */
-  ListenableFuture<Long> changeTTL(String streamName, long ttl);
-
-  /**
-   * Changes the notification threshold of the given stream.
-   *
-   * @param streamName name of the stream
-   * @param threshold the new notification threshold
-   * @return A future that will be completed when the update of threshold is done. The future result will carry
-   *         the threshold updated by this method.
-   */
-  ListenableFuture<Integer> changeThreshold(String streamName, int threshold);
 
   /**
    * Receives event for changes in stream properties.
@@ -65,11 +36,28 @@ public interface StreamCoordinatorClient extends Service {
   Cancellable addListener(String streamName, StreamPropertyListener listener);
 
   /**
-   * Called whenever a new stream is created.
-   * Affect a Stream handler leader to a stream.
+   * Creates a stream by performing the given action. The execution of the action is protected by a lock
+   * so that it is guaranteed that there is only one thread executing the given action for the given stream
+   * across the whole system.
    *
-   * @param streamName name of the stream.
-   * @return A {@link ListenableFuture} describing the progress of the operation.
+   * @param streamName name of the stream
+   * @param action action to perform. If a new stream is created, it should returns a {@link StreamConfig} representing
+   *               the configuration of the new stream; otherwise {@code null} should be returned.
+   * @return The {@link StreamConfig} as returned by the action
+   * @throws Exception if the action throws Exception
    */
-  ListenableFuture<Void> streamCreated(String streamName);
+  @Nullable
+  StreamConfig createStream(String streamName, Callable<StreamConfig> action) throws Exception;
+
+  /**
+   * Updates the stream properties by performing the given action. The execution of the action is protected by a lock
+   * so that it is guaranteed that there is only one thread executing the given action for the given stream
+   * across the whole system.
+   *
+   * @param streamName name of the stream
+   * @param action action to perform. It should returns a {@link CoordinatorStreamProperties} containing information
+   *               about the update properties.
+   * @throws Exception if failed to update properties
+   */
+  void updateProperties(String streamName, Callable<CoordinatorStreamProperties> action) throws Exception;
 }

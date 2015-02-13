@@ -22,16 +22,16 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Represents the properties of a stream.
  */
-public final class StreamProperties {
+public class StreamProperties {
 
   private final String name;
   private final Long ttl;
   private final FormatSpecification format;
 
-  @SerializedName("notification_threshold_mb")
+  @SerializedName("notification.threshold.MB")
   private final Integer notificationThresholdMB;
 
-  public StreamProperties(String name, long ttl, FormatSpecification format, int notificationThresholdMB) {
+  public StreamProperties(String name, long ttl, FormatSpecification format, Integer notificationThresholdMB) {
     this.name = name;
     this.ttl = ttl;
     this.format = format;

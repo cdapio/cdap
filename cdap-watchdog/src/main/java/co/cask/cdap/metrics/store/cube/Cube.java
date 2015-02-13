@@ -37,4 +37,12 @@ public interface Cube {
    * @return {@link List} of {@link TimeSeries} that are result of the query.
    */
   Collection<TimeSeries> query(CubeQuery query) throws Exception;
+
+  /**
+   * Deletes the data specified by {@link CubeQuery} from all the fact tables.
+   * @param query query specifies parameters for deletion. groupByTags and resolution fields are not used.
+   * @throws Exception
+   */
+  //todo: create separate DeleteCubeQuery class
+  void delete(CubeQuery query) throws Exception;
 }

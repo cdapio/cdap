@@ -36,7 +36,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -44,6 +43,7 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.TxRetryPolicy;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Throwables;
@@ -80,10 +80,10 @@ public abstract class NotificationTest {
 
   private static NotificationService notificationService;
 
-  protected static final NotificationFeed FEED1 = new NotificationFeed.Builder()
-    .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
-  protected static final NotificationFeed FEED2 = new NotificationFeed.Builder()
-    .setNamespace("namespace").setCategory("stream").setName("bar").setDescription("").build();
+  protected static final Id.NotificationFeed FEED1 = new Id.NotificationFeed.Builder()
+    .setNamespaceId("namespace").setCategory("stream").setName("foo").setDescription("").build();
+  protected static final Id.NotificationFeed FEED2 = new Id.NotificationFeed.Builder()
+    .setNamespaceId("namespace").setCategory("stream").setName("bar").setDescription("").build();
 
   protected static NotificationService getNotificationService() {
     return notificationService;

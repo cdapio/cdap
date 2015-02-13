@@ -90,6 +90,29 @@ public abstract class AbstractCubeTest {
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(3, 5))));
 
+    // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
+    // check data for other timestamp is available
+
+    CubeQuery query = new CubeQuery(0, 8, 1, "metric1", MeasureType.COUNTER,
+                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                    ImmutableList.<String>of());
+    cube.delete(query);
+
+    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                     ImmutableList.<String>of(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(10, 2, 11, 3))));
+
+    // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
+
+    query = new CubeQuery(0, 15, 1, "metric1", MeasureType.COUNTER,
+                                    ImmutableMap.of("tag1", "1", "tag2", "1"),
+                                    ImmutableList.<String>of());
+    cube.delete(query);
+
+    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
+                     ImmutableList.<String>of(), ImmutableList.<TimeSeries>of());
+
   }
 
   private void writeInc(Cube cube, String measureName, long ts, long value, String... tags) throws Exception {

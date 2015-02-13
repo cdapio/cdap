@@ -44,7 +44,7 @@ import java.io.IOException;
 public class AppWithTimePartitionedFileSet extends AbstractApplication {
 
   public static final String INPUT = "input";
-  public static final String PARTITIONED = "partitioned";
+  public static final String TIME_PARTITIONED = "time-part-d";
   public static final String OUTPUT = "output";
   public static final byte[] ONLY_COLUMN = { 'x' };
   public static final String ROW_TO_WRITE = "row.to.write";
@@ -58,7 +58,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
       createDataset(INPUT, "table");
       createDataset(OUTPUT, "table");
 
-      createDataset(PARTITIONED, "timePartitionedFileSet", FileSetProperties.builder()
+      createDataset(TIME_PARTITIONED, "timePartitionedFileSet", FileSetProperties.builder()
         // properties for file set
         .setBasePath("/partitioned")
         .setInputFormat(TextInputFormat.class)
@@ -80,7 +80,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
     @Override
     public void configure() {
       setInputDataset(INPUT);
-      setOutputDataset(PARTITIONED);
+      setOutputDataset(TIME_PARTITIONED);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       if (succeeded) {
-        TimePartitionedFileSet ds = context.getDataset(PARTITIONED);
+        TimePartitionedFileSet ds = context.getDataset(TIME_PARTITIONED);
         String outputPath = FileSetArguments.getOutputPath(ds.getUnderlyingFileSet().getRuntimeArguments());
         Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());
         Preconditions.checkNotNull(time, "Output partition time is null.");
@@ -119,7 +119,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
 
     @Override
     public void configure() {
-      setInputDataset(PARTITIONED);
+      setInputDataset(TIME_PARTITIONED);
       setOutputDataset(OUTPUT);
     }
 

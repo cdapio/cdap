@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
@@ -75,10 +76,12 @@ public class AbstractDatasetTest {
     framework.addModule("core", new CoreDatasetsModule());
     framework.addModule("fileSet", new FileSetModule());
     framework.addModule("tpfs", new TimePartitionedFileSetModule());
+    framework.addModule("pfs", new PartitionedFileSetModule());
   }
 
   @AfterClass
   public static void destroy() throws Exception {
+    framework.deleteModule("pfs");
     framework.deleteModule("tpfs");
     framework.deleteModule("fileSet");
     framework.deleteModule("core");
