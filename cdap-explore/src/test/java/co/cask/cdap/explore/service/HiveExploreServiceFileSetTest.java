@@ -278,9 +278,9 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     long time2 = DATE_FORMAT.parse("12/10/14 2:00 am").getTime();
     long time3 = DATE_FORMAT.parse("12/10/14 3:00 am").getTime();
 
-    Location location1 = tpfs.getUnderlyingFileSet().getLocation("file1/nn");
-    Location location2 = tpfs.getUnderlyingFileSet().getLocation("file2/nn");
-    Location location3 = tpfs.getUnderlyingFileSet().getLocation("file3/nn");
+    Location location1 = tpfs.getEmbeddedFileSet().getLocation("file1/nn");
+    Location location2 = tpfs.getEmbeddedFileSet().getLocation("file2/nn");
+    Location location3 = tpfs.getEmbeddedFileSet().getLocation("file3/nn");
 
     AvroHelper.generateAvroFile(location1.getOutputStream(), "x", 1, 2);
     AvroHelper.generateAvroFile(location2.getOutputStream(), "y", 2, 3);
@@ -401,9 +401,9 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     long time2 = DATE_FORMAT.parse("12/10/14 2:00 am").getTime();
     long time3 = DATE_FORMAT.parse("12/10/14 3:00 am").getTime();
 
-    Location location1 = tpfs.getUnderlyingFileSet().getLocation("file1/nn");
-    Location location2 = tpfs.getUnderlyingFileSet().getLocation("file2/nn");
-    Location location3 = tpfs.getUnderlyingFileSet().getLocation("file3/nn");
+    Location location1 = tpfs.getEmbeddedFileSet().getLocation("file1/nn");
+    Location location2 = tpfs.getEmbeddedFileSet().getLocation("file2/nn");
+    Location location3 = tpfs.getEmbeddedFileSet().getLocation("file3/nn");
 
     AvroHelper.generateAvroFile(location1.getOutputStream(), "x", 1, 2);
     AvroHelper.generateAvroFile(location2.getOutputStream(), "x", 2, 3);

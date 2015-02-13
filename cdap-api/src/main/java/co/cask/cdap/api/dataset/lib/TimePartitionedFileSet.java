@@ -77,11 +77,4 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    */
   @Deprecated
   public FileSet getUnderlyingFileSet();
-
-  /**
-   * Allow direct access to the runtime arguments of this partitioned file set.
-   *
-   * @return the runtime arguments specified for this dataset.
-   */
-  Map<String, String> getRuntimeArguments();
 }
