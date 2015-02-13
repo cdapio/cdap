@@ -92,11 +92,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, exploreService.execute(query));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
-                                                                        e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                         e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -115,7 +115,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -139,11 +139,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, status);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -167,11 +167,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, schema);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -198,11 +198,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -244,11 +244,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       if (e.isInactive()) {
         responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
@@ -302,13 +302,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Got exception:", e);
       // We can't send another response if sendChunkStart has been called
       if (!responseStarted) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       }
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
       if (!responseStarted) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
-                                                                          e.getSQLState(), e.getMessage()));
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                           e.getSQLState(), e.getMessage()));
       }
     } catch (HandleNotFoundException e) {
       if (!responseStarted) {

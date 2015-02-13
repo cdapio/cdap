@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,27 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.worker.Worker;
 
 /**
- * Workers for user services must implement this interface.
- *
- * @deprecated As of version 2.8.0, replaced by {@link Worker}
+ * Defines a Worker.
  */
-@Deprecated
-public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
+public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
 
   /**
-   * Configure a ServiceWorker.
+   * Configure a Worker.
    */
-  void configure(ServiceWorkerConfigurer configurer);
+  void configure(WorkerConfigurer configurer);
 
   /**
    * Request to stop the running worker.
-   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method.
+   * This method will be invoked from a different thread than the one calling the {@link #run()} method.
    */
   void stop();
 }

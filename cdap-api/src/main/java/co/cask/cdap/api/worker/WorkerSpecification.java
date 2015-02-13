@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.worker.WorkerSpecification;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,12 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Specification for {@link ServiceWorker}s.
- *
- * @deprecated As of version 2.8.0, replaced by {@link WorkerSpecification}
+ * Specification for {@link Worker}s.
  */
-@Deprecated
-public final class ServiceWorkerSpecification implements ProgramSpecification, PropertyProvider {
+public final class WorkerSpecification implements ProgramSpecification, PropertyProvider {
   private final String className;
   private final String name;
   private final String description;
@@ -44,12 +39,8 @@ public final class ServiceWorkerSpecification implements ProgramSpecification, P
   private final Resources resources;
   private final int instances;
 
-  /**
-   * Create a new instance of ServiceWorkerSpecification.
-   */
-  public ServiceWorkerSpecification(String className, String name, String description,
-                                    Map<String, String> properties, Set<String> datasets,
-                                    Resources resources, int instances) {
+  public WorkerSpecification(String className, String name, String description, Map<String, String> properties,
+                             Set<String> datasets, Resources resources, int instances) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -85,21 +76,21 @@ public final class ServiceWorkerSpecification implements ProgramSpecification, P
   }
 
   /**
-   * @return Resources requirements which will be used to run the {@link ServiceWorker}.
+   * @return resources requirements which will be used to run the {@link Worker}
    */
   public Resources getResources() {
     return resources;
   }
 
   /**
-   * @return An immutable set of {@link Dataset} name that are used by the {@link HttpServiceHandler}.
+   * @return an immutable set of {@link Dataset} name that are used by the {@link Worker}
    */
   public Set<String> getDatasets() {
     return datasets;
   }
 
   /**
-   * @return Number of instances for the worker.
+   * @return number of instances for the worker
    */
   public int getInstances() {
     return instances;

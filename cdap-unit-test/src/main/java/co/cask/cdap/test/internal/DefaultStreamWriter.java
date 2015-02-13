@@ -16,7 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamWriter;
 import com.google.common.base.Charsets;
@@ -43,13 +43,13 @@ import java.util.Map;
 public final class DefaultStreamWriter implements StreamWriter {
 
   private final Id.Stream streamId;
-  private final StreamHandler streamHandler;
+  private final StreamHandlerV2 streamHandlerV2;
 
   @Inject
-  public DefaultStreamWriter(StreamHandler streamHandler,
+  public DefaultStreamWriter(StreamHandlerV2 streamHandlerV2,
                              @Assisted Id.Stream streamId) throws IOException {
 
-    this.streamHandler = streamHandler;
+    this.streamHandlerV2 = streamHandlerV2;
     this.streamId = streamId;
   }
 
@@ -61,7 +61,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.create(httpRequest, responder, streamId.getName());
+      streamHandlerV2.create(httpRequest, responder, streamId.getName());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);
@@ -120,7 +120,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.enqueue(httpRequest, responder, streamId.getName());
+      streamHandlerV2.enqueue(httpRequest, responder, streamId.getName());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

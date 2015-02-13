@@ -14,19 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.conversion.app;
+package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
- * Workflow that periodically reads data from a stream and writes it into a time partitioned fileset.
+ * Tests v2 stream endpoints
  */
-public class StreamConversionWorkflow extends AbstractWorkflow {
-
+public class StreamHandlerTestV2 extends StreamHandlerTest {
   @Override
-  public void configure() {
-    setName("StreamConversionWorkflow");
-    setDescription("Periodically reads stream data and writes it into a FileSet");
-    addMapReduce("StreamConversionMapReduce");
+  protected URL constructPath(String path) throws URISyntaxException, MalformedURLException {
+    return getEndPoint(String.format("/v2/%s", path)).toURL();
   }
 }
