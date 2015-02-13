@@ -1,6 +1,15 @@
 var module = angular.module(PKG.name+'.commons');
 
-module.directive('myFlowGraph', function () {
+module.factory('d3', function ($window) {
+  return $window.d3;
+});
+
+module.factory('dagreD3', function ($window) {
+  return $window.dagreD3;
+});
+
+
+module.directive('myFlowGraph', function (d3, dagreD3) {
   return {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
@@ -20,7 +29,6 @@ module.directive('myFlowGraph', function () {
         var edges = scope.model.edges;
 
         var inner = d3.select('g');
-
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
 
@@ -42,7 +50,7 @@ module.directive('myFlowGraph', function () {
         });
 
         renderer(inner, g);
-      }
+      };
 
     }
   };

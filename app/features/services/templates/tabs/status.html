@@ -54,7 +54,10 @@
         <td ng-bind="ep.path"></td>
         <td>
           <div class="btn-group btn-group-xs" role="group">
-            <a class="btn btn-default"> Make Request </a>
+            <a class="btn btn-default"
+                ng-disabled="status !== 'RUNNING'"
+                ui-sref=".makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
+              Make Request </a>
           </div>
         </td>
       </tr>

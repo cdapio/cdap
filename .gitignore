@@ -1,5 +1,7 @@
 .DS_Store
+*.iml
 npm-debug.log
+node/
 node_modules/
 bower_components/
 dist/

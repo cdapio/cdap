@@ -23,5 +23,5 @@ function ($scope, $state, MyDataSource) {
       } else if(newValue === 1) {
         $state.go(toState + '.logs');
       }
-    })
+    });
 });
