@@ -42,7 +42,7 @@ public class CoordinatorStreamProperties extends StreamProperties {
     return Objects.toStringHelper(this)
       .add("ttl", getTTL())
       .add("format", getFormat())
-      .add("threshold", getThreshold())
+      .add("notificationThresholdMB", getNotificationThresholdMB())
       .add("generation", getGeneration())
       .toString();
   }

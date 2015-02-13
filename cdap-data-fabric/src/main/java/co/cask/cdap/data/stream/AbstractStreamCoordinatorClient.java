@@ -113,7 +113,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
           return new CoordinatorStreamProperties(
             firstNotNull(properties.getTTL(), oldProperties.getTTL()),
             firstNotNull(properties.getFormat(), oldProperties.getFormat()),
-            firstNotNull(properties.getThreshold(), oldProperties.getThreshold()),
+            firstNotNull(properties.getNotificationThresholdMB(), oldProperties.getNotificationThresholdMB()),
             firstNotNull(properties.getGeneration(), oldProperties.getGeneration()));
         }
       }).get();
@@ -200,8 +200,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
         ttlChanged(streamId, ttl);
       }
 
-      Integer threshold = properties.getThreshold();
-      Integer oldThreshold = (oldProperties == null) ? null : oldProperties.getThreshold();
+      Integer threshold = properties.getNotificationThresholdMB();
+      Integer oldThreshold = (oldProperties == null) ? null : oldProperties.getNotificationThresholdMB();
 
       if (threshold != null && !threshold.equals(oldThreshold)) {
         thresholdChanged(streamId, threshold);

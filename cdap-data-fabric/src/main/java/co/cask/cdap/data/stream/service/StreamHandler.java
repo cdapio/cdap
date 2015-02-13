@@ -392,7 +392,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     // Validate notification threshold
-    Integer threshold = properties.getThreshold();
+    Integer threshold = properties.getNotificationThresholdMB();
     if (threshold != null && threshold <= 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
       return null;
@@ -479,8 +479,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       if (src.getFormat() != null) {
         json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
       }
-      if (src.getThreshold() != null) {
-        json.addProperty("threshold", src.getThreshold());
+      if (src.getNotificationThresholdMB() != null) {
+        json.addProperty("notification.threshold.mb", src.getNotificationThresholdMB());
       }
       return json;
     }
@@ -494,7 +494,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
-      Integer threshold = jsonObj.has("threshold") ? jsonObj.get("threshold").getAsInt() : null;
+      Integer threshold = jsonObj.has("notification.threshold.mb") ?
+        jsonObj.get("notification.threshold.mb").getAsInt() :
+        null;
       return new StreamProperties(ttl, format, threshold);
     }
   }
