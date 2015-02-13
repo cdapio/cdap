@@ -19,6 +19,8 @@ package co.cask.cdap.proto;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 
 /**
  * Contains collection of classes representing different types of Ids.
@@ -41,6 +43,7 @@ public final class Id  {
 
     public Namespace(String id) {
       Preconditions.checkNotNull(id, "Namespace cannot be null.");
+      Preconditions.checkArgument(isId(id), "Namespace has an incorrect format.");
       this.id = id;
     }
 
@@ -347,6 +350,93 @@ public final class Id  {
     @Override
     public int hashCode() {
       return Objects.hashCode(namespace, category, name);
+    }
+  }
+
+
+  /**
+   * Id.Stream uniquely identifies a stream.
+   */
+  public static final class Stream {
+    private final String namespace;
+    private final String streamName;
+    private transient int hashCode;
+
+    private Stream(final String namespace, final String streamName) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
+
+      Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
+      Preconditions.checkArgument(isId(streamName), "Stream name has an incorrect format.");
+
+      this.namespace = namespace;
+      this.streamName = streamName;
+    }
+
+    public Namespace getNamespace() {
+      return Id.Namespace.from(namespace);
+    }
+
+    public String getNamespaceId() {
+      return namespace;
+    }
+
+    public String getName() {
+      return streamName;
+    }
+
+    public static Stream from(Namespace id, String streamName) {
+      return new Stream(id.getId(), streamName);
+    }
+
+    public static Stream from(String namespaceId, String streamName) {
+      return new Stream(namespaceId, streamName);
+    }
+
+    public String toId() {
+      return String.format("%s.%s", namespace, streamName);
+    }
+
+    public static Stream fromId(String id) {
+      Iterable<String> comps = Splitter.on('.').omitEmptyStrings().split(id);
+      Preconditions.checkArgument(2 == Iterables.size(comps));
+
+      String namespace = Iterables.get(comps, 0);
+      String streamName = Iterables.get(comps, 1);
+      return from(namespace, streamName);
+    }
+
+    @Override
+    public int hashCode() {
+      int h = hashCode;
+      if (h == 0) {
+        h = 31 * namespace.hashCode() + streamName.hashCode();
+        hashCode = h;
+      }
+      return h;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Stream that = (Stream) o;
+
+      return this.namespace.equals(that.namespace) &&
+        this.streamName.equals(that.streamName);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("streamName", streamName)
+        .toString();
     }
   }
 }

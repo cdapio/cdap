@@ -25,11 +25,15 @@ import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -42,13 +46,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Store store;
   private final PreferencesStore preferencesStore;
   private final DashboardStore dashboardStore;
+  private final LocationFactory locationFactory;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
-                               DashboardStore dashboardStore) {
+                               DashboardStore dashboardStore, LocationFactory locationFactory) {
     this.store = storeFactory.create();
     this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
+    this.locationFactory = locationFactory;
   }
 
   /**
@@ -66,6 +72,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       LOG.info("Successfully created 'default' namespace.");
     } catch (AlreadyExistsException e) {
       LOG.info("'default' namespace already exists.");
+    } catch (IOException e) {
+      // propagating it as an unchecked exception because this will be gone soon,
+      // don't want to change method signatures till then
+      LOG.info("Error while creating default namespace");
+      Throwables.propagate(e);
     }
   }
 
@@ -120,10 +131,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws AlreadyExistsException if the specified namespace already exists
    */
-  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException {
+  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException, IOException {
+    // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     NamespaceMeta existing = store.createNamespace(metadata);
     if (existing != null) {
       throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getId());
+    }
+    Location namespaceLocation = locationFactory.create(metadata.getId());
+    String namespacePath = namespaceLocation.toURI().getPath();
+    if (namespaceLocation.exists()) {
+      throw new IOException(String.format("Namespace home directory %s already exists", namespacePath));
+    }
+    if (!namespaceLocation.mkdirs()) {
+      throw new IOException(String.format("Error while creating namespace home directory %s", namespacePath));
     }
   }
 
@@ -133,8 +153,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
    * @throws NotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException {
-    //TODO: CDAP-870. Delete should be in a single transaction.
+  public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException, IOException {
+    //TODO: CDAP-870, CDAP-1427. Delete should be in a single transaction.
     // Delete Preferences associated with this namespace
     preferencesStore.deleteProperties(namespaceId.getId());
 
@@ -145,6 +165,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);
     if (deletedNamespace == null) {
       throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+    }
+
+    Location namespaceLocation = locationFactory.create(namespaceId.getId());
+    String namespacePath = namespaceLocation.toURI().getPath();
+    if (!namespaceLocation.exists()) {
+      throw new IOException(String.format("Namespace home %s not found", namespacePath));
+    }
+    if (!namespaceLocation.delete(true)) {
+      throw new IOException(String.format("Error while deleting namespace directory %s", namespacePath));
     }
   }
 }

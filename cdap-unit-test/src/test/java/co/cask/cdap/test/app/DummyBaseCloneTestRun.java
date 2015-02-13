@@ -47,7 +47,7 @@ public class DummyBaseCloneTestRun extends TestFrameworkTestBase {
 
       // Since this test can runs in test suite that may contains other tests,
       // use intersect to verify to avoid seeing tables created by other tests
-      Set<String> expected = Sets.newHashSet("cdap_stream_who", "cdap_user_whom");
+      Set<String> expected = Sets.newHashSet("cdap_stream_default_who", "cdap_user_whom");
       Assert.assertEquals(expected, Sets.intersection(expected, tables));
     } finally {
       connection.close();

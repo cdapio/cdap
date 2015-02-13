@@ -16,6 +16,8 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
@@ -115,12 +117,37 @@ abstract class ExploreHttpClient implements Explore {
                                  ". Reason: " + getDetails(response));
   }
 
+  protected QueryHandle doAddPartition(String datasetName, PartitionKey key, String path) throws ExploreException {
+    Map<String, String> args = Maps.newHashMap();
+    PartitionedFileSetArguments.setOutputPartitionKey(args, key);
+    args.put("path", path);
+    HttpResponse response = doPost(String.format("data/explore/datasets/%s/partitions", datasetName),
+                                   GSON.toJson(args), null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot add partition with key " + key + "to dataset " + datasetName +
+                                 ". Reason: " + getDetails(response));
+  }
+
   protected QueryHandle doDropPartition(String datasetName, long time) throws ExploreException {
     HttpResponse response = doDelete(String.format("data/explore/datasets/%s/partitions/%d", datasetName, time));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot drop partition with time " + time + "from dataset " + datasetName +
+                                 ". Reason: " + getDetails(response));
+  }
+
+  protected QueryHandle doDropPartition(String datasetName, PartitionKey key) throws ExploreException {
+    Map<String, String> args = Maps.newHashMap();
+    PartitionedFileSetArguments.setOutputPartitionKey(args, key);
+    HttpResponse response = doPost(String.format("data/explore/datasets/%s/deletePartition", datasetName),
+                                     GSON.toJson(args), null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot drop partition with key " + key + "from dataset " + datasetName +
                                  ". Reason: " + getDetails(response));
   }
 

@@ -17,6 +17,7 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -24,6 +25,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -60,7 +62,10 @@ public class StreamTailer {
                                              new NotificationFeedClientModule());
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
-    StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+
+    //TODO: get namespace from commandline arguments
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     Location streamLocation = streamConfig.getLocation();
     List<Location> eventFiles = Lists.newArrayList();
 
