@@ -15,8 +15,10 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Throwables;
 import org.junit.Assert;
@@ -50,13 +52,14 @@ public abstract class StreamCoordinatorTestBase {
   public void testGeneration() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();
     final String streamName = "testGen";
-    streamAdmin.create(streamName);
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    streamAdmin.create(streamId);
 
     StreamCoordinatorClient coordinator = getStreamCoordinator();
     final CountDownLatch genIdChanged = new CountDownLatch(1);
-    coordinator.addListener(streamName, new StreamPropertyListener() {
+    coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void generationChanged(String streamName, int generation) {
+      public void generationChanged(Id.Stream streamId, int generation) {
         if (generation == 10) {
           genIdChanged.countDown();
         }
@@ -72,7 +75,7 @@ public abstract class StreamCoordinatorTestBase {
           try {
             barrier.await();
             for (int i = 0; i < 5; i++) {
-              streamAdmin.truncate(streamName);
+              streamAdmin.truncate(streamId);
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -89,19 +92,21 @@ public abstract class StreamCoordinatorTestBase {
   public void testConfig() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();
     final String streamName = "testConfig";
-    streamAdmin.create(streamName);
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    streamAdmin.create(streamId);
+
 
     StreamCoordinatorClient coordinator = getStreamCoordinator();
     final BlockingDeque<Integer> thresholds = new LinkedBlockingDeque<Integer>();
     final BlockingDeque<Long> ttls = new LinkedBlockingDeque<Long>();
-    coordinator.addListener(streamName, new StreamPropertyListener() {
+    coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void thresholdChanged(String streamName, int threshold) {
+      public void thresholdChanged(Id.Stream streamId, int threshold) {
         thresholds.add(threshold);
       }
 
       @Override
-      public void ttlChanged(String streamName, long ttl) {
+      public void ttlChanged(Id.Stream streamId, long ttl) {
         ttls.add(ttl);
       }
     });
@@ -119,7 +124,7 @@ public abstract class StreamCoordinatorTestBase {
             for (int i = 0; i < 100; i++) {
               Long ttl = (threadId == 0) ? (long) (i * 1000) : null;
               Integer threshold = (threadId == 1) ? i : null;
-              streamAdmin.updateConfig(streamName, new StreamProperties(ttl, null, threshold));
+              streamAdmin.updateConfig(streamId, new StreamProperties(ttl, null, threshold));
             }
             completeLatch.countDown();
           } catch (Exception e) {
@@ -139,7 +144,7 @@ public abstract class StreamCoordinatorTestBase {
     Assert.assertTrue(validateLastElement(ttls, 99000L));
 
     // Verify the config is right
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(streamId);
     Assert.assertEquals(99, config.getNotificationThresholdMB());
     Assert.assertEquals(99000L, config.getTTL());
   }

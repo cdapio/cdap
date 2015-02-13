@@ -16,12 +16,14 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
@@ -646,12 +648,13 @@ public abstract class StreamDataFileTestBase {
   @Test
   public void testLiveStream() throws Exception {
     String streamName = "live";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     final String filePrefix = "prefix";
     long partitionDuration = 5000;    // 5 seconds
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
-    final StreamConfig config = new StreamConfig(streamName, partitionDuration, 10000, Long.MAX_VALUE,
+    final StreamConfig config = new StreamConfig(streamId, partitionDuration, 10000, Long.MAX_VALUE,
                                                  location, null, 1000);
 
     // Create a thread that will write 10 event per second

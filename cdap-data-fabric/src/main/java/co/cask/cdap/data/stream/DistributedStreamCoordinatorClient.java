@@ -24,6 +24,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -72,20 +73,20 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   }
 
   @Override
-  protected Lock getLock(String streamName) {
+  protected Lock getLock(Id.Stream streamId) {
     // It's ok to create new locks every time as it's backed by ZK for distributed lock
     ZKClient lockZKClient = ZKClients.namespace(zkClient, "/" + Constants.Service.STREAMS + "/locks");
-    return new ReentrantDistributedLock(lockZKClient, streamName);
+    return new ReentrantDistributedLock(lockZKClient, streamId.toId());
   }
 
   @Override
-  protected void streamCreated(final String streamName) {
+  protected void streamCreated(final Id.Stream streamId) {
     resourceCoordinatorClient.modifyRequirement(
       Constants.Service.STREAMS, new ResourceModifier() {
         @Nullable
         @Override
         public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
-          LOG.debug("Modifying requirement to add stream {} as a resource", streamName);
+          LOG.debug("Modifying requirement to add stream {} as a resource", streamId);
           Set<ResourceRequirement.Partition> partitions;
           if (existingRequirement != null) {
             partitions = existingRequirement.getPartitions();
@@ -93,7 +94,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
             partitions = ImmutableSet.of();
           }
 
-          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamName, 1);
+          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamId.toId(), 1);
           if (partitions.contains(newPartition)) {
             return null;
           }

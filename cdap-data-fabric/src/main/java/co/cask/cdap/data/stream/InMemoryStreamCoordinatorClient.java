@@ -18,7 +18,7 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -56,12 +56,12 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
   }
 
   @Override
-  protected Lock getLock(String streamName) {
+  protected Lock getLock(Id.Stream streamId) {
     return lock;
   }
 
   @Override
-  protected void streamCreated(String streamName) {
+  protected void streamCreated(Id.Stream streamId) {
     // Nothing to do
   }
 }

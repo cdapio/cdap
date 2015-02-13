@@ -52,7 +52,7 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
     try {
-      Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", config.getName());
+      Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", config.getStreamId());
 
       Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
       Locations.mkdirsIfNotExists(baseLocation);

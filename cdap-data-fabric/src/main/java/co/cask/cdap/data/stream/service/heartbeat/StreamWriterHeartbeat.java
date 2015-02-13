@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service.heartbeat;
 
 import co.cask.cdap.data.stream.service.DistributedStreamService;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 
@@ -30,9 +31,9 @@ public class StreamWriterHeartbeat {
 
   private final long timestamp;
   private final int instanceId;
-  private final Map<String, Long> streamsSizes;
+  private final Map<Id.Stream, Long> streamsSizes;
 
-  public StreamWriterHeartbeat(long timestamp, int instanceId, Map<String, Long> streamsSizes) {
+  public StreamWriterHeartbeat(long timestamp, int instanceId, Map<Id.Stream, Long> streamsSizes) {
     this.timestamp = timestamp;
     this.instanceId = instanceId;
     this.streamsSizes = ImmutableMap.copyOf(streamsSizes);
@@ -46,7 +47,7 @@ public class StreamWriterHeartbeat {
     return instanceId;
   }
 
-  public Map<String, Long> getStreamsSizes() {
+  public Map<Id.Stream, Long> getStreamsSizes() {
     return streamsSizes;
   }
 
