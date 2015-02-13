@@ -87,6 +87,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(SparkProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER).to(ServiceComponentProgramRunner.class);
 
     // Service support in standalone
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(ServiceProgramRunner.class);
