@@ -1,9 +1,6 @@
 angular.module(PKG.name+'.feature.operation28')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
-    // $urlRouterProvider
-    //   .when('/operations', '/operations/whatever');
-
     var path = '/assets/features/operation28/';
 
     /**
@@ -18,10 +15,12 @@ angular.module(PKG.name+'.feature.operation28')
         },
         url: '/operations',
         templateUrl: path + 'ops.html',
-        controller: function ($state) {
-          if($state.is('operations')) {
-            $state.go('operations.cdap');
-          }
+        controller: function ($scope, $state) {
+          $scope.$on('$stateChangeSuccess', function(){
+            if($state.is('operations')) {
+              $state.go('operations.cdap');
+            }
+          });
         }
       })
         .state('operations.cdap', {

@@ -1,13 +1,11 @@
 /**
- * Controllers for Operation 2.8
+ * Operation 2.8
  */
-
-
 
 angular.module(PKG.name+'.feature.operation28')
   .factory('op28helper', function () {
 
-    function panelMap(d){
+    function panelMap (d) {
       return {
         title: d[0],
         unit: d[1],
@@ -40,26 +38,27 @@ angular.module(PKG.name+'.feature.operation28')
     };
 
     return {
-      pollCb: pollCb,
-      panelMap: panelMap
+      panelMap: panelMap,
+      pollCb: pollCb
     };
+
   })
   .controller('Op28CdapCtrl', function ($scope, op28helper, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
-      ['Collect', 'EPS', 'collect.events'],
-      ['Process', '%', 'process.busyness'],
-      ['Store', 'B/s', 'dataset.store.bytes'],
-      ['Query', 'QPS', 'query.requests'],
+      ['Collect', 'EPS',    'collect.events'],
+      ['Process', '%',      'process.busyness'],
+      ['Store', 'B/s',      'dataset.store.bytes'],
+      ['Query', 'QPS',      'query.requests']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
-      var c = panel.chart,
-          path = '/metrics/system/' + c.metric;
+      var c = panel.chart;
       dataSrc.poll({
-          _cdapPathV2: path + '?start=now-60s&end=now',
+          _cdapPathV2: '/metrics/system/'
+            + c.metric + '?start=now-60s&end=now',
           method: 'GET'
         },
         op28helper.pollCb.bind(c)
@@ -67,17 +66,31 @@ angular.module(PKG.name+'.feature.operation28')
     });
 
   })
-  .controller('Op28SystemCtrl', function ($scope, $state) {
+  .controller('Op28SystemCtrl', function ($scope, op28helper, MyDataSource) {
 
+    $scope.panels = [
+      ['AppFabric', 'Containers', ''],
+      ['Processors', 'Cores',     ''],
+      ['Memory', 'B',             ''],
+      ['DataFabric', 'GB',        '']
+    ].map(op28helper.panelMap);
 
-
-
+    // angular.forEach($scope.panels, function (panel) {
+    //   var c = panel.chart;
+    //   dataSrc.poll({
+    //       _cdapPathV2: '/metrics/system/'
+    //         + c.metric + '?start=now-60s&end=now',
+    //       method: 'GET'
+    //     },
+    //     op28helper.pollCb.bind(c)
+    //   );
+    // });
 
   })
-  .controller('Op28AppsCtrl', function ($scope, $state) {
+  .controller('Op28AppsCtrl', function ($scope, MyDataSource) {
 
 
-
+    console.log('TODO: Op28AppsCtrl');
 
 
   })
