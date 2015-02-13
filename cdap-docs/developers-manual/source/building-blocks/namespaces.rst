@@ -45,8 +45,8 @@ the entity ID, since an entity cannot exist independently of a namespace.
 
 First Version Limitations
 ==============================
-The first version of namespaces was introduced in CDAP v2.8.0, and is part of the
-HTTP RESTful API v3.
+The first version of namespaces was introduced in :ref:`CDAP v2.8.0 <release-notes>`, and
+is part of the :ref:`HTTP RESTful API v3 <http-restful-api-v3>`.
 
 For this first version, certain limitations apply and are not allowed or implemented:
 
