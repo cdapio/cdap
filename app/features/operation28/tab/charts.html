@@ -14,14 +14,15 @@
           <strong>{{panel.unit}}</strong>
         </p>
 
-        <epoch-line
-          data-history="panel.chart.history"
-          data-stream="panel.chart.stream"
-          chart-height="200"
-          chart-ticks="{ bottom: 1 }"
-          chart-axes="['left', 'bottom']"
-        ></epoch-line>
       </div>
+
+      <epoch-line
+        data-history="panel.chart.history"
+        data-stream="panel.chart.stream"
+        chart-height="200"
+        chart-ticks="{ time: 20 }"
+        chart-axes="['left', 'bottom']"
+      ></epoch-line>
 
     </div>
   </div>

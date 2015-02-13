@@ -48,10 +48,14 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
     $scope.options = options;
 
     if(attr.history) {
+      var once = false;
       $scope.$watch('history', function (newVal) {
         if(newVal) {
           $scope.options.data = newVal;
-          render();
+          if(!once) {
+            once = true;
+            render();
+          }
         }
       });
     }
