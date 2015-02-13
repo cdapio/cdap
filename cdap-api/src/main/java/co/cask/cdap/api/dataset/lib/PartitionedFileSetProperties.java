@@ -92,9 +92,9 @@ public class PartitionedFileSetProperties extends FileSetProperties {
      * Sets the base path for the file dataset.
      */
     public Builder setPartitioning(Partitioning partitioning) {
-      delegate.add(PARTITIONING_FIELDS, Joiner.on(",").join(partitioning.getFields().keySet()));
+      add(PARTITIONING_FIELDS, Joiner.on(",").join(partitioning.getFields().keySet()));
       for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
-        delegate.add(PARTITIONING_FIELD_PREFIX + entry.getKey(), entry.getValue().name());
+        add(PARTITIONING_FIELD_PREFIX + entry.getKey(), entry.getValue().name());
       }
       return this;
     }

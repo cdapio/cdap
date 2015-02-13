@@ -71,13 +71,18 @@ public class StreamConversionTest extends TestBase {
     Assert.assertEquals(1, partitions.size());
     long partitionTime = partitions.keySet().iterator().next();
 
-    // partition time should be the logical start time of the MapReduce. Let's say within 1 minute after start.
-    Assert.assertTrue(partitionTime >= startTime);
-    Assert.assertTrue(partitionTime <= startTime + TimeUnit.SECONDS.toMillis(60));
-
-    // extract fields from partition time
+    // we must round down the start time to the full minute before we compare the partition time
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(startTime);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    long startMinute = calendar.getTimeInMillis();
+
+    // partition time should be the logical start time of the MapReduce. That is between start and now.
+    Assert.assertTrue(partitionTime >= startMinute);
+    Assert.assertTrue(partitionTime <= System.currentTimeMillis());
+
+    // extract fields from partition time
     int year = calendar.get(Calendar.YEAR);
     int month = calendar.get(Calendar.MONTH) + 1;
     int day = calendar.get(Calendar.DAY_OF_MONTH);
