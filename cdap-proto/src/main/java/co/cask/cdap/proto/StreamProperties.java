@@ -28,7 +28,7 @@ public class StreamProperties {
   private final Long ttl;
   private final FormatSpecification format;
 
-  @SerializedName("notification.threshold.MB")
+  @SerializedName("notification.threshold.mb")
   private final Integer notificationThresholdMB;
 
   public StreamProperties(String name, long ttl, FormatSpecification format, Integer notificationThresholdMB) {

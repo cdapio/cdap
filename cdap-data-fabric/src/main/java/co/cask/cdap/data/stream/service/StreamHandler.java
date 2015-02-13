@@ -50,7 +50,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
@@ -466,7 +465,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
       }
       if (src.getNotificationThresholdMB() != null) {
-        json.addProperty("notification.threshold.MB", src.getNotificationThresholdMB());
+        json.addProperty("notification.threshold.mb", src.getNotificationThresholdMB());
       }
       return json;
     }
@@ -481,8 +480,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
-      Integer threshold = jsonObj.has("notification.threshold.MB") ?
-        jsonObj.get("notification.threshold.MB").getAsInt() :
+      Integer threshold = jsonObj.has("notification.threshold.mb") ?
+        jsonObj.get("notification.threshold.mb").getAsInt() :
         null;
       return new StreamProperties(name, ttl, format, threshold);
     }
