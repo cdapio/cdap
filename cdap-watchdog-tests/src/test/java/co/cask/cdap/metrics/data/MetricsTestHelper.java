@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,6 +48,8 @@ import java.io.File;
  * Helper class for constructing different test environments for running metrics tests.
  */
 public class MetricsTestHelper {
+
+  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   public static MetricsTableFactory createLocalMetricsTableFactory(File dataDir) throws DatasetManagementException {
     CConfiguration cConf = CConfiguration.create();
@@ -70,7 +73,7 @@ public class MetricsTestHelper {
 
     DatasetFramework dsFramework =
       new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metricsTable-leveldb", new LevelDBMetricsTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "metricsTable-leveldb"), new LevelDBMetricsTableModule());
     return new DefaultMetricsTableFactory(cConf, dsFramework);
   }
 
@@ -101,7 +104,7 @@ public class MetricsTestHelper {
 
     DatasetFramework dsFramework =
       new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "metrics-hbase"), new HBaseMetricsTableModule());
     return new DefaultMetricsTableFactory(cConf, dsFramework);
   }
 

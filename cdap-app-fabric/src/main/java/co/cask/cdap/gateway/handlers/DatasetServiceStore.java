@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -47,7 +48,7 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
                              @Named("serviceModule") DatasetModule datasetModule) throws Exception {
     this.dsFramework = new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
                                                       new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
-    this.dsFramework.addModule("basicKVTable", datasetModule);
+    this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
   }
 
   @Override

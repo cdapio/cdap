@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -65,6 +66,7 @@ public class LogCleanupTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final int RETENTION_DURATION_MS = 100000;
+  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   private static LocationFactory locationFactory;
 
@@ -76,7 +78,7 @@ public class LogCleanupTest {
   @Test
   public void testCleanup() throws Exception {
     DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "table"), new InMemoryOrderedTableModule());
 
     CConfiguration cConf = CConfiguration.create();
 

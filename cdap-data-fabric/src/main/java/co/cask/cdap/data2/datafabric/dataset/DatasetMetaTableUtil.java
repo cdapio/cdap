@@ -17,11 +17,13 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 
@@ -67,7 +69,9 @@ public class DatasetMetaTableUtil {
   }
 
   private static void addTypes(DatasetFramework framework) throws DatasetManagementException {
-    framework.addModule("typeMDSModule", new SingleTypeModule(DatasetTypeMDS.class));
-    framework.addModule("instanceMDSModule", new SingleTypeModule(DatasetInstanceMDS.class));
+    Id.DatasetModule typeMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "typeMDSModule");
+    Id.DatasetModule instanceMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "instanceMDSModule");
+    framework.addModule(typeMDSModuleId, new SingleTypeModule(DatasetTypeMDS.class));
+    framework.addModule(instanceMDSModuleId, new SingleTypeModule(DatasetInstanceMDS.class));
   }
 }

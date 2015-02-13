@@ -23,8 +23,10 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -54,7 +56,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   private DatasetDefinitionRegistryFactory registryFactory;
   private Map<String, ? extends DatasetModule> defaultModules;
 
-  private final Map<String, String> moduleClasses = Maps.newLinkedHashMap();
+  private final Map<Id.DatasetModule, String> moduleClasses = Maps.newLinkedHashMap();
   private final Set<String> defaultTypes = Sets.newHashSet();
   private final Map<String, DatasetSpecification> instances = Maps.newHashMap();
 
@@ -76,19 +78,19 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void addModule(String moduleName, DatasetModule module)
+  public synchronized void addModule(Id.DatasetModule moduleId, DatasetModule module)
     throws ModuleConflictException {
 
-    if (moduleClasses.containsKey(moduleName)) {
-      throw new ModuleConflictException("Cannot add module " + moduleName + ": it already exists.");
+    if (moduleClasses.containsKey(moduleId)) {
+      throw new ModuleConflictException("Cannot add module " + moduleId + ": it already exists.");
     }
-    add(moduleName, module, false);
+    add(moduleId, module, false);
   }
 
   @Override
-  public synchronized void deleteModule(String moduleName) throws ModuleConflictException {
+  public synchronized void deleteModule(Id.DatasetModule moduleId) throws ModuleConflictException {
     // todo: check if existnig datasets or modules use this module
-    moduleClasses.remove(moduleName);
+    moduleClasses.remove(moduleId);
     // this will cleanup types
     registry = createRegistry(registry.getClass().getClassLoader());
   }
@@ -229,13 +231,13 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     return registry;
   }
 
-  private void add(String moduleName, DatasetModule module, boolean defaultModule) {
+  private void add(Id.DatasetModule moduleId, DatasetModule module, boolean defaultModule) {
     TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(registry);
     module.register(trackingRegistry);
     if (defaultModule) {
       defaultTypes.addAll(trackingRegistry.getTypes());
     }
-    moduleClasses.put(moduleName, DatasetModules.getDatasetModuleClass(module).getName());
+    moduleClasses.put(moduleId, DatasetModules.getDatasetModuleClass(module).getName());
   }
 
   private void resetRegistry() {
@@ -246,7 +248,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     registry = registryFactory.create();
     for (Map.Entry<String, ? extends DatasetModule> entry : defaultModules.entrySet()) {
       LOG.info("Adding Default module: " + entry.getKey() + " " + this.toString());
-      add(entry.getKey(), entry.getValue(), true);
+      // default modules in system namespace
+      add(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, entry.getKey()), entry.getValue(), true);
     }
   }
 
