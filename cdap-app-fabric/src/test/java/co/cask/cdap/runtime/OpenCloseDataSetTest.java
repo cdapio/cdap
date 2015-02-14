@@ -106,7 +106,7 @@ public class OpenCloseDataSetTest {
     TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
       getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream("xx");
+    QueueName queueName = QueueName.fromStream(app.getId().getNamespaceId(), "xx");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     QueueProducer producer = queueClientFactory.createProducer(queueName);
 

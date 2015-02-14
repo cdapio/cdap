@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 
 import java.io.IOException;
@@ -36,11 +36,11 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(QueueName streamName, long groupId, int instances) throws Exception {
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
   }
 
   @Override
-  public void configureGroups(QueueName streamName, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
   }
 
   @Override
@@ -48,12 +48,12 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
-    throw new IllegalStateException("Stream " + streamName + " not exists.");
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    throw new IllegalStateException("Stream " + streamId + " not exists.");
   }
 
   @Override
-  public void updateConfig(String streamName, StreamProperties properties) throws IOException {
+  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
   }
 
   @Override
@@ -62,27 +62,24 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
+  public boolean exists(Id.Stream streamId) throws Exception {
     return false;
   }
 
   @Override
-  public void create(String name) throws Exception {
+  public void create(Id.Stream streamId) throws Exception {
   }
 
   @Override
-  public void create(String name, @Nullable Properties props) throws Exception {
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
   }
 
   @Override
-  public void truncate(String name) throws Exception {
+  public void truncate(Id.Stream streamId) throws Exception {
   }
 
   @Override
-  public void drop(String name) throws Exception {
+  public void drop(Id.Stream streamId) throws Exception {
   }
 
-  @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-  }
 }

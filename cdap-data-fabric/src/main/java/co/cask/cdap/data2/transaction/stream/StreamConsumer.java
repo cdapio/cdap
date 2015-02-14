@@ -16,9 +16,9 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 
 import java.io.Closeable;
@@ -32,13 +32,12 @@ import java.util.concurrent.TimeUnit;
  * On transaction rollback, all events that are read by poll calls will be reverted so that when poll is issued on a
  * new transaction afterwards, it will start giving stream events from the where last committed poll ended.
  */
-public interface
-  StreamConsumer extends Closeable, TransactionAware {
+public interface StreamConsumer extends Closeable, TransactionAware {
 
   /**
-   * @return Name of the stream this consumer is consuming.
+   * @return Id of the stream this consumer is consuming.
    */
-  QueueName getStreamName();
+  Id.Stream getStreamId();
 
   /**
    * @return Configuration of this consumer.

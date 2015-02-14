@@ -50,6 +50,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -95,6 +96,10 @@ public class BaseHiveExploreServiceTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
+
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
   public static boolean runAfter = true;

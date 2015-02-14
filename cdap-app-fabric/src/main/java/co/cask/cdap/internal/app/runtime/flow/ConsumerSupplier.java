@@ -88,7 +88,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {
-        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName, config);
+        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId(), config);
         consumerConfig = streamConsumer.getConsumerConfig();
         consumer = streamConsumer;
       }

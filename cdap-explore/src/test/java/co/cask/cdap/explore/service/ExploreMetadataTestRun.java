@@ -42,7 +42,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     startServices();
 
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
@@ -53,7 +53,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteInstance("other_table");
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
   @Test

@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -47,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -209,10 +211,13 @@ public class Main {
     DatasetFramework datasetFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
-    datasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
-    datasetFramework.addModule("metricsTable", new HBaseMetricsTableModule());
-    datasetFramework.addModule("core", new CoreDatasetsModule());
-    datasetFramework.addModule("fileSet", new FileSetModule());
+    // TODO: this doesn't sound right. find out why its needed.
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "orderedTable"),
+                               new HBaseOrderedTableModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
+                               new HBaseMetricsTableModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
 
     return datasetFramework;
   }

@@ -20,11 +20,11 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
@@ -330,8 +330,8 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(streamName);
-    return streamWriterFactory.create(queueName, accountId, applicationId);
+    Id.Stream streamId = Id.Stream.from(accountId, streamName);
+    return streamWriterFactory.create(streamId);
   }
 
   @Override
