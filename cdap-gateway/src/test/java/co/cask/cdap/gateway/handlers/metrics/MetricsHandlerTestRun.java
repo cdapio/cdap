@@ -61,6 +61,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
+    // todo : figure out why we need this
     TimeUnit.SECONDS.sleep(1);
     collector.increment("reads", 1);
     TimeUnit.MILLISECONDS.sleep(2000);
@@ -135,6 +136,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace.WCount1.b.ClassicWordCount.m.task1",
                        ImmutableList.<String>of());
   }
+
 
   @Test
   public void testQueryMetrics() throws Exception {
