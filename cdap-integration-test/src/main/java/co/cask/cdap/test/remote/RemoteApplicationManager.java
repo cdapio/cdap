@@ -33,6 +33,7 @@ import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -248,6 +249,16 @@ public class RemoteApplicationManager implements ApplicationManager {
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
     return new RemoteServiceManager(serviceId, clientConfig);
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
+    return null;
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName) {
+    return null;
   }
 
   @Override

@@ -1354,6 +1354,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         programSpec = appSpec.getWorkflows().get(id.getId());
       } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(runnableId)) {
         programSpec = appSpec.getServices().get(id.getId());
+      } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(runnableId)) {
+        programSpec = appSpec.getWorkers().get(id.getId());
       } else {
         programSpec = null;
       }

@@ -58,7 +58,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
     jsonObj.add("schedules", serializeMap(src.getSchedules(), context, ScheduleSpecification.class));
-    jsonObj.add("services", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
+    jsonObj.add("workers", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
 
     return jsonObj;
   }

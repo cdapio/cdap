@@ -429,6 +429,37 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Sets number of instances for a worker.
+   */
+  @PUT
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void setWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                 @PathParam("worker-id") final String workerId) {
+    try {
+      String accId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accId, appId, workerId);
+
+      if (!store.programExists(programId, ProgramType.WORKER)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Worker not found");
+        return;
+      }
+
+      int instances = getInstances(request);
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+
+      setProgramInstances(programId, instances);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable t) {
+      LOG.error("Got exception : ", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   /**
    * Sets number of instances for a procedure.

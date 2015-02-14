@@ -62,7 +62,7 @@ public class WorkerTwillApplication implements TwillApplication {
     Resources resources = spec.getResources();
     TwillSpecification.Builder.RunnableSetter runnableSetter;
     runnableSetter = moreRunnable.add(spec.getName(),
-                                      new ServiceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+                                      new WorkerTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
                                       createResourceSpec(resources, spec.getInstances()))
                                   .withLocalFiles()
                                       .add(programName, programLocation.toURI())

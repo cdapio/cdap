@@ -21,9 +21,6 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,8 +41,8 @@ public final class WorkerSpecification implements ProgramSpecification, Property
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
+    this.properties = properties;
+    this.datasets = datasets;
     this.resources = resources;
     this.instances = instances;
   }

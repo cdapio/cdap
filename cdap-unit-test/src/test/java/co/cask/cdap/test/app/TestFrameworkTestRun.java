@@ -38,6 +38,7 @@ import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
@@ -352,6 +353,23 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(expected = IllegalArgumentException.class)
   public void testServiceWithInvalidHandler() throws Exception {
     deployApplication(AppWithInvalidHandler.class);
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testAppWithWorker() throws Exception {
+    ApplicationManager applicationManager = getTestManager().deployApplication(AppWithWorker.class);
+    LOG.info("Deployed.");
+    WorkerManager manager = applicationManager.startWorker(AppWithWorker.WORKER);
+    manager.waitForStatus(true, 10, 1);
+    manager.stop();
+    manager.waitForStatus(false, 10, 1);
+    applicationManager.stopAll();
+    DataSetManager<KeyValueTable> dataSetManager = applicationManager.getDataSet(AppWithWorker.DATASET);
+    KeyValueTable table = dataSetManager.get();
+    Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
+    Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
+    Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
   }
 
   @Category(SlowTests.class)
