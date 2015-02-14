@@ -30,6 +30,7 @@ import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Collections;
@@ -207,6 +208,13 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(Service service) {
     configurer.addService(service);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addWorker(Worker)
+   */
+  protected void addWorker(Worker worker) {
+    configurer.addWorker(worker);
   }
 
   /**

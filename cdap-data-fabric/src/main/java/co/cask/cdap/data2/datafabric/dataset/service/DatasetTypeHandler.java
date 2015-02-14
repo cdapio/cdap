@@ -107,7 +107,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       manager.deleteModules();
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetModuleConflictException e) {
-      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     }
   }
 
@@ -193,7 +193,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     try {
       deleted = manager.deleteModule(name);
     } catch (DatasetModuleConflictException e) {
-      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
     }
 

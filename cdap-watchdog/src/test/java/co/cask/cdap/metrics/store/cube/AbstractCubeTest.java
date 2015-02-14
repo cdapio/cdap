@@ -93,9 +93,8 @@ public abstract class AbstractCubeTest {
     // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
 
-    CubeQuery query = new CubeQuery(0, 8, 1, "metric1", MeasureType.COUNTER,
-                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
-                                    ImmutableList.<String>of());
+    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, "metric1",
+                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
@@ -105,9 +104,7 @@ public abstract class AbstractCubeTest {
 
     // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
 
-    query = new CubeQuery(0, 15, 1, "metric1", MeasureType.COUNTER,
-                                    ImmutableMap.of("tag1", "1", "tag2", "1"),
-                                    ImmutableList.<String>of());
+    query = new CubeDeleteQuery(0, 15,  "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"));
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),

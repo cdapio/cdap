@@ -222,13 +222,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
             contextConfig.set(context, cConf, tx, programJarCopy.getName());
 
             LOG.info("Submitting MapReduce Job: {}", context);
-            ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-            try {
-              // submits job and returns immediately
-              job.submit();
-            } finally {
-              ClassLoaders.setContextClassLoader(oldClassLoader);
-            }
+            // submits job and returns immediately. Shouldn't need to set context ClassLoader.
+            job.submit();
 
             this.job = job;
             this.transaction = tx;
@@ -303,6 +298,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       } finally {
         context.close();
         cleanupTask.run();
+        // Need to reset the ClassLoader in the job conf, otherwise the MR framework will be holding a reference
+        // to the ProgramClassLoader, resulting in memory leak.
+        job.getConfiguration().setClassLoader(null);
       }
     }
   }

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -46,13 +47,16 @@ public class DatasetInstanceHandlerV2 extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder) {
-    datasetInstanceHandler.list(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    datasetInstanceHandler.list(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                Constants.DEFAULT_NAMESPACE);
   }
 
   @GET
   @Path("/data/datasets/{name}")
-  public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("name") String name) {
-    datasetInstanceHandler.getInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
+  public void getInfo(HttpRequest request, HttpResponder responder,
+                      @PathParam("name") String name) {
+    datasetInstanceHandler.getInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                   Constants.DEFAULT_NAMESPACE, name);
   }
 
   /**
@@ -60,8 +64,10 @@ public class DatasetInstanceHandlerV2 extends AbstractHttpHandler {
    */
   @PUT
   @Path("/data/datasets/{name}")
-  public void create(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
-    datasetInstanceHandler.create(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
+  public void create(HttpRequest request, HttpResponder responder,
+                     @PathParam("name") String name) {
+    datasetInstanceHandler.create(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                  Constants.DEFAULT_NAMESPACE, name);
   }
 
   /**
@@ -70,44 +76,35 @@ public class DatasetInstanceHandlerV2 extends AbstractHttpHandler {
    */
   @PUT
   @Path("/data/datasets/{name}/properties")
-  public void update(HttpRequest request, HttpResponder responder, @PathParam("name") String name) {
-    datasetInstanceHandler.update(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
+  public void update(HttpRequest request, HttpResponder responder,
+                     @PathParam("name") String name) {
+    datasetInstanceHandler.update(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                  Constants.DEFAULT_NAMESPACE, name);
   }
 
   @DELETE
   @Path("/data/datasets/{name}")
-  public void drop(HttpRequest request, HttpResponder responder, @PathParam("name") String name) {
-    datasetInstanceHandler.drop(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, name);
+  public void drop(HttpRequest request, HttpResponder responder,
+                   @PathParam("name") String name) {
+    datasetInstanceHandler.drop(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                Constants.DEFAULT_NAMESPACE, name);
   }
 
   @POST
   @Path("/data/datasets/{name}/admin/{method}")
-  public void executeAdmin(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName,
+  public void executeAdmin(HttpRequest request, HttpResponder responder,
+                           @PathParam("name") String instanceName,
                            @PathParam("method") String method) {
-    datasetInstanceHandler.executeAdmin(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, instanceName,
-                                        method);
+    datasetInstanceHandler.executeAdmin(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                        Constants.DEFAULT_NAMESPACE, instanceName, method);
   }
 
   @POST
   @Path("/data/datasets/{name}/data/{method}")
-  public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName,
+  public void executeDataOp(HttpRequest request, HttpResponder responder,
+                            @PathParam("name") String instanceName,
                             @PathParam("method") String method) {
-    datasetInstanceHandler.executeDataOp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, instanceName,
-                                         method);
-  }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated in various handlers, but its ok since this temporary, till we
-   * support v2 APIs
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
+    datasetInstanceHandler.executeDataOp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                         Constants.DEFAULT_NAMESPACE, instanceName, method);
   }
 }

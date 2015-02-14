@@ -30,7 +30,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -45,8 +45,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static long emitTs;
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     setupMetrics();
   }
 
@@ -61,6 +61,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
+    TimeUnit.SECONDS.sleep(1);
     collector.increment("reads", 1);
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
@@ -156,6 +157,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       verifyRangeQueryResult(
         "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter", "splitter") +
         "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
@@ -215,7 +217,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
-    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
+    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() {
+    }.getType());
     List<TimeValue> result = timeSeriesCollection.iterator().next().getTimeValues();
 
     for (TimeValue point : result) {

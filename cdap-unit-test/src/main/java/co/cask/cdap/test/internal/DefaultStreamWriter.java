@@ -17,7 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -44,14 +44,14 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   private final String accountId;
   private final QueueName streamName;
-  private final StreamHandler streamHandler;
+  private final StreamHandlerV2 streamHandlerV2;
 
   @Inject
-  public DefaultStreamWriter(StreamHandler streamHandler,
+  public DefaultStreamWriter(StreamHandlerV2 streamHandlerV2,
                              @Assisted QueueName streamName,
                              @Assisted("accountId") String accountId) throws IOException {
 
-    this.streamHandler = streamHandler;
+    this.streamHandlerV2 = streamHandlerV2;
     this.streamName = streamName;
     this.accountId = accountId;
   }
@@ -64,7 +64,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.create(httpRequest, responder, streamName.getSimpleName());
+      streamHandlerV2.create(httpRequest, responder, streamName.getSimpleName());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);
@@ -123,7 +123,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.enqueue(httpRequest, responder, streamName.getSimpleName());
+      streamHandlerV2.enqueue(httpRequest, responder, streamName.getSimpleName());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

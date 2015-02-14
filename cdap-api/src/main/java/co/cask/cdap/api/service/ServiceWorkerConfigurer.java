@@ -17,12 +17,16 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.worker.WorkerConfigurer;
 
 import java.util.Map;
 
 /**
  * Interface for configuring {@link ServiceWorker} usage in a {@link Service}.
+ *
+ * @deprecated As of version 2.8.0, replaced by {@link WorkerConfigurer}
  */
+@Deprecated
 public interface ServiceWorkerConfigurer {
 
   /**

@@ -101,7 +101,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void clear() {
+  public void clear() throws Exception {
     try {
       appFabricClient.reset();
     } catch (Exception e) {
