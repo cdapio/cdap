@@ -14,8 +14,9 @@
 # Attributes
 
 * `['cdap']['conf_dir']` - The directory used inside `/etc/cdap` and used via the alternatives system. Default `conf.chef`
-* `['cdap']['repo']['url']` - Specifies URL for fetching packages
-* `['cdap']['repo']['components']` - Repository components to use for APT repositories
+* `['cdap']['repo']['apt_repo_url']` - Specifies URL for fetching packages from APT
+* `['cdap']['repo']['apt_components']` - Repository components to use for APT repositories
+* `['cdap']['repo']['yum_repo_url']` - Specifies URL for fetching packages from YUM
 
 # Recipes
 
