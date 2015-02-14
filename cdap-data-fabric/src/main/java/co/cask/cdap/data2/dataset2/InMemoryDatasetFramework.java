@@ -58,7 +58,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   private final Map<Id.DatasetModule, String> moduleClasses = Maps.newLinkedHashMap();
   private final Set<String> defaultTypes = Sets.newHashSet();
-  private final Map<String, DatasetSpecification> instances = Maps.newHashMap();
+  private final Map<Id.DatasetInstance, DatasetSpecification> instances = Maps.newHashMap();
 
   // NOTE: used only for "internal" operations, that doesn't return to client object of custom type
   // NOTE: for getting dataset/admin objects we construct fresh new one using all modules (no dependency management in
@@ -107,50 +107,51 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
-    throws InstanceConflictException, IOException {
-    if (instances.get(datasetInstanceName) != null) {
-      throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
+  public synchronized void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
+                                       DatasetProperties props) throws InstanceConflictException, IOException {
+    if (instances.get(datasetInstanceId) != null) {
+      throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceId);
     }
 
     Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
-    DatasetSpecification spec = def.configure(datasetInstanceName, props);
-    instances.put(datasetInstanceName, spec);
+    DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+    instances.put(datasetInstanceId, spec);
     def.getAdmin(spec, null).create();
-    instances.put(datasetInstanceName, spec);
-    LOG.info("Created dataset {} of type {}", datasetInstanceName, datasetType);
+    instances.put(datasetInstanceId, spec);
+    LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
   }
 
   @Override
-  public synchronized void updateInstance(String datasetInstanceName, DatasetProperties props)
+  public synchronized void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws InstanceConflictException, IOException {
-    DatasetSpecification oldSpec = instances.get(datasetInstanceName);
+    DatasetSpecification oldSpec = instances.get(datasetInstanceId);
     if (oldSpec == null) {
-      throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
+      throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceId);
     }
     String datasetType = oldSpec.getType();
     Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
-    DatasetSpecification spec = def.configure(datasetInstanceName, props);
-    instances.put(datasetInstanceName, spec);
+    DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+    instances.put(datasetInstanceId, spec);
     def.getAdmin(spec, null).upgrade();
   }
 
   @Override
-  public synchronized Collection<DatasetSpecification> getInstances() {
+  public synchronized Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) {
     return Collections.unmodifiableCollection(instances.values());
   }
 
   @Nullable
   @Override
-  public synchronized DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    return instances.get(name);
+  public synchronized DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId)
+    throws DatasetManagementException {
+    return instances.get(datasetInstanceId);
   }
 
   @Override
-  public synchronized boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return instances.containsKey(instanceName);
+  public synchronized boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return instances.containsKey(datasetInstanceId);
   }
 
   @Override
@@ -159,14 +160,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
-    DatasetSpecification spec = instances.remove(datasetInstanceName);
+  public synchronized void deleteInstance(Id.DatasetInstance datasetInstanceId)
+    throws InstanceConflictException, IOException {
+    DatasetSpecification spec = instances.remove(datasetInstanceId);
     DatasetDefinition def = registry.get(spec.getType());
     def.getAdmin(spec, null).drop();
   }
 
   @Override
-  public synchronized void deleteAllInstances() throws DatasetManagementException, IOException {
+  public synchronized void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     for (DatasetSpecification spec : instances.values()) {
       DatasetDefinition def = registry.get(spec.getType());
       def.getAdmin(spec, null).drop();
@@ -175,11 +177,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized <T extends DatasetAdmin> T getAdmin(String datasetInstanceName,
+  public synchronized <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
                                                           @Nullable ClassLoader classLoader)
     throws IOException {
 
-    DatasetSpecification spec = instances.get(datasetInstanceName);
+    DatasetSpecification spec = instances.get(datasetInstanceId);
     if (spec == null) {
       return null;
     }
@@ -188,12 +190,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName,
+  public synchronized <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                                        Map<String, String> arguments,
                                                        @Nullable ClassLoader classLoader)
     throws IOException {
 
-    DatasetSpecification spec = instances.get(datasetInstanceName);
+    DatasetSpecification spec = instances.get(datasetInstanceId);
     if (spec == null) {
       return null;
     }

@@ -184,7 +184,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableDataset(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
     try {
-      Dataset dataset = instantiateDataset(datasetName, responder);
+      // Note: Namespacing will come later.
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }
@@ -201,7 +203,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
           || dataset instanceof TimePartitionedFileSet
           || dataset instanceof PartitionedFileSet) {
           // this cannot fail because we were able to instantiate the dataset
-          DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetName);
+          DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
           if (spec != null) {
             Map<String, String> properties = spec.getProperties();
             if (FileSetProperties.isExploreEnabled(properties)) {
@@ -238,10 +240,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private Dataset instantiateDataset(String datasetName, HttpResponder responder) throws Exception {
+  private Dataset instantiateDataset(Id.DatasetInstance datasetInstanceId, HttpResponder responder) throws Exception {
     Dataset dataset;
     try {
-      dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      dataset = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     } catch (Exception e) {
       String className = isClassNotFoundException(e);
       if (className == null) {
@@ -249,14 +251,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
       LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
                  "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
-                 "guide for more information.", datasetName, className, className, datasetName);
+                 "guide for more information.", datasetInstanceId, className, className, datasetInstanceId);
       JsonObject json = new JsonObject();
       json.addProperty("handle", QueryHandle.NO_OP.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
       return null;
     }
     if (dataset == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
       return null;
     }
     return dataset;
@@ -281,8 +283,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("dataset") final String datasetName) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
-
-      Dataset dataset = instantiateDataset(datasetName, responder);
+      // Note: namespacing will come later
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }
@@ -293,7 +296,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       } else if (dataset instanceof FileSet
         || dataset instanceof PartitionedFileSet || dataset instanceof TimePartitionedFileSet) {
         // this cannot fail because we were able to instantiate the dataset
-        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetName);
+        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
         if (spec != null) {
           Map<String, String> properties = spec.getProperties();
           if (FileSetProperties.isExploreEnabled(properties)) {
@@ -365,7 +368,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void addPartition(HttpRequest request, HttpResponder responder,
                            @PathParam("dataset") final String datasetName) {
     try {
-      Dataset dataset = instantiateDataset(datasetName, responder);
+      // Note: Namespacing will come later.
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }
@@ -434,7 +439,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void dropPartition(HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
     try {
-      Dataset dataset = instantiateDataset(datasetName, responder);
+      // Note: Namespacing will come later.
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }

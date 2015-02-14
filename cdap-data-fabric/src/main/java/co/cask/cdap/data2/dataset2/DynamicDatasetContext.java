@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import com.google.common.cache.LoadingCache;
@@ -41,6 +42,8 @@ import javax.annotation.Nullable;
  */
 public abstract class DynamicDatasetContext implements DatasetContext {
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
+
+  private final Id.Namespace namespaceId;
   private final TransactionContext context;
   private final Set<String> allowedDatasets;
   private final DatasetFramework datasetFramework;
@@ -63,23 +66,26 @@ public abstract class DynamicDatasetContext implements DatasetContext {
     return RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
   }
 
-  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader) {
-    this(context, datasetFramework, classLoader, null, EMPTY_MAP);
+  public DynamicDatasetContext(Id.Namespace namespaceId, TransactionContext context, DatasetFramework datasetFramework,
+                               ClassLoader classLoader) {
+    this(namespaceId, context, datasetFramework, classLoader, null, EMPTY_MAP);
   }
 
   /**
    * Create a dynamic dataset context that will get datasets and add them to the transaction context.
    *
+   * @param namespaceId the {@link Id.Namespace} in which the transaction context is created
    * @param context the transaction context
    * @param datasetFramework the dataset framework for creating dataset instances
    * @param classLoader the classloader to use when creating dataset instances
    * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
    * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
    *                         are expected to be scoped so that arguments for one dataset do not override arguments
-   *                         for another. For example, dataset.myfileset.output.path instead of output.path
    */
-  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader,
-                               @Nullable Set<String> datasets, Map<String, String> runtimeArguments) {
+  public DynamicDatasetContext(Id.Namespace namespaceId, TransactionContext context, DatasetFramework datasetFramework,
+                               ClassLoader classLoader, @Nullable Set<String> datasets,
+                               Map<String, String> runtimeArguments) {
+    this.namespaceId = namespaceId;
     this.context = context;
     this.allowedDatasets = datasets == null ? null : ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
@@ -128,6 +134,8 @@ public abstract class DynamicDatasetContext implements DatasetContext {
                         "useDataset() in the configure() method", name));
     }
 
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, name);
+
     // apply arguments on top of runtime arguments for the dataset
     Map<String, String> dsArguments = Maps.newHashMap();
     Map<String, String> runtimeArgs = getRuntimeArguments(name);
@@ -145,13 +153,13 @@ public abstract class DynamicDatasetContext implements DatasetContext {
         Map<DatasetCacheKey, Dataset> threadLocalMap = getDatasetsCache().get(Thread.currentThread().getId());
         dataset = threadLocalMap.get(datasetCacheKey);
         if (dataset == null) {
-          dataset = datasetFramework.getDataset(name, dsArguments, classLoader);
+          dataset = datasetFramework.getDataset(datasetInstanceId, dsArguments, classLoader);
           if (dataset != null) {
             threadLocalMap.put(datasetCacheKey, dataset);
           }
         }
       } else {
-        dataset = datasetFramework.getDataset(name, dsArguments, classLoader);
+        dataset = datasetFramework.getDataset(datasetInstanceId, dsArguments, classLoader);
       }
 
       if (dataset == null) {

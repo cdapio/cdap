@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
@@ -29,42 +30,50 @@ import java.io.IOException;
 public interface DatasetOpExecutor extends Service {
 
   /**
-   * @param instanceName Name of the dataset instance.
+   * Checks for the existence of a dataset instance
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @return true if dataset exists
    * @throws IOException
    */
-  boolean exists(String instanceName) throws Exception;
+  boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception;
 
   /**
-   * Creates dataset.
-   * @param instanceName Name of the dataset instance.
+   * Creates a dataset.
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @param typeMeta Data set type meta
    * @param props Data set instance properties
    * @throws IOException
    */
-  DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
+  DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception;
 
   /**
    * Drops dataset.
+   *
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @param typeMeta Data set type meta
    * @param spec Data set instance spec
    * @throws IOException
    */
-  void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception;
+  void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec) throws Exception;
 
   /**
    * Deletes all data of the dataset.
-   * @param instanceName Name of the dataset instance.
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @throws IOException
    */
-  void truncate(String instanceName) throws Exception;
+  void truncate(Id.DatasetInstance datasetInstanceId) throws Exception;
 
   /**
    * Upgrades dataset.
-   * @param instanceName Name of the dataset instance.
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @throws IOException
    */
-  void upgrade(String instanceName) throws Exception;
+  void upgrade(Id.DatasetInstance datasetInstanceId) throws Exception;
 
 }
