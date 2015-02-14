@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.data;
 
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.base.Preconditions;
 
 /**
@@ -42,9 +43,9 @@ public final class Interpolators {
     public long interpolate(TimeValue start, TimeValue end, long ts) {
       Preconditions.checkNotNull(start);
       Preconditions.checkNotNull(end);
-      Preconditions.checkArgument((ts <= end.getTime()) && (ts >= start.getTime()));
+      Preconditions.checkArgument((ts <= end.getTimestamp()) && (ts >= start.getTimestamp()));
       // if its been too many seconds between datapoints, return a 0 for everything in between.
-      if ((end.getTime() - start.getTime()) > maxAllowedGap) {
+      if ((end.getTimestamp() - start.getTimestamp()) > maxAllowedGap) {
         return 0;
       }
       return limitedInterpolate(start, end, ts);
@@ -75,7 +76,7 @@ public final class Interpolators {
 
     @Override
     protected long limitedInterpolate(TimeValue start, TimeValue end, long ts) {
-      return (ts < end.getTime()) ? start.getValue() : end.getValue();
+      return (ts < end.getTimestamp()) ? start.getValue() : end.getValue();
     }
   }
 
@@ -95,8 +96,8 @@ public final class Interpolators {
 
     @Override
     protected long limitedInterpolate(TimeValue start, TimeValue end, long ts) {
-      long deltaX = ts - start.getTime();
-      long totalX = end.getTime() - start.getTime();
+      long deltaX = ts - start.getTimestamp();
+      long totalX = end.getTimestamp() - start.getTimestamp();
       long totalY = end.getValue() - start.getValue();
       long deltaY = (int) (totalY * deltaX / totalX);
       return start.getValue() + deltaY;

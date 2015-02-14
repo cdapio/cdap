@@ -28,6 +28,7 @@ import co.cask.cdap.hive.datasets.DatasetInputFormat;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -69,7 +70,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     startServices();
 
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
@@ -104,19 +105,20 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
   @Test
   public void testDeployNotRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
-    datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
+    Id.DatasetModule module2 = Id.DatasetModule.from(NAMESPACE_ID, "module2");
+    datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
     datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
                                  DatasetProperties.EMPTY);
 
     datasetFramework.deleteInstance("my_table_not_record_scannable");
-    datasetFramework.deleteModule("module2");
+    datasetFramework.deleteModule(module2);
   }
 
   @Test

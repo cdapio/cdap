@@ -33,6 +33,7 @@ import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -77,7 +78,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(String moduleName, DatasetModule module)
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module)
     throws DatasetManagementException {
 
     // We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
@@ -95,12 +96,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
       typeClass = module.getClass();
     }
 
-    addModule(moduleName, typeClass);
+    addModule(moduleId, typeClass);
   }
 
   @Override
-  public void deleteModule(String moduleName) throws DatasetManagementException {
-    client.deleteModule(moduleName);
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+    client.deleteModule(moduleId.getId());
   }
 
   @Override
@@ -182,18 +183,18 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return (T) type.getDataset(instanceInfo.getSpec(), arguments);
   }
 
-  private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
+  private void addModule(Id.DatasetModule moduleId, Class<?> typeClass) throws DatasetManagementException {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
-        client.addModule(moduleName, typeClass.getName(), tempJarPath);
+        client.addModule(moduleId.getId(), typeClass.getName(), tempJarPath);
       } finally {
         tempFile.delete();
       }
     } catch (IOException e) {
       String msg = String.format("Could not create jar for deploying dataset module %s with main class %s",
-                                 moduleName, typeClass.getName());
+                                 moduleId, typeClass.getName());
       LOG.error(msg, e);
       throw new DatasetManagementException(msg, e);
     }

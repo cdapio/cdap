@@ -235,7 +235,7 @@ public class FileStreamAdmin implements StreamAdmin {
             }
 
             return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
-                                                   properties.getThreshold(), null);
+                                                   properties.getNotificationThresholdMB(), null);
           }
         });
     } catch (Exception e) {
@@ -282,8 +282,7 @@ public class FileStreamAdmin implements StreamAdmin {
                                                                        cConf.get(Constants.Stream.PARTITION_DURATION)));
         long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
                                                                    cConf.get(Constants.Stream.INDEX_INTERVAL)));
-        long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
-                                                         cConf.get(Constants.Stream.TTL)));
+        long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
         int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
                                                                 cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
@@ -366,8 +365,8 @@ public class FileStreamAdmin implements StreamAdmin {
     if (properties.getFormat() != null) {
       builder.setFormatSpec(properties.getFormat());
     }
-    if (properties.getThreshold() != null) {
-      builder.setNotificationThreshold(properties.getThreshold());
+    if (properties.getNotificationThresholdMB() != null) {
+      builder.setNotificationThreshold(properties.getNotificationThresholdMB());
     }
 
     writeConfig(builder.build());

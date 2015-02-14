@@ -17,7 +17,7 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.metrics.MetricsConstants.ConfigKeys;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -46,7 +46,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private final String topicPrefix;
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
-  private final MetricsTableFactory metricsTableFactory;
+  private final MetricDatasetFactory metricDatasetFactory;
 
   private volatile boolean stopping = false;
 
@@ -54,7 +54,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
   @Inject
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
-                                      MetricsTableFactory metricsTableFactory,
+                                      MetricDatasetFactory metricDatasetFactory,
                                       MessageCallbackFactory callbackFactory,
                                       @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                       @Assisted Set<Integer> partitions) {
@@ -62,7 +62,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
-    this.metricsTableFactory = metricsTableFactory;
+    this.metricDatasetFactory = metricDatasetFactory;
   }
 
   @Override
@@ -112,7 +112,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
         break;
       }
       try {
-        metaTable = metricsTableFactory.createKafkaConsumerMeta();
+        metaTable = metricDatasetFactory.createKafkaConsumerMeta();
       } catch (Exception e) {
         LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
         try {

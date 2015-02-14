@@ -213,7 +213,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
     if (count <= 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
     }
-    if (!streamMetaStore.streamExists(streamId.getNamespaceId(), streamId.getName())) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return false;
     }
