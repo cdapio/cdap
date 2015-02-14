@@ -2,6 +2,7 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowsDetailRunStatusController', function($state, $scope, MyDataSource) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+
     $scope.data = {};
     $scope.status = null;
     $scope.duration = null;
@@ -17,8 +18,9 @@ angular.module(PKG.name + '.feature.flows')
           }
         });
 
-        nodes = nodes.concat(Object.keys(res.flowlets));
 
+        nodes = nodes.concat(Object.keys(res.flowlets));
+        console.log(res.flowlets);
         $scope.data = {
           nodes: nodes,
           edges: res.connections
