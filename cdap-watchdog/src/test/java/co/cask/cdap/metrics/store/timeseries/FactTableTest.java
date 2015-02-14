@@ -123,14 +123,14 @@ public class FactTableTest {
     expected.clear();
 
     // delete the metrics data at (timestamp + 20) resolution
-    scan = new FactScan(ts + resolution * 2, ts + resolution * 4, null, tagValues);
+    scan = new FactScan(ts + resolution * 2, ts + resolution * 3, null, tagValues);
     table.delete(scan);
     for (int k = 1; k < 4; k++) {
       expected.put("metric" + k, tagValues, ImmutableList.of(new TimeValue(ts, 11 * k),
                                                              new TimeValue(ts + resolution, 27 * k)));
     }
     // verify deletion
-    scan = new FactScan(ts - 2 * resolution, ts + 4 * resolution, null, tagValues);
+    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, null, tagValues);
     assertScan(table, expected, scan);
 
     // delete metrics for "metric1" at ts0 and verify deletion
