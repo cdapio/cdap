@@ -30,11 +30,9 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdminTest;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -51,18 +49,14 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static CConfiguration cConf;
-  private static StreamConsumerFactory consumerFactory;
   private static StreamAdmin streamAdmin;
-  private static TransactionSystemClient txClient;
   private static TransactionManager txManager;
-  private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws Exception {
-    cConf = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
@@ -80,11 +74,8 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
         })
     );
 
-    consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
-    txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(TransactionManager.class);
-    queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
