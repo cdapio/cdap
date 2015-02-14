@@ -117,6 +117,10 @@ public final class FactTable {
   }
 
   public FactScanner scan(FactScan scan) throws Exception {
+    return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs());
+  }
+
+  private Scanner getScanner(FactScan scan) throws Exception {
     byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
     byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
     byte[][] columns = null;
@@ -138,36 +142,45 @@ public final class FactTable {
                 timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
     }
 
-    return new FactScanner(timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter), codec,
-                             scan.getStartTs(), scan.getEndTs());
+    return timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
   }
 
   /**
    * Delete entries in fact table.
-   * @param scan
+   * @param scan specifies deletion criteria
    * @throws Exception
    */
   public void delete(FactScan scan) throws Exception {
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
-    byte[][] columns = null;
-    if (Arrays.equals(startRow, endRow)) {
-      // If on the same timebase, we only need subset of columns
-      long timeBase = scan.getStartTs() / rollTime * rollTime;
-      int startCol = (int) (scan.getStartTs() - timeBase) / resolution;
-      int endCol = (int) (scan.getEndTs() - timeBase) / resolution;
-      columns = new byte[endCol - startCol + 1][];
-      for (int i = 0; i < columns.length; i++) {
-        columns[i] = Bytes.toBytes((short) (startCol + i));
+    Scanner scanner = getScanner(scan);
+    try {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        List<byte[]> columns = Lists.newArrayList();
+
+        boolean exhausted = false;
+        for (byte[] column : row.getColumns().keySet()) {
+          long ts = codec.getTimestamp(row.getRow(), column);
+          if (ts < scan.getStartTs()) {
+            continue;
+          }
+
+          if (ts > scan.getEndTs()) {
+            exhausted = true;
+            break;
+          }
+
+          columns.add(column);
+        }
+
+        timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]));
+
+        if (exhausted) {
+          break;
+        }
       }
+    } finally {
+      scanner.close();
     }
-    endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow, false);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Deleting fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
-                timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
-    }
-    timeSeriesTable.deleteRange(startRow, endRow, columns, fuzzyRowFilter);
   }
 
   /*

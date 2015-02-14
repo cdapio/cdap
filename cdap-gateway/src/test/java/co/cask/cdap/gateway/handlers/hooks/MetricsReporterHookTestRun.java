@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers.hooks;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
@@ -63,7 +62,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String path = "/system/services/stream.handler/handlers/StreamHandler/methods/getInfo";
+    String path = "/system/services/stream.handler/handlers/StreamHandlerV2/methods/getInfo";
 
     long received = getMetricValue(path, "request.received");
     long successful = getMetricValue(path, "response.successful");

@@ -84,17 +84,6 @@ public final class RuntimeStats {
       context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
   }
 
-  // todo: Why is it different from others? Have we reviewed this API?
-  public static long getSparkMetrics(String applicationId, String sparkId, String metricName) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SPARK),
-      Constants.Metrics.Tag.PROGRAM, sparkId);
-
-    return getTotalCounter(context, metricName);
-  }
-
   private static RuntimeMetrics getMetrics(final Map<String, String> context,
                                            final String inputName,
                                            final String processedName,
