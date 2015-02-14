@@ -24,6 +24,7 @@ import com.google.common.collect.PeekingIterator;
 
 import java.util.Collection;
 import java.util.Iterator;
+import javax.annotation.Nullable;
 
 /**
  * Applies given interpolator to a given time series,
@@ -47,10 +48,12 @@ import java.util.Iterator;
 public class TimeSeriesInterpolator implements Iterable<TimeValue> {
 
   private final Collection<TimeValue> timeSeries;
+  @Nullable
   private final Interpolator interpolator;
   private final int resolution;
 
-  public TimeSeriesInterpolator(Collection<TimeValue> timeValues, Interpolator interpolator, int resolution) {
+  public TimeSeriesInterpolator(Collection<TimeValue> timeValues,
+                                @Nullable Interpolator interpolator, int resolution) {
     this.timeSeries = ImmutableList.copyOf(timeValues);
     this.interpolator = interpolator;
     this.resolution = resolution;
