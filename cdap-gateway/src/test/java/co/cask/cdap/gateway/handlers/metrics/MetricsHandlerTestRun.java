@@ -21,6 +21,8 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.metrics.store.cube.TimeSeries;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -29,9 +31,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +61,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
+    // todo : figure out why we need this
+    TimeUnit.SECONDS.sleep(1);
     collector.increment("reads", 1);
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
@@ -100,7 +105,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
-                       ImmutableList.<String>of("myspace", "yourspace"));
+                               ImmutableList.<String>of("myspace", "yourspace"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=yourspace",
@@ -132,40 +137,53 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of());
   }
 
-  // todo : failing test , metrics handler /query needs to be fixed
-  @Ignore
+
   @Test
   public void testQueryMetrics() throws Exception {
-    // aggregate result, in the system namespace
+
+    //aggregate result, in the right namespace
     verifyAggregateQueryResult(
-      "/v3/metrics/query?context=system.-.cluster&metric=system.resources.total.storage&aggregate=true", 10);
-    // cluster metrics must have system in the context prefix
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter", "splitter") +
+        "&metric=system.reads&aggregate=true", 3);
     verifyAggregateQueryResult(
-      "/v3/metrics/query?context=-.cluster&metric=system.resources.total.storage&aggregate=true", 0);
-    // aggregate result, in the right namespace
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?context=yourspace.WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 3);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?context=yourspace.WCount1.f.WCounter.counter&metric=system.reads&aggregate=true", 1);
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter", "counter") +
+        "&metric=system.reads&aggregate=true", 1);
 
     // aggregate result, in the wrong namespace
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?context=myspace.WCount1.f.WCounter.splitter&metric=system.reads&aggregate=true", 0);
-    // time range
-    // now-60s, now+60s
-    verifyRangeQueryResult(
-      "/v3/metrics/query?context=yourspace.WCount1.f.WCounter.splitter&" +
-        "metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+    verifyEmptyQueryResult(
+      "/v3/metrics/query?context=" + getContext("myspace", "WCount1", "f", "WCounter", "splitter") +
+        "&metric=system.reads&aggregate=true");
+
+      // time range
+      // now-60s, now+60s
+      verifyRangeQueryResult(
+        "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter", "splitter") +
+        "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
     verifyRangeQueryResult(
-      "/v3/metrics/query?context=yourspace.WCount1.f.WCounter.splitter&metric=system.reads&start=" + start + "&end="
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + start + "&end="
         + end, 2, 3);
     // range query, in the wrong namespace
-    verifyRangeQueryResult(
-      "/v3/metrics/query?context=myspace.WCount1.f.WCounter.splitter&metric=system.reads&start=" + start + "&end="
-        + end, 0, 0);
+    verifyEmptyQueryResult(
+      "/v3/metrics/query?context=" + getContext("myspace", "WCount1", "f", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + start + "&end="
+        + end);
+  }
+
+  private void verifyEmptyQueryResult(String url) throws Exception {
+    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
+    Assert.assertEquals(0, timeSeriesCollection.size());
+  }
+
+  private String getContext(String nameSpace, String appName, String programType,
+                          String programName, String flowletName) {
+    return Constants.Metrics.Tag.NAMESPACE + "." + nameSpace + "." + Constants.Metrics.Tag.APP + "." + appName + "." +
+      Constants.Metrics.Tag.PROGRAM_TYPE + "." + programType + "." + Constants.Metrics.Tag.PROGRAM + "." +
+      programName + "." + Constants.Metrics.Tag.FLOWLET + "." + flowletName;
   }
 
   @Test
@@ -196,27 +214,29 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
-    Assert.assertEquals(expectedValue, post(url, AggregateQueryResult.class).data);
+    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
+    Assert.assertEquals(expectedValue, timeSeriesCollection.iterator().next().getTimeValues().get(0).getValue());
   }
 
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
-    TimeRangeQueryResult result = post(url, TimeRangeQueryResult.class);
-    for (DataPoint point : result.data) {
-      if (point.value != 0) {
+    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() {
+    }.getType());
+    List<TimeValue> result = timeSeriesCollection.iterator().next().getTimeValues();
+
+    for (TimeValue point : result) {
+      if (point.getValue() != 0) {
         nonZeroPointsCount--;
-        expectedSum -= point.value;
+        expectedSum -= point.getValue();
       }
     }
-
     Assert.assertEquals(0, nonZeroPointsCount);
     Assert.assertEquals(0, expectedSum);
   }
 
-  private <T> T post(String url, Class<T> clazz) throws Exception {
+  private <T> T post(String url, Type type) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String result = EntityUtils.toString(response.getEntity());
-    return new Gson().fromJson(result, clazz);
+    return new Gson().fromJson(EntityUtils.toString(response.getEntity()), type);
   }
 
   private void verifySearchResult(String url, List<String> expectedValues) throws Exception {
@@ -238,20 +258,4 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertTrue(reply.containsAll(expectedValues));
   }
 
-  // helpers to easier json results parsing & verification
-
-  private static final class TimeRangeQueryResult {
-    private long start;
-    private long end;
-    private DataPoint[] data;
-  }
-  
-  private static final class DataPoint {
-    private long time;
-    private long value;
-  }
-
-  private static final class AggregateQueryResult {
-    private long data;
-  }
 }

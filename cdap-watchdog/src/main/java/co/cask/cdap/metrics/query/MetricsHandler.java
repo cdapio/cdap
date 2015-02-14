@@ -96,6 +96,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       // sets time range, query type, etc.
       MetricQueryParser.CubeQueryBuilder builder = new MetricQueryParser.CubeQueryBuilder();
       MetricQueryParser.parseQueryString(new URI(request.getUri()), builder);
+      builder.setSliceByTagValues(Maps.<String, String>newHashMap());
       CubeQuery queryTimeParams = builder.build();
 
       // todo: what if context is null?
