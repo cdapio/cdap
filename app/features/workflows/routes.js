@@ -53,7 +53,8 @@ angular.module(PKG.name + '.feature.workflows')
             })
               .state('workflows.detail.runs.detail.flow', {
                 url: '/flow',
-                template: 'Flow Blah',
+                templateUrl: '/assets/features/workflows/templates/tabs/runs/flow.html',
+                controller: 'WorkflowsDetailRunStatusController',
                 ncyBreadcrumb: {
                   parent: "apps.detail.overview",
                   label: "{{$state.params.programId}} / {{$state.params.runId}}"

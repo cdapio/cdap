@@ -1,0 +1,32 @@
+<div class="row h4">
+  <div class="col-sm-3">
+    <span> Status </span>
+    <div ng-bind="status"></div>
+  </div>
+  <div class="col-sm-3">
+    <span> Started </span>
+    <div ng-bind="startTime | date : format : timezone"></div>
+  </div>
+  <div class="col-sm-3">
+    <span> Duration </span>
+    <div ng-bind="duration"></div>
+  </div>
+  <div class="col-sm-3 text-right">
+    <div ng-show="status == 'RUNNING'"
+         class="btn btn-default btn-md"
+         ng-click="toggleFlow('stop')">
+      <span class="fa fa-stop"> </span>
+    </div>
+
+    <div ng-show="status == 'STOPPED' || status == 'COMPLETED'"
+          ng-disabled="true"
+         class="btn btn-default btn-md"
+         ng-click="toggleFlow('start')">
+      <span class="fa fa-play"> </span>
+    </div>
+    <div ng-show="status == 'start' || status == 'stop'"
+         class="btn btn-default btn-md">
+      <span class="fa fa-refresh fa-spin"></span>
+    </div>
+  </div>
+</div>
