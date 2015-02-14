@@ -33,15 +33,16 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.metrics.guice.MetricsProcessorModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import co.cask.cdap.metrics.process.MessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.metrics.store.MetricStore;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -129,9 +130,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   static final class KafkaMetricsProcessorModule extends PrivateModule {
    @Override
     protected void configure() {
-      install(new MetricsProcessorModule());
-      bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class)
-        .in(Scopes.SINGLETON);
+      bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+      bind(MetricStore.class).to(DefaultMetricStore.class);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));

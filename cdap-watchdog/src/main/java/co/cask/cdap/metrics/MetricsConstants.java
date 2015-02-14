@@ -35,8 +35,6 @@ public final class MetricsConstants {
 
     public static final String SERVER_ADDRESS = "metrics.query.bind.address";
     public static final String SERVER_PORT = "metrics.query.bind.port";
-    public static final String THREAD_POOL_SIZE = "metrics.query.thread.pool.size";
-    public static final String KEEP_ALIVE_SECONDS = "metrics.query.keepAlive.seconds";
 
     public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
@@ -44,13 +42,9 @@ public final class MetricsConstants {
     public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
   }
 
-  public static final String EMPTY_TAG = "-";
-  public static final int DEFAULT_CONTEXT_DEPTH = 6;
-  public static final int DEFAULT_METRIC_DEPTH = 4;
-  public static final int DEFAULT_TAG_DEPTH = 3;
-
-  public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
-  public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.table";
+  // v2 to avoid conflict with data of older metrics system
+  public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
+  public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.v2.table";
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
   public static final long DEFAULT_RETENTION_HOURS = 2;
 
@@ -65,9 +59,6 @@ public final class MetricsConstants {
 
   // Number of seconds to subtract from current timestamp when query without "end" time.
   public static final long QUERY_SECOND_DELAY = 2;
-
-  public static final int DEFAULT_THREAD_POOL_SIZE = 30;
-  public static final int DEFAULT_KEEP_ALIVE_SECONDS = 30;
 
   private MetricsConstants() {
   }

@@ -112,7 +112,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     // todo: really inefficient to call this on the intense data flow path
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-      Constants.Metrics.Tag.SERVICE, serviceName,
+      Constants.Metrics.Tag.COMPONENT, serviceName,
       Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
       Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());
   }

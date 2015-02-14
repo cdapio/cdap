@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.process;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
+import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
@@ -35,8 +36,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricValue} and invoke
- * set of {@link MetricsProcessor}.
+ * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricValue} and stores it in
+ * {@link MetricStore}.
  */
 public final class MetricsMessageCallback implements KafkaConsumer.MessageCallback {
 
@@ -44,15 +45,15 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
   private final DatumReader<MetricValue> recordReader;
   private final Schema recordSchema;
-  private final Set<MetricsProcessor> processors;
   private long recordProcessed;
+  private MetricStore metricStore;
 
-  public MetricsMessageCallback(Set<MetricsProcessor> processors,
-                                DatumReader<MetricValue> recordReader,
-                                Schema recordSchema) {
-    this.processors = processors;
+  public MetricsMessageCallback(DatumReader<MetricValue> recordReader,
+                                Schema recordSchema,
+                                MetricStore metricStore) {
     this.recordReader = recordReader;
     this.recordSchema = recordSchema;
+    this.metricStore = metricStore;
   }
 
   @Override
@@ -76,9 +77,17 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       LOG.info("No records to process.");
       return;
     }
-    // Invoke processors one by one.
-    for (MetricsProcessor processor : processors) {
-      processor.process(new MetricRecordsWrapper(records.iterator()));
+
+    for (MetricValue value : records) {
+      // todo: change method signature to allow adding list?
+      try {
+        metricStore.add(value);
+      } catch (Exception e) {
+        String msg = "Failed to add metric data to a store";
+        LOG.error(msg);
+        // todo: will it shut down the whole the metrics processor service??
+        throw new RuntimeException(msg, e);
+      }
     }
 
     recordProcessed += records.size();

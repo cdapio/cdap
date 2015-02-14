@@ -36,7 +36,6 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HBase based implementation for {@link MetricsTable}.
@@ -72,6 +71,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    // todo: CDAP-1458 HTableDatasetAdmin doesn't fit where there are coprocessors set for table, as it does no upgrade
     return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
   }
 
