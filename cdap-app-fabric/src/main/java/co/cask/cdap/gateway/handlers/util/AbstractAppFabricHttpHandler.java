@@ -242,6 +242,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
         case SERVICE:
           createProgramRecords(appSpec.getName(), type, appSpec.getServices().values(), programRecords);
           break;
+        case WORKER:
+          createProgramRecords(appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
+          break;
         case WORKFLOW:
           createProgramRecords(appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
           break;

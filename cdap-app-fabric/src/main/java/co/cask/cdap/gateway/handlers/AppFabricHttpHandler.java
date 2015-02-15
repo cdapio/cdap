@@ -900,6 +900,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns a list of worker jobs associated with an account.
+   */
+  @GET
+  @Path("/workers")
+  public void getAllWorkers(HttpRequest request, HttpResponder responder) {
+    programLifecycleHttpHandler.getAllWorkers(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+  }
+
+  /**
    * Returns a list of workflows associated with an account.
    */
   @GET

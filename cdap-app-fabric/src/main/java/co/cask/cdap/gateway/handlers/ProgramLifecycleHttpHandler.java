@@ -680,6 +680,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     programList(responder, namespaceId, ProgramType.SERVICE, null, store);
   }
 
+  @GET
+  @Path("/workers")
+  public void getAllWorkers(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.WORKER, null, store);
+  }
+
   /**
    * Returns a list of programs associated with an application within a namespace.
    */

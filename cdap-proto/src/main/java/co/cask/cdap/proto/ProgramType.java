@@ -50,7 +50,7 @@ public enum ProgramType {
   SPARK(7, "spark", "Spark", true),
 
   @SerializedName("Worker")
-  WORKER(8, "worker", "Worker", true);
+  WORKER(8, "workers", "Worker", true);
 
   private static final Map<String, ProgramType> CATEGORY_MAP;
 
