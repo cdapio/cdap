@@ -67,6 +67,74 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   }
 
   @Test
+  public void testDelete() throws Exception {
+    createIndexedObjectStoreInstance("index", Feed.class);
+    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        List<String> categories = ImmutableList.of("racing", "running", "tech");
+        Feed feed1 = new Feed("f1", "http://f1.com", categories);
+        byte[] key1 = Bytes.toBytes(feed1.getId());
+        indexedFeed.write(key1, feed1, getCategories(categories));
+
+        {
+          List<Feed> feedResult1 = indexedFeed.readAllByIndex(Bytes.toBytes("racing"));
+          Assert.assertEquals(1, feedResult1.size());
+
+          List<Feed> feedResult2 = indexedFeed.readAllByIndex(Bytes.toBytes("running"));
+          Assert.assertEquals(1, feedResult2.size());
+
+          List<Feed> feedResult3 = indexedFeed.readAllByIndex(Bytes.toBytes("tech"));
+          Assert.assertEquals(1, feedResult3.size());
+        }
+
+        indexedFeed.deleteAllByIndex(Bytes.toBytes("racing"));
+
+        {
+          List<Feed> feedResult1 = indexedFeed.readAllByIndex(Bytes.toBytes("racing"));
+          Assert.assertEquals(0, feedResult1.size());
+
+          List<Feed> feedResult2 = indexedFeed.readAllByIndex(Bytes.toBytes("running"));
+          Assert.assertEquals(0, feedResult2.size());
+
+          List<Feed> feedResult3 = indexedFeed.readAllByIndex(Bytes.toBytes("tech"));
+          Assert.assertEquals(0, feedResult3.size());
+        }
+
+        indexedFeed.write(key1, feed1, getCategories(categories));
+
+        {
+          List<Feed> feedResult1 = indexedFeed.readAllByIndex(Bytes.toBytes("racing"));
+          Assert.assertEquals(1, feedResult1.size());
+
+          List<Feed> feedResult2 = indexedFeed.readAllByIndex(Bytes.toBytes("running"));
+          Assert.assertEquals(1, feedResult2.size());
+
+          List<Feed> feedResult3 = indexedFeed.readAllByIndex(Bytes.toBytes("tech"));
+          Assert.assertEquals(1, feedResult3.size());
+        }
+
+        indexedFeed.delete(key1);
+        {
+          List<Feed> feedResult1 = indexedFeed.readAllByIndex(Bytes.toBytes("racing"));
+          Assert.assertEquals(0, feedResult1.size());
+
+          List<Feed> feedResult2 = indexedFeed.readAllByIndex(Bytes.toBytes("running"));
+          Assert.assertEquals(0, feedResult2.size());
+
+          List<Feed> feedResult3 = indexedFeed.readAllByIndex(Bytes.toBytes("tech"));
+          Assert.assertEquals(0, feedResult3.size());
+        }
+      }
+    });
+
+    deleteInstance("index");
+  }
+
+  @Test
   public void testIndexRewrites() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);
     final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
