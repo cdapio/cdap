@@ -42,6 +42,7 @@ public class ConnectCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
+    boolean useSavedToken = Boolean.parseBoolean(arguments.get("use-saved-token", "true"));
     String uriString = arguments.get("cdap-instance-uri");
     if (!uriString.contains("://")) {
       uriString = "http://" + uriString;
@@ -60,7 +61,7 @@ public class ConnectCommand implements Command {
 
     CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
     try {
-      cliConfig.tryConnect(connectionInfo, output, true);
+      cliConfig.tryConnect(connectionInfo, output, useSavedToken, true);
     } catch (Exception e) {
       output.println("Failed to connect to " + uriString + ": " + e.getMessage());
     }
@@ -68,7 +69,7 @@ public class ConnectCommand implements Command {
 
   @Override
   public String getPattern() {
-    return "connect <cdap-instance-uri>";
+    return "connect <cdap-instance-uri> [<use-saved-token>]";
   }
 
   @Override
@@ -90,7 +91,7 @@ public class ConnectCommand implements Command {
     CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
 
     try {
-      cliConfig.tryConnect(connectionInfo, output, verbose);
+      cliConfig.tryConnect(connectionInfo, output, true, verbose);
     } catch (Exception e) {
       // NO-OP
     }
