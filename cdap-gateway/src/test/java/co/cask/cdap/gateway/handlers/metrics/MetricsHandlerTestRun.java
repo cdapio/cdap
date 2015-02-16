@@ -174,7 +174,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private void verifyEmptyQueryResult(String url) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    Assert.assertEquals(0, queryResult.getSerieses().length);
+    Assert.assertEquals(0, queryResult.getSeries().length);
   }
 
   private String getContext(String nameSpace, String appName, String programType,
@@ -213,12 +213,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    Assert.assertEquals(expectedValue, queryResult.getSerieses()[0].getData()[0].getValue());
+    Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
   }
 
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    MetricQueryResult.TimeValue[] data = queryResult.getSerieses()[0].getData();
+    MetricQueryResult.TimeValue[] data = queryResult.getSeries()[0].getData();
 
     for (MetricQueryResult.TimeValue point : data) {
       if (point.getValue() != 0) {

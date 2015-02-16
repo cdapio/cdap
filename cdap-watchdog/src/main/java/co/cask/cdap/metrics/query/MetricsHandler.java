@@ -34,8 +34,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -121,8 +119,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       Collection<TimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
-      System.out.println();
-      System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(result));
 
       responder.sendJson(HttpResponseStatus.OK, result);
     } catch (Exception e) {

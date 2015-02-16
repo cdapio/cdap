@@ -23,26 +23,26 @@ import java.util.Map;
  */
 // todo: move to cdap-proto along with adding CLI support for metrics querying
 public final class MetricQueryResult {
-  private final long startTs;
-  private final long endTs;
-  private final TimeSeries[] serieses;
+  private final long startTime;
+  private final long endTime;
+  private final TimeSeries[] series;
 
-  MetricQueryResult(long startTs, long endTs, TimeSeries[] serieses) {
-    this.startTs = startTs;
-    this.endTs = endTs;
-    this.serieses = serieses;
+  MetricQueryResult(long startTime, long endTime, TimeSeries[] series) {
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.series = series;
   }
 
-  public long getStartTs() {
-    return startTs;
+  public long getStartTime() {
+    return startTime;
   }
 
-  public long getEndTs() {
-    return endTs;
+  public long getEndTime() {
+    return endTime;
   }
 
-  public TimeSeries[] getSerieses() {
-    return serieses;
+  public TimeSeries[] getSeries() {
+    return series;
   }
 
   public static final class TimeSeries {
