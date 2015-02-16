@@ -49,13 +49,38 @@ angular.module(PKG.name+'.feature.login')
 
     if(MY_CONFIG.securityEnabled) {
       angular.forEach([
-          MYAUTH_EVENT.loginFailed,
-          MYAUTH_EVENT.sessionTimeout,
-          MYAUTH_EVENT.notAuthenticated
+          {
+            event: MYAUTH_EVENT.loginFailed,
+            eventType: 'danger',
+            title: 'Login Failed',
+            message: 'User Authentication failed! Please check username and password'
+          },
+          {
+            event: MYAUTH_EVENT.sessionTimeout,
+            eventType: 'danger',
+            title: 'Session Timeout',
+            message: 'Your current session has timed out. Please login again.'
+          },
+          {
+            event: MYAUTH_EVENT.notAuthenticated,
+            eventType: 'danger',
+            title: 'Authentication required',
+            message: 'This page needs user to be authenticated. Please login to this page.'
+          },
+          {
+            event: MYAUTH_EVENT.loginSuccess,
+            eventType: 'success',
+            title: 'Login Success!',
+            message: 'You have been authenticated!'
+          }
         ],
         function (v) {
-          $rootScope.$on(v, function (event) {
-            $alert({title:event.name, type:'danger'});
+          $rootScope.$on(v.event, function (event) {
+            $alert({
+              title: v.title,
+              content: v.message,
+              type: v.eventType
+            });
           });
         }
       );

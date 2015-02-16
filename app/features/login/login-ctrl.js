@@ -13,20 +13,6 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
     cfpLoadingBar.start();
 
     myAuth.login(c)
-      .then(function(){
-        $alert({
-          title:'Welcome!',
-          content:'You\'re logged in!',
-          type:'success'
-        });
-      },
-      function(){
-        $alert({
-          title:'Incorrect Login!',
-          content:'Could not log you in!',
-          type:'danger'
-        });
-      })
       .finally(function() {
         $scope.submitting = false;
         cfpLoadingBar.complete();

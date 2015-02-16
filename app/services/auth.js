@@ -79,21 +79,17 @@ module.service('myAuth', function myAuthService (MY_CONFIG, MYAUTH_EVENT, MyAuth
    * @return {promise} resolved on sucessful login
    */
   this.login = function (cred) {
-    var deferred = $q.defer();
-    myAuthPromise(cred).then(
+    return myAuthPromise(cred).then(
       function(data) {
-        deferred.resolve();
         var user = new MyAuthUser(data);
         persist(user);
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
       function() {
-        deferred.reject();
         $rootScope.$broadcast(MYAUTH_EVENT.loginFailed);
       }
     );
-    return deferred.promise;
   };
 
   /**
