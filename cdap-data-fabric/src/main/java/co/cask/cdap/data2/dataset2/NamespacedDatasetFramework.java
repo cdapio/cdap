@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -41,15 +42,15 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(String moduleName, DatasetModule module)
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module)
     throws DatasetManagementException {
 
-    delegate.addModule(moduleName, module);
+    delegate.addModule(moduleId, module);
   }
 
   @Override
-  public void deleteModule(String moduleName) throws DatasetManagementException {
-    delegate.deleteModule(moduleName);
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+    delegate.deleteModule(moduleId);
   }
 
   @Override

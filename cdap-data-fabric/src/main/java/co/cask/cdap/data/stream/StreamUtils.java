@@ -22,6 +22,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -294,15 +295,15 @@ public final class StreamUtils {
     return new StreamFileOffset(eventLocation, offset, generation);
   }
 
-  public static StreamConfig ensureExists(StreamAdmin admin, String streamName) throws IOException {
+  public static StreamConfig ensureExists(StreamAdmin admin, Id.Stream streamId) throws IOException {
     try {
-      return admin.getConfig(streamName);
+      return admin.getConfig(streamId);
     } catch (Exception e) {
       // Ignored
     }
     try {
-      admin.create(streamName);
-      return admin.getConfig(streamName);
+      admin.create(streamId);
+      return admin.getConfig(streamId);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);

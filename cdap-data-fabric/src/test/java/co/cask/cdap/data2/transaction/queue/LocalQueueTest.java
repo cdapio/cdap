@@ -113,7 +113,7 @@ public class LocalQueueTest extends QueueTest {
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
-    QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));
+    QueueProducer producer = factory.createProducer(QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueueProducer);
     producer = factory.createProducer(QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet",
                                                             "output"));

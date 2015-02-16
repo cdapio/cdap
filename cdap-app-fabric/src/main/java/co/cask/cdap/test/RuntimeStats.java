@@ -18,96 +18,90 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
+import co.cask.cdap.metrics.store.cube.TimeSeries;
+import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Predicate;
+import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  */
 public final class RuntimeStats {
+  // ugly attempt to suport existing APIs
+  // todo: non-thread safe? or fine as long as in-memory datasets underneath are used?
+  public static MetricStore metricStore;
 
-  private static final String EMPTY_STRING = "";
-
-  private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
-
-  public static void resetAll() {
-    counters.clear();
+  private RuntimeStats() {
   }
 
-  public static void count(String name, long count) {
-    AtomicLong oldValue = counters.putIfAbsent(name, new AtomicLong(count));
-    if (oldValue != null) {
-      oldValue.addAndGet(count);
-    }
+  public static void resetAll() throws Exception {
+    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    String prefix = String.format("%s.%s.f.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
-    String inputName = String.format("%s.system.process.tuples.read", prefix);
-    String processedName = String.format("%s.system.process.events.processed", prefix);
-    String exceptionName = String.format("%s.system.process.errors", prefix);
+    Map<String, String> context = ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+      Constants.Metrics.Tag.APP, applicationId,
+      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
+      Constants.Metrics.Tag.PROGRAM, flowId,
+      Constants.Metrics.Tag.FLOWLET, flowletId);
 
-    return getMetrics(prefix, inputName, processedName, exceptionName);
+    return getMetrics(
+      context, "system.process.tuples.read", "system.process.events.processed", "system.process.errors");
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    String prefix = String.format("%s.%s.p.%s", Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
-    String inputName = String.format("%s.system.query.requests", prefix);
-    String processedName = String.format("%s.system.query.processed", prefix);
-    String exceptionName = String.format("%s.system.query.failures", prefix);
+    Map<String, String> context = ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+      Constants.Metrics.Tag.APP, applicationId,
+      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
+      Constants.Metrics.Tag.PROGRAM, procedureId);
 
-    return getMetrics(prefix, inputName, processedName, exceptionName);
+    return getMetrics(context, "system.query.requests", "system.query.processed", "system.query.failures");
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    String prefix = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
-                                  TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
-    String inputName = String.format("%s.system.requests.count", prefix);
-    String processedName = String.format("%s.system.response.successful.count", prefix);
-    String exceptionName = String.format("%s.system.response.server.error.count", prefix);
+    Map<String, String> context = ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+      Constants.Metrics.Tag.APP, applicationId,
+      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
+      Constants.Metrics.Tag.PROGRAM, serviceId);
 
-    return getMetrics(prefix, inputName, processedName, exceptionName);
+    return getMetrics(
+      context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
   }
 
-  public static long getSparkMetrics(String applicationId, String procedureId, String keyEnding) {
-    String keyStarting = String.format("%s.%s.%s.%s", Constants.DEFAULT_NAMESPACE, applicationId,
-                                       TypeId.getMetricContextId(ProgramType.SPARK), procedureId);
-    String inputName = getMetricsKey(keyStarting, keyEnding);
-    AtomicLong input = counters.get(inputName);
-    return input == null ? 0 : input.get();
-  }
-
-  private static RuntimeMetrics getMetrics(final String prefix,
+  private static RuntimeMetrics getMetrics(final Map<String, String> context,
                                            final String inputName,
                                            final String processedName,
                                            final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {
-        AtomicLong input = counters.get(inputName);
-        return input == null ? 0 : input.get();
+        return getTotalCounter(context, inputName);
       }
 
       @Override
       public long getProcessed() {
-        AtomicLong processed = counters.get(processedName);
-        return processed == null ? 0 : processed.get();
-
+        return getTotalCounter(context, processedName);
       }
 
       @Override
       public long getException() {
-        AtomicLong exception = counters.get(exceptionName);
-        return exception == null ? 0 : exception.get();
+        return getTotalCounter(context, exceptionName);
       }
 
       @Override
@@ -131,22 +125,22 @@ public final class RuntimeStats {
       @Override
       public void waitFor(String name, long count,
                           long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-        doWaitFor(prefix + "." + name, count, timeout, timeoutUnit);
+        doWaitFor(name, count, timeout, timeoutUnit);
       }
 
       private void doWaitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
-        AtomicLong value = counters.get(name);
+        long value = getTotalCounter(context, name);
 
         // Min sleep time is 10ms, max sleep time is 1 seconds
         long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
         Stopwatch stopwatch = new Stopwatch().start();
-        while ((value == null || value.get() < count) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+        while (value < count && stopwatch.elapsedTime(timeoutUnit) < timeout) {
           TimeUnit.MILLISECONDS.sleep(sleepMillis);
-          value = counters.get(name);
+          value = getTotalCounter(context, name);
         }
 
-        if (value == null || value.get() < count) {
+        if (value < count) {
           throw new TimeoutException("Time limit reached.");
         }
       }
@@ -154,37 +148,38 @@ public final class RuntimeStats {
       @Override
       public String toString() {
         return String.format("%s; input=%d, processed=%d, exception=%d",
-                             prefix, getInput(), getProcessed(), getException());
+                             Joiner.on(",").withKeyValueSeparator(":").join(context),
+                             getInput(), getProcessed(), getException());
       }
     };
   }
 
-  public static void clearStats(final String prefix) {
-    Iterators.removeIf(counters.entrySet().iterator(), new Predicate<Map.Entry<String, AtomicLong>>() {
-      @Override
-      public boolean apply(Map.Entry<String, AtomicLong> input) {
-        return input.getKey().startsWith(prefix);
+  private static long getTotalCounter(Map<String, String> context, String metricName) {
+    CubeQuery query = getTotalCounterQuery(context, metricName);
+    try {
+      Collection<TimeSeries> result = metricStore.query(query);
+      if (result.isEmpty()) {
+        return 0;
       }
-    });
-  }
-
-  private RuntimeStats() {
-  }
-
-  /**
-   * Returns the metrics key having the given starting and ending parts. If no such key is found, returns an 
-   * empty string.
-   *
-   * @param starting the starting part of the key
-   * @param ending the ending part of the key
-   * @return the complete key if found else an empyty string
-   */
-  public static String getMetricsKey(String starting, String ending) {
-    for (String key : counters.keySet()) {
-      if (key.startsWith(starting) && key.endsWith(ending)) {
-        return key;
+      // since it is totals query and not groupBy specified, we know there's one time series
+      List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+      if (timeValues.isEmpty()) {
+        return 0;
       }
+
+      // since it is totals, we know there's one value only
+      return timeValues.get(0).getValue();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
-    return EMPTY_STRING;
+  }
+
+  private static CubeQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
+    return new CubeQuery(0, 0, Integer.MAX_VALUE, metricName, MeasureType.COUNTER,
+                         context, new ArrayList<String>());
+  }
+
+  public static void clearStats(final String applicationId) {
+    // todo: implement. Is it really needed though? seems like after adding namespaces it would not work at all
   }
 }

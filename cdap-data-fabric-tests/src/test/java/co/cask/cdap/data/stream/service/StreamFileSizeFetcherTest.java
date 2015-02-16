@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
@@ -24,6 +25,7 @@ import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -52,11 +54,12 @@ public class StreamFileSizeFetcherTest {
   @Test
   public void testFetchSize() throws Exception {
     final String streamName = "testFetchSize";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     final int nbEvents = 100;
     StreamAdmin streamAdmin = new TestStreamAdmin(locationFactory, Long.MAX_VALUE, 1000);
 
-    streamAdmin.create(streamName);
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     try {
       StreamUtils.fetchStreamFilesSize(config);
@@ -98,14 +101,16 @@ public class StreamFileSizeFetcherTest {
     }
 
     @Override
-    public boolean exists(String name) throws Exception {
+    public boolean exists(Id.Stream streamId) throws Exception {
       return true;
     }
 
     @Override
-    public StreamConfig getConfig(String streamName) throws IOException {
-      Location streamLocation = locationFactory.create(streamName);
-      return new StreamConfig(streamName, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
+    public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+      //TODO: namespace the location
+      Location streamLocation = locationFactory.create(streamId.getName());
+      return new StreamConfig(streamId, partitionDuration, indexInterval,
+                              Long.MAX_VALUE, streamLocation, null, 1000);
     }
 
     @Override

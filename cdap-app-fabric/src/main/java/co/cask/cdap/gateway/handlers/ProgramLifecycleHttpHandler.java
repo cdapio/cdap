@@ -951,8 +951,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                        "application/json; charset=utf-8"));
 
                                            } else {
-                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                 status.getResult());
+                                             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                                                  status.getResult());
                                            }
                                          }
                                        });

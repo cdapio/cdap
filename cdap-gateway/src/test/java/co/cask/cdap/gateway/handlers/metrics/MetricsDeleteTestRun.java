@@ -106,7 +106,9 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(3, getMetricCount(base + "/flowlets/counter", "process.events.out"));
 
     // do the delete
-    HttpResponse response = doDelete(base + "/flowlets/unique?prefixEntity=process");
+    HttpResponse response = doDelete(base + "/flowlets/unique?prefixEntity=process.events.processed");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    response = doDelete(base + "/flowlets/unique?prefixEntity=process.events.out");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
     Assert.assertEquals(0, getMetricCount(base + "/flowlets/unique", "process.events.processed"));
@@ -136,7 +138,9 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(5, getMetricCount(base, "process.events.out"));
 
     // do the delete
-    HttpResponse response = doDelete(base + "?prefixEntity=process");
+    HttpResponse response = doDelete(base + "?prefixEntity=process.events.processed");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    response = doDelete(base + "?prefixEntity=process.events.out");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
     Assert.assertEquals(0, getMetricCount(base, "process.events.processed"));

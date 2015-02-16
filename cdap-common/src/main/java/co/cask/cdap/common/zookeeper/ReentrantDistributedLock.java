@@ -25,13 +25,13 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeChildren;
+import org.apache.twill.zookeeper.NodeData;
 import org.apache.twill.zookeeper.OperationFuture;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -287,7 +287,7 @@ public final class ReentrantDistributedLock implements Lock {
 
         // Find the node to watch, which is the one with the largest id that is smaller than currentId
         // If the current id is the smallest one, nodeToWatch will be null
-        String nodeToWatch = findNodeToWatch(children, lockNode, guid);
+        final String nodeToWatch = findNodeToWatch(children, lockNode, guid);
 
         // Step 3a. lockNode is the lowest, hence this become lock owner.
         if (nodeToWatch == null) {
@@ -302,8 +302,10 @@ public final class ReentrantDistributedLock implements Lock {
           return;
         }
 
-        // Step 3b and 4. Call exists on the next lowest sequence ID
-        OperationFuture<Stat> existsFuture = zkClient.exists(nodeToWatch, new Watcher() {
+        // Step 3b and 4. See if the the next lowest sequence ID exists. If it does, leave a watch
+        // Use getData() instead of exists() to avoid leaking Watcher resources (if the node is gone, there will
+        // be a watch left on the ZK server if exists() is used).
+        OperationFuture<NodeData> getDataFuture = zkClient.getData(nodeToWatch, new Watcher() {
           @Override
           public void process(WatchedEvent event) {
             if (!completion.isDone()) {
@@ -315,19 +317,21 @@ public final class ReentrantDistributedLock implements Lock {
 
         // Step 5. Depends on the exists call result, either go to step 2 if the nodeToWatch is gone or just
         // let the watcher to trigger step 2 when there is change to the nodeToWatch.
-        Futures.addCallback(existsFuture, new FutureCallback<Stat>() {
+        Futures.addCallback(getDataFuture, new FutureCallback<NodeData>() {
           @Override
-          public void onSuccess(@Nullable Stat result) {
-            // Result == null if the node is no longer exists
-            if (result == null && !completion.isDone()) {
-              doAcquire(completion, waitForLock, guid, lockNode);
-            }
+          public void onSuccess(NodeData nodeData) {
+            // No-op
           }
 
           @Override
           public void onFailure(Throwable t) {
-            // If failed to call exists, fail the lock acquisition
-            completion.setException(t);
+            // See if the failure is due to node not exists. If that's the case, go to step 2.
+            if (t instanceof KeeperException.NoNodeException && !completion.isDone()) {
+              doAcquire(completion, waitForLock, guid, lockNode);
+            } else {
+              // If failed due to something else, fail the lock acquisition.
+              completion.setException(t);
+            }
           }
         });
       }

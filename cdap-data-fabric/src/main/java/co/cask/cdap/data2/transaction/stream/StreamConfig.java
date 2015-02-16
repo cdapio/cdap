@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
@@ -34,7 +35,7 @@ public final class StreamConfig {
       Schema.recordOf("stringBody", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
       Collections.<String, String>emptyMap());
 
-  private final transient String name;
+  private final transient Id.Stream streamId;
   private final long partitionDuration;
   private final long indexInterval;
   private final long ttl;
@@ -43,9 +44,9 @@ public final class StreamConfig {
 
   private final transient Location location;
 
-  public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl,
+  public StreamConfig(Id.Stream streamId, long partitionDuration, long indexInterval, long ttl,
                       Location location, FormatSpecification format, int notificationThresholdMB) {
-    this.name = name;
+    this.streamId = streamId;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
     this.ttl = ttl;
@@ -55,10 +56,10 @@ public final class StreamConfig {
   }
 
   /**
-   * @return Name of the stream.
+   * @return Id of the stream.
    */
-  public String getName() {
-    return name;
+  public Id.Stream getStreamId() {
+    return streamId;
   }
 
   /**
@@ -106,7 +107,7 @@ public final class StreamConfig {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("name", name)
+      .add("streamId", streamId)
       .add("duration", partitionDuration)
       .add("indexInterval", indexInterval)
       .add("ttl", ttl)
@@ -147,7 +148,7 @@ public final class StreamConfig {
     }
 
     public StreamConfig build() {
-      return new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+      return new StreamConfig(config.getStreamId(), config.getPartitionDuration(), config.getIndexInterval(),
                               Objects.firstNonNull(ttl, config.getTTL()),
                               config.getLocation(),
                               Objects.firstNonNull(formatSpec, config.getFormat()),

@@ -31,6 +31,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.Id;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -63,7 +64,7 @@ import javax.ws.rs.QueryParam;
 /**
  * A HTTP handler for handling getting stream events.
  */
-@Path(Constants.Gateway.API_VERSION_2 + "/streams")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
@@ -99,17 +100,19 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/events")
   public void fetch(HttpRequest request, HttpResponder responder,
+                    @PathParam("namespace-id") String namespaceId,
                     @PathParam("stream") String stream,
                     @QueryParam("start") long startTime,
                     @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
-    if (!verifyGetEventsRequest(accountID, stream, startTime, endTime, limit, responder)) {
+    Id.Stream streamId = Id.Stream.from(accountID, stream);
+    if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {
       return;
     }
 
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());
     endTime = Math.min(endTime, now);
@@ -194,24 +197,24 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   /**
    * Verifies query properties.
    */
-  private boolean verifyGetEventsRequest(String accountID, String stream, long startTime, long endTime,
+  private boolean verifyGetEventsRequest(Id.Stream streamId, long startTime, long endTime,
                                          int count, HttpResponder responder) throws Exception {
     if (startTime < 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
       return false;
     }
     if (endTime < 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "End time must be >= 0");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "End time must be >= 0");
       return false;
     }
     if (startTime >= endTime) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Start time must be smaller than end time");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be smaller than end time");
       return false;
     }
     if (count <= 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
     }
-    if (!streamMetaStore.streamExists(accountID, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return false;
     }

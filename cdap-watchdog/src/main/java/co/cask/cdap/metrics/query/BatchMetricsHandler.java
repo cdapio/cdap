@@ -17,7 +17,9 @@ package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -46,18 +48,18 @@ import javax.ws.rs.Path;
  * Class for handling batch requests for metrics data.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics")
-public final class BatchMetricsHandler extends BaseMetricsHandler {
+public final class BatchMetricsHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
   private static final String CONTENT_TYPE_JSON = "application/json";
   private static final Gson GSON = new Gson();
 
-  private final MetricsRequestExecutor requestExecutor;
+  private final MetricStoreRequestExecutor requestExecutor;
 
   @Inject
-  public BatchMetricsHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+  public BatchMetricsHandler(Authenticator authenticator, MetricStore metricStore) {
     super(authenticator);
-    this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
+    this.requestExecutor = new MetricStoreRequestExecutor(metricStore);
   }
 
   @Override
@@ -75,7 +77,7 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
   @POST
   public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException {
     if (!CONTENT_TYPE_JSON.equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
-      responder.sendError(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
+      responder.sendString(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
       return;
     }
 
@@ -89,23 +91,21 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
       LOG.trace("Requests: {}", uris);
       for (URI uri : uris) {
         currPath = uri.toString();
-        // if the request is invalid, this will throw an exception and return a 400 indicating the request
-        // that is invalid and why.
-        MetricsRequest metricsRequest = parseAndValidate(request, uri);
+        CubeQuery query = MetricQueryParser.parse(uri);
 
         JsonObject json = new JsonObject();
-        json.addProperty("path", metricsRequest.getRequestURI().toString());
-        json.add("result", requestExecutor.executeQuery(metricsRequest));
+        json.addProperty("path", uri.toString());
+        json.add("result", requestExecutor.executeQuery(query));
         json.add("error", JsonNull.INSTANCE);
 
         output.add(json);
       }
       responder.sendJson(HttpResponseStatus.OK, output);
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     } finally {
       reader.close();
     }

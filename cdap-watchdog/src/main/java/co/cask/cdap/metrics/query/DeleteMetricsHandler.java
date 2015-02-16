@@ -15,16 +15,15 @@
  */
 package co.cask.cdap.metrics.query;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.data.AggregatesTable;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.metrics.store.MetricStore;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -43,24 +42,18 @@ import javax.ws.rs.QueryParam;
  */
 // todo: expire metrics where possible instead of explicit delete: CDAP-1124
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics")
-public class DeleteMetricsHandler extends BaseMetricsHandler {
+public class DeleteMetricsHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
-
-  private final Supplier<AggregatesTable> aggregatesTable;
+  private final MetricStore metricStore;
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
-                              final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
+                              final MetricStore metricStore) {
     super(authenticator);
-    
-    this.aggregatesTable = Suppliers.memoize(new Supplier<AggregatesTable>() {
-      @Override
-      public AggregatesTable get() {
-        return metricsTableFactory.createAggregates();
-      }
-    });
+
+    this.metricStore = metricStore;
   }
 
   @Override
@@ -138,39 +131,19 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private void handleDelete(HttpRequest request, HttpResponder responder, String metricPrefix) {
     try {
-      URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
-      MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
-      MetricsRequestContext metricsRequestContext = MetricsRequestParser.parseContext(uri.getPath(), requestBuilder);
-      this.validatePathElements(request, metricsRequestContext);
-      requestBuilder.setMetricPrefix(metricPrefix);
-      MetricsRequest metricsRequest = requestBuilder.build();
-
-      deleteTableEntries(metricsRequest.getContextPrefix(),
-                         metricsRequest.getMetricPrefix(),
-                         metricsRequest.getTagPrefix());
+      URI uri = new URI(MetricQueryParser.stripVersionAndMetricsFromPath(request.getUri()));
+      CubeDeleteQuery query = MetricQueryParser.parseDelete(uri, metricPrefix);
+      metricStore.delete(query);
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (ServerException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     } catch (Exception e) {
       LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
-    }
-  }
-
-  private void deleteTableEntries(String contextPrefix,
-                                  String metricPrefix, String tag) throws Exception {
-    AggregatesTable aggTable = aggregatesTable.get();
-
-    if (contextPrefix == null && tag == null && metricPrefix == null) {
-      aggTable.clear();
-    } else if (tag == null) {
-      aggTable.delete(contextPrefix, metricPrefix);
-    } else {
-      aggTable.delete(contextPrefix, metricPrefix, "0", tag);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     }
   }
 }

@@ -16,8 +16,10 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -46,11 +48,12 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testMultiFileReader() throws Exception {
     String streamName = "multiReader";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
     // Create a stream with 1 partition.
-    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null, 1000);
+    StreamConfig config = new StreamConfig(streamId, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null, 1000);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     List<FileWriter<StreamEvent>> writers = Lists.newArrayList();
@@ -126,11 +129,12 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testOffsets() throws Exception {
     String streamName = "offsets";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
     // Create a stream with 1 partition.
-    StreamConfig config = new StreamConfig(streamName, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null, 1000);
+    StreamConfig config = new StreamConfig(streamId, Long.MAX_VALUE, 10000, Long.MAX_VALUE, location, null, 1000);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     for (int i = 0; i < 5; i++) {
