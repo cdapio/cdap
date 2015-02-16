@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Constants {
 
+  public static final String ARCHIVE_DIR = "archive";
+
   /**
    * Global Service names.
    */
@@ -121,7 +123,6 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
-    public static final String ARCHIVE_DIR = "archive";
   }
 
   /**
