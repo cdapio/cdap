@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -47,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.DefaultId;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
@@ -87,7 +87,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class MapReduceProgramRunnerTest {
-  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
 
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
@@ -121,11 +120,11 @@ public class MapReduceProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf, Namespace.USER));
+                                                 new DefaultDatasetNamespace(conf));
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetInstantiator =
-      new DatasetInstantiator(namespaceId, datasetFramework, injector.getInstance(CConfiguration.class),
+      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
                               MapReduceProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
@@ -139,8 +138,8 @@ public class MapReduceProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances(namespaceId)) {
-      dsFramework.deleteInstance(Id.DatasetInstance.from(namespaceId, spec.getName()));
+    for (DatasetSpecification spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
+      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
   }
 
@@ -180,9 +179,9 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapreduceWithDynamicFileSet() throws Exception {
-    Id.DatasetInstance rtInput1 = Id.DatasetInstance.from(namespaceId, "rtInput1");
-    Id.DatasetInstance rtInput2 = Id.DatasetInstance.from(namespaceId, "rtInput2");
-    Id.DatasetInstance rtOutput1 = Id.DatasetInstance.from(namespaceId, "rtOutput1");
+    Id.DatasetInstance rtInput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtInput1");
+    Id.DatasetInstance rtInput2 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtInput2");
+    Id.DatasetInstance rtOutput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtOutput1");
     // create the datasets here because they are not created by the app
     dsFramework.addInstance("fileSet", rtInput1, FileSetProperties.builder()
       .setBasePath("/rtInput1")

@@ -19,6 +19,9 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+
+import java.util.Iterator;
 
 /**
  * Identifier for an HBase tables that contains namespace and a table name
@@ -44,6 +47,16 @@ public class TableId {
     Preconditions.checkArgument(tableName != null, "Table name should not be null.");
     // Id.Namespace already checks for non-null namespace
     return new TableId(Id.Namespace.from(namespace), tableName);
+  }
+
+  public static TableId from(String datasetName) {
+    Preconditions.checkArgument(datasetName != null, "Dataset name should not be null");
+    // Dataset name is of the format cdap.<namespace>.<dataset-name>
+    String invalidFormatError = String.format("Incvalid format for dataset name '%s'. E" +
+                                                "xpected - cdap.<namespace>.<dataset-name>", datasetName);
+    String [] parts = datasetName.split("\\.", 3);
+    Preconditions.checkArgument(parts.length == 3, invalidFormatError);
+    return new TableId(Id.Namespace.from(parts[1]), parts[2]);
   }
 
   @Override

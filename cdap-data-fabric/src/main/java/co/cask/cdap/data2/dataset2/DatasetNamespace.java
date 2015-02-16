@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,28 +16,51 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.proto.Id;
+
 import javax.annotation.Nullable;
 
 /**
- * Performs namespacing for data set names.
+ * Performs namespacing for datasets.
  */
 public interface DatasetNamespace {
-  /**
-   * @param name name of the dataset
-   * @return namespaced name of the dataset
-   */
-  String namespace(String name);
 
   /**
-   * @param name namespaced name of the dataset
-   * @return original name of the dataset or null if name is not within this namespace
+   * @param datasetInstanceName name of the dataset instance to be namespaced
+   * @return namespaced {@link Id.DatasetInstance} of the dataset
+   */
+  Id.DatasetInstance namespace(String datasetInstanceName);
+
+  /**
+   * @param datasetInstanceId {@link Id.DatasetInstance} for the dataset instance to be namespaced
+   * @return namespaced {@link Id.DatasetInstance} of the dataset
+   */
+  Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId);
+
+  /**
+   * @param namespaceId the {@link Id.Namespace} to namespace the suffix with
+   * @param suffix the suffix to namespace
+   * @return String containing the suffix prefixed with the specified namespace
+   */
+  String namespace(Id.Namespace namespaceId, String suffix);
+
+  /**
+   * @param datasetInstanceName namespaced name of the dataset
+   * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
    */
   @Nullable
-  String fromNamespaced(String name);
+  Id.DatasetInstance fromNamespaced(String datasetInstanceName);
+
+  /**
+   * @param datasetInstanceId namespaced {@link Id.DatasetInstance} of the dataset
+   * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
+   */
+  @Nullable
+  Id.DatasetInstance fromNamespaced(Id.DatasetInstance datasetInstanceId);
 
   /**
    * @param name namespaced name of the dataset
    * @return true if the dataset belongs to this namespace
    */
-  boolean contains(String name);
+  boolean contains(String name, String namespaceId);
 }

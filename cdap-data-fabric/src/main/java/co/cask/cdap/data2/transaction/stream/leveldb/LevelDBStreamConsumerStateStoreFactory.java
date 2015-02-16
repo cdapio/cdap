@@ -16,7 +16,6 @@
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
@@ -40,9 +39,8 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
   @Inject
   LevelDBStreamConsumerStateStoreFactory(CConfiguration conf, LevelDBOrderedTableService tableService) {
     this.tableService = tableService;
-    this.tableName = new DefaultDatasetNamespace(conf, Namespace.SYSTEM)
-      .namespace(QueueConstants.STREAM_TABLE_PREFIX + ".state.store");
-
+    this.tableName = new DefaultDatasetNamespace(conf)
+      .namespace(QueueConstants.STREAM_TABLE_PREFIX + ".state.store").getId();
   }
 
   @Override
