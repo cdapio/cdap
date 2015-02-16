@@ -70,14 +70,31 @@ function(Components, Embeddables, HTTP, Util) {
 			}.observes('currentPath'),
 
 			load: function () {
+        var self = this;
 
 				Em.debug('Routing started');
+        var selectedNamespace = C.Util.Cookie('selectedNamespace') || 'default';
+        this.set('selectedNamespace', selectedNamespace);
 
 				/*
 				 * Do version check.
 				 */
 				this.HTTP.get('version', this.checkVersion);
+
+        // Load namespaces.
+        this.HTTP.rest('namespaces', function (data) {
+        	data = data.map(function (item) {
+        		return item.id;
+        	});
+          self.set('namespaces', data);
+        });
 			},
+
+      setNamespace: function (namespace) {
+        C.Util.Cookie('selectedNamespace', namespace);
+        this.set('selectedNamespace', namespace);
+        window.location.reload();
+      },
 
 			checkVersion: function(version) {
 
@@ -178,7 +195,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('explore_enabled', (env.explore_enabled === "true"));
 			C.Env.set('ip', env.ip);
 			C.Env.set('nux', !!env.nux);
-      C.Env.set('security_enabled', env.security_enabled);
+      		C.Env.set('security_enabled', env.security_enabled);
 
 			$('title').text(env.product_name + ' » CDAP');
 
