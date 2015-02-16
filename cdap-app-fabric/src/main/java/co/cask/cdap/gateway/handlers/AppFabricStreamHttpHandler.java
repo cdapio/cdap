@@ -58,8 +58,9 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Inject
   public AppFabricStreamHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                    StoreFactory storeFactory, DatasetFramework dsFramework) {
-    super(authenticator);
+                                    StoreFactory storeFactory, DatasetFramework dsFramework,
+                                    SecureHandler secureHandler) {
+    super(authenticator, secureHandler);
     this.store = storeFactory.create();
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));

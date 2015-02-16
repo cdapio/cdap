@@ -32,6 +32,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -58,10 +59,15 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.common.authorization.IdentifiableObject;
+import co.cask.common.authorization.ObjectId;
+import co.cask.common.authorization.Permission;
+import co.cask.common.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -205,8 +211,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     StreamAdmin streamAdmin, Scheduler scheduler, PreferencesStore preferencesStore) {
-    super(authenticator);
+                                     StreamAdmin streamAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
+                                     SecureHandler secureHandler) {
+    super(authenticator, secureHandler);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
     this.locationFactory = locationFactory;
@@ -239,6 +246,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Program program = Id.Program.from(namespaceId, appId, id);
       ProgramType programType = ProgramType.valueOfCategoryName(type);
+
       StatusMap statusMap = getStatus(program, programType);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
@@ -246,7 +254,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       Map<String, String> status = ImmutableMap.of("status", statusMap.getStatus());
-      responder.sendJson(HttpResponseStatus.OK, status);
+      secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, status,
+                                      ObjectIds.program(namespaceId, appId, programType, program.getId()),
+                                      ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -272,9 +282,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       String programName = scheduleSpec.getProgram().getProgramName();
       Id.Program programId = Id.Program.from(namespaceId, appId, programName);
       JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
-                                                         scheduleName).toString());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      Scheduler.ScheduleState scheduleState = scheduler.scheduleState(programId,
+                                                                      scheduleSpec.getProgram().getProgramType(),
+                                                                      scheduleName);
+      json.addProperty("status", scheduleState.toString());
+      secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, json,
+                                      ObjectIds.application(namespaceId, appId),
+                                      ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -296,14 +310,23 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    if (!isValidAction(action)) {
-      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-      return;
-    }
 
     ProgramType programType = ProgramType.valueOfCategoryName(type);
     if ("debug".equals(action) && !isDebugAllowed(programType)) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+      return;
+    }
+
+    try {
+      secureHandler.authorize(ObjectIds.program(namespaceId, appId, programType, id),
+                              ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
+    if (!isValidAction(action)) {
+      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
       return;
     }
     startStopProgram(request, responder, namespaceId, appId, programType, id, action);
@@ -385,6 +408,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
+
+    try {
+      secureHandler.authorize(ObjectIds.program(namespaceId, appId, type, runnableId),
+                              ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
     getRuns(responder, namespaceId, appId, runnableId, status, start, end, resultLimit);
@@ -400,6 +432,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") String appId,
                                      @PathParam("runnable-type") String runnableType,
                                      @PathParam("runnable-id") String runnableId) {
+
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -413,6 +446,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
+
+      try {
+        secureHandler.authorize(ObjectIds.program(namespaceId, appId, type, runnableId),
+                                ImmutableList.of(Permission.LIFECYCLE));
+      } catch (UnauthorizedException e) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
                                                                        runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
@@ -446,6 +488,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
+
+      try {
+        secureHandler.authorize(ObjectIds.program(namespaceId, appId, type, runnableId),
+                                ImmutableList.of(Permission.LIFECYCLE));
+      } catch (UnauthorizedException e) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       Map<String, String> args = decodeArguments(request);
       preferencesStore.setProperties(namespaceId, appId, runnableType, runnableId, args);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -475,7 +526,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        responder.sendJson(HttpResponseStatus.OK, specification);
+        secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, specification,
+                                        ObjectIds.program(namespaceId, appId, type, runnableId),
+                                        ImmutableList.of(Permission.LIFECYCLE));
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -535,7 +588,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // set the program type to the pretty name in case the request originally didn't have pretty name
         requestedObj.setProgramType(programType.getPrettyName());
       }
-      responder.sendJson(HttpResponseStatus.OK, args);
+
+      secureHandler.sendProtectedJsonList(responder, HttpResponseStatus.OK,
+                                          ObjectIds.namespace(namespaceId), args,
+                                          ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -594,8 +650,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           continue;
         }
 
-        String programTypeStr = requestedObj.getProgramType();
-        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
+        ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
         // cant get instances for things that are not flows, services, or procedures
         if (!canHaveInstances(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
@@ -605,7 +660,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         populateRunnableInstances(requestedObj, namespaceId, appId, spec, programType, requestedObj.getProgramId());
       }
-      responder.sendJson(HttpResponseStatus.OK, args);
+      secureHandler.sendProtectedJsonList(responder, HttpResponseStatus.OK,
+                                          ObjectIds.namespace(namespaceId), args,
+                                          ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (JsonSyntaxException e) {
@@ -710,7 +767,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("flowlet-id") String flowletId) {
     try {
       int count = store.getFlowletInstances(Id.Program.from(namespaceId, appId, flowId), flowletId);
-      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
+      secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, new Instances(count),
+                                      ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                                      ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -731,7 +790,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                   @PathParam("flowlet-id") String flowletId) {
-    int instances = 0;
+
+    try {
+      secureHandler.authorize(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                              ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
+    int instances;
     try {
       instances = getInstances(request);
       if (instances < 1) {
@@ -780,6 +848,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                             @PathParam("flow-id") String flowId,
                                             @PathParam("flowlet-id") String flowletId,
                                             @PathParam("stream-id") String streamId) throws IOException {
+
+    try {
+      secureHandler.authorize(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                              ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       Map<String, String> arguments = decodeArguments(request);
       String oldStreamId = arguments.get("oldStreamId");
@@ -833,6 +910,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("flow-id") String flowId) {
+    try {
+      secureHandler.authorize(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                              ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
     try {
       ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
@@ -859,28 +944,32 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
+                             @PathParam("app-id") String appId,
+                             @PathParam("workflow-name") String workflowName) {
+
+    final ImmutableList<Permission> requiredPermissions = ImmutableList.of(Permission.LIFECYCLE);
+    final ObjectId objectId = ObjectIds.program(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
 
     try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
+      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, new WorkflowClient.Callback() {
+        @Override
+        public void handle(WorkflowClient.Status status) {
+          if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+            secureHandler.sendProtectedStatus(responder, HttpResponseStatus.NOT_FOUND,
+                                             objectId, requiredPermissions);
+          } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+            secureHandler.sendProtectedByteArray(responder, HttpResponseStatus.OK,
+                                                 status.getResult().getBytes(),
+                                                 ImmutableMultimap.of(
+                                                   HttpHeaders.Names.CONTENT_TYPE,
+                                                   "application/json; charset=utf-8"),
+                                                 objectId, requiredPermissions);
 
-                                           } else {
-                                             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                  status.getResult());
-                                           }
-                                         }
-                                       });
+          } else {
+            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
+          }
+        }
+      });
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -908,7 +997,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         object.addProperty("time", runtime.getTime());
         array.add(object);
       }
-      responder.sendJson(HttpResponseStatus.OK, array);
+      secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, array,
+                                      ObjectIds.program(namespaceId, appId, ProgramType.WORKFLOW, workflowId),
+                                      ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -940,7 +1031,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         specList.add(entry.getValue());
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, specList);
+    secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, specList,
+                                    ObjectIds.program(namespaceId, appId, ProgramType.WORKFLOW, workflowId),
+                                    ImmutableList.of(Permission.LIFECYCLE));
   }
 
   /**
@@ -953,17 +1046,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId,
                                   @PathParam("runnable-name") String runnableName) {
+    ObjectId objectId = ObjectIds.program(namespaceId, appId, ProgramType.SERVICE, serviceId);
+    List<Permission> requiredPermissions = ImmutableList.of(Permission.LIFECYCLE);
+
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        secureHandler.sendProtectedString(responder, HttpResponseStatus.NOT_FOUND, "Runnable not found",
+                                          objectId, requiredPermissions);
         return;
       }
 
       ServiceSpecification specification = (ServiceSpecification) getProgramSpecification(programId,
                                                                                           ProgramType.SERVICE);
       if (specification == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        secureHandler.sendProtectedStatus(responder, HttpResponseStatus.NOT_FOUND, objectId, requiredPermissions);
         return;
       }
 
@@ -974,16 +1071,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } else {
         ServiceWorkerSpecification workerSpec = specification.getWorkers().get(runnableName);
         if (workerSpec == null) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          secureHandler.sendProtectedStatus(responder, HttpResponseStatus.NOT_FOUND, objectId, requiredPermissions);
           return;
         }
         instances = workerSpec.getInstances();
       }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceInstances(instances, getRunnableCount(namespaceId, appId, ProgramType.SERVICE,
-                                                                          serviceId, runnableName)));
-
+      int runnableCount = getRunnableCount(namespaceId, appId, ProgramType.SERVICE, serviceId, runnableName);
+      ServiceInstances serviceInstances = new ServiceInstances(instances, runnableCount);
+      secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, serviceInstances,
+                                      objectId, requiredPermissions);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1002,6 +1098,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId,
                                   @PathParam("runnable-name") String runnableName) {
+
+    try {
+      secureHandler.authorize(ObjectIds.program(namespaceId, appId, ProgramType.SERVICE, serviceId),
+                              ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
@@ -1054,6 +1158,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/queues")
   public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) {
+
+    try {
+      secureHandler.authorize(ObjectIds.namespace(namespaceId), ImmutableList.of(Permission.LIFECYCLE));
+    } catch (UnauthorizedException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1612,7 +1724,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Convenience class for representing the necessary components in the batch endpoint.
    */
-  private class BatchEndpointArgs {
+  private class BatchEndpointArgs implements IdentifiableObject {
+
+    private String namespace = null;
     private String appId = null;
     private String programType = null;
     private String programId = null;
@@ -1620,8 +1734,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     private String error = null;
     private Integer statusCode = null;
 
-    private BatchEndpointArgs(String appId, String programType, String programId, String runnableId, String error,
+    private BatchEndpointArgs(String namespace, String appId, String programType,
+                              String programId, String runnableId, String error,
                               Integer statusCode) {
+      this.namespace = namespace;
       this.appId = appId;
       this.programType = programType;
       this.programId = programId;
@@ -1631,7 +1747,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     public BatchEndpointArgs(BatchEndpointArgs arg) {
-      this(arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
+      this(arg.namespace, arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
+    }
+
+    public String getNamespace() {
+      return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+      this.namespace = namespace;
     }
 
     public String getRunnableId() {
@@ -1672,6 +1796,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     public void setProgramType(String programType) {
       this.programType = programType;
+    }
+
+    @Override
+    public ObjectId getObjectId() {
+      return ObjectIds.program(namespace, appId, ProgramType.valueOfPrettyName(programType), programId);
     }
   }
 

@@ -96,10 +96,31 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     if (!row.isEmpty()) {
       for (byte[] column : row.getColumns().keySet()) {
         T obj = objectStore.read(column);
-        resultList.add(obj);
+        if (obj != null) {
+          resultList.add(obj);
+        }
       }
     }
     return resultList.build();
+  }
+
+  /**
+   * Deletes all the objects from the objectStore for a given index.
+   *
+   * @param secondaryKey for the lookup.
+   */
+  public void deleteAllByIndex(byte[] secondaryKey) {
+    //Lookup the secondaryKey and get all the keys in primary
+    //Each row with secondaryKey as rowKey contains column named as the primary key
+    // of every object that can be looked up using the secondaryKey
+    Row row = index.get(secondaryKey);
+
+    // if the index has no match, do nothing
+    if (!row.isEmpty()) {
+      for (byte[] column : row.getColumns().keySet()) {
+        objectStore.delete(column);
+      }
+    }
   }
 
   private List<byte[]> secondaryKeysToDelete(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
@@ -195,6 +216,14 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     writeToObjectStore(key, object);
   }
 
+  public void delete(byte[] key) {
+    Row row = index.get(getPrefixedPrimaryKey(key));
+    if (!row.isEmpty()) {
+      Set<byte[]> columnsToDelete = row.getColumns().keySet();
+      deleteSecondaryKeys(key, columnsToDelete.toArray(new byte[columnsToDelete.size()][]));
+    }
+    objectStore.delete(key);
+  }
 
   private void deleteSecondaryKeys(byte[] key, byte[][] columns) {
     //Delete the key to secondaryKey mapping

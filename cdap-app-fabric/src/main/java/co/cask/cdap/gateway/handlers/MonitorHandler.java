@@ -55,8 +55,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public MonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
-                        ServiceStore serviceStore) throws Exception {
-    super(authenticator);
+                        ServiceStore serviceStore, SecureHandler secureHandler) throws Exception {
+    super(authenticator, secureHandler);
     this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
   }

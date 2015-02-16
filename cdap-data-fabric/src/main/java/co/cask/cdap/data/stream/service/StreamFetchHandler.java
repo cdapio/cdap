@@ -78,7 +78,6 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   @Inject
   public StreamFetchHandler(CConfiguration cConf, Authenticator authenticator,
                             StreamAdmin streamAdmin, StreamMetaStore streamMetaStore) {
-
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;

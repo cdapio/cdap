@@ -1091,9 +1091,15 @@
   </property>
 
   <property>
-      <name>security.authorization.enabled</name>
-      <value>false</value>
-      <description>If this is set to true, authorization checks will be made</description>
+    <name>security.authorization.enabled</name>
+    <value>false</value>
+    <description>If this is set to true, authorization checks will be made</description>
+  </property>
+
+  <property>
+    <name>security.admins</name>
+    <value></value>
+    <description>Initial admin subjects</description>
   </property>
 
   <property>
