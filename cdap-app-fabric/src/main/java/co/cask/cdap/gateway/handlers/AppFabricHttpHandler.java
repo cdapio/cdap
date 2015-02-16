@@ -992,6 +992,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns a list of workers associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers")
+  public void getWorkersByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.WORKER.getCategoryName());
+  }
+
+  /**
    * Returns a list of streams associated with account.
    */
   @GET
