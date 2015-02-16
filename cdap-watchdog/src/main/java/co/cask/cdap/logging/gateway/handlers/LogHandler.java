@@ -166,6 +166,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return ProgramType.SPARK;
       case SERVICE:
         return ProgramType.SERVICE;
+      case WORKER:
+        return ProgramType.WORKER;
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", programType));
     }

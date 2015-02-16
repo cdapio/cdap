@@ -705,6 +705,74 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     programList(responder, namespaceId, type, appId, store);
   }
 
+  /**
+   * Returns number of instances of a worker.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void getWorkerInstances(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appId,
+                                 @PathParam("worker-id") String workerId) {
+    try {
+      int count = store.getWorkerInstances(Id.Program.from(namespaceId, appId, workerId));
+      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Sets the number of instances of a worker.
+   */
+  @PUT
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void setWorkerInstances(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appId,
+                                 @PathParam("worker-id") String workerId) {
+    int instances = 0;
+    try {
+      instances = getInstances(request);
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+    } catch (Throwable th) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
+    }
+
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, workerId);
+      int oldInstances = store.getWorkerInstances(programId);
+      if (oldInstances != instances) {
+        store.setWorkerInstances(programId, instances);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(namespaceId, appId, workerId,
+                                                                        ProgramType.WORKER, runtimeService);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                              ImmutableMap.of("newInstances", String.valueOf(instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /********************** Flow/Flowlet APIs ***********************************************************/
   /**
    * Returns number of instances for a flowlet within a flow.

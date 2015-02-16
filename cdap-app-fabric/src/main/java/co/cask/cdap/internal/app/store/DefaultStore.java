@@ -30,6 +30,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -347,6 +348,30 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setWorkerInstances(final Id.Program id, final int instances) {
+    Preconditions.checkArgument(instances > 0, "cannot change number of program " +
+      "instances to negative number: " + instances);
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
+        WorkerSpecification newSpecification = new WorkerSpecification(workerSpec.getClassName(),
+                                                                       workerSpec.getName(),
+                                                                       workerSpec.getDescription(),
+                                                                       workerSpec.getProperties(),
+                                                                       workerSpec.getDatasets(),
+                                                                       workerSpec.getResources(),
+                                                                       instances);
+        ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
+        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.WORKER);
+        mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public void setProcedureInstances(final Id.Program id, final int count) {
     Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
 
@@ -452,6 +477,18 @@ public class DefaultStore implements Store {
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
+  }
+
+  @Override
+  public int getWorkerInstances(final Id.Program id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+      @Override
+      public Integer apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
+        return workerSpec.getInstances();
+      }
+    });
   }
 
   @Override
@@ -993,6 +1030,16 @@ public class DefaultStore implements Store {
     return spec;
   }
 
+  private static WorkerSpecification getWorkerSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
+    WorkerSpecification workerSpecification = appSpec.getWorkers().get(id.getId());
+    if (workerSpecification == null) {
+      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
+                                         ", app id: " + id.getApplication() +
+                                         ", procedure id: " + id.getId());
+    }
+    return workerSpecification;
+  }
+
   private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
     if (procedureSpecification == null) {
@@ -1100,6 +1147,31 @@ public class DefaultStore implements Store {
       Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
       flows.put(flowId, newFlowSpec);
       return flows;
+    }
+  }
+
+  private static ApplicationSpecification replaceWorkerInAppSpec(final ApplicationSpecification appSpec,
+                                                                 final Id.Program id,
+                                                                 final WorkerSpecification workerSpecification) {
+    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getId(), workerSpecification);
+  }
+
+  private static final class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
+    private final String workerId;
+    private final WorkerSpecification workerSpecification;
+
+    private ApplicationSpecificationWithChangedWorkers(ApplicationSpecification delegate, String workerId,
+                                                       WorkerSpecification workerSpec) {
+      super(delegate);
+      this.workerId = workerId;
+      this.workerSpecification = workerSpec;
+    }
+
+    @Override
+    public Map<String, WorkerSpecification> getWorkers() {
+      Map<String, WorkerSpecification> workers = Maps.newHashMap(super.getWorkers());
+      workers.put(workerId, workerSpecification);
+      return workers;
     }
   }
 

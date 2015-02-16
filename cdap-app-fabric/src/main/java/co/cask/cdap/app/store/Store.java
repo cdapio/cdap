@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -225,6 +226,21 @@ public interface Store {
    * @return number of instances
    */
   int getServiceWorkerInstances(Id.Program id, String workerName);
+
+  /**
+   * Sets the number of instances of a {@link Worker}
+   *
+   * @param id program id
+   * @param instances number of instances
+   */
+  void setWorkerInstances(Id.Program id, int instances);
+
+  /**
+   * Gets the number of instances of a {@link Worker}
+   * @param id program id
+   * @return number of instances
+   */
+  int getWorkerInstances(Id.Program id);
 
   /**
    * Removes all program under the given application and also the application itself.
