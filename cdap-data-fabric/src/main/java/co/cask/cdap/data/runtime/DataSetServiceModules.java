@@ -32,7 +32,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
-import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
+import co.cask.cdap.data2.dataset2.lib.table.ACLStoreTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
@@ -72,7 +72,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-    INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
+    INMEMORY_DATASET_MODULES.put("aclStoreTable", new ACLStoreTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -84,7 +84,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
-        defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
 
@@ -129,7 +129,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-        defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("aclStoreTable", new ACLStoreTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -174,7 +174,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-        defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("aclStoreTable", new ACLStoreTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
