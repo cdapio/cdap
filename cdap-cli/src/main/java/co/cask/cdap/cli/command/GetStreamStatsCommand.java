@@ -323,15 +323,17 @@ public class GetStreamStatsCommand extends AbstractCommand {
     }
 
     private int getLongestBucketPrefix() {
-      int longestBucket = Collections.max(buckets.elementSet(), new Comparator<Integer>() {
+      Set<Integer> bucketIndices = buckets.elementSet();
+      int longestBucket = Collections.max(bucketIndices, new Comparator<Integer>() {
         @Override
         public int compare(Integer o1, Integer o2) {
-          return (Integer.toString(o1 * BUCKET_SIZE).length() * 2 + buckets.count(o1))
-            - (Integer.toString(o2 * BUCKET_SIZE).length() * 2 + buckets.count(o2));
+          return (Long.toString(o1 * BUCKET_SIZE).length() * 2 + Long.toString(buckets.count(o1)).length())
+            - (Long.toString(o2 * BUCKET_SIZE).length() * 2 + Long.toString(buckets.count(o2)).length());
         }
       });
       Bucket bucket = new Bucket(longestBucket, buckets.count(longestBucket));
-      return bucket.getPrefix().length();
+      String longestBucketPrefix = bucket.getPrefix();
+      return longestBucketPrefix.length();
     }
 
     /**
