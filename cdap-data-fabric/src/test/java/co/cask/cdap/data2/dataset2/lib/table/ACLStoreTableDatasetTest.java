@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.cdap.common.authorization.SubjectIds;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.common.authorization.ACLEntry;
 import co.cask.common.authorization.ACLStore;
 import co.cask.common.authorization.ObjectId;
@@ -70,11 +71,13 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
     Permission.READ
   );
 
+  private static final Id.DatasetModule moduleId = new Id.DatasetModule(new Id.Namespace("default"),
+                                                                        ACLStoreTableModule.class.getName());
   private ACLStoreTable aclStore;
 
   @Before
   public void setUp() throws Exception {
-    addModule(ACLStoreTableModule.class.getName(), new ACLStoreTableModule());
+    addModule(moduleId, new ACLStoreTableModule());
     createInstance(ACLStoreTable.class.getName(), "testACLStoreTable", DatasetProperties.EMPTY);
     this.aclStore = getInstance("testACLStoreTable");
     aclStore.write(UNRELATED_ACL);
@@ -84,7 +87,7 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
   @After
   public void tearDown() throws Exception {
     deleteInstance("testACLStoreTable");
-    deleteModule(ACLStoreTableModule.class.getName());
+    deleteModule(moduleId);
   }
 
   @Test
