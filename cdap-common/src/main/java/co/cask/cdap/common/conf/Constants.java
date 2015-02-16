@@ -383,7 +383,6 @@ public final class Constants {
       public static final String COMPONENT = "cmp";
       public static final String STREAM = "str";
       public static final String DATASET = "ds";
-      public static final String WORKER = "wrk";
       public static final String SERVICE = "srv";
       public static final String SERVICE_RUNNABLE = "srn";
       public static final String HANDLER = "hnd";

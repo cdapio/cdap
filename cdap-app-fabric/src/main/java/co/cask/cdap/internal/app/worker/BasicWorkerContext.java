@@ -85,7 +85,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
+          getMetricCollector(metricsCollectionService, program, runId.getId(), instanceId),
           datasetFramework, cConf, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
@@ -96,7 +96,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
-                                                                 spec.getName(), runId.getId(), instanceId));
+                                                                 runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 minutes.
@@ -143,12 +143,11 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
-                                                     String runnableName, String runId, int instanceId) {
+                                                     String runId, int instanceId) {
     if (service == null) {
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.WORKER, runnableName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
     return service.getCollector(tags);
   }

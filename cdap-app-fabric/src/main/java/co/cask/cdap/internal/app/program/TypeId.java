@@ -42,6 +42,8 @@ public final class TypeId {
         return "s";
       case SERVICE:
         return "u";
+      case WORKER:
+        return "w";
       default:
         return "unknown";
     }
