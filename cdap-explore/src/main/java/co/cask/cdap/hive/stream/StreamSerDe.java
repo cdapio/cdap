@@ -93,6 +93,9 @@ public class StreamSerDe implements SerDe {
 
     String streamName = properties.getProperty(Constants.Explore.STREAM_NAME);
     String streamNamespace = properties.getProperty(Constants.Explore.STREAM_NAMESPACE);
+    if (streamNamespace == null) {
+      streamNamespace = Constants.DEFAULT_NAMESPACE;
+    }
     Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
     try {
       // Get the stream format from the stream config.

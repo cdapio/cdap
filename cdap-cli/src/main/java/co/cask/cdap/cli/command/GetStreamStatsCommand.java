@@ -24,7 +24,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
@@ -165,7 +164,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
   }
 
   private String getHiveTableName(String streamId) {
-    return String.format("cdap_stream_%s_%s", Constants.DEFAULT_NAMESPACE, streamId);
+    return String.format("cdap_stream_%s", streamId);
   }
 
   private String cdapSchemaColumName2HiveColumnName(String streamId, String schemaColumName) {
