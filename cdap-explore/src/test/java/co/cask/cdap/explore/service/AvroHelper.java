@@ -35,10 +35,10 @@ import java.io.OutputStream;
 public class AvroHelper {
 
   /**
-   * Generate an Avro file of schema (key: String, value String) containing the records ("i", "Record #i")
+   * Generate an Avro file of schema (key: String, value String) containing the records ("<prefix>i", "#i")
    * for start <= i < end. The file is written using the passed-in output stream.
    */
-  public static void generateAvroFile(OutputStream out, int start, int end) throws IOException {
+  public static void generateAvroFile(OutputStream out, String prefix, int start, int end) throws IOException {
     Schema schema = Schema.createRecord("kv", null, null, false);
     schema.setFields(ImmutableList.of(
       new Schema.Field("key", Schema.create(Schema.Type.STRING), null, null),
@@ -50,8 +50,8 @@ public class AvroHelper {
     try {
       for (int i = start; i < end; i++) {
         GenericRecord kv = new GenericData.Record(schema);
-        kv.put("key", "" + i);
-        kv.put("value", "Record #" + i);
+        kv.put("key", prefix + i);
+        kv.put("value", "#" + i);
         dataFileWriter.append(kv);
       }
     } finally {

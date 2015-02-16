@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
@@ -31,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.ACLStoreTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
@@ -73,6 +75,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
     INMEMORY_DATASET_MODULES.put("aclStoreTable", new ACLStoreTableModule());
+    INMEMORY_DATASET_MODULES.put("partitionedFileSet", new PartitionedFileSetModule());
   }
 
   public Module getInMemoryModule() {
@@ -87,6 +90,7 @@ public class DataSetServiceModules {
         defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -104,6 +108,7 @@ public class DataSetServiceModules {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
@@ -130,6 +135,7 @@ public class DataSetServiceModules {
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("aclStoreTable", new ACLStoreTableModule());
+        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -151,6 +157,7 @@ public class DataSetServiceModules {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
@@ -175,6 +182,7 @@ public class DataSetServiceModules {
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("aclStoreTable", new ACLStoreTableModule());
+        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -198,6 +206,7 @@ public class DataSetServiceModules {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CreateDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DeleteDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DeleteDatasetModuleCommand;
@@ -35,7 +37,7 @@ import com.google.inject.Injector;
 /**
  * Dataset commands.
  */
-public class DatasetCommands extends CommandSet<Command> {
+public class DatasetCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public DatasetCommands(Injector injector) {
@@ -52,5 +54,10 @@ public class DatasetCommands extends CommandSet<Command> {
         .add(injector.getInstance(DeleteDatasetModuleCommand.class))
         .add(injector.getInstance(DescribeDatasetTypeCommand.class))
       .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.DATASET.getName();
   }
 }

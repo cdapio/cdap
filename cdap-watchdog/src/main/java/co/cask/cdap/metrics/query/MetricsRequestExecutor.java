@@ -19,7 +19,6 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.data.AggregatesScanResult;
 import co.cask.cdap.metrics.data.AggregatesScanner;
 import co.cask.cdap.metrics.data.AggregatesTable;
@@ -45,7 +44,6 @@ import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
@@ -73,7 +71,7 @@ public class MetricsRequestExecutor {
     });
   }
 
-  public JsonElement executeQuery(MetricsRequest metricsRequest) throws IOException, OperationException {
+  public JsonElement executeQuery(MetricsRequest metricsRequest) throws Exception {
 
     // Pretty ugly logic now. Need to refactor
     Object resultObj = null;
@@ -128,7 +126,7 @@ public class MetricsRequestExecutor {
   }
 
   private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder)
-    throws OperationException {
+    throws Exception {
     int resolution = metricsRequest.getTimeSeriesResolution();
     long start = metricsRequest.getStartTime() / resolution * resolution;
     long end = (metricsRequest.getEndTime() / resolution) * resolution;
@@ -184,17 +182,22 @@ public class MetricsRequestExecutor {
                                                      "input");
 
     long processed = 0;
-    Set<String> streamNames = Sets.newHashSet();
+    Set<ImmutablePair<String, String>> streamNameContexts = Sets.newHashSet();
     Set<ImmutablePair<String, String>> queueNameContexts = Sets.newHashSet();
     while (scanner.hasNext()) {
       AggregatesScanResult scanResult = scanner.next();
       processed += scanResult.getValue();
-      // tag is of the form input.[queueURI].  ex: input.queue://PurchaseFlow/reader/queue
+      // tag is of the form input.[queueURI].  ex: input.queue://namespace/PurchaseFlow/reader/queue
       String tag = scanResult.getTag();
       // strip the preceding "input." from the tag.
       QueueName queueName = QueueName.from(URI.create(tag.substring(6, tag.length())));
       if (queueName.isStream()) {
-        streamNames.add(queueName.getSimpleName());
+        //TODO: namespace stream metrics
+        String context = String.format("%s.%s.%s",
+                                       Constants.SYSTEM_NAMESPACE,
+                                       Constants.Gateway.METRICS_CONTEXT,
+                                       Constants.Gateway.STREAM_HANDLER_NAME);
+        streamNameContexts.add(new ImmutablePair<String, String>(queueName.getSimpleName(), context));
       } else if (queueName.isQueue()) {
         String context = String.format("%s.%s.f.%s.%s",
                                        queueName.getFirstComponent(), // the namespace
@@ -213,12 +216,8 @@ public class MetricsRequestExecutor {
       // The paths would be /flowId/flowletId/queueSimpleName
       enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "system.process.events.out", "0", pair.getFirst()));
     }
-    for (String streamName : streamNames) {
-      String ctx = String.format("%s.%s.%s",
-                                 Constants.SYSTEM_NAMESPACE,
-                                 Constants.Gateway.METRICS_CONTEXT,
-                                 Constants.Gateway.STREAM_HANDLER_NAME);
-      enqueue += sumAll(aggregatesTable.scan(ctx, "system.collect.events", "0", streamName));
+    for (ImmutablePair<String, String> pair : streamNameContexts) {
+      enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "system.collect.events", "0", pair.getFirst()));
     }
 
     long len = enqueue - processed;
@@ -226,7 +225,7 @@ public class MetricsRequestExecutor {
   }
 
   private Iterator<TimeValue> queryTimeSeries(MetricsScanQuery scanQuery, Interpolator interpolator, int resolution)
-    throws OperationException {
+    throws Exception {
 
     Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
     MetricsScanner scanner = timeSeriesTables.scan(resolution, scanQuery);

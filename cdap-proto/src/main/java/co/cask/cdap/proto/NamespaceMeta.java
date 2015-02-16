@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 
 /**
  * Represents metadata for namespaces
@@ -68,6 +69,13 @@ public final class NamespaceMeta {
     }
 
     public NamespaceMeta build() {
+      Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
+      if (name == null) {
+        name = id;
+      }
+      if (description == null) {
+        description = "";
+      }
       return new NamespaceMeta(id, name, description);
     }
   }

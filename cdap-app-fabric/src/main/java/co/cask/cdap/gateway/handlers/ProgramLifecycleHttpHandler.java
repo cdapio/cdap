@@ -955,14 +955,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         @Override
         public void handle(WorkflowClient.Status status) {
           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-            secureHandler.sendProtectedStatus(responder, HttpResponseStatus.NOT_FOUND, objectId, requiredPermissions);
+            secureHandler.sendProtectedStatus(responder, HttpResponseStatus.NOT_FOUND,
+                                             objectId, requiredPermissions);
           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-            ImmutableMultimap<String, String> headers = ImmutableMultimap.of(
-              HttpHeaders.Names.CONTENT_TYPE, "application/json; charset=utf-8");
-            secureHandler.sendProtectedByteArray(responder, HttpResponseStatus.OK, status.getResult().getBytes(),
-                                                 headers, objectId, requiredPermissions);
+            secureHandler.sendProtectedByteArray(responder, HttpResponseStatus.OK,
+                                                 status.getResult().getBytes(),
+                                                 ImmutableMultimap.of(
+                                                   HttpHeaders.Names.CONTENT_TYPE,
+                                                   "application/json; charset=utf-8"),
+                                                 objectId, requiredPermissions);
+
           } else {
-            responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
+            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
           }
         }
       });

@@ -18,10 +18,10 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -46,10 +46,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * HTTP handler to access the service managing {@link NotificationFeed} objects.
+ * HTTP handler to access the service managing {@link Id.NotificationFeed} objects.
  * These endpoints are only reachable internally.
  */
-@Path(Constants.Gateway.API_VERSION_3)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedHttpHandler.class);
 
@@ -63,13 +63,19 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/feeds/{id}")
-  public void createFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  @Path("/feeds/categories/{feed-category}/names/{feed-name}")
+  public void createFeed(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("feed-category") String category,
+                         @PathParam("feed-name") String name) {
     try {
-      NotificationFeed combinedFeed;
+      Id.NotificationFeed combinedFeed;
       try {
-        NotificationFeed feed = parseBody(request, NotificationFeed.class);
-        combinedFeed = new NotificationFeed.Builder(NotificationFeed.fromId(id))
+        Id.NotificationFeed feed = parseBody(request, Id.NotificationFeed.class);
+        combinedFeed = new Id.NotificationFeed.Builder()
+          .setNamespaceId(namespaceId)
+          .setCategory(category)
+          .setName(name)
           .setDescription(feed == null ? null : feed.getDescription())
           .build();
       } catch (IllegalArgumentException e) {
@@ -78,10 +84,10 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
         return;
       }
       if (feedManager.createFeed(combinedFeed)) {
-        responder.sendStatus(HttpResponseStatus.OK);
+        responder.sendString(HttpResponseStatus.OK, "Notification Feed created successfully");
       } else {
         LOG.trace("Notification Feed already exists.");
-        responder.sendStatus(HttpResponseStatus.CONFLICT);
+        responder.sendString(HttpResponseStatus.OK, "Notification Feed already exists.");
       }
     } catch (NotificationFeedException e) {
       LOG.error("Could not create notification feed.", e);
@@ -95,12 +101,19 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   }
 
   @DELETE
-  @Path("/feeds/{id}")
-  public void deleteFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  @Path("/feeds/categories/{feed-category}/names/{feed-name}")
+  public void deleteFeed(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("feed-category") String category,
+                         @PathParam("feed-name") String name) {
     try {
-      NotificationFeed feed;
+      Id.NotificationFeed feed;
       try {
-        feed = NotificationFeed.fromId(id);
+        feed = new Id.NotificationFeed.Builder()
+          .setNamespaceId(namespaceId)
+          .setCategory(category)
+          .setName(name)
+          .build();
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
@@ -116,12 +129,19 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/feeds/{id}")
-  public void getFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  @Path("/feeds/categories/{feed-category}/names/{feed-name}")
+  public void getFeed(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("feed-category") String category,
+                      @PathParam("feed-name") String name) {
     try {
-      NotificationFeed feed;
+      Id.NotificationFeed feed;
       try {
-        feed = NotificationFeed.fromId(id);
+        feed = new Id.NotificationFeed.Builder()
+          .setNamespaceId(namespaceId)
+          .setCategory(category)
+          .setName(name)
+          .build();
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
@@ -138,9 +158,10 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
 
   @GET
   @Path("/feeds")
-  public void listFeeds(HttpRequest request, HttpResponder responder) {
+  public void listFeeds(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId) {
     try {
-      List<NotificationFeed> feeds = feedManager.listFeeds();
+      List<Id.NotificationFeed> feeds = feedManager.listFeeds(Id.Namespace.from(namespaceId));
       responder.sendJson(HttpResponseStatus.OK, feeds);
     } catch (NotificationFeedException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,

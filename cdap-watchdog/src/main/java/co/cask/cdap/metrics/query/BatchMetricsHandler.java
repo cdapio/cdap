@@ -16,8 +16,6 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.http.HandlerContext;
@@ -77,7 +75,7 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
   @POST
   public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException {
     if (!CONTENT_TYPE_JSON.equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
-      responder.sendError(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
+      responder.sendString(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
       return;
     }
 
@@ -104,12 +102,10 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, output);
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
-    } catch (OperationException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
+    } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
-    } catch (ServerException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     } finally {
       reader.close();
     }

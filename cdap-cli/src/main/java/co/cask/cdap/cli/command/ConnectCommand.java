@@ -74,8 +74,7 @@ public class ConnectCommand implements Command {
 
   @Override
   public String getDescription() {
-    return "Connects to a CDAP instance. <credential(s)> "
-      + "parameter(s) could be used if authentication is enabled in the gateway server.";
+    return "Connects to a CDAP instance.";
   }
 
   /**

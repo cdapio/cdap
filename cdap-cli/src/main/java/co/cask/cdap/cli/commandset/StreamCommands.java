@@ -16,9 +16,12 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CreateStreamCommand;
 import co.cask.cdap.cli.command.DescribeStreamCommand;
 import co.cask.cdap.cli.command.GetStreamEventsCommand;
+import co.cask.cdap.cli.command.GetStreamStatsCommand;
 import co.cask.cdap.cli.command.ListStreamsCommand;
 import co.cask.cdap.cli.command.LoadStreamCommand;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
@@ -35,7 +38,7 @@ import com.google.inject.Injector;
 /**
  * Stream commands.
  */
-public class StreamCommands extends CommandSet<Command> {
+public class StreamCommands extends CommandSet<Command> implements Categorized {
 
   @Inject
   public StreamCommands(Injector injector) {
@@ -45,12 +48,18 @@ public class StreamCommands extends CommandSet<Command> {
         .add(injector.getInstance(DescribeStreamCommand.class))
         .add(injector.getInstance(GetStreamEventsCommand.class))
         .add(injector.getInstance(ListStreamsCommand.class))
-        .add(injector.getInstance(SendStreamEventCommand.class))
-        .add(injector.getInstance(LoadStreamCommand.class))
         .add(injector.getInstance(SetStreamTTLCommand.class))
         .add(injector.getInstance(SetStreamFormatCommand.class))
         .add(injector.getInstance(SetStreamPropertiesCommand.class))
         .add(injector.getInstance(TruncateStreamCommand.class))
+        .add(injector.getInstance(SendStreamEventCommand.class))
+        .add(injector.getInstance(LoadStreamCommand.class))
+        .add(injector.getInstance(GetStreamStatsCommand.class))
         .build());
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

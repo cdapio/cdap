@@ -42,7 +42,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployNonExistingNamespace() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Deploy failed - namespace 'random' does not exist.", readResponse(response));
+    Assert.assertEquals("Deploy failed - namespace 'random' not found.", readResponse(response));
   }
 
   /**

@@ -22,7 +22,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -57,7 +56,7 @@ public class TimeSeriesCleanupTest {
   private static MetricsTableFactory tableFactory;
 
   @Test
-  public void testDeleteBefore() throws OperationException {
+  public void testDeleteBefore() throws Exception {
     TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(1);
 
     // 2012-10-01T12:00:00
@@ -112,7 +111,7 @@ public class TimeSeriesCleanupTest {
 
   private void insertMetrics(TimeSeriesTable timeSeriesTable,
                              String context, String runId, String metric, Iterable<String> tags,
-                             long startTime, int offset, int count, int batchSize) throws OperationException {
+                             long startTime, int offset, int count, int batchSize) throws Exception {
 
     List<TagMetric> tagMetrics = Lists.newLinkedList();
     List<MetricsRecord> records = Lists.newArrayListWithCapacity(batchSize);

@@ -16,8 +16,6 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.collect.Maps;
 import org.apache.twill.kafka.client.TopicPartition;
@@ -38,35 +36,27 @@ public final class KafkaConsumerMetaTable {
     this.metaTable = metaTable;
   }
 
-  public synchronized void save(Map<TopicPartition, Long> offsets) throws OperationException {
+  public synchronized void save(Map<TopicPartition, Long> offsets) throws Exception {
 
     NavigableMap<byte[], NavigableMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
       updates.put(getKey(entry.getKey()), Bytes.immutableSortedMapOf(OFFSET_COLUMN, entry.getValue()));
     }
-    try {
-      metaTable.put(updates);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    metaTable.put(updates);
   }
 
   /**
    * Gets the offset of a given topic partition.
    * @param topicPartition The topic and partition to fetch offset.
    * @return The offset or {@code -1} if the offset is not found.
-   * @throws OperationException If there is an error when fetching.
+   * @throws Exception If there is an error when fetching.
    */
-  public synchronized long get(TopicPartition topicPartition) throws OperationException {
-    try {
-      byte[] result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN);
-      if (result == null) {
-        return -1;
-      }
-      return Bytes.toLong(result);
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+  public synchronized long get(TopicPartition topicPartition) throws Exception {
+    byte[] result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN);
+    if (result == null) {
+      return -1;
     }
+    return Bytes.toLong(result);
   }
 
   private byte[] getKey(TopicPartition topicPartition) {

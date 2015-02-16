@@ -1126,7 +1126,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
     // write smth to a stream
-    QueueName queueName = QueueName.fromStream(name);
+    QueueName queueName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
@@ -1159,7 +1159,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // for now, DELETE /streams only deletes the stream data, not meta data
     // boolean streamExists = 200 ==
     //   doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
-    return dequeueOne(QueueName.fromStream(name));
+    return dequeueOne(QueueName.fromStream(Constants.DEFAULT_NAMESPACE, name));
   }
 
   boolean verifyQueue(String name) throws Exception {

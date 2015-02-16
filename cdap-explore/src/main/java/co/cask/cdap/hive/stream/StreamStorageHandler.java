@@ -55,6 +55,8 @@ public class StreamStorageHandler extends DefaultStorageHandler {
     // Hive ensures that the properties of the right table will be passed at the right time to those classes.
     String streamName = tableDesc.getProperties().getProperty(Constants.Explore.STREAM_NAME);
     jobProperties.put(Constants.Explore.STREAM_NAME, streamName);
+    String streamNamespace = tableDesc.getProperties().getProperty(Constants.Explore.STREAM_NAMESPACE);
+    jobProperties.put(Constants.Explore.STREAM_NAMESPACE, streamNamespace);
     LOG.debug("Got stream {} for external table {}", streamName, tableDesc.getTableName());
   }
 

@@ -20,12 +20,9 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import com.google.inject.Inject;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -50,19 +47,21 @@ public abstract class StreamFileJanitorTestBase {
 
   protected abstract CConfiguration getCConfiguration();
 
-  protected abstract FileWriter<StreamEvent> createWriter(String streamName) throws IOException;
+  protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
 
   @Test
   public void testCleanupGeneration() throws Exception {
     // Create a stream and performs couple truncate
     String streamName = "testCleanupGeneration";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+
     StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(streamName);
-    StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(), getLocationFactory());
 
     for (int i = 0; i < 5; i++) {
-      FileWriter<StreamEvent> writer = createWriter(streamName);
+      FileWriter<StreamEvent> writer = createWriter(streamId);
       writer.append(StreamFileTestUtils.createEvent(System.currentTimeMillis(), "Testing"));
       writer.close();
 
@@ -70,7 +69,7 @@ public abstract class StreamFileJanitorTestBase {
       janitor.clean(streamConfig, System.currentTimeMillis());
       verifyGeneration(streamConfig, i);
 
-      streamAdmin.truncate(streamName);
+      streamAdmin.truncate(streamId);
     }
 
     int generation = StreamUtils.getGeneration(streamConfig);
@@ -90,6 +89,8 @@ public abstract class StreamFileJanitorTestBase {
   public void testCleanupTTL() throws Exception {
     // Create a stream with 5 seconds TTL, partition duration of 2 seconds
     String streamName = "testCleanupTTL";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(), getLocationFactory());
 
@@ -97,14 +98,14 @@ public abstract class StreamFileJanitorTestBase {
     properties.setProperty(Constants.Stream.PARTITION_DURATION, "2000");
     properties.setProperty(Constants.Stream.TTL, "5000");
 
-    streamAdmin.create(streamName, properties);
+    streamAdmin.create(streamId, properties);
 
     // Truncate to increment generation to 1. This make verification condition easier (won't affect correctness).
-    streamAdmin.truncate(streamName);
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.truncate(streamId);
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Write data with different timestamps that spans across 5 partitions
-    FileWriter<StreamEvent> writer = createWriter(streamName);
+    FileWriter<StreamEvent> writer = createWriter(streamId);
 
     for (int i = 0; i < 10; i++) {
       writer.append(StreamFileTestUtils.createEvent(i * 1000, "Testing " + i));
@@ -139,19 +140,4 @@ public abstract class StreamFileJanitorTestBase {
 
     throw new IOException("Not a valid generation directory");
   }
-
-  /**
-   * A stream admin for interact with files only (the product one operations on both file and HBase).
-   */
-  protected static final class TestStreamFileAdmin extends AbstractStreamFileAdmin {
-
-    @Inject
-    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                        StreamCoordinatorClient streamCoordinatorClient,
-                        StreamConsumerStateStoreFactory stateStoreFactory) {
-      super(locationFactory, cConf, streamCoordinatorClient, stateStoreFactory, new NoOpNotificationFeedManager(),
-            new NoopStreamAdmin());
-    }
-  }
-
 }

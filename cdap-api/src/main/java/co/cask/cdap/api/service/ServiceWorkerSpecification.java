@@ -21,6 +21,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.worker.WorkerSpecification;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,7 +31,10 @@ import java.util.Set;
 
 /**
  * Specification for {@link ServiceWorker}s.
+ *
+ * @deprecated As of version 2.8.0, replaced by {@link WorkerSpecification}
  */
+@Deprecated
 public final class ServiceWorkerSpecification implements ProgramSpecification, PropertyProvider {
   private final String className;
   private final String name;

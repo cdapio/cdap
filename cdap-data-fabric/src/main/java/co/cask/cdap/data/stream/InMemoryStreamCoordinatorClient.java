@@ -15,15 +15,15 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.InMemoryPropertyStore;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * In memory implementation for {@link StreamCoordinatorClient}.
@@ -31,13 +31,17 @@ import com.google.inject.Singleton;
 @Singleton
 public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordinatorClient {
 
+  // Global lock for all streams
+  private final Lock lock;
+
   @Inject
-  public InMemoryStreamCoordinatorClient(CConfiguration cConf, StreamAdmin streamAdmin) {
-    super(cConf, streamAdmin);
+  public InMemoryStreamCoordinatorClient() {
+    super();
+    this.lock = new ReentrantLock();
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void doStartUp() throws Exception {
     // No-op
   }
 
@@ -52,7 +56,12 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
   }
 
   @Override
-  public ListenableFuture<Void> streamCreated(String streamName) {
-    return Futures.immediateFuture(null);
+  protected Lock getLock(Id.Stream streamId) {
+    return lock;
+  }
+
+  @Override
+  protected void streamCreated(Id.Stream streamId) {
+    // Nothing to do
   }
 }

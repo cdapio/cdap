@@ -215,7 +215,6 @@ a.headerlink:hover {
 
 div.body p, div.body dd, div.body li {
     line-height: 1.5em;
-    margin-right: 15px;
 }
 
 div.admonition p.admonition-title + p {
@@ -248,6 +247,17 @@ div.warning {
     border: 1px solid #f66;
 }
 
+div.new-icon {
+  position:absolute;
+  z-index: 5;
+  background-image: url(./ico_new.png);
+  display: inline-block;
+  margin-left: -18px;
+  width: 22px;
+  height: 22px;
+  background-repeat: no-repeat
+}
+
 p.admonition-title {
     display: inline;
 }
@@ -261,9 +271,19 @@ p.rubric {
     font-size: 120%;
     font-weight: normal;
     color: #111;
-    margin: 30px 0px 10px -15px;
+    margin: 30px 0px 10px 0px;
     padding: 5px 0 5px 15px;
     text-shadow: 0px 1px 0 white
+}
+
+.sidebar20.sidebar {
+  width: 20%;
+  text-align: center;
+}
+
+.sidebar30.sidebar {
+  width: 30%;
+  text-align: center;
 }
 
 em {

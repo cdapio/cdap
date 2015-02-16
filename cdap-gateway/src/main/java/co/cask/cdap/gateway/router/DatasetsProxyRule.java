@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import org.apache.commons.lang.StringUtils;
@@ -38,6 +39,15 @@ public class DatasetsProxyRule implements ProxyRule {
   public HttpRequest apply(HttpRequest request) {
     String path = URI.create(request.getUri()).normalize().getPath();
     String[] uriParts = StringUtils.split(path, '/');
+    if (uriParts[0].equals(Constants.Gateway.API_VERSION_2_TOKEN)) {
+      return applyToV2(request, uriParts, path);
+    } else if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
+      return applyToV3(request, uriParts, path);
+    }
+    return request;
+  }
+
+  private HttpRequest applyToV2(HttpRequest request, String [] uriParts, String path) {
     if ((uriParts.length >= 4) && uriParts[1].equals("data") && uriParts[2].equals("datasets")) {
       // three parts with '/' wrapping them
       int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + 4;
@@ -50,7 +60,24 @@ public class DatasetsProxyRule implements ProxyRule {
       String datasetName = uriParts[4];
       request.setUri(processDatasetPath(path, insertAt, datasetName));
     }
+    return request;
+  }
 
+  private HttpRequest applyToV3(HttpRequest request, String [] uriParts, String path) {
+    if ((uriParts.length >= 6) && uriParts[3].equals("data") && uriParts[4].equals("datasets")) {
+      // five parts with '/' wrapping them
+      int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + uriParts[3].length() +
+        uriParts[4].length() + 6;
+      String datasetName = uriParts[5];
+      request.setUri(processDatasetPath(path, insertAt, datasetName));
+    } else if ((uriParts.length == 8) && uriParts[3].equals("data") && uriParts[4].equals("explore")
+      && uriParts[5].equals("datasets") && uriParts[7].equals("schema")) {
+      // six parts with '/' wrapping them
+      int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + uriParts[3].length() +
+        uriParts[4].length() + uriParts[5].length() + 7;
+      String datasetName = uriParts[6];
+      request.setUri(processDatasetPath(path, insertAt, datasetName));
+    }
     return request;
   }
 
