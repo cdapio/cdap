@@ -96,7 +96,8 @@ public interface WorkflowConfigurer {
 
   /**
    * Adds a fork as a next sequential step to the {@link Workflow}
+   * @param fork the name of the fork to be added to the {@link Workflow}
    * @param branches {@link List} of branches to be added to the fork
    */
-  void addFork(List<String> branches);
+  void addFork(String fork, List<String> branches);
 }

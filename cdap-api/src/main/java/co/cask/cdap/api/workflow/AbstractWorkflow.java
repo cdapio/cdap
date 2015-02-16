@@ -137,9 +137,10 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a fork to the {@link Workflow}
+   * @param fork the name of the fork to be added to the {@link Workflow}
    * @param branches the list of branches to be added to the {@link Workflow}
    */
-  protected final void addFork(List<String> branches) {
-    configurer.addFork(branches);
+  protected final void addFork(String fork, List<String> branches) {
+    configurer.addFork(fork, branches);
   }
 }

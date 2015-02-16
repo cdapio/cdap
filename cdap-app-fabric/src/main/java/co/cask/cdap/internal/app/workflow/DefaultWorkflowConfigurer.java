@@ -32,10 +32,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Default implementation of {@link WorkflowConfigurer}.
@@ -49,8 +51,10 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
   private final Map<String, WorkflowFork> forks = Maps.newHashMap();
-  private final Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
   private final Map<String, List<WorkflowNode>> branches = Maps.newHashMap();
+  private final Set<String> mapreduces = Sets.newHashSet();
+  private final Set<String> sparks = Sets.newHashSet();
+  private final Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
 
   public DefaultWorkflowConfigurer(Workflow workflow) {
     this.className = workflow.getClass().getName();
@@ -77,15 +81,16 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   public void addMapReduce(String mapReduce) {
     Preconditions.checkNotNull(mapReduce, "MapReduce name is null.");
     Preconditions.checkArgument(!mapReduce.isEmpty(), "MapReduce name is empty.");
-    nodes.add(new WorkflowNode(WorkflowNodeType.ACTION, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                                mapReduce)));
+    mapreduces.add(mapReduce);
+    nodes.add(new WorkflowNode(mapReduce, WorkflowNodeType.ACTION));
   }
 
   @Override
   public void addSpark(String spark) {
     Preconditions.checkNotNull(spark, "Spark program name is null.");
     Preconditions.checkArgument(!spark.isEmpty(), "Spark program name is empty.");
-    nodes.add(new WorkflowNode(WorkflowNodeType.ACTION, new ScheduleProgramInfo(SchedulableProgramType.SPARK, spark)));
+    sparks.add(spark);
+    nodes.add(new WorkflowNode(spark, WorkflowNodeType.ACTION));
   }
 
   @Override
@@ -93,8 +98,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
     customActionMap.put(spec.getName(), spec);
-    nodes.add(new WorkflowNode(WorkflowNodeType.ACTION, new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                                spec.getName())));
+    nodes.add(new WorkflowNode(spec.getName(), WorkflowNodeType.ACTION));
   }
 
   @Override
@@ -104,11 +108,11 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     Preconditions.checkNotNull(branch, "Branch name is null.");
     Preconditions.checkArgument(!branch.isEmpty(), "Branch name is empty.");
 
+    mapreduces.add(mapReduce);
     if (!branches.containsKey(branch)) {
       branches.put(branch, new ArrayList<WorkflowNode>());
     }
-    WorkflowNode node = new WorkflowNode(WorkflowNodeType.ACTION,
-                                         new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, mapReduce));
+    WorkflowNode node = new WorkflowNode(mapReduce, WorkflowNodeType.ACTION);
     branches.get(branch).add(node);
   }
 
@@ -119,11 +123,11 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     Preconditions.checkNotNull(branch, "Branch name is null.");
     Preconditions.checkArgument(!branch.isEmpty(), "Branch name is empty.");
 
+    sparks.add(spark);
     if (!branches.containsKey(branch)) {
       branches.put(branch, new ArrayList<WorkflowNode>());
     }
-    WorkflowNode node = new WorkflowNode(WorkflowNodeType.ACTION,
-                                         new ScheduleProgramInfo(SchedulableProgramType.SPARK, spark));
+    WorkflowNode node = new WorkflowNode(spark, WorkflowNodeType.ACTION);
     branches.get(branch).add(node);
   }
 
@@ -139,13 +143,12 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     if (!branches.containsKey(branch)) {
       branches.put(branch, new ArrayList<WorkflowNode>());
     }
-    WorkflowNode node = new WorkflowNode(WorkflowNodeType.ACTION,
-                                         new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, spec.getName()));
+    WorkflowNode node = new WorkflowNode(spec.getName(), WorkflowNodeType.ACTION);
     branches.get(branch).add(node);
   }
 
   @Override
-  public void addFork(List<String> branchList) {
+  public void addFork(String fork, List<String> branchList) {
     Preconditions.checkArgument(branchList != null, "List of branches for the fork is null.");
     Preconditions.checkArgument(branchList.size() > 1, "Atleast two branches needed for fork.");
 
@@ -157,17 +160,14 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
       forkBranches.add(forkBranch);
     }
 
-    int forkSize = forks.size();
-    // Generate the id for the fork based on its occurrence in the Workflow
-    String forkId = "fork_" + forkSize;
-    forks.put(forkId, new WorkflowFork(forkBranches));
+    forks.put(fork, new WorkflowFork(forkBranches));
 
-    WorkflowNode node = new WorkflowNode(WorkflowNodeType.FORK,
-                                         new ScheduleProgramInfo(SchedulableProgramType.NONE, forkId));
+    WorkflowNode node = new WorkflowNode(fork, WorkflowNodeType.FORK);
     nodes.add(node);
   }
 
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties, nodes, forks, customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, nodes, forks, mapreduces, sparks,
+                                     customActionMap);
   }
 }

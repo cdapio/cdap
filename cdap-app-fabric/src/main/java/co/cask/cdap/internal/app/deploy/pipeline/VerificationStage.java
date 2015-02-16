@@ -165,7 +165,7 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
-        verifyWorkflowAction(appSpec, node.getProgramInfo());
+        verifyWorkflowAction(appSpec, workflowSpec.getProgramInfo(node.getName()));
         break;
       case FORK:
         for (Map.Entry<String, WorkflowFork> entry : workflowSpec.getForks().entrySet()) {
