@@ -28,8 +28,11 @@ import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -42,6 +45,7 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * Configuration for the CDAP CLI.
@@ -58,6 +62,8 @@ public class CLIConfig {
 
   private List<ConnectionChangeListener> connectionChangeListeners;
   private ConnectionInfo connectionInfo;
+
+  private String currentUser = null;
 
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
@@ -100,11 +106,11 @@ public class CLIConfig {
     return hostnameProvided;
   }
 
-  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
-
+  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output,
+                         boolean useSavedToken, boolean verbose) throws Exception {
     this.connectionInfo = connectionInfo;
     try {
-      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, verbose);
+      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, useSavedToken, verbose);
       checkConnection(clientConfig, connectionInfo, accessToken);
       setHostname(connectionInfo.getHostname());
       setPort(connectionInfo.getPort());
@@ -147,18 +153,20 @@ public class CLIConfig {
   }
 
   private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo, PrintStream output,
-                                         boolean verbose) throws IOException {
+                                         boolean useSavedToken, boolean verbose) throws IOException {
 
     if (!isAuthenticationEnabled(connectionInfo)) {
       return null;
     }
 
-    try {
-      AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
-      checkConnection(clientConfig, connectionInfo, savedAccessToken);
-      return savedAccessToken;
-    } catch (UnAuthorizedAccessTokenException ignored) {
-      // access token invalid - fall through to try acquiring token manually
+    if (useSavedToken) {
+      try {
+        AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
+        checkConnection(clientConfig, connectionInfo, savedAccessToken);
+        return savedAccessToken;
+      } catch (UnAuthorizedAccessTokenException ignored) {
+        // access token invalid - fall through to try acquiring token manually
+      }
     }
 
     return getNewAccessToken(connectionInfo, output, verbose);
@@ -183,11 +191,16 @@ public class CLIConfig {
       } else {
         credentialValue = reader.readLine(prompt);
       }
+
+      if (credential.getName().endsWith(".username")) {
+        setCurrentUser(credentialValue);
+      }
       properties.put(credential.getName(), credentialValue);
     }
 
     authenticationClient.configure(properties);
     AccessToken accessToken = authenticationClient.getAccessToken();
+    clientConfig.setAccessToken(accessToken);
 
     if (accessToken != null) {
       if (saveAccessToken(accessToken, connectionInfo.getHostname()) && verbose) {
@@ -296,12 +309,50 @@ public class CLIConfig {
     }
   }
 
+  public void setCurrentUser(String user) {
+    currentUser = user;
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getNamespace(), clientConfig.getBaseURI());
+    }
+  }
+
   public void setAccessToken(AccessToken accessToken) {
     clientConfig.setAccessToken(accessToken);
   }
 
   public void addHostnameChangeListener(ConnectionChangeListener listener) {
     this.connectionChangeListeners.add(listener);
+  }
+
+  public String getPrompt() {
+    return "cdap (" + (currentUser != null ? currentUser + " @ " : "") + getURI() + "/" + getCurrentNamespace() + ")> ";
+  }
+
+  public Supplier<URI> getURISupplier() {
+    return new Supplier<URI>() {
+      @Override
+      public URI get() {
+        return getURI();
+      }
+    };
+  }
+
+  public Supplier<Multimap<String, String>> getHeadersSupplier() {
+    return new Supplier<Multimap<String, String>>() {
+      @Override
+      public Multimap<String, String> get() {
+        return getHeaders();
+      }
+    };
+  }
+
+  private Multimap<String, String> getHeaders() {
+    HashMultimap<String, String> headers = HashMultimap.create();
+    AccessToken accessToken = clientConfig.getAccessToken();
+    if (accessToken != null) {
+      headers.put(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+    }
+    return headers;
   }
 
   /**
