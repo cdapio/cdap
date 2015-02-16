@@ -44,7 +44,6 @@ public class DefaultWorkerManager extends AbstractWorkerManager {
     this.programId = programId;
     this.appId = programId.getApplicationId();
     this.workerId = programId.getRunnableId();
-
     this.appFabricClient = appFabricClient;
     this.applicationManager = applicationManager;
   }

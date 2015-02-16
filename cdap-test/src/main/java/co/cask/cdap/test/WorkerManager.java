@@ -23,8 +23,7 @@ public interface WorkerManager {
 
   /**
    * Changes the number of instances.
-   *
-   * @param instances number of instances to change to.
+   * @param instances number of instances to change to
    */
   void setRunnableInstances(int instances);
 
@@ -35,6 +34,7 @@ public interface WorkerManager {
 
   /**
    * Checks if the worker is running.
+   * @return true if worker is running
    */
   boolean isRunning();
 

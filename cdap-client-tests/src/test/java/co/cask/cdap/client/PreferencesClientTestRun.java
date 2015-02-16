@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
  * Test for {@link PreferencesClient}
  */
 @Category(XSlowTests.class)
-public class  PreferencesClientTestRun extends ClientTestBase {
+public class PreferencesClientTestRun extends ClientTestBase {
   private static final Gson GSON = new Gson();
 
   private PreferencesClient client;

@@ -292,6 +292,48 @@ public class ProgramClient {
   }
 
   /**
+   * Gets the number of instances that a worker is currently running on.
+   *
+   * @param appId ID of the application that the worker belongs to
+   * @param workerId ID of the worker
+   * @return number of instances that the worker is currently running on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or worker could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public int getWorkerInstances(String appId, String workerId) throws IOException, NotFoundException,
+    UnAuthorizedAccessTokenException {
+    URL url = config.resolveURL(String.format("apps/%s/workers/%s/instances", appId, workerId));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application or worker", appId + "/" + workerId);
+    }
+    return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
+  }
+
+  /**
+   * Sets the number of instances that a worker will run on.
+   *
+   * @param appId ID of the application that the worker belongs to
+   * @param workerId ID of the worker
+   * @param instances number of instances for the worker to run on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or worker could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void setWorkerInstances(String appId, String workerId, int instances) throws IOException, NotFoundException,
+    UnAuthorizedAccessTokenException {
+    URL url = config.resolveURL(String.format("apps/%s/workers/%s/instances", appId, workerId));
+    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application or worker", appId + "/" + workerId);
+    }
+  }
+
+  /**
    * Gets the number of instances that a procedure is currently running on.
    *
    * @param appId ID of the application that the procedure belongs to

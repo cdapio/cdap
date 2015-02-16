@@ -23,6 +23,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -252,13 +253,39 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
-  public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
-    return null;
+  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
+    final ProgramId workerId = new ProgramId(applicationId, workerName, ProgramType.WORKER);
+    return new AbstractWorkerManager() {
+      @Override
+      public void setRunnableInstances(int instances) {
+        Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
+        try {
+          programClient.setWorkerInstances(applicationId, workerName, instances);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+
+      @Override
+      public void stop() {
+        stopProgram(workerId);
+      }
+
+      @Override
+      public boolean isRunning() {
+        try {
+          String status = programClient.getStatus(applicationId, ProgramType.WORKER, workerName);
+          return "RUNNING".equals(status);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
   }
 
   @Override
   public WorkerManager startWorker(String workerName) {
-    return null;
+    return startWorker(workerName, ImmutableMap.<String, String>of());
   }
 
   @Override

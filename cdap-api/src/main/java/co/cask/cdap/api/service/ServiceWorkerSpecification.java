@@ -35,7 +35,7 @@ import java.util.Set;
  * @deprecated As of version 2.8.0, replaced by {@link WorkerSpecification}
  */
 @Deprecated
-public class ServiceWorkerSpecification implements ProgramSpecification, PropertyProvider {
+public final class ServiceWorkerSpecification implements ProgramSpecification, PropertyProvider {
   private final String className;
   private final String name;
   private final String description;
