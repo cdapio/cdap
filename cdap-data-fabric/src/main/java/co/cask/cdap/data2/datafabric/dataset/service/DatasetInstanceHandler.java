@@ -53,6 +53,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -103,7 +104,16 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
+      // try finding type info in the dataset's namespace first, then the system namespace
+      DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), spec.getType());
+      if (typeMeta == null) {
+        // Dataset type not found in the instance's namespace or the system namespace. Bail out.
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             String.format("Dataset type %s used by dataset %s not found", spec.getType(), name));
+        return;
+      }
+      // typeMeta is guaranteed to be non-null now.
+      DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
       responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
     }
   }
@@ -114,7 +124,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/datasets/{name}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                  @PathParam("name") String name) {
+                     @PathParam("name") String name) {
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
@@ -197,8 +207,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties, String namespaceId,
                                         String name, HttpResponder responder, String operation) {
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
+    String typeName = creationProperties.getTypeName();
+    DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), typeName);
     if (typeMeta == null) {
+      // Type not found in the instance's namespace and the system namespace. Bail out.
       String message = String.format("Cannot %s dataset %s.%s: unknown type %s",
                                      operation, namespaceId, name, creationProperties.getTypeName());
       LOG.warn(message);
@@ -289,6 +301,28 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
+   * Finds the {@link DatasetTypeMeta} for the specified dataset type name.
+   * Search order - first in the specified namespace, then in the 'system' namespace from defaultModules
+   *
+   * @param namespaceId {@link Id.Namespace} for the specified namespace
+   * @param typeName the name of the dataset type to search
+   * @return {@link DatasetTypeMeta} for the type if found in either the specified namespace or in the system namespace,
+   * null otherwise.
+   * TODO: This may need to move to a util class eventually
+   */
+  @Nullable
+  private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) {
+    Id.DatasetType datasetTypeId = Id.DatasetType.from(namespaceId, typeName);
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(datasetTypeId);
+    if (typeMeta == null) {
+      // Type not found in the instance's namespace. Now try finding it in the system namespace
+      Id.DatasetType systemDatasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName);
+      typeMeta = implManager.getTypeInfo(systemDatasetTypeId);
+    }
+    return typeMeta;
+  }
+
+  /**
    * Drops a dataset.
    * @param spec specification of dataset to be dropped.
    * @return true if dropped successfully, false if dataset is not found.
@@ -303,7 +337,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return false;
     }
 
-    opExecutorClient.drop(datasetInstaceId, implManager.getTypeInfo(spec.getType()), spec);
+    DatasetTypeMeta typeMeta = getTypeInfo(datasetInstaceId.getNamespace(), spec.getType());
+    if (typeMeta == null) {
+      return false;
+    }
+    opExecutorClient.drop(datasetInstaceId, typeMeta, spec);
     return true;
   }
 

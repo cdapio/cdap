@@ -72,6 +72,7 @@ public class DatasetMetaTableUtil {
   }
 
   private static void addTypes(DatasetFramework framework) throws DatasetManagementException {
+    // meta tables should be in the system namespace
     Id.DatasetModule typeMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "typeMDSModule");
     Id.DatasetModule instanceMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "instanceMDSModule");
     framework.addModule(typeMDSModuleId, new SingleTypeModule(DatasetTypeMDS.class));

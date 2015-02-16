@@ -22,6 +22,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -50,7 +51,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -83,6 +88,13 @@ public class OpenCloseDataSetTest {
       }
     }
   };
+
+  @BeforeClass
+  public static void setup() throws IOException {
+    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
+      .create(DefaultId.NAMESPACE.getId());
+    Locations.mkdirsIfNotExists(location);
+  }
 
   @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
@@ -193,5 +205,12 @@ public class OpenCloseDataSetTest {
     Assert.assertEquals(TrackingTable.getTracker("cdap.user.bar", "open"),
                         TrackingTable.getTracker("cdap.user.bar", "close"));
 
+  }
+
+  @AfterClass
+  public static void tearDown() throws IOException {
+    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
+      .create(DefaultId.NAMESPACE.getId());
+    Locations.deleteQuietly(location, true);
   }
 }

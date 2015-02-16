@@ -97,8 +97,13 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
-    return delegate.hasType(typeName);
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return delegate.hasSystemType(typeName);
+  }
+
+  @Override
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return delegate.hasType(datasetTypeId);
   }
 
   @Override
