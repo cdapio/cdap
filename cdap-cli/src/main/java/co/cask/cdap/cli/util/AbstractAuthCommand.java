@@ -28,7 +28,7 @@ import java.io.PrintStream;
  */
 public abstract class AbstractAuthCommand implements Command {
 
-  private final CLIConfig cliConfig;
+  protected final CLIConfig cliConfig;
 
   public AbstractAuthCommand(CLIConfig cliConfig) {
     this.cliConfig = cliConfig;
@@ -39,8 +39,10 @@ public abstract class AbstractAuthCommand implements Command {
     try {
       perform(arguments, printStream);
     } catch (UnAuthorizedAccessTokenException e) {
-      cliConfig.updateAccessToken(printStream);
-      perform(arguments, printStream);
+      // TODO: commented out for demo
+//      cliConfig.updateAccessToken(printStream);
+//      perform(arguments, printStream);
+      printStream.println("Unauthorized");
     }
   }
 

@@ -52,8 +52,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public PreferencesHttpHandler(Authenticator authenticator, PreferencesStore preferencesStore,
-                                StoreFactory storeFactory) {
-    super(authenticator);
+                                StoreFactory storeFactory, SecureHandler secureHandler) {
+    super(authenticator, secureHandler);
     this.preferencesStore = preferencesStore;
     this.store = storeFactory.create();
   }

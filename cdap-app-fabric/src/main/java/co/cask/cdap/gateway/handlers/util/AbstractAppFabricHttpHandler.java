@@ -28,23 +28,30 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.gateway.handlers.SecureHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.DatasetRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
+import co.cask.common.authorization.ObjectId;
+import co.cask.common.authorization.Permission;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -88,6 +95,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
    * Name of the header that should specify the application archive
    */
   public static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+
+  protected final SecureHandler secureHandler;
 
   /**
    * Class to represent status of programs.
@@ -135,8 +144,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  public AbstractAppFabricHttpHandler(Authenticator authenticator) {
+  public AbstractAppFabricHttpHandler(Authenticator authenticator, SecureHandler secureHandler) {
     super(authenticator);
+    this.secureHandler = secureHandler;
   }
 
   protected int getInstances(HttpRequest request) throws IOException, NumberFormatException {
@@ -177,7 +187,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
+  protected final void programList(HttpResponder responder, final String namespaceId, ProgramType type,
                                    @Nullable String applicationId, Store store) {
     if (applicationId != null && applicationId.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Application id is empty");
@@ -197,7 +207,18 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       if (programRecords == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        responder.sendJson(HttpResponseStatus.OK, programRecords);
+        secureHandler.sendProtectedJsonList(responder, HttpResponseStatus.OK,
+                                            ObjectIds.namespace(namespaceId),
+                                            programRecords,
+                                            ImmutableList.of(Permission.READ),
+                                            new Function<ProgramRecord, ObjectId>() {
+          @Nullable
+          @Override
+          public ObjectId apply(@Nullable ProgramRecord input) {
+            Preconditions.checkNotNull(input);
+            return ObjectIds.program(namespaceId, input.getApp(), input.getType(), input.getId());
+          }
+        });
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -301,8 +322,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
                              final String appId, final String programId, ProgramType type,
                              ProgramRuntimeService runtimeService) {
     try {
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, programId), type));
+      ProgramLiveInfo liveInfo = runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, programId), type);
+      secureHandler.sendProtectedJson(responder, HttpResponseStatus.OK, liveInfo,
+                                      ObjectIds.program(namespaceId, appId, type, programId),
+                                      ImmutableList.of(Permission.LIFECYCLE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
