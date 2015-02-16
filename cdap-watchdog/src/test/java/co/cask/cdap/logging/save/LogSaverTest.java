@@ -102,12 +102,12 @@ public class LogSaverTest extends KafkaTestBase {
   private static DatasetFramework dsFramework;
   private static LogSaverTableUtil tableUtil;
   private static CConfiguration cConf;
-  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "table"), new InMemoryOrderedTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
+                          new InMemoryOrderedTableModule());
 
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
     LOG.info("Log base dir {}", logBaseDir);

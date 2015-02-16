@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
@@ -63,12 +64,12 @@ public class TestFileLogging {
 
   private static DatasetFramework dsFramework;
   private static InMemoryTxSystemClient txClient;
-  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void setUpContext() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "table"), new InMemoryOrderedTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
+                          new InMemoryOrderedTableModule());
 
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
