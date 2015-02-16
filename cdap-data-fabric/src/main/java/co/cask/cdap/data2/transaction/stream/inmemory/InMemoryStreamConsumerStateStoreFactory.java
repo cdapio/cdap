@@ -41,7 +41,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
-    String tableName = StreamUtils.constructStateStoreTableName(namespace);
+    String tableName = StreamUtils.getStateStoreTableName(namespace);
     if (!tableService.exists(tableName)) {
       tableService.create(tableName);
     }
@@ -51,7 +51,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
 
   @Override
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
-    String tableName = StreamUtils.constructStateStoreTableName(namespace);
+    String tableName = StreamUtils.getStateStoreTableName(namespace);
     tableService.drop(tableName);
   }
 }

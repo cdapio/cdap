@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.proto.Id;
@@ -43,7 +42,7 @@ public abstract class StreamAdminTest {
     StreamAdmin streamAdmin = getStreamAdmin();
 
     String streamName = "streamName";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from("fooNamespace", streamName);
     Id.Stream otherStreamId = Id.Stream.from("otherNamespace", streamName);
 
     Assert.assertFalse(streamAdmin.exists(streamId));
@@ -66,13 +65,14 @@ public abstract class StreamAdminTest {
 
     Id.Stream otherStream = Id.Stream.from("otherNamespace", "otherStream");
 
-    List<Id.Stream> defaultStreams = Lists.newArrayList();
+    String fooNamespace = "fooNamespace";
+    List<Id.Stream> fooStreams = Lists.newArrayList();
     for (int i = 0; i < 4; i++) {
-      defaultStreams.add(Id.Stream.from(Constants.DEFAULT_NAMESPACE, "stream" + i));
+      fooStreams.add(Id.Stream.from(fooNamespace, "stream" + i));
     }
 
     List<Id.Stream> allStreams = Lists.newArrayList();
-    allStreams.addAll(defaultStreams);
+    allStreams.addAll(fooStreams);
     allStreams.add(otherStream);
 
     for (Id.Stream stream : allStreams) {
@@ -82,10 +82,10 @@ public abstract class StreamAdminTest {
       Assert.assertNotEquals(0, getStreamSize(stream));
     }
 
-    streamAdmin.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
+    streamAdmin.dropAllInNamespace(Id.Namespace.from(fooNamespace));
 
     // All of the streams within the default namespace should have no data in them
-    for (Id.Stream defaultStream : defaultStreams) {
+    for (Id.Stream defaultStream : fooStreams) {
       Assert.assertEquals(0, getStreamSize(defaultStream));
     }
     // otherStream isn't in the default namespace so its data is not deleted in the above call to dropAllInNamespace.

@@ -52,7 +52,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
-    byte[] tableName = Bytes.toBytes(constructTableName(namespace));
+    byte[] tableName = Bytes.toBytes(getTableName(namespace));
 
     HBaseAdmin admin = new HBaseAdmin(hConf);
     if (!admin.tableExists(tableName)) {
@@ -80,7 +80,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
     HBaseAdmin admin = new HBaseAdmin(hConf);
     try {
-      byte[] tableName = Bytes.toBytes(constructTableName(namespace));
+      byte[] tableName = Bytes.toBytes(getTableName(namespace));
 
       if (admin.tableExists(tableName)) {
         admin.disableTable(tableName);
@@ -91,7 +91,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     }
   }
 
-  private String constructTableName(Id.Namespace namespace) {
-    return HBaseTableUtil.getHBaseTableName(StreamUtils.constructStateStoreTableName(namespace));
+  private String getTableName(Id.Namespace namespace) {
+    return HBaseTableUtil.getHBaseTableName(StreamUtils.getStateStoreTableName(namespace));
   }
 }

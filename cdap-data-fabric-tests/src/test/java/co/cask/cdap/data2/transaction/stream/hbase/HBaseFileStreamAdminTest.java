@@ -58,7 +58,6 @@ import org.junit.rules.TemporaryFolder;
  *
  */
 @Category(SlowTests.class)
-
 public class HBaseFileStreamAdminTest extends StreamAdminTest {
 
   @ClassRule

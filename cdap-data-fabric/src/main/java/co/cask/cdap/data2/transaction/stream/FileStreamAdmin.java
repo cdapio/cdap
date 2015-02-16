@@ -331,6 +331,7 @@ public class FileStreamAdmin implements StreamAdmin {
     return getStreamBaseLocation(streamId).append(CONFIG_FILE_NAME);
   }
 
+  // Constructs path: /.../<namespace>/streams/<streamName>, as expected by StreamUtils#getStreamIdFromLocation
   private Location getStreamBaseLocation(Id.Stream streamId) throws IOException {
     return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getName());
   }

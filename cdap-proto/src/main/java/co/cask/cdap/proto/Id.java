@@ -23,8 +23,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
-import javax.ws.rs.HEAD;
-
 /**
  * Contains collection of classes representing different types of Ids.
  */
