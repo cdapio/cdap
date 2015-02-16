@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +89,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
                      @QueryParam("context") String context,
-                     @QueryParam("metric") String metric) throws Exception {
+                     @QueryParam("metric") String metric,
+                     @QueryParam("groupBy") String groupBy) throws Exception {
     try {
       // todo: refactor parsing time range params
       // sets time range, query type, etc.
@@ -108,10 +108,15 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
         tagsSliceBy.put(tagValues[i], tagValues[i + 1]);
       }
 
+      // groupBy tags are comma separated
+      List<String> groupByTags;
+      groupByTags = (groupBy == null) ? Lists.<String>newArrayList() :
+        Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+
       CubeQuery query = new CubeQuery(queryTimeParams.getStartTs(), queryTimeParams.getEndTs(),
                                       queryTimeParams.getResolution(), metric,
                                           // todo: figure out MeasureType
-                                      MeasureType.COUNTER, tagsSliceBy, new ArrayList<String>());
+                                      MeasureType.COUNTER, tagsSliceBy, groupByTags);
 
       Collection<TimeSeries> result = metricStore.query(query);
       responder.sendJson(HttpResponseStatus.OK, result);
