@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.workflows')
   .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
-    $scope.data = {};
+
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;
@@ -10,9 +10,18 @@ angular.module(PKG.name + '.feature.workflows')
       _cdapNsPath: basePath
     })
       .then(function(res) {
-        console.log("Workflow: ", res);
+        $scope.actions = res.actions;
       });
 
+
+    $scope.goToDetailActionView = function(programId, programType) {
+      // As of 2.7 only a mapreduce job is scheduled in a workflow.
+      if (programType === 'MAPREDUCE') {
+        $state.go('mapreduce.detail', {
+          programId: programId
+        });
+      }
+    };
 
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
@@ -29,10 +38,7 @@ angular.module(PKG.name + '.feature.workflows')
             } else if (duration > 60000 && duration < 3600000) {
               $scope.duration = duration + ' minutes';
             } else {
-              // Assuming that none of the 'scheduled' workflow programs
-              // are going to run for more than an hour. If yes then he is a
-              // worse developer than me.
-              $socpe.duration = 'N/A';
+              $scope.duration = 'N/A';
             }
             $scope.startTime = new Date(startTime);
           }

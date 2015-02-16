@@ -63,7 +63,10 @@ angular.module(PKG.name + '.feature.workflows')
 
               .state('workflows.detail.runs.detail.data', {
                 url: '/data',
-                template: 'Data Blah',
+                template:
+                '<div class="well well-lg text-center">' +
+                  '<div> Workflow: Data - Work In Progress</div> ' +
+                '</div>',
                 ncyBreadcrumb: {
                   parent: "apps.detail.overview",
                   label: "{{$state.params.programId}} / {{$state.params.runId}}"
@@ -71,7 +74,10 @@ angular.module(PKG.name + '.feature.workflows')
               })
               .state('workflows.detail.runs.detail.configuration', {
                 url: '/configuration',
-                template: 'Configuration Blah',
+                template:
+                '<div class="well well-lg text-center">' +
+                  '<div> Workflow: Configuration - Work In Progress</div> ' +
+                '</div>',
                 ncyBreadcrumb: {
                   parent: "apps.detail.overview",
                   label: "{{$state.params.programId}} / {{$state.params.runId}}"
@@ -79,7 +85,10 @@ angular.module(PKG.name + '.feature.workflows')
               })
               .state('workflows.detail.runs.detail.log', {
                 url: '/log',
-                template: 'Log Blah',
+                template:
+                '<div class="well well-lg text-center">' +
+                  '<div> Workflow: Log - Work In Progress</div> ' +
+                '</div>',
                 ncyBreadcrumb: {
                   parent: "apps.detail.overview",
                   label: "{{$state.params.programId}} / {{$state.params.runId}}"
