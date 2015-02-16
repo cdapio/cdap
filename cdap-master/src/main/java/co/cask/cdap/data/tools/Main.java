@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -37,6 +38,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTableAdmin;
+import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
@@ -45,6 +47,8 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -166,6 +170,7 @@ public class Main {
   }
 
   private void upgradeSystemDatasets(Injector injector) throws Exception {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     // Setting up all system datasets to be upgraded, collecting them from respective components
     DatasetFramework framework = createRegisteredDatasetFramework(injector);
     // dataset service
@@ -178,6 +183,8 @@ public class Main {
     LogSaverTableUtil.setupDatasets(framework);
     // scheduler metadata
     ScheduleStoreTableUtil.setupDatasets(framework);
+    // metrics data
+    DefaultMetricDatasetFactory.setupDatasets(cConf, framework);
 
     // Upgrade all datasets
     for (DatasetSpecification spec : framework.getInstances()) {
@@ -204,9 +211,13 @@ public class Main {
     DatasetFramework datasetFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
-    datasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
-    datasetFramework.addModule("core", new CoreDatasetsModule());
-    datasetFramework.addModule("fileSet", new FileSetModule());
+    // TODO: this doesn't sound right. find out why its needed.
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "orderedTable"),
+                               new HBaseOrderedTableModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
+                               new HBaseMetricsTableModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
 
     return datasetFramework;
   }

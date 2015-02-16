@@ -23,6 +23,7 @@ import co.cask.cdap.explore.service.datasets.KeyExtendedStructValueTableDefiniti
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.KeyValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.WritableKeyStructValueTableDefinition;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
@@ -42,10 +43,17 @@ import java.net.URL;
  */
 @Category(XSlowTests.class)
 public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
+
+  private static final Id.DatasetModule keyExtendedStructValueTable =
+    Id.DatasetModule.from(NAMESPACE_ID, "keyExtendedStructValueTable");
+  private static final Id.DatasetModule kvTable = Id.DatasetModule.from(NAMESPACE_ID, "kvTable");
+  private static final Id.DatasetModule writableKeyStructValueTable =
+    Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
+
   @BeforeClass
   public static void start() throws Exception {
     startServices();
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
   }
 
   private static void initKeyValueTable(String tableName, boolean addData) throws Exception {
@@ -81,7 +89,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
   @Test
@@ -127,7 +135,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void writeIntoOtherDatasetTest() throws Exception {
 
-    datasetFramework.addModule("keyExtendedStructValueTable",
+    datasetFramework.addModule(keyExtendedStructValueTable,
                                new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
     datasetFramework.addInstance("keyExtendedStructValueTable", "extended_table", DatasetProperties.EMPTY);
     try {
@@ -174,18 +182,18 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     } finally {
       datasetFramework.deleteInstance("my_table");
       datasetFramework.deleteInstance("extended_table");
-      datasetFramework.deleteModule("keyExtendedStructValueTable");
+      datasetFramework.deleteModule(keyExtendedStructValueTable);
     }
   }
 
   @Test
   public void writeIntoNonScannableDataset() throws Exception {
 
-    datasetFramework.addModule("keyExtendedStructValueTable",
+    datasetFramework.addModule(keyExtendedStructValueTable,
                                new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
     datasetFramework.addInstance("keyExtendedStructValueTable", "extended_table", DatasetProperties.EMPTY);
 
-    datasetFramework.addModule("writableKeyStructValueTable",
+    datasetFramework.addModule(writableKeyStructValueTable,
                                new WritableKeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addInstance("writableKeyStructValueTable", "writable_table", DatasetProperties.EMPTY);
     try {
@@ -232,8 +240,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     } finally {
       datasetFramework.deleteInstance("writable_table");
       datasetFramework.deleteInstance("extended_table");
-      datasetFramework.deleteModule("writableKeyStructValueTable");
-      datasetFramework.deleteModule("keyExtendedStructValueTable");
+      datasetFramework.deleteModule(writableKeyStructValueTable);
+      datasetFramework.deleteModule(keyExtendedStructValueTable);
     }
   }
 
@@ -277,7 +285,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void writeFromNativeTableIntoDatasetTest() throws Exception {
 
-    datasetFramework.addModule("kvTable", new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addModule(kvTable, new KeyValueTableDefinition.KeyValueTableModule());
     datasetFramework.addInstance("kvTable", "simple_table", DatasetProperties.EMPTY);
     try {
       URL loadFileUrl = getClass().getResource("/test_table.dat");
@@ -302,14 +310,14 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     } finally {
       exploreClient.submit("drop table if exists test").get().close();
       datasetFramework.deleteInstance("simple_table");
-      datasetFramework.deleteModule("kvTable");
+      datasetFramework.deleteModule(kvTable);
     }
   }
 
   @Test
   public void writeFromDatasetIntoNativeTableTest() throws Exception {
 
-    datasetFramework.addModule("kvTable", new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addModule(kvTable, new KeyValueTableDefinition.KeyValueTableModule());
     datasetFramework.addInstance("kvTable", "simple_table", DatasetProperties.EMPTY);
     try {
       exploreClient.submit("create table test (first INT, second STRING) ROW FORMAT " +
@@ -341,7 +349,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     } finally {
       exploreClient.submit("drop table if exists test").get().close();
       datasetFramework.deleteInstance("simple_table");
-      datasetFramework.deleteModule("kvTable");
+      datasetFramework.deleteModule(kvTable);
     }
   }
 

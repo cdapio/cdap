@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import org.apache.twill.kafka.client.KafkaConsumer;
 
 /**

@@ -91,7 +91,8 @@ public abstract class GatewayTestBase {
   private static Injector injector;
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
-  private static MetricsQueryService metrics;
+  private static MetricsQueryService metricsQueryService;
+  private static MetricsCollectionService metricsCollectionService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
@@ -157,12 +158,6 @@ public abstract class GatewayTestBase {
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-
-          MockMetricsCollectionService metricsCollectionService = new
-            MockMetricsCollectionService();
-          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
           bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
@@ -179,9 +174,11 @@ public abstract class GatewayTestBase {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    metrics = injector.getInstance(MetricsQueryService.class);
     appFabricServer.startAndWait();
-    metrics.startAndWait();
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.startAndWait();
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
@@ -203,7 +200,8 @@ public abstract class GatewayTestBase {
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();
-    metrics.stopAndWait();
+    metricsCollectionService.stopAndWait();
+    metricsQueryService.stopAndWait();
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();

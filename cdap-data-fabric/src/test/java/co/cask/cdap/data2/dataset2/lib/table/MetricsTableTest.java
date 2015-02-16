@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -44,6 +45,8 @@ public abstract class MetricsTableTest {
   private static final byte ONES = 0x7f;
 
   protected abstract MetricsTable getTable(String name) throws Exception;
+
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   protected static final byte[] A = Bytes.toBytes(1L);
   protected static final byte[] B = Bytes.toBytes(2L);

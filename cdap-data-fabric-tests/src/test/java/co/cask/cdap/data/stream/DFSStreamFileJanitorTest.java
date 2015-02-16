@@ -31,6 +31,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -127,8 +128,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   }
 
   @Override
-  protected FileWriter<StreamEvent> createWriter(String streamName) throws IOException {
-    StreamConfig config = streamAdmin.getConfig(streamName);
+  protected FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException {
+    StreamConfig config = streamAdmin.getConfig(streamId);
     return fileWriterFactory.create(config, StreamUtils.getGeneration(config));
   }
 }

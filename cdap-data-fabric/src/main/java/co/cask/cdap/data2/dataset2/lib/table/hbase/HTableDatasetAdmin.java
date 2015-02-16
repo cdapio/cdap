@@ -61,7 +61,7 @@ public class HTableDatasetAdmin implements DatasetAdmin {
 
   @Override
   public void create() throws IOException {
-    getAdmin().createTable(tableDescriptor);
+    tableUtil.createTableIfNotExists(getAdmin(), tableName, tableDescriptor, null);
   }
 
   @Override

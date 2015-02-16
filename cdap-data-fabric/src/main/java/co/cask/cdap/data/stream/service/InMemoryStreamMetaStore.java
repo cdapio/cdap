@@ -42,25 +42,25 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public void addStream(String accountId, String streamName) throws Exception {
-    streams.put(accountId, streamName);
+  public void addStream(Id.Stream streamId) throws Exception {
+    streams.put(streamId.getNamespaceId(), streamId.getName());
   }
 
   @Override
-  public void removeStream(String accountId, String streamName) throws Exception {
-    streams.remove(accountId, streamName);
+  public void removeStream(Id.Stream streamId) throws Exception {
+    streams.remove(streamId.getNamespaceId(), streamId.getName());
   }
 
   @Override
-  public boolean streamExists(String accountId, String streamName) throws Exception {
-    return streams.containsEntry(accountId, streamName);
+  public boolean streamExists(Id.Stream streamId) throws Exception {
+    return streams.containsEntry(streamId.getNamespaceId(), streamId.getName());
   }
 
   @Override
-  public List<StreamSpecification> listStreams(String accountId) throws Exception {
+  public List<StreamSpecification> listStreams(Id.Namespace namespaceId) throws Exception {
     ImmutableList.Builder<StreamSpecification> builder = ImmutableList.builder();
     synchronized (streams) {
-      for (String stream : streams.get(accountId)) {
+      for (String stream : streams.get(namespaceId.getId())) {
         builder.add(new StreamSpecification.Builder().setName(stream).create());
       }
     }
