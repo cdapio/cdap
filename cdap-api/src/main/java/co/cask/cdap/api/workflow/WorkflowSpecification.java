@@ -121,10 +121,12 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     sb.append("className='").append(className).append('\'');
     sb.append(", name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
-    sb.append(", customActionMap=").append(customActionMap);
+    sb.append(", properties=").append(properties);
     sb.append(", nodes=").append(nodes);
     sb.append(", forks=").append(forks);
-    sb.append(", properties=").append(properties);
+    sb.append(", mapreduces=").append(mapreduces);
+    sb.append(", sparks=").append(sparks);
+    sb.append(", customActionMap=").append(customActionMap);
     sb.append('}');
     return sb.toString();
   }
