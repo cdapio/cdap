@@ -74,7 +74,7 @@ public final class Id  {
   }
 
   /**
-   * Program Id identifies a given application.
+   * Application Id identifies a given application.
    * Application is global unique if used within context of namespace.
    */
   public static final class Application {
@@ -353,7 +353,6 @@ public final class Id  {
     }
   }
 
-
   /**
    * Id.Stream uniquely identifies a stream.
    */
@@ -437,6 +436,82 @@ public final class Id  {
         .add("namespace", namespace)
         .add("streamName", streamName)
         .toString();
+    }
+  }
+
+  /**
+   * Dataset Module Id identifies a given dataset module.
+   */
+  public static final class DatasetModule {
+    private final Namespace namespace;
+    private final String moduleId;
+
+    public DatasetModule(final Namespace namespace, final String moduleId) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(moduleId, "Dataset module id cannot be null.");
+      Preconditions.checkArgument(isValidModuleId(moduleId), "Invalid characters found in module Id. " +
+        "Module id can contain alphabets, numbers or _, -, . characters");
+      this.namespace = namespace;
+      this.moduleId = moduleId;
+    }
+
+    /**
+     * Allow '.' and '$' for modules since module ids can be fully qualified class names
+     */
+    private boolean isValidModuleId(String moduleId) {
+      return CharMatcher.inRange('A', 'Z')
+        .or(CharMatcher.inRange('a', 'z'))
+        .or(CharMatcher.is('-'))
+        .or(CharMatcher.is('_'))
+        .or(CharMatcher.is('.'))
+        .or(CharMatcher.is('$'))
+        .or(CharMatcher.inRange('0', '9')).matchesAllOf(moduleId);
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    public String getId() {
+      return moduleId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      DatasetModule that = (DatasetModule) o;
+      return namespace.equals(that.namespace) && moduleId.equals(that.moduleId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, moduleId);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+       .add("namespace", namespace)
+       .add("module", moduleId)
+       .toString();
+    }
+
+    public static DatasetModule from(Namespace id, String moduleId) {
+      return new DatasetModule(id, moduleId);
+    }
+
+    public static DatasetModule from(String namespaceId, String moduleId) {
+      return new DatasetModule(Namespace.from(namespaceId), moduleId);
     }
   }
 }

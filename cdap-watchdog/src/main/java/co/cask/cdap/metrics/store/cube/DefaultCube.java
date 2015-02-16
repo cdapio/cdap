@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.metrics.data.TimeSeriesInterpolator;
 import co.cask.cdap.metrics.store.timeseries.Fact;
 import co.cask.cdap.metrics.store.timeseries.FactScan;
 import co.cask.cdap.metrics.store.timeseries.FactScanResult;
@@ -25,8 +26,10 @@ import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Table;
 
 import java.util.Collection;
@@ -131,7 +134,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public void delete(CubeQuery query) throws Exception {
+  public void delete(CubeDeleteQuery query) throws Exception {
     //this may be very inefficient and its better to use TTL, this is to only support existing old functionality.
     List<TagValue> tagValues = Lists.newArrayList();
     // find all the aggregations that match the sliceByTags in the query and
@@ -148,6 +151,17 @@ public class DefaultCube implements Cube {
         }
       }
     }
+  }
+
+  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
+    return resolutionToFactTable.get(query.getResolution()).findNextAvailableTags(query.getTagValues(),
+                                                                                  query.getStartTs(), query.getEndTs());
+  }
+
+  @Override
+  public Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception {
+    return resolutionToFactTable.get(query.getResolution()).getMeasureNames(query.getTagValues(),
+                                                                            query.getStartTs(), query.getEndTs());
   }
 
   @Nullable
@@ -220,7 +234,6 @@ public class DefaultCube implements Cube {
 
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
                                                       Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
-
     List<TimeSeries> result = Lists.newArrayList();
     for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
       List<TimeValue> timeValues = Lists.newArrayList();
@@ -228,7 +241,14 @@ public class DefaultCube implements Cube {
         timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
       }
       Collections.sort(timeValues);
-      result.add(new TimeSeries(query.getMeasureName(), row.getKey(), timeValues));
+      PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
+        new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
+      List<TimeValue> resultTimeValues = Lists.newArrayList();
+      while (timeValueItor.hasNext()) {
+        TimeValue timeValue = timeValueItor.next();
+        resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+      }
+      result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
     }
 
     return result;

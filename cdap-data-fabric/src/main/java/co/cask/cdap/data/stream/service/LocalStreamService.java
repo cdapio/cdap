@@ -68,7 +68,7 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
-    String namespace = Constants.DEFAULT_NAMESPACE;
+    Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     //TODO: use streamMetaStore.listStreams() instead
     for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
       Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
@@ -87,7 +87,7 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void runOneIteration() throws Exception {
-    String namespace = Constants.DEFAULT_NAMESPACE;
+    Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
     //TODO: use streamMetaStore.listStreams() instead
     for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {

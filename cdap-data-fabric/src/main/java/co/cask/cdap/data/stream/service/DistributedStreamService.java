@@ -189,7 +189,7 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<Id.Stream, Long> sizes = ImmutableMap.builder();
-    String namespace = Constants.DEFAULT_NAMESPACE;
+    Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     //TODO: use listStreams() across all namespaces, not just default namespace.
     for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
       Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
@@ -450,7 +450,7 @@ public class DistributedStreamService extends AbstractStreamService {
           // Create one requirement for the resource coordinator for all the streams.
           // One stream is identified by one partition
           ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-          for (StreamSpecification spec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
+          for (StreamSpecification spec : streamMetaStore.listStreams(Id.Namespace.from(Constants.DEFAULT_NAMESPACE))) {
             LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
                       spec.getName());
             builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));

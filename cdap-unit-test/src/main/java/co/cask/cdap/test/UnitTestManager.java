@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultId;
@@ -101,7 +102,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void clear() {
+  public void clear() throws Exception {
     try {
       appFabricClient.reset();
     } catch (Exception e) {
@@ -115,7 +116,8 @@ public class UnitTestManager implements TestManager {
   @Override
   public final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetFramework.addModule(moduleName, datasetModule.newInstance());
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    datasetFramework.addModule(Id.DatasetModule.from(DefaultId.NAMESPACE, moduleName), datasetModule.newInstance());
   }
 
   @Beta

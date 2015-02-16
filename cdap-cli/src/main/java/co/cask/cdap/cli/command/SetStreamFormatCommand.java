@@ -23,7 +23,6 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Splitter;
@@ -35,6 +34,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Map;
+import javax.ws.rs.HEAD;
 
 /**
  * Sets the Format Specification of a stream.
@@ -63,7 +63,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     }
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
-                                                             formatSpecification, currentProperties.getThreshold());
+                                                             formatSpecification,
+                                                             currentProperties.getNotificationThresholdMB());
     streamClient.setStreamProperties(streamName, streamProperties);
     output.printf("Successfully set format of stream '%s'\n", streamName);
   }

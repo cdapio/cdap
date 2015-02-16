@@ -167,7 +167,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountID, stream);
 
-    if (streamMetaStore.streamExists(accountID, stream)) {
+    if (streamMetaStore.streamExists(streamId)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
                                                                streamConfig.getNotificationThresholdMB());
@@ -195,7 +195,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(streamId);
-    streamMetaStore.addStream(accountID, stream);
+    streamMetaStore.addStream(streamId);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -244,7 +244,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     Id.Stream streamId = Id.Stream.from(accountId, stream);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return null;
     }
@@ -265,7 +265,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountId, stream);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return;
     }
@@ -287,7 +287,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Stream streamId = Id.Stream.from(accountId, stream);
 
-    if (!streamMetaStore.streamExists(accountId, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
       return;
     }
@@ -392,7 +392,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     // Validate notification threshold
-    Integer threshold = properties.getThreshold();
+    Integer threshold = properties.getNotificationThresholdMB();
     if (threshold != null && threshold <= 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
       return null;
@@ -479,8 +479,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       if (src.getFormat() != null) {
         json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
       }
-      if (src.getThreshold() != null) {
-        json.addProperty("threshold", src.getThreshold());
+      if (src.getNotificationThresholdMB() != null) {
+        json.addProperty("notification.threshold.mb", src.getNotificationThresholdMB());
       }
       return json;
     }
@@ -494,7 +494,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
-      Integer threshold = jsonObj.has("threshold") ? jsonObj.get("threshold").getAsInt() : null;
+      Integer threshold = jsonObj.has("notification.threshold.mb") ?
+        jsonObj.get("notification.threshold.mb").getAsInt() :
+        null;
       return new StreamProperties(ttl, format, threshold);
     }
   }

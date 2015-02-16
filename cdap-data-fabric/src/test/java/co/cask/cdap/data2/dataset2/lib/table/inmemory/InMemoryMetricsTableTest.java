@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -41,6 +42,9 @@ import org.junit.BeforeClass;
  * test in-memory metrics tables.
  */
 public class InMemoryMetricsTableTest extends MetricsTableTest {
+
+  private static final Id.DatasetModule metricsInMemoryModule = Id.DatasetModule.from(NAMESPACE_ID, "metrics-inmemory");
+
   private static DatasetFramework dsFramework;
 
   @BeforeClass
@@ -62,7 +66,7 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
       });
 
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-inmemory", new InMemoryMetricsTableModule());
+    dsFramework.addModule(metricsInMemoryModule, new InMemoryMetricsTableModule());
   }
 
   @Override

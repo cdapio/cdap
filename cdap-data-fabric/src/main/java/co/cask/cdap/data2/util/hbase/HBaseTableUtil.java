@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
+import javax.annotation.Nullable;
 
 /**
  * Common utilities for dealing with HBase.
@@ -121,7 +122,7 @@ public abstract class HBaseTableUtil {
    */
   public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                      HTableDescriptor tableDescriptor,
-                                     byte[][] splitKeys) throws IOException {
+                                     @Nullable byte[][] splitKeys) throws IOException {
     createTableIfNotExists(admin, tableName, tableDescriptor, splitKeys,
                            MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
   }
@@ -137,7 +138,7 @@ public abstract class HBaseTableUtil {
    */
   public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                      HTableDescriptor tableDescriptor,
-                                     byte[][] splitKeys,
+                                     @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
     if (admin.tableExists(tableName)) {
       return;
