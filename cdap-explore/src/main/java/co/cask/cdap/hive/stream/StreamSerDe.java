@@ -27,6 +27,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.hive.serde.ObjectTranslator;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.serdeConstants;
@@ -91,12 +92,14 @@ public class StreamSerDe implements SerDe {
     this.inspector = ObjectInspectorFactory.getStandardStructObjectInspector(columnNames, columnOIs);
 
     String streamName = properties.getProperty(Constants.Explore.STREAM_NAME);
+    String streamNamespace = properties.getProperty(Constants.Explore.STREAM_NAMESPACE);
+    Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
     try {
       // Get the stream format from the stream config.
       ContextManager.Context context = ContextManager.getContext(conf);
       // get the stream admin from the context, which will let us get stream information such as the path
       StreamAdmin streamAdmin = context.getStreamAdmin();
-      StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       FormatSpecification formatSpec = streamConfig.getFormat();
       this.streamFormat = (StreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
     } catch (UnsupportedTypeException e) {

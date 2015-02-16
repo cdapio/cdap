@@ -43,6 +43,7 @@ import co.cask.cdap.logging.read.AvroFileLogReader;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
@@ -101,11 +102,12 @@ public class LogSaverTest extends KafkaTestBase {
   private static DatasetFramework dsFramework;
   private static LogSaverTableUtil tableUtil;
   private static CConfiguration cConf;
+  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "table"), new InMemoryOrderedTableModule());
 
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
     LOG.info("Log base dir {}", logBaseDir);

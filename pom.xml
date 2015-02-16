@@ -149,7 +149,6 @@
     <module>cdap-hbase-compat-0.96</module>
     <module>cdap-hbase-compat-0.98</module>
     <module>cdap-watchdog</module>
-    <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
     <module>cdap-security</module>
     <module>cdap-gateway</module>
@@ -2100,6 +2099,32 @@
             </plugin>
           </plugins>
         </pluginManagement>
+      </build>
+    </profile>
+
+    <!-- For running findbugs plugin -->
+    <profile>
+      <id>findbugs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>2.5.5</version>
+            <executions>
+              <execution>
+                <id>findbugs-check</id>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-test-classes</phase>
+                <configuration>
+                  <failOnError>false</failOnError>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
       </build>
     </profile>
   </profiles>

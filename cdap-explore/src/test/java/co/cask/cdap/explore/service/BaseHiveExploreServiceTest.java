@@ -28,8 +28,11 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -47,6 +50,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -92,6 +96,10 @@ public class BaseHiveExploreServiceTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
+
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
   public static boolean runAfter = true;
@@ -103,6 +111,7 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
   protected static StreamHttpService streamHttpService;
+  protected static StreamService streamService;
 
   protected static ExploreClient exploreClient;
 
@@ -143,6 +152,8 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
   }
@@ -154,6 +165,7 @@ public class BaseHiveExploreServiceTest {
     }
 
     streamHttpService.stopAndWait();
+    streamService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
@@ -299,6 +311,8 @@ public class BaseHiveExploreServiceTest {
 
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandlerV2.class);
+          handlerBinder.addBinding().to(StreamFetchHandlerV2.class);
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
@@ -345,6 +359,8 @@ public class BaseHiveExploreServiceTest {
 
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandlerV2.class);
+          handlerBinder.addBinding().to(StreamFetchHandlerV2.class);
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);

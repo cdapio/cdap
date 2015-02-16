@@ -21,8 +21,10 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.SlowTests;
@@ -59,7 +61,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   private static final String body2 = "userY,actionB,item123";
   private static final String body3 = "userZ,actionA,item456";
   private static final String streamName = "mystream";
-  private static final String streamTableName = "cdap_stream_" + streamName;
+  private static final String streamTableName = getTableName(streamName);
   // headers must be prefixed with the stream name, otherwise they are filtered out.
   private static final Map<String, String> headers = ImmutableMap.of("header1", "val1", "header2", "val2");
   private static final Type headerType = new TypeToken<Map<String, String>>() { }.getType();
@@ -161,12 +163,12 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
     sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
 
-    runCommand("select cdap_stream_jointest1.body, cdap_stream_jointest2.body" +
-                 " from cdap_stream_jointest1 join cdap_stream_jointest2" +
-                 " on (cdap_stream_jointest1.body = cdap_stream_jointest2.body)",
+    runCommand("select " + getTableName("jointest1") + ".body, " + getTableName("jointest2") + ".body" +
+                 " from " + getTableName("jointest1") + " join " + getTableName("jointest2") +
+                 " on (" + getTableName("jointest1") + ".body = " + getTableName("jointest2") + ".body)",
                true,
-               Lists.newArrayList(new ColumnDesc("cdap_stream_jointest1.body", "STRING", 1, null),
-                                  new ColumnDesc("cdap_stream_jointest2.body", "STRING", 2, null)),
+               Lists.newArrayList(new ColumnDesc(getTableName("jointest1") + ".body", "STRING", 1, null),
+                                  new ColumnDesc(getTableName("jointest2") + ".body", "STRING", 2, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
     );
   }
@@ -187,7 +189,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     );
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO, schema, Collections.<String, String>emptyMap());
-    StreamProperties properties = new StreamProperties("avroStream", Long.MAX_VALUE, formatSpecification, 1000);
+    StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
     setStreamProperties("avroStream", properties);
 
     // our schemas are compatible
@@ -205,7 +207,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
     ExploreExecutionResult result = exploreClient.submit(
       "SELECT user, sum(num) as total_num, sum(price * num) as total_price " +
-        "FROM cdap_stream_avroStream GROUP BY user ORDER BY total_price DESC").get();
+        "FROM " + getTableName("avroStream") + " GROUP BY user ORDER BY total_price DESC").get();
 
     Assert.assertTrue(result.hasNext());
     Assert.assertEquals(
@@ -236,6 +238,10 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
     // shouldn't be any more results
     Assert.assertFalse(result.hasNext());
+  }
+
+  private static String getTableName(String streamName) {
+    return String.format("cdap_stream_%s_%s", Constants.DEFAULT_NAMESPACE, streamName);
   }
 
   private byte[] createAvroEvent(org.apache.avro.Schema schema, Object... values) throws IOException {

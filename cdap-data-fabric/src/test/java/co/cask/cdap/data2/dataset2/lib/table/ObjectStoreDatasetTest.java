@@ -32,6 +32,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.TypeRepresentation;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
@@ -61,14 +62,16 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
 
+  private static final Id.DatasetModule integerStore = Id.DatasetModule.from(NAMESPACE_ID, "integerStore");
+
   @BeforeClass
   public static void beforeClass() throws Exception {
-    addModule("integerStore", new IntegerStoreModule());
+    addModule(integerStore, new IntegerStoreModule());
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteModule("integerStore");
+    deleteModule(integerStore);
   }
 
   private void addIntegerStoreInstance(String instanceName) throws Exception {

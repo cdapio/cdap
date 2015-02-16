@@ -42,6 +42,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -68,6 +69,7 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void start() throws Exception {
@@ -99,7 +101,8 @@ public class ExploreDisabledTest {
   public void testDeployRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
-    datasetFramework.addModule("module1", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    Id.DatasetModule module1 = Id.DatasetModule.from(namespaceId, "module1");
+    datasetFramework.addModule(module1, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
@@ -133,14 +136,15 @@ public class ExploreDisabledTest {
     Assert.assertEquals(value1, table.get("1"));
 
     datasetFramework.deleteInstance("table1");
-    datasetFramework.deleteModule("module1");
+    datasetFramework.deleteModule(module1);
   }
 
   @Test
   public void testDeployNotRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exceptionbeing thrown
-    datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
+    Id.DatasetModule module2 = Id.DatasetModule.from(namespaceId, "module2");
+    datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("NotRecordScannableTableDef", "table2", DatasetProperties.EMPTY);
@@ -170,7 +174,7 @@ public class ExploreDisabledTest {
     Assert.assertEquals("value1", new String(table.read("key1")));
 
     datasetFramework.deleteInstance("table2");
-    datasetFramework.deleteModule("module2");
+    datasetFramework.deleteModule(module2);
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

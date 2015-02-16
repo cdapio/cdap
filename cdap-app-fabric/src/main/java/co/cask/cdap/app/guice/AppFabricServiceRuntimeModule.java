@@ -26,10 +26,13 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.AppFabricStreamHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
@@ -106,7 +109,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
+                                                      StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -151,7 +155,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
+                                                      StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -266,6 +271,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                                         Names.named("appfabric.http.handler"));
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
+      handlerBinder.addBinding().to(AppFabricStreamHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);

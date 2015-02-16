@@ -211,6 +211,15 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void delete(byte[] row, byte[][] columns) throws Exception {
+    Delete delete = new Delete(row);
+    for (byte[] column : columns) {
+      delete.deleteColumn(DATA_COLUMN_FAMILY, column);
+    }
+    hTable.delete(delete);
+  }
+
+  @Override
   public void delete(Collection<byte[]> rows) throws Exception {
     List<Delete> deletes = Lists.newArrayList();
     for (byte[] row : rows) {

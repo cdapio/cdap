@@ -25,6 +25,7 @@ import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -65,6 +66,7 @@ public final class FactTable {
   private final MetricsTable timeSeriesTable;
   private final FactCodec codec;
   private final int resolution;
+  // todo: should not be used outside of codec
   private final int rollTime;
 
   /**
@@ -115,6 +117,10 @@ public final class FactTable {
   }
 
   public FactScanner scan(FactScan scan) throws Exception {
+    return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs());
+  }
+
+  private Scanner getScanner(FactScan scan) throws Exception {
     byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
     byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
     byte[][] columns = null;
@@ -136,36 +142,45 @@ public final class FactTable {
                 timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
     }
 
-    return new FactScanner(timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter), codec,
-                             scan.getStartTs(), scan.getEndTs());
+    return timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
   }
 
   /**
    * Delete entries in fact table.
-   * @param scan
+   * @param scan specifies deletion criteria
    * @throws Exception
    */
   public void delete(FactScan scan) throws Exception {
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
-    byte[][] columns = null;
-    if (Arrays.equals(startRow, endRow)) {
-      // If on the same timebase, we only need subset of columns
-      long timeBase = scan.getStartTs() / rollTime * rollTime;
-      int startCol = (int) (scan.getStartTs() - timeBase) / resolution;
-      int endCol = (int) (scan.getEndTs() - timeBase) / resolution;
-      columns = new byte[endCol - startCol + 1][];
-      for (int i = 0; i < columns.length; i++) {
-        columns[i] = Bytes.toBytes((short) (startCol + i));
+    Scanner scanner = getScanner(scan);
+    try {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        List<byte[]> columns = Lists.newArrayList();
+
+        boolean exhausted = false;
+        for (byte[] column : row.getColumns().keySet()) {
+          long ts = codec.getTimestamp(row.getRow(), column);
+          if (ts < scan.getStartTs()) {
+            continue;
+          }
+
+          if (ts > scan.getEndTs()) {
+            exhausted = true;
+            break;
+          }
+
+          columns.add(column);
+        }
+
+        timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]));
+
+        if (exhausted) {
+          break;
+        }
       }
+    } finally {
+      scanner.close();
     }
-    endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow, false);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Deleting fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
-                timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
-    }
-    timeSeriesTable.deleteRange(startRow, endRow, columns, fuzzyRowFilter);
   }
 
   /*
@@ -177,14 +192,15 @@ public final class FactTable {
    * @return Sorted collection of tags
    * @throws Exception
    */
-  public Collection<TagValue> getNextTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
+  public Collection<TagValue> findNextAvailableTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
     //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
     //todo: pass a limit on number of tags returned
+    //todo: go over aggregations that match the given tags as first tags in the same order.
     byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
     byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
-                                                                startRow, true);
+                                                         startRow, true);
     Row rowResult;
     int targetIndex = tags.size();
     SortedSet<TagValue> result = Sets.newTreeSet(new Comparator<TagValue>() {
@@ -194,13 +210,21 @@ public final class FactTable {
         if (cmp != 0) {
           return cmp;
         }
+        if (t1.getValue() == null) {
+          if (t2.getValue() == null) {
+            return 0;
+          } else {
+            return -1;
+          }
+        }
+        if (t2.getValue() == null) {
+          return 1;
+        }
         return t1.getValue().compareTo(t2.getValue());
       }
     });
 
     Scanner scanner = null;
-    long startTimeBase = startTs / rollTime * rollTime;
-    long endTimeBase = endTs / rollTime * rollTime;
     try {
       scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
       while ((rowResult = scanner.next()) != null) {
@@ -208,8 +232,8 @@ public final class FactTable {
         // since the timestamp filter is fuzzy and also the aggregate_key is at the begging of rowKey,
         // we could match rows where (ts < startTs or ts > endTs) and the tags at beginning match,
         // we will skip those rows
-        if ((codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTimeBase) ||
-          (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTimeBase)) {
+        if ((codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) ||
+          (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs)) {
           continue;
         }
         List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
@@ -217,7 +241,7 @@ public final class FactTable {
         if (startsWithTags(tags, tagValues)) {
           //add item to result set and increment the start rowKey
           if (tagValues.size() > targetIndex) {
-            result.add(tagValues.get(targetIndex));
+              result.add(tagValues.get(targetIndex));
           }
           startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
           scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
@@ -246,31 +270,30 @@ public final class FactTable {
     byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
-                                                                startRow, true);
+                                                         startRow, true);
     Row rowResult;
     SortedSet<String> measureNames = Sets.newTreeSet();
     Scanner scanner = null;
-    long startTimeBase = startTs / rollTime * rollTime;
-    long endTimeBase = endTs / rollTime * rollTime;
     try {
-        scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
-        while ((rowResult = scanner.next()) != null) {
-          byte[] rowKey = rowResult.getRow();
-          // since the timestamp filter is fuzzy and also the aggregate_key is at the begging of rowKey,
-          // we could match rows where (ts < startTs or ts > endTs) and the tags at beginning match,
-          // we will skip those rows
-          if ((codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTimeBase) ||
-            (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTimeBase)) {
-            continue;
-          }
-          // if the timestamp is within query range and the tag-list matches, we add them to the result
-          if (startsWithTags(tags, codec.getTagValues(rowKey))) {
-            //add item to result set and increment the start rowKey
-            measureNames.add(codec.getMeasureName(rowResult.getRow()));
-            startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
-            scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
-          }
+      scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+      while ((rowResult = scanner.next()) != null) {
+        byte[] rowKey = rowResult.getRow();
+        // since the timestamp filter is fuzzy and also the aggregate_key is at the begging of rowKey,
+        // we could match rows where (ts < startTs or ts > endTs) and the tags at beginning match,
+        // we will skip those rows
+        if ((codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) ||
+          (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs)) {
+          continue;
         }
+        List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
+        // if the timestamp is within query range and the tag-list matches, we add them to the result
+        if (startsWithTags(tags, tagValues)) {
+          //add item to result set and increment the start rowKey
+          measureNames.add(codec.getMeasureName(rowResult.getRow()));
+          startRow = codec.getNextRowKey(rowResult.getRow(), tagValues.size());
+          scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        }
+      }
     } finally {
       scanner.close();
     }
@@ -282,7 +305,7 @@ public final class FactTable {
       return false;
     }
     for (int i = 0; i < expected.size(); i++) {
-      if (!expected.get(i).equals(actual.get(i))) {
+      if (expected.get(i).getValue() != null && !expected.get(i).equals(actual.get(i))) {
         return false;
       }
     }
@@ -293,7 +316,8 @@ public final class FactTable {
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow, boolean anyAggGroup) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
-    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName(), anyAggGroup);
+    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName(),
+                                                   anyAggGroup);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
   }

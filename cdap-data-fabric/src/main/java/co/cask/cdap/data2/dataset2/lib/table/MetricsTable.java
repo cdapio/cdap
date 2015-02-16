@@ -74,6 +74,14 @@ public interface MetricsTable extends Dataset {
   void deleteAll(byte[] prefix) throws Exception;
 
   /**
+   * Deletes specified columns of the specified row.
+   *
+   * @param row row to delete from
+   * @param columns names of columns to delete
+   */
+  void delete(byte[] row, byte[][] columns) throws Exception;
+
+  /**
    * Delete (all columns of) a set of rows.
    */
   void delete(Collection<byte[]> rows) throws Exception;
