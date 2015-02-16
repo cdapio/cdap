@@ -84,9 +84,6 @@ import javax.annotation.Nullable;
  */
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
