@@ -188,7 +188,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     for (TimeSeries timeSeries : timeSerieses) {
       MetricQueryResult.TimeValue[] timeValues = decorate(timeSeries.getTimeValues());
       serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMeasureName(),
-                                                       ImmutableMap.of("a", "b", "c", "d"), timeValues);
+                                                       timeSeries.getTagValues(), timeValues);
     }
     return new MetricQueryResult(startTs, endTs, serieses);
   }
