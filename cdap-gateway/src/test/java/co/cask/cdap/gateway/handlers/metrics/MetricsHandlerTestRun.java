@@ -21,8 +21,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
+import co.cask.cdap.metrics.query.MetricQueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -34,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -175,8 +173,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void verifyEmptyQueryResult(String url) throws Exception {
-    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
-    Assert.assertEquals(0, timeSeriesCollection.size());
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals(0, queryResult.getSerieses().length);
   }
 
   private String getContext(String nameSpace, String appName, String programType,
@@ -214,16 +212,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
-    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
-    Assert.assertEquals(expectedValue, timeSeriesCollection.iterator().next().getTimeValues().get(0).getValue());
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals(expectedValue, queryResult.getSerieses()[0].getData()[0].getValue());
   }
 
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
-    Collection<TimeSeries> timeSeriesCollection = post(url, new TypeToken<List<TimeSeries>>() {
-    }.getType());
-    List<TimeValue> result = timeSeriesCollection.iterator().next().getTimeValues();
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    MetricQueryResult.TimeValue[] data = queryResult.getSerieses()[0].getData();
 
-    for (TimeValue point : result) {
+    for (MetricQueryResult.TimeValue point : data) {
       if (point.getValue() != 0) {
         nonZeroPointsCount--;
         expectedSum -= point.getValue();

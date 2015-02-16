@@ -25,13 +25,17 @@ import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import co.cask.cdap.metrics.store.timeseries.TagValue;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -108,12 +112,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
         tagsSliceBy.put(tagValues[i], tagValues[i + 1]);
       }
 
-      CubeQuery query = new CubeQuery(queryTimeParams.getStartTs(), queryTimeParams.getEndTs(),
+      long startTs = queryTimeParams.getStartTs();
+      long endTs = queryTimeParams.getEndTs();
+      CubeQuery query = new CubeQuery(startTs, endTs,
                                       queryTimeParams.getResolution(), metric,
                                           // todo: figure out MeasureType
                                       MeasureType.COUNTER, tagsSliceBy, new ArrayList<String>());
 
-      Collection<TimeSeries> result = metricStore.query(query);
+      Collection<TimeSeries> queryResult = metricStore.query(query);
+      MetricQueryResult result = decorate(queryResult, startTs, endTs);
+      System.out.println();
+      System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(result));
+
       responder.sendJson(HttpResponseStatus.OK, result);
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
@@ -174,5 +184,25 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, getContext(contextPrefix));
     Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
+  }
+
+  private MetricQueryResult decorate(Collection<TimeSeries> timeSerieses, long startTs, long endTs) {
+    MetricQueryResult.TimeSeries[] serieses = new MetricQueryResult.TimeSeries[timeSerieses.size()];
+    int i = 0;
+    for (TimeSeries timeSeries : timeSerieses) {
+      MetricQueryResult.TimeValue[] timeValues = decorate(timeSeries.getTimeValues());
+      serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMeasureName(),
+                                                       ImmutableMap.of("a", "b", "c", "d"), timeValues);
+    }
+    return new MetricQueryResult(startTs, endTs, serieses);
+  }
+
+  private MetricQueryResult.TimeValue[] decorate(List<TimeValue> points) {
+    MetricQueryResult.TimeValue[] timeValues = new MetricQueryResult.TimeValue[points.size()];
+    int k = 0;
+    for (TimeValue timeValue : points) {
+      timeValues[k++] = new MetricQueryResult.TimeValue(timeValue.getTimestamp(), timeValue.getValue());
+    }
+    return timeValues;
   }
 }
