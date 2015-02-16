@@ -15,12 +15,13 @@ angular.module(PKG.name+'.feature.operation28')
         },
         url: '/operations',
         templateUrl: path + 'ops.html',
-        controller: function ($scope, $state) {
+        controller: function ($scope, $state, MY_CONFIG) {
           $scope.$on('$stateChangeSuccess', function(){
             if($state.is('operations')) {
               $state.go('operations.cdap');
             }
           });
+          $scope.isEnterprise = MY_CONFIG.isEnterprise;
         }
       })
         .state('operations.cdap', {
