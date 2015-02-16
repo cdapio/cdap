@@ -17,7 +17,7 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.Arrays;
@@ -72,9 +72,10 @@ public abstract class AbstractService implements Service {
 
   /**
    * Add a worker to the Service.
+   * @deprecated as of version 2.8.0, replaced by {@link AbstractApplication#addWorker}
    * @param worker for the service.
    */
-  @Beta
+  @Deprecated
   protected void addWorker(String name, ServiceWorker worker) {
     Map<String, ServiceWorker> workers = new HashMap<String, ServiceWorker>();
     workers.put(name, worker);
@@ -83,11 +84,11 @@ public abstract class AbstractService implements Service {
 
   /**
    * Adds workers to the Service. The worker simple class name is used as the worker name.
-   *
+   * @deprecated as of version 2.8.0, replaced by {@link AbstractApplication#addWorker}
    * @param worker The worker to add
    * @param workers More workers to add.
    */
-  @Beta
+  @Deprecated
    protected void addWorkers(ServiceWorker worker, ServiceWorker...workers) {
     Map<String, ServiceWorker> workerMap = new HashMap<String, ServiceWorker>();
     workerMap.put(worker.getClass().getSimpleName(), worker);
@@ -99,9 +100,10 @@ public abstract class AbstractService implements Service {
 
   /**
    * Add a list of workers to the Service.
+   * @deprecated as of version 2.8.0, replaced by {@link AbstractApplication#addWorker}
    * @param workers for the service.
    */
-  @Beta
+  @Deprecated
   protected void addWorkers(Map<String, ServiceWorker> workers) {
     configurer.addWorkers(workers);
   }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.Id;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -50,22 +51,22 @@ public interface DatasetFramework {
 
   /**
    * Adds dataset types by adding dataset module to the system.
-   * @param moduleName dataset module name
+   * @param moduleId dataset module id
    * @param module dataset module
    * @throws ModuleConflictException when module with same name is already registered or this module registers a type
    *         with a same name as one of the already registered by another module types
    * @throws DatasetManagementException in case of problems
    */
-  void addModule(String moduleName, DatasetModule module)
+  void addModule(Id.DatasetModule moduleId, DatasetModule module)
     throws DatasetManagementException;
 
   /**
    * Deletes dataset module and its types from the system.
-   * @param moduleName dataset module name
+   * @param moduleId dataset module id
    * @throws ModuleConflictException when module cannot be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
-  void deleteModule(String moduleName)
+  void deleteModule(Id.DatasetModule moduleId)
     throws DatasetManagementException;
 
   /**

@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -31,16 +32,18 @@ import java.util.Collections;
  */
 public class DatasetWithArgumentsTest extends AbstractDatasetTest {
 
+  private static final Id.DatasetModule prefix = Id.DatasetModule.from(NAMESPACE_ID, "prefix");
+
   @BeforeClass
   public static void beforeClass() throws Exception {
-    addModule("prefix", new PrefixedTableModule());
+    addModule(prefix, new PrefixedTableModule());
     createInstance("prefixedTable", "pret", DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     deleteInstance("pret");
-    deleteModule("prefix");
+    deleteModule(prefix);
   }
 
   @Test

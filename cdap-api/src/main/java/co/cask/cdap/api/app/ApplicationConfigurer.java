@@ -28,6 +28,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Map;
@@ -154,6 +155,13 @@ public interface ApplicationConfigurer {
    * @param service The service to include in the Application
    */
   void addService(Service service);
+
+  /**
+   * Adds a {@link Worker} to the Application.
+   *
+   * @param worker The worker to include in the Application
+   */
+  void addWorker(Worker worker);
 
   /**
    * Adds a {@link Schedule} to the specified program in the Application

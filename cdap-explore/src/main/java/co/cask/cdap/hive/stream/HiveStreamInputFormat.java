@@ -23,6 +23,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ObjectWritable;
@@ -58,8 +59,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     // this MUST be done in the input format and not in StreamSerDe's initialize method because we have no control
     // over when initialize is called. If we set job conf settings there, the settings for one stream get clobbered
     // by the settings for another stream if a join over streams is being performed.
-    String streamName = conf.get(Constants.Explore.STREAM_NAME);
-    StreamInputSplitFinder<InputSplit> splitFinder = getSplitFinder(conf, streamName);
+    StreamInputSplitFinder<InputSplit> splitFinder = getSplitFinder(conf);
     try {
       List<InputSplit> splits = splitFinder.getSplits(conf);
       InputSplit[] splitArray = new InputSplit[splits.size()];
@@ -80,12 +80,16 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     return new StreamRecordReader(split, conf);
   }
 
-  private StreamInputSplitFinder<InputSplit> getSplitFinder(JobConf conf, String streamName) throws IOException {
+  private StreamInputSplitFinder<InputSplit> getSplitFinder(JobConf conf) throws IOException {
     // first get the context we are in
     ContextManager.Context context = ContextManager.getContext(conf);
     // get the stream admin from the context, which will let us get stream information such as the path
     StreamAdmin streamAdmin = context.getStreamAdmin();
-    StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+
+    String streamName = conf.get(Constants.Explore.STREAM_NAME);
+    String streamNamespace = conf.get(Constants.Explore.STREAM_NAMESPACE);
+    Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     // make sure we get the current generation so we don't read events that occurred before a truncate.
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));

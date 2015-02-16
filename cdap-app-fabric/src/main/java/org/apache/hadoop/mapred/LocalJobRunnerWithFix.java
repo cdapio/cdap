@@ -434,7 +434,10 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       LOG.debug("Reduce tasks to process: {}", this.numReduceTasks);
 
       // Create a new executor service to drain the work queue.
-      ExecutorService executor = Executors.newFixedThreadPool(maxReduceThreads);
+      ThreadFactory tf = new ThreadFactoryBuilder()
+        .setNameFormat("LocalJobRunner Reducer Task Executor #%d")
+        .build();
+      ExecutorService executor = Executors.newFixedThreadPool(maxReduceThreads, tf);
 
       return executor;
     }

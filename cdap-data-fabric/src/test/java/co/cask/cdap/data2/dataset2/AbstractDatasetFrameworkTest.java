@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -39,14 +40,19 @@ public abstract class AbstractDatasetFrameworkTest {
 
   protected abstract DatasetFramework getFramework();
 
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+  private static final Id.DatasetModule inMemory = Id.DatasetModule.from(namespaceId, "inMemory");
+  private static final Id.DatasetModule core = Id.DatasetModule.from(namespaceId, "core");
+  private static final Id.DatasetModule keyValue = Id.DatasetModule.from(namespaceId, "keyValue");
+  private static final Id.DatasetModule doubleKeyValue = Id.DatasetModule.from(namespaceId, "doubleKeyValue");
+
   @Test
   public void testSimpleDataset() throws Exception {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
-    String moduleName = "inMemory";
 
     Assert.assertFalse(framework.hasType("orderedTable"));
-    framework.addModule(moduleName, new InMemoryOrderedTableModule());
+    framework.addModule(inMemory, new InMemoryOrderedTableModule());
     Assert.assertTrue(framework.hasType("orderedTable"));
 
     Assert.assertFalse(framework.hasInstance("my_table"));
@@ -83,7 +89,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance("my_table");
-    framework.deleteModule("inMemory");
+    framework.deleteModule(inMemory);
   }
 
   @Test
@@ -91,10 +97,10 @@ public abstract class AbstractDatasetFrameworkTest {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
 
-    framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("core", new CoreDatasetsModule());
+    framework.addModule(inMemory, new InMemoryOrderedTableModule());
+    framework.addModule(core, new CoreDatasetsModule());
     Assert.assertFalse(framework.hasType(SimpleKVTable.class.getName()));
-    framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
+    framework.addModule(keyValue, new SingleTypeModule(SimpleKVTable.class));
     Assert.assertTrue(framework.hasType(SimpleKVTable.class.getName()));
 
     // Creating instance
@@ -107,9 +113,9 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance("my_table");
-    framework.deleteModule("keyValue");
-    framework.deleteModule("core");
-    framework.deleteModule("inMemory");
+    framework.deleteModule(keyValue);
+    framework.deleteModule(core);
+    framework.deleteModule(inMemory);
   }
 
   @Test
@@ -117,11 +123,11 @@ public abstract class AbstractDatasetFrameworkTest {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
 
-    framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("core", new CoreDatasetsModule());
-    framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
+    framework.addModule(inMemory, new InMemoryOrderedTableModule());
+    framework.addModule(core, new CoreDatasetsModule());
+    framework.addModule(keyValue, new SingleTypeModule(SimpleKVTable.class));
     Assert.assertFalse(framework.hasType(DoubleWrappedKVTable.class.getName()));
-    framework.addModule("doubleKeyValue", new SingleTypeModule(DoubleWrappedKVTable.class));
+    framework.addModule(doubleKeyValue, new SingleTypeModule(DoubleWrappedKVTable.class));
     Assert.assertTrue(framework.hasType(DoubleWrappedKVTable.class.getName()));
 
     // Creating instance
@@ -133,10 +139,10 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance("my_table");
-    framework.deleteModule("doubleKeyValue");
-    framework.deleteModule("keyValue");
-    framework.deleteModule("core");
-    framework.deleteModule("inMemory");
+    framework.deleteModule(doubleKeyValue);
+    framework.deleteModule(keyValue);
+    framework.deleteModule(core);
+    framework.deleteModule(inMemory);
   }
 
   private void testCompositeDataset(DatasetFramework framework) throws Exception {
@@ -174,8 +180,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // Adding modules
     DatasetFramework framework = getFramework();
 
-    framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("core", new CoreDatasetsModule());
+    framework.addModule(inMemory, new InMemoryOrderedTableModule());
+    framework.addModule(core, new CoreDatasetsModule());
     Assert.assertTrue(framework.hasType(OrderedTable.class.getName()));
     Assert.assertTrue(framework.hasType(Table.class.getName()));
 

@@ -22,6 +22,8 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -31,6 +33,9 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * admin for streams in hbase.
@@ -47,8 +52,9 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
+      //TODO: namespace the tableName (have to modify tableNamePrefix)
       // <cdap namespace>.system.stream.<stream name>
-      return getTableNamePrefix() + "." + queueName.getFirstComponent();
+      return getTableNamePrefix() + "." + queueName.getSecondComponent();
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }
@@ -73,17 +79,57 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
-    return null;
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+    configureInstances(QueueName.fromStream(streamId), groupId, instances);
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+    configureGroups(QueueName.fromStream(streamId), groupInfo);
+  }
 
+  @Override
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
+  }
+
+  @Override
+  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override
   public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
     return 0;
   }
+
+  private String fromStream(Id.Stream streamId) {
+    return QueueName.fromStream(streamId).toURI().toString();
+  }
+
+  @Override
+  public boolean exists(Id.Stream streamId) throws Exception {
+    return exists(fromStream(streamId));
+  }
+
+  @Override
+  public void create(Id.Stream streamId) throws Exception {
+    create(fromStream(streamId));
+  }
+
+  @Override
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+    create(fromStream(streamId), props);
+  }
+
+  @Override
+  public void truncate(Id.Stream streamId) throws Exception {
+    truncate(fromStream(streamId));
+  }
+
+  @Override
+  public void drop(Id.Stream streamId) throws Exception {
+    drop(fromStream(streamId));
+  }
+
 }

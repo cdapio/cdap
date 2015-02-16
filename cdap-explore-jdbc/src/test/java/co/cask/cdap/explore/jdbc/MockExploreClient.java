@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.jdbc;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.ExploreException;
@@ -79,7 +80,17 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<Void> addPartition(String datasetName, PartitionKey key, String path) {
+    return null;
+  }
+
+  @Override
   public ListenableFuture<Void> dropPartition(String datasetName, long time) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> dropPartition(String datasetName, PartitionKey key) {
     return null;
   }
 

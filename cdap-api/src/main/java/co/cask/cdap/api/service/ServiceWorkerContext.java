@@ -19,10 +19,14 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.worker.WorkerContext;
 
 /**
  * Context for custom Service workers.
+ *
+ * @deprecated As of version 2.8.0, replaced by {@link WorkerContext}
  */
+@Deprecated
 public interface ServiceWorkerContext extends RuntimeContext, ServiceDiscoverer {
 
   /**

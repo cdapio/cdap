@@ -28,6 +28,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimestampCloseable;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -92,9 +93,9 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final StreamMetaStore streamMetaStore;
   private final int workerThreads;
   private final StreamMetricsCollectorFactory metricsCollectorFactory;
-  private final ConcurrentMap<String, EventQueue> eventQueues;
+  private final ConcurrentMap<Id.Stream, EventQueue> eventQueues;
   private final StreamFileFactory streamFileFactory;
-  private final Set<String> generationWatched;
+  private final Set<Id.Stream> generationWatched;
   private final List<Cancellable> cancellables;
   private final Lock createLock;
 
@@ -116,58 +117,55 @@ public final class ConcurrentStreamWriter implements Closeable {
   /**
    * Writes an event to the given stream.
    *
-   * @param accountId account id for the requester
-   * @param stream name of the stream
+   * @param streamId identifier of the stream
    * @param headers header of the event
    * @param body content of the event
    *
    * @throws IOException if failed to write to stream
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void enqueue(String accountId, String stream,
+  public void enqueue(Id.Stream streamId,
                       Map<String, String> headers, ByteBuffer body) throws IOException {
-    EventQueue eventQueue = getEventQueue(accountId, stream);
+    EventQueue eventQueue = getEventQueue(streamId);
     WriteRequest writeRequest = eventQueue.append(headers, body);
-    persistUntilCompleted(stream, eventQueue, writeRequest);
+    persistUntilCompleted(streamId, eventQueue, writeRequest);
   }
 
   /**
    * Writes a list of events to the given stream.
    *
-   * @param accountId account id for the requester
-   * @param stream name of the stream
+   * @param streamId identifier of the stream
    * @param events list of events to write
    * @throws IOException if failed to write to stream
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void enqueue(String accountId, String stream, Iterator<? extends StreamEventData> events) throws IOException {
-    EventQueue eventQueue = getEventQueue(accountId, stream);
+  public void enqueue(Id.Stream streamId, Iterator<? extends StreamEventData> events) throws IOException {
+    EventQueue eventQueue = getEventQueue(streamId);
     WriteRequest writeRequest = eventQueue.append(events);
-    persistUntilCompleted(stream, eventQueue, writeRequest);
+    persistUntilCompleted(streamId, eventQueue, writeRequest);
   }
 
   /**
    * Writes an event to the given stream asynchronously. This method returns when the new event is stored to
    * the in-memory event queue, but before persisted.
    *
-   * @param accountId account id for the requester
-   * @param stream name of the stream
+   * @param streamId identifier of the stream
    * @param headers header of the event
    * @param body content of the event
    * @param executor The executor for performing the async write flush operation
    * @throws IOException if fails to get stream information
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void asyncEnqueue(String accountId, final String stream,
+  public void asyncEnqueue(final Id.Stream streamId,
                            Map<String, String> headers, ByteBuffer body, Executor executor) throws IOException {
     // Put the event to the queue first and then execute the write asynchronously
-    final EventQueue eventQueue = getEventQueue(accountId, stream);
+    final EventQueue eventQueue = getEventQueue(streamId);
     final WriteRequest writeRequest = eventQueue.append(headers, body);
     executor.execute(new Runnable() {
       @Override
       public void run() {
         try {
-          persistUntilCompleted(stream, eventQueue, writeRequest);
+          persistUntilCompleted(streamId, eventQueue, writeRequest);
         } catch (IOException e) {
           // Since it's done in the async executor, simply log the exception
           LOG.error("Async write failed", e);
@@ -179,19 +177,18 @@ public final class ConcurrentStreamWriter implements Closeable {
   /**
    * Appends a new stream file to the given stream.
    *
-   * @param accountId account id for the requester
-   * @param stream name of the stream
+   * @param streamId identifier of the stream
    * @param eventFile location to the new stream data file
    * @param indexFile location to the new stream index file
    * @param eventCount number of events in the given stream file
    * @param timestampCloseable a {@link TimestampCloseable} to close and return the stream file close timestamp
    * @throws IOException if failed to append the new stream file
    */
-  public void appendFile(String accountId, String stream,
+  public void appendFile(Id.Stream streamId,
                          Location eventFile, Location indexFile, long eventCount,
                          TimestampCloseable timestampCloseable) throws IOException {
-    EventQueue eventQueue = getEventQueue(accountId, stream);
-    StreamConfig config = streamAdmin.getConfig(stream);
+    EventQueue eventQueue = getEventQueue(streamId);
+    StreamConfig config = streamAdmin.getConfig(streamId);
     while (!eventQueue.tryAppendFile(config, eventFile, indexFile, eventCount, timestampCloseable)) {
       Thread.yield();
     }
@@ -212,8 +209,8 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
   }
 
-  private EventQueue getEventQueue(String accountId, String streamName) throws IOException {
-    EventQueue eventQueue = eventQueues.get(streamName);
+  private EventQueue getEventQueue(Id.Stream streamId) throws IOException {
+    EventQueue eventQueue = eventQueues.get(streamId);
     if (eventQueue != null) {
       return eventQueue;
     }
@@ -221,22 +218,22 @@ public final class ConcurrentStreamWriter implements Closeable {
     createLock.lock();
     try {
       // Double check
-      eventQueue = eventQueues.get(streamName);
+      eventQueue = eventQueues.get(streamId);
       if (eventQueue != null) {
         return eventQueue;
       }
 
-      if (!streamMetaStore.streamExists(accountId, streamName)) {
+      if (!streamMetaStore.streamExists(streamId)) {
         throw new IllegalArgumentException("Stream not exists");
       }
-      StreamUtils.ensureExists(streamAdmin, streamName);
+      StreamUtils.ensureExists(streamAdmin, streamId);
 
-      if (generationWatched.add(streamName)) {
-        cancellables.add(streamCoordinatorClient.addListener(streamName, streamFileFactory));
+      if (generationWatched.add(streamId)) {
+        cancellables.add(streamCoordinatorClient.addListener(streamId, streamFileFactory));
       }
 
-      eventQueue = new EventQueue(streamName, metricsCollectorFactory.createMetricsCollector(streamName));
-      eventQueues.put(streamName, eventQueue);
+      eventQueue = new EventQueue(streamId, metricsCollectorFactory.createMetricsCollector(streamId));
+      eventQueues.put(streamId, eventQueue);
 
       return eventQueue;
 
@@ -256,7 +253,8 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param request a request for persisting data to stream
    * @throws IOException if failed to write to stream
    */
-  private void persistUntilCompleted(String stream, EventQueue eventQueue, WriteRequest request) throws IOException {
+  private void persistUntilCompleted(Id.Stream streamId, EventQueue eventQueue, WriteRequest request)
+    throws IOException {
     while (!request.isCompleted()) {
       if (!eventQueue.tryWrite()) {
         Thread.yield();
@@ -264,7 +262,7 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
     if (!request.isSuccess()) {
       Throwables.propagateIfInstanceOf(request.getFailure(), IOException.class);
-      throw new IOException("Unable to write stream event to " + stream, request.getFailure());
+      throw new IOException("Unable to write stream event to " + streamId, request.getFailure());
     }
   }
 
@@ -275,19 +273,19 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final class StreamFileFactory extends StreamPropertyListener {
 
     private final StreamFileWriterFactory writerFactory;
-    private final Map<String, Integer> generations;
+    private final Map<Id.Stream, Integer> generations;
 
     StreamFileFactory(StreamFileWriterFactory writerFactory) {
       this.writerFactory = writerFactory;
-      this.generations = Collections.synchronizedMap(Maps.<String, Integer>newHashMap());
+      this.generations = Collections.synchronizedMap(Maps.<Id.Stream, Integer>newHashMap());
     }
 
     @Override
-    public void generationChanged(String streamName, int generation) {
-      LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamName, generation);
-      generations.put(streamName, generation);
+    public void generationChanged(Id.Stream streamId, int generation) {
+      LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamId, generation);
+      generations.put(streamId, generation);
 
-      EventQueue eventQueue = eventQueues.remove(streamName);
+      EventQueue eventQueue = eventQueues.remove(streamId);
       if (eventQueue != null) {
         try {
           eventQueue.close();
@@ -298,28 +296,28 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
 
     @Override
-    public void generationDeleted(String streamName) {
+    public void generationDeleted(Id.Stream streamId) {
       // Generation deleted. Remove the cache.
       // This makes creation of file writer resort to scanning the stream directory for generation id.
-      LOG.debug("Generation for stream '{}' deleted for stream writer", streamName);
-      generations.remove(streamName);
+      LOG.debug("Generation for stream '{}' deleted for stream writer", streamId);
+      generations.remove(streamId);
     }
 
     /**
      * Creates a new {@link FileWriter} for the given stream.
      *
-     * @param streamName name of the stream
+     * @param streamId identifier of the stream
      * @return A {@link FileWriter} for writing {@link StreamEvent} to the given stream
      * @throws IOException if failed to create the file writer
      */
-    FileWriter<StreamEvent> create(String streamName) throws IOException {
-      StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-      Integer generation = generations.get(streamName);
+    FileWriter<StreamEvent> create(Id.Stream streamId) throws IOException {
+      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+      Integer generation = generations.get(streamId);
       if (generation == null) {
         generation = StreamUtils.getGeneration(streamConfig);
       }
 
-      LOG.info("Create stream writer for {} with generation {}", streamName, generation);
+      LOG.info("Create stream writer for {} with generation {}", streamId, generation);
       return writerFactory.create(streamConfig, generation);
     }
 
@@ -337,7 +335,7 @@ public final class ConcurrentStreamWriter implements Closeable {
      * @throws IOException if failed to append the file to the stream
      */
     void appendFile(StreamConfig config, Location eventFile, Location indexFile, long timestamp) throws IOException {
-      Integer generation = generations.get(config.getName());
+      Integer generation = generations.get(config.getStreamId());
       if (generation == null) {
         generation = StreamUtils.getGeneration(config);
       }
@@ -375,7 +373,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    */
   private final class EventQueue implements Closeable {
 
-    private final String streamName;
+    private final Id.Stream streamId;
     private final StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector;
     private final Queue<WriteRequest> queue;
     private final AtomicBoolean writerFlag;
@@ -385,8 +383,8 @@ public final class ConcurrentStreamWriter implements Closeable {
     private FileWriter<StreamEventData> fileWriter;
     private boolean closed;
 
-    EventQueue(String streamName, StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector) {
-      this.streamName = streamName;
+    EventQueue(Id.Stream streamId, StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector) {
+      this.streamId = streamId;
       this.streamEvent = new MutableStreamEvent();
       this.queue = new ConcurrentLinkedQueue<WriteRequest>();
       this.writerFlag = new AtomicBoolean(false);
@@ -500,7 +498,7 @@ public final class ConcurrentStreamWriter implements Closeable {
           eventsWritten = metrics.eventsWritten;
         } catch (Throwable t) {
           // On exception, remove this EventQueue from the map and close this event queue
-          eventQueues.remove(streamName, this);
+          eventQueues.remove(streamId, this);
           doClose();
 
           for (WriteRequest processed : processQueue) {
@@ -524,7 +522,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         throw new IOException("Stream writer already closed");
       }
       if (fileWriter == null) {
-        fileWriter = FileWriters.transform(streamFileFactory.create(streamName), eventTransformer);
+        fileWriter = FileWriters.transform(streamFileFactory.create(streamId), eventTransformer);
       }
       return fileWriter;
     }

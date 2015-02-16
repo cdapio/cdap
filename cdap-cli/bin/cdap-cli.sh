@@ -51,4 +51,4 @@ elif [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.cli.CLIMain "$@"
+java $JAVA_OPTS -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.cli.CLIMain "$@"

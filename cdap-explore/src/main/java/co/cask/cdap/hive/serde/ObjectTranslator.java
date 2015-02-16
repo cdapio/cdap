@@ -106,7 +106,7 @@ public class ObjectTranslator {
     switch (typeInfo.getPrimitiveCategory()) {
       case STRING:
         // URI, URL, and String all get mapped to string
-        return primitive.toString();
+        return (primitive == null ? null : primitive.toString());
       case BINARY:
         // byte[], ByteBuffer, and UUID get mapped to bytes
         if (primitive instanceof ByteBuffer) {

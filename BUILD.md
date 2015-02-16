@@ -48,6 +48,9 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
 ### Show test output to stdout
     mvn -Dsurefire.redirectTestOutputToFile=false ...
 
+### Generates findbugs report
+    mvn process-test-classes -P findbugs,examples
+
 ### Offline mode
     mvn -o ....
 

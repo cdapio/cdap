@@ -24,6 +24,8 @@ import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+
 /**
  * Tests for {@link DefaultNamespaceAdmin}
  */
@@ -31,7 +33,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
 
   @Test
-  public void testNamespaces() throws AlreadyExistsException {
+  public void testNamespaces() throws AlreadyExistsException, IOException {
     String namespace = "namespace";
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
