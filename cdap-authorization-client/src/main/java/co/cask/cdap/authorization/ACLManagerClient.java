@@ -22,7 +22,6 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -35,7 +34,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -57,12 +55,10 @@ public class ACLManagerClient {
     this(baseURISupplier, null);
   }
 
-  public String appendQuery(String path, Iterable<ACLStore.Query> queries) {
+  public String appendQuery(String path, ACLStore.Query query) {
     List<String> arguments = Lists.newArrayList();
 
-    Iterator<ACLStore.Query> iterator = queries.iterator();
-    if (iterator.hasNext()) {
-      ACLStore.Query query = iterator.next();
+    if (query != null) {
       if (query.getSubjectId() != null) {
         arguments.add("subject=" + query.getSubjectId().getRep());
       }
@@ -74,20 +70,6 @@ public class ACLManagerClient {
       }
     }
 
-//    int i = 0;
-//    for (ACLStore.Query query : queries) {
-//      if (query.getSubjectId() != null) {
-//        arguments.add("subject[" + i + "]=" + query.getSubjectId().getRep());
-//      }
-//      if (query.getObjectId() != null) {
-//        arguments.add("object[" + i + "]=" + query.getObjectId().getRep());
-//      }
-//      if (query.getPermission() != null) {
-//        arguments.add("permission[" + i + "]=" + query.getPermission().getName());
-//      }
-//      i++;
-//    }
-
     if (!arguments.isEmpty()) {
       return path + "?" + Joiner.on("&").join(arguments);
     }
@@ -95,8 +77,8 @@ public class ACLManagerClient {
     return path;
   }
 
-  public Set<ACLEntry> getGlobalACLs(Iterable<ACLStore.Query> queries) throws IOException {
-    String path = appendQuery("/v1/acls/global", queries);
+  public Set<ACLEntry> getGlobalACLs(ACLStore.Query query) throws IOException {
+    String path = appendQuery("/v1/acls/global", query);
     HttpRequest request = HttpRequest.get(resolveURL(path)).addHeaders(getHeaders()).build();
     HttpResponse response = HttpRequests.execute(request);
 
@@ -108,8 +90,8 @@ public class ACLManagerClient {
     return ObjectResponse.fromJsonBody(response, new TypeToken<Set<ACLEntry>>() { }).getResponseObject();
   }
 
-  public Set<ACLEntry> getACLs(String namespaceId, Iterable<ACLStore.Query> queries) throws IOException {
-    String path = appendQuery("/v1/acls/namespace/" + namespaceId, queries);
+  public Set<ACLEntry> getACLs(String namespaceId, ACLStore.Query query) throws IOException {
+    String path = appendQuery("/v1/acls/namespace/" + namespaceId, query);
     HttpRequest request = HttpRequest.get(resolveURL(path)).addHeaders(getHeaders()).build();
     HttpResponse response = HttpRequests.execute(request);
 
@@ -134,8 +116,8 @@ public class ACLManagerClient {
     return ObjectResponse.fromJsonBody(response, new TypeToken<Set<ACLEntry>>() { }).getResponseObject();
   }
 
-  public void deleteGlobalACLs(Iterable<ACLStore.Query> queries) throws IOException {
-    String path = appendQuery("/v1/acls/global", queries);
+  public void deleteGlobalACLs(ACLStore.Query query) throws IOException {
+    String path = appendQuery("/v1/acls/global", query);
     HttpRequest request = HttpRequest.delete(resolveURL(path)).addHeaders(getHeaders()).build();
     HttpResponse response = HttpRequests.execute(request);
 
@@ -145,8 +127,8 @@ public class ACLManagerClient {
     }
   }
 
-  public void deleteACLs(String namespaceId, Iterable<ACLStore.Query> queries) throws IOException {
-    String path = appendQuery("/v1/acls/namespace/" + namespaceId, queries);
+  public void deleteACLs(String namespaceId, ACLStore.Query query) throws IOException {
+    String path = appendQuery("/v1/acls/namespace/" + namespaceId, query);
     HttpRequest request = HttpRequest.delete(resolveURL(path)).addHeaders(getHeaders()).build();
     HttpResponse response = HttpRequests.execute(request);
 
