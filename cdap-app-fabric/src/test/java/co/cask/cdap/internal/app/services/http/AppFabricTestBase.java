@@ -81,11 +81,13 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * AppFabric HttpHandler Test classes can extend this class, this will allow the HttpService be setup before
  * running the handler tests, this also gives the ability to run individual test cases.
  */
+@NotThreadSafe
 public abstract class AppFabricTestBase {
   protected static final Gson GSON = new Gson();
   private static final String API_KEY = "SampleTestApiKey";
@@ -102,6 +104,9 @@ public abstract class AppFabricTestBase {
   protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE2)
     .setName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
+  protected static final String INITIAL_ADMIN = "admin";
+  protected static final String NORMAL_USER = "powerless_bob";
+  private static String currentUser = INITIAL_ADMIN;
 
   private static final String hostname = "127.0.0.1";
 
@@ -127,6 +132,8 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    conf.setBoolean(Constants.Security.AUTHORIZATION_ENABLED, true);
+    conf.set(Constants.Security.ADMINS, INITIAL_ADMIN);
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
@@ -166,6 +173,18 @@ public abstract class AppFabricTestBase {
     TEMP_FOLDER.delete();
   }
 
+  protected static void useAdminUser() {
+    currentUser = INITIAL_ADMIN;
+  }
+
+  protected static void usePowerlessUser() {
+    currentUser = NORMAL_USER;
+  }
+
+  protected static String getCurrentUser() {
+    return currentUser;
+  }
+
   protected static Injector getInjector() {
     return injector;
   }
@@ -182,6 +201,13 @@ public abstract class AppFabricTestBase {
     return new URI("http://" + hostname + ":" + port + path);
   }
 
+  protected static Header[] getCommonHeaders() {
+    return new Header[] {
+      AUTH_HEADER,
+      new BasicHeader(Constants.Security.Headers.USER_ID, getCurrentUser())
+    };
+  }
+
   protected static HttpResponse doGet(String resource) throws Exception {
     return doGet(resource, null);
   }
@@ -191,28 +217,30 @@ public abstract class AppFabricTestBase {
     HttpGet get = new HttpGet(AppFabricTestBase.getEndPoint(resource));
 
     if (headers != null) {
-      get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+      get.setHeaders(ObjectArrays.concat(getCommonHeaders(), headers, Header.class));
     } else {
-      get.setHeader(AUTH_HEADER);
+      get.setHeaders(getCommonHeaders());
     }
     return client.execute(get);
   }
 
   protected static HttpResponse execute(HttpUriRequest request) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    request.setHeader(AUTH_HEADER);
+    for (Header header : getCommonHeaders()) {
+      request.setHeader(header);
+    }
     return client.execute(request);
   }
 
   protected static HttpPost getPost(String resource) throws Exception {
     HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
-    post.setHeader(AUTH_HEADER);
+    post.setHeaders(getCommonHeaders());
     return post;
   }
 
   protected static HttpPut getPut(String resource) throws Exception {
     HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
-    put.setHeader(AUTH_HEADER);
+    put.setHeaders(getCommonHeaders());
     return put;
   }
 
@@ -233,23 +261,24 @@ public abstract class AppFabricTestBase {
     }
 
     if (headers != null) {
-      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+      post.setHeaders(ObjectArrays.concat(getCommonHeaders(), headers, Header.class));
     } else {
-      post.setHeader(AUTH_HEADER);
+      post.setHeaders(getCommonHeaders());
     }
     return client.execute(post);
   }
 
   protected static HttpResponse doPost(HttpPost post) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    post.setHeader(AUTH_HEADER);
+    for (Header header : getCommonHeaders()) {
+      post.setHeader(header);
+    }
     return client.execute(post);
   }
 
   protected static HttpResponse doPut(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
-    put.setHeader(AUTH_HEADER);
+    put.setHeaders(getCommonHeaders());
     return doPut(resource, null);
   }
 
@@ -259,14 +288,14 @@ public abstract class AppFabricTestBase {
     if (body != null) {
       put.setEntity(new StringEntity(body));
     }
-    put.setHeader(AUTH_HEADER);
+    put.setHeaders(getCommonHeaders());
     return client.execute(put);
   }
 
   protected static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpDelete delete = new HttpDelete(AppFabricTestBase.getEndPoint(resource));
-    delete.setHeader(AUTH_HEADER);
+    delete.setHeaders(getCommonHeaders());
     return client.execute(delete);
   }
 

@@ -24,6 +24,7 @@ import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -129,7 +130,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "start");
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "start"));
     waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "RUNNING");
     // Try to delete an App while its flow is running
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
@@ -151,5 +152,47 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testAuthorization() throws Exception {
+    usePowerlessUser();
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2, "AppWithName");
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+    useAdminUser();
+
+    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    usePowerlessUser();
+    response = doGet(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("[]", EntityUtils.toString(response.getEntity()));
+
+    response = doGet(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+                                            TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath("adapters", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath("adapters/Null", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath("adapters/Null/stop", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = doDelete(getVersionedAPIPath("adapters/Null", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+
+    response = doPost(getVersionedAPIPath("adapters/Null", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(401, response.getStatusLine().getStatusCode());
+    useAdminUser();
   }
 }

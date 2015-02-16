@@ -55,8 +55,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                              PreferencesStore preferencesStore, DashboardStore dashboardStore) {
-    super(authenticator);
+                              PreferencesStore preferencesStore, DashboardStore dashboardStore,
+                              SecureHandler secureHandler) {
+    super(authenticator, secureHandler);
     this.store = storeFactory.create();
     this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
