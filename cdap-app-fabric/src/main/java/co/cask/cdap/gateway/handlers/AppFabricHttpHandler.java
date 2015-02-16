@@ -123,10 +123,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                              AppFabricStreamHttpHandler appFabricStreamHttpHandler,
-                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
+                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore,
+                              SecureHandler secureHandler, AppFabricStreamHttpHandler appFabricStreamHttpHandler) {
 
-    super(authenticator);
+    super(authenticator, secureHandler);
     this.streamAdmin = streamAdmin;
     this.configuration = configuration;
     this.runtimeService = runtimeService;

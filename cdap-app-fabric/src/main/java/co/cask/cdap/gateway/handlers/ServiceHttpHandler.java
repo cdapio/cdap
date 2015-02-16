@@ -41,8 +41,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator,
-                            ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
-    super(authenticator);
+                            ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                            SecureHandler secureHandler) {
+    super(authenticator, secureHandler);
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
   }
 

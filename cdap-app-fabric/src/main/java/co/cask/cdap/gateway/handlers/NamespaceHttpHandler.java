@@ -51,8 +51,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public NamespaceHttpHandler(Authenticator authenticator, SecureHandler secureHandler, NamespaceAdmin namespaceAdmin) {
+    super(authenticator, secureHandler);
     this.namespaceAdmin = namespaceAdmin;
   }
 
