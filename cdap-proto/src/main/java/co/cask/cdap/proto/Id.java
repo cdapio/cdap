@@ -459,6 +459,69 @@ public final class Id  {
   }
 
   /**
+   * Dataset Type Id identifies a given dataset module.
+   */
+  public static final class DatasetType {
+    private final Namespace namespace;
+    private final String typeId;
+
+    public DatasetType(final Namespace namespace, final String typeId) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(typeId, "Dataset type id cannot be null.");
+      Preconditions.checkArgument(isValidDatasetId(typeId), "Invalid characters found in dataset type Id. '" +
+        typeId + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
+      this.namespace = namespace;
+      this.typeId = typeId;
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    public String getId() {
+      return typeId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      DatasetType that = (DatasetType) o;
+      return namespace.equals(that.namespace) && typeId.equals(that.typeId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, typeId);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("type", typeId)
+        .toString();
+    }
+
+    public static DatasetType from(Namespace id, String typeId) {
+      return new DatasetType(id, typeId);
+    }
+
+    public static DatasetType from(String namespaceId, String typeId) {
+      return new DatasetType(Namespace.from(namespaceId), typeId);
+    }
+  }
+
+  /**
    * Dataset Module Id identifies a given dataset module.
    */
   public static final class DatasetModule {
