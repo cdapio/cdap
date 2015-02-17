@@ -18,6 +18,7 @@ angular.module(PKG.name + '.services')
   .factory('MyBrowserStorage', function MyBrowserStorageFactory($q, $localStorage, $sessionStorage, myHelpers) {
 
     function MyBrowserStorage (type) {
+      this.type = type;
       this.data = type==='local' ? $localStorage : $sessionStorage;
     }
 
@@ -28,6 +29,9 @@ angular.module(PKG.name + '.services')
      * @return {promise} resolved with the response from server
      */
     MyBrowserStorage.prototype.set = function (key, value) {
+      if(this.type === 'local') {
+        key = PKG.name + '.' + key;
+      }
       return $q.when(myHelpers.deepSet(this.data, key, value));
     };
 
@@ -37,6 +41,9 @@ angular.module(PKG.name + '.services')
      * @return {promise} resolved with the value
      */
     MyBrowserStorage.prototype.get = function (key) {
+      if(this.type === 'local') {
+        key = PKG.name + '.' + key;
+      }
       return $q.when(myHelpers.deepGet(this.data, key));
     };
 
