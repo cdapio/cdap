@@ -13,11 +13,11 @@ angular.module(PKG.name + '.feature.foo')
       /*
         naming scheme for preferences:
 
-        first component: "f" for feature
+        first component: "feature" because it's not a "service" preference
         second component: "foo" feature name
         last component(s): state the pref originate from
        */
-      var PREF_KEY = 'f.foo.test-settings';
+      var PREF_KEY = 'feature.foo.test-settings';
 
       $q.all(solutions.map(function(s){
         return s.v.get(PREF_KEY);
