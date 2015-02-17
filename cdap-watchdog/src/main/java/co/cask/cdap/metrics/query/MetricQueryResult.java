@@ -45,6 +45,9 @@ public final class MetricQueryResult {
     return series;
   }
 
+  /**
+   * Represents time series of a metric. This is used for decorating REST API output.
+   */
   public static final class TimeSeries {
     private final String metricName;
     private final Map<String, String> grouping;
@@ -69,6 +72,9 @@ public final class MetricQueryResult {
     }
   }
 
+  /**
+   * Represents time value of a metric. This is used for decorating REST API output.
+   */
   public static final class TimeValue {
     private final long time;
     private final long value;
