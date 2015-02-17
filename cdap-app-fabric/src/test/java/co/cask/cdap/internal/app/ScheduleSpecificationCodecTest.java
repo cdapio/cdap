@@ -52,7 +52,7 @@ public class ScheduleSpecificationCodecTest {
 
   @Test
   public void testTimeSchedule() throws Exception {
-    TimeSchedule timeSchedule = new TimeSchedule("foo", "bar", "cronEntry");
+    TimeSchedule timeSchedule = (TimeSchedule) Schedule.buildTimeSchedule("foo", "bar", "cronEntry");
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
@@ -65,7 +65,7 @@ public class ScheduleSpecificationCodecTest {
 
   @Test
   public void testStreamSizeSchedule() throws Exception {
-    StreamSizeSchedule dataSchedule = new StreamSizeSchedule("foo", "bar", "stream", 10);
+    StreamSizeSchedule dataSchedule = (StreamSizeSchedule) Schedule.buildStreamSizeSchedule("foo", "bar", "stream", 10);
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(dataSchedule, programInfo, properties);

@@ -227,7 +227,6 @@ public abstract class AbstractApplication implements Application {
    * @param schedule the schedule to be added for the Workflow
    * @param workflowName the name of the Workflow
    */
-  @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
     scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
   }
@@ -240,7 +239,7 @@ public abstract class AbstractApplication implements Application {
    */
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    scheduleWorkflow(new TimeSchedule(scheduleName, scheduleDescription, cronTab), workflowName,
+    scheduleWorkflow(Schedule.buildTimeSchedule(scheduleName, scheduleDescription, cronTab), workflowName,
                      Collections.<String, String>emptyMap());
   }
 
@@ -254,7 +253,7 @@ public abstract class AbstractApplication implements Application {
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName,
                                   Map<String, String> properties) {
     String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    scheduleWorkflow(new TimeSchedule(scheduleName, scheduleDescription, cronTab), workflowName, properties);
+    scheduleWorkflow(Schedule.buildTimeSchedule(scheduleName, scheduleDescription, cronTab), workflowName, properties);
   }
 
   /**
@@ -263,7 +262,6 @@ public abstract class AbstractApplication implements Application {
    * @param workflowName the name of the Workflow
    * @param properties properties to be added for the Schedule
    */
-  @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
     configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
   }
@@ -310,7 +308,7 @@ public abstract class AbstractApplication implements Application {
                                   String workflowName, Map<String, String> properties) {
     String scheduleDescription = String.format("%s on stream %s with trigger %dMB", scheduleName, streamName,
                                                dataTriggerMB);
-    scheduleWorkflow(new StreamSizeSchedule(scheduleName, scheduleDescription, streamName, dataTriggerMB),
+    scheduleWorkflow(Schedule.buildStreamSizeSchedule(scheduleName, scheduleDescription, streamName, dataTriggerMB),
                      workflowName, properties);
   }
 

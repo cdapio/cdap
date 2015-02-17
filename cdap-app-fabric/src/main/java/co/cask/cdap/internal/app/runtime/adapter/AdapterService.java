@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -376,8 +375,8 @@ public class AdapterService extends AbstractIdleService {
                                   " Cannot schedule program.");
     String cronExpr = Schedules.toCronExpr(frequency);
     String adapterName = adapterSpec.getName();
-    Schedule schedule = new TimeSchedule(constructScheduleName(programId, adapterName),
-                                         getScheduleDescription(adapterName), cronExpr);
+    Schedule schedule = Schedule.buildTimeSchedule(constructScheduleName(programId, adapterName),
+                                                   getScheduleDescription(adapterName), cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(programType, programId.getId()),
                                            adapterSpec.getProperties());

@@ -23,7 +23,7 @@ public final class TimeSchedule extends Schedule {
 
   private final String cronExpression;
 
-  public TimeSchedule(String name, String description, String cronExpression) {
+  TimeSchedule(String name, String description, String cronExpression) {
     super(name, description);
     this.cronExpression = cronExpression;
   }

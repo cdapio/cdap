@@ -17,7 +17,7 @@
 package co.cask.cdap.api.schedule;
 
 /**
- * Defines a schedule based on data availability in a stream for running a program.
+ * Defines a schedule based on data availability in a stream.
  */
 public final class StreamSizeSchedule extends Schedule {
 
@@ -25,7 +25,7 @@ public final class StreamSizeSchedule extends Schedule {
 
   private final int dataTriggerMB;
 
-  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
+  StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
     super(name, description);
     this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;
