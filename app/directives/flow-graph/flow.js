@@ -9,7 +9,7 @@ module.factory('dagreD3', function ($window) {
 });
 
 
-module.directive('myFlowGraph', function (d3, dagreD3) {
+module.directive('myFlowGraph', function (d3, dagreD3, $state) {
   return {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
@@ -97,8 +97,15 @@ module.directive('myFlowGraph', function (d3, dagreD3) {
         angular.forEach(edges, function (edge) {
           g.setEdge(edge.sourceName, edge.targetName);
         });
-
         renderer(inner, g);
+        
+        // Set up onclick after rendering.
+        inner
+          .selectAll("g.node")
+          .on("click", function(nodeId) {
+            console.log(nodeId);
+             $state.go('flows.detail.runs.detail.flowlets.detail', {flowletId: nodeId});
+          });
       };
 
     }
