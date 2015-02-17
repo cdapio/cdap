@@ -20,7 +20,6 @@ angular.module(PKG.name + '.feature.flows')
 
 
         nodes = nodes.concat(Object.keys(res.flowlets));
-        console.log(res.flowlets);
         $scope.data = {
           nodes: nodes,
           edges: res.connections

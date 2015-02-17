@@ -3,6 +3,9 @@ my-flow-graph {
     font-weight: 300;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
     font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    fill: white;
   }
 
   .node rect {
@@ -12,19 +15,51 @@ my-flow-graph {
   }
 
   .edgePath path {
-    stroke: #333;
-    stroke-width: 1.5px;
+    stroke-dasharray: 8px, 8px;
+    stroke: #5A5D6E;
+    stroke-width: 2px;
   }
+    
 
   .flowlet-svg {
-    fill: transparent;
-    stroke-width: 2px;
-    stroke: #000;
+    fill: #3C4355;
+    cursor: pointer;
   }
 
   .stream-svg {
-    stroke: black;
-    fill: transparent;
+    fill: #3C4355;
+    cursor: pointer;
+  }
+
+  .flowlet-events {
+    fill: #FF6600;
+    stroke: white;
     stroke-width: 2px;
+  }
+
+  .flowlet-event-count {
+    fill: white;
+    cursor: default;
+  }
+
+  .stream-events {
+    fill: #0AAE33;
+    stroke: white;
+    stroke-width: 2px;
+  }
+
+  .stream-event-count {
+    fill: white;
+  }
+
+  .flowlet-instances {
+    fill: #01ABED;
+    stroke: #3C4355;
+    stroke-width: 2px;
+  }
+
+  .flowlet-instance-count {
+    fill: white;
+    cursor: default;
   }
 }
