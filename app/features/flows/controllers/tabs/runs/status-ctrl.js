@@ -14,12 +14,19 @@ angular.module(PKG.name + '.feature.flows')
         var nodes = [];
         angular.forEach(res.connections, function(conn) {
           if (conn.sourceType === 'STREAM') {
-            nodes.push(conn.sourceName);
+            nodes.push({
+              type: conn.sourceType,
+              name: conn.sourceName
+            });
           }
         });
 
+        angular.forEach(res.flowlets, function (val, key) {
+          val.type = 'FLOWLET';
+          val.name = key;
+          nodes.push(val);
+        });
 
-        nodes = nodes.concat(Object.keys(res.flowlets));
         $scope.data = {
           nodes: nodes,
           edges: res.connections

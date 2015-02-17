@@ -27,6 +27,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
       scope.render = function (){
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
+        var instanceMap = {};
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
@@ -42,11 +43,12 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
 
         
         angular.forEach(nodes, function (node) {
-          var nodeLabel = node.length > 8 ? node.substr(0, 5) + '...' : node;
-          if (node === "wordStream") {
-            g.setNode(node, { shape: "stream", label: nodeLabel});
+          var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
+          if (node.type === "STREAM") {
+            g.setNode(node.name, { shape: "stream", label: nodeLabel});
           } else {
-            g.setNode(node, { shape: "flowlet", label: nodeLabel});
+            g.setNode(node.name, { shape: "flowlet", label: nodeLabel});
+            instanceMap[node.name] = node;
           }
           
           
@@ -58,6 +60,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
 
 
         renderer.shapes().flowlet = function(parent, bbox, node) {
+          var instances = getInstances(node.elem.__data__); // No other way to get name from node.
           var r = 60,
           shapeSvg = parent.insert("circle", ":first-child")
             .attr("x", -bbox.width / 2)
@@ -73,8 +76,8 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           
           parent.insert("text")
             .attr("x", 46)
-            .attr("y", -26)
-            .text('1')
+            .attr("y", -25)
+            .text(instances)
             .attr("class", "flow-shapes flowlet-instance-count");
 
           parent.insert("circle")
@@ -85,7 +88,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           parent.insert("text")
             .attr("x", -62)
             .attr("y", 5)
-            .text('1')
+            .text('-1')
             .attr("class", "flow-shapes flowlet-event-count");
           
           node.intersect = function(point) {
@@ -119,7 +122,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           parent.insert("text")
             .attr("x", -62)
             .attr("y", 5)
-            .text('1')
+            .text('-1')
             .attr("class", "flow-shapes stream-event-count");
 
           node.intersect = function(point) {
@@ -147,7 +150,6 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
         svg
           .selectAll("g.node .foundation-shape")
           .on("click", function(nodeId) {
-            console.log(nodeId);
              $state.go('flows.detail.runs.detail.flowlets.detail', {flowletId: nodeId});
           });
 
@@ -158,7 +160,11 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           .scale(initialScale)
           .event(svg);
         svg.attr('height', g.graph().height * initialScale + 40);
-        
+
+
+        function getInstances(nodeId) {
+          return instanceMap[nodeId].instances ? instanceMap[nodeId].instances : 0;
+        }  
       };
 
     }
