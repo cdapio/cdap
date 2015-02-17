@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -73,7 +74,9 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
         @Override
         public NotificationFeedMds get() {
           try {
-            Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, NOTIFICATION_FEED_TABLE, "table",
+            Id.DatasetInstance notificationsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                        NOTIFICATION_FEED_TABLE);
+            Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, notificationsDatasetInstanceId, "table",
                                                              DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS,
                                                              null);
 

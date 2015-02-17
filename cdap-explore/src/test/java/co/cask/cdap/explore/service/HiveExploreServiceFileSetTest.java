@@ -27,7 +27,9 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
@@ -63,19 +65,20 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @After
   public void deleteAll() throws Exception {
-    datasetFramework.deleteAllInstances();
+    datasetFramework.deleteAllInstances(NAMESPACE_ID);
   }
 
   @Test
   public void testCreateAddDrop() throws Exception {
 
     final String datasetName = "files";
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     final String tableName = datasetName; // in this test context, the hive table name is the same as the dataset name
 
     // create a time partitioned file set
-    datasetFramework.addInstance("fileSet", datasetName, FileSetProperties.builder()
+    datasetFramework.addInstance("fileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
       .setBasePath("/myPath")
         // properties for partitioned hive table
@@ -92,7 +95,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
     // Accessing dataset instance to perform data operations
-    FileSet fileSet = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+    FileSet fileSet = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(fileSet);
 
     // add a file
@@ -117,7 +120,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(5L))));
 
     // drop the dataset
-    datasetFramework.deleteInstance(datasetName);
+    datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
     runCommand("show tables", false,
@@ -130,12 +133,13 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testPartitionedFileSet() throws Exception {
 
     final String datasetName = "parted";
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     final String tableName = datasetName; // in this test context, the hive table name is the same as the dataset name
 
     // create a time partitioned file set
-    datasetFramework.addInstance("partitionedFileSet", datasetName, PartitionedFileSetProperties.builder()
+    datasetFramework.addInstance("partitionedFileSet", datasetInstanceId, PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder()
                          .addStringField("str")
                          .addIntField("num")
@@ -156,7 +160,8 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
     // Accessing dataset instance to perform data operations
-    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS,
+                                                                 null);
     Assert.assertNotNull(partitioned);
     FileSet fileSet = partitioned.getEmbeddedFileSet();
 
@@ -233,7 +238,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("y2", "#2"))));
 
     // drop the dataset
-    datasetFramework.deleteInstance(datasetName);
+    datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
     runCommand("show tables", false,
@@ -245,12 +250,13 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testTimePartitionedFileSet() throws Exception {
 
     final String datasetName = "parts";
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     final String tableName = datasetName; // in this test context, the hive table name is the same as the dataset name
 
     // create a time partitioned file set
-    datasetFramework.addInstance("timePartitionedFileSet", datasetName, FileSetProperties.builder()
+    datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
       .setBasePath("/somePath")
         // properties for partitioned hive table
@@ -267,7 +273,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
     // Accessing dataset instance to perform data operations
-    TimePartitionedFileSet tpfs = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+    TimePartitionedFileSet tpfs = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(tpfs);
     Assert.assertTrue(tpfs instanceof TransactionAware);
 
@@ -335,14 +341,14 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=3/minute=0"))));
 
     // drop the dataset
-    datasetFramework.deleteInstance(datasetName);
+    datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
     runCommand("show tables", false,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Collections.<QueryResult>emptyList());
 
-    datasetFramework.addInstance("timePartitionedFileSet", datasetName, FileSetProperties.builder()
+    datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
       .setBasePath("/somePath")
         // properties for partitioned hive table
