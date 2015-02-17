@@ -32,7 +32,7 @@ public class GenerateCLIDocsTable {
   private final Command printDocsCommand;
 
   public GenerateCLIDocsTable(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.printDocsCommand = new PrintCLIDocsTableCommand(new CLIMain(cliConfig).getCommandsSupplier());
+    this.printDocsCommand = new GenerateCLIDocsTableCommand(new CLIMain(cliConfig).getCommandsSupplier());
   }
 
   public static void main(String[] args) throws Exception {

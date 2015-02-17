@@ -23,16 +23,20 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Generates data for the table in cdap-docs/reference-manual/source/cli-api.rst.
  */
-public class PrintCLIDocsTableCommand extends HelpCommand {
+public class GenerateCLIDocsTableCommand extends HelpCommand {
 
-  public PrintCLIDocsTableCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
+  public GenerateCLIDocsTableCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
     super(commands);
   }
 
@@ -43,7 +47,14 @@ public class PrintCLIDocsTableCommand extends HelpCommand {
       commands.get(), CommandCategory.GENERAL, Predicates.<Command>alwaysTrue());
     for (String category : categorizedCommands.keySet()) {
       output.printf("   **%s**\n", category);
-      for (Command command : categorizedCommands.get(category)) {
+      List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category));
+      Collections.sort(commandList, new Comparator<Command>() {
+        @Override
+        public int compare(Command command, Command command2) {
+          return command.getPattern().compareTo(command2.getPattern());
+        }
+      });
+      for (Command command : commandList) {
         output.printf("   ``%s``,\"%s\"\n", command.getPattern(), command.getDescription().replace("\"", "\"\""));
       }
     }
