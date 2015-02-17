@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -73,22 +74,22 @@ public interface ExploreClient extends Closeable {
    * Add a partition to a dataset's table.
    *
    * @param datasetName name of the dataset
-   * @param time the partition time
+   * @param key the partition key
    * @param path the file system path of the partition
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
-  ListenableFuture<Void> addPartition(String datasetName, long time, String path);
+  ListenableFuture<Void> addPartition(String datasetName, PartitionKey key, String path);
 
   /**
    * Drop a partition from a dataset's table.
    *
    * @param datasetName name of the dataset
-   * @param time the partition time
+   * @param key the partition key
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
-  ListenableFuture<Void> dropPartition(String datasetName, long time);
+  ListenableFuture<Void> dropPartition(String datasetName, PartitionKey key);
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the

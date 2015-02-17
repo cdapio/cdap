@@ -31,12 +31,13 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -57,6 +58,8 @@ public class DefaultConfigStore implements ConfigStore {
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String PROPERTY_COLUMN = "properties";
+  private static final Id.DatasetInstance configStoreDatasetInstanceId =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, Constants.ConfigStore.CONFIG_TABLE);
 
   private final Transactional<ConfigTable, Table> txnl;
 
@@ -69,9 +72,9 @@ public class DefaultConfigStore implements ConfigStore {
       @Override
       public ConfigTable get() {
         try {
-          Table table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.ConfigStore.CONFIG_TABLE,
-                                                                "table", DatasetProperties.EMPTY,
-                                                                DatasetDefinition.NO_ARGUMENTS, null);
+          Table table = DatasetsUtil.getOrCreateDataset(dsFramework, configStoreDatasetInstanceId,
+                                                        "table", DatasetProperties.EMPTY,
+                                                        DatasetDefinition.NO_ARGUMENTS, null);
           return new ConfigTable(table);
         } catch (Exception e) {
           LOG.error("Failed to access {} table", Constants.ConfigStore.CONFIG_TABLE, e);
@@ -82,7 +85,7 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
-    dsFramework.addInstance(Table.class.getName(), Constants.ConfigStore.CONFIG_TABLE, DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), configStoreDatasetInstanceId, DatasetProperties.EMPTY);
   }
 
   @Override

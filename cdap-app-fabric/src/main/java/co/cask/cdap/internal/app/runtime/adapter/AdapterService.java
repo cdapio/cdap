@@ -35,7 +35,6 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -66,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -95,8 +95,6 @@ public class AdapterService extends AbstractIdleService {
   private final Store store;
   private final PreferencesStore preferencesStore;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
-  private final String archiveDir;
-
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
@@ -111,7 +109,6 @@ public class AdapterService extends AbstractIdleService {
     this.store = storeFactory.create();
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
-    archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
     this.adapterTypeInfos = Maps.newHashMap();
     this.preferencesStore = preferencesStore;
   }
@@ -229,22 +226,22 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
     Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
-
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     String adapterName = adapterSpec.getName();
-    AdapterSpecification existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+    AdapterSpecification existingAdapter = store.getAdapter(namespace, adapterName);
     if (existingAdapter != null) {
       throw new AdapterAlreadyExistsException(adapterName);
     }
 
     ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
-    validateSources(adapterName, adapterSpec.getSources());
-    createSinks(adapterSpec.getSinks(), adapterTypeInfo);
+    validateSources(namespaceId, adapterName, adapterSpec.getSources());
+    createSinks(Id.Namespace.from(namespaceId), adapterTypeInfo, adapterSpec.getSinks());
 
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     preferencesStore.setProperties(namespaceId, appSpec.getName(), properties);
     schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
-    store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
+    store.addAdapter(namespace, adapterSpec);
   }
 
   /**
@@ -328,7 +325,17 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-      Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
+      Location namespaceHomeLocation = locationFactory.create(namespaceId);
+      if (!namespaceHomeLocation.exists()) {
+        String msg = String.format("Home directory %s for namespace %s not found",
+                                   namespaceHomeLocation.toURI().getPath(), namespaceId);
+        LOG.error(msg);
+        throw new FileNotFoundException(msg);
+      }
+
+      String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+      Location destination = namespaceHomeLocation.append(appFabricDir)
+        .append(Constants.AppFabric.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
       DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
                                                          ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =
@@ -395,27 +402,29 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Sources for all adapters should exists before creating the adapters.
-  private void validateSources(String adapterName, Set<Source> sources) throws IllegalArgumentException {
+  private void validateSources(String namespaceId, String adapterName,
+                               Set<Source> sources) throws IllegalArgumentException {
     // Ensure all sources exist
     for (Source source : sources) {
       Preconditions.checkArgument(Source.Type.STREAM.equals(source.getType()),
                                   String.format("Unknown Source type: %s", source.getType()));
-      Preconditions.checkArgument(streamExists(source.getName()),
+      Id.Stream streamId = Id.Stream.from(namespaceId, source.getName());
+      Preconditions.checkArgument(streamExists(streamId),
                                   String.format("Stream %s must exist during create of adapter: %s",
                                                 source.getName(), adapterName));
     }
   }
 
-  private boolean streamExists(String streamName) {
+  private boolean streamExists(Id.Stream streamId) {
     try {
-      return streamAdmin.exists(streamName);
+      return streamAdmin.exists(streamId);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   // create the required sinks for the adapters. Currently only DATASET sink type is supported.
-  private void createSinks(Set<Sink> sinks, AdapterTypeInfo adapterTypeInfo) {
+  private void createSinks(Id.Namespace namespaceId, AdapterTypeInfo adapterTypeInfo, Set<Sink> sinks) {
     // create sinks if it does not exist
     for (Sink sink : sinks) {
       Preconditions.checkArgument(Sink.Type.DATASET.equals(sink.getType()),
@@ -429,23 +438,24 @@ public class AdapterService extends AbstractIdleService {
 
       String datasetClass = properties.getProperties().get(DATASET_CLASS);
       Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null");
-      createDataset(sink.getName(), datasetClass, properties);
+      Id.DatasetInstance sinkInstanceId = Id.DatasetInstance.from(namespaceId, sink.getName());
+      createDataset(sinkInstanceId, datasetClass, properties);
     }
   }
 
-  private void createDataset(String datasetName, String datasetClass, DatasetProperties properties) {
+  private void createDataset(Id.DatasetInstance datasetInstanceId, String datasetClass, DatasetProperties properties) {
     try {
-      if (!datasetFramework.hasInstance(datasetName)) {
-        datasetFramework.addInstance(datasetClass, datasetName, properties);
-        LOG.debug("Dataset instance {} created with properties: {}.", datasetName, properties);
+      if (!datasetFramework.hasInstance(datasetInstanceId)) {
+        datasetFramework.addInstance(datasetClass, datasetInstanceId, properties);
+        LOG.debug("Dataset instance {} created with properties: {}.", datasetInstanceId, properties);
       } else {
-        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetName);
+        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetInstanceId);
       }
     } catch (DatasetManagementException e) {
-      LOG.error("Error while creating dataset {}", datasetName, e);
+      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
       throw new RuntimeException(e);
     } catch (IOException e) {
-      LOG.error("Error while creating dataset {}", datasetName, e);
+      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
       throw new RuntimeException(e);
     }
   }

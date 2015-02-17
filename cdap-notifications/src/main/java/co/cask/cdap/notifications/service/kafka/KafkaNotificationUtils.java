@@ -16,7 +16,7 @@
 
 package co.cask.cdap.notifications.service.kafka;
 
-import co.cask.cdap.notifications.feeds.NotificationFeed;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.kafka.client.TopicPartition;
 
 /**
@@ -25,12 +25,12 @@ import org.apache.twill.kafka.client.TopicPartition;
 public final class KafkaNotificationUtils {
 
   /**
-   * Map a {@link NotificationFeed} to a Kafka topic partition.
+   * Map a {@link Id.NotificationFeed} to a Kafka topic partition.
    *
-   * @param feed {@link NotificationFeed} object
+   * @param feed {@link Id.NotificationFeed} object
    * @return Kafka topic that should contain the Notifications published on the {@code feed}
    */
-  public static TopicPartition getKafkaTopicPartition(NotificationFeed feed) {
+  public static TopicPartition getKafkaTopicPartition(Id.NotificationFeed feed) {
     // For now, we only have a topic per feed Category.
     // Later, we may want to have multiple topics per categories, defined in cdap-site.
     // For example, we may have 10 topics for the category streams, which names would be
@@ -41,21 +41,21 @@ public final class KafkaNotificationUtils {
   /**
    * Build the key of a Kafka message based on a {@code feed}.
    *
-   * @param feed {@link NotificationFeed} to get the Kafka message key of
+   * @param feed {@link Id.NotificationFeed} to get the Kafka message key of
    * @return the key of a Kafka message based on the {@code feed}
    */
-  public static String getMessageKey(NotificationFeed feed) {
+  public static String getMessageKey(Id.NotificationFeed feed) {
     return feed.getId();
   }
 
   /**
-   * Return the {@link NotificationFeed} attached to a Kafka message containing a notification.
+   * Return the {@link Id.NotificationFeed} attached to a Kafka message containing a notification.
    *
    * @param messageKey key of a Kafka message containing a Notification
-   * @return the {@link NotificationFeed} attached to a Kafka message containing a notification
+   * @return the {@link Id.NotificationFeed} attached to a Kafka message containing a notification
    */
-  public static NotificationFeed getMessageFeed(String messageKey) {
-    return NotificationFeed.fromId(messageKey);
+  public static Id.NotificationFeed getMessageFeed(String messageKey) {
+    return Id.NotificationFeed.fromId(messageKey);
   }
 
   private KafkaNotificationUtils() {

@@ -17,15 +17,16 @@
 package co.cask.cdap.notifications.service.inmemory;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 
@@ -37,7 +38,9 @@ import java.util.concurrent.Executors;
  * In-memory Notification service that pushes notifications to subscribers.
  */
 public class InMemoryNotificationService extends AbstractNotificationService {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .enableComplexMapKeySerialization()
+    .create();
   private ListeningExecutorService executorService;
 
   @Inject
@@ -58,7 +61,8 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, final Type notificationType)
+  public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
+                                         final Type notificationType)
     throws NotificationException {
     return executorService.submit(new Callable<N>() {
       @Override

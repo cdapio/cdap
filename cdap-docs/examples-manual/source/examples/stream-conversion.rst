@@ -39,7 +39,7 @@ of the Application are tied together by the class ``StreamConversionApp``:
 
 The interesting part is the creation of the dataset ``converted``:
 
-- It is a ``TimePartitionedFileSet``. This is an experimental new dataset type, introduced in CDAP 2.7.0. This
+- It is a ``TimePartitionedFileSet``. This is an experimental new dataset type, introduced in CDAP 2.7.1. This
   dataset manages the files in a ``FileSet`` by associating each file with a time stamp.
 - The properties are divided in two sections:
 

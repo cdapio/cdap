@@ -29,6 +29,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import jline.console.completer.Completer;
+import jline.console.completer.EnumCompleter;
 import jline.console.completer.FileNameCompleter;
 
 import java.util.Map;
@@ -55,8 +56,8 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
         .put(ArgumentName.NAMESPACE_ID.getName(), injector.getInstance(NamespaceIdCompleter.class))
-        .putAll(generateProgramIdCompleters(injector))
-        .build();
+        .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
+        .putAll(generateProgramIdCompleters(injector)).build();
   }
 
   private static Map<? extends String, ? extends Completer> generateProgramIdCompleters(Injector injector) {

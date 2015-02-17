@@ -16,19 +16,22 @@
 
 package co.cask.cdap.notifications.feeds;
 
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.proto.Id;
+
 /**
- * Exception thrown when a {@link NotificationFeed} object is not found.
+ * Exception thrown when a {@link Id.NotificationFeed} object is not found.
  */
-public class NotificationFeedNotFoundException extends NotificationFeedException {
-  public NotificationFeedNotFoundException(String s) {
-    super(s);
+public class NotificationFeedNotFoundException extends NotFoundException {
+
+  public NotificationFeedNotFoundException(String elementId) {
+    super("feed", elementId);
   }
 
-  public NotificationFeedNotFoundException(Throwable throwable) {
-    super(throwable);
-  }
-
-  public NotificationFeedNotFoundException(String s, Throwable throwable) {
-    super(s, throwable);
+  /**
+   * @return The name of the feed that could not be found
+   */
+  public String getFeedName() {
+    return getElementId();
   }
 }

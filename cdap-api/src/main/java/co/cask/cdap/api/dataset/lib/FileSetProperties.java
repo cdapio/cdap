@@ -175,11 +175,10 @@ public class FileSetProperties {
   /**
    * A Builder to construct properties for FileSet datasets.
    */
-  public static class Builder {
-    protected final DatasetProperties.Builder delegate = DatasetProperties.builder();
+  public static class Builder extends DatasetProperties.Builder {
 
     /**
-     * Package visible default constructor, to allow subclassing by other datasets in this package.
+     * Package visible default constructor, to allow sub-classing by other datasets in this package.
      */
     Builder() { }
 
@@ -187,7 +186,7 @@ public class FileSetProperties {
      * Sets the base path for the file dataset.
      */
     public Builder setBasePath(String path) {
-      delegate.add(BASE_PATH, path);
+      add(BASE_PATH, path);
       return this;
     }
 
@@ -203,7 +202,7 @@ public class FileSetProperties {
      * Sets the output format of the file dataset.
      */
     public Builder setOutputFormat(String className) {
-      delegate.add(OUTPUT_FORMAT, className);
+      add(OUTPUT_FORMAT, className);
       return this;
     }
 
@@ -219,7 +218,7 @@ public class FileSetProperties {
      * Sets the input format of the file dataset.
      */
     public Builder setInputFormat(String className) {
-      delegate.add(INPUT_FORMAT, className);
+      add(INPUT_FORMAT, className);
       return this;
     }
 
@@ -227,7 +226,7 @@ public class FileSetProperties {
      * Sets a property for the input format of the file dataset.
      */
     public Builder setInputProperty(String name, String value) {
-      delegate.add(INPUT_PROPERTIES_PREFIX + name, value);
+      add(INPUT_PROPERTIES_PREFIX + name, value);
       return this;
     }
 
@@ -235,7 +234,7 @@ public class FileSetProperties {
      * Sets a property for the output format of the file dataset.
      */
     public Builder setOutputProperty(String name, String value) {
-      delegate.add(OUTPUT_PROPERTIES_PREFIX + name, value);
+      add(OUTPUT_PROPERTIES_PREFIX + name, value);
       return this;
     }
 
@@ -243,7 +242,7 @@ public class FileSetProperties {
      * Enable explore for this dataset.
      */
     public Builder setEnableExploreOnCreate(boolean enabled) {
-      delegate.add(PROPERTY_ENABLE_EXPLORE_ON_CREATE, Boolean.toString(enabled));
+      add(PROPERTY_ENABLE_EXPLORE_ON_CREATE, Boolean.toString(enabled));
       return this;
     }
 
@@ -251,7 +250,7 @@ public class FileSetProperties {
      * Set the class name of the SerDe used to create the Hive table.
      */
     public Builder setSerDe(String className) {
-      delegate.add(PROPERTY_EXPLORE_SERDE, className);
+      add(PROPERTY_EXPLORE_SERDE, className);
       return this;
     }
 
@@ -268,7 +267,7 @@ public class FileSetProperties {
      * for the file set itself.
      */
     public Builder setExploreInputFormat(String className) {
-      delegate.add(PROPERTY_EXPLORE_INPUT_FORMAT, className);
+      add(PROPERTY_EXPLORE_INPUT_FORMAT, className);
       return this;
     }
 
@@ -287,7 +286,7 @@ public class FileSetProperties {
      * for the file set itself.
      */
     public Builder setExploreOutputFormat(String className) {
-      delegate.add(PROPERTY_EXPLORE_OUTPUT_FORMAT, className);
+      add(PROPERTY_EXPLORE_OUTPUT_FORMAT, className);
       return this;
     }
 
@@ -304,7 +303,7 @@ public class FileSetProperties {
      * Set a table property to be added to the Hive table. Multiple properties can be set.
      */
     public Builder setTableProperty(String name, String value) {
-      delegate.add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
+      add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
       return this;
     }
 
@@ -312,7 +311,7 @@ public class FileSetProperties {
      * Create a DatasetProperties from this builder.
      */
     public DatasetProperties build() {
-      return delegate.build();
+      return super.build();
     }
   }
 }

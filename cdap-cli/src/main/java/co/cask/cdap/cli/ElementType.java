@@ -36,27 +36,22 @@ public enum ElementType {
             null, null, ArgumentName.NAMESPACE_ID, Capability.PREFERENCES),
 
   APP("application", "applications", "app", "apps",
-      null, null, ArgumentName.APP,
-      Capability.LIST, Capability.PREFERENCES),
+      null, null, ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
   DATASET("Dataset", "Datasets", "dataset", "datasets",
-          null, null, ArgumentName.DATASET,
-          Capability.LIST),
+          null, null, ArgumentName.DATASET, Capability.LIST),
 
   DATASET_MODULE("Dataset module", "Dataset modules", "dataset module", "dataset modules",
-                 null, null, ArgumentName.DATASET_MODULE,
-                 Capability.LIST),
+                 null, null, ArgumentName.DATASET_MODULE, Capability.LIST),
 
   DATASET_TYPE("Dataset type", "Dataset types", "dataset type", "dataset types",
-               null, null, ArgumentName.DATASET_TYPE,
-               Capability.LIST),
+               null, null, ArgumentName.DATASET_TYPE, Capability.LIST),
 
   QUERY("Dataset query", "Dataset queries", "dataset query", "dataset queries",
         null, null, ArgumentName.QUERY),
 
   STREAM("Stream", "Streams", "stream", "streams",
-         null, null, ArgumentName.STREAM,
-         Capability.LIST),
+         null, null, ArgumentName.STREAM, Capability.LIST),
 
   PROGRAM("program", "programs", "program", "programs",
           null, null, ArgumentName.PROGRAM),
@@ -94,13 +89,13 @@ public enum ElementType {
            ArgumentName.RUNNABLE,
            Capability.SCALE, Capability.RUNS, Capability.LOGS),
 
-  MAPREDUCE("MapReduce", "MapReduce Programs", "mapreduce", "mapreduce",
+  MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  SPARK("Spark", "Spark Programs", "spark", "spark",
+  SPARK("Spark Program", "Spark Programs", "spark", "spark programs",
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
@@ -115,10 +110,8 @@ public enum ElementType {
   private final String prettyName;
   private final ArgumentName argumentName;
 
-  ElementType(String prettyName, String pluralPrettyName,
-              String name, String pluralName,
-              ProgramType programType, ProgramType parentType,
-              ArgumentName argumentName,
+  ElementType(String prettyName, String pluralPrettyName, String name, String pluralName,
+              ProgramType programType, ProgramType parentType, ArgumentName argumentName,
               Capability... capabilities) {
     this.prettyName = prettyName;
     this.pluralPrettyName = pluralPrettyName;

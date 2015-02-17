@@ -27,14 +27,13 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.test.internal.TempFolder;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -63,6 +62,8 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -115,16 +116,19 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamCoordinatorClient streamCoordinatorClient;
-  private static final TempFolder TEMP_FOLDER = new TempFolder();
   private static final String adapterFolder = "adapter";
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    File adapterDir = TEMP_FOLDER.newFolder(adapterFolder);
+    File adapterDir = tmpFolder.newFolder(adapterFolder);
 
     CConfiguration conf = CConfiguration.create();
 
     conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
@@ -163,7 +167,6 @@ public abstract class AppFabricTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
-    TEMP_FOLDER.delete();
   }
 
   protected static Injector getInjector() {

@@ -22,6 +22,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -90,11 +91,13 @@ public abstract class GatewayTestBase {
   private static Injector injector;
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
-  private static MetricsQueryService metrics;
+  private static MetricsQueryService metricsQueryService;
+  private static MetricsCollectionService metricsCollectionService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static NotificationService notificationService;
+  private static StreamService streamService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -155,12 +158,6 @@ public abstract class GatewayTestBase {
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-
-          MockMetricsCollectionService metricsCollectionService = new
-            MockMetricsCollectionService();
-          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
           bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
@@ -177,11 +174,15 @@ public abstract class GatewayTestBase {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    metrics = injector.getInstance(MetricsQueryService.class);
     appFabricServer.startAndWait();
-    metrics.startAndWait();
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.startAndWait();
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -196,9 +197,11 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
+    streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();
-    metrics.stopAndWait();
+    metricsCollectionService.stopAndWait();
+    metricsQueryService.stopAndWait();
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();

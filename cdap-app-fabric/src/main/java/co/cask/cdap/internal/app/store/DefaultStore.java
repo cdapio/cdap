@@ -93,6 +93,8 @@ import javax.annotation.Nullable;
 public class DefaultStore implements Store {
   public static final String APP_META_TABLE = "app.meta";
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
+  private static final Id.DatasetInstance appMetaDatasetInstanceId =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, APP_META_TABLE);
 
   private final LocationFactory locationFactory;
   private final CConfiguration configuration;
@@ -121,7 +123,7 @@ public class DefaultStore implements Store {
           @Override
           public AppMds get() {
             try {
-              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_TABLE, "table",
+              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, appMetaDatasetInstanceId, "table",
                                                                DatasetProperties.EMPTY,
                                                                DatasetDefinition.NO_ARGUMENTS, null);
               return new AppMds(mdsTable);
@@ -138,7 +140,7 @@ public class DefaultStore implements Store {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), APP_META_TABLE, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), appMetaDatasetInstanceId, DatasetProperties.EMPTY);
   }
 
   @Nullable
@@ -741,6 +743,7 @@ public class DefaultStore implements Store {
   @Override
   @Nullable
   public NamespaceMeta createNamespace(final NamespaceMeta metadata) {
+    Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -758,6 +761,7 @@ public class DefaultStore implements Store {
   @Override
   @Nullable
   public NamespaceMeta getNamespace(final Id.Namespace id) {
+    Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -769,6 +773,7 @@ public class DefaultStore implements Store {
   @Override
   @Nullable
   public NamespaceMeta deleteNamespace(final Id.Namespace id) {
+    Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -872,7 +877,7 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    DatasetAdmin admin = dsFramework.getAdmin(APP_META_TABLE, null);
+    DatasetAdmin admin = dsFramework.getAdmin(appMetaDatasetInstanceId, null);
     if (admin != null) {
       admin.truncate();
     }

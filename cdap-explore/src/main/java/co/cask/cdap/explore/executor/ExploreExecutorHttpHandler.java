@@ -25,9 +25,13 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.partitioned.FieldTypes;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.schema.SchemaConverter;
@@ -35,6 +39,7 @@ import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -61,12 +66,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -96,11 +98,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                            @PathParam("stream") final String streamName) {
     try {
+      //TODO: get this from path in v3 stream api
+      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
       String streamLocationURI;
       StreamConfig streamConfig;
       try {
-        streamConfig = streamAdmin.getConfig(streamName);
+        streamConfig = streamAdmin.getConfig(streamId);
         Location streamLocation = streamConfig.getLocation();
         if (streamLocation == null) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find location of stream " + streamName);
@@ -116,7 +120,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocationURI);
       String createStatement;
       try {
-        createStatement = generateStreamCreateStatement(streamName, streamLocationURI,
+        createStatement = generateStreamCreateStatement(streamId, streamLocationURI,
                                                         streamConfig.getFormat().getSchema());
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for stream {}", streamName, e);
@@ -141,18 +145,21 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void disableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("stream") final String streamName) {
     try {
+      //TODO: get this from path in v3 stream api
+      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+
       LOG.debug("Disabling explore for stream {}", streamName);
 
       try {
         // throws io exception if there is no stream
-        streamAdmin.getConfig(streamName);
+        streamAdmin.getConfig(streamId);
       } catch (IOException e) {
         LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
         return;
       }
 
-      String deleteStatement = generateDeleteStatement(getStreamTableName(streamName));
+      String deleteStatement = generateDeleteStatement(getStreamTableName(streamId));
       LOG.debug("Running delete statement for stream {} - {}", streamName, deleteStatement);
 
       QueryHandle handle = exploreService.execute(deleteStatement);
@@ -173,38 +180,24 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableDataset(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
     try {
-      Dataset dataset;
-      try {
-        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
-      } catch (Exception e) {
-        String className = isClassNotFoundException(e);
-        if (className == null) {
-          throw e;
-        }
-        LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
-                   "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
-                   "guide for more information.", datasetName, className, className, datasetName);
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
+      // Note: Namespacing will come later.
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
-        return;
+        return; // response sent by instantiateDataset()
       }
 
       String createStatement = null;
-      // To be enabled for explore, a dataset must either be RecordScannable/Writable, or it must be a FileSet
-      // or a TimePartitionedFileSet with explore enabled in it properties.
+      // To be enabled for explore, a dataset must either be RecordScannable/Writable,
+      // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
       try {
         if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
           LOG.debug("Enabling explore for dataset instance {}", datasetName);
           createStatement = generateCreateStatement(datasetName, dataset);
 
-        } else if (dataset instanceof FileSet || dataset instanceof TimePartitionedFileSet) {
+        } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
           // this cannot fail because we were able to instantiate the dataset
-          DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetName);
+          DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
           if (spec != null) {
             Map<String, String> properties = spec.getProperties();
             if (FileSetProperties.isExploreEnabled(properties)) {
@@ -241,6 +234,30 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  private Dataset instantiateDataset(Id.DatasetInstance datasetInstanceId, HttpResponder responder) throws Exception {
+    Dataset dataset;
+    try {
+      dataset = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
+    } catch (Exception e) {
+      String className = isClassNotFoundException(e);
+      if (className == null) {
+        throw e;
+      }
+      LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
+                 "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
+                 "guide for more information.", datasetInstanceId, className, className, datasetInstanceId);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+      return null;
+    }
+    if (dataset == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+      return null;
+    }
+    return dataset;
+  }
+
   private String isClassNotFoundException(Throwable e) {
     if (e instanceof ClassNotFoundException) {
       return e.getMessage();
@@ -260,34 +277,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("dataset") final String datasetName) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
-
-      Dataset dataset;
-      try {
-        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
-      } catch (Exception e) {
-        String className = isClassNotFoundException(e);
-        if (className == null) {
-          throw e;
-        }
-        LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
-                   "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
-                   "guide for more information.", datasetName, className, className, datasetName);
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
+      // Note: namespacing will come later
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
-        return;
+        return; // response sent by instantiateDataset()
       }
 
       String deleteStatement = null;
       if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
         deleteStatement = generateDeleteStatement(datasetName);
-      } else if (dataset instanceof FileSet || dataset instanceof TimePartitionedFileSet) {
+      } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         // this cannot fail because we were able to instantiate the dataset
-        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetName);
+        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
         if (spec != null) {
           Map<String, String> properties = spec.getProperties();
           if (FileSetProperties.isExploreEnabled(properties)) {
@@ -304,7 +306,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
-      
+
       // If table does not exist, nothing to be done
       try {
         exploreService.getTableInfo(null, getHiveTableName(datasetName));
@@ -328,20 +330,45 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  @PUT
-  @Path("/datasets/{dataset}/partitions/{time}")
+  @POST
+  @Path("/datasets/{dataset}/partitions")
   public void addPartition(HttpRequest request, HttpResponder responder,
-                           @PathParam("dataset") final String datasetName,
-                           @PathParam("time") final long partitionTime) {
+                           @PathParam("dataset") final String datasetName) {
     try {
+      // Note: Namespacing will come later.
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
+      if (dataset == null) {
+        return; // response sent by instantiateDataset()
+      }
+      if (!(dataset instanceof PartitionedFileSet)) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
+        return;
+      }
+      Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
+
       Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
       Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
       String fsPath = properties.get("path");
       if (fsPath == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "path was not specified.");
+        return;
       }
-      String addPartitionStatement = generateAddPartitionStatement(datasetName, partitionTime, fsPath);
-      LOG.debug("Add partition for time {} dataset {} - {}", partitionTime, datasetName, addPartitionStatement);
+
+      PartitionKey partitionKey;
+      try {
+        partitionKey = PartitionedFileSetArguments.getOutputPartitionKey(properties, partitioning);
+      } catch (Exception e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "invalid partition key: " + e.getMessage());
+        return;
+      }
+      if (partitionKey == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
+        return;
+      }
+
+      String addPartitionStatement = generateAddPartitionStatement(datasetName, partitionKey, fsPath);
+      LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetName, addPartitionStatement);
 
       QueryHandle handle = exploreService.execute(addPartitionStatement);
       JsonObject json = new JsonObject();
@@ -353,14 +380,42 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  @DELETE
-  @Path("/datasets/{dataset}/partitions/{time}")
+  // this should really be a DELETE request. However, the partition key must be passed in the body
+  // of the request, and that does not work with many HTTP clients, including Java's URLConnection.
+  @POST
+  @Path("/datasets/{dataset}/deletePartition")
   public void dropPartition(HttpRequest request, HttpResponder responder,
-                           @PathParam("dataset") final String datasetName,
-                           @PathParam("time") final long partitionTime) {
+                            @PathParam("dataset") final String datasetName) {
     try {
-      String dropPartitionStatement = generateDropPartitionStatement(datasetName, partitionTime);
-      LOG.debug("Drop partition for time {} dataset {} - {}", partitionTime, datasetName, dropPartitionStatement);
+      // Note: Namespacing will come later.
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
+      if (dataset == null) {
+        return; // response sent by instantiateDataset()
+      }
+      if (!(dataset instanceof PartitionedFileSet)) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
+        return;
+      }
+      Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
+
+      Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+
+      PartitionKey partitionKey;
+      try {
+        partitionKey = PartitionedFileSetArguments.getOutputPartitionKey(properties, partitioning);
+      } catch (Exception e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "invalid partition key: " + e.getMessage());
+        return;
+      }
+      if (partitionKey == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
+        return;
+      }
+
+      String dropPartitionStatement = generateDropPartitionStatement(datasetName, partitionKey);
+      LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetName, dropPartitionStatement);
 
       QueryHandle handle = exploreService.execute(dropPartitionStatement);
       JsonObject json = new JsonObject();
@@ -372,11 +427,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private static String getStreamTableName(String streamName) {
-    return getHiveTableName("cdap_stream_" + streamName);
+  private static String getStreamTableName(Id.Stream streamId) {
+    //TODO: use hive namespace
+    return getHiveTableName(String.format("cdap_stream_%s_%s", streamId.getNamespaceId(), streamId.getName()));
   }
 
-  public static String getHiveTableName(String name) {
+  private static String getHiveTableName(String name) {
     // Instance name is like cdap.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
     return name.replaceAll("\\.", "_").toLowerCase();
@@ -387,13 +443,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * in a dummy value for an external table if it is not given in the create statement, which will result in a
    * table that cannot be queried. As such, the location must be given and accurate.
    *
-   * @param name name of the stream
-   * @param location location of the stream
+   * @param streamId   Id of the stream
+   * @param location   location of the stream
    * @param bodySchema schema for the body of a stream event
    * @return hive statement to use when creating the external table for querying the stream
    * @throws UnsupportedTypeException
    */
-  public static String generateStreamCreateStatement(String name, String location, Schema bodySchema)
+  public static String generateStreamCreateStatement(Id.Stream streamId, String location, Schema bodySchema)
     throws UnsupportedTypeException {
     // schema of a stream is always timestamp, headers, and then the schema of the body.
     List<Schema.Field> fields = Lists.newArrayList(
@@ -402,15 +458,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     fields.addAll(bodySchema.getFields());
     Schema schema = Schema.recordOf("streamEvent", fields);
     String hiveSchema = SchemaConverter.toHiveSchema(schema);
-    String tableName = getStreamTableName(name);
+    String tableName = getStreamTableName(streamId);
     return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Stream\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\", \"%s\" = \"%s\") " +
                            "LOCATION \"%s\"" +
                            "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.STREAM_NAME, name, location,
+                         Constants.Explore.STREAM_NAME, streamId.getName(),
+                         Constants.Explore.STREAM_NAMESPACE, streamId.getNamespaceId(),
+                         location,
                          // this is set so we know what stream it is created from, and so we know it's from CDAP
-                         Constants.Explore.CDAP_NAME, name);
+                         Constants.Explore.CDAP_NAME, streamId);
   }
 
   public static String generateCreateStatement(String name, Dataset dataset)
@@ -439,9 +497,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
     String partitioned;
     Location baseLocation;
-    if (dataset instanceof TimePartitionedFileSet) {
-      partitioned = "PARTITIONED BY (year INT, month INT, day INT, hour INT, minute INT)";
-      baseLocation = ((TimePartitionedFileSet) dataset).getUnderlyingFileSet().getBaseLocation();
+    if (dataset instanceof PartitionedFileSet) {
+      partitioned = "PARTITIONED BY " + toHivePartitioning(((PartitionedFileSet) dataset).getPartitioning());
+      baseLocation = ((PartitionedFileSet) dataset).getEmbeddedFileSet().getBaseLocation();
     } else {
       partitioned = "";
       baseLocation = ((FileSet) dataset).getBaseLocation();
@@ -464,10 +522,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     // CREATE EXTERNAL TABLE nn
-    //   [ PARTITIONED BY(time BIGINT) ]
-    //   ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-    //   STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
-    //             OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+    //   [ PARTITIONED BY (field type, ...) ]
+    //   ROW FORMAT SERDE '<serde class>'
+    //   STORED AS INPUTFORMAT '<input format class>'
+    //             OUTPUTFORMAT '<output format class>'
     //   LOCATION '<uri>'
     //   TBLPROPERTIES ('avro.schema.literal'='...');
 
@@ -477,32 +535,43 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       tableName, partitioned, serde, inputFormat, outputFormat, baseLocation.toURI().toString(), tblProperties);
   }
 
+  private static String toHivePartitioning(Partitioning partitioning) {
+    String sep = "";
+    StringBuilder builder = new StringBuilder("(");
+    for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
+      builder.append(sep).append(entry.getKey()).append(" ").append(FieldTypes.toHiveType(entry.getValue()));
+      sep = ", ";
+    }
+    builder.append(")");
+    return builder.toString();
+  }
+
   public static String generateDeleteStatement(String name) {
     return String.format("DROP TABLE IF EXISTS %s", getHiveTableName(name));
   }
 
-  public static String generateAddPartitionStatement(String name, long time, String path) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTimeInMillis(time);
-    int year = calendar.get(Calendar.YEAR);
-    int month = calendar.get(Calendar.MONTH) + 1;
-    int day = calendar.get(Calendar.DAY_OF_MONTH);
-    int hour = calendar.get(Calendar.HOUR_OF_DAY);
-    int minute = calendar.get(Calendar.MINUTE);
-    return String.format("ALTER TABLE %s ADD PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d) LOCATION '%s'",
-                         getHiveTableName(name), year, month, day, hour, minute, path);
+  public static String generateAddPartitionStatement(String name, PartitionKey key, String path) {
+    return String.format("ALTER TABLE %s ADD PARTITION %s LOCATION '%s'",
+                         getHiveTableName(name), generateHivePartitionKey(key), path);
   }
 
-  public static String generateDropPartitionStatement(String name, long time) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTimeInMillis(time);
-    int year = calendar.get(Calendar.YEAR);
-    int month = calendar.get(Calendar.MONTH) + 1;
-    int day = calendar.get(Calendar.DAY_OF_MONTH);
-    int hour = calendar.get(Calendar.HOUR_OF_DAY);
-    int minute = calendar.get(Calendar.MINUTE);
-    return String.format("ALTER TABLE %s DROP PARTITION(year=%d,month=%d,day=%d,hour=%d,minute=%d)",
-                         getHiveTableName(name), year, month, day, hour, minute);
+  public static String generateDropPartitionStatement(String name, PartitionKey key) {
+    return String.format("ALTER TABLE %s DROP PARTITION %s",
+                         getHiveTableName(name), generateHivePartitionKey(key));
+  }
+
+  private static String generateHivePartitionKey(PartitionKey key) {
+    StringBuilder builder = new StringBuilder("(");
+    String sep = "";
+    for (Map.Entry<String, ? extends Comparable> entry : key.getFields().entrySet()) {
+      String fieldName = entry.getKey();
+      Comparable fieldValue = entry.getValue();
+      String quote = fieldValue instanceof String ? "'" : "";
+      builder.append(sep).append(fieldName).append("=").append(quote).append(fieldValue.toString()).append(quote);
+      sep = ", ";
+    }
+    builder.append(")");
+    return builder.toString();
   }
 
   /**

@@ -23,13 +23,13 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Collections;
@@ -42,7 +42,7 @@ import java.util.Map;
  * <p>
  * Implement the {@link #configure()} method to define your application.
  * </p>
- * 
+ *
  * @see co.cask.cdap.api.app
  */
 public abstract class AbstractApplication implements Application {
@@ -164,20 +164,22 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addProcedure(Procedure)
+   * @see ApplicationConfigurer#addProcedure(co.cask.cdap.api.procedure.Procedure)
    * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  protected void addProcedure(Procedure procedure) {
+  @SuppressWarnings("deprecation")
+  protected void addProcedure(co.cask.cdap.api.procedure.Procedure procedure) {
     configurer.addProcedure(procedure);
   }
 
   /**
-   * @see ApplicationConfigurer#addProcedure(Procedure, int)
+   * @see ApplicationConfigurer#addProcedure(co.cask.cdap.api.procedure.Procedure, int)
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  protected void addProcedure(Procedure procedure, int instances) {
+  @SuppressWarnings("deprecation")
+  protected void addProcedure(co.cask.cdap.api.procedure.Procedure procedure, int instances) {
     configurer.addProcedure(procedure, instances);
   }
 
@@ -207,6 +209,13 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(Service service) {
     configurer.addService(service);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addWorker(Worker)
+   */
+  protected void addWorker(Worker worker) {
+    configurer.addWorker(worker);
   }
 
   /**

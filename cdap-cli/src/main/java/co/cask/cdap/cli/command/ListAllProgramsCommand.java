@@ -17,6 +17,8 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.Categorized;
+import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
@@ -35,7 +37,7 @@ import javax.inject.Inject;
 /**
  * Lists all programs.
  */
-public class ListAllProgramsCommand extends AbstractAuthCommand {
+public class ListAllProgramsCommand extends AbstractAuthCommand implements Categorized {
 
   private final ApplicationClient appClient;
 
@@ -74,5 +76,10 @@ public class ListAllProgramsCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Lists all " + ElementType.PROGRAM.getPluralPrettyName();
+  }
+
+  @Override
+  public String getCategory() {
+    return CommandCategory.LIFECYCLE.getName();
   }
 }

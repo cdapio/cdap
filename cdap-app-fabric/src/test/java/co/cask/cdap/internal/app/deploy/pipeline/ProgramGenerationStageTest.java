@@ -20,6 +20,7 @@ import co.cask.cdap.ToyApp;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
@@ -30,7 +31,9 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests the program generation stage of the deploy pipeline.
@@ -38,11 +41,19 @@ import org.junit.Test;
 public class ProgramGenerationStageTest {
   private static CConfiguration configuration = CConfiguration.create();
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
-    configuration.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    LocationFactory lf = new LocalLocationFactory();
-    Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
+    configuration.set(Constants.AppFabric.OUTPUT_DIR, "programs");
+    LocationFactory lf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    // have to do this since we are not going through the route of create namespace -> deploy application
+    // in real scenarios, the namespace directory would already be created
+    Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespaceId());
+    Locations.mkdirsIfNotExists(namespaceLocation);
+    LocationFactory rootLf = new LocalLocationFactory();
+    Location appArchive = rootLf.create(JarFinder.getJar(ToyApp.class));
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));

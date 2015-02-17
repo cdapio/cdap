@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -28,12 +28,15 @@ import com.google.common.reflect.TypeToken;
  * application. Additionally, it will enable exploration of those streams if exploration is enabled.
  */
 public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
+  private final Id.Namespace namespace;
   private final StreamAdmin streamAdmin;
   private final ExploreFacade exploreFacade;
   private final boolean enableExplore;
 
-  public CreateStreamsStage(StreamAdmin streamAdmin, ExploreFacade exploreFacade, boolean enableExplore) {
+  public CreateStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin, ExploreFacade exploreFacade,
+                            boolean enableExplore) {
     super(TypeToken.of(ApplicationDeployable.class));
+    this.namespace = namespace;
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
     this.enableExplore = enableExplore;
@@ -50,9 +53,10 @@ public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
     // create stream instances
     ApplicationSpecification specification = input.getSpecification();
     for (String streamName : specification.getStreams().keySet()) {
+      Id.Stream streamId = Id.Stream.from(namespace, streamName);
       // create the stream and enable exploration if the stream doesn't already exist.
-      if (!streamAdmin.exists(streamName)) {
-        streamAdmin.create(streamName);
+      if (!streamAdmin.exists(streamId)) {
+        streamAdmin.create(streamId);
         if (enableExplore) {
           exploreFacade.enableExploreStream(streamName);
         }

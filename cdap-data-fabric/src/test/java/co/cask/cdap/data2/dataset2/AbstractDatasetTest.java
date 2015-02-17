@@ -26,9 +26,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -50,7 +52,14 @@ public class AbstractDatasetTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+
   private static DatasetFramework framework;
+  private static final Id.DatasetModule inMemory = Id.DatasetModule.from(NAMESPACE_ID, "inMemory");
+  private static final Id.DatasetModule core = Id.DatasetModule.from(NAMESPACE_ID, "core");
+  private static final Id.DatasetModule fileSet = Id.DatasetModule.from(NAMESPACE_ID, "fileSet");
+  private static final Id.DatasetModule tpfs = Id.DatasetModule.from(NAMESPACE_ID, "tpfs");
+  private static final Id.DatasetModule pfs = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
 
   @BeforeClass
   public static void init() throws Exception {
@@ -71,47 +80,50 @@ public class AbstractDatasetTest {
         return registry;
       }
     });
-    framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("core", new CoreDatasetsModule());
-    framework.addModule("fileSet", new FileSetModule());
-    framework.addModule("tpfs", new TimePartitionedFileSetModule());
+    framework.addModule(inMemory, new InMemoryOrderedTableModule());
+    framework.addModule(core, new CoreDatasetsModule());
+    framework.addModule(fileSet, new FileSetModule());
+    framework.addModule(tpfs, new TimePartitionedFileSetModule());
+    framework.addModule(pfs, new PartitionedFileSetModule());
   }
 
   @AfterClass
   public static void destroy() throws Exception {
-    framework.deleteModule("tpfs");
-    framework.deleteModule("fileSet");
-    framework.deleteModule("core");
-    framework.deleteModule("inMemory");
+    framework.deleteModule(pfs);
+    framework.deleteModule(tpfs);
+    framework.deleteModule(fileSet);
+    framework.deleteModule(core);
+    framework.deleteModule(inMemory);
   }
 
-  protected static void addModule(String name, DatasetModule module) throws DatasetManagementException {
-    framework.addModule(name, module);
+  protected static void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
+    framework.addModule(moduleId, module);
   }
 
-  protected static void deleteModule(String name) throws DatasetManagementException {
-    framework.deleteModule(name);
+  protected static void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+    framework.deleteModule(moduleId);
   }
 
-  protected static void createInstance(String type, String instanceName, DatasetProperties properties)
+  protected static void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
     throws IOException, DatasetManagementException {
 
-    framework.addInstance(type, instanceName, properties);
+    framework.addInstance(type, datasetInstanceId, properties);
   }
 
-  protected static void deleteInstance(String instanceName) throws IOException, DatasetManagementException {
-    framework.deleteInstance(instanceName);
+  protected static void deleteInstance(Id.DatasetInstance datasetInstanceId)
+    throws IOException, DatasetManagementException {
+    framework.deleteInstance(datasetInstanceId);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName)
+  protected static <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException {
-
-    return getInstance(datasetName, DatasetDefinition.NO_ARGUMENTS);
+    return getInstance(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
+  protected static <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId,
+                                                     Map<String, String> arguments)
     throws DatasetManagementException, IOException {
-    return framework.getDataset(datasetName, arguments, null);
+    return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
   protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {

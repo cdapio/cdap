@@ -36,7 +36,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -44,6 +43,7 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.TxRetryPolicy;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Throwables;
@@ -80,10 +80,11 @@ public abstract class NotificationTest {
 
   private static NotificationService notificationService;
 
-  protected static final NotificationFeed FEED1 = new NotificationFeed.Builder()
-    .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
-  protected static final NotificationFeed FEED2 = new NotificationFeed.Builder()
-    .setNamespace("namespace").setCategory("stream").setName("bar").setDescription("").build();
+  private static final Id.Namespace namespace = Id.Namespace.from("namespace");
+  protected static final Id.NotificationFeed FEED1 = new Id.NotificationFeed.Builder()
+    .setNamespaceId(namespace.getId()).setCategory("stream").setName("foo").setDescription("").build();
+  protected static final Id.NotificationFeed FEED2 = new Id.NotificationFeed.Builder()
+    .setNamespaceId(namespace.getId()).setCategory("stream").setName("bar").setDescription("").build();
 
   protected static NotificationService getNotificationService() {
     return notificationService;
@@ -222,7 +223,8 @@ public abstract class NotificationTest {
   public void useTransactionTest() throws Exception {
     // Performing admin operations to create dataset instance
     // keyValueTable is a system dataset module
-    dsFramework.addInstance("keyValueTable", "myTable", DatasetProperties.EMPTY);
+    Id.DatasetInstance myTableInstance = Id.DatasetInstance.from(namespace, "myTable");
+    dsFramework.addInstance("keyValueTable", myTableInstance, DatasetProperties.EMPTY);
 
     Assert.assertTrue(feedManager.createFeed(FEED1));
     try {
@@ -252,7 +254,7 @@ public abstract class NotificationTest {
         // Waiting for the subscriber to receive that notification
         TimeUnit.SECONDS.sleep(2);
 
-        KeyValueTable table = dsFramework.getDataset("myTable", DatasetDefinition.NO_ARGUMENTS, null);
+        KeyValueTable table = dsFramework.getDataset(myTableInstance, DatasetDefinition.NO_ARGUMENTS, null);
         Assert.assertNotNull(table);
         Transaction tx1 = txManager.startShort(100);
         table.startTx(tx1);
@@ -265,7 +267,7 @@ public abstract class NotificationTest {
         cancellable.cancel();
       }
     } finally {
-      dsFramework.deleteInstance("myTable");
+      dsFramework.deleteInstance(myTableInstance);
       feedManager.deleteFeed(FEED1);
     }
   }

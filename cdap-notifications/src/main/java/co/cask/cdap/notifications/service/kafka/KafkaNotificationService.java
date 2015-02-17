@@ -18,19 +18,21 @@ package co.cask.cdap.notifications.service.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.feeds.NotificationFeed;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -58,7 +60,9 @@ import java.util.concurrent.Executors;
  */
 public class KafkaNotificationService extends AbstractNotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationService.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .enableComplexMapKeySerialization()
+    .create();
 
   private final KafkaClient kafkaClient;
   private final NotificationFeedManager feedManager;
@@ -97,7 +101,8 @@ public class KafkaNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final NotificationFeed feed, final N notification, final Type notificationType)
+  public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
+                                         final Type notificationType)
     throws NotificationException {
     LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
     return publishingExecutor.submit(new Callable<N>() {
@@ -126,8 +131,9 @@ public class KafkaNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler,
-                                   Executor executor) throws NotificationFeedException {
+  public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler,
+                                   Executor executor)
+    throws NotificationFeedNotFoundException, NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
@@ -163,8 +169,9 @@ public class KafkaNotificationService extends AbstractNotificationService {
       this.topicPartition = topicPartition;
     }
 
-    public <N> Cancellable subscribe(NotificationFeed feed, NotificationHandler<N> handler,
-                                     Executor executor) throws NotificationFeedException {
+    public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler,
+                                     Executor executor)
+      throws NotificationFeedNotFoundException, NotificationFeedException {
       final Cancellable cancellable = KafkaNotificationService.super.subscribe(feed, handler, executor);
       synchronized (KafkaNotificationService.this) {
         if (subscriptions == 0) {

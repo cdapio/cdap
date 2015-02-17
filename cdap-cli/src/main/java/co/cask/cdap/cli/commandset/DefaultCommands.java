@@ -38,7 +38,7 @@ public class DefaultCommands extends CommandSet<Command> {
         .add(injector.getInstance(CallProcedureCommand.class))
         .build(),
       ImmutableList.<CommandSet<Command>>builder()
-        .add(injector.getInstance(BasicCommands.class))
+        .add(injector.getInstance(GeneralCommands.class))
         .add(injector.getInstance(ApplicationCommands.class))
         .add(injector.getInstance(StreamCommands.class))
         .add(injector.getInstance(ProgramCommands.class))
@@ -48,7 +48,7 @@ public class DefaultCommands extends CommandSet<Command> {
         //TODO: uncomment to expose Preferences cli commands
 //      .add(injector.getInstance(PreferencesCommandSet.class))
         //TODO: uncomment when namespace is ready
-//      .add(injector.getInstance(NamespaceCommands.class))
+      .add(injector.getInstance(NamespaceCommands.class))
         .build());
   }
 }

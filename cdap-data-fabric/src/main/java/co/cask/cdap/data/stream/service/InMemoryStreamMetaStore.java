@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
@@ -42,25 +42,25 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public void addStream(String accountId, String streamName) throws Exception {
-    streams.put(accountId, streamName);
+  public void addStream(Id.Stream streamId) throws Exception {
+    streams.put(streamId.getNamespaceId(), streamId.getName());
   }
 
   @Override
-  public void removeStream(String accountId, String streamName) throws Exception {
-    streams.remove(accountId, streamName);
+  public void removeStream(Id.Stream streamId) throws Exception {
+    streams.remove(streamId.getNamespaceId(), streamId.getName());
   }
 
   @Override
-  public boolean streamExists(String accountId, String streamName) throws Exception {
-    return streams.containsEntry(accountId, streamName);
+  public boolean streamExists(Id.Stream streamId) throws Exception {
+    return streams.containsEntry(streamId.getNamespaceId(), streamId.getName());
   }
 
   @Override
-  public List<StreamSpecification> listStreams(String accountId) throws Exception {
+  public List<StreamSpecification> listStreams(Id.Namespace namespaceId) throws Exception {
     ImmutableList.Builder<StreamSpecification> builder = ImmutableList.builder();
     synchronized (streams) {
-      for (String stream : streams.get(accountId)) {
+      for (String stream : streams.get(namespaceId.getId())) {
         builder.add(new StreamSpecification.Builder().setName(stream).create());
       }
     }
@@ -68,12 +68,12 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public synchronized Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception {
-    ImmutableMultimap.Builder<NamespaceMeta, StreamSpecification> builder = ImmutableMultimap.builder();
+  public synchronized Multimap<Id.Namespace, StreamSpecification> listStreams() throws Exception {
+    ImmutableMultimap.Builder<Id.Namespace, StreamSpecification> builder = ImmutableMultimap.builder();
     for (String namespaceId : streams.keySet()) {
       synchronized (streams) {
         Collection<String> streamNames = streams.get(namespaceId);
-        builder.putAll(new NamespaceMeta.Builder().setId(namespaceId).build(),
+        builder.putAll(Id.Namespace.from(namespaceId),
                        Collections2.transform(streamNames, new Function<String, StreamSpecification>() {
                          @Nullable
                          @Override

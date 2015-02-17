@@ -77,14 +77,14 @@ public class AdapterClientTest extends ClientTestBase {
   @Before
   public void setUp() throws Throwable {
     super.setUp();
+    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE);
     adapterClient = new AdapterClient(clientConfig);
     applicationClient = new ApplicationClient(clientConfig);
   }
 
   @Test
   public void testAdapters() throws Exception {
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-    List<AdapterSpecification> initialList = adapterClient.list(namespaceId);
+    List<AdapterSpecification> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
     AdapterConfig adapterConfig = new AdapterConfig();
@@ -94,31 +94,31 @@ public class AdapterClientTest extends ClientTestBase {
     adapterConfig.sink = new AdapterConfig.Sink("mySink", ImmutableMap.of("dataset.class", FileSet.class.getName()));
 
     // Create Adapter
-    adapterClient.create(namespaceId, "someAdapter", adapterConfig);
+    adapterClient.create("someAdapter", adapterConfig);
 
     // Check that the created adapter is present
-    adapterClient.waitForExists(namespaceId, "someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists(namespaceId, "someAdapter"));
-    AdapterSpecification someAdapter = adapterClient.get(namespaceId, "someAdapter");
+    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
+    Assert.assertTrue(adapterClient.exists("someAdapter"));
+    AdapterSpecification someAdapter = adapterClient.get("someAdapter");
     Assert.assertNotNull(someAdapter);
 
     // list all adapters
-    List<AdapterSpecification> list = adapterClient.list(namespaceId);
+    List<AdapterSpecification> list = adapterClient.list();
     Assert.assertArrayEquals(new AdapterSpecification[] {someAdapter}, list.toArray());
 
     // Delete Adapter
-    adapterClient.delete(namespaceId, "someAdapter");
+    adapterClient.delete("someAdapter");
 
     // verify that the adapter is deleted
-    Assert.assertFalse(adapterClient.exists(namespaceId, "someAdapter"));
+    Assert.assertFalse(adapterClient.exists("someAdapter"));
     try {
-      adapterClient.get(namespaceId, "someAdapter");
+      adapterClient.get("someAdapter");
       Assert.fail();
     } catch (AdapterNotFoundException e) {
       // Expected
     }
 
-    List<AdapterSpecification> finalList = adapterClient.list(namespaceId);
+    List<AdapterSpecification> finalList = adapterClient.list();
     Assert.assertEquals(0, finalList.size());
 
     applicationClient.deleteAll();

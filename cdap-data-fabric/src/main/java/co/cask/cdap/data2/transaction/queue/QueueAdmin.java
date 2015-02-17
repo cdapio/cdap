@@ -17,14 +17,15 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.transaction.EntityAdmin;
 
 import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-public interface QueueAdmin extends EntityAdmin {
+public interface QueueAdmin {
 
   /**
    * Deletes all entries for all queues.
@@ -69,4 +70,48 @@ public interface QueueAdmin extends EntityAdmin {
    * Performs upgrade action for all queues.
    */
   void upgrade() throws Exception;
+
+  /**
+   * @param name entity name
+   * @return true if entity with given name exists, otherwise false
+   * @throws Exception if check fails
+   */
+  boolean exists(String name) throws Exception;
+
+  /**
+   * Creates entity if doesn't exist. If entity exists does nothing.
+   * @param name name of the entity to create
+   * @throws Exception if creation fails
+   */
+  void create(String name) throws Exception;
+
+  /**
+   * Creates entity if doesn't exist. If entity exists does nothing.
+   * @param name name of the entity to create
+   * @param props additional properties
+   * @throws Exception if creation fails
+   */
+  void create(String name, @Nullable Properties props) throws Exception;
+
+  /**
+   * Wipes out entity data.
+   * @param name entity name
+   * @throws Exception if cleanup fails
+   */
+  void truncate(String name) throws Exception;
+
+  /**
+   * Deletes entity from the system completely.
+   * @param name entity name
+   * @throws Exception if deletion fails
+   */
+  void drop(String name) throws Exception;
+
+  /**
+   * Performs update of entity.
+   *
+   * @param name Name of the entity to update
+   * @throws Exception if update fails
+   */
+  void upgrade(String name, Properties properties) throws Exception;
 }

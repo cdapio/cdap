@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -35,16 +36,17 @@ import static org.junit.Assert.assertTrue;
  */
 public class CounterTimeseriesTableTest extends AbstractDatasetTest {
   private static CounterTimeseriesTable table = null;
+  private static Id.DatasetInstance counterTable = Id.DatasetInstance.from(NAMESPACE_ID, "counterTable");
 
   @BeforeClass
   public static void setup() throws Exception {
-    createInstance("counterTimeseriesTable", "counterTable", DatasetProperties.EMPTY);
-    table = getInstance("counterTable");
+    createInstance("counterTimeseriesTable", counterTable, DatasetProperties.EMPTY);
+    table = getInstance(counterTable);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    deleteInstance("counterTable");
+    deleteInstance(counterTable);
   }
 
   @Test

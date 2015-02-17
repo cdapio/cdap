@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -36,6 +37,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
@@ -56,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
+import javax.annotation.Nullable;
 
 /**
  * Common utilities for dealing with HBase.
@@ -119,7 +122,7 @@ public abstract class HBaseTableUtil {
    */
   public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                      HTableDescriptor tableDescriptor,
-                                     byte[][] splitKeys) throws IOException {
+                                     @Nullable byte[][] splitKeys) throws IOException {
     createTableIfNotExists(admin, tableName, tableDescriptor, splitKeys,
                            MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
   }
@@ -135,7 +138,7 @@ public abstract class HBaseTableUtil {
    */
   public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                      HTableDescriptor tableDescriptor,
-                                     byte[][] splitKeys,
+                                     @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
     if (admin.tableExists(tableName)) {
       return;
@@ -384,6 +387,71 @@ public abstract class HBaseTableUtil {
 
     return info;
   }
+
+  protected String toHBaseNamespace(Id.Namespace namespace) {
+    return "cdap_" + namespace.getId();
+  }
+
+  /**
+   * Returns if the current version of HBase supports namespaces
+   *
+   * @return true if namespaces are supported, false otherwise
+   */
+  public abstract boolean namespacesSupported();
+
+  /**
+   * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
+   *
+   * @param conf the hadoop configuration
+   * @param tableId the {@link TableId} to create an {@link HTable} for
+   * @return an {@link HTable} for the tableName in the namespace
+   */
+  public abstract HTable getHTable(Configuration conf, TableId tableId) throws IOException;
+
+  /**
+   * Creates a new {@link HTableDescriptor} which may contain an HBase namespace depending on the HBase version
+   *
+   * @param tableId the {@link TableId} to create an {@link HTableDescriptor} for
+   * @return an {@link HTableDescriptor} for the tableName in the namespace
+   */
+  public abstract HTableDescriptor getHTableDescriptor(TableId tableId);
+
+  /**
+   * Checks if an HBase namespace already exists
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespace the {@link Id.Namespace} to check for existence
+   * @throws IOException if an I/O error occurs during the operation
+   */
+  public abstract boolean hasNamespace(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+
+  /**
+   * Creates an HBase namespace, if it does not already exist
+   * This method uses {@link Id.Namespace} here to cover for a future case when CDAP namespaces may push down namespace
+   * properties to HBase
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespace the {@link Id.Namespace} to create
+   * @throws IOException if an I/O error occurs during the operation
+   */
+  public abstract void createNamespaceIfNotExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+
+  /**
+   * Creates an HBase namespace, if it exists
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespace the {@link Id.Namespace} to delete
+   * @throws IOException if an I/O error occurs during the operation
+   */
+  public abstract void deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+
+  /**
+   * Returns the fully qualified table name containing namespace
+   *
+   * @param tableId the identifier for the table containing namespace and table name
+   * @return the fully qualified table name containing namespace
+   */
+  public abstract String getTableNameWithNamespace(TableId tableId);
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
 
