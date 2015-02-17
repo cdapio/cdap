@@ -189,9 +189,9 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<Id.Stream, Long> sizes = ImmutableMap.builder();
-    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
-      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
-      sizes.put(streamId, streamWriterSizeCollector.getTotalCollected(streamId));
+    Map<Id.Stream, AtomicLong> streamSizes = streamWriterSizeCollector.getStreamSizes();
+    for (Map.Entry<Id.Stream, AtomicLong> streamSize : streamSizes.entrySet()) {
+      sizes.put(streamSize.getKey(), streamSize.getValue().get());
     }
     StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
     LOG.trace("Publishing heartbeat {}", heartbeat);

@@ -103,7 +103,7 @@ public class FileStreamAdmin implements StreamAdmin {
     // is done external to this class.
     List<Location> locations;
     try {
-      locations = getStreamBaseLocation(namespace).list();
+      locations = getStreamsHomeLocation(namespace).list();
     } catch (FileNotFoundException e) {
       // If the stream base doesn't exists, nothing need to be deleted
       locations = ImmutableList.of();
@@ -333,10 +333,10 @@ public class FileStreamAdmin implements StreamAdmin {
 
   // Constructs path: /.../<namespace>/streams/<streamName>, as expected by StreamUtils#getStreamIdFromLocation
   private Location getStreamBaseLocation(Id.Stream streamId) throws IOException {
-    return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getName());
+    return getStreamsHomeLocation(streamId.getNamespace()).append(streamId.getName());
   }
 
-  private Location getStreamBaseLocation(Id.Namespace namespace) throws IOException {
+  private Location getStreamsHomeLocation(Id.Namespace namespace) throws IOException {
     return locationFactory.create(namespace.getId()).append(streamBaseDirPath);
   }
 
