@@ -23,6 +23,7 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -30,6 +31,8 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,6 +45,8 @@ import java.util.concurrent.TimeUnit;
  */
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
 public class HBaseDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseDatasetMetricsReporter.class);
+
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
@@ -109,10 +114,17 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
         // not a user dataset
         continue;
       }
+      if (datasetName.contains(".")) {
+        datasetName = datasetName.substring(0, datasetName.indexOf("."));
+      }
       MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
+        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                                                    Constants.Metrics.Tag.DATASET, datasetName));
+      LOG.info("Dataset Name {} , Collector {} , totalSize {}", datasetName,
+               collector, statEntry.getValue().getTotalSizeMB());
+
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      collector.increment("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
+      collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
     }
   }
 }

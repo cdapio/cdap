@@ -97,11 +97,13 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
         // not a user dataset
         continue;
       }
+      datasetName = datasetName.substring(0, datasetName.indexOf("."));
       MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
+        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                                                    Constants.Metrics.Tag.DATASET, datasetName));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
-      collector.increment("dataset.size.mb", sizeInMb);
+      collector.gauge("dataset.size.mb", sizeInMb);
     }
   }
 }
