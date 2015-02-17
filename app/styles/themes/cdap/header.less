@@ -10,13 +10,31 @@ body.theme-cdap header {
     padding-bottom: 15px;
 
     .navbar-brand {
+      position: relative;
+      top: -5px;
+
       > strong {
         display: inline-block;
         visibility: hidden;
         width: 77px;
       }
       background: url('@{img-path}/cdap.png') no-repeat 15px center;
-      background-size: 75%;
+      background-size: 77px auto;
+
+      &:after {
+        position: absolute;
+        content: 'BETA';
+        width: 77px;
+        text-align: center;
+        color: @gray-light;
+        background-color: @cdap-darkness;
+        font-size: 8px;
+        font-weight: bold;
+        line-height: 12px;
+        border-radius: 12px;
+        bottom: 0;
+      }
+
     }
 
     // center the navbar
