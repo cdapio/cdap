@@ -21,9 +21,9 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 
 import java.io.PrintStream;
@@ -64,7 +64,7 @@ public class StartProgramCommand extends AbstractAuthCommand {
                     elementType.getPrettyName(), programId, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
-      Map<String, String> runtimeArgs = Splitter.on(" ").withKeyValueSeparator("=").split(runtimeArgsString);
+      Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
       programClient.start(appId, elementType.getProgramType(), programId, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
                     elementType.getPrettyName(), programId, appId, runtimeArgsString);
