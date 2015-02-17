@@ -16,9 +16,10 @@ Flows, Procedures, MapReduce programs, Workflows, and Custom Services.
 
 Deploy an Application
 ---------------------
-To deploy an Application from your local file system, submit an HTTP POST request::
+To deploy an Application from your local file system into the namespace *<namespace-id>*,
+submit an HTTP POST request::
 
-  POST <base-url>/apps
+  POST <base-url>/namespaces/<namespace-id>/apps
 
 with the name of the JAR file as a header::
 
@@ -35,9 +36,10 @@ However, be sure to stop all of its Flows, Procedures and MapReduce programs bef
 Deployed Applications
 ---------------------
 
-To list all of the deployed applications, issue an HTTP GET request::
+To list all of the deployed applications in the namespace *<namespace-id>*, issue an HTTP
+GET request::
 
-  GET <base-url>/apps
+  GET <base-url>/namespaces/<namespace-id>/apps
 
 This will return a JSON String map that lists each Application with its name and description.
 
@@ -45,9 +47,10 @@ This will return a JSON String map that lists each Application with its name and
 Details of a Deployed Application
 ---------------------------------
 
-For detailed information on an application that has been deployed, use::
+For detailed information on an application that has been deployed in the namespace
+*<namespace-id>*, use::
 
-  GET <base-url>/apps/<app-id>
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>
 
 The information will be returned in the body of the response.
 
@@ -57,6 +60,8 @@ The information will be returned in the body of the response.
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application
 
@@ -74,9 +79,10 @@ HTTP Responses
 
 Delete an Application
 ---------------------
-To delete an Application together with all of its Flows, Procedures and MapReduce programs, submit an HTTP DELETE::
+To delete an Application—together with all of its Flows, Procedures, MapReduce
+programs, and Spark programs—submit an HTTP DELETE::
 
-  DELETE <base-url>/apps/<application-name>
+  DELETE <base-url>/namespaces/<namespace-id>/apps/<application-name>
 
 .. list-table::
    :widths: 20 80
@@ -84,14 +90,16 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<application-name>``
      - Name of the Application to be deleted
 
 **Note:** The ``<application-name>`` in this URL is the name of the Application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-Also, this does not delete the Streams and Datasets associated with the Application
-because they belong to your account, not the Application.
+This does not delete the Streams and Datasets associated with the Application
+because they belong to the namespace, not the Application.
 
 
 Start, Stop, Status, and Runtime Arguments
@@ -99,8 +107,8 @@ Start, Stop, Status, and Runtime Arguments
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
 programs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
-  POST <base-url>/apps/<app-id>/<program-type>/<program-id>/<operation>
-  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/status
+  POST <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/<operation>
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/status
 
 .. list-table::
    :widths: 20 80
@@ -108,6 +116,8 @@ programs, Workflows, and Custom Services, and query for their status using HTTP 
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
@@ -121,7 +131,7 @@ programs, Workflows, and Custom Services, and query for their status using HTTP 
 You can retrieve the status of multiple programs from different applications and program types
 using an HTTP POST method::
 
-  POST <base-url>/status
+  POST <base-url>/namespaces/<namespace-id>/status
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
@@ -131,6 +141,8 @@ with a JSON array in the request body consisting of multiple JSON objects with t
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
@@ -166,25 +178,25 @@ Examples
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
+     - ``POST <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/start``
    * - Description
-     - Start a Flow *WhoFlow* in the Application *HelloWorld*
+     - Start a Flow *WhoFlow* in the Application *HelloWorld* in the namespace *default*
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
+     - ``POST <base-url>/namespaces/default/apps/Count/procedures/GetCounts/stop``
    * - Description
-     - Stop the Procedure *GetCounts* in the Application *Count*
+     - Stop the Procedure *GetCounts* in the Application *Count* in the namespace *default*
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/status``
    * - Description
-     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
+     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld* in the namespace *default*
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/status``
+     - ``POST <base-url>/namespaces/default/status``
    * - HTTP Body
      - ``[{"appId": "MyApp", "programType": "flow", "programId": "MyFlow"},``
        ``{"appId": "MyApp2", "programType": "procedure", "programId": "MyProcedure"}]``
@@ -194,11 +206,11 @@ Examples
        ``"error":"Program not found", "statusCode":404}]``
    * - Description
      - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
-       in the Application *MyApp2*
+       in the Application *MyApp2* in the namespace *default*
 
 When starting an program, you can optionally specify runtime arguments as a JSON map in the request body::
 
-  POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
+  POST <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/start
 
 with the arguments as a JSON string in the body::
 
@@ -208,7 +220,7 @@ CDAP will use these these runtime arguments only for this single invocation of t
 program. To save the runtime arguments so that CDAP will use them every time you start the program,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
-  PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+  PUT <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 with the arguments as a JSON string in the body::
 
@@ -217,7 +229,7 @@ with the arguments as a JSON string in the body::
 To retrieve the runtime arguments saved for an Application's program, issue an HTTP GET 
 request to the program's URL using the same parameter ``runtimeargs``::
 
-  GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+  GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
 
@@ -227,7 +239,7 @@ Container Information
 To find out the address of an program's container host and the container’s debug port, you can query
 CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/live-info
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -235,6 +247,8 @@ CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
@@ -244,7 +258,7 @@ CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
 Example::
 
-  GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+  GET <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/live-info
 
 The response is formatted in JSON; an example of this is shown in 
 :ref:`CDAP Testing and Debugging. <developers:debugging-distributed>`
@@ -258,7 +272,16 @@ Scaling
 You can retrieve the instance count executing different components from various applications and
 different program types using an HTTP POST method::
 
-  POST <base-url>/instances
+  POST <base-url>/namespaces/<namespace-id>/instances
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
 
 with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
@@ -306,7 +329,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/instances``
+     - ``POST <base-url>/namespaces/default/instances``
    * - HTTP Body
      - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},``
        ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},``
@@ -330,8 +353,8 @@ Scaling Flowlets
 You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-  PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -343,6 +366,8 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<flow-id>``
@@ -359,18 +384,18 @@ Examples
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
        ``instances``
    * - Description
      - Find out the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the Application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld* in the namespace *default*
 
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
+     - ``PUT <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
        ``instances``
 
        with the arguments as a JSON string in the body::
@@ -378,16 +403,16 @@ Examples
          { "instances" : 2 }
 
    * - Description
-     - Change the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the Application *HelloWorld*
+     - Change the number of instances of the Flowlet *saver* in the Flow *WhoFlow* of the
+       Application *HelloWorld* in the namespace *default*
 
 Scaling Procedures
 ..................
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
 of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
-  PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/procedures/<procedure-id>/instances
+  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/procedures/<procedure-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -399,6 +424,8 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application
    * - ``<procedure-id>``
@@ -413,19 +440,19 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/procedures/Greeting/instances``
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/procedures/Greeting/instances``
        ``instances``
    * - Description
      - Find out the number of instances of the Procedure *Greeting*
-       in the Application *HelloWorld*
+       in the Application *HelloWorld* in the namespace *default*
 
 Scaling Services
 ................
 You can query or change the number of instances of a Service
 by using the ``instances`` parameter with HTTP GET or PUT methods::
 
-  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-  PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -437,6 +464,8 @@ with the arguments as a JSON string in the body::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application
    * - ``<service-id>``
@@ -455,9 +484,10 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances``
+     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances``
    * - Description
-     - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
+     - Retrieve the number of instances of the Service *CatalogLookup* in the application
+       *PurchaseHistory* in the namespace *default*
 
 .. _rest-program-runs:
 
@@ -469,7 +499,7 @@ Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::
 
-  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/runs
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs
 
 .. list-table::
    :widths: 20 80
@@ -477,6 +507,8 @@ end time and program status::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application
    * - ``<program-type>``
@@ -510,7 +542,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/runs``
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
    * - Description
      - Retrieve the run records of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
@@ -524,27 +556,27 @@ with the start and end times in seconds since the start of the Epoch (midnight 1
 
 For Services, you can retrieve the history of successfully completed Twill Service using::
 
-  GET <base-url>/apps/<app-id>/services/<service-id>/runs?status=completed
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runs?status=completed
 
 For Workflows, you can also retrieve:
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
-    GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules
+    GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
 
 - the next time that the workflow is scheduled to run (using the parameter ``nextruntime``)::
 
-    GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+    GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 Schedules can be suspended or resumed:
 
 - to suspend a schedule::
 
-    POST <base-url>/apps/<app-id>/schedules/<schedule-name>/suspend
+    POST <base-url>/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/suspend
 
 - to resume a schedule::
 
-    POST <base-url>/apps/<app-id>/schedules/<schedule-name>/resume
+    POST <base-url>/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/resume
 
 Example
 .......
@@ -553,7 +585,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
+     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
    * - Description
      - Retrieve the most recent successful completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
    * - Returns
@@ -561,7 +593,7 @@ Example
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
+     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
    * - Description
      - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
    * - Returns
@@ -570,7 +602,7 @@ Example
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
+     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
    * - Description
      - Retrieves the next runtime of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
    * - Returns

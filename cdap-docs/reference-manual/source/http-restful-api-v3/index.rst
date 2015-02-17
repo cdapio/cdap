@@ -25,7 +25,7 @@ CDAP HTTP RESTful API v3
     Logging <logging>
     Metrics <metrics>
     Monitor <monitor>
-    Summary <summary>
+..    Summary <summary>
 
 .. highlight:: console
 
@@ -45,4 +45,4 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 - :doc:`Logging: <logging>` retrieving Application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various System and Custom CDAP services
-- :doc:`Summary: <summary>` lists all API calls in a single page in summary form
+.. - :doc:`Summary: <summary>` lists all API calls in a single page in summary form

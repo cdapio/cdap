@@ -21,7 +21,16 @@ Listing all Datasets
 
 You can list all Datasets in CDAP by issuing an HTTP GET request to the URL::
 
-  GET <base-url>/data/datasets
+  GET <base-url>/namespaces/<namespace-id>/data/datasets
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
 
 The response body will contain a JSON-formatted list of the existing Datasets::
 
@@ -44,8 +53,8 @@ Creating a Dataset
 
 You can create a Dataset by issuing an HTTP PUT request to the URL::
 
-  PUT <base-url>/data/datasets/<dataset-name>
-  
+  PUT <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>
+
 with JSON-formatted name of the dataset type and properties in a body::
 
   {
@@ -60,6 +69,8 @@ with JSON-formatted name of the dataset type and properties in a body::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<dataset-name>``
      - Name of the new Dataset
    * - ``<type-name>``
@@ -89,11 +100,12 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``PUT <base-url>/data/datasets/mydataset``
+     - ``PUT <base-url>/namespaces/default/data/datasets/mydataset``
    * - Body
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600"}}``
    * - Description
-     - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
+     - Creates a Dataset named "mydataset" of the type "table" in the namespace *default*
+       with the time-to-live property set to 1 hour
 
 
 Updating an Existing Dataset
@@ -101,7 +113,7 @@ Updating an Existing Dataset
 
 You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/data/datasets/<dataset-name>/properties
+	PUT <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>/properties
 
 with JSON-formatted name of the dataset type and properties in the body::
 
@@ -118,6 +130,8 @@ with JSON-formatted name of the dataset type and properties in the body::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<dataset-name>``
      - Name of the existing Dataset
    * - ``<type-name>``
@@ -147,11 +161,12 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``PUT <base-url>/data/datasets/mydataset/properties``
+     - ``PUT <base-url>/namespaces/default/data/datasets/mydataset/properties``
    * - Body
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200"}}``
    * - Description
-     - For the "mydataset" of type "Table", update the Dataset and its time-to-live property to 2 hours
+     - For the "mydataset" of type "Table" of the namespace *default*, update the Dataset
+       and its time-to-live property to 2 hours
 
 
 Deleting a Dataset
@@ -159,8 +174,19 @@ Deleting a Dataset
 
 You can delete a Dataset by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/data/datasets/<dataset-name>
+  DELETE <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<dataset-name>``
+     - Dataset name
+     
 HTTP Responses
 ..............
 .. list-table::
@@ -172,7 +198,7 @@ HTTP Responses
    * - ``200 OK``
      - Dataset was successfully deleted
    * - ``404 Not Found``
-     - Dataset named ``<dataset-name>`` could not be found
+     - Dataset named *dataset-name* could not be found
 
 Example
 .......
@@ -181,9 +207,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``DELETE <base-url>/data/datasets/mydataset``
+     - ``DELETE <base-url>/namespaces/default/data/datasets/mydataset``
    * - Description
-     - Deletes the Dataset named "mydataset"
+     - Deletes the Dataset *mydataset* in the namespace *default*
 
 
 Deleting all Datasets
@@ -192,7 +218,16 @@ Deleting all Datasets
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, you can delete all Datasets
 by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/unrecoverable/data/datasets
+  DELETE <base-url>/namespaces/<namespace-id>/unrecoverable/data/datasets
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
 
 HTTP Responses
 ..............
@@ -206,19 +241,31 @@ HTTP Responses
      - All Datasets were successfully deleted
 
 
-If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is not set to ``true``,
-this operation will return a Status Code ``403 Forbidden``. Note that this operation can only be performed if
-all programs are stopped. If there's at least one program that is running
-this operation will return a Status Code ``400 Bad Request``
+If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is not set to
+``true``, this operation will return a Status Code ``403 Forbidden``. Note that this
+operation can only be performed if all programs are stopped. If there's at least one
+program that is running, this operation will return a Status Code ``400 Bad Request``.
 
 Truncating a Dataset
 --------------------
 
 You can truncate a Dataset by issuing an HTTP POST request to the URL::
 
-  POST <base-url>/data/datasets/<dataset-name>/admin/truncate
+  POST <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>/admin/truncate
 
 This will clear the existing data from the Dataset. This cannot be undone.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<dataset-name>``
+     - Dataset name
+
 
 HTTP Responses
 ..............

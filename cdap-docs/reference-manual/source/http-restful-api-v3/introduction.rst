@@ -24,7 +24,7 @@ In this API, *client* refers to an external application that is calling CDAP usi
 All URLs referenced in this API (with the exception of those in the 
 Namespace API) have this base URL::
 
-  http://<host>:<port>/v3/namespaces/<namespace-id>
+  http://<host>:<port>/v3
 
 where:
 
@@ -38,8 +38,6 @@ where:
      - Host name of the CDAP server
    * - ``<port>``
      - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``)
-   * - ``<namespace-id>``
-     - Namespace ID, a valid and existing namespace in the CDAP instance
 
 
 **Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
@@ -51,7 +49,7 @@ In this API, the base URL is represented as::
 
 For example::
 
-  PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/namespaces/<namespace-id>/streams/<new-stream-id>
 
 means::
 
@@ -62,12 +60,13 @@ means::
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-  PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/namespaces/<namespace-id>/streams/<new-stream-id>
 
-indicates that—in addition to the ``<base-url>``—the text ``<new-stream-id>`` is a variable
-and that you are to replace it with your value, perhaps in this case *mystream*::
+indicates that—in addition to the ``<base-url>``—text such as ``<namespace-id>`` and
+``<new-stream-id>`` are variables
+and that you are to replace them with your values, perhaps in this case *default* and *mystream*::
 
-  PUT <base-url>/streams/mystream
+  PUT <base-url>/namespaces/default/streams/mystream
 
 
 Converting from V2 APIs
