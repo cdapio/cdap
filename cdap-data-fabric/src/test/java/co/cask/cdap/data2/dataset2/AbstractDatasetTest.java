@@ -131,8 +131,8 @@ public class AbstractDatasetTest {
     return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
-  protected DatasetSpecification getSpec(String datasetName) throws DatasetManagementException {
-    return framework.getDatasetSpec(datasetName);
+  protected DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return framework.getDatasetSpec(datasetInstanceId);
   }
 
   protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {

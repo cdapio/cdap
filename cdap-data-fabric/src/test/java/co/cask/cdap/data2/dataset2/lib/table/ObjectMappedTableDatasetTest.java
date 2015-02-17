@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
@@ -39,13 +40,14 @@ import java.util.UUID;
  * Test for {@link ObjectMappedTableDataset}.
  */
 public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
+  private static final Id.DatasetInstance RECORDS_ID = Id.DatasetInstance.from(NAMESPACE_ID, "records");
 
   @Test
   public void testGetPutDelete() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), "records",
+    createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
                    ObjectStores.objectStoreProperties(new TypeToken<Record>() { }.getType(), DatasetProperties.EMPTY));
     try {
-      ObjectMappedTableDataset<Record> records = getInstance("records");
+      ObjectMappedTableDataset<Record> records = getInstance(RECORDS_ID);
       Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
                                  Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
       records.write("123", record);
@@ -54,16 +56,16 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
       records.delete("123");
       Assert.assertNull(records.read("123"));
     } finally {
-      deleteInstance("records");
+      deleteInstance(RECORDS_ID);
     }
   }
 
   @Test
   public void testScan() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), "records",
+    createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
                    ObjectStores.objectStoreProperties(new TypeToken<Record>() { }.getType(), DatasetProperties.EMPTY));
     try {
-      ObjectMappedTableDataset<Record> records = getInstance("records");
+      ObjectMappedTableDataset<Record> records = getInstance(RECORDS_ID);
       Record record1 = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
                                   Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
       Record record2 = new Record(Integer.MIN_VALUE, Long.MIN_VALUE, Float.MIN_VALUE, Double.MIN_VALUE, "baz",
@@ -111,27 +113,27 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
       Assert.assertFalse(results.hasNext());
       results.close();
     } finally {
-      deleteInstance("records");
+      deleteInstance(RECORDS_ID);
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidTypeFails() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), "custom",
+    createInstance(ObjectMappedTable.class.getName(), Id.DatasetInstance.from(NAMESPACE_ID, "custom"),
                    ObjectStores.objectStoreProperties(new TypeToken<Custom>() { }.getType(), DatasetProperties.EMPTY));
   }
 
   @Test
   public void testSchemaIsSetAsProperty() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), "records",
+    createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
                    ObjectStores.objectStoreProperties(new TypeToken<Record>() { }.getType(), DatasetProperties.EMPTY));
     try {
       Schema expected = new ReflectionSchemaGenerator().generate(Record.class);
-      DatasetSpecification spec = getSpec("records");
+      DatasetSpecification spec = getSpec(RECORDS_ID);
       Schema actual = Schema.parseJson(spec.getProperty("schema"));
       Assert.assertEquals(expected, actual);
     } finally {
-      deleteInstance("records");
+      deleteInstance(RECORDS_ID);
     }
   }
 }
