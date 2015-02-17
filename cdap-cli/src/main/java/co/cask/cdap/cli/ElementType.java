@@ -59,13 +59,13 @@ public enum ElementType {
   FLOW("Flow", "Flows", "flow", "flows",
        ProgramType.FLOW, null,
        ArgumentName.FLOW,
-       Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START_STOP,
+       Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START, Capability.STOP,
        Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   WORKFLOW("Workflow", "Workflows", "workflow", "workflows",
            ProgramType.WORKFLOW, null,
            ArgumentName.WORKFLOW,
-           Capability.RUNS, Capability.STATUS, Capability.START_STOP,
+           Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP,
            Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   FLOWLET("Flowlet", "Flowlets", "flowlet", "flowlets",
@@ -77,12 +77,13 @@ public enum ElementType {
             ProgramType.PROCEDURE, null,
             ArgumentName.PROCEDURE,
             Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-            Capability.START_STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+            Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   SERVICE("Service", "Services", "service", "services",
           ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
-          Capability.START_STOP, Capability.STATUS, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+          Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
+          Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
            null, ProgramType.SERVICE,
@@ -92,13 +93,13 @@ public enum ElementType {
   MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
-            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
+            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   SPARK("Spark Program", "Spark Programs", "spark", "spark programs",
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
-            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
+            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES);
 
   private final String pluralName;
@@ -175,8 +176,12 @@ public enum ElementType {
     return capabilities.contains(Capability.STATUS);
   }
 
-  public boolean canStartStop() {
-    return capabilities.contains(Capability.START_STOP);
+  public boolean canStart() {
+    return capabilities.contains(Capability.START);
+  }
+
+  public boolean canStop() {
+    return capabilities.contains(Capability.STOP);
   }
 
   public static ElementType fromProgramType(ProgramType programType) {
@@ -201,6 +206,6 @@ public enum ElementType {
   }
 
   private enum Capability {
-    SCALE, RUNS, LOGS, LIVE_INFO, STATUS, START_STOP, LIST, RUNTIME_ARGS, PREFERENCES
+    SCALE, RUNS, LOGS, LIVE_INFO, STATUS, START, STOP, LIST, RUNTIME_ARGS, PREFERENCES
   }
 }
