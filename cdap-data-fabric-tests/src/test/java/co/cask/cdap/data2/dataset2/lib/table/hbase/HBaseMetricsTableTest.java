@@ -129,7 +129,8 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    return DatasetsUtil.getOrCreateDataset(dsFramework, name, MetricsTable.class.getName(),
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, name);
+    return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
                                            DatasetProperties.EMPTY, null, null);
   }
 }

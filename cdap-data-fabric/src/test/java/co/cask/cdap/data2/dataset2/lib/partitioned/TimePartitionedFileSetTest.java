@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
@@ -56,20 +57,23 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   static final long YEAR = TimeUnit.DAYS.toMillis(365);
   static final long MAX = Long.MAX_VALUE;
 
+  private static final Id.DatasetInstance TPFS_INSTANCE = Id.DatasetInstance.from(NAMESPACE_ID, "tpfs");
+
+
   @Before
   public void before() throws Exception {
-    createInstance("timePartitionedFileSet", "tpfs", FileSetProperties.builder()
+    createInstance("timePartitionedFileSet", TPFS_INSTANCE, FileSetProperties.builder()
       .setBasePath("testDir").build());
   }
 
   @After
   public void after() throws Exception {
-    deleteInstance("tpfs");
+    deleteInstance(TPFS_INSTANCE);
   }
 
   @Test
   public void testAddGetPartitions() throws IOException, ParseException, DatasetManagementException {
-    TimePartitionedFileSet fileSet = getInstance("tpfs");
+    TimePartitionedFileSet fileSet = getInstance(TPFS_INSTANCE);
 
     // this is an arbitrary data to use as the test time
     long time = DATE_FORMAT.parse("12/10/14 5:10 am").getTime();
@@ -164,7 +168,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
-    TimePartitionedFileSet ds = getInstance("tpfs", args);
+    TimePartitionedFileSet ds = getInstance(TPFS_INSTANCE, args);
 
     String outputPath = ds.getEmbeddedFileSet().getOutputLocation().toURI().getPath();
     Assert.assertTrue(outputPath.endsWith("2015-01-01/20-42." + date.getTime()));
@@ -180,19 +184,19 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       .addIntField("hour", 20)
       .addIntField("minute", 54)
       .build();
-    TimePartitionedFileSet ds1 = getInstance("tpfs", args);
+    TimePartitionedFileSet ds1 = getInstance(TPFS_INSTANCE, args);
     TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
     outputConfig = ds1.getOutputFormatConfiguration();
     Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20-42." + date.getTime()));
 
     args.clear();
     TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
-    TimePartitionedFileSet ds2 = getInstance("tpfs", args);
+    TimePartitionedFileSet ds2 = getInstance(TPFS_INSTANCE, args);
     outputConfig = ds2.getOutputFormatConfiguration();
     Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("54"));
 
     args.clear();
-    TimePartitionedFileSet ds3 = getInstance("tpfs", args);
+    TimePartitionedFileSet ds3 = getInstance(TPFS_INSTANCE, args);
     try {
       ds3.getOutputFormatConfiguration();
       Assert.fail("getOutputFormatConfiguration should have failed with neither output time nor partition key");
@@ -207,8 +211,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   @Test
   public void testInputPartitionPaths() throws Exception {
     // make sure the dataset has no partitions
-    final TimePartitionedFileSet tpfs = getInstance("tpfs");
-    Assert.assertTrue(tpfs.getPartitionPaths(0L, MAX).isEmpty());
+    final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE);
+    Assert.assertTrue(tpfs.getPartitionPaths(0L, Long.MAX_VALUE).isEmpty());
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();
@@ -238,7 +242,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     Map<String, String> arguments = Maps.newHashMap();
     TimePartitionedFileSetArguments.setInputStartTime(arguments, time + start * MINUTE);
     TimePartitionedFileSetArguments.setInputEndTime(arguments, time + end * MINUTE);
-    final TimePartitionedFileSet tpfs = getInstance("tpfs", arguments);
+    final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE, arguments);
     newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -417,7 +421,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // this should give us an instance that thinks it may have pre-2.8 partitions
     final TimePartitionedFileSet dataset = getInstance(
-      "tpfs", ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true"));
+      TPFS_INSTANCE, ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true"));
     final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
 
     // add some legacy partitions
@@ -542,7 +546,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // list again with a dataset that does not take legacy partitions into account
-    final TimePartitionedFileSet tpfs = getInstance("tpfs");
+    final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE);
     final PartitionFilter filter2014 = PartitionFilter.builder().addValueCondition("year", 2014).build();
 
     newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
@@ -587,7 +591,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // add a few partitions
     {
-      final TimePartitionedFileSet dataset = getInstance("tpfs");
+      final TimePartitionedFileSet dataset = getInstance(TPFS_INSTANCE);
       newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -624,7 +628,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   }
 
   private void testInputConfiguration(Map<String, String> arguments, final String expectedPath) throws Exception {
-    final TimePartitionedFileSet dataset = getInstance("tpfs", arguments);
+    final TimePartitionedFileSet dataset = getInstance(TPFS_INSTANCE, arguments);
     newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -638,7 +642,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   }
 
   private void testInputConfigurationFailure(Map<String, String> arguments, final String why) throws Exception {
-    final TimePartitionedFileSet dataset = getInstance("tpfs", arguments);
+    final TimePartitionedFileSet dataset = getInstance(TPFS_INSTANCE, arguments);
     newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

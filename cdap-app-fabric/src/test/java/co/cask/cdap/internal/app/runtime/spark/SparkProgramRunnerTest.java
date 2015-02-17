@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.TempFolder;
@@ -81,6 +82,8 @@ public class SparkProgramRunnerTest {
   final String testString1 = "persisted data";
   final String testString2 = "distributed systems";
 
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -111,7 +114,7 @@ public class SparkProgramRunnerTest {
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetInstantiator =
-      new DatasetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
+      new DatasetInstantiator(namespaceId, datasetFramework, injector.getInstance(CConfiguration.class),
                               SparkProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
@@ -125,8 +128,8 @@ public class SparkProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances()) {
-      dsFramework.deleteInstance(spec.getName());
+    for (DatasetSpecification spec : dsFramework.getInstances(namespaceId)) {
+      dsFramework.deleteInstance(Id.DatasetInstance.from(namespaceId, spec.getName()));
     }
   }
 

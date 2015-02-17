@@ -21,6 +21,7 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +51,14 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
   public void process(ApplicationDeployable input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
+    Id.Namespace namespaceId = input.getId().getNamespace();
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
       String instanceName = instanceEntry.getKey();
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, instanceName);
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       try {
-        if (!datasetFramework.hasInstance(instanceName)) {
-          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
+        if (!datasetFramework.hasInstance(instanceId)) {
+          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
         }
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
