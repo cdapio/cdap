@@ -107,11 +107,11 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
-    if (!verifyGetEventsRequest(accountID, stream, startTime, endTime, limit, responder)) {
+    Id.Stream streamId = Id.Stream.from(accountID, stream);
+    if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {
       return;
     }
 
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());
@@ -197,7 +197,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   /**
    * Verifies query properties.
    */
-  private boolean verifyGetEventsRequest(String accountID, String stream, long startTime, long endTime,
+  private boolean verifyGetEventsRequest(Id.Stream streamId, long startTime, long endTime,
                                          int count, HttpResponder responder) throws Exception {
     if (startTime < 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
@@ -214,7 +214,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
     if (count <= 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
     }
-    if (!streamMetaStore.streamExists(accountID, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return false;
     }

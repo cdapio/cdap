@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -57,7 +58,6 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   // dependent
   private static final String STREAM_META_TABLE = "app.meta";
   private static final String TYPE_STREAM = "stream";
-  private static final String TYPE_NAMESPACE = "namespace";
 
   private Transactional<StreamMds, MetadataStoreDataset> txnl;
 
@@ -77,7 +77,9 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
           @Override
           public StreamMds get() {
             try {
-              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, STREAM_META_TABLE, "table",
+              Id.DatasetInstance streamMetaDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                       STREAM_META_TABLE);
+              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, streamMetaDatasetInstanceId, "table",
                                                                DatasetProperties.EMPTY,
                                                                DatasetDefinition.NO_ARGUMENTS, null);
 
@@ -91,44 +93,44 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public void addStream(final String accountId, final String streamName) throws Exception {
+  public void addStream(final Id.Stream streamId) throws Exception {
     txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, Void>() {
       @Override
       public Void apply(StreamMds mds) throws Exception {
-        mds.streams.write(getKey(accountId, streamName),
-                          createStreamSpec(streamName));
+        mds.streams.write(getKey(streamId),
+                          createStreamSpec(streamId));
         return null;
       }
     });
   }
 
   @Override
-  public void removeStream(final String accountId, final String streamName) throws Exception {
+  public void removeStream(final Id.Stream streamId) throws Exception {
     txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, Void>() {
       @Override
       public Void apply(StreamMds mds) throws Exception {
-        mds.streams.deleteAll(getKey(accountId, streamName));
+        mds.streams.deleteAll(getKey(streamId));
         return null;
       }
     });
   }
 
   @Override
-  public boolean streamExists(final String accountId, final String streamName) throws Exception {
+  public boolean streamExists(final Id.Stream streamId) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, Boolean>() {
       @Override
       public Boolean apply(StreamMds mds) throws Exception {
-        return mds.streams.get(getKey(accountId, streamName), StreamSpecification.class) != null;
+        return mds.streams.get(getKey(streamId), StreamSpecification.class) != null;
       }
     });
   }
 
   @Override
-  public List<StreamSpecification> listStreams(final String accountId) throws Exception {
+  public List<StreamSpecification> listStreams(final Id.Namespace namespaceId) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, List<StreamSpecification>>() {
       @Override
       public List<StreamSpecification> apply(StreamMds mds) throws Exception {
-        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, accountId).build(),
+        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, namespaceId.getId()).build(),
                                 StreamSpecification.class);
       }
     });
@@ -155,12 +157,13 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
       });
   }
 
-  private MetadataStoreDataset.Key getKey(String accountId, String streamName) {
-    return new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, accountId, streamName).build();
+  private MetadataStoreDataset.Key getKey(Id.Stream streamId) {
+    return new MetadataStoreDataset.Key.Builder()
+      .add(TYPE_STREAM, streamId.getNamespaceId(), streamId.getName()).build();
   }
 
-  private StreamSpecification createStreamSpec(String streamName) {
-    return new StreamSpecification.Builder().setName(streamName).create();
+  private StreamSpecification createStreamSpec(Id.Stream streamId) {
+    return new StreamSpecification.Builder().setName(streamId.getName()).create();
   }
 
   private static final class StreamMds implements Iterable<MetadataStoreDataset> {

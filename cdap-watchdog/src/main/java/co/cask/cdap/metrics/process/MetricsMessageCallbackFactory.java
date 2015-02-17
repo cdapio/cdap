@@ -21,6 +21,7 @@ import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -28,28 +29,26 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.kafka.client.KafkaConsumer;
 
-import java.util.Set;
-
 /**
- * A {@link MessageCallbackFactory} that creates MessageCallback for processing MetricsRecord
+ * A {@link MessageCallbackFactory} that creates MessageCallback for processing {@link MetricValue}s
  * with offset persists to {@link KafkaConsumerMetaTable}.
  */
 public final class MetricsMessageCallbackFactory implements MessageCallbackFactory {
 
   private final DatumReader<MetricValue> datumReader;
   private final Schema recordSchema;
-  private final Set<MetricsProcessor> processors;
+  private final MetricStore metricStore;
   private final int persistThreshold;
 
   @Inject
   public MetricsMessageCallbackFactory(SchemaGenerator schemaGenerator, DatumReaderFactory readerFactory,
-                                       Set<MetricsProcessor> processors,
+                                       MetricStore metricStore,
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
                                        int persistThreshold) {
     try {
       this.recordSchema = schemaGenerator.generate(MetricValue.class);
       this.datumReader = readerFactory.create(TypeToken.of(MetricValue.class), recordSchema);
-      this.processors = processors;
+      this.metricStore = metricStore;
       this.persistThreshold = persistThreshold;
 
     } catch (UnsupportedTypeException e) {
@@ -60,6 +59,6 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   @Override
   public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable) {
     return new PersistedMessageCallback(
-      new MetricsMessageCallback(processors, datumReader, recordSchema), metaTable, persistThreshold);
+      new MetricsMessageCallback(datumReader, recordSchema, metricStore), metaTable, persistThreshold);
   }
 }

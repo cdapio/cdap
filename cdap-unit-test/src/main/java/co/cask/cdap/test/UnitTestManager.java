@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultId;
@@ -101,7 +102,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void clear() {
+  public void clear() throws Exception {
     try {
       appFabricClient.reset();
     } catch (Exception e) {
@@ -115,25 +116,28 @@ public class UnitTestManager implements TestManager {
   @Override
   public final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetFramework.addModule(moduleName, datasetModule.newInstance());
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    datasetFramework.addModule(Id.DatasetModule.from(DefaultId.NAMESPACE, moduleName), datasetModule.newInstance());
   }
 
   @Beta
   @Override
   public final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName,
                                                              DatasetProperties props) throws Exception {
-
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
+    return datasetFramework.getAdmin(datasetInstanceId, null);
   }
 
   @Beta
   @Override
   public final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                              String datasetInstanceName) throws Exception {
-
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, DatasetProperties.EMPTY);
+    return datasetFramework.getAdmin(datasetInstanceId, null);
   }
 
   /**
@@ -144,8 +148,10 @@ public class UnitTestManager implements TestManager {
    */
   @Beta
   public final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
     try {
       final TransactionContext txContext;
       // not every dataset is TransactionAware. FileSets for example, are not transactional.

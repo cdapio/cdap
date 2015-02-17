@@ -207,7 +207,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     streamConfig.getLocation().mkdirs();
 
     StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
-    streamMetaStore.addStream(streamId.getNamespaceId(), streamId.getName());
+    streamMetaStore.addStream(streamId);
     return new ConcurrentStreamWriter(COORDINATOR_CLIENT, streamAdmin, streamMetaStore,
                                       writerFactory, threads, new TestMetricsCollectorFactory());
   }

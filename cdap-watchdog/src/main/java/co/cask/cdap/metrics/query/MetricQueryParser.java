@@ -16,19 +16,23 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.Interpolator;
 import co.cask.cdap.metrics.data.Interpolators;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
+import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.CharEncoding;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * For parsing metrics REST request.
  */
-final class MetricsRequestParser {
+final class MetricQueryParser {
 
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
@@ -48,7 +52,6 @@ final class MetricsRequestParser {
   private static final String STEP_INTERPOLATOR = "step";
   private static final String LINEAR_INTERPOLATOR = "linear";
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
-  private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
   private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
   private static final String AUTO_RESOLUTION = "auto";
 
@@ -61,7 +64,7 @@ final class MetricsRequestParser {
     SPARK
   }
 
-  public enum RequestType {
+  public enum ProgramType {
     FLOWS("f"),
     MAPREDUCE("b"),
     PROCEDURES("p"),
@@ -71,7 +74,7 @@ final class MetricsRequestParser {
 
     private final String code;
 
-    private RequestType(String code) {
+    private ProgramType(String code) {
       this.code = code;
     }
 
@@ -93,6 +96,26 @@ final class MetricsRequestParser {
     private String getId() {
       return id;
     }
+  }
+
+  enum Resolution {
+    SECOND(1),
+    MINUTE(60),
+    HOUR(3600);
+
+    private int resolution;
+    private Resolution(int resolution) {
+      this.resolution = resolution;
+    }
+
+    public int getResolution() {
+      return resolution;
+    }
+  }
+
+  public enum MetricsScope {
+    SYSTEM,
+    USER
   }
 
   private static String urlDecode(String str) {
@@ -117,36 +140,43 @@ final class MetricsRequestParser {
     return path.substring(startPos, path.length());
   }
 
-  static MetricsRequest parse(URI requestURI) throws MetricsPathException {
-    return parseRequestAndContext(requestURI).getFirst();
+  static CubeDeleteQuery parseDelete(URI requestURI, String metricPrefix) throws MetricsPathException {
+    CubeQueryBuilder builder = new CubeQueryBuilder();
+    parseContext(requestURI.getPath(), builder);
+    builder.setStartTs(0);
+    builder.setEndTs(Integer.MAX_VALUE - 1);
+    builder.setMetricName(metricPrefix);
+
+    CubeQuery query = builder.build();
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMeasureName(), query.getSliceByTags());
   }
 
-  static ImmutablePair<MetricsRequest, MetricsRequestContext> parseRequestAndContext(URI requestURI)
-    throws MetricsPathException {
-    MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
-
+  static CubeQuery parse(URI requestURI) throws MetricsPathException {
+    CubeQueryBuilder builder = new CubeQueryBuilder();
     // metric will be at the end.
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
-    builder.setMetricPrefix(urlDecode(uriPath.substring(index + 1)));
-
+    builder.setMetricName(urlDecode(uriPath.substring(index + 1)));
     // strip the metric from the end of the path
-    String strippedPath = uriPath.substring(0, index);
-
-    MetricsRequestContext metricsRequestContext;
-    if (strippedPath.startsWith("/system/cluster")) {
-      builder.setContextPrefix(String.format("%s.%s", Constants.SYSTEM_NAMESPACE, CLUSTER_METRICS_CONTEXT));
-      builder.setScope(MetricsScope.SYSTEM);
-      metricsRequestContext = new MetricsRequestContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build();
-    } else if (strippedPath.startsWith("/system/transactions")) {
-      builder.setContextPrefix(String.format("%s.%s", Constants.SYSTEM_NAMESPACE, TRANSACTION_METRICS_CONTEXT));
-      builder.setScope(MetricsScope.SYSTEM);
-      metricsRequestContext = new MetricsRequestContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build();
+    if (index != -1) {
+      String strippedPath = uriPath.substring(0, index);
+      if (strippedPath.startsWith("/system/cluster")) {
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                                                    Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+        builder.setScope("system");
+      } else if (strippedPath.startsWith("/system/transactions")) {
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                                                    Constants.Metrics.Tag.COMPONENT, TRANSACTION_METRICS_CONTEXT));
+        builder.setScope("system");
+      } else {
+        parseContext(strippedPath, builder);
+      }
     } else {
-      metricsRequestContext = parseContext(strippedPath, builder);
+      builder.setSliceByTagValues(Maps.<String, String>newHashMap());
     }
     parseQueryString(requestURI, builder);
-    return new ImmutablePair<MetricsRequest, MetricsRequestContext>(builder.build(), metricsRequestContext);
+
+    return builder.build();
   }
 
   /**
@@ -154,26 +184,31 @@ final class MetricsRequestParser {
    * Context starts after the scope and looks something like:
    * system/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}
    */
-  static MetricsRequestContext parseContext(String path, MetricsRequestBuilder builder) throws MetricsPathException {
+  static void parseContext(String path, CubeQueryBuilder builder) throws MetricsPathException {
+    Map<String, String> tagValues = Maps.newHashMap();
+
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();
-    MetricsRequestContext.Builder contextBuilder = new MetricsRequestContext.Builder();
 
     // everything
     if (!pathParts.hasNext()) {
-      return contextBuilder.build();
+      builder.setSliceByTagValues(tagValues);
+      return;
     }
 
     // scope is the first part of the path
     String scopeStr = pathParts.next();
     try {
-      builder.setScope(MetricsScope.valueOf(scopeStr.toUpperCase()));
+      // we do conversion to validate value
+      builder.setScope(MetricsScope.valueOf(scopeStr.toUpperCase()).toString().toLowerCase());
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid scope: " + scopeStr);
     }
 
+
     // streams, datasets, apps, or nothing.
     if (!pathParts.hasNext()) {
-      return contextBuilder.build();
+      builder.setSliceByTagValues(tagValues);
+      return;
     }
 
     // apps, streams, or datasets
@@ -181,71 +216,99 @@ final class MetricsRequestParser {
     PathType pathType;
     try {
       pathType = PathType.valueOf(pathTypeStr.toUpperCase());
-      contextBuilder.setPathType(pathType);
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid type: " + pathTypeStr);
     }
 
-    // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-
     switch (pathType) {
       case APPS:
-        contextBuilder.setNamespaceId(namespaceId);
-        parseSubContext(pathParts, contextBuilder);
+        // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
+        parseSubContext(pathParts, tagValues);
         break;
       case STREAMS:
+        // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'streams' must be followed by a stream name");
         }
-        contextBuilder.setNamespaceId(namespaceId);
-        contextBuilder.setTag(MetricsRequestContext.TagType.STREAM, urlDecode(pathParts.next()));
+        tagValues.put(Constants.Metrics.Tag.STREAM, urlDecode(pathParts.next()));
         break;
       case DATASETS:
+        // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'datasets' must be followed by a dataset name");
         }
-        contextBuilder.setNamespaceId(namespaceId);
-        contextBuilder.setTag(MetricsRequestContext.TagType.DATASET, urlDecode(pathParts.next()));
+        tagValues.put(Constants.Metrics.Tag.DATASET, urlDecode(pathParts.next()));
         // path can be /metric/scope/datasets/{dataset}/apps/...
         if (pathParts.hasNext()) {
           if (!pathParts.next().equals("apps")) {
             throw new MetricsPathException("expecting 'apps' after stream or dataset name");
           }
-          parseSubContext(pathParts, contextBuilder);
+          tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
+          parseSubContext(pathParts, tagValues);
         }
         break;
       case SERVICES:
-        if (!pathParts.hasNext()) {
-          throw new MetricsPathException("'services must be followed by a service name");
-        }
-        contextBuilder.setNamespaceId(Constants.SYSTEM_NAMESPACE);
-        parseSubContext(pathParts, contextBuilder);
+        // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
+        parseSystemService(pathParts, tagValues);
         break;
     }
 
     if (pathParts.hasNext()) {
-      throw new MetricsPathException("path contains too many elements");
+      throw new MetricsPathException("path contains too many elements: " + path);
     }
-    MetricsRequestContext context = contextBuilder.build();
-    builder.setContextPrefix(context.getContextPrefix());
-    builder.setRunId(context.getRunId());
-    if (context.getTag() != null) {
-      builder.setTagPrefix(context.getTag());
+
+    builder.setSliceByTagValues(tagValues);
+  }
+
+  private static void parseSystemService(Iterator<String> pathParts, Map<String, String> tagValues)
+    throws MetricsPathException {
+
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("'services must be followed by a service name");
     }
-    return context;
+    tagValues.put(Constants.Metrics.Tag.COMPONENT, urlDecode(pathParts.next()));
+    if (!pathParts.hasNext()) {
+      return;
+    }
+    // skipping "/handlers"
+    String next = pathParts.next();
+    if (!"handlers".equals(next)) {
+      throw new MetricsPathException("'handlers must be followed by a service name");
+    }
+    tagValues.put(Constants.Metrics.Tag.HANDLER, urlDecode(pathParts.next()));
+    if (!pathParts.hasNext()) {
+      return;
+    }
+    // skipping "/runs"
+    next = pathParts.next();
+    if (RUN_ID.equals(next)) {
+      tagValues.put(Constants.Metrics.Tag.RUN_ID, urlDecode(pathParts.next()));
+      if (!pathParts.hasNext()) {
+        return;
+      }
+      // skipping "/methods"
+      pathParts.next();
+    }
+
+    tagValues.put(Constants.Metrics.Tag.METHOD, urlDecode(pathParts.next()));
   }
 
   /**
    * pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
    */
-  static void parseSubContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  static void parseSubContext(Iterator<String> pathParts, Map<String, String> tagValues)
     throws MetricsPathException {
 
-    if (!pathParts.hasNext()) {
-      return;
-    }
-    builder.setTypeId(urlDecode(pathParts.next()));
+    // todo
+//    if (!pathParts.hasNext()) {
+//      return;
+//    }
+//    builder.setTypeId(urlDecode(pathParts.next()));
 
     if (!pathParts.hasNext()) {
       return;
@@ -253,10 +316,10 @@ final class MetricsRequestParser {
 
     // request-type: flows, procedures, or mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
-    RequestType requestType;
+    ProgramType programType;
     try {
-      requestType = RequestType.valueOf(pathProgramTypeStr.toUpperCase());
-      builder.setRequestType(requestType);
+      programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
+      tagValues.put(Constants.Metrics.Tag.PROGRAM_TYPE, programType.getCode());
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
@@ -265,17 +328,17 @@ final class MetricsRequestParser {
     if (!pathParts.hasNext()) {
       return;
     }
-    builder.setRequestId(urlDecode(pathParts.next()));
+    tagValues.put(Constants.Metrics.Tag.PROGRAM, pathParts.next());
 
     if (!pathParts.hasNext()) {
       return;
     }
 
-    switch (requestType) {
+    switch (programType) {
       case MAPREDUCE:
         String mrTypeStr = pathParts.next();
         if (mrTypeStr.equals(RUN_ID)) {
-          parseRunId(pathParts, builder);
+          parseRunId(pathParts, tagValues);
           if (pathParts.hasNext()) {
             mrTypeStr = pathParts.next();
           } else {
@@ -289,28 +352,28 @@ final class MetricsRequestParser {
           throw new MetricsPathException("invalid mapreduce component: " + mrTypeStr
                                            + ".  must be 'mappers' or 'reducers'.");
         }
-        builder.setComponentId(mrType.getId());
+        tagValues.put(Constants.Metrics.Tag.MR_TASK_TYPE, mrType.getId());
         break;
       case FLOWS:
-        buildFlowletContext(pathParts, builder);
+        buildFlowletContext(pathParts, tagValues);
         break;
       case HANDLERS:
-        buildComponentTypeContext(pathParts, builder, "methods", "handler");
+        buildComponentTypeContext(pathParts, tagValues, "methods", "handler", Constants.Metrics.Tag.METHOD);
         break;
       case SERVICES:
-        buildComponentTypeContext(pathParts, builder, "runnables", "service");
+        buildComponentTypeContext(pathParts, tagValues, "runnables", "service", Constants.Metrics.Tag.SERVICE_RUNNABLE);
         break;
       case PROCEDURES:
         if (pathParts.hasNext()) {
           if (pathParts.next().equals(RUN_ID)) {
-            parseRunId(pathParts, builder);
+            parseRunId(pathParts, tagValues);
           }
         }
         break;
       case SPARK:
         if (pathParts.hasNext()) {
           if (pathParts.next().equals(RUN_ID)) {
-            parseRunId(pathParts, builder);
+            parseRunId(pathParts, tagValues);
           }
         }
         break;
@@ -320,13 +383,13 @@ final class MetricsRequestParser {
     }
   }
 
-  private static void buildComponentTypeContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder,
-                                                String componentType, String requestType)
+  private static void buildComponentTypeContext(Iterator<String> pathParts, Map<String, String> tagValues,
+                                                String componentType, String requestType, String componentTagName)
     throws MetricsPathException {
     String nextPath = pathParts.next();
 
     if (nextPath.equals(RUN_ID)) {
-      parseRunId(pathParts, builder);
+      tagValues.put(Constants.Metrics.Tag.RUN_ID, pathParts.next());
       if (pathParts.hasNext()) {
         nextPath = pathParts.next();
       } else {
@@ -343,24 +406,24 @@ final class MetricsRequestParser {
                                        componentType.substring(0, componentType.length() - 1));
       throw new MetricsPathException(exception);
     }
-    builder.setComponentId(urlDecode(pathParts.next()));
+    tagValues.put(componentTagName, urlDecode(pathParts.next()));
   }
 
-  private static void parseRunId(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  private static void parseRunId(Iterator<String> pathParts, Map<String, String> tagValues)
     throws MetricsPathException {
     if (!pathParts.hasNext()) {
       throw new MetricsPathException("expecting " + RUN_ID + " value after the identifier runs in path");
     }
-    builder.setRunId(pathParts.next());
+    tagValues.put(Constants.Metrics.Tag.RUN_ID, pathParts.next());
   }
 
   /**
    * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
    */
-  private static void buildFlowletContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  private static void buildFlowletContext(Iterator<String> pathParts, Map<String, String> tagValues)
     throws MetricsPathException {
 
-    buildComponentTypeContext(pathParts, builder, "flowlets", "flows");
+    buildComponentTypeContext(pathParts, tagValues, "flowlets", "flows", Constants.Metrics.Tag.FLOWLET);
     if (pathParts.hasNext()) {
       if (!pathParts.next().equals("queues")) {
         throw new MetricsPathException("expecting 'queues' after the flowlet name");
@@ -368,61 +431,38 @@ final class MetricsRequestParser {
       if (!pathParts.hasNext()) {
         throw new MetricsPathException("'queues' must be followed by a queue name");
       }
-      builder.setTag(MetricsRequestContext.TagType.QUEUE, urlDecode(pathParts.next()));
+      tagValues.put(Constants.Metrics.Tag.FLOWLET_QUEUE, urlDecode(pathParts.next()));
     }
   }
 
   /**
    * From the query string determine the query type, time range and related parameters.
    */
-  public static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
-
+  public static void parseQueryString(URI requestURI, CubeQueryBuilder builder) throws MetricsPathException {
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
-    // Extracts the query type.
-    if (isTimeseriesRequest(queryParams)) {
-      parseTimeseries(queryParams, builder);
-    } else {
-      boolean foundType = false;
-      for (MetricsRequest.Type type : MetricsRequest.Type.values()) {
-        if (Boolean.parseBoolean(getQueryParam(queryParams, type.name().toLowerCase(), "false"))) {
-          builder.setType(type);
-          foundType = true;
-          break;
-        }
-      }
-
-      if (!foundType) {
-        throw new IllegalArgumentException("Unknown query type for " + requestURI);
-      }
-    }
-  }
-
-  private static boolean isTimeseriesRequest(Map<String, List<String>> queryParams) {
-    return queryParams.containsKey(COUNT) || queryParams.containsKey(START_TIME) || queryParams.containsKey(END_TIME);
+    parseTimeseries(queryParams, builder);
   }
 
   private static boolean isAutoResolution(Map<String, List<String>> queryParams) {
     return queryParams.get(RESOLUTION).get(0).equals(AUTO_RESOLUTION);
   }
 
-  private static void parseTimeseries(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
+  private static void parseTimeseries(Map<String, List<String>> queryParams, CubeQueryBuilder builder) {
     int count;
     long startTime;
     long endTime;
-    int resolution = 1;
+    int resolution;
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 
     if (queryParams.containsKey(RESOLUTION) && !isAutoResolution(queryParams)) {
       resolution = TimeMathParser.resolutionInSeconds(queryParams.get(RESOLUTION).get(0));
-      if ((resolution == 3600) || (resolution == 60) || (resolution == 1)) {
-        builder.setTimeSeriesResolution(resolution);
-      } else {
+      if (!((resolution == 3600) || (resolution == 60) || (resolution == 1))) {
         throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
                                              "1 hour resolutions are supported currently");
       }
     } else {
-      // if resolution is not provided set 1
-      builder.setTimeSeriesResolution(1);
+      // if resolution is not provided set default 1
+      resolution = 1;
     }
 
     if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
@@ -431,13 +471,11 @@ final class MetricsRequestParser {
       if (queryParams.containsKey(RESOLUTION)) {
         if (isAutoResolution(queryParams)) {
           // auto determine resolution, based on time difference.
-          MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
+          Resolution autoResolution = getResolution(endTime - startTime);
           resolution = autoResolution.getResolution();
-          builder.setTimeSeriesResolution(resolution);
         }
       } else {
-        builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND.getResolution());
-        resolution = MetricsRequest.TimeSeriesResolution.SECOND.getResolution();
+        resolution = Resolution.SECOND.getResolution();
       }
       count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
     } else if (queryParams.containsKey(COUNT)) {
@@ -455,26 +493,32 @@ final class MetricsRequestParser {
         startTime = endTime - (count * resolution) + resolution;
       }
     } else {
-      throw new IllegalArgumentException("must specify 'count', or both 'start' and 'end'");
+      startTime = 0;
+      endTime = 0;
+      count = 1;
+      // max int means aggregate "all time totals"
+      resolution = Integer.MAX_VALUE;
     }
 
-    builder.setStartTime(startTime);
-    builder.setEndTime(endTime);
-    builder.setCount(count);
-    builder.setType(MetricsRequest.Type.TIME_SERIES);
+    builder.setStartTs(startTime);
+    builder.setEndTs(endTime);
+    builder.setLimit(count);
+    builder.setResolution(resolution);
+
     setInterpolator(queryParams, builder);
   }
 
-  private static MetricsRequest.TimeSeriesResolution getResolution(long difference) {
+  private static Resolution getResolution(long difference) {
     if (difference >= MetricsConstants.METRICS_HOUR_RESOLUTION_CUTOFF) {
-      return  MetricsRequest.TimeSeriesResolution.HOUR;
+      return  Resolution.HOUR;
     } else if (difference >= MetricsConstants.METRICS_MINUTE_RESOLUTION_CUTOFF) {
-      return MetricsRequest.TimeSeriesResolution.MINUTE;
+      return Resolution.MINUTE;
     } else {
-      return MetricsRequest.TimeSeriesResolution.SECOND;
+      return Resolution.SECOND;
     }
   }
-  private static void setInterpolator(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
+
+  private static void setInterpolator(Map<String, List<String>> queryParams, CubeQueryBuilder builder) {
     Interpolator interpolator = null;
 
     if (queryParams.containsKey(INTERPOLATE)) {
@@ -494,18 +538,53 @@ final class MetricsRequestParser {
     builder.setInterpolator(interpolator);
   }
 
-  /**
-   * Gets a query string parameter by the given key. It will returns the first value if available or the default value
-   * if it is absent.
-   */
-  private static String getQueryParam(Map<String, List<String>> queries, String key, String defaultValue) {
-    if (!queries.containsKey(key)) {
-      return defaultValue;
+  static class CubeQueryBuilder {
+    private long startTs;
+    private long endTs;
+    private int resolution;
+    private String scope;
+    private String metricName;
+    // todo: should be aggregation? e.g. also support min/max, etc.
+    private Map<String, String> sliceByTagValues;
+    private int limit;
+    private Interpolator interpolator;
+
+    public void setStartTs(long startTs) {
+      this.startTs = startTs;
     }
-    List<String> values = queries.get(key);
-    if (values.isEmpty()) {
-      return defaultValue;
+
+    public void setEndTs(long endTs) {
+      this.endTs = endTs;
     }
-    return values.get(0);
+
+    public void setResolution(int resolution) {
+      this.resolution = resolution;
+    }
+
+    public void setMetricName(String metricName) {
+      this.metricName = metricName;
+    }
+
+    public void setScope(String scope) {
+      this.scope = scope;
+    }
+
+    public void setSliceByTagValues(Map<String, String> sliceByTagValues) {
+      this.sliceByTagValues = sliceByTagValues;
+    }
+
+    public void setLimit(int limit) {
+      this.limit = limit;
+    }
+
+    public CubeQuery build() {
+      String measureName = (metricName != null && scope != null) ? scope + "." + metricName : null;
+      return new CubeQuery(startTs, endTs, resolution, limit, measureName, MeasureType.COUNTER,
+                           sliceByTagValues, new ArrayList<String>(), interpolator);
+    }
+
+    public void setInterpolator(Interpolator interpolator) {
+      this.interpolator = interpolator;
+    }
   }
 }

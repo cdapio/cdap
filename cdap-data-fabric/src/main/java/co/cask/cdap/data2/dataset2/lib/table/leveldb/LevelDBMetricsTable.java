@@ -102,6 +102,14 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void delete(byte[] row, byte[][] columns) throws Exception {
+    for (byte[] column : columns) {
+      // Bytes.EMPTY_BYTE_ARRAY is a delete marker
+      core.put(row, column, Bytes.EMPTY_BYTE_ARRAY, System.currentTimeMillis());
+    }
+  }
+
+  @Override
   public void deleteRange(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
                           @Nullable FuzzyRowFilter filter) throws IOException {
     core.deleteRange(start, stop, filter, columns);

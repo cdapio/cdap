@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -44,6 +45,9 @@ import org.junit.rules.TemporaryFolder;
  * metrics table test for levelDB.
  */
 public class LevelDBMetricsTableTest extends MetricsTableTest {
+
+  private static final Id.DatasetModule metricsLevelDBModule = Id.DatasetModule.from(NAMESPACE_ID, "metrics-inmemory");
+
   private static DatasetFramework dsFramework;
 
   @ClassRule
@@ -69,12 +73,13 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
       });
 
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-leveldb", new LevelDBMetricsTableModule());
+    dsFramework.addModule(metricsLevelDBModule, new LevelDBMetricsTableModule());
   }
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    return DatasetsUtil.getOrCreateDataset(dsFramework, name, MetricsTable.class.getName(),
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, name);
+    return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
                                            DatasetProperties.EMPTY, null, null);
   }
 }

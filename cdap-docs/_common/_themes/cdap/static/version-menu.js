@@ -21,10 +21,11 @@
  * 
  * Requires a JSONP file at http://docs.cask.co/cdap/json-versions.js in the format:
  * 
- *  versionscallback({ "development":[["2.7.0-SNAPSHOT", "2.7.0"], ["2.6.0-SNAPSHOT","2.6.0"],], "current": ["2.5.2", "2.5.2"], "versions": [["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],] });
+ *  versionscallback({ "development":[["2.7.0-SNAPSHOT", "2.7.0"], ["2.6.0-SNAPSHOT","2.6.0"],], "older": ["2.5.2", "2.5.2"], "versions": [["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],] });
  * 
  * list of development versions; one current version; list of additional versions
- * the tool versionscallback-gen.py will generate this from scanning a directory
+ *
+ * version 0.2
  * 
  */
 
