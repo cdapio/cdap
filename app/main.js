@@ -48,7 +48,8 @@ angular
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
       'mgcrea.ngStrap.modal',
-      'ncy-angular-breadcrumb'
+      'ncy-angular-breadcrumb',
+      'angularMoment'
 
     ]).name,
 
