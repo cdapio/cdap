@@ -33,24 +33,25 @@ import java.util.Collections;
 public class DatasetWithArgumentsTest extends AbstractDatasetTest {
 
   private static final Id.DatasetModule prefix = Id.DatasetModule.from(NAMESPACE_ID, "prefix");
+  private static final Id.DatasetInstance pret = Id.DatasetInstance.from(NAMESPACE_ID, "pret");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     addModule(prefix, new PrefixedTableModule());
-    createInstance("prefixedTable", "pret", DatasetProperties.EMPTY);
+    createInstance("prefixedTable", pret, DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("pret");
+    deleteInstance(pret);
     deleteModule(prefix);
   }
 
   @Test
   public void testPrefixTable() throws Exception {
-    final PrefixedTable table = getInstance("pret", null);
-    final PrefixedTable aTable = getInstance("pret", Collections.singletonMap("prefix", "a"));
-    final PrefixedTable bTable = getInstance("pret", Collections.singletonMap("prefix", "b"));
+    final PrefixedTable table = getInstance(pret, null);
+    final PrefixedTable aTable = getInstance(pret, Collections.singletonMap("prefix", "a"));
+    final PrefixedTable bTable = getInstance(pret, Collections.singletonMap("prefix", "b"));
 
     TransactionExecutor txnl = newTransactionExecutor(aTable, bTable, table);
 

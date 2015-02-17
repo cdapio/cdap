@@ -62,10 +62,10 @@ public final class DatasetProperties {
   /**
    * A Builder to construct DatasetProperties instances.
    */
-  public static final class Builder {
+  public static class Builder {
     private Map<String, String> properties = Maps.newHashMap();
 
-    private Builder() {
+    protected Builder() {
     }
 
     /**
