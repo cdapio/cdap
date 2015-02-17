@@ -55,6 +55,7 @@ public class DefaultMetricStore implements MetricStore {
 
   private final Supplier<Cube> cube;
   private final Map<String, String> tagMapping;
+  private final Map<String, Map<String, String>> reverseMapping;
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
@@ -83,6 +84,19 @@ public class DefaultMetricStore implements MetricStore {
       Constants.Metrics.Tag.INSTANCE_ID, PROGRAM_LEVEL3,
       // service
       Constants.Metrics.Tag.SERVICE_RUNNABLE, PROGRAM_LEVEL2
+    );
+
+    // reverse mapping
+    // todo : remove hard-coded values and use TypeId (need to move TypeId out of app-fabric ?)
+    this.reverseMapping = ImmutableMap.<String, Map<String, String>>of(
+      //flow
+      "f", ImmutableMap.<String, String>of(PROGRAM_LEVEL2, Constants.Metrics.Tag.FLOWLET,
+                                              PROGRAM_LEVEL3, Constants.Metrics.Tag.FLOWLET_QUEUE)
+      ,
+      "b", ImmutableMap.<String, String>of(PROGRAM_LEVEL2, Constants.Metrics.Tag.MR_TASK_TYPE,
+                                                   PROGRAM_LEVEL3, Constants.Metrics.Tag.INSTANCE_ID)
+      ,
+      "u", ImmutableMap.<String, String>of(PROGRAM_LEVEL2, Constants.Metrics.Tag.SERVICE_RUNNABLE)
     );
   }
 
@@ -146,7 +160,20 @@ public class DefaultMetricStore implements MetricStore {
     Collection<TimeSeries> cubeResult = cube.get().query(q);
     List<TimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
-      result.add(new TimeSeries(timeSeries, replaceTagsIfNeeded(timeSeries.getTagValues())));
+      result.add(new TimeSeries(timeSeries, unMapTags(timeSeries.getTagValues(),
+                                                      query.getSliceByTags().get(Constants.Metrics.Tag.PROGRAM_TYPE))));
+    }
+    return result;
+  }
+
+  private Map<String, String> unMapTags(Map<String, String> tagValues, String programType) {
+    if (programType == null) {
+      return tagValues;
+    }
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
+      String tagNameReplacement = reverseMapping.get(programType).get(tagValue.getKey());
+      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
     }
     return result;
   }

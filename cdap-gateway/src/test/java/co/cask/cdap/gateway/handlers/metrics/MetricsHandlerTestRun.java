@@ -33,7 +33,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,10 +45,15 @@ import java.util.concurrent.TimeUnit;
 public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static long emitTs;
+  private List<String> tagsList;
 
   @Before
   public void setup() throws Exception {
     setupMetrics();
+    tagsList = ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+                                Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
+                                Constants.Metrics.Tag.FLOWLET);
+
   }
 
   private static void setupMetrics() throws Exception {
@@ -202,6 +210,60 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       "/v3/metrics/query?context=" + getContext("myspace", "WCount1", "f", "WCounter", "splitter") +
         "&metric=system.reads&start=" + start + "&end="
         + end);
+
+    List<TimeSeriesResult> groupByResult =
+      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("flt", "counter"), 1),
+                       new TimeSeriesResult(ImmutableMap.of("flt", "splitter"), 3));
+
+    verifyGroupByResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter") +
+        "&metric=system.reads&groupBy=" + Constants.Metrics.Tag.FLOWLET + "&start=" + start + "&end="
+        + end, groupByResult);
+
+    groupByResult =
+      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("app", "WCount1", "ptp", "b"), 2),
+                       new TimeSeriesResult(ImmutableMap.of("app", "WCount1", "ptp", "p"), 1),
+                       new TimeSeriesResult(ImmutableMap.of("app", "WCount1", "ptp", "f"), 5));
+
+    verifyGroupByResult(
+      "/v3/metrics/query?context=" + getContext("yourspace") +
+        "&metric=system.reads&groupBy=" + Constants.Metrics.Tag.APP + "," + Constants.Metrics.Tag.PROGRAM_TYPE +
+        "&start=" + start + "&end=" + end, groupByResult);
+  }
+
+  private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
+    Collection<TimeSeries> result = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
+    Assert.assertEquals(groupByResult.size(), result.size());
+    Iterator<TimeSeries> resultItor = result.iterator();
+    while (resultItor.hasNext()) {
+      TimeSeries resultTs = resultItor.next();
+      for (TimeSeriesResult expectedTs : groupByResult) {
+        if (compareTagValues(expectedTs.getTagValues(), resultTs.getTagValues())) {
+          assertTimeValues(expectedTs, resultTs);
+        }
+      }
+    }
+  }
+
+  private boolean compareTagValues(Map<String, String> expected, Map<String, String> actual) {
+    for (String key : expected.keySet()) {
+      if (!actual.containsKey(key)) {
+        return false;
+      }
+      if (!expected.get(key).equals(actual.get(key))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void assertTimeValues(TimeSeriesResult expected, TimeSeries actual) {
+    Iterator<TimeValue> timeValueIterator = actual.getTimeValues().iterator();
+    long expectedValue = expected.getTimeSeriesSum();
+    while (timeValueIterator.hasNext()) {
+      expectedValue -= timeValueIterator.next().getValue();
+    }
+    Assert.assertEquals(0, expectedValue);
   }
 
   private void verifyEmptyQueryResult(String url) throws Exception {
@@ -209,11 +271,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(0, queryResult.getSeries().length);
   }
 
-  private String getContext(String nameSpace, String appName, String programType,
-                          String programName, String flowletName) {
-    return Constants.Metrics.Tag.NAMESPACE + "." + nameSpace + "." + Constants.Metrics.Tag.APP + "." + appName + "." +
-      Constants.Metrics.Tag.PROGRAM_TYPE + "." + programType + "." + Constants.Metrics.Tag.PROGRAM + "." +
-      programName + "." + Constants.Metrics.Tag.FLOWLET + "." + flowletName;
+  private String getContext(String... tags) {
+    String context = "";
+    for (int i = 0; i < tags.length; i++) {
+      context += tagsList.get(i) + "." + tags[i] + ".";
+    }
+    return context.substring(0, context.length() - 1);
   }
 
   @Test
@@ -301,6 +364,23 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     String result = EntityUtils.toString(response.getEntity());
     List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
+  }
+
+  class TimeSeriesResult {
+    public Map<String, String> getTagValues() {
+      return tagValues;
+    }
+
+    public long getTimeSeriesSum() {
+      return timeSeriesSum;
+    }
+
+    Map<String, String> tagValues;
+    long timeSeriesSum;
+    TimeSeriesResult(Map<String, String> tagValues, long timeSeriesSum) {
+      this.tagValues = tagValues;
+      this.timeSeriesSum = timeSeriesSum;
+    }
   }
 
 }

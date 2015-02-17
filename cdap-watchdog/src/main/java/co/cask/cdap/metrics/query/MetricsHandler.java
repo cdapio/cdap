@@ -28,6 +28,7 @@ import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -39,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -92,7 +92,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
                      @QueryParam("context") String context,
-                     @QueryParam("metric") String metric) throws Exception {
+                     @QueryParam("metric") String metric,
+                     @QueryParam("groupBy") String groupBy) throws Exception {
     try {
       // todo: refactor parsing time range params
       // sets time range, query type, etc.
@@ -102,12 +103,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       CubeQuery queryTimeParams = builder.build();
       Map<String, String> tagsSliceBy = parseTagValuesAsMap(context);
 
+      // groupBy tags are comma separated
+      List<String> groupByTags = 
+        (groupBy == null) ? Lists.<String>newArrayList() :
+        Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
+
       CubeQuery query = new CubeQuery(startTs, endTs,
                                       queryTimeParams.getResolution(), metric,
                                           // todo: figure out MeasureType
-                                      MeasureType.COUNTER, tagsSliceBy, new ArrayList<String>());
+                                      MeasureType.COUNTER, tagsSliceBy, groupByTags);
 
       Collection<TimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
