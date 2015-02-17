@@ -1,7 +1,17 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminOverviewController', function ($scope, $state, myNamespace, MyDataSource) {
+  .controller('AdminOverviewController', function ($scope, $state, myNamespace, MyDataSource, myLocalStorage, MY_CONFIG) {
     var dataSrc = new MyDataSource($scope);
-    $scope.hideWelcomeMessage = false;
+
+    myLocalStorage.get('AdminOverview.welcomeIsHidden')
+      .then(function(v) {
+        $scope.welcomeIsHidden = v;
+      });
+
+    $scope.hideWelcome = function () {
+      $scope.welcomeIsHidden = true;
+    };
+
+    $scope.isEnterprise = MY_CONFIG.isEnterprise;
 
     // TODO: add dataset and stream counts per namespace
     myNamespace.getList()
