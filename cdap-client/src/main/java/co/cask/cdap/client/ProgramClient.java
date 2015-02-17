@@ -307,7 +307,7 @@ public class ProgramClient {
   public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException,
     UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURLV3(String.format("apps/%s/procedures/%s/instances", appId, procedureId));
+    URL url = config.resolveURL(String.format("apps/%s/procedures/%s/instances", appId, procedureId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
