@@ -39,7 +39,7 @@ public class StartProgramCommandSet extends CommandSet<Command> {
   private static List<Command> generateCommands(ProgramClient programClient, CLIConfig cliConfig) {
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
-      if (elementType.canStartStop()) {
+      if (elementType.canStart()) {
         commands.add(new StartProgramCommand(elementType, programClient, cliConfig));
       }
     }
