@@ -20,17 +20,23 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
  * Creates a dataset.
  */
 public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
+  private static final Gson GSON = new Gson();
   private final DatasetClient datasetClient;
 
   @Inject
@@ -43,14 +49,20 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String datasetType = arguments.get(ArgumentName.DATASET_TYPE.toString());
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
+    String datasetPropertiesString = arguments.get(ArgumentName.DATASET_PROPERTIES.toString(), "");
+    Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
+    DatasetInstanceConfiguration datasetConfig = new DatasetInstanceConfiguration(datasetType, datasetProperties);
 
-    datasetClient.create(datasetName, datasetType);
-    output.printf("Successfully created dataset named '%s' with type '%s'\n", datasetName, datasetType);
+    datasetClient.create(datasetName, datasetConfig);
+    output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",
+                  datasetName, datasetType, GSON.toJson(datasetProperties));
+    output.println();
   }
 
   @Override
   public String getPattern() {
-    return String.format("create dataset instance <%s> <%s>", ArgumentName.DATASET_TYPE, ArgumentName.NEW_DATASET);
+    return String.format("create dataset instance <%s> <%s> [<%s>]",
+                         ArgumentName.DATASET_TYPE, ArgumentName.NEW_DATASET, ArgumentName.DATASET_PROPERTIES);
   }
 
   @Override
