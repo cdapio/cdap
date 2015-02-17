@@ -18,9 +18,9 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.StreamSizeSchedule;
-import co.cask.cdap.api.schedule.TimeSchedule;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -43,7 +44,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.Schedules;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulesUtil;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -373,10 +374,10 @@ public class AdapterService extends AbstractIdleService {
     Preconditions.checkArgument(frequency != null,
                                 "Frequency of running the adapter is missing from adapter properties." +
                                   " Cannot schedule program.");
-    String cronExpr = Schedules.toCronExpr(frequency);
+    String cronExpr = SchedulesUtil.toCronExpr(frequency);
     String adapterName = adapterSpec.getName();
-    Schedule schedule = Schedule.buildTimeSchedule(constructScheduleName(programId, adapterName),
-                                                   getScheduleDescription(adapterName), cronExpr);
+    Schedule schedule = Schedules.createTimeSchedule(constructScheduleName(programId, adapterName),
+                                                     getScheduleDescription(adapterName), cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(programType, programId.getId()),
                                            adapterSpec.getProperties());

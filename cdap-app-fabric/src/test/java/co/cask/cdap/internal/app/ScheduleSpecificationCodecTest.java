@@ -19,9 +19,10 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.StreamSizeSchedule;
-import co.cask.cdap.api.schedule.TimeSchedule;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -52,7 +53,7 @@ public class ScheduleSpecificationCodecTest {
 
   @Test
   public void testTimeSchedule() throws Exception {
-    TimeSchedule timeSchedule = (TimeSchedule) Schedule.buildTimeSchedule("foo", "bar", "cronEntry");
+    TimeSchedule timeSchedule = (TimeSchedule) Schedules.createTimeSchedule("foo", "bar", "cronEntry");
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
@@ -65,7 +66,8 @@ public class ScheduleSpecificationCodecTest {
 
   @Test
   public void testStreamSizeSchedule() throws Exception {
-    StreamSizeSchedule dataSchedule = (StreamSizeSchedule) Schedule.buildStreamSizeSchedule("foo", "bar", "stream", 10);
+    StreamSizeSchedule dataSchedule =
+      (StreamSizeSchedule) Schedules.createDataSchedule("foo", "bar", Schedule.DataType.STREAM_SIZE, "stream", 10);
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(dataSchedule, programInfo, properties);

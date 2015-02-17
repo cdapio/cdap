@@ -14,7 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package co.cask.cdap.internal.schedule;
+
+import co.cask.cdap.api.schedule.Schedule;
 
 /**
  * Defines a schedule based on data availability in a stream.
@@ -25,7 +27,7 @@ public final class StreamSizeSchedule extends Schedule {
 
   private final int dataTriggerMB;
 
-  StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
+  public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
     super(name, description);
     this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;

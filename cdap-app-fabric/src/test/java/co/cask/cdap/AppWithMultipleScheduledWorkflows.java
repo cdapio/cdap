@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import org.slf4j.Logger;
@@ -33,11 +34,11 @@ public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new SomeWorkflow());
     addWorkflow(new AnotherWorkflow());
-    scheduleWorkflow("SomeSchedule1", "0 4 * * *", "SomeWorkflow");
-    scheduleWorkflow("SomeSchedule2", "0 5 * * *", "SomeWorkflow");
-    scheduleWorkflow("AnotherSchedule1", "0 6 * * *", "AnotherWorkflow");
-    scheduleWorkflow("AnotherSchedule2", "0 7 * * *", "AnotherWorkflow");
-    scheduleWorkflow("AnotherSchedule3", "0 8 * * *", "AnotherWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("SomeSchedule1", "", "0 4 * * *"), "SomeWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("SomeSchedule2", "", "0 5 * * *"), "SomeWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("AnotherSchedule1", "", "0 6 * * *"), "AnotherWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("AnotherSchedule2", "", "0 7 * * *"), "AnotherWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("AnotherSchedule3", "", "0 8 * * *"), "AnotherWorkflow");
   }
 
   /**

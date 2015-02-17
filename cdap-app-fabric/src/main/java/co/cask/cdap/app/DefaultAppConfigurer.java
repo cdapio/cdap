@@ -32,7 +32,6 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.StreamSizeSchedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -48,6 +47,7 @@ import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 

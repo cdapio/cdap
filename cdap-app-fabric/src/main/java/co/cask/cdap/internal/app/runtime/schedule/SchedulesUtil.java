@@ -22,7 +22,7 @@ import org.quartz.DateBuilder;
 /**
  *  Utility class for Scheduler.
  */
-public class Schedules {
+public class SchedulesUtil {
 
   /**
    * Converts a frequency expression into cronExpression that is usable by quartz.

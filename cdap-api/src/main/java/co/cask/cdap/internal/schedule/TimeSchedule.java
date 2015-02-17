@@ -14,7 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package co.cask.cdap.internal.schedule;
+
+import co.cask.cdap.api.schedule.Schedule;
 
 /**
  * Defines a cron-based schedule for running a program.
@@ -23,7 +25,7 @@ public final class TimeSchedule extends Schedule {
 
   private final String cronExpression;
 
-  TimeSchedule(String name, String description, String cronExpression) {
+  public TimeSchedule(String name, String description, String cronExpression) {
     super(name, description);
     this.cronExpression = cronExpression;
   }
