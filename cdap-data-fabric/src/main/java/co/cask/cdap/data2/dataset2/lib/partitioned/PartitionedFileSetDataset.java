@@ -62,7 +62,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected static final byte[] FIELD_PREFIX = { 'f', '.' };
 
   protected final FileSet files;
-  protected final Table partitions;
+  protected final Table partitionsTable;
   protected final Map<String, String> runtimeArguments;
   protected final DatasetSpecification spec;
   protected final Provider<ExploreFacade> exploreFacadeProvider;
@@ -76,7 +76,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
                                    Provider<ExploreFacade> exploreFacadeProvider) {
     super(name, partitionTable);
     this.files = fileSet;
-    this.partitions = partitionTable;
+    this.partitionsTable = partitionTable;
     this.spec = spec;
     this.exploreFacadeProvider = exploreFacadeProvider;
     this.runtimeArguments = arguments;
@@ -91,7 +91,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void addPartition(PartitionKey key, String path) {
     final byte[] rowKey = generateRowKey(key, partitioning);
-    Row row = partitions.get(rowKey);
+    Row row = partitionsTable.get(rowKey);
     if (row != null && !row.isEmpty()) {
       throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
                                                getName(), key.toString()));
@@ -102,8 +102,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       put.add(Bytes.add(FIELD_PREFIX, Bytes.toBytes(entry.getKey())), // "f.<field name>"
               Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
     }
-    partitions.put(put);
+    partitionsTable.put(put);
     addPartitionToExplore(key, path);
+    // TODO: make DDL operations transactional [CDAP-1393]
   }
 
   protected void addPartitionToExplore(PartitionKey key, String path) {
@@ -123,8 +124,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void dropPartition(PartitionKey key) {
     final byte[] rowKey = generateRowKey(key, partitioning);
-    partitions.delete(rowKey);
+    partitionsTable.delete(rowKey);
     dropPartitionFromExplore(key);
+    // TODO: make DDL operations transactional [CDAP-1393]
   }
 
   private void dropPartitionFromExplore(PartitionKey key) {
@@ -144,7 +146,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public String getPartition(PartitionKey key) {
     final byte[] rowKey = generateRowKey(key, partitioning);
-    Row row = partitions.get(rowKey);
+    Row row = partitionsTable.get(rowKey);
     if (row == null) {
       return null;
     }
@@ -182,7 +184,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer) {
     final byte[] startKey = generateStartKey(filter);
     final byte[] endKey = generateStopKey(filter);
-    Scanner scanner = partitions.scan(startKey, endKey);
+    Scanner scanner = partitionsTable.scan(startKey, endKey);
     try {
       while (true) {
         Row row = scanner.next();
@@ -221,7 +223,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     try {
       files.close();
     } finally {
-      partitions.close();
+      partitionsTable.close();
     }
   }
 
@@ -447,9 +449,5 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
                       offset, rowKey.length - offset));
     }
     return builder.build();
-  }
-
-  protected Table getPartitionsTable() {
-    return partitions;
   }
 }

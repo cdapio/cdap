@@ -38,6 +38,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Provider;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -50,6 +51,8 @@ import java.util.Set;
  * Implementation of partitioned datasets using a Table to store the meta data.
  */
 public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset implements TimePartitionedFileSet {
+
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TimePartitionedFileSetDataset.class);
 
   // the fixed partitioning that time maps to
   private static final String FIELD_YEAR = "year";
@@ -87,6 +90,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     if (isLegacyDataset) {
       // prevents overly verbose logging of legacy row keys
       ignoreInvalidRowsSilently = true;
+      LOG.info("Backward compatibility mode for dataset '{}' is turned on.", getName());
     }
   }
 
@@ -155,14 +159,14 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   @VisibleForTesting
   public void addLegacyPartition(long time, String path) {
     final byte[] rowKey = Bytes.toBytes(time);
-    Row row = getPartitionsTable().get(rowKey);
+    Row row = partitionsTable.get(rowKey);
     if (row != null && !row.isEmpty()) {
       throw new DataSetException(String.format("Dataset '%s' already has a partition with time: %d.",
                                                getName(), time));
     }
     Put put = new Put(rowKey);
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
-    getPartitionsTable().put(put);
+    partitionsTable.put(put);
     addPartitionToExplore(partitionKeyForTime(time), path);
   }
 
@@ -174,7 +178,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
       return null;
     }
     final byte[] rowKey = Bytes.toBytes(time);
-    Row row = getPartitionsTable().get(rowKey);
+    Row row = partitionsTable.get(rowKey);
     if (row == null) {
       return null;
     }
@@ -190,7 +194,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
    */
   private void dropLegacyPartition(long time) {
     final byte[] rowKey = Bytes.toBytes(time);
-    getPartitionsTable().delete(rowKey);
+    partitionsTable.delete(rowKey);
   }
 
   /**
@@ -201,7 +205,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     // the legacy (2.7) implementation of this dataset used the partition time as the row key
     final byte[] startKey = Bytes.toBytes(startTime);
     final byte[] endKey = Bytes.toBytes(endTime);
-    Scanner scanner = getPartitionsTable().scan(startKey, endKey);
+    Scanner scanner = partitionsTable.scan(startKey, endKey);
 
     try {
       while (true) {
@@ -251,9 +255,9 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     Collection<String> inputPaths = getPartitionPaths(startTime, endTime);
     List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
     for (String path : inputPaths) {
-      inputLocations.add(getEmbeddedFileSet().getLocation(path));
+      inputLocations.add(files.getLocation(path));
     }
-    return getEmbeddedFileSet().getInputFormatConfiguration(inputLocations);
+    return files.getInputFormatConfiguration(inputLocations);
   }
 
   @Override
