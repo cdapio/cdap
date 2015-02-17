@@ -63,8 +63,8 @@ Text that are variables that you are to replace is indicated by a series of angl
   PUT <base-url>/namespaces/<namespace-id>/streams/<new-stream-id>
 
 indicates that—in addition to the ``<base-url>``—text such as ``<namespace-id>`` and
-``<new-stream-id>`` are variables
-and that you are to replace them with your values, perhaps in this case *default* and *mystream*::
+``<new-stream-id>`` are variables and that you are to replace them with your values,
+perhaps in this case *default* and *mystream*::
 
   PUT <base-url>/namespaces/default/streams/mystream
 
@@ -109,7 +109,7 @@ Names and Characters for Namespace IDs
 
 Namespace IDs have a limited set of characters allowed; they are restricted to letters (a-z,
 A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
-on the length of a namespace ID nor on the number of namespaces.
+length of a namespace ID nor on the number of namespaces.
 
 The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
