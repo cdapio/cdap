@@ -10,8 +10,17 @@ angular.module(PKG.name + '.feature.foo')
         { n:'Settings', v:mySettings }
       ];
 
+      /*
+        naming scheme for preferences:
+
+        first component: "f" for feature
+        second component: "foo" feature name
+        last component(s): state the pref originate from
+       */
+      var PREF_KEY = 'f.foo.test-settings';
+
       $q.all(solutions.map(function(s){
-        return s.v.get('test');
+        return s.v.get(PREF_KEY);
       }))
       .then(function(result){
         var s;
@@ -19,7 +28,7 @@ angular.module(PKG.name + '.feature.foo')
           s = solutions[i];
           $scope[s.n.toLowerCase()] = result[i];
           $scope['doSave'+s.n] = (function() {
-            this.v.set('test', $scope[this.n.toLowerCase()]);
+            this.v.set(PREF_KEY, $scope[this.n.toLowerCase()]);
           }).bind(s);
         }
       });
