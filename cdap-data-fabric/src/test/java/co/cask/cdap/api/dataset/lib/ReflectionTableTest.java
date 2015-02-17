@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.internal.io.ReflectionPutWriter;
 import co.cask.cdap.internal.io.ReflectionRowReader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Objects;
@@ -44,6 +45,7 @@ import java.util.Map;
  *
  */
 public class ReflectionTableTest extends AbstractDatasetTest {
+  private static final Id.DatasetInstance users = Id.DatasetInstance.from(NAMESPACE_ID, "users");
   private static final User SAMUEL = new User(
     "Samuel L.", "Jackson",
     Gender.MALE,
@@ -200,35 +202,35 @@ public class ReflectionTableTest extends AbstractDatasetTest {
 
   @Test
   public void testPutAndGet() throws Exception {
-    createInstance("table", "users", DatasetProperties.builder().build());
+    createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance("users");
+      final Table usersTable = getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
       assertGetAndPut(usersTable, rowKey, SAMUEL, schema);
     } finally {
-      deleteInstance("users");
+      deleteInstance(users);
     }
   }
 
   @Test
   public void testNullFields() throws Exception {
-    createInstance("table", "users", DatasetProperties.builder().build());
+    createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance("users");
+      final Table usersTable = getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
       assertGetAndPut(usersTable, rowKey, SAMUEL, schema);
     } finally {
-      deleteInstance("users");
+      deleteInstance(users);
     }
   }
 
   @Test
   public void testTypeProjection() throws Exception {
-    createInstance("table", "users", DatasetProperties.builder().build());
+    createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance("users");
+      final Table usersTable = getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final User2 projected = new User2("Samuel L.", 123L, ((Float) 50000000.02f).doubleValue(), Double.MAX_VALUE,
                                         ByteBuffer.wrap(new byte[]{0, 1, 2}));
@@ -251,7 +253,7 @@ public class ReflectionTableTest extends AbstractDatasetTest {
         }
       });
     } finally {
-      deleteInstance("users");
+      deleteInstance(users);
     }
   }
 

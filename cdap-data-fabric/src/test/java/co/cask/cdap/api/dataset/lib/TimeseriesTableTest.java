@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import org.junit.AfterClass;
@@ -36,17 +37,18 @@ import java.util.concurrent.TimeUnit;
  * Time series table tests.
  */
 public class TimeseriesTableTest extends AbstractDatasetTest {
+  private static final Id.DatasetInstance metricsTableInstance = Id.DatasetInstance.from(NAMESPACE_ID, "metricsTable");
   private static TimeseriesTable table;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("timeseriesTable", "metricsTable", DatasetProperties.EMPTY);
-    table = getInstance("metricsTable");
+    createInstance("timeseriesTable", metricsTableInstance, DatasetProperties.EMPTY);
+    table = getInstance(metricsTableInstance);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("metricsTable");
+    deleteInstance(metricsTableInstance);
   }
 
   @Test

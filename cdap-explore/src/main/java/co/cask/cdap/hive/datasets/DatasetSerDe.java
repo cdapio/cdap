@@ -19,6 +19,7 @@ package co.cask.cdap.hive.datasets;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.context.NullJobConfException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -88,6 +89,8 @@ public class DatasetSerDe implements SerDe {
     columnNames = new ArrayList<String>(Arrays.asList(StringUtils.split(properties.getProperty("columns"), ",")));
 
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
+    // note: namespacing will come in later. Perhaps initialize this class with a namespace or get it in each method
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
     try {
       if (entries != null) {
         // Here, we can't say whether Hive wants to read the table, or write to it
@@ -97,7 +100,7 @@ public class DatasetSerDe implements SerDe {
       } else {
         // When initialize is called to write to a table, entries is null
         try {
-          recordType = DatasetAccessor.getRecordWritableType(datasetName);
+          recordType = DatasetAccessor.getRecordWritableType(datasetInstanceId);
         } catch (NullJobConfException e) {
           // This is the case when this serDe is used by Hive only for its serialize method. In that case,
           // We don't need to initialize a context since serialize does not need any dataset information.

@@ -102,7 +102,8 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
         throw new RuntimeException(result.getMessage());
       }
       String dsName = dataSetCreateSpec.getInstanceName();
-      DatasetSpecification existingSpec = dsFramework.getDatasetSpec(dsName);
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(appId.getNamespace(), dsName);
+      DatasetSpecification existingSpec = dsFramework.getDatasetSpec(datasetInstanceId);
       if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
           // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
           throw new DataSetException

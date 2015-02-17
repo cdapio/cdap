@@ -110,33 +110,32 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+  public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-
-    client.addInstance(datasetInstanceName, datasetType, props);
+    client.addInstance(datasetInstanceId.getId(), datasetType, props);
   }
 
   @Override
-  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-    client.updateInstance(datasetInstanceName, props);
+    client.updateInstance(datasetInstanceId.getId(), props);
   }
 
   @Override
-  public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
+  public Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
     return client.getAllInstances();
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    DatasetMeta meta = client.getInstance(name);
+  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    DatasetMeta meta = client.getInstance(datasetInstanceId.getId());
     return meta == null ? null : meta.getSpec();
   }
 
   @Override
-  public boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return client.getInstance(instanceName) != null;
+  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return client.getInstance(datasetInstanceId.getId()) != null;
   }
 
   @Override
@@ -145,23 +144,23 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
-    client.deleteInstance(datasetInstanceName);
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    client.deleteInstance(datasetInstanceId.getId());
   }
 
   @Override
-  public void deleteAllInstances() throws DatasetManagementException, IOException {
+  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     // delete all one by one
-    for (DatasetSpecification spec : getInstances()) {
-      deleteInstance(spec.getName());
+    for (DatasetSpecification spec : getInstances(namespaceId)) {
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, spec.getName());
+      deleteInstance(datasetInstanceId);
     }
   }
 
   @Override
-  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-
-    DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
+    DatasetMeta instanceInfo = client.getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
       return null;
     }
@@ -171,10 +170,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
                                           ClassLoader classLoader) throws DatasetManagementException, IOException {
-
-    DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
+    DatasetMeta instanceInfo = client.getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
       return null;
     }
