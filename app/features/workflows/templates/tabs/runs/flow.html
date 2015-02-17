@@ -5,11 +5,12 @@
   </div>
   <div class="col-sm-3">
     <span> Started </span>
-    <div ng-bind="startTime | date : format : timezone"></div>
+    <div ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"></div>
   </div>
   <div class="col-sm-3">
     <span> Duration </span>
-    <div ng-bind="duration"></div>
+    <div ng-show="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"></div>
+    <div ng-show="!duration"> N/A </div>
   </div>
   <div class="col-sm-3 text-right">
     <div ng-show="status == 'RUNNING'"
