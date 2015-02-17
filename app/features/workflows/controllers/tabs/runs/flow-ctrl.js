@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, amMoment) {
+  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, amMoment, $filter) {
     var dataSrc = new MyDataSource($scope),
+        filterFilter = $filter('filter');
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
     $scope.moment = amMoment;
     $scope.moment.changeLocale('en');
@@ -27,12 +28,17 @@ angular.module(PKG.name + '.feature.workflows')
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
-        angular.forEach(res, function(run) {
-          $scope.startTime = new Date(run.start * 1000);
+        var run, startMs;
+        var runsThatWeCareAbout = filterFilter(res, { runid:$state.params.runId });
+        if(runsThatWeCareAbout.length) {
+          run = runsThatWeCareAbout[0];
+          startMs = run.start * 1000;
+          $scope.startTime = new Date(startMs);
           $scope.status = run.status;
-          $scope.duration = (run.end ? (run.end * 1000) - $scope.startTime : 0);
-          console.log("Duration:", $scope.duration);
-        });
+          $scope.duration = (run.end ? (run.end * 1000) - startMs : 0);
+        }
+
+
       });
 
   });
