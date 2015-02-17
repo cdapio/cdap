@@ -75,7 +75,6 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
@@ -83,7 +82,6 @@ import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultProcedureClient;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
-import co.cask.cdap.test.internal.ProcedureClientFactory;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -161,7 +159,6 @@ public class TestBase {
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
-  @Deprecated
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File... bundleEmbeddedJars) {
     TestManager testManager = getTestManager();
@@ -176,7 +173,6 @@ public class TestBase {
    *
    * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
    */
-  @Deprecated
   protected void clear() throws Exception {
     TestManager testManager = getTestManager();
     testManager.clear();
@@ -269,13 +265,14 @@ public class TestBase {
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
+        @SuppressWarnings("deprecation")
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
           install(new FactoryModuleBuilder().implement(ProcedureClient.class, DefaultProcedureClient.class)
-                    .build(ProcedureClientFactory.class));
+                    .build(co.cask.cdap.test.internal.ProcedureClientFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
@@ -395,7 +392,6 @@ public class TestBase {
    * @param datasetModule module class
    * @throws Exception
    */
-  @Deprecated
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
     TestManager testManager = getTestManager();
@@ -413,7 +409,6 @@ public class TestBase {
    * @param props properties
    * @param <T> type of the dataset admin
    */
-  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
@@ -430,7 +425,6 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
-  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
@@ -443,7 +437,6 @@ public class TestBase {
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
-  @Deprecated
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
     return testManager.getDataset(datasetInstanceName);
@@ -452,7 +445,6 @@ public class TestBase {
   /**
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
-  @Deprecated
   protected final Connection getQueryClient() throws Exception {
     TestManager testManager = getTestManager();
     return testManager.getQueryClient();
