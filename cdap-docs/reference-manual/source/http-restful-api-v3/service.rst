@@ -19,8 +19,17 @@ Listing all Services
 
 You can list all Services in CDAP by issuing an HTTP GET request to the URL::
 
-  GET <base-url>/services
+  GET <base-url>/namespaces/<namespace-id>/services
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+     
 The response body will contain a JSON-formatted list of the existing Services::
 
   [
@@ -41,7 +50,7 @@ as part of the request URL along with any additional headers, body and query par
 
 The request type is defined by the Service's method::
 
-  <request-type> <base-url>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
+  <request-type> <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
   
 **Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`. See the
@@ -54,6 +63,8 @@ encoding parameters.
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<request-type>``
      - One of GET, POST, PUT and DELETE. This is defined by the handler method.
    * - ``<app-id>``
@@ -83,10 +94,11 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2``
+     - ``GET <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2``
    * - Description
-     - Make a request to the ``count/{word}`` endpoint of the ``RetrieveCounts`` Service in ``WordCount`` to
-       get a count of the word "Cask" and its associated words with a limit of 2.
+     - Make a request to the ``count/{word}`` endpoint of the ``RetrieveCounts`` Service
+       in the application ``WordCount`` in the namespace *default* to get a count of the
+       word "Cask" and its associated words with a limit of 2.
    * - Response Status Code
      - ``200 OK``
    * - Response Body

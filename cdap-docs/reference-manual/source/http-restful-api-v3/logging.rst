@@ -16,7 +16,7 @@ Downloading Logs
 Logs emitted by a *Flow*, *MapReduce*, *Procedure*, *Service*, or *Spark* program running in CDAP can be
 downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
 
-  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -24,6 +24,8 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
@@ -40,11 +42,11 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/WordCount/flows/WordCountFlow/``
+     - ``GET <base-url>/namespaces/default/apps/WordCount/flows/WordCountFlow/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
      - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
-       Application,
+       Application in the namespace *default*,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
