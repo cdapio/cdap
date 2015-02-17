@@ -24,19 +24,19 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class MetadataStoreDatasetTest {
+public class MDSKeyTest {
 
   @Test
   public void testKeyBuildSplit() {
     List<String> originalKeyParts = ImmutableList.of("part1", "part2", "part3");
-    MetadataStoreDataset.Key.Builder builder = new MetadataStoreDataset.Key.Builder();
+    MDSKey.Builder builder = new MDSKey.Builder();
     for (String part : originalKeyParts) {
       builder.add(part);
     }
-    MetadataStoreDataset.Key key = builder.build();
+    MDSKey MDSKey = builder.build();
 
     List<String> splitKeyParts = Lists.newArrayList();
-    List<byte[]> splittedBytes = key.split();
+    List<byte[]> splittedBytes = MDSKey.split();
     for (byte[] bytes : splittedBytes) {
       splitKeyParts.add(Bytes.toString(bytes));
     }

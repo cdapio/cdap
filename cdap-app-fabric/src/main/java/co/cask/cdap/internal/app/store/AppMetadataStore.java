@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
@@ -80,11 +81,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   @Nullable
   public ApplicationMeta getApplication(String namespaceId, String appId) {
-    return get(new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+    return get(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) {
-    return list(new Key.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
+    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
   }
 
   public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec,
@@ -92,16 +93,16 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
-    write(new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
+    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
           new ApplicationMeta(appId, spec, archiveLocation));
   }
 
   public void deleteApplication(String namespaceId, String appId) {
-    deleteAll(new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build());
   }
 
   public void deleteApplications(String namespaceId) {
-    deleteAll(new Key.Builder().add(TYPE_APP_META, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build());
   }
 
   // todo: do we need appId? may be use from appSpec?
@@ -110,7 +111,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
-    Key key = new Key.Builder().add(TYPE_APP_META, namespaceId, appId).build();
+    MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
     ApplicationMeta existing = get(key, ApplicationMeta.class);
     if (existing == null) {
       String msg = String.format("No meta for namespace %s app %s exists", namespaceId, appId);
@@ -128,13 +129,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void recordProgramStart(String namespaceId, String appId, String programId, String pid, long startTs) {
-      write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build(),
+      write(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build(),
             new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING));
   }
 
   public void recordProgramStop(String namespaceId, String appId, String programId,
                                 String pid, long stopTs, ProgramController.State endStatus) {
-    Key key = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build();
+    MDSKey key = new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build();
     RunRecord started = get(key, RunRecord.class);
     if (started == null) {
       String msg = String.format("No meta for started run record for namespace %s app %s program %s pid %s exists",
@@ -145,7 +146,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     deleteAll(key);
 
-    key = new Key.Builder()
+    key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId)
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
@@ -169,18 +170,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   private List<RunRecord> getActiveRuns(String namespaceId, String appId, String programId,
                                         final long startTime, final long endTime, int limit) {
-    Key activeKey = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId).build();
-    Key start = new Key.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
-    Key stop = new Key.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
+    MDSKey activeKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId).build();
+    MDSKey start = new MDSKey.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
+    MDSKey stop = new MDSKey.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
     return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
   }
 
   private List<RunRecord> getHistoricalRuns(String namespaceId, String appId, String programId,
                                             ProgramRunStatus status,
                                             final long startTime, final long endTime, int limit) {
-    Key historyKey = new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId).build();
-    Key start = new Key.Builder(historyKey).add(getInvertedTsKeyPart(endTime)).build();
-    Key stop = new Key.Builder(historyKey).add(getInvertedTsKeyPart(startTime)).build();
+    MDSKey historyKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId).build();
+    MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsKeyPart(endTime)).build();
+    MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
       return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
@@ -205,53 +206,53 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void writeStream(String namespaceId, StreamSpecification spec) {
-    write(new Key.Builder().add(TYPE_STREAM, namespaceId, spec.getName()).build(), spec);
+    write(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, spec.getName()).build(), spec);
   }
 
   public StreamSpecification getStream(String namespaceId, String name) {
-    return get(new Key.Builder().add(TYPE_STREAM, namespaceId, name).build(), StreamSpecification.class);
+    return get(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build(), StreamSpecification.class);
   }
 
   public List<StreamSpecification> getAllStreams(String namespaceId) {
-    return list(new Key.Builder().add(TYPE_STREAM, namespaceId).build(), StreamSpecification.class);
+    return list(new MDSKey.Builder().add(TYPE_STREAM, namespaceId).build(), StreamSpecification.class);
   }
 
   public void deleteAllStreams(String namespaceId) {
-    deleteAll(new Key.Builder().add(TYPE_STREAM, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId).build());
   }
 
   public void deleteStream(String namespaceId, String name) {
-    deleteAll(new Key.Builder().add(TYPE_STREAM, namespaceId, name).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build());
   }
 
   public void writeProgramArgs(String namespaceId, String appId, String programName, Map<String, String> args) {
-    write(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), new ProgramArgs(args));
+    write(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), new ProgramArgs(args));
   }
 
   public ProgramArgs getProgramArgs(String namespaceId, String appId, String programName) {
-    return get(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), ProgramArgs.class);
+    return get(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), ProgramArgs.class);
   }
 
   public void deleteProgramArgs(String namespaceId, String appId, String programName) {
-    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build());
   }
 
   public void deleteProgramArgs(String namespaceId, String appId) {
-    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId).build());
   }
 
   public void deleteProgramArgs(String namespaceId) {
-    deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId).build());
   }
 
   public void deleteProgramHistory(String namespaceId, String appId) {
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build());
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId).build());
   }
 
   public void deleteProgramHistory(String namespaceId) {
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId).build());
-    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
   }
 
   public void createNamespace(NamespaceMeta metadata) {
@@ -271,7 +272,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec, AdapterStatus adapterStatus) {
-    write(new Key.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
+    write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
           new AdapterMeta(adapterSpec, adapterStatus));
   }
 
@@ -300,12 +301,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
-    return get(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
+    return get(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
   }
 
   public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
     List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta> adapterMetas = list(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterMeta.class);
+    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterMeta.class);
     for (AdapterMeta adapterMeta : adapterMetas) {
       adapterSpecs.add(adapterMeta.getSpec());
     }
@@ -313,15 +314,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void deleteAdapter(Id.Namespace id, String name) {
-    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
   }
 
   public void deleteAllAdapters(Id.Namespace id) {
-    deleteAll(new Key.Builder().add(TYPE_ADAPTER, id.getId()).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build());
   }
 
-  private Key getNamespaceKey(@Nullable String name) {
-    Key.Builder builder = new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE);
+  private MDSKey getNamespaceKey(@Nullable String name) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(TYPE_NAMESPACE);
     if (null != name) {
       builder.add(name);
     }
