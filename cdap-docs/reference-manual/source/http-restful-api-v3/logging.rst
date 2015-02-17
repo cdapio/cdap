@@ -13,7 +13,7 @@ Logging HTTP RESTful API
 
 Downloading Logs
 ----------------
-Logs emitted by a *Flow*, *MapReduce*, *Procedure*, *Service*, or *Spark* program running in CDAP can be
+Logs emitted by a *Flow*, *MapReduce*, *Service*, or *Spark* program running in CDAP can be
 downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
@@ -29,14 +29,13 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``procedures``, ``services``, or ``spark``
+     - One of ``flows``, ``mapreduce``, ``services``, or ``spark``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Procedure*, *Service*, *Spark*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -50,8 +49,8 @@ Example
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
-Comments
-........
+.. rubric:: Comments
+
 The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be
 escaped. A line of the log may look like this::
 

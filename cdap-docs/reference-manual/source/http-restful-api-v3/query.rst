@@ -42,8 +42,7 @@ The body of the request must contain a JSON string of the form::
 
 where ``<SQL-query-string>`` is the actual SQL query.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -56,15 +55,14 @@ HTTP Responses
    * - ``400 Bad Request``
      - The query is not well-formed or contains an error, such as a nonexistent table name
 
-Comments
-........
+.. rubric:: Comments
+
 If the query execution was successfully initiated, the body will contain a handle 
 used to identify the query in subsequent requests::
 
   { "handle":"<query-handle>" }
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -97,8 +95,7 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -110,8 +107,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Comments
-........
+.. rubric:: Comments
+
 If the query exists, the body will contain the status of its execution
 and whether the query has a results set::
 
@@ -123,8 +120,7 @@ and whether the query has a results set::
 Status can be one of the following: ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
 ``ERROR``, ``UNKNOWN``, and ``PENDING``.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -155,8 +151,7 @@ If the query's status is ``FINISHED`` and it has results, you can obtain the sch
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -170,8 +165,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Comments
-........
+.. rubric:: Comments
+
 The query's result schema is returned in a JSON body as a list of columns,
 each given by its name, type and position; if the query has no result set, this list is empty::
 
@@ -183,8 +178,7 @@ each given by its name, type and position; if the query has no result set, this 
 The type of each column is a data type as defined in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -225,8 +219,7 @@ If the batch size is not specified, the default is 20.
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -238,8 +231,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Comments
-........
+.. rubric:: Comments
+
 The results are returned in a JSON body as a list of columns,
 each given as a structure containing a list of column values::
 
@@ -255,8 +248,7 @@ whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 Repeat the query to retrieve subsequent results. If all results of the query have already 
 been retrieved, then the returned list is empty. 
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -291,8 +283,7 @@ This frees all resources that are held by this query.
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -306,8 +297,7 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -340,8 +330,8 @@ To return a list of queries, use::
      - Optional offset for pagination; returns the results that are greater than offset if the cursor is ``next`` or
        results that are less than offset if cursor is ``prev``
 
-Comments
-........
+.. rubric:: Comments
+
 The results are returned as a JSON array, with each element containing information about a query::
 
   [
@@ -356,8 +346,7 @@ The results are returned as a JSON array, with each element containing informati
     ...
   ]
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -395,13 +384,12 @@ The results of the query are returned in CSV format.
    * - ``<query-handle>``
      - Handle obtained when the query was submitted or via a list of queries
 
-Comments
-........
+.. rubric:: Comments
+
 The query results can be downloaded only once. The RESTful API will return a Status Code ``409 Conflict`` 
 if results for the ``query-handle`` are attempted to be downloaded again.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -432,8 +420,7 @@ You can obtain the schema of the underlying Hive Table with::
    * - ``<dataset-name>``
      - Name of the Dataset whose schema is to be retrieved
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -445,8 +432,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The dataset was not found
      
-Comments
-........
+.. rubric:: Comments
+
 The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
 ``value`` containing the column types of the underlying table::
 

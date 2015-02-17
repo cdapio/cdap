@@ -74,8 +74,7 @@ encoding parameters.
    * - ``<endpoint-path>``
      - Endpoint path of the method being called
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -87,8 +86,7 @@ HTTP Responses
 
 Other responses are defined by the Service's method.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1

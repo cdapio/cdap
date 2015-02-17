@@ -43,8 +43,7 @@ The general form of a metrics request is::
    * - ``<time-range>``
      - A `Time Range`_ or ``aggregate=true`` for all since the Application was deployed
 
-Examples
-........
+.. rubric:: Examples
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -69,8 +68,8 @@ Examples
    * - Description
      - Using a *User-Defined* metric, *names.bytes* in a Service's Handler
 
-Comments
-........
+.. rubric:: Comments
+
 The scope must be either ``system`` for system metrics or ``user`` for user-defined metrics.
 
 System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).

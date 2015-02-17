@@ -78,8 +78,7 @@ with JSON-formatted name of the dataset type and properties in a body::
    * - ``<properties>``
      - Dataset properties, map of String to String.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -93,8 +92,7 @@ HTTP Responses
    * - ``409 Conflict``
      - Dataset with the same name already exists
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -139,8 +137,7 @@ with JSON-formatted name of the dataset type and properties in the body::
    * - ``<properties>``
      - Dataset properties as a map of String to String
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -154,8 +151,7 @@ HTTP Responses
    * - ``409 Conflict``
      - Dataset Type provided for update is different from the existing Dataset Type
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -187,8 +183,7 @@ You can delete a Dataset by issuing an HTTP DELETE request to the URL::
    * - ``<dataset-name>``
      - Dataset name
      
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -200,8 +195,7 @@ HTTP Responses
    * - ``404 Not Found``
      - Dataset named *dataset-name* could not be found
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -229,8 +223,7 @@ by issuing an HTTP DELETE request to the URL::
    * - ``<namespace-id>``
      - Namespace ID
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -266,9 +259,7 @@ This will clear the existing data from the Dataset. This cannot be undone.
    * - ``<dataset-name>``
      - Dataset name
 
-
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1

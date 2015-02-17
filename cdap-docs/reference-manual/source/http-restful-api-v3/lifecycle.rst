@@ -10,7 +10,7 @@ Lifecycle HTTP RESTful API
 ===========================================================
 
 Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
-Flows, Procedures, MapReduce programs, Workflows, and Custom Services.
+Flows, MapReduce programs, Workflows, and Custom Services.
 
 .. highlight:: console
 
@@ -30,7 +30,7 @@ and its content as the body of the request::
   <JAR binary content>
 
 Invoke the same command to update an Application to a newer version.
-However, be sure to stop all of its Flows, Procedures and MapReduce programs before updating the Application.
+However, be sure to stop all of its Flows, Spark and MapReduce programs before updating the Application.
 
 
 Deployed Applications
@@ -65,8 +65,8 @@ The information will be returned in the body of the response.
    * - ``<app-id>``
      - Name of the Application
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -79,8 +79,8 @@ HTTP Responses
 
 Delete an Application
 ---------------------
-To delete an Application—together with all of its Flows, Procedures, MapReduce
-programs, and Spark programs—submit an HTTP DELETE::
+To delete an Application—together with all of its Flows, MapReduce or Spark
+programs, Services, Workflows, Schedules—submit an HTTP DELETE::
 
   DELETE <base-url>/namespaces/<namespace-id>/apps/<application-name>
 
@@ -104,7 +104,7 @@ because they belong to the namespace, not the Application.
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
+After an Application is deployed, you can start and stop its Flows, MapReduce 
 programs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/<operation>
@@ -121,9 +121,9 @@ programs, Workflows, and Custom Services, and query for their status using HTTP 
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
+     - One of ``flows``, ```mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
-     - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+     - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
        being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
@@ -146,9 +146,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow`` or ``service``
    * - ``"programId"``
-     - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+     - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
        being called
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -170,8 +170,7 @@ The response will be the same JSON array with additional parameters for each of 
 The ``status`` and ``error`` fields are mutually exclusive meaning if there is an error,
 then there will never be a status and vice versa.
 
-Examples
-........
+.. rubric::  Examples
 
 .. list-table::
    :widths: 20 80
@@ -184,9 +183,9 @@ Examples
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/namespaces/default/apps/Count/procedures/GetCounts/stop``
+     - ``POST <base-url>/namespaces/default/apps/Count/services/GetCounts/stop``
    * - Description
-     - Stop the Procedure *GetCounts* in the Application *Count* in the namespace *default*
+     - Stop the Service *GetCounts* in the Application *Count* in the namespace *default*
    * - 
      - 
    * - HTTP Method
@@ -199,13 +198,13 @@ Examples
      - ``POST <base-url>/namespaces/default/status``
    * - HTTP Body
      - ``[{"appId": "MyApp", "programType": "flow", "programId": "MyFlow"},``
-       ``{"appId": "MyApp2", "programType": "procedure", "programId": "MyProcedure"}]``
+       ``{"appId": "MyApp2", "programType": "service", "programId": "MyService"}]``
    * - HTTP Response
      - ``[{"appId":"MyApp", "programType":"flow", "programId":"MyFlow", "status":"RUNNING", "statusCode":200},``
-       ``{"appId":"MyApp2", "programType":"procedure", "programId":"MyProcedure",``
+       ``{"appId":"MyApp2", "programType":"service", "programId":"MyService",``
        ``"error":"Program not found", "statusCode":404}]``
    * - Description
-     - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
+     - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Service *MyService*
        in the Application *MyApp2* in the namespace *default*
 
 When starting an program, you can optionally specify runtime arguments as a JSON map in the request body::
@@ -237,7 +236,7 @@ Container Information
 ---------------------
 
 To find out the address of an program's container host and the container’s debug port, you can query
-CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
+CDAP for a Flow or Service’s live info via an HTTP GET method::
 
   GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/live-info
 
@@ -252,9 +251,9 @@ CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``procedures`` or ``services``
+     - One of ``flows`` or ``services``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *Procedure* or *Custom Service*)
+     - Name of the program (*Flow* or *Custom Service*)
 
 Example::
 
@@ -294,12 +293,11 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``flow``, ``procedure``, or ``service``
+     - One of ``flow`` or ``service``
    * - ``"programId"``
-     - Name of the program (*Flow*, *Procedure*, or *Custom Service*) being called
+     - Name of the program (*Flow* or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet* or *Service* if querying either a *Flow* or *User Service*. This parameter
-       does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
+     - Name of the *Flowlet* or *Service*
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
 
@@ -321,8 +319,7 @@ The response will be the same JSON array with additional parameters for each of 
 
 **Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
-Example
-.......
+.. rubric:: Example
 
 .. list-table::
    :widths: 20 80
@@ -332,19 +329,16 @@ Example
      - ``POST <base-url>/namespaces/default/instances``
    * - HTTP Body
      - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},``
-       ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},``
        ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyHandler1"}]``
    * - HTTP Response
      - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",``
        ``"runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},``
-       ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",``
-       ``"provisioned":0,"requested":1,"statusCode":200},``
        ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,``
        ``"runnableId":"MyHandler1","statusCode":404,"error":"Runnable: MyHandler1 not found"}]``
    * - Description
-     - Try to get the instances of the Flowlet *MyFlowlet5* in the Flow *MyFlow1* in the Application *MyApp1*, the
-       Procedure *MyProc2* in the Application *MyApp1*, and the Service Handler *MyHandler1* in the
-       User Service *MySvc1* in the Application *MyApp3*
+     - Try to get the instances of the Flowlet *MyFlowlet5* in the Flow *MyFlow1* in the
+       Application *MyApp1*, and the Service Handler *MyHandler1* in the User Service
+       *MySvc1* in the Application *MyApp3*, all in the namespace *default*
 
 .. _rest-scaling-flowlets:
 
@@ -377,8 +371,8 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
 
-Examples
-........
+.. rubric:: Examples
+
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -405,46 +399,6 @@ Examples
    * - Description
      - Change the number of instances of the Flowlet *saver* in the Flow *WhoFlow* of the
        Application *HelloWorld* in the namespace *default*
-
-Scaling Procedures
-..................
-In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
-of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
-
-  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/procedures/<procedure-id>/instances
-  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/procedures/<procedure-id>/instances
-
-with the arguments as a JSON string in the body::
-
-  { "instances" : <quantity> }
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<namespace-id>``
-     - Namespace ID
-   * - ``<app-id>``
-     - Name of the Application
-   * - ``<procedure-id>``
-     - Name of the Procedure
-   * - ``<quantity>``
-     - Number of instances to be used
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/HelloWorld/procedures/Greeting/instances``
-       ``instances``
-   * - Description
-     - Find out the number of instances of the Procedure *Greeting*
-       in the Application *HelloWorld* in the namespace *default*
 
 Scaling Services
 ................
@@ -477,8 +431,7 @@ with the arguments as a JSON string in the body::
 
 **Note:** In this release the ``runnable-id`` is the same as the ``service-id``.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -494,7 +447,7 @@ Example
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected program (Flows, Procedures, MapReduce programs, Spark programs, Workflows, and
+To see all the runs of a selected program (Flows, MapReduce programs, Spark programs, Workflows, and
 Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::
@@ -512,7 +465,7 @@ end time and program status::
    * - ``<app-id>``
      - Name of the Application
    * - ``<program-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
      - Name of the program
 
@@ -535,8 +488,7 @@ and can limit the number of returned records.
      - maximum number of returned records
 
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -578,8 +530,7 @@ Schedules can be suspended or resumed:
 
     POST <base-url>/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/resume
 
-Example
-.......
+.. rubric:: Examples
 .. list-table::
    :widths: 10 90
    :stub-columns: 1

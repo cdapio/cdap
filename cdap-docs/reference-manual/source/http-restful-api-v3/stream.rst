@@ -35,8 +35,7 @@ A Stream can be created with an HTTP PUT method to the URL::
    * - ``<new-stream-id>``
      - Name of the Stream to be created
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -46,8 +45,7 @@ HTTP Responses
    * - ``200 OK``
      - The event either successfully created a Stream or the Stream already exists
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -57,8 +55,8 @@ Example
    * - Description
      - Create a new Stream named *mystream* in the namespace *default* 
 
-Comments
-........
+.. rubric:: Comments
+
 - The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
@@ -85,8 +83,7 @@ asynchronously to a Stream with higher throughput by sending an HTTP POST method
    * - ``<stream-id>``
      - Name of an existing Stream
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -101,8 +98,7 @@ HTTP Responses
      - The Stream does not exist
 
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -112,8 +108,8 @@ Example
    * - Description
      - Send an event to the existing Stream named *mystream* in the namespace *default*
 
-Comments
-........
+.. rubric:: Comments
+
 You can pass headers for the event as HTTP headers by prefixing them with the *stream-id*::
 
   <stream-id>.<property>:<string value>
@@ -147,8 +143,7 @@ types are supported:
    * - ``avro/binary``
      - Avro Object Container File format; each Avro record in the file becomes a single event in the stream
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -160,8 +155,7 @@ HTTP Responses
    * - ``404 Not Found``
      - The Stream does not exist
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -180,8 +174,8 @@ Example
    * - Description
      - Writes three comma-separated events to the Stream named *mystream* in the namespace *default*
 
-Comments
-........
+.. rubric:: Comments
+
 You can pass headers that apply to all events as HTTP headers by prefixing them with the *stream-id*::
 
   <stream-id>.<property>:<string-value>
@@ -213,8 +207,7 @@ Reading events from an existing Stream is performed with an HTTP GET method to t
    * - ``<limit>``
      - Optional maximum number of events to read; default is unlimited
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -248,8 +241,7 @@ The response body is a JSON array with the Stream event objects as array element
    * - ``body``
      - A printable string representing the event body; non-printable bytes are hex escaped in the format ``\x[hex-digit][hex-digit]``, e.g. ``\x05``
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -280,8 +272,7 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - ``<stream-id>``
      - Name of an existing Stream
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -293,8 +284,7 @@ HTTP Responses
    * - ``404 Not Found``
      - The Stream ``<stream-id>`` does not exist
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -348,8 +338,7 @@ For example, setting format but not TTL will preserve the current value for TTL.
 Changing the schema attached to a Stream will drop the Hive table associated with
 the Stream and re-create it with the new schema.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -364,8 +353,7 @@ HTTP Responses
    * - ``404 Not Found``
      - The Stream does not exist
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1

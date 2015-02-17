@@ -111,9 +111,11 @@ Namespace IDs have a limited set of characters allowed; they are restricted to l
 A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
 length of a namespace ID nor on the number of namespaces.
 
-The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
-namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
-be deleted.
+The three namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``cdap``
+and ``system`` namespaces cannot be used by users directly. The ``default`` namespace,
+however,  can be used by anyone.
+
+All reserved namespaces cannot be deleted.
 
 
 .. _http-restful-api-status-codes:

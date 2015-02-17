@@ -21,8 +21,7 @@ For the detailed information of all available System Services, use::
 
   GET <base-url>/system/services
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -38,8 +37,7 @@ To check the status of all the System Services, use::
 
   GET <base-url>/system/services/status
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -91,8 +89,7 @@ The status of these CDAP System Services can be checked:
 
 **Note:** The Service status checks are more useful when CDAP is running in a distributed cluster mode.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -104,8 +101,7 @@ HTTP Responses
    * - ``404 Not Found``
      - The service is either not running or not found
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -140,8 +136,7 @@ with the arguments as a JSON string in the body::
      
 **Note:** In standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
-Examples
-........
+.. rubric:: Examples
 .. list-table::
    :widths: 20 80
    :stub-columns: 1

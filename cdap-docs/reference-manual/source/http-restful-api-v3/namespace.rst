@@ -61,8 +61,8 @@ future release of CDAP will allow these properties to be edited.
 If a namespace with the same ID already exists, the method will still return ``200 OK``,
 but with a message that the ``Namespace '<namespace-id>' already exists``.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -108,8 +108,8 @@ The information will be returned in the body of the response::
    * - ``<namespace-id>``
      - Namespace ID
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -122,7 +122,7 @@ HTTP Responses
 
 Delete a Namespace
 ------------------
-To delete a Namespace—together with all of its Flows, Procedures, Datasets and MapReduce 
+To delete a Namespace—together with all of its Flows, Datasets and MapReduce 
 programs, any and all entities associated with that namespace—submit an HTTP DELETE::
 
   DELETE http://<host>:<port>/v3/namespaces/<namespace-id>
