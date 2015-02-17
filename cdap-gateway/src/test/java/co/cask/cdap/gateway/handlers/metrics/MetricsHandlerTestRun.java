@@ -33,8 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -232,14 +230,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
-    Collection<TimeSeries> result = post(url, new TypeToken<List<TimeSeries>>() { }.getType());
-    Assert.assertEquals(groupByResult.size(), result.size());
-    Iterator<TimeSeries> resultItor = result.iterator();
-    while (resultItor.hasNext()) {
-      TimeSeries resultTs = resultItor.next();
+    MetricQueryResult result = post(url, MetricQueryResult.class);
+    Assert.assertEquals(groupByResult.size(), result.getSeries().length);
+    for (MetricQueryResult.TimeSeries timeSeries : result.getSeries()) {
       for (TimeSeriesResult expectedTs : groupByResult) {
-        if (compareTagValues(expectedTs.getTagValues(), resultTs.getTagValues())) {
-          assertTimeValues(expectedTs, resultTs);
+        if (compareTagValues(expectedTs.getTagValues(), timeSeries.getGrouping())) {
+          assertTimeValues(expectedTs, timeSeries);
         }
       }
     }
@@ -257,11 +253,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     return true;
   }
 
-  private void assertTimeValues(TimeSeriesResult expected, TimeSeries actual) {
-    Iterator<TimeValue> timeValueIterator = actual.getTimeValues().iterator();
+  private void assertTimeValues(TimeSeriesResult expected, MetricQueryResult.TimeSeries actual) {
     long expectedValue = expected.getTimeSeriesSum();
-    while (timeValueIterator.hasNext()) {
-      expectedValue -= timeValueIterator.next().getValue();
+    for (MetricQueryResult.TimeValue timeValue : actual.getData()) {
+      expectedValue -= timeValue.getValue();
     }
     Assert.assertEquals(0, expectedValue);
   }

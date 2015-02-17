@@ -101,12 +101,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       MetricQueryParser.parseQueryString(new URI(request.getUri()), builder);
       builder.setSliceByTagValues(Maps.<String, String>newHashMap());
       CubeQuery queryTimeParams = builder.build();
-      Map<String, String> tagsSliceBy = parseTagValuesAsMap(context);
 
-      // groupBy tags are comma separated
-      List<String> groupByTags = 
-        (groupBy == null) ? Lists.<String>newArrayList() :
-        Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+      Map<String, String> tagsSliceBy = parseTagValuesAsMap(context);
+      List<String> groupByTags = parseGroupBy(groupBy);
 
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
@@ -126,6 +123,12 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private List<String> parseGroupBy(String groupBy) {
+    // groupBy tags are comma separated
+    return (groupBy == null) ? Lists.<String>newArrayList() :
+    Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+  }
+
   private Map<String, String> parseTagValuesAsMap(@Nullable String context) {
     if (context == null) {
       return new HashMap<String, String>();
@@ -138,7 +141,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       String tag = tagValues[i];
       // if odd number, the value for last tag is assumed to be null
       String val = i + 1 < tagValues.length ? tagValues[i + 1] : null;
-      if ("*".equals(val)) {
+      if (ANY_TAG_VALUE.equals(val)) {
         val = null;
       }
       result.put(tag, val);
