@@ -9,6 +9,7 @@ angular.module(PKG.name + '.feature.admin')
       });
 
     $scope.hideWelcome = function () {
+      myLocalStorage.set(PREFKEY, true);
       $scope.welcomeIsHidden = true;
     };
 
