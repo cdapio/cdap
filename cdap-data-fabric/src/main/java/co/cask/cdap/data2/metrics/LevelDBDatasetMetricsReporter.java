@@ -97,7 +97,10 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
         // not a user dataset
         continue;
       }
-      datasetName = datasetName.substring(0, datasetName.indexOf("."));
+      // use the first part of the dataset name, would use history if dataset name is history.objects.kv
+      if (datasetName.contains(".")) {
+        datasetName = datasetName.substring(0, datasetName.indexOf("."));
+      }
       MetricsCollector collector =
         metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
                                                     Constants.Metrics.Tag.DATASET, datasetName));
