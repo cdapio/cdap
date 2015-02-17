@@ -47,12 +47,10 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
-  private final CLIConfig cliConfig;
 
   @Inject
   public CreateStreamConversionAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
-    this.cliConfig = cliConfig;
     this.adapterClient = adapterClient;
   }
 
@@ -97,7 +95,7 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
     adapterConfig.source = new AdapterConfig.Source(sourceName, Collections.<String, String>emptyMap());
     adapterConfig.sink = new AdapterConfig.Sink(sinkName, sinkProps);
 
-    adapterClient.create(cliConfig.getCurrentNamespace(), adapterName, adapterConfig);
+    adapterClient.create(adapterName, adapterConfig);
     output.printf("Successfully created adapter named '%s' with config '%s'\n",
                   adapterName, GSON.toJson(adapterConfig));
   }
