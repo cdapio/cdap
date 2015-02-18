@@ -3,12 +3,13 @@
 
     <ul class="list-group list-unstyled">
       <li class="list-group-item">
-        <a ui-sref="admin.overview" href="">
+        <a ui-sref="admin.overview"
+           ui-sref-active="current">
           Management Home
         </a>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.system.overview" href="">
+        <a ui-sref="admin.system.overview">
           System Configuration
         </a>
         <ul class="list-unstyled"
@@ -19,7 +20,8 @@
             </a>
           </li> -->
           <li>
-            <a ui-sref="admin.system.services" href="">
+            <a ui-sref="admin.system.services"
+               ui-sref-active="current">
               Services
             </a>
           </li>
@@ -31,7 +33,7 @@
         </ul>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.security.overview" href="">
+        <a ui-sref="admin.security.overview">
           Systemwide Security
         </a>
         <ul class="list-unstyled"
@@ -42,7 +44,8 @@
               </a>
             </li> -->
           <li>
-            <a ui-sref="admin.security.tokens" href="">
+            <a ui-sref="admin.security.tokens"
+               ui-sref-active="current">
               Access Tokens
             </a>
           </li>
@@ -54,16 +57,16 @@
         </ul>
       </li>
 
-      <li
-        class="list-group-item"
-        data-start-collapsed="1"
-        bs-collapse>
-        <a bs-collapse-toggle href="">
+      <li class="list-group-item"
+          data-start-collapsed="1"
+          bs-collapse>
+        <a bs-collapse-toggle>
           Namespaces
         </a>
         <ul class="list-unstyled" bs-collapse-target>
           <li>
-            <a ui-sref="admin.namespace.create" href="">
+            <a ui-sref="admin.namespace.create"
+               ui-sref-active="current">
               Create Namespace
             </a>
           </li>

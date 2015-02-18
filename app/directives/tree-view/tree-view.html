@@ -2,10 +2,11 @@
     data-start-collapsed="0"
     bs-collapse>
   <a ui-sref="{{menu.state || 'home'}}"
+     ui-sref-active="current"
      ng-show="menu.children.length == 0"
-     ng-bind="menu.label" href="">
+     ng-bind="menu.label">
   </a>
-  <a ng-show="menu.children.length > 0" href="">
+  <a ng-show="menu.children.length > 0">
     <span ng-bind="menu.label" bs-collapse-toggle></span>
   </a>
   <ul class="list-unstyled" bs-collapse-target>
