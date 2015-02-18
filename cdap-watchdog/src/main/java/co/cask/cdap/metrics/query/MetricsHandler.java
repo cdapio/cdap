@@ -180,7 +180,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
-    toCanonicalContext(tagValues);
     contextPrefix = toCanonicalContext(tagValues);
     CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
