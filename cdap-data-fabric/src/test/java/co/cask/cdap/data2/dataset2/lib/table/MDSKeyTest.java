@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Cask Data, Inc.
  *
@@ -18,7 +19,6 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,12 +36,10 @@ public class MDSKeyTest {
     }
     MDSKey mdsKey = builder.build();
 
-    List<String> splitKeyParts = Lists.newArrayList();
-    List<byte[]> splittedBytes = mdsKey.split();
-    for (byte[] bytes : splittedBytes) {
-      splitKeyParts.add(Bytes.toString(bytes));
+    MDSKey.Splitter splitter = mdsKey.split();
+    for (String originalKeyPart : originalKeyParts) {
+      Assert.assertEquals(originalKeyPart, splitter.getString());
     }
-    Assert.assertEquals(originalKeyParts, splitKeyParts);
   }
 
   @Test
@@ -59,16 +57,54 @@ public class MDSKeyTest {
     builder.add(fifthPart);
     MDSKey mdsKey = builder.build();
 
-    List<byte[]> splittedBytes = mdsKey.split();
-    List<String> splitKeyParts = Lists.newArrayList();
-
-    int i = 0;
-    for (; i < firstParts.size(); i++) {
-      splitKeyParts.add(Bytes.toString(splittedBytes.get(i)));
+    MDSKey.Splitter splitter = mdsKey.split();
+    for (String part : firstParts) {
+      Assert.assertEquals(part, splitter.getString());
     }
-    Assert.assertEquals(firstParts, splitKeyParts);
+    Assert.assertEquals(fourthPart, splitter.getLong());
+    Assert.assertTrue(Bytes.equals(fifthPart, splitter.getBytes()));
+  }
 
-    Assert.assertEquals(fourthPart, Bytes.toLong(splittedBytes.get(3)));
-    Assert.assertTrue(Bytes.equals(fifthPart, splittedBytes.get(4)));
+  @Test
+  public void testSkipStringAndBytes() {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add("part1");
+    builder.add("part2");
+    builder.add("part3");
+
+    byte[] bytesToSkip = new byte[] { 0x1 };
+    byte[] bytesToCheck = new byte[] { 0x2 };
+    builder.add(bytesToSkip);
+    builder.add(bytesToCheck);
+
+    MDSKey mdsKey = builder.build();
+    MDSKey.Splitter splitter = mdsKey.split();
+
+    Assert.assertEquals("part1", splitter.getString());
+    splitter.skipString();
+    Assert.assertEquals("part3", splitter.getString());
+
+    splitter.skipBytes();
+    Assert.assertTrue(Bytes.equals(bytesToCheck, splitter.getBytes()));
+  }
+
+  @Test
+  public void testSkipLongAndInt() {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add("part1");
+    builder.add(2L);
+    builder.add(3L);
+    builder.add(4);
+    builder.add(5);
+
+    MDSKey mdsKey = builder.build();
+    MDSKey.Splitter splitter = mdsKey.split();
+
+    Assert.assertEquals("part1", splitter.getString());
+    splitter.skipLong();
+    Assert.assertEquals(3L, splitter.getLong());
+
+    splitter.skipInt();
+    Assert.assertEquals(5, splitter.getInt());
   }
 }

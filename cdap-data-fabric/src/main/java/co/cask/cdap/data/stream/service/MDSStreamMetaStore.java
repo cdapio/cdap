@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -148,9 +147,11 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
             mds.streams.listKV(new MDSKey.Builder().add(TYPE_STREAM).build(),
                                StreamSpecification.class);
           for (Map.Entry<MDSKey, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
-            List<byte[]> keyParts = streamSpecEntry.getKey().split();
-            // Namespace id is the key part with index 1.
-            String namespaceId = Bytes.toString(keyParts.get(1));
+            MDSKey.Splitter splitter = streamSpecEntry.getKey().split();
+            // skip the first name ("stream")
+            splitter.skipString();
+            // Namespace id is the next part.
+            String namespaceId = splitter.getString();
             builder.put(Id.Namespace.from(namespaceId), streamSpecEntry.getValue());
           }
           return builder.build();

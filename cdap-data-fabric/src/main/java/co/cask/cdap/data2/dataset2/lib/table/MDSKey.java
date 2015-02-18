@@ -17,11 +17,10 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 
-import java.util.Arrays;
-import java.util.List;
+import java.nio.ByteBuffer;
 
 /**
  * Metadata entry key
@@ -29,7 +28,7 @@ import java.util.List;
 public final class MDSKey {
   private final byte[] key;
 
-  private MDSKey(byte[] key) {
+  public MDSKey(byte[] key) {
     this.key = key;
   }
 
@@ -40,16 +39,59 @@ public final class MDSKey {
   /**
    * Splits the keys into the parts that comprise this.
    */
-  public List<byte[]> split() {
-    List<byte[]> bytes = Lists.newArrayList();
-    int offset = 0;
-    while (offset < key.length) {
-      int length = Bytes.toInt(key, offset);
-      offset += Ints.BYTES;
-      bytes.add(Arrays.copyOfRange(key, offset, offset + length));
-      offset += length;
+  public Splitter split() {
+    return new Splitter(key);
+  }
+
+  /**
+   * Decodes the keys parts, as specified (int, long, byte[], String)
+   */
+  public static final class Splitter {
+    private final ByteBuffer byteBuffer;
+    private Splitter(byte[] bytes) {
+      byteBuffer = ByteBuffer.wrap(bytes);
     }
-    return bytes;
+
+    public int getInt() {
+      return byteBuffer.getInt();
+    }
+
+    public long getLong() {
+      return byteBuffer.getLong();
+    }
+
+    public byte[] getBytes() {
+      int len = byteBuffer.getInt();
+      byte[] bytes = new byte[len];
+      byteBuffer.get(bytes, 0, len);
+      return bytes;
+    }
+
+    public String getString() {
+      return Bytes.toString(getBytes());
+    }
+
+    public void skipInt() {
+      forward(Ints.BYTES);
+    }
+
+    public void skipLong() {
+      forward(Longs.BYTES);
+    }
+
+    public void skipBytes() {
+      int len = byteBuffer.getInt();
+      forward(len);
+    }
+
+    public void skipString() {
+      skipBytes();
+    }
+
+    private void forward(int count) {
+      int position = byteBuffer.position();
+      byteBuffer.position(position + count);
+    }
   }
 
   @Override
@@ -103,7 +145,12 @@ public final class MDSKey {
     }
 
     public Builder add(long part) {
-      add(Bytes.toBytes(part));
+      key = Bytes.add(key, Bytes.toBytes(part));
+      return this;
+    }
+
+    public Builder add(int part) {
+      key = Bytes.add(key, Bytes.toBytes(part));
       return this;
     }
 
