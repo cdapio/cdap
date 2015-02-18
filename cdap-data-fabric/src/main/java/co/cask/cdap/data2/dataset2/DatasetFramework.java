@@ -70,12 +70,12 @@ public interface DatasetFramework {
   void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException;
 
   /**
-   * Deletes dataset modules and its types from the system.
+   * Deletes dataset modules and its types in the specified namespace.
    *
    * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
-  void deleteAllModules() throws DatasetManagementException;
+  void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.

@@ -54,8 +54,8 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteAllModules() throws DatasetManagementException {
-    delegate.deleteAllModules();
+  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
+    delegate.deleteAllModules(namespaceId);
   }
 
   @Override

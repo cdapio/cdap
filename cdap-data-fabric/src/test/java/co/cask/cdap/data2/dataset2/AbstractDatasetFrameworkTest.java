@@ -199,7 +199,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     try {
-      framework.deleteAllModules();
+      framework.deleteAllModules(namespaceId);
       Assert.fail("should not delete modules: there are datasets using their types");
     } catch (DatasetManagementException e) {
       // expected
@@ -216,7 +216,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertNull(framework.getDatasetSpec(myTable2));
 
     // now it should susceed
-    framework.deleteAllModules();
+    framework.deleteAllModules(namespaceId);
     Assert.assertFalse(framework.hasType(OrderedTable.class.getName()));
     Assert.assertFalse(framework.hasType(Table.class.getName()));
   }
