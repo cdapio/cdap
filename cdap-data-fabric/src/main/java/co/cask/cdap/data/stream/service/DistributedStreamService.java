@@ -57,6 +57,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
@@ -71,6 +72,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -107,6 +110,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
   private Cancellable coordinationSubscription;
+  private ExecutorService heartbeatsSubscriptionExecutor;
 
   @Inject
   public DistributedStreamService(CConfiguration cConf,
@@ -144,8 +148,6 @@ public class DistributedStreamService extends AbstractStreamService {
     resourceCoordinatorClient.startAndWait();
     coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
                                                                    new StreamsLeaderHandler());
-
-    heartbeatsSubscription = subscribeToHeartbeatsFeed();
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
       public void leaderOf(Set<Id.Stream> streamIds) {
@@ -164,10 +166,6 @@ public class DistributedStreamService extends AbstractStreamService {
 
     if (leaderListenerCancellable != null) {
       leaderListenerCancellable.cancel();
-    }
-
-    if (heartbeatsSubscription != null) {
-      heartbeatsSubscription.cancel();
     }
 
     heartbeatPublisher.stopAndWait();
@@ -326,7 +324,7 @@ public class DistributedStreamService extends AbstractStreamService {
           streamSizeAggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
         }
       }
-    });
+    }, heartbeatsSubscriptionExecutor);
   }
 
   /**
@@ -356,7 +354,6 @@ public class DistributedStreamService extends AbstractStreamService {
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
-    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
@@ -381,11 +378,25 @@ public class DistributedStreamService extends AbstractStreamService {
       zkClient, "/election/" + STREAMS_COORDINATOR, new ElectionHandler() {
       @Override
       public void leader() {
-        LOG.info("Became Stream handler leader. Starting resource coordinator.");
-        resourceCoordinator = new ResourceCoordinator(getCoordinatorZKClient(), discoveryServiceClient,
-                                                      new BalancedAssignmentStrategy());
-        resourceCoordinator.startAndWait();
-        updateRequirement();
+        while (true) {
+          LOG.info("Became Stream handler leader. Starting resource coordinator.");
+          heartbeatsSubscriptionExecutor = Executors.newSingleThreadExecutor(
+            Threads.createDaemonThreadFactory("heartbeats-subscription-executor"));
+          try {
+            heartbeatsSubscription = subscribeToHeartbeatsFeed();
+            resourceCoordinator = new ResourceCoordinator(getCoordinatorZKClient(), discoveryServiceClient,
+                                                          new BalancedAssignmentStrategy());
+            resourceCoordinator.startAndWait();
+            updateRequirement();
+            break;
+          } catch (NotificationFeedNotFoundException e) {
+            LOG.error("Internal stream heartbeats feed should exist", e);
+            Throwables.propagate(e);
+          } catch (NotificationFeedException e) {
+            // Most probably, the dataset service is not up. We retry
+            LOG.warn("Could not subscribe to heartbeats feed", e);
+          }
+        }
       }
 
       @Override
@@ -393,6 +404,12 @@ public class DistributedStreamService extends AbstractStreamService {
         LOG.info("Became Stream handler follower.");
         if (resourceCoordinator != null) {
           resourceCoordinator.stopAndWait();
+        }
+        if (heartbeatsSubscription != null) {
+          heartbeatsSubscription.cancel();
+        }
+        if (heartbeatsSubscriptionExecutor != null) {
+          heartbeatsSubscriptionExecutor.shutdownNow();
         }
       }
     });
@@ -534,9 +551,8 @@ public class DistributedStreamService extends AbstractStreamService {
       this.cancellable = cancellable;
       this.isInit = true;
       this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(streamId.getNamespaceId())
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamId.getName())
+        .setNamespaceId(streamId.getNamespaceId()).setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+        .setName(String.format("%sSize", streamId.getName()))
         .build();
     }
 
@@ -584,7 +600,12 @@ public class DistributedStreamService extends AbstractStreamService {
         sum += size;
       }
 
-      if (isInit || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
+      boolean init;
+      synchronized (this) {
+        init = isInit;
+        isInit = false;
+      }
+      if (init || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
@@ -592,7 +613,6 @@ public class DistributedStreamService extends AbstractStreamService {
           countFromFiles.set(0);
         }
       }
-      isInit = false;
     }
 
     private long toBytes(int mb) {
