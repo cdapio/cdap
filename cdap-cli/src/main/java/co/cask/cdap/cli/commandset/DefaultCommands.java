@@ -48,7 +48,7 @@ public class DefaultCommands extends CommandSet<Command> {
         //TODO: uncomment to expose Preferences cli commands
 //      .add(injector.getInstance(PreferencesCommandSet.class))
         //TODO: uncomment when namespace is ready
-//      .add(injector.getInstance(NamespaceCommands.class))
+      .add(injector.getInstance(NamespaceCommands.class))
         .build());
   }
 }

@@ -78,6 +78,10 @@ public class ClientConfig {
     this.uploadHttpConfig = uploadHttpConfig;
   }
 
+  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
+  }
+
   /**
    * Resolves a path against the target CDAP server
    *
@@ -87,20 +91,22 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveURL(String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
+    return resolveURL(apiVersion, path);
   }
 
   /**
-   * Resolves a path against the target CDAP server with the provided apiVersion and namespace
+   * Resolves a path against the target CDAP server
    *
-   * @param apiVersion the api version to use
-   * @param namespace the namespace to use
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
-  public URL resolveURL(String apiVersion, String namespace, String path) throws MalformedURLException {
+  public URL resolveURLV3(String path) throws MalformedURLException {
+    return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
+  }
+
+  private URL resolveNamespacedURL(String apiVersion, String namespace, String path) throws MalformedURLException {
     return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
   }
 
@@ -112,8 +118,8 @@ public class ClientConfig {
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
-  public URL resolveURLV3(String path) throws MalformedURLException {
-    return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
+  public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
   }
 
   /**
@@ -335,7 +341,7 @@ public class ClientConfig {
       }
       return this;
     }
-    
+
     public ClientConfig build() {
       return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT), namespace,
                               sslEnabled, serviceUnavailableRetryLimit, apiVersion, accessToken, verifySSLCert,

@@ -130,7 +130,7 @@ public class StreamConversionAdapterTest extends TestBase {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(avroSchema);
     List<GenericRecord> records = Lists.newArrayList();
-    for (Location dayLoc : fileSet.getUnderlyingFileSet().getBaseLocation().list()) {
+    for (Location dayLoc : fileSet.getEmbeddedFileSet().getBaseLocation().list()) {
       // this level should be the day (ex: 2015-01-19)
       for (Location timeLoc : dayLoc.list()) {
         // this level should be the time (ex: 21-23.1234567890000)
