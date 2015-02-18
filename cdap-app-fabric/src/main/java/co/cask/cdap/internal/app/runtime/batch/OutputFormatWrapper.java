@@ -52,7 +52,7 @@ public class OutputFormatWrapper<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
   @Override
   public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
     // this is called during job submission, not on the map/reduce tasks.
-    getOutputFormat(context.getConfiguration(), null).checkOutputSpecs(context);
+    getOutputFormat(context.getConfiguration(), context.getConfiguration().getClassLoader()).checkOutputSpecs(context);
   }
 
   @Override

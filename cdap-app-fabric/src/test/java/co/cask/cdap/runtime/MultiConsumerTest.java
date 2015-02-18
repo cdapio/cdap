@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.runtime.app.MultiApp;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.tephra.TransactionExecutor;
@@ -80,8 +81,9 @@ public class MultiConsumerTest {
 
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
-    DatasetInstantiator datasetInstantiator =
-      new DatasetInstantiator(datasetFramework, CConfiguration.create(), getClass().getClassLoader(), null);
+    DatasetInstantiator datasetInstantiator = new DatasetInstantiator(Id.Namespace.from("myspace"), datasetFramework,
+                                                                      CConfiguration.create(),
+                                                                      getClass().getClassLoader(), null);
 
     final KeyValueTable accumulated = datasetInstantiator.getDataset("accumulated");
     TransactionExecutorFactory txExecutorFactory =

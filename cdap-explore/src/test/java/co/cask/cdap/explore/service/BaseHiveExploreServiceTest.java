@@ -99,6 +99,7 @@ public class BaseHiveExploreServiceTest {
 
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
   protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
+  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;

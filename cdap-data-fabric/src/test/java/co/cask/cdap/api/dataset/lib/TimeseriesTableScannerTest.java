@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit;
  * Defines a class to test EntryScanner in TimeseriesTable
  */
 public class TimeseriesTableScannerTest extends AbstractDatasetTest {
+  private static final Id.DatasetInstance facts = Id.DatasetInstance.from(NAMESPACE_ID, "facts");
   private static final byte[] ALL_KEY = Bytes.toBytes("a");
   private static final String SRC_TAG = "src";
   private static final String DST_TAG = "dst";
@@ -52,13 +54,13 @@ public class TimeseriesTableScannerTest extends AbstractDatasetTest {
   private static TimeseriesTable table = null;
   @BeforeClass
   public static void setup() throws Exception {
-    createInstance("timeseriesTable", "facts", DatasetProperties.EMPTY);
-    table = getInstance("facts");
+    createInstance("timeseriesTable", facts, DatasetProperties.EMPTY);
+    table = getInstance(facts);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    deleteInstance("facts");
+    deleteInstance(facts);
   }
 
   @Test
