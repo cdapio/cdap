@@ -428,7 +428,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private static String getStreamTableName(Id.Stream streamId) {
     //TODO: use hive namespace
-    return getHiveTableName(String.format("cdap_stream_%s_%s", streamId.getNamespaceId(), streamId.getName()));
+    return getHiveTableName(String.format("cdap_stream_%s", streamId.getName()));
   }
 
   private static String getHiveTableName(String name) {
@@ -459,12 +459,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     String hiveSchema = SchemaConverter.toHiveSchema(schema);
     String tableName = getStreamTableName(streamId);
     return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Stream\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\", \"%s\" = \"%s\") " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
                            "LOCATION \"%s\"" +
                            "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
                          Constants.Explore.STREAM_NAME, streamId.getName(),
-                         Constants.Explore.STREAM_NAMESPACE, streamId.getNamespaceId(),
+//                         Constants.Explore.STREAM_NAMESPACE, streamId.getNamespaceId(),
                          location,
                          // this is set so we know what stream it is created from, and so we know it's from CDAP
                          Constants.Explore.CDAP_NAME, streamId);

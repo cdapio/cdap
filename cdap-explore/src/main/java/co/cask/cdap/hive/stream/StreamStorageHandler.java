@@ -56,6 +56,9 @@ public class StreamStorageHandler extends DefaultStorageHandler {
     String streamName = tableDesc.getProperties().getProperty(Constants.Explore.STREAM_NAME);
     jobProperties.put(Constants.Explore.STREAM_NAME, streamName);
     String streamNamespace = tableDesc.getProperties().getProperty(Constants.Explore.STREAM_NAMESPACE);
+    if (streamNamespace == null) {
+      streamNamespace = Constants.DEFAULT_NAMESPACE;
+    }
     jobProperties.put(Constants.Explore.STREAM_NAMESPACE, streamNamespace);
     LOG.debug("Got stream {} for external table {}", streamName, tableDesc.getTableName());
   }
