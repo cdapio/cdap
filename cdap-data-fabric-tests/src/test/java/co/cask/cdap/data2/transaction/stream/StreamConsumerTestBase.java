@@ -79,12 +79,14 @@ public abstract class StreamConsumerTestBase {
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
+  private static final String TEST_NAMESPACE = "streamConsumerTestNamespace";
+
   @Test
   public void testNamespacedStreamConsumers() throws Exception {
     // Test two consumers for two streams with the same name, but in different namespaces. Their consumption should be
     // independent of the other.
     String stream = "testNamespacedStreamConsumers";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     Id.Stream otherStreamId = Id.Stream.from("otherNamespace", stream);
 
     StreamAdmin streamAdmin = getStreamAdmin();
@@ -158,7 +160,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testFIFORollback() throws Exception {
     String stream = "testFIFORollback";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -215,7 +217,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testFIFOReconfigure() throws Exception {
     String stream = "testReconfigure";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -309,7 +311,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testCombineConsumer() throws Exception {
     String stream = "testCombineConsumer";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -384,7 +386,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTL() throws Exception {
     String stream = "testTTL";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -441,7 +443,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
     String stream = "testTTLMultipleEventsWithSameTimestamp";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -500,7 +502,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLStartingFile() throws Exception {
     String stream = "testTTLStartingFile";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 3 seconds and partition duration of 3 seconds

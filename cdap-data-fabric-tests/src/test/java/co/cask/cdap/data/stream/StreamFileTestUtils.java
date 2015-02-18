@@ -33,8 +33,8 @@ public class StreamFileTestUtils {
   private StreamFileTestUtils() {
   }
 
-  public static Location constructStreamLocation(LocationFactory locationFactory,
-                                                 Id.Stream streamId) throws IOException {
+  public static Location getStreamBaseLocation(LocationFactory locationFactory,
+                                               Id.Stream streamId) throws IOException {
     return locationFactory.create(streamId.getNamespaceId()).append(streamId.getName());
   }
 

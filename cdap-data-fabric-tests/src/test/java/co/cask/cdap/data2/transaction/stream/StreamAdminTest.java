@@ -28,9 +28,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
-/**
- *
- */
 public abstract class StreamAdminTest {
 
   protected abstract StreamAdmin getStreamAdmin();
@@ -55,7 +52,6 @@ public abstract class StreamAdminTest {
     Assert.assertFalse(streamAdmin.exists(otherStreamId));
 
     streamAdmin.create(otherStreamId);
-    Assert.assertTrue(streamAdmin.exists(streamId));
     Assert.assertTrue(streamAdmin.exists(otherStreamId));
   }
 
@@ -88,7 +84,7 @@ public abstract class StreamAdminTest {
     for (Id.Stream defaultStream : fooStreams) {
       Assert.assertEquals(0, getStreamSize(defaultStream));
     }
-    // otherStream isn't in the default namespace so its data is not deleted in the above call to dropAllInNamespace.
+    // otherStream isn't in the foo namespace so its data is not deleted in the above call to dropAllInNamespace.
     Assert.assertNotEquals(0, getStreamSize(otherStream));
 
     // truncate should also delete all the data of a stream

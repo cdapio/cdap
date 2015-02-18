@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -39,17 +38,19 @@ public abstract class StreamConsumerStateTestBase {
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
 
+  private static final String TEST_NAMESPACE = "streamConsumerStateTestNamespace";
+
   @Test
   public void testStateExists() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStateExists";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
     streamAdmin.create(streamId);
 
     StreamConfig config = streamAdmin.getConfig(streamId);
     StreamConsumerStateStore stateStore = createStateStore(config);
 
-    streamAdmin.configureInstances(Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName), 0L, 1);
+    streamAdmin.configureInstances(Id.Stream.from(TEST_NAMESPACE, streamName), 0L, 1);
 
     // Get a consumer state that is configured
     StreamConsumerState state = stateStore.get(0L, 0);
@@ -64,7 +65,7 @@ public abstract class StreamConsumerStateTestBase {
   public void testStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStore";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
     streamAdmin.create(streamId);
 
@@ -88,7 +89,7 @@ public abstract class StreamConsumerStateTestBase {
     // StateStoreFactory is capable of storing distinct states for streams with same name but different namespace
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testNamespacedStore";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
     Id.Stream otherStreamId = Id.Stream.from("otherNamespace", streamName);
 
     streamAdmin.create(streamId);
@@ -122,7 +123,7 @@ public abstract class StreamConsumerStateTestBase {
   public void testMultiStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testMultiStore";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
     streamAdmin.create(streamId);
 
@@ -148,7 +149,7 @@ public abstract class StreamConsumerStateTestBase {
   public void testRemove() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testRemove";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
     streamAdmin.create(streamId);
 
@@ -194,7 +195,7 @@ public abstract class StreamConsumerStateTestBase {
   public void testChangeInstance() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testChangeInstance";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
     streamAdmin.create(streamId);
 
