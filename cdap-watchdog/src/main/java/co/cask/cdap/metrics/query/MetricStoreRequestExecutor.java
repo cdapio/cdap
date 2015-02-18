@@ -152,7 +152,8 @@ public class MetricStoreRequestExecutor {
         sliceByTags.put(MetricTags.STREAM.getCodeName(), queueName.getSimpleName());
         // note: namespace + stream uniquely define the stream
         // we know that flow can consume from stream of the same namespace only at this point
-        sliceByTags.put(MetricTags.NAMESPACE.getCodeName(), query.getSliceByTags().get(MetricTags.NAMESPACE));
+        sliceByTags.put(MetricTags.NAMESPACE.getCodeName(),
+                        query.getSliceByTags().get(MetricTags.NAMESPACE.getCodeName()));
         written = getTotals(new CubeQuery(new CubeQuery(query, sliceByTags), "system.collect.events"));
       } else {
         LOG.warn("Unknown queue type: " + name);

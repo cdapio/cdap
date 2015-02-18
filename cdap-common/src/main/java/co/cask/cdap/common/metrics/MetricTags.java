@@ -66,9 +66,4 @@ public enum MetricTags {
   public String getCodeName() {
     return codeName;
   }
-
-  public static String getCodeFromFullName(String fullName) {
-    MetricTags tag = valueOf(fullName.toUpperCase());
-    return tag.getCodeName();
-  }
 }

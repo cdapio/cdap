@@ -112,6 +112,18 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
+  public void testInvalidRequests() throws Exception {
+    HttpResponse response = doPost("/v3/metrics/search?target=childContext&context=wrongtag.myspace", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    response = doPost("/v3/metrics/search?target=metric&context=namespace.myspace.app.WCount1.invalid.f", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    response = doPost("/v3/metrics/query?metric=system.reads&context=namespace.myspace.app.WCount1." +
+                        "program_type.f.random.flowName", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+  }
+  @Test
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
@@ -298,50 +310,44 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testSearchMetrics() throws Exception {
     // metrics in myspace
-    String context = String.format("%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s",
-                                   MetricTags.NAMESPACE.name().toLowerCase(), "myspace",
-                                   MetricTags.APP.name().toLowerCase(), "WordCount1",
-                                   MetricTags.PROGRAM_TYPE.name().toLowerCase(), "f",
-                                   MetricTags.PROGRAM.name().toLowerCase(), "WordCounter",
-                                   MetricTags.RUN_ID.name().toLowerCase(), "run1",
-                                   MetricTags.FLOWLET.name().toLowerCase(), "splitter");
-    verifySearchResult("/v3/metrics/search?target=metric&context=" + context,
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                       ".program_type.f.program.WordCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
-/*
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.collector",
+
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1.program_type.f." +
+                         "program.WordCounter.run_id.run1.flowlet.collector",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
 
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                         ".program_type.f.program.WordCounter.run_id.run1",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                 "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.yourspace.app.WordCount1." +
-                         "ptp.f.prg.WordCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WordCount1." +
+                         "program_type.f.program.WordCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of());
 
 
     // metrics in yourspace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.yourspace.app.WCount1" +
-                         ".ptp.f.prg.WCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WCount1" +
+                         ".program_type.f.program.WCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of("system.reads"));
 
     // wrong namespace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WCount1" +
-                         ".ptp.f.prg.WCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WCount1" +
+                         ".program_type.f.program.WCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of());
 
     // verify "*"
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.*",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                         ".program_type.f.program.WordCounter.run_id.run1.flowlet.*",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                 "system.writes", "system.zz", "user.reads", "user.writes"));
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.*.run.run1",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                         ".program_type.f.program.*.run_id.run1",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                "system.writes", "system.zz", "user.reads", "user.writes")); */
+                                                "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {

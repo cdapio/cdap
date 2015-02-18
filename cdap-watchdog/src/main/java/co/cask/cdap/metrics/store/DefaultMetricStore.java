@@ -146,7 +146,7 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public void add(MetricValue metricValue) throws Exception {
-    String scope = metricValue.getTags().get(MetricTags.SCOPE);
+    String scope = metricValue.getTags().get(MetricTags.SCOPE.getCodeName());
     String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
     CubeFact fact = new CubeFact(replaceTagsIfNeeded(metricValue.getTags()),
                                  toMeasureType(metricValue.getType()), measureName,
@@ -161,8 +161,8 @@ public class DefaultMetricStore implements MetricStore {
     Collection<TimeSeries> cubeResult = cube.get().query(q);
     List<TimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
-      result.add(new TimeSeries(timeSeries, unMapTags(timeSeries.getTagValues(),
-                                                      query.getSliceByTags().get(MetricTags.PROGRAM_TYPE))));
+      result.add(new TimeSeries(timeSeries, unMapTags(
+        timeSeries.getTagValues(), query.getSliceByTags().get(MetricTags.PROGRAM_TYPE.getCodeName()))));
     }
     return result;
   }
