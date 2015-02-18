@@ -11,13 +11,9 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
   $scope.doLogin = function (c) {
     $scope.submitting = true;
     cfpLoadingBar.start();
+
     myAuth.login(c)
-      .finally(function(){
-        $alert({
-          title:'Welcome!',
-          content:'You\'re logged in!',
-          type:'success'
-        });
+      .finally(function() {
         $scope.submitting = false;
         cfpLoadingBar.complete();
       });
