@@ -379,19 +379,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns number of instances for a procedure.
+   * Gets number of instances for a worker.
    */
   @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
-  public void getProcedureInstances(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("procedure-id") final String procedureId) {
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void getWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                 @PathParam("worker-id") final String workerId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, workerId);
 
-      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+      if (!store.programExists(programId, ProgramType.WORKER)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Worker not found");
         return;
       }
 
@@ -433,6 +432,33 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable t) {
       LOG.error("Got exception : ", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns number of instances for a procedure.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
+  public void getProcedureInstances(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+
+      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
+      int count = getProgramInstances(programId);
+      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable throwable) {
+      LOG.error("Got exception : ", throwable);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }

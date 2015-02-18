@@ -46,6 +46,8 @@ public class AppWithWorker extends AbstractApplication {
 
   private static class TableWriter extends AbstractWorker {
 
+    private volatile boolean running;
+
     @Override
     public void configure() {
       useDatasets(DATASET);
@@ -59,16 +61,20 @@ public class AppWithWorker extends AbstractApplication {
 
     @Override
     public void run() {
-      writeToTable(RUN, RUN);
-      try {
-        TimeUnit.SECONDS.sleep(5);
-      } catch (InterruptedException e) {
+      running = true;
+      while (running) {
+        try {
+          writeToTable(RUN, RUN);
+          TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
 
+        }
       }
     }
 
     @Override
     public void stop() {
+      running = false;
       writeToTable(STOP, STOP);
     }
 
