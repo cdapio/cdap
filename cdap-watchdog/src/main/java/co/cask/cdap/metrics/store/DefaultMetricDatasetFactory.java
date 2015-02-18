@@ -19,6 +19,7 @@ package co.cask.cdap.metrics.store;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -30,6 +31,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -100,9 +102,11 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
 
     MetricsTable table = null;
+    // metrics tables are in the system namespace
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
     while (table == null) {
       try {
-        table = DatasetsUtil.getOrCreateDataset(dsFramework, tableName,
+        table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                                 MetricsTable.class.getName(), props, null, null);
       } catch (DatasetManagementException e) {
         // dataset service may be not up yet

@@ -186,10 +186,11 @@ public class Main {
     // metrics data
     DefaultMetricDatasetFactory.setupDatasets(cConf, framework);
 
-    // Upgrade all datasets
-    for (DatasetSpecification spec : framework.getInstances()) {
+    // Upgrade all datasets in system namespace
+    Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
+    for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
       System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
-      DatasetAdmin admin = framework.getAdmin(spec.getName(), null);
+      DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(systemNamespace, spec.getName()), null);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
       System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
