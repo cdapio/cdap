@@ -21,15 +21,21 @@ import co.cask.cdap.cli.command.HelpCommand;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Generates data for the table in cdap-docs/reference-manual/source/cli-api.rst.
@@ -46,7 +52,7 @@ public class GenerateCLIDocsTableCommand extends HelpCommand {
     Multimap<String, Command> categorizedCommands = categorizeCommands(
       commands.get(), CommandCategory.GENERAL, Predicates.<Command>alwaysTrue());
     for (String category : categorizedCommands.keySet()) {
-      output.printf("   **%s**\n", category);
+      output.printf("   **%s**\n", simpleTitleCase(category));
       List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category));
       Collections.sort(commandList, new Comparator<Command>() {
         @Override
@@ -58,6 +64,24 @@ public class GenerateCLIDocsTableCommand extends HelpCommand {
         output.printf("   ``%s``,\"%s\"\n", command.getPattern(), command.getDescription().replace("\"", "\"\""));
       }
     }
+  }
+
+  private String simpleTitleCase(String sentence) {
+    Iterator<String> transformedWords = Iterators.transform(
+      Splitter.on(" ").split(sentence).iterator(), new Function<String, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable String input) {
+        if (input == null) {
+          return null;
+        } else if (input.length() <= 1) {
+          return input.toUpperCase();
+        } else {
+          return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
+        }
+      }
+    });
+    return Joiner.on(" ").join(transformedWords);
   }
 
   @Override
