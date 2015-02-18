@@ -58,6 +58,6 @@ public class UseNamespaceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Changes the current " + ElementType.NAMESPACE.getPrettyName();
+    return String.format("Changes the current %s.", ElementType.NAMESPACE.getPrettyName());
   }
 }

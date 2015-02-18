@@ -54,6 +54,6 @@ public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Deletes a " + ElementType.DATASET.getPrettyName();
+    return String.format("Deletes a %s.", ElementType.DATASET.getPrettyName());
   }
 }

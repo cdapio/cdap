@@ -70,6 +70,6 @@ public class ListDatasetTypesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Lists " + ElementType.DATASET_TYPE.getPluralPrettyName();
+    return String.format("Lists %s.", ElementType.DATASET_TYPE.getPluralPrettyName());
   }
 }

@@ -54,6 +54,6 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Deletes an " + ElementType.ADAPTER.getPrettyName();
+    return String.format("Deletes an %s.", ElementType.ADAPTER.getPrettyName());
   }
 }
