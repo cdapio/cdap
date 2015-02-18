@@ -258,6 +258,7 @@ public class IntegrationTestBase {
     return result;
   }
 
+  @SuppressWarnings("deprecation")
   private void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
                                           int numInstances)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {

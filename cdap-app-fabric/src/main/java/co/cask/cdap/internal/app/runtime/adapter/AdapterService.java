@@ -226,9 +226,9 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
     Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
-
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     String adapterName = adapterSpec.getName();
-    AdapterSpecification existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+    AdapterSpecification existingAdapter = store.getAdapter(namespace, adapterName);
     if (existingAdapter != null) {
       throw new AdapterAlreadyExistsException(adapterName);
     }
@@ -236,12 +236,12 @@ public class AdapterService extends AbstractIdleService {
     ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
     validateSources(namespaceId, adapterName, adapterSpec.getSources());
-    createSinks(adapterSpec.getSinks(), adapterTypeInfo);
+    createSinks(Id.Namespace.from(namespaceId), adapterTypeInfo, adapterSpec.getSinks());
 
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     preferencesStore.setProperties(namespaceId, appSpec.getName(), properties);
     schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
-    store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
+    store.addAdapter(namespace, adapterSpec);
   }
 
   /**
@@ -424,7 +424,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // create the required sinks for the adapters. Currently only DATASET sink type is supported.
-  private void createSinks(Set<Sink> sinks, AdapterTypeInfo adapterTypeInfo) {
+  private void createSinks(Id.Namespace namespaceId, AdapterTypeInfo adapterTypeInfo, Set<Sink> sinks) {
     // create sinks if it does not exist
     for (Sink sink : sinks) {
       Preconditions.checkArgument(Sink.Type.DATASET.equals(sink.getType()),
@@ -438,23 +438,24 @@ public class AdapterService extends AbstractIdleService {
 
       String datasetClass = properties.getProperties().get(DATASET_CLASS);
       Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null");
-      createDataset(sink.getName(), datasetClass, properties);
+      Id.DatasetInstance sinkInstanceId = Id.DatasetInstance.from(namespaceId, sink.getName());
+      createDataset(sinkInstanceId, datasetClass, properties);
     }
   }
 
-  private void createDataset(String datasetName, String datasetClass, DatasetProperties properties) {
+  private void createDataset(Id.DatasetInstance datasetInstanceId, String datasetClass, DatasetProperties properties) {
     try {
-      if (!datasetFramework.hasInstance(datasetName)) {
-        datasetFramework.addInstance(datasetClass, datasetName, properties);
-        LOG.debug("Dataset instance {} created with properties: {}.", datasetName, properties);
+      if (!datasetFramework.hasInstance(datasetInstanceId)) {
+        datasetFramework.addInstance(datasetClass, datasetInstanceId, properties);
+        LOG.debug("Dataset instance {} created with properties: {}.", datasetInstanceId, properties);
       } else {
-        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetName);
+        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetInstanceId);
       }
     } catch (DatasetManagementException e) {
-      LOG.error("Error while creating dataset {}", datasetName, e);
+      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
       throw new RuntimeException(e);
     } catch (IOException e) {
-      LOG.error("Error while creating dataset {}", datasetName, e);
+      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
       throw new RuntimeException(e);
     }
   }

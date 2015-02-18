@@ -105,15 +105,6 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance);
   }
 
-  public void addPartition(String name, long time, String location) throws ExploreException, SQLException {
-    if (!exploreEnabled) {
-      return;
-    }
-
-    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(name, time, location);
-    handleExploreFuture(futureSuccess, "add", "partition", name);
-  }
-
   public void addPartition(String name, PartitionKey key, String location) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
@@ -121,15 +112,6 @@ public class ExploreFacade {
 
     ListenableFuture<Void> futureSuccess = exploreClient.addPartition(name, key, location);
     handleExploreFuture(futureSuccess, "add", "partition", name);
-  }
-
-  public void dropPartition(String name, long time) throws ExploreException, SQLException {
-    if (!exploreEnabled) {
-      return;
-    }
-
-    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(name, time);
-    handleExploreFuture(futureSuccess, "drop", "partition", name);
   }
 
   public void dropPartition(String name, PartitionKey key) throws ExploreException, SQLException {
