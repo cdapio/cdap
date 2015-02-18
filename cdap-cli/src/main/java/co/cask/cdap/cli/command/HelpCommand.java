@@ -17,10 +17,8 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.Constants;
 import co.cask.cdap.cli.util.StringStyler;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -47,12 +45,10 @@ public class HelpCommand implements Command {
 
   static final int COL_WIDTH = 80;
 
-  private final Supplier<Iterable<CommandSet<Command>>> commands;
-  private final CLIConfig config;
+  protected final Supplier<Iterable<CommandSet<Command>>> commands;
 
-  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands, CLIConfig config) {
+  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
     this.commands = commands;
-    this.config = config;
   }
 
   @Override
@@ -150,7 +146,7 @@ public class HelpCommand implements Command {
 
   @Override
   public String getDescription() {
-    return String.format("Prints this helper text. Optionally provide <%s> to get help with a specific category",
+    return String.format("Prints this helper text. Optionally, provide <%s> to get help with a specific category.",
                          ArgumentName.COMMAND_CATEGORY);
   }
 

@@ -55,6 +55,6 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Deletes an " + ElementType.APP.getPrettyName();
+    return String.format("Deletes an %s.", ElementType.APP.getPrettyName());
   }
 }

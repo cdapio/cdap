@@ -41,9 +41,9 @@ public class ACLTableDatasetTest extends AbstractDatasetTest {
   @Test
   public void testBasics() throws Exception {
     addModule(aclTableModule, new ACLTableModule());
-
-    createInstance(ACLTable.class.getName(), "myAclTable", DatasetProperties.EMPTY);
-    ACLTable myAclTable = getInstance("myAclTable");
+    Id.DatasetInstance myAclTableInstance = Id.DatasetInstance.from(NAMESPACE_ID, "myAclTable");
+    createInstance(ACLTable.class.getName(), myAclTableInstance, DatasetProperties.EMPTY);
+    ACLTable myAclTable = getInstance(myAclTableInstance);
 
     final Principal bobUser = new Principal(PrincipalType.USER, "bob");
     final Principal bobGroup = new Principal(PrincipalType.GROUP, "bobs-only");

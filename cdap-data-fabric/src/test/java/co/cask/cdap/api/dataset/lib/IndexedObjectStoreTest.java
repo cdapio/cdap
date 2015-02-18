@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
@@ -31,10 +32,13 @@ import java.util.List;
  * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
  */
 public class IndexedObjectStoreTest extends AbstractDatasetTest {
+
+  private static final Id.DatasetInstance index = Id.DatasetInstance.from(NAMESPACE_ID, "index");
+
   @Test
   public void testLookupByIndex() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    createIndexedObjectStoreInstance(index, Feed.class);
+    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -63,7 +67,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
       }
     });
 
-    deleteInstance("index");
+    deleteInstance(index);
   }
 
   @Test
@@ -136,8 +140,8 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testIndexRewrites() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    createIndexedObjectStoreInstance(index, Feed.class);
+    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -171,13 +175,13 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
         Assert.assertEquals(0, feedResult.size());
       }
     });
-    deleteInstance("index");
+    deleteInstance(index);
   }
 
   @Test
   public void testIndexPruning() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    createIndexedObjectStoreInstance(index, Feed.class);
+    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -198,13 +202,13 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
       }
     });
 
-    deleteInstance("index");
+    deleteInstance(index);
   }
 
   @Test
   public void testIndexNoSecondaryKeyChanges() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    createIndexedObjectStoreInstance(index, Feed.class);
+    IndexedObjectStore<Feed> indexedFeed = getInstance(index);
 
     List<String> categories = ImmutableList.of("C++", "C#");
 
@@ -230,13 +234,13 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
     Assert.assertEquals("http://microsoft.com", feedResult.get(0).getUrl());
 
-    deleteInstance("index");
+    deleteInstance(index);
   }
 
   @Test
   public void testIndexUpdates() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    createIndexedObjectStoreInstance(index, Feed.class);
+    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -259,11 +263,11 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
       }
     });
 
-    deleteInstance("index");
+    deleteInstance(index);
   }
 
-  protected void createIndexedObjectStoreInstance(String instanceName, Type type) throws Exception {
-    createInstance("indexedObjectStore", instanceName,
+  protected void createIndexedObjectStoreInstance(Id.DatasetInstance datasetInstanceId, Type type) throws Exception {
+    createInstance("indexedObjectStore", datasetInstanceId,
                    ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }
 

@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -169,6 +170,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       schedule(programId, programType, ImmutableList.of(schedule));
     }
 
+    // TODO remove this annotation once the Schedule class becomes abstract
     @Override
     public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
       checkInitialized();
@@ -185,8 +187,10 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         throw Throwables.propagate(e);
       }
       for (Schedule schedule : schedules) {
-        String scheduleName = schedule.getName();
-        String cronEntry = schedule.getCronEntry();
+        Preconditions.checkArgument(schedule instanceof TimeSchedule);
+        TimeSchedule timeSchedule = (TimeSchedule) schedule;
+        String scheduleName = timeSchedule.getName();
+        String cronEntry = timeSchedule.getCronEntry();
         String triggerKey = getScheduleId(programId, programType, scheduleName);
 
         LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,11 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.gson.JsonObject;
+import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -31,13 +31,18 @@ import javax.ws.rs.Path;
  * Explore ping handler - reachable outside of CDAP.
  */
 @Path(Constants.Gateway.API_VERSION_2)
-public class ExplorePingHandler extends AbstractHttpHandler {
+public class ExploreStatusHandlerV2 extends AbstractHttpHandler {
+  private final ExploreStatusHandler exploreStatusHandler;
+
+  @Inject
+  public ExploreStatusHandlerV2(ExploreStatusHandler exploreStatusHandler) {
+    this.exploreStatusHandler = exploreStatusHandler;
+  }
 
   @Path("/explore/status")
   @GET
-  public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    JsonObject json = new JsonObject();
-    json.addProperty("status", "OK");
-    responder.sendJson(HttpResponseStatus.OK, json);
+  public void status(HttpRequest request, HttpResponder responder) {
+    exploreStatusHandler.status(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                Constants.DEFAULT_NAMESPACE);
   }
 }

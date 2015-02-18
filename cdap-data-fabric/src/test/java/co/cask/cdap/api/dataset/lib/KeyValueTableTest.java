@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.Sets;
@@ -47,17 +48,19 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   static final byte[] VAL2 = Bytes.toBytes("VAL2");
   static final byte[] VAL3 = Bytes.toBytes("VAL3");
 
+  private static final Id.DatasetInstance testInstance = Id.DatasetInstance.from(NAMESPACE_ID, "test");
+
   private static KeyValueTable kvTable;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("keyValueTable", "test", DatasetProperties.EMPTY);
-    kvTable = getInstance("test");
+    createInstance("keyValueTable", testInstance, DatasetProperties.EMPTY);
+    kvTable = getInstance(testInstance);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("test");
+    deleteInstance(testInstance);
   }
 
   @Test
@@ -180,11 +183,13 @@ public class KeyValueTableTest extends AbstractDatasetTest {
 
   @Test
   public void testTransactionAcrossTables() throws Exception {
-    createInstance("keyValueTable", "t1", DatasetProperties.EMPTY);
-    createInstance("keyValueTable", "t2", DatasetProperties.EMPTY);
+    Id.DatasetInstance t1 = Id.DatasetInstance.from(NAMESPACE_ID, "t1");
+    Id.DatasetInstance t2 = Id.DatasetInstance.from(NAMESPACE_ID, "t2");
+    createInstance("keyValueTable", t1, DatasetProperties.EMPTY);
+    createInstance("keyValueTable", t2, DatasetProperties.EMPTY);
 
-    final KeyValueTable table1 = getInstance("t1");
-    final KeyValueTable table2 = getInstance("t2");
+    final KeyValueTable table1 = getInstance(t1);
+    final KeyValueTable table2 = getInstance(t2);
     TransactionExecutor txnl = newTransactionExecutor(table1, table2);
 
     // write a value to table1 and verify it
@@ -227,8 +232,8 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     });
 
     // verify synchronously that old value are still there
-    final KeyValueTable table1v2 = getInstance("t1");
-    final KeyValueTable table2v2 = getInstance("t2");
+    final KeyValueTable table1v2 = getInstance(t1);
+    final KeyValueTable table2v2 = getInstance(t2);
     TransactionExecutor txnlv2 = newTransactionExecutor(table1v2, table2v2);
     txnlv2.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -238,15 +243,16 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       }
     });
 
-    deleteInstance("t1");
-    deleteInstance("t2");
+    deleteInstance(t1);
+    deleteInstance(t2);
   }
 
   @Test
   public void testScanning() throws Exception {
-    createInstance("keyValueTable", "tScan", DatasetProperties.EMPTY);
+    Id.DatasetInstance tScan = Id.DatasetInstance.from(NAMESPACE_ID, "tScan");
+    createInstance("keyValueTable", tScan, DatasetProperties.EMPTY);
 
-    final KeyValueTable t = getInstance("tScan");
+    final KeyValueTable t = getInstance(tScan);
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     // start a transaction
@@ -296,14 +302,15 @@ public class KeyValueTableTest extends AbstractDatasetTest {
         }
       }
     });
-    deleteInstance("tScan");
+    deleteInstance(tScan);
   }
 
   @Test
   public void testBatchReads() throws Exception {
-    createInstance("keyValueTable", "tBatch", DatasetProperties.EMPTY);
+    Id.DatasetInstance tBatch = Id.DatasetInstance.from(NAMESPACE_ID, "tBatch");
+    createInstance("keyValueTable", tBatch, DatasetProperties.EMPTY);
 
-    final KeyValueTable t = getInstance("tBatch");
+    final KeyValueTable t = getInstance(tBatch);
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
@@ -348,7 +355,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       }
     });
 
-    deleteInstance("tBatch");
+    deleteInstance(tBatch);
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
