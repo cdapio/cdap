@@ -20,9 +20,9 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 
 /**
- * Utility class to create {@link Schedule} objects.
+ * Factory class to create {@link Schedule} objects.
  */
-public class Schedules {
+public final class Schedules {
   
   /**
    * Build a time-based schedule.
@@ -43,12 +43,11 @@ public class Schedules {
    * @param description description of the schedule
    * @param source source of data the schedule is based on
    * @param sourceName name of the source of data the schedule is based on
-   * @param dataTriggerMB the size of data, in MB, that the source has to receive to trigger an execution. It can be
-   *                      null if this parameter is irrelevent for the {@code dataType} given.
+   * @param dataTriggerMB the size of data, in MB, that the source has to receive to trigger an execution
    * @return a schedule based on data availability in the given {@code dataSourceName}
    */
-  public static Schedule createDataSchedule(String name, String description, Schedule.Source source, String sourceName,
-                                            Integer dataTriggerMB) {
+  public static Schedule createDataSchedule(String name, String description, Source source, String sourceName,
+                                            int dataTriggerMB) {
     switch (source) {
       case STREAM:
         return new StreamSizeSchedule(name, description, sourceName, dataTriggerMB);
@@ -57,5 +56,12 @@ public class Schedules {
   }
 
   private Schedules() {
+  }
+
+  /**
+   * Defines different types of data schedules.
+   */
+  public enum Source {
+    STREAM
   }
 }

@@ -68,7 +68,7 @@ public class ScheduleSpecificationCodecTest {
 
   @Test
   public void testStreamSizeSchedule() throws Exception {
-    Schedule dataSchedule = Schedules.createDataSchedule("foo", "bar", Schedule.Source.STREAM, "stream", 10);
+    Schedule dataSchedule = Schedules.createDataSchedule("foo", "bar", Schedules.Source.STREAM, "stream", 10);
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(dataSchedule, programInfo, properties);

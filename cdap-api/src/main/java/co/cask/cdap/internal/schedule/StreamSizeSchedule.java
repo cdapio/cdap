@@ -24,7 +24,6 @@ import co.cask.cdap.api.schedule.Schedule;
 public final class StreamSizeSchedule extends Schedule {
 
   private final String streamName;
-
   private final int dataTriggerMB;
 
   public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {

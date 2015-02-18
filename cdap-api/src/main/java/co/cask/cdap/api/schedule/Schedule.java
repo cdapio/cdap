@@ -24,18 +24,11 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
  */
 public class Schedule {
 
-  /**
-   * Defines different types of data schedules.
-   */
-  public enum Source {
-    STREAM
-  }
-
   private final String name;
 
   private final String description;
 
-  // NOTE: the two below attributes are left for backwards compatibility
+  // NOTE: the below attribute is left for backwards compatibility
   private final String cronEntry;
 
   @Deprecated
