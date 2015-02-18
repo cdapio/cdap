@@ -52,7 +52,7 @@ public final class Schedules {
       case STREAM:
         return new StreamSizeSchedule(name, description, sourceName, dataTriggerMB);
     }
-    throw new IllegalArgumentException();
+    throw new IllegalArgumentException("Unhandled source of " + source);
   }
 
   private Schedules() {

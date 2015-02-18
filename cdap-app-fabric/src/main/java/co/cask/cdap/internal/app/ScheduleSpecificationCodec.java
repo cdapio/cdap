@@ -41,12 +41,6 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
    */
   private enum ScheduleType {
     /**
-     * Represents a {@link Schedule} object which, prior to 2.8.0, defines a time-based schedule.
-     * This one is never used for persistence
-     */
-    ORIGINAL_TIME,
-
-    /**
      * Represents {@link TimeSchedule} objects.
      */
     TIME,
@@ -62,7 +56,7 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
       } else if (schedule instanceof TimeSchedule) {
         return TIME;
       } else {
-        return ORIGINAL_TIME;
+        throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
       }
     }
   }
@@ -73,14 +67,7 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     JsonObject jsonObj = new JsonObject();
 
     ScheduleType scheduleType = ScheduleType.fromSchedule(src.getSchedule());
-    if (scheduleType.equals(ScheduleType.ORIGINAL_TIME)) {
-      // This should never happen, but to be on the safe side, we can serialize the schedule as a TimeSchedule object
-      jsonObj.add("scheduleType", context.serialize(ScheduleType.TIME, ScheduleType.class));
-      Schedule timeSchedule = Schedules.createTimeSchedule(src.getSchedule().getName(),
-                                                           src.getSchedule().getDescription(),
-                                                           src.getSchedule().getCronEntry());
-      jsonObj.add("schedule", context.serialize(timeSchedule, TimeSchedule.class));
-    } else if (scheduleType.equals(ScheduleType.TIME)) {
+    if (scheduleType.equals(ScheduleType.TIME)) {
       jsonObj.add("scheduleType", context.serialize(ScheduleType.TIME, ScheduleType.class));
       jsonObj.add("schedule", context.serialize(src.getSchedule(), TimeSchedule.class));
     } else if (scheduleType.equals(ScheduleType.STREAM)) {

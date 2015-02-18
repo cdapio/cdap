@@ -44,7 +44,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulesUtil;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -52,6 +51,7 @@ import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -62,6 +62,7 @@ import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.quartz.DateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -382,7 +383,7 @@ public class AdapterService extends AbstractIdleService {
     Preconditions.checkArgument(frequency != null,
                                 "Frequency of running the adapter is missing from adapter properties." +
                                   " Cannot schedule program.");
-    String cronExpr = SchedulesUtil.toCronExpr(frequency);
+    String cronExpr = toCronExpr(frequency);
     String adapterName = adapterSpec.getName();
     Schedule schedule = Schedules.createTimeSchedule(constructScheduleName(programId, adapterName),
                                                      getScheduleDescription(adapterName), cronExpr);
@@ -539,5 +540,46 @@ public class AdapterService extends AbstractIdleService {
    */
   public String getScheduleDescription(String adapterName) {
     return String.format("Schedule for adapter: %s", adapterName);
+  }
+
+  /**
+   * Converts a frequency expression into cronExpression that is usable by quartz.
+   * Supports frequency expressions with the following resolutions: minutes, hours, days.
+   * Example conversions:
+   * '10m' -> '*{@literal /}10 * * * ?'
+   * '3d' -> '0 0 *{@literal /}3 * ?'
+   *
+   * @return a cron expression
+   */
+  private String toCronExpr(String frequency) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(frequency));
+    // remove all whitespace
+    frequency = frequency.replaceAll("\\s+", "");
+    Preconditions.checkArgument(frequency.length() >= 0);
+
+    frequency = frequency.toLowerCase();
+
+    String value = frequency.substring(0, frequency.length() - 1);
+    try {
+      int parsedValue = Integer.parseInt(value);
+      Preconditions.checkArgument(parsedValue > 0);
+      // TODO: Check for regular frequency.
+      String everyN = String.format("*/%s", value);
+      char lastChar = frequency.charAt(frequency.length() - 1);
+      switch (lastChar) {
+        case 'm':
+          DateBuilder.validateMinute(parsedValue);
+          return String.format("%s * * * ?", everyN);
+        case 'h':
+          DateBuilder.validateHour(parsedValue);
+          return String.format("0 %s * * ?", everyN);
+        case 'd':
+          DateBuilder.validateDayOfMonth(parsedValue);
+          return String.format("0 0 %s * ?", everyN);
+      }
+      throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Could not parse the frequency");
+    }
   }
 }

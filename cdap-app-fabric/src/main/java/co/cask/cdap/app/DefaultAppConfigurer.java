@@ -52,7 +52,6 @@ import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -221,7 +220,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
     Schedule realSchedule = schedule;
-    if (!(schedule instanceof TimeSchedule) && !(schedule instanceof StreamSizeSchedule)) {
+    if (schedule.getClass().equals(Schedule.class)) {
       realSchedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(),
                                                   schedule.getCronEntry());
     }

@@ -17,8 +17,6 @@
 package co.cask.cdap.api.schedule;
 
 
-import co.cask.cdap.internal.schedule.TimeSchedule;
-
 /**
  * Defines a cron-based schedule for running a program.
  */
@@ -60,7 +58,7 @@ public class Schedule {
 
   /**
    * @return Cron expression for the schedule.
-   * @deprecated As of version 2.8.0, use {@link TimeSchedule#getCronEntry()} instead
+   * @deprecated As of version 2.8.0, do not use this method anymore
    */
   @Deprecated
   public String getCronEntry() {

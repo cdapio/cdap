@@ -44,23 +44,6 @@ public class ScheduleSpecificationCodecTest {
     .create();
 
   @Test
-  public void testOriginalTimeSchedule() throws Exception {
-    @SuppressWarnings("deprecation")
-    Schedule schedule = new Schedule("foo", "bar", "cronEntry");
-    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
-    ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
-    ScheduleSpecification specification = new ScheduleSpecification(schedule, programInfo, properties);
-
-    String jsonStr = GSON.toJson(specification);
-    ScheduleSpecification deserialized = GSON.fromJson(jsonStr, ScheduleSpecification.class);
-
-    ScheduleSpecification expectedSpec = new ScheduleSpecification(
-      Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry()),
-      programInfo, properties);
-    Assert.assertEquals(expectedSpec, deserialized);
-  }
-
-  @Test
   public void testTimeSchedule() throws Exception {
     TimeSchedule timeSchedule = (TimeSchedule) Schedules.createTimeSchedule("foo", "bar", "cronEntry");
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
