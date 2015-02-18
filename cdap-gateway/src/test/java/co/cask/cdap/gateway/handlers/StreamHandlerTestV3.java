@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.clearspring.analytics.util.Lists;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests v3 stream endpoints with default namespace
@@ -44,35 +45,6 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
 
   private URL constructPath(String namespace, String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v3/namespaces/%s/%s", namespace, path)).toURL();
-  }
-
-  private void createStream(Id.Stream streamId) throws Exception {
-    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName());
-    HttpRequest request = HttpRequest.put(url).build();
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
-  }
-
-  private void sendEvent(Id.Stream streamId, String body) throws Exception {
-    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName());
-    HttpRequest request = HttpRequest.post(url).withBody(body).build();
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
-  }
-
-  private List<String> fetchEvents(Id.Stream streamId) throws Exception {
-    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName() + "/events");
-    HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
-
-
-    List<String> events = Lists.newArrayList();
-    JsonArray jsonArray = new JsonParser().parse(response.getResponseBodyAsString()).getAsJsonArray();
-    for (JsonElement jsonElement : jsonArray) {
-      events.add(jsonElement.getAsJsonObject().get("body").getAsString());
-    }
-    return events;
   }
 
   @Test
@@ -109,4 +81,97 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
     List<String> eventsFetchedFromStream2 = fetchEvents(streamId2);
     Assert.assertEquals(eventsSentToStream2, eventsFetchedFromStream2);
   }
+
+  @Test
+  public void testNamespacedMetrics() throws Exception {
+    // Create two streams with the same name, in different namespaces.
+    String streamName = "testNamespacedMetrics";
+    Id.Stream streamId1 = Id.Stream.from("namespace1", streamName);
+    Id.Stream streamId2 = Id.Stream.from("namespace2", streamName);
+
+    createStream(streamId1);
+    createStream(streamId2);
+
+    // Enqueue 10 entries to the stream in the first namespace
+    for (int i = 0; i < 10; ++i) {
+      sendEvent(streamId1, Integer.toString(i));
+    }
+
+    // Enqueue only 2 entries to the stream in the second namespace
+    for (int i = 0; i < 2; ++i) {
+      sendEvent(streamId2, Integer.toString(i));
+    }
+
+    // Check metrics to verify that the metric for events processed is specific to each stream
+    checkEventsProcessed(streamId1, 10, 10);
+    checkEventsProcessed(streamId2, 2, 10);
+  }
+
+  private void checkEventsProcessed(Id.Stream streamId, int expectedCount, int retries) throws Exception {
+    for (int i = 0; i < retries; i++) {
+      int numProcessed = getNumProcessed(streamId);
+      if (numProcessed == expectedCount) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expectedCount, getNumProcessed(streamId));
+  }
+
+  private void createStream(Id.Stream streamId) throws Exception {
+    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName());
+    HttpRequest request = HttpRequest.put(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void sendEvent(Id.Stream streamId, String body) throws Exception {
+    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName());
+    HttpRequest request = HttpRequest.post(url).withBody(body).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private List<String> fetchEvents(Id.Stream streamId) throws Exception {
+    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName() + "/events");
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+
+
+    List<String> events = Lists.newArrayList();
+    JsonArray jsonArray = new JsonParser().parse(response.getResponseBodyAsString()).getAsJsonArray();
+    for (JsonElement jsonElement : jsonArray) {
+      events.add(jsonElement.getAsJsonObject().get("body").getAsString());
+    }
+    return events;
+  }
+
+  private int getNumProcessed(Id.Stream streamId) throws Exception {
+    String path = String.format("/v3/metrics/query?metric=system.collect.events&context=ns.%s.str.%s",
+                                streamId.getNamespaceId(), streamId.getName());
+    System.out.println(path);
+    HttpRequest request = HttpRequest.post(getEndPoint(path).toURL()).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+    System.out.println(response.getResponseBodyAsString());
+    return getNumEventsFromResponse(response.getResponseBodyAsString());
+  }
+
+  private int getNumEventsFromResponse(String response) {
+    // response format:
+    // [{"measureName":"system.collect.events","tagValues":{},"timeValues":[{"timestamp":0,"value":12}]}]
+
+    JsonElement jsonResponse = new JsonParser().parse(response);
+    JsonArray jsonArray = jsonResponse.getAsJsonArray();
+    if (jsonArray.size() == 0) {
+      return 0;
+    }
+    return jsonArray.get(0)
+      .getAsJsonObject().get("timeValues")
+      .getAsJsonArray().get(0)
+      .getAsJsonObject().get("value")
+      .getAsInt();
+  }
+
 }
