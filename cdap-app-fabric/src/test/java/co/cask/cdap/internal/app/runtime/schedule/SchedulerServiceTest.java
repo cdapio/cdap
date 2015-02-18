@@ -130,7 +130,8 @@ public class SchedulerServiceTest {
   private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) {
     Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
                                                                       "Schedule1"));
-    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW, "Schedule1"));
+    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
+                                                                      "Schedule1"));
   }
 
   private ApplicationSpecification createNewSpecification(ApplicationSpecification spec, Id.Program programId,
