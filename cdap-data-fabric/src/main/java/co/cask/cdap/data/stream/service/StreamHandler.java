@@ -41,7 +41,6 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
@@ -182,16 +181,15 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
-
-    String accountID = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
-
     // Verify stream name
-    if (!isValidName(stream)) {
+    if (!Id.isId(stream)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            "Stream name can only contains alphanumeric, '-' and '_' characters only.");
       return;
     }
+
+    String accountID = getAuthenticatedAccountId(request);
+    Id.Stream streamId = Id.Stream.from(accountID, stream);
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(streamId);
@@ -411,15 +409,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         }
       }
     };
-  }
-
-  private boolean isValidName(String streamName) {
-    // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
   /**

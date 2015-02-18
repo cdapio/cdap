@@ -27,7 +27,7 @@ import com.google.common.collect.Iterables;
  */
 public final class Id  {
 
-  private static boolean isId(String name) {
+  public static boolean isId(String name) {
     return CharMatcher.inRange('A', 'Z')
       .or(CharMatcher.inRange('a', 'z'))
       .or(CharMatcher.is('-'))
