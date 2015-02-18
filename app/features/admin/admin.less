@@ -1,13 +1,23 @@
 body.state-admin {
   main.container {
     .sidebar {
-        ul > li > ul {
-          padding-left: 1em;
+      ul > li > ul {
+        padding-left: 1em;
 
-          > my-tree-view {
-            padding-left: 0;
-          }
+        > my-tree-view {
+          padding-left: 0;
         }
+      }
+      a.current {
+        color: @text-color;
+        cursor: default;
+        &:hover {
+          text-decoration: none;
+        }
+      }
+    }
+    .clickable {
+      cursor: pointer;
     }
   }
 }
