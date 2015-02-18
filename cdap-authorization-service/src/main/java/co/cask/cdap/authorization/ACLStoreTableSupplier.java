@@ -16,9 +16,11 @@
 package co.cask.cdap.authorization;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.ACLStoreTable;
+import co.cask.cdap.proto.Id;
 import co.cask.common.authorization.client.ACLStoreSupplier;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -34,6 +36,8 @@ import com.google.inject.Singleton;
 public class ACLStoreTableSupplier implements ACLStoreSupplier {
 
   private static final String TABLE_NAME = "aclStoreTable";
+  private static final Id.DatasetInstance TABLE_ID = new Id.DatasetInstance(
+    new Id.Namespace(Constants.SYSTEM_NAMESPACE), TABLE_NAME);
 
   private final Supplier<ACLStoreTable> supplier;
 
@@ -44,7 +48,7 @@ public class ACLStoreTableSupplier implements ACLStoreSupplier {
       @Override
       public ACLStoreTable get() {
         try {
-          return DatasetsUtil.getOrCreateDataset(datasetFramework, TABLE_NAME, ACLStoreTable.class.getName(),
+          return DatasetsUtil.getOrCreateDataset(datasetFramework, TABLE_ID, ACLStoreTable.class.getName(),
                                                  DatasetProperties.EMPTY, ImmutableMap.<String, String>of(), null);
         } catch (Exception e) {
           throw Throwables.propagate(e);
