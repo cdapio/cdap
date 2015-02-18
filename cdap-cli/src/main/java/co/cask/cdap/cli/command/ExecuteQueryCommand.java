@@ -116,8 +116,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getDescription() {
-    return "Executes a " + ElementType.QUERY.getPrettyName()
-      + " with optional <" + ArgumentName.TIMEOUT + "> in minutes (default is no timeout)";
+    return String.format("Executes a %s with optional <%s> in minutes (default is no timeout).", 
+                         ElementType.QUERY.getPrettyName(), ArgumentName.TIMEOUT);
   }
 
   @Override
