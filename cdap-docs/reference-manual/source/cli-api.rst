@@ -92,7 +92,7 @@ These are the available commands:
    ``list namespaces``,"Lists all Namespaces."
    ``use namespace <namespace-id>``,"Changes the current Namespace to <namespace-id>."
    **Lifecycle**
-   ``create adapter <adapter-name> type <adapter-type> [props <adapter-props>] src <adapter-source> [src-props <adapter-source-config>] sink <adapter-sink> [sink-props <adapter-sink-config>]``,"Creates a Adapter."
+   ``create adapter <adapter-name> type <adapter-type> [props <adapter-props>] src <adapter-source> [src-props <adapter-source-config>] sink <adapter-sink> [sink-props <adapter-sink-config>]``,"Creates an Adapter."
    ``create stream <new-stream-id>``,"Creates a Stream."
    ``create stream-conversion adapter <adapter-name> on <stream-id> [frequency <frequency>] [format <format>] [schema <schema>] [headers <headers>] [to <dataset-name>]``,"Creates a Stream conversion Adapter that periodically reads from a Stream and writes to a time-partitioned fileset. <frequency> is a number followed by a 'm', 'h', or 'd' for minute, hour, or day. <format> is the name of the stream format, such as 'text', 'avro', 'csv', or 'tsv'. <schema> is a sql-like schema of comma separated column name followed by column type. <headers> is a comma separated list of Stream headers to include in the output schema. <dataset-name> is the name of the time-partitioned fileset to write to."
    ``delete adapter <adapter-name>``,"Deletes an Adapter."
@@ -184,5 +184,5 @@ These are the available commands:
    ``send stream <stream-id> <stream-event>``,"Sends an event to a Stream."
    **Egress**
    ``call procedure <app-id.procedure-id> <app-id.method-id> [<parameter-map>]``,"Calls a Procedure."
-   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"" and the <body> is a String."
-   
+   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"" and the <body> is a String." 
+     
