@@ -52,7 +52,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 });
 
 
-module.service('myAuth', function myAuthService (MY_CONFIG, MYAUTH_EVENT, MyAuthUser, myAuthPromise, $q, $rootScope, $localStorage) {
+module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage) {
 
   /**
    * private method to sync the user everywhere
