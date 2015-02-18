@@ -1,13 +1,15 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _http-restful-api-monitor:
+.. _http-restful-api-v2-monitor:
 
 ===========================================================
 Monitor HTTP RESTful API
 ===========================================================
+
+.. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
 
 .. highlight:: console
 
