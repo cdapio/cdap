@@ -120,8 +120,9 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public String getDescription() {
-    return String.format("Calls a %s endpoint. The header is formatted as \"{'key':'value', ...}\"" +
-                         " and the body is a String.", ElementType.SERVICE.getPrettyName());
+    return String.format("Calls a %s endpoint. The <%s> are formatted as \"{'key':'value', ...}\"" +
+                         " and the <%s> is a String.", ElementType.SERVICE.getPrettyName(),
+                         ArgumentName.HEADERS, ArgumentName.HTTP_BODY);
   }
 
   /**

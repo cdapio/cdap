@@ -23,7 +23,16 @@ Submitting a Query
 ------------------
 To submit a SQL query, post the query string to the ``queries`` URL::
 
-  POST <base-url>/data/explore/queries
+  POST <base-url>/namespaces/<namespace-id>/data/explore/queries
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
 
 The body of the request must contain a JSON string of the form::
 
@@ -33,8 +42,7 @@ The body of the request must contain a JSON string of the form::
 
 where ``<SQL-query-string>`` is the actual SQL query.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -47,34 +55,34 @@ HTTP Responses
    * - ``400 Bad Request``
      - The query is not well-formed or contains an error, such as a nonexistent table name
 
-Comments
-........
+.. rubric:: Comments
+
 If the query execution was successfully initiated, the body will contain a handle 
 used to identify the query in subsequent requests::
 
   { "handle":"<query-handle>" }
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``PUT <base-url>/data/explore/queries``
+     - ``PUT <base-url>/namespaces/default/data/explore/queries``
    * - HTTP Body
      - ``{"query":"SELECT * FROM cdap_user_mydataset LIMIT 5"}``
    * - HTTP Response
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
    * - Description
-     - Submit a query to get the first 5 entries from the Dataset, *mydataset*
+     - Submit a query in the namespace *default* to get the first 5 entries from the
+       Dataset, *mydataset* in the namespace *default*
 
 
 Status of a Query
 -----------------
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
-  GET <base-url>/data/explore/queries/<query-handle>/status
+  GET <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/status
 
 .. list-table::
    :widths: 20 80
@@ -82,11 +90,12 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -98,8 +107,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Comments
-........
+.. rubric:: Comments
+
 If the query exists, the body will contain the status of its execution
 and whether the query has a results set::
 
@@ -111,25 +120,25 @@ and whether the query has a results set::
 Status can be one of the following: ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
 ``ERROR``, ``UNKNOWN``, and ``PENDING``.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
+     - ``GET <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
    * - HTTP Response
      - ``{"status":"FINISHED","hasResults":true}``
    * - Description
-     - Retrieve the status of the query which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
+     - Retrieve the status of the query in the namespace *default* which has the handle
+       ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
 
 Obtaining the Result Schema
 ---------------------------
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
-  GET <base-url>/data/explore/queries/<query-handle>/schema
+  GET <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/schema
 
 .. list-table::
    :widths: 20 80
@@ -137,11 +146,12 @@ If the query's status is ``FINISHED`` and it has results, you can obtain the sch
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -155,8 +165,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Comments
-........
+.. rubric:: Comments
+
 The query's result schema is returned in a JSON body as a list of columns,
 each given by its name, type and position; if the query has no result set, this list is empty::
 
@@ -168,19 +178,19 @@ each given by its name, type and position; if the query has no result set, this 
 The type of each column is a data type as defined in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema``
+     - ``GET <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema``
    * - HTTP Response
      - ``[{"name":"cdap_user_mydataset.key","type":"array<tinyint>","position":1},``
        ``{"name":"cdap_user_mydataset.value","type":"array<tinyint>","position":2}]``
    * - Description
-     - Retrieve the schema of the result of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+     - Retrieve the schema of the result of the query in the namespace *default* which has
+       the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
 
 Retrieving Query Results
@@ -188,7 +198,7 @@ Retrieving Query Results
 Query results can be retrieved in batches after the query is finished, optionally specifying the batch
 size in the body of the request::
 
-  POST <base-url>/data/explore/queries/<query-handle>/next
+  POST <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/next
 
 The body of the request can contain a JSON string specifying the batch size::
 
@@ -204,11 +214,12 @@ If the batch size is not specified, the default is 20.
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -220,8 +231,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Comments
-........
+.. rubric:: Comments
+
 The results are returned in a JSON body as a list of columns,
 each given as a structure containing a list of column values::
 
@@ -237,14 +248,13 @@ whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 Repeat the query to retrieve subsequent results. If all results of the query have already 
 been retrieved, then the returned list is empty. 
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``POST <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next``
+     - ``POST <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next``
    * - HTTP Response
      - ``[{"columns": [ 10, 5]},``
        `` {"columns": [ 20, 27]},``
@@ -258,7 +268,7 @@ Closing a Query
 ---------------
 The query can be closed by issuing an HTTP DELETE against its URL::
 
-  DELETE <base-url>/data/explore/queries/<query-handle>
+  DELETE <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>
 
 This frees all resources that are held by this query.
 
@@ -268,11 +278,12 @@ This frees all resources that are held by this query.
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -286,22 +297,21 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``DELETE <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
+     - ``DELETE <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
    * - Description
-     - Close the query which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
+     - Close the query in the namespace *default* which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
 List of Queries
 ---------------
 To return a list of queries, use::
 
-   GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
+   GET <base-url>/namespaces/<namespace-id>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
 .. list-table::
    :widths: 20 80
@@ -309,6 +319,8 @@ To return a list of queries, use::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<limit>``
      - Optional number indicating how many results to return in the response; by default, 50 results are returned
    * - ``<cursor>``
@@ -318,8 +330,8 @@ To return a list of queries, use::
      - Optional offset for pagination; returns the results that are greater than offset if the cursor is ``next`` or
        results that are less than offset if cursor is ``prev``
 
-Comments
-........
+.. rubric:: Comments
+
 The results are returned as a JSON array, with each element containing information about a query::
 
   [
@@ -334,14 +346,13 @@ The results are returned as a JSON array, with each element containing informati
     ...
   ]
 
-Example
-.......
+.. rubric:: Example
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
-     - ``GET <base-url>/data/explore/queries``
+     - ``GET <base-url>/namespaces/default/data/explore/queries``
    * - HTTP Response
      - ``[{``
        ``   "timestamp": 1411266478717,``
@@ -358,7 +369,7 @@ Download Query Results
 ----------------------
 To download the results of a query, use::
 
-  POST <base-url>/data/explore/queries/<query-handle>/download
+  POST <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/download
 
 The results of the query are returned in CSV format.
 
@@ -368,16 +379,17 @@ The results of the query are returned in CSV format.
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted or via a list of queries
 
-Comments
-........
+.. rubric:: Comments
+
 The query results can be downloaded only once. The RESTful API will return a Status Code ``409 Conflict`` 
 if results for the ``query-handle`` are attempted to be downloaded again.
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -395,7 +407,7 @@ Hive Table Schema
 -----------------
 You can obtain the schema of the underlying Hive Table with::
 
-  GET <base-url>/data/explore/datasets/<dataset-name>/schema
+  GET <base-url>/namespaces/<namespace-id>/data/explore/datasets/<dataset-name>/schema
 
 .. list-table::
    :widths: 20 80
@@ -403,11 +415,12 @@ You can obtain the schema of the underlying Hive Table with::
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID
    * - ``<dataset-name>``
      - Name of the Dataset whose schema is to be retrieved
 
-HTTP Responses
-..............
+.. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -419,8 +432,8 @@ HTTP Responses
    * - ``404 Not Found``
      - The dataset was not found
      
-Comments
-........
+.. rubric:: Comments
+
 The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
 ``value`` containing the column types of the underlying table::
 
