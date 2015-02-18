@@ -44,6 +44,9 @@ public class ArgumentParser {
    * @return the map
    */
   public static Map<String, String> parseMap(String mapString) {
+    if (mapString == null || mapString.isEmpty()) {
+      return ImmutableMap.of();
+    }
     return Splitter.on(" ").withKeyValueSeparator("=").split(mapString);
   }
 
