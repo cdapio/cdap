@@ -148,7 +148,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
         
         // Set up onclick after rendering.
         svg
-          .selectAll("g.node .foundation-shape")
+          .selectAll("g.node")
           .on("click", function(nodeId) {
              $state.go('flows.detail.runs.detail.flowlets.detail', {flowletId: nodeId});
           });
