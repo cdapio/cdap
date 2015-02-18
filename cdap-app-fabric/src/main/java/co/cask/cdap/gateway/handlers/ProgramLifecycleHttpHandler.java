@@ -1539,6 +1539,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             error(controller.getFailureCause());
           }
         }
+
         @Override
         public void stopped() {
           store.setStop(id, runId,

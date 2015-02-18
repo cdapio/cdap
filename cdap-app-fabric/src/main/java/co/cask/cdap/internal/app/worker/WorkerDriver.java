@@ -108,7 +108,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     return new Executor() {
       @Override
       public void execute(Runnable command) {
-        Thread t = new Thread(command, String.format("worker-%s-%s", program.getName(), spec.getName()));
+        Thread t = new Thread(command, String.format("worker-%s-%d", program.getName(), context.getInstanceId()));
         t.setDaemon(true);
         t.start();
       }
