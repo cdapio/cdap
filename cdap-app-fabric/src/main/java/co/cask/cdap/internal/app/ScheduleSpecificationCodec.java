@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -49,11 +50,11 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     /**
      * Represents {@link StreamSizeSchedule} objects.
      */
-    STREAM_DATA;
+    STREAM;
 
     private static ScheduleType fromSchedule(Schedule schedule) {
       if (schedule instanceof StreamSizeSchedule) {
-        return STREAM_DATA;
+        return STREAM;
       } else if (schedule instanceof TimeSchedule) {
         return TIME;
       } else {
@@ -62,17 +63,24 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public JsonElement serialize(ScheduleSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
     ScheduleType scheduleType = ScheduleType.fromSchedule(src.getSchedule());
-    jsonObj.add("scheduleType", context.serialize(scheduleType, ScheduleType.class));
     if (scheduleType.equals(ScheduleType.ORIGINAL_TIME)) {
-      jsonObj.add("schedule", context.serialize(src.getSchedule(), Schedule.class));
+      // This should never happen, but to be on the safe side, we can serialize the schedule as a TimeSchedule object
+      jsonObj.add("scheduleType", context.serialize(ScheduleType.TIME, ScheduleType.class));
+      Schedule timeSchedule = Schedules.createTimeSchedule(src.getSchedule().getName(),
+                                                           src.getSchedule().getDescription(),
+                                                           src.getSchedule().getCronEntry());
+      jsonObj.add("schedule", context.serialize(timeSchedule, TimeSchedule.class));
     } else if (scheduleType.equals(ScheduleType.TIME)) {
+      jsonObj.add("scheduleType", context.serialize(ScheduleType.TIME, ScheduleType.class));
       jsonObj.add("schedule", context.serialize(src.getSchedule(), TimeSchedule.class));
-    } else if (scheduleType.equals(ScheduleType.STREAM_DATA)) {
+    } else if (scheduleType.equals(ScheduleType.STREAM)) {
+      jsonObj.add("scheduleType", context.serialize(ScheduleType.STREAM, ScheduleType.class));
       jsonObj.add("schedule", context.serialize(src.getSchedule(), StreamSizeSchedule.class));
     }
 
@@ -81,6 +89,7 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     return jsonObj;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public ScheduleSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
@@ -98,12 +107,14 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     Schedule schedule = null;
     switch (scheduleType) {
       case ORIGINAL_TIME:
+        // Deserialize into a TimeSchedule object
         schedule = context.deserialize(jsonObj.get("schedule"), Schedule.class);
+        schedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry());
         break;
       case TIME:
         schedule = context.deserialize(jsonObj.get("schedule"), TimeSchedule.class);
         break;
-      case STREAM_DATA:
+      case STREAM:
         schedule = context.deserialize(jsonObj.get("schedule"), StreamSizeSchedule.class);
         break;
     }

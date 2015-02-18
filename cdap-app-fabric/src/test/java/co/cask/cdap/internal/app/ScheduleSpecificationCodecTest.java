@@ -21,7 +21,6 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -48,7 +47,10 @@ public class ScheduleSpecificationCodecTest {
     String jsonStr = GSON.toJson(specification);
     ScheduleSpecification deserialized = GSON.fromJson(jsonStr, ScheduleSpecification.class);
 
-    Assert.assertEquals(specification, deserialized);
+    ScheduleSpecification expectedSpec = new ScheduleSpecification(
+      Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry()),
+      programInfo, properties);
+    Assert.assertEquals(expectedSpec, deserialized);
   }
 
   @Test
@@ -66,8 +68,7 @@ public class ScheduleSpecificationCodecTest {
 
   @Test
   public void testStreamSizeSchedule() throws Exception {
-    StreamSizeSchedule dataSchedule =
-      (StreamSizeSchedule) Schedules.createDataSchedule("foo", "bar", Schedule.DataType.STREAM_SIZE, "stream", 10);
+    Schedule dataSchedule = Schedules.createDataSchedule("foo", "bar", Schedule.Source.STREAM, "stream", 10);
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "testWorkflow");
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(dataSchedule, programInfo, properties);
@@ -93,7 +94,10 @@ public class ScheduleSpecificationCodecTest {
     String jsonStr = new Gson().toJson(specification);
     
     ScheduleSpecification deserialized = GSON.fromJson(jsonStr, ScheduleSpecification.class);
+    ScheduleSpecification expectedSpec = new ScheduleSpecification(
+      Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry()),
+      programInfo, properties);
 
-    Assert.assertEquals(specification, deserialized);
+    Assert.assertEquals(expectedSpec, deserialized);
   }
 }

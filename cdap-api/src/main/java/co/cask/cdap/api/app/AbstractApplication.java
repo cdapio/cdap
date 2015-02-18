@@ -244,6 +244,7 @@ public abstract class AbstractApplication implements Application {
    * @param scheduleName the name of the Schedule
    * @param cronTab the crontab entry for the Schedule
    * @param workflowName the name of the Workflow
+   * @deprecated As of version 2.8.0, replaced by {@link #scheduleWorkflow(Schedule, String)}
    */
   @Deprecated
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
@@ -258,6 +259,7 @@ public abstract class AbstractApplication implements Application {
    * @param cronTab the crontab entry for the Schedule
    * @param workflowName the name of the Workflow
    * @param properties properties to be added for the Schedule
+   * @deprecated As of version 2.8.0, replaced by {@link #scheduleWorkflow(Schedule, String, Map<String, String>)}
    */
   @Deprecated
   protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName,

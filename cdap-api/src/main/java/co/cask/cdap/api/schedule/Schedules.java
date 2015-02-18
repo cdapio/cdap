@@ -41,19 +41,19 @@ public class Schedules {
    *
    * @param name name of the schedule
    * @param description description of the schedule
-   * @param dataType type of data the schedule is based on
-   * @param dataSourceName name of the source of data the schedule is based on
+   * @param source source of data the schedule is based on
+   * @param sourceName name of the source of data the schedule is based on
    * @param dataTriggerMB the size of data, in MB, that the source has to receive to trigger an execution. It can be
    *                      null if this parameter is irrelevent for the {@code dataType} given.
    * @return a schedule based on data availability in the given {@code dataSourceName}
    */
-  public static Schedule createDataSchedule(String name, String description, Schedule.DataType dataType,
-                                            String dataSourceName, Integer dataTriggerMB) {
-    switch (dataType) {
-      case STREAM_SIZE:
-      default:
-        return new StreamSizeSchedule(name, description, dataSourceName, dataTriggerMB);
+  public static Schedule createDataSchedule(String name, String description, Schedule.Source source, String sourceName,
+                                            Integer dataTriggerMB) {
+    switch (source) {
+      case STREAM:
+        return new StreamSizeSchedule(name, description, sourceName, dataTriggerMB);
     }
+    throw new IllegalArgumentException();
   }
 
   private Schedules() {
