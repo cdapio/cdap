@@ -124,7 +124,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         T value = deserialize(columnValue, classOfT);
 
         if (filter.apply(value)) {
-          MDSKey key = new MDSKey.Builder().add(next.getRow()).build();
+          MDSKey key = new MDSKey(next.getRow());
           map.put(key, value);
         }
       }
