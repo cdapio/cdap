@@ -51,9 +51,9 @@ public class GenerateCLIDocsTableCommand extends HelpCommand {
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     Multimap<String, Command> categorizedCommands = categorizeCommands(
       commands.get(), CommandCategory.GENERAL, Predicates.<Command>alwaysTrue());
-    for (String category : categorizedCommands.keySet()) {
-      output.printf("   **%s**\n", simpleTitleCase(category));
-      List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category));
+    for (CommandCategory category : CommandCategory.values()) {
+      output.printf("   **%s**\n", simpleTitleCase(category.getName()));
+      List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
       Collections.sort(commandList, new Comparator<Command>() {
         @Override
         public int compare(Command command, Command command2) {
