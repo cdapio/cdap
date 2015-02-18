@@ -171,7 +171,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     // TODO remove this annotation once the Schedule class becomes abstract
-    @SuppressWarnings("deprecation")
     @Override
     public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
       checkInitialized();
@@ -191,7 +190,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         Preconditions.checkArgument(schedule instanceof TimeSchedule);
         TimeSchedule timeSchedule = (TimeSchedule) schedule;
         String scheduleName = timeSchedule.getName();
-        String cronEntry = timeSchedule.getCronExpression();
+        String cronEntry = timeSchedule.getCronEntry();
         String triggerKey = getScheduleId(programId, programType, scheduleName);
 
         LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);

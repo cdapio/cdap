@@ -16,11 +16,18 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -99,5 +106,34 @@ public class ScheduleSpecificationCodecTest {
       programInfo, properties);
 
     Assert.assertEquals(expectedSpec, deserialized);
+  }
+
+  @Test
+  public void testAppConfigurerRoute() throws Exception {
+    Application app = new AbstractApplication() {
+      @Override
+      @SuppressWarnings("deprecation")
+      public void configure() {
+        scheduleWorkflow(new Schedule("oldSchedule", "", "cronEntry"), "workflow");
+        scheduleWorkflow(Schedules.createTimeSchedule("timeSchedule", "", "cronEntry"), "workflow");
+        scheduleWorkflow(Schedules.createDataSchedule("streamSizeSchedule", "", Schedules.Source.STREAM, "stream", 1),
+                         "workflow");
+      }
+    };
+    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+    app.configure(configurer, new ApplicationContext());
+    ApplicationSpecification specification = configurer.createSpecification();
+
+    ApplicationSpecificationAdapter gsonAdapater =
+      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    String jsonStr = gsonAdapater.toJson(specification);
+
+    ApplicationSpecification deserializedSpec = gsonAdapater.fromJson(jsonStr);
+    Assert.assertEquals(new TimeSchedule("oldSchedule", "", "cronEntry"),
+                        deserializedSpec.getSchedules().get("oldSchedule").getSchedule());
+    Assert.assertEquals(new TimeSchedule("timeSchedule", "", "cronEntry"),
+                        deserializedSpec.getSchedules().get("timeSchedule").getSchedule());
+    Assert.assertEquals(new StreamSizeSchedule("streamSizeSchedule", "", "stream", 1),
+                        deserializedSpec.getSchedules().get("streamSizeSchedule").getSchedule());
   }
 }

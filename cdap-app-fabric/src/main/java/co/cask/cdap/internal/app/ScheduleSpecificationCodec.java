@@ -40,6 +40,10 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
    * Schedule Type.
    */
   private enum ScheduleType {
+    /**
+     * Represents a {@link Schedule} object which, prior to 2.8.0, defines a time-based schedule.
+     * This one is never used for persistence
+     */
     ORIGINAL_TIME,
 
     /**
@@ -99,24 +103,24 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     ScheduleType scheduleType;
     if (scheduleTypeJson == null) {
       // For backwards compatibility with spec persisted with older versions than 2.8, we need these lines
-      scheduleType = ScheduleType.ORIGINAL_TIME;
+      scheduleType = null;
     } else {
       scheduleType = context.deserialize(jsonObj.get("scheduleType"), ScheduleType.class);
     }
 
     Schedule schedule = null;
-    switch (scheduleType) {
-      case ORIGINAL_TIME:
-        // Deserialize into a TimeSchedule object
-        schedule = context.deserialize(jsonObj.get("schedule"), Schedule.class);
-        schedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry());
-        break;
-      case TIME:
-        schedule = context.deserialize(jsonObj.get("schedule"), TimeSchedule.class);
-        break;
-      case STREAM:
-        schedule = context.deserialize(jsonObj.get("schedule"), StreamSizeSchedule.class);
-        break;
+    if (scheduleType == null) {
+      schedule = context.deserialize(jsonObj.get("schedule"), Schedule.class);
+      schedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry());
+    } else {
+      switch (scheduleType) {
+        case TIME:
+          schedule = context.deserialize(jsonObj.get("schedule"), TimeSchedule.class);
+          break;
+        case STREAM:
+          schedule = context.deserialize(jsonObj.get("schedule"), StreamSizeSchedule.class);
+          break;
+      }
     }
 
     ScheduleProgramInfo program = context.deserialize(jsonObj.get("program"), ScheduleProgramInfo.class);

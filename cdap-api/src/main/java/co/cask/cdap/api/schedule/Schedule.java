@@ -60,7 +60,7 @@ public class Schedule {
 
   /**
    * @return Cron expression for the schedule.
-   * @deprecated As of version 2.8.0, use {@link TimeSchedule#getCronExpression()} instead
+   * @deprecated As of version 2.8.0, use {@link TimeSchedule#getCronEntry()} instead
    */
   @Deprecated
   public String getCronEntry() {
