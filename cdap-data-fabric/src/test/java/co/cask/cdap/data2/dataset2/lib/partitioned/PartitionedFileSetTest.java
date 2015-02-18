@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -59,9 +60,11 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     .addStringField("x")
     .build();
 
+  private static final Id.DatasetInstance pfsInstance = Id.DatasetInstance.from(NAMESPACE_ID, "pfs");
+
   @Before
   public void before() throws Exception {
-    createInstance("partitionedFileSet", "pfs", PartitionedFileSetProperties.builder()
+    createInstance("partitionedFileSet", pfsInstance, PartitionedFileSetProperties.builder()
       .setPartitioning(PARTITIONING_1)
       .setBasePath("testDir")
       .build());
@@ -69,7 +72,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
 
   @After
   public void after() throws Exception {
-    deleteInstance("pfs");
+    deleteInstance(pfsInstance);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -110,7 +113,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
   @Category(SlowTests.class)
   public void testAddRemoveGetPartitions() throws Exception {
 
-    final PartitionedFileSet dataset = getInstance("pfs");
+    final PartitionedFileSet dataset = getInstance(pfsInstance);
 
     final PartitionKey[][][] keys = new PartitionKey[4][4][4];
     final String[][][] paths = new String[4][4][4];

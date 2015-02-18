@@ -3,11 +3,13 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _http-restful-api-metrics:
+.. _http-restful-api-v2-metrics:
 
 ===========================================================
 Metrics HTTP RESTful API
 ===========================================================
+
+.. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
 
 .. highlight:: console
 
@@ -255,7 +257,7 @@ Querying by Run-ID
 
 Each execution of an program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that program's run.
 We can query metrics for an program by its run-ID to see the metrics for a particular run.
-Please see the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical program runs.
+Please see the :ref:`Run Records and Schedule <rest-program-runs-v2>` on retrieving active and historical program runs.
 
 When querying by run-ID, it is specified after the ``program-id`` in the path::
 

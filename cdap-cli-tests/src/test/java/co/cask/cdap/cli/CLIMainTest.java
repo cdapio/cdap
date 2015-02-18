@@ -55,9 +55,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -410,8 +412,6 @@ public class CLIMainTest extends StandaloneTestBase {
 
   @Test
   public void testAdapters() throws Exception {
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-
     // Create Adapter
     String createCommand = "create adapter someAdapter type dummyAdapter" +
       " props " + GSON.toJson(ImmutableMap.of("frequency", "1m")) +
@@ -420,8 +420,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, createCommand, "Successfully created adapter");
 
     // Check that the created adapter is present
-    adapterClient.waitForExists(namespaceId, "someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists(namespaceId, "someAdapter"));
+    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
+    Assert.assertTrue(adapterClient.exists("someAdapter"));
 
     testCommandOutputContains(cli, "list adapters", "someAdapter");
     testCommandOutputContains(cli, "get adapter someAdapter", "someAdapter");
@@ -445,7 +445,7 @@ public class CLIMainTest extends StandaloneTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
 
-    File tempDir = Files.createTempDir();
+    File tempDir = TMP_FOLDER.newFolder();
     try {
       File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
       File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));

@@ -32,12 +32,10 @@ import java.io.PrintStream;
 public class DeleteAdapterCommand extends AbstractAuthCommand {
 
   private final AdapterClient adapterClient;
-  private final CLIConfig cliConfig;
 
   @Inject
   public DeleteAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
-    this.cliConfig = cliConfig;
     this.adapterClient = adapterClient;
   }
 
@@ -45,7 +43,7 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
 
-    adapterClient.delete(cliConfig.getCurrentNamespace(), adapterName);
+    adapterClient.delete(adapterName);
     output.printf("Successfully deleted adapter named '%s'\n", adapterName);
   }
 
@@ -56,6 +54,6 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Deletes an " + ElementType.ADAPTER.getPrettyName();
+    return String.format("Deletes an %s.", ElementType.ADAPTER.getPrettyName());
   }
 }

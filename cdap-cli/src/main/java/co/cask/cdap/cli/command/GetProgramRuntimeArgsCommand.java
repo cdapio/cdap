@@ -58,6 +58,6 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the runtime arguments of a " + elementType.getPrettyName();
+    return String.format("Gets the runtime arguments of a %s.", elementType.getPrettyName());
   }
 }
