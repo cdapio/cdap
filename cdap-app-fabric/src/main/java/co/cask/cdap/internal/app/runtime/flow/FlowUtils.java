@@ -100,7 +100,7 @@ public final class FlowUtils {
       for (Map.Entry<QueueName, Map<Long, Integer>> row : queueConfigs.rowMap().entrySet()) {
         LOG.info("Queue config for {} : {}", row.getKey(), row.getValue());
         if (row.getKey().isStream()) {
-          streamAdmin.configureGroups(row.getKey(), row.getValue());
+          streamAdmin.configureGroups(row.getKey().toStreamId(), row.getValue());
         } else {
           queueAdmin.configureGroups(row.getKey(), row.getValue());
         }
@@ -124,7 +124,7 @@ public final class FlowUtils {
     // Then reconfigure stream/queue
     for (QueueName queueName : consumerQueues) {
       if (queueName.isStream()) {
-        streamAdmin.configureInstances(queueName, groupId, instances);
+        streamAdmin.configureInstances(queueName.toStreamId(), groupId, instances);
       } else {
         queueAdmin.configureInstances(queueName, groupId, instances);
       }

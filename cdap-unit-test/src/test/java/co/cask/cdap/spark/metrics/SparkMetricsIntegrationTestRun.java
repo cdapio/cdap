@@ -16,15 +16,32 @@
 
 package co.cask.cdap.spark.metrics;
 
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
+import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
+import co.cask.cdap.metrics.store.cube.CubeQuery;
+import co.cask.cdap.metrics.store.cube.TimeSeries;
+import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.metrics.store.timeseries.TagValue;
+import co.cask.cdap.metrics.store.timeseries.TimeValue;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,8 +58,73 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     SparkManager sparkManager = applicationManager.startSpark(TestSparkMetricsIntegrationApp.APP_SPARK_NAME);
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
-    Assert.assertTrue(RuntimeStats.getSparkMetrics(TestSparkMetricsIntegrationApp.APP_NAME,
-                                                   TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0);
+    Assert.assertTrue(getSparkMetric(TestSparkMetricsIntegrationApp.APP_NAME,
+                                     TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0);
     //TODO: Add test to check user metrics once the support is added: CDAP-765
   }
+
+  private static long getSparkMetric(String applicationId, String sparkId, String metricName) throws Exception {
+    Map<String, String> context = ImmutableMap.of(
+      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+      MetricTags.APP.getCodeName(), applicationId,
+      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SPARK),
+      MetricTags.PROGRAM.getCodeName(), sparkId);
+
+    return getTotalCounterByPrefix(context, metricName);
+  }
+
+  private static long getTotalCounterByPrefix(Map<String, String> context, String metricNameSuffix) throws Exception {
+    CubeQuery query = getTotalCounterQuery(context);
+
+    // todo: allow group by metric name when querying Cube instead
+    String metricName = findMetricName(context, query.getStartTs(), query.getEndTs(),
+                                       query.getResolution(), metricNameSuffix);
+    query = new CubeQuery(query, metricName);
+
+    try {
+      Collection<TimeSeries> result = RuntimeStats.metricStore.query(query);
+      if (result.isEmpty()) {
+        return 0;
+      }
+
+      // since it is totals query and not groupBy specified, we know there's one time series
+      List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+      if (timeValues.isEmpty()) {
+        return 0;
+      }
+
+      // since it is totals, we know there's one value only
+      return timeValues.get(0).getValue();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private static String findMetricName(Map<String, String> context, long startTs, long endTs,
+                                       int resolution, String metricNameSuffix) throws Exception {
+
+    List<TagValue> tagValues = Lists.newArrayList();
+    // note: we know the order is good
+    for (Map.Entry<String, String> tagValue : context.entrySet()) {
+      tagValues.add(new TagValue(tagValue.getKey(), tagValue.getValue()));
+    }
+
+    Collection<String> metricNames =
+      RuntimeStats.metricStore.findMetricNames(
+        new CubeExploreQuery(startTs, endTs, resolution, Integer.MAX_VALUE, tagValues));
+
+    String metricName = null;
+    for (String name : metricNames) {
+      if (name.endsWith(metricNameSuffix)) {
+        metricName = name;
+        break;
+      }
+    }
+    return metricName;
+  }
+
+  private static CubeQuery getTotalCounterQuery(Map<String, String> context) {
+    return new CubeQuery(0, 0, Integer.MAX_VALUE, null, MeasureType.COUNTER, context, new ArrayList<String>());
+  }
+
 }

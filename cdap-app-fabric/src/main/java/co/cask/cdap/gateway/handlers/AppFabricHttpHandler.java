@@ -16,20 +16,13 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.Namespace;
@@ -43,29 +36,21 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.proto.DatasetRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -73,10 +58,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -93,11 +74,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_2) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
-
-  /**
-   * Json serializer.
-   */
-  private static final Gson GSON = new Gson();
 
   /**
    * Configuration object passed from higher up.
@@ -123,21 +99,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
+  private final PreferencesStore preferencesStore;
+  private final ConsoleSettingsStore consoleSettingsStore;
 
   private final QueueAdmin queueAdmin;
-
   private final StreamAdmin streamAdmin;
 
   /**
    * V3 API Handlers
    */
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
-
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final AppFabricStreamHttpHandler appFabricStreamHttpHandler;
 
-  private final PreferencesStore preferencesStore;
-
-  private final ConsoleSettingsStore consoleSettingsStore;
 
   /**
    * Constructs an new instance. Parameters are binded by Guice.
@@ -149,6 +123,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                              AppFabricStreamHttpHandler appFabricStreamHttpHandler,
                               PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
 
     super(authenticator);
@@ -162,6 +137,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
+    this.appFabricStreamHttpHandler = appFabricStreamHttpHandler;
     this.preferencesStore = preferencesStore;
     this.consoleSettingsStore = consoleSettingsStore;
   }
@@ -957,7 +933,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder) {
-    dataList(request, responder, Data.STREAM, null, null);
+    appFabricStreamHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -967,7 +944,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}")
   public void getStreamSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("stream-id") final String streamId) {
-    dataList(request, responder, Data.STREAM, streamId, null);
+    dataList(request, responder, store, dsFramework, Data.STREAM, Constants.DEFAULT_NAMESPACE, streamId, null);
   }
 
   /**
@@ -977,7 +954,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId) {
-    dataList(request, responder, Data.STREAM, null, appId);
+    appFabricStreamHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -986,7 +964,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/datasets")
   public void getDatasets(HttpRequest request, HttpResponder responder) {
-    dataList(request, responder, Data.DATASET, null, null);
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, null);
   }
 
   /**
@@ -996,7 +974,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("dataset-id") final String datasetId) {
-    dataList(request, responder, Data.DATASET, datasetId, null);
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, datasetId, null);
   }
 
   /**
@@ -1006,147 +984,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/datasets")
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("app-id") final String appId) {
-    dataList(request, responder, Data.DATASET, null, appId);
-  }
-
-  private void dataList(HttpRequest request, HttpResponder responder, Data type, String name, String appId) {
-    try {
-      if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided");
-        return;
-      }
-
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program program = Id.Program.from(accountId, appId == null ? "" : appId, "");
-      String json = name != null ? getDataEntity(program, type, name) :
-        appId != null ? listDataEntitiesByApp(program, type) : listDataEntities(program, type);
-      if (json.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private String getDataEntity(Id.Program programId, Data type, String name) {
-    Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
-    if (type == Data.DATASET) {
-      DatasetSpecification dsSpec = getDatasetSpec(name);
-      String typeName = null;
-      if (dsSpec != null) {
-        typeName = dsSpec.getType();
-      }
-      return GSON.toJson(makeDataSetRecord(name, typeName));
-    } else if (type == Data.STREAM) {
-      StreamSpecification spec = store.getStream(namespace, name);
-      return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
-    }
-    return "";
-  }
-
-  private String listDataEntities(Id.Program programId, Data type) throws Exception {
-    if (type == Data.DATASET) {
-      Collection<DatasetSpecification> instances = dsFramework.getInstances();
-      List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
-      for (DatasetSpecification instance : instances) {
-        result.add(makeDataSetRecord(instance.getName(), instance.getType()));
-      }
-      return GSON.toJson(result);
-    } else if (type == Data.STREAM) {
-      Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
-      List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
-      for (StreamSpecification spec : specs) {
-        result.add(makeStreamRecord(spec.getName(), null));
-      }
-      return GSON.toJson(result);
-    }
-    return "";
-
-  }
-
-  private String listDataEntitiesByApp(Id.Program programId, Data type) throws Exception {
-    Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
-    ApplicationSpecification appSpec = store.getApplication(new Id.Application(
-      namespace, programId.getApplicationId()));
-    if (type == Data.DATASET) {
-      Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
-      List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
-      for (String dsName : dataSetsUsed) {
-        String typeName = null;
-        DatasetSpecification dsSpec = getDatasetSpec(dsName);
-        if (dsSpec != null) {
-          typeName = dsSpec.getType();
-        }
-        result.add(makeDataSetRecord(dsName, typeName));
-      }
-      return GSON.toJson(result);
-    }
-    if (type == Data.STREAM) {
-      Set<String> streamsUsed = streamsUsedBy(appSpec);
-      List<StreamRecord> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
-      for (String streamName : streamsUsed) {
-        result.add(makeStreamRecord(streamName, null));
-      }
-      return GSON.toJson(result);
-    }
-    return "";
-  }
-
-  @Nullable
-  private DatasetSpecification getDatasetSpec(String dsName) {
-    try {
-      return dsFramework.getDatasetSpec(dsName);
-    } catch (Exception e) {
-      LOG.warn("Couldn't get spec for dataset: " + dsName);
-      return null;
-    }
-  }
-
-  private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
-      result.addAll(flowlet.getDatasets());
-    }
-    return result;
-  }
-
-  private Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      result.addAll(dataSetsUsedBy(flowSpec));
-    }
-    for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
-      result.addAll(procSpec.getDataSets());
-    }
-    for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
-      result.addAll(mrSpec.getDataSets());
-    }
-    return result;
-  }
-
-  private Set<String> streamsUsedBy(FlowSpecification flowSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowletConnection con : flowSpec.getConnections()) {
-      if (FlowletConnection.Type.STREAM == con.getSourceType()) {
-        result.add(con.getSourceName());
-      }
-    }
-    return result;
-  }
-
-  private Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      result.addAll(streamsUsedBy(flowSpec));
-    }
-    result.addAll(appSpec.getStreams().keySet());
-    return result;
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, appId);
   }
 
   /**
@@ -1156,7 +994,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("stream-id") final String streamId) {
-    programListByDataAccess(request, responder, ProgramType.FLOW, Data.STREAM, streamId);
+    appFabricStreamHttpHandler.getFlowsByStream(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                Constants.DEFAULT_NAMESPACE, streamId);
   }
 
   /**
@@ -1166,105 +1005,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                 @PathParam("dataset-id") final String datasetId) {
-    programListByDataAccess(request, responder, ProgramType.FLOW, Data.DATASET, datasetId);
-  }
-
-  private void programListByDataAccess(HttpRequest request, HttpResponder responder,
-                                       ProgramType type, Data data, String name) {
-    try {
-      if (name.isEmpty()) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, data.prettyName().toLowerCase() + " name is empty");
-        return;
-      }
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, "", "");
-      List<ProgramRecord> programRecords = listProgramsByDataAccess(programId, type, data, name);
-      if (programRecords == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, programRecords);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * @return list of program records, an empty list if no programs were found, or null if the stream or
-   * dataset does not exist
-   */
-  private List<ProgramRecord> listProgramsByDataAccess(Id.Program programId, ProgramType type,
-                                                       Data data, String name) throws Exception {
-    // search all apps for programs that use this
-    List<ProgramRecord> result = Lists.newArrayList();
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
-      new Id.Namespace(programId.getNamespaceId()));
-    if (appSpecs != null) {
-      for (ApplicationSpecification appSpec : appSpecs) {
-        if (type == ProgramType.FLOW) {
-          for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-            if ((data == Data.DATASET && usesDataSet(flowSpec, name))
-              || (data == Data.STREAM && usesStream(flowSpec, name))) {
-              result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
-            }
-          }
-        } else if (type == ProgramType.PROCEDURE) {
-          for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-            if (data == Data.DATASET && procedureSpec.getDataSets().contains(name)) {
-              result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
-            }
-          }
-        } else if (type == ProgramType.MAPREDUCE) {
-          for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
-            if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
-              result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
-            }
-          }
-        }
-      }
-    }
-    if (!result.isEmpty()) {
-      return result;
-    }
-    // if no programs were found, check whether the data exists, return [] if yes, null if not
-    boolean exists = false;
-    if (data == Data.DATASET) {
-      exists = dsFramework.hasInstance(name);
-    } else if (data == Data.STREAM) {
-      exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
-    }
-    return exists ? result : null;
-  }
-
-  private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
-    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
-      if (flowlet.getDatasets().contains(dataset)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean usesStream(FlowSpecification flowSpec, String stream) {
-    for (FlowletConnection con : flowSpec.getConnections()) {
-      if (FlowletConnection.Type.STREAM == con.getSourceType() && stream.equals(con.getSourceName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-   /* -----------------  helpers to return Json consistently -------------- */
-
-  private static DatasetRecord makeDataSetRecord(String name, String classname) {
-    return new DatasetRecord("Dataset", name, name, classname);
-  }
-
-  private static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
-    return new StreamRecord("Stream", name, name, GSON.toJson(specification));
+    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
+                            Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**
@@ -1303,7 +1045,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove all data in consolesettings
       consoleSettingsStore.delete();
 
-      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllInstances(namespaceId);
       dsFramework.deleteAllModules();
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
@@ -1356,7 +1098,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       LOG.info("Deleting all datasets for account '" + account + "'.");
 
-      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllInstances(namespaceId);
 
       LOG.info("All datasets for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

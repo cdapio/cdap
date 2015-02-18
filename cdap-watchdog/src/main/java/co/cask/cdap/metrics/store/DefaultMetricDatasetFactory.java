@@ -16,11 +16,10 @@
 
 package co.cask.cdap.metrics.store;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -32,6 +31,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -65,8 +65,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       @Override
       public EntityTable get() {
         String tableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                     // todo: remove + ".v2"
-                                     MetricsConstants.DEFAULT_ENTITY_TABLE_NAME) + ".v2";
+                                     MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
         return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
       }
     });
@@ -76,8 +75,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   @Override
   public FactTable get(int resolution) {
     String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                 // todo: remove + ".v2"
-                                 MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".v2" + ".ts." + resolution;
+                                 MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     DatasetProperties props = ttl > 0 ?
@@ -104,9 +102,11 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
 
     MetricsTable table = null;
+    // metrics tables are in the system namespace
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
     while (table == null) {
       try {
-        table = DatasetsUtil.getOrCreateDataset(dsFramework, tableName,
+        table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                                 MetricsTable.class.getName(), props, null, null);
       } catch (DatasetManagementException e) {
         // dataset service may be not up yet
@@ -127,23 +127,26 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return table;
   }
 
-  @Override
-  public void upgrade() throws Exception {
-    // todo: remove + ".v2"
-    String metricsPrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".v2";
-    for (DatasetSpecification spec : dsFramework.getInstances()) {
-      String dsName = spec.getName();
-      if (dsName.contains(metricsPrefix + ".ts.")) {
-        DatasetAdmin admin = dsFramework.getAdmin(dsName, null);
-        if (admin != null) {
-          admin.upgrade();
-        } else {
-          LOG.error("Could not obtain admin to upgrade metrics table: " + dsName);
-          // continue to best effort
-        }
-      }
-    }
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by metrics system.
+   * <p/>
+   * It is primarily used by upgrade tool.
+   *
+   * @param datasetFramework framework to add types and datasets to
+   */
+  public static void setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
+    throws IOException, DatasetManagementException {
+
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+
+    // adding all fact tables
+    factory.get(1);
+    factory.get(60);
+    factory.get(3600);
+    factory.get(Integer.MAX_VALUE);
+
+    // adding kafka consumer meta
+    factory.createKafkaConsumerMeta();
   }
 
   private int getRollTime(int resolution) {

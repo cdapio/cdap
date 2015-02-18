@@ -16,10 +16,10 @@
 
 package co.cask.cdap.metrics.store;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeFact;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
@@ -76,13 +76,13 @@ public class DefaultMetricStore implements MetricStore {
     // NOTE: to reduce number of aggregations we rename some of the emitted tags to "canonical" names
     this.tagMapping = ImmutableMap.of(
       // flow
-      MetricTags.FLOWLET.getCodeName(), PROGRAM_LEVEL2,
-      MetricTags.FLOWLET_QUEUE.getCodeName(), PROGRAM_LEVEL3,
+      MetricTags.FLOWLET.name(), PROGRAM_LEVEL2,
+      MetricTags.FLOWLET_QUEUE.name(), PROGRAM_LEVEL3,
       // mapreduce
-      MetricTags.MR_TASK_TYPE.getCodeName(), PROGRAM_LEVEL2,
-      MetricTags.INSTANCE_ID.getCodeName(), PROGRAM_LEVEL3,
+      MetricTags.MR_TASK_TYPE.name(), PROGRAM_LEVEL2,
+      MetricTags.INSTANCE_ID.name(), PROGRAM_LEVEL3,
       // service
-      MetricTags.SERVICE_RUNNABLE.getCodeName(), PROGRAM_LEVEL2
+      MetricTags.SERVICE_RUNNABLE.name(), PROGRAM_LEVEL2
     );
   }
 
@@ -124,7 +124,8 @@ public class DefaultMetricStore implements MetricStore {
     aggs.add(new DefaultAggregation(ImmutableList.of(MetricTags.NAMESPACE.getCodeName(),
                                                      MetricTags.DATASET.getCodeName()),
                                     // i.e. for datasets only
-                                    ImmutableList.of(MetricTags.DATASET.getCodeName())));
+                                    ImmutableList.of(MetricTags.NAMESPACE.getCodeName(),
+                                                     MetricTags.DATASET.getCodeName())));
 
     return aggs;
   }
@@ -162,8 +163,19 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void deleteBefore(long timestamp) {
-    // todo: implement metric ttl
+  public void deleteBefore(long timestamp) throws Exception {
+    // delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
+    // note: We are using 1 as start ts, so that we do not delete data from "totals". This method is applied in
+    //       in-memory and standalone modes, so it is fine to keep totals in these cases during TTL
+    //       todo: Cube and FactTable must use resolution when applying time range conditions
+    CubeDeleteQuery query = new CubeDeleteQuery(1, timestamp, null, Maps.<String, String>newHashMap());
+    cube.get().delete(query);
+  }
+
+  @Override
+  public void delete(CubeDeleteQuery query) throws Exception {
+    CubeDeleteQuery transformedQuery = new CubeDeleteQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
+    cube.get().delete(transformedQuery);
   }
 
   private void replaceTagValuesIfNeeded(List<TagValue> tagValues) {

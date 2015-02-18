@@ -78,7 +78,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     context.setOutput("converted", partitionedFileSet);
 
     LOG.info("Output location for new partition is: {}",
-             partitionedFileSet.getUnderlyingFileSet().getOutputLocation().toURI().toString());
+             partitionedFileSet.getEmbeddedFileSet().getOutputLocation().toURI().toString());
   }
 
   @Override
@@ -86,7 +86,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     if (succeeded) {
       // TODO this should be done by the output committer (CDAP-1227)
       TimePartitionedFileSet converted = context.getDataset("converted", dsArguments);
-      String outputPath = FileSetArguments.getOutputPath(converted.getUnderlyingFileSet().getRuntimeArguments());
+      String outputPath = FileSetArguments.getOutputPath(converted.getEmbeddedFileSet().getRuntimeArguments());
       Long partitionTime = context.getLogicalStartTime();
 
       LOG.info("Adding partition for time {} with path {} to dataset '{}'", partitionTime, outputPath, "converted");

@@ -38,12 +38,10 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
-  private final CLIConfig cliConfig;
 
   @Inject
   public CreateAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
-    this.cliConfig = cliConfig;
     this.adapterClient = adapterClient;
   }
 
@@ -65,7 +63,7 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
     adapterConfig.sink = new AdapterConfig.Sink(
       arguments.get(ArgumentName.ADAPTER_SINK.toString()), sinkProps);
 
-    adapterClient.create(cliConfig.getCurrentNamespace(), adapterName, adapterConfig);
+    adapterClient.create(adapterName, adapterConfig);
     output.printf("Successfully created adapter named '%s' with config '%s'\n",
                   adapterName, GSON.toJson(adapterConfig));
   }

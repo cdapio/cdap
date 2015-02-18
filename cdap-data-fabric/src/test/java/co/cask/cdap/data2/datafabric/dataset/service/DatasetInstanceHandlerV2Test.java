@@ -22,10 +22,12 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.ObjectResponse;
@@ -163,8 +165,11 @@ public class DatasetInstanceHandlerV2Test extends DatasetServiceTestBase {
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
-    final Table table1 = dsFramework.getDataset("myTable1", DatasetDefinition.NO_ARGUMENTS, null);
-    final Table table2 = dsFramework.getDataset("myTable2", DatasetDefinition.NO_ARGUMENTS, null);
+    // using default namespace here since this is testing v2 APIs right now. TODO: add tests for v3 APIs
+    final Table table1 = dsFramework.getDataset(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, "myTable1"),
+                                                DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table2 = dsFramework.getDataset(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, "myTable2"),
+                                                DatasetDefinition.NO_ARGUMENTS, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));

@@ -25,6 +25,7 @@ import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.api.security.Principal;
 import co.cask.cdap.api.security.PrincipalType;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,12 +36,14 @@ import java.util.List;
  */
 public class ACLTableDatasetTest extends AbstractDatasetTest {
 
+  private static final Id.DatasetModule aclTableModule = Id.DatasetModule.from(NAMESPACE_ID, "aclTableModule");
+
   @Test
   public void testBasics() throws Exception {
-    addModule("aclTableModule", new ACLTableModule());
-
-    createInstance(ACLTable.class.getName(), "myAclTable", DatasetProperties.EMPTY);
-    ACLTable myAclTable = getInstance("myAclTable");
+    addModule(aclTableModule, new ACLTableModule());
+    Id.DatasetInstance myAclTableInstance = Id.DatasetInstance.from(NAMESPACE_ID, "myAclTable");
+    createInstance(ACLTable.class.getName(), myAclTableInstance, DatasetProperties.EMPTY);
+    ACLTable myAclTable = getInstance(myAclTableInstance);
 
     final Principal bobUser = new Principal(PrincipalType.USER, "bob");
     final Principal bobGroup = new Principal(PrincipalType.GROUP, "bobs-only");
@@ -81,7 +84,7 @@ public class ACLTableDatasetTest extends AbstractDatasetTest {
     Assert.assertEquals(1, actualBobsAcl.getPermissions().size());
     Assert.assertTrue(actualBobsAcl.getPermissions().contains(PermissionType.WRITE));
 
-    deleteModule("aclTableModule");
+    deleteModule(aclTableModule);
   }
 
 }

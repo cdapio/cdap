@@ -28,6 +28,7 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -59,17 +60,22 @@ public class DatasetInstantiator implements DatasetContext {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final MetricsCollector metricsCollector;
+  private final Id.Namespace namespaceId;
 
   /**
    * Constructor from data fabric.
+   *
+   * @param namespaceId the {@link Id.Namespace} in which this dataset exists
    * @param classLoader the class loader to use for loading data set classes.
    *                    If null, then the default class loader is used
    */
-  public DatasetInstantiator(DatasetFramework datasetFramework,
+  public DatasetInstantiator(Id.Namespace namespaceId,
+                             DatasetFramework datasetFramework,
                              CConfiguration configuration,
                              ClassLoader classLoader,
                              @Nullable
                              MetricsCollector metricsCollector) {
+    this.namespaceId = namespaceId;
     this.classLoader = classLoader;
     this.metricsCollector = metricsCollector;
     // todo: should be passed in already namespaced. Refactor
@@ -91,11 +97,11 @@ public class DatasetInstantiator implements DatasetContext {
 
     T dataset;
     try {
-      if (!datasetFramework.hasInstance(name)) {
+      if (!datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, name))) {
         throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + name);
       }
 
-      dataset = datasetFramework.getDataset(name, arguments, classLoader);
+      dataset = datasetFramework.getDataset(Id.DatasetInstance.from(namespaceId, name), arguments, classLoader);
       if (dataset == null) {
         throw new DatasetInstantiationException("Failed to access dataset: " + name);
       }

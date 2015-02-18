@@ -23,11 +23,11 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Map;
@@ -108,23 +108,25 @@ public interface ApplicationConfigurer {
   void addFlow(Flow flow);
 
   /**
-   * Adds a {@link Procedure} to the Application with a single instance.
+   * Adds a {@link co.cask.cdap.api.procedure.Procedure} to the Application with a single instance.
    *
-   * @param procedure The {@link Procedure} to include in the Application
+   * @param procedure The {@link co.cask.cdap.api.procedure.Procedure} to include in the Application
    * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  void addProcedure(Procedure procedure);
+  @SuppressWarnings("deprecation")
+  void addProcedure(co.cask.cdap.api.procedure.Procedure procedure);
 
   /**
-   * Adds a {@link Procedure} to the Application with a number of instances.
+   * Adds a {@link co.cask.cdap.api.procedure.Procedure} to the Application with a number of instances.
    *
-   * @param procedure The {@link Procedure} to include in the Application
+   * @param procedure The {@link co.cask.cdap.api.procedure.Procedure} to include in the Application
    * @param instances Number of instances to be included
    * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  void addProcedure(Procedure procedure, int instances);
+  @SuppressWarnings("deprecation")
+  void addProcedure(co.cask.cdap.api.procedure.Procedure procedure, int instances);
 
   /**
    * Adds a {@link MapReduce MapReduce job} to the Application. Use it when you need to re-use existing MapReduce jobs
@@ -154,6 +156,13 @@ public interface ApplicationConfigurer {
    * @param service The service to include in the Application
    */
   void addService(Service service);
+
+  /**
+   * Adds a {@link Worker} to the Application.
+   *
+   * @param worker The worker to include in the Application
+   */
+  void addWorker(Worker worker);
 
   /**
    * Adds a {@link Schedule} to the specified program in the Application

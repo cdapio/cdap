@@ -48,8 +48,8 @@ public final class RuntimeStats {
   private RuntimeStats() {
   }
 
-  public static void resetAll() {
-    metricStore.deleteBefore(System.currentTimeMillis());
+  public static void resetAll() throws Exception {
+    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
@@ -83,17 +83,6 @@ public final class RuntimeStats {
 
     return getMetrics(
       context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
-  }
-
-  // todo: Why is it different from others? Have we reviewed this API?
-  public static long getSparkMetrics(String applicationId, String sparkId, String metricName) {
-    Map<String, String> context = ImmutableMap.of(
-      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
-      MetricTags.APP.getCodeName(), applicationId,
-      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SPARK),
-      MetricTags.PROGRAM.getCodeName(), sparkId);
-
-    return getTotalCounter(context, metricName);
   }
 
   private static RuntimeMetrics getMetrics(final Map<String, String> context,

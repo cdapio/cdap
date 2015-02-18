@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -46,11 +47,10 @@ import javax.ws.rs.PathParam;
 /**
  * Provides REST endpoints for {@link DatasetAdmin} operations.
  */
-@Path(Constants.Gateway.API_VERSION_2)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);
-
   private static final Gson GSON = new Gson();
 
   private final RemoteDatasetFramework dsFramework;
@@ -63,24 +63,28 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/exists")
-  public void exists(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
+  public void exists(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
+                     @PathParam("name") String instanceName) {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
-      DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
+      DatasetAdmin datasetAdmin = getDatasetAdmin(Id.DatasetInstance.from(namespace, instanceName));
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(datasetAdmin.exists(), null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
+      responder.sendString(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Exception e) {
       LOG.error(getAdminOpErrorMessage("exists", instanceName), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("exists", instanceName));
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("exists", instanceName));
     }
   }
 
   @POST
   @Path("/data/datasets/{name}/admin/create")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("name") String name)
-  throws Exception {
-
+  public void create(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
+                     @PathParam("name") String name) throws Exception {
+    // TODO: Use namespaceId here
     InternalDatasetCreationParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
@@ -95,7 +99,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     if (type == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
       LOG.error(msg);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, msg);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, msg);
       return;
     }
 
@@ -107,8 +111,9 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/drop")
-  public void drop(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName)
-    throws Exception {
+  public void drop(HttpRequest request, HttpResponder responder,
+                   @PathParam("namespace-id") String namespaceId,
+                   @PathParam("name") String instanceName) throws Exception {
 
     InternalDatasetDropParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                      InternalDatasetDropParams.class);
@@ -124,7 +129,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     if (type == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
       LOG.error(msg);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, msg);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, msg);
       return;
     }
 
@@ -135,33 +140,39 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   @POST
   @Path("/data/datasets/{name}/admin/truncate")
-  public void truncate(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
+  public void truncate(HttpRequest request, HttpResponder responder,
+                       @PathParam("namespace-id") String namespaceId,
+                       @PathParam("name") String instanceName) {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
-      DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
+      DatasetAdmin datasetAdmin = getDatasetAdmin(Id.DatasetInstance.from(namespace, instanceName));
       datasetAdmin.truncate();
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
+      responder.sendString(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Exception e) {
       LOG.error(getAdminOpErrorMessage("truncate", instanceName), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("truncate", instanceName));
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("truncate", instanceName));
     }
   }
 
   @POST
   @Path("/data/datasets/{name}/admin/upgrade")
-  public void upgrade(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
+  public void upgrade(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("name") String instanceName) {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
-      DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
+      DatasetAdmin datasetAdmin = getDatasetAdmin(Id.DatasetInstance.from(namespace, instanceName));
       datasetAdmin.upgrade();
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
+      responder.sendString(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Exception e) {
       LOG.error(getAdminOpErrorMessage("upgrade", instanceName), e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("upgrade", instanceName));
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("upgrade", instanceName));
     }
   }
 
@@ -169,11 +180,12 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     return String.format("Error executing admin operation %s for dataset instance %s", opName, instanceName);
   }
 
-  private DatasetAdmin getDatasetAdmin(String instanceName) throws IOException, DatasetManagementException {
-    DatasetAdmin admin = dsFramework.getAdmin(instanceName, null);
+  private DatasetAdmin getDatasetAdmin(Id.DatasetInstance datasetInstanceId)
+    throws IOException, DatasetManagementException {
+    DatasetAdmin admin = dsFramework.getAdmin(datasetInstanceId, null);
     if (admin == null) {
       throw new HandlerException(HttpResponseStatus.NOT_FOUND,
-                                 "Couldn't obtain DatasetAdmin for dataset instance " + instanceName);
+                                 "Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
     }
     return admin;
   }

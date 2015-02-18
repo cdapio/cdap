@@ -38,6 +38,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -164,8 +165,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(context, datasetFramework, getProgram().getClassLoader(),
-                                             datasets, runtimeArgs) {
+      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), context, datasetFramework,
+                                             getProgram().getClassLoader(), datasets, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
           return datasetsCache;

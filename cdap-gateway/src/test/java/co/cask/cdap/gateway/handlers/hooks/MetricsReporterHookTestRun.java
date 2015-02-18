@@ -62,7 +62,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String path = "/system/services/stream.handler/handlers/StreamHandler/methods/getInfo";
+    String path = "/system/services/stream.handler/handlers/StreamHandlerV2/methods/getInfo";
 
     long received = getMetricValue(path, "request.received");
     long successful = getMetricValue(path, "response.successful");

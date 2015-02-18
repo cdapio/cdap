@@ -35,6 +35,7 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.StandaloneLogReader;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.commons.io.FileUtils;
@@ -62,11 +63,12 @@ public class TestFileLogging {
 
   private static DatasetFramework dsFramework;
   private static InMemoryTxSystemClient txClient;
+  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void setUpContext() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "table"), new InMemoryOrderedTableModule());
 
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();

@@ -350,7 +350,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (queueName.isQueue()) {
       queueAdmin.configureGroups(queueName, groupInfo);
     } else {
-      streamAdmin.configureGroups(queueName, groupInfo);
+      streamAdmin.configureGroups(queueName.toStreamId(), groupInfo);
     }
   }
 }

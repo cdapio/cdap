@@ -21,6 +21,7 @@ import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.Interpolator;
 import co.cask.cdap.metrics.data.Interpolators;
+import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Splitter;
@@ -140,17 +141,26 @@ final class MetricQueryParser {
     return path.substring(startPos, path.length());
   }
 
+  static CubeDeleteQuery parseDelete(URI requestURI, String metricPrefix) throws MetricsPathException {
+    CubeQueryBuilder builder = new CubeQueryBuilder();
+    parseContext(requestURI.getPath(), builder);
+    builder.setStartTs(0);
+    builder.setEndTs(Integer.MAX_VALUE - 1);
+    builder.setMetricName(metricPrefix);
+
+    CubeQuery query = builder.build();
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMeasureName(), query.getSliceByTags());
+  }
+
   static CubeQuery parse(URI requestURI) throws MetricsPathException {
     CubeQueryBuilder builder = new CubeQueryBuilder();
     // metric will be at the end.
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
     builder.setMetricName(urlDecode(uriPath.substring(index + 1)));
-    String strippedPath = null;
     // strip the metric from the end of the path
     if (index != -1) {
-      strippedPath = uriPath.substring(0, index);
-
+      String strippedPath = uriPath.substring(0, index);
       if (strippedPath.startsWith("/system/cluster")) {
         builder.setSliceByTagValues(ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
                                                     MetricTags.CLUSTER_METRICS.getCodeName(), "true"));
@@ -386,8 +396,6 @@ final class MetricQueryParser {
       } else {
         return;
       }
-    } else {
-      tagValues.put(MetricTags.DATASET.getCodeName(), null);
     }
     if (!nextPath.equals(componentType)) {
       String exception = String.format("Expecting '%s' after the %s name ", componentType,
@@ -528,8 +536,7 @@ final class MetricQueryParser {
         interpolator = new Interpolators.Linear(timeLimit);
       }
     }
-    // todo: support interpolator in CubeQuery
-//    builder.setInterpolator(interpolator);
+    builder.setInterpolator(interpolator);
   }
 
   static class CubeQueryBuilder {
@@ -541,6 +548,7 @@ final class MetricQueryParser {
     // todo: should be aggregation? e.g. also support min/max, etc.
     private Map<String, String> sliceByTagValues;
     private int limit;
+    private Interpolator interpolator;
 
     public void setStartTs(long startTs) {
       this.startTs = startTs;
@@ -573,7 +581,11 @@ final class MetricQueryParser {
     public CubeQuery build() {
       String measureName = (metricName != null && scope != null) ? scope + "." + metricName : null;
       return new CubeQuery(startTs, endTs, resolution, limit, measureName, MeasureType.COUNTER,
-                           sliceByTagValues, new ArrayList<String>());
+                           sliceByTagValues, new ArrayList<String>(), interpolator);
+    }
+
+    public void setInterpolator(Interpolator interpolator) {
+      this.interpolator = interpolator;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,26 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.data;
+
+package co.cask.cdap.gateway.handlers;
+
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
- * Class to represent a timestamp in seconds and an int value.
+ * Tests v2 stream endpoints
  */
-public final class TimeValue {
-
-  private final long time;
-  private final long value;
-
-  public TimeValue(long time, long value) {
-    this.time = time;
-    this.value = value;
-  }
-
-  public long getTime() {
-    return time;
-  }
-
-  public long getValue() {
-    return value;
+public class StreamHandlerTestV2 extends StreamHandlerTest {
+  @Override
+  protected URL constructPath(String path) throws URISyntaxException, MalformedURLException {
+    return getEndPoint(String.format("/v2/%s", path)).toURL();
   }
 }

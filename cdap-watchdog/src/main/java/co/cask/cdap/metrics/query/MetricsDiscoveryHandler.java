@@ -52,7 +52,7 @@ import javax.ws.rs.QueryParam;
  * Class for handling requests for aggregate application metrics.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
-//todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
+// todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
 public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
@@ -205,6 +205,10 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         for (Map.Entry<String, String> tag : tagValues.entrySet()) {
           tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
         }
+        if (tagsList.size() > 3) {
+          // todo : adding null for runId,should we support searching with runId ?
+          tagsList.add(4, new TagValue(MetricTags.RUN_ID.getCodeName(), null));
+        }
         List<List<TagValue>> resultSet = Lists.newArrayList();
         getAllPossibleTags(tagsList, resultSet);
         for (List<TagValue> tagValueList : resultSet) {
@@ -216,10 +220,10 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
     } catch (Exception e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
       return;
     }
 

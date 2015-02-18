@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
@@ -96,27 +97,34 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       // sets time range, query type, etc.
       MetricQueryParser.CubeQueryBuilder builder = new MetricQueryParser.CubeQueryBuilder();
       MetricQueryParser.parseQueryString(new URI(request.getUri()), builder);
+      builder.setSliceByTagValues(Maps.<String, String>newHashMap());
       CubeQuery queryTimeParams = builder.build();
 
       // todo: what if context is null?
       String[] tagValues = context.split("\\.");
       // todo: validate even number of parts?
-  
+
       Map<String, String> tagsSliceBy = Maps.newHashMap();
       for (int i = 0; i < tagValues.length - 1; i += 2) {
-        tagsSliceBy.put(tagValues[i], tagValues[i + 1]);
+        MetricTags tagKey = MetricTags.valueOf(tagValues[i]);
+        if (tagKey == null) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                               String.format("Invalid context part %s in %s", tagValues[i], context));
+          return;
+        }
+        tagsSliceBy.put(tagKey.getCodeName(), tagValues[i + 1]);
       }
-  
+
       CubeQuery query = new CubeQuery(queryTimeParams.getStartTs(), queryTimeParams.getEndTs(),
                                       queryTimeParams.getResolution(), metric,
                                           // todo: figure out MeasureType
                                       MeasureType.COUNTER, tagsSliceBy, new ArrayList<String>());
-  
+
       Collection<TimeSeries> result = metricStore.query(query);
       responder.sendJson(HttpResponseStatus.OK, result);
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     }
   }
 
