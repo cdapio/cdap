@@ -80,6 +80,6 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates a %s.", ElementType.ADAPTER.getPrettyName());
+    return String.format("Creates an %s.", ElementType.ADAPTER.getPrettyName());
   }
 }
