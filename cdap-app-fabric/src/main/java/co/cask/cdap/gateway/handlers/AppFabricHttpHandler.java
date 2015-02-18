@@ -1046,7 +1046,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       consoleSettingsStore.delete();
 
       dsFramework.deleteAllInstances(namespaceId);
-      dsFramework.deleteAllModules();
+      dsFramework.deleteAllModules(namespaceId);
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);

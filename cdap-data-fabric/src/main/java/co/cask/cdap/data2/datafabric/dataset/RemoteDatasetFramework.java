@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
@@ -36,6 +37,9 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
@@ -63,16 +67,20 @@ import javax.annotation.Nullable;
 public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
-  private final DatasetServiceClient client;
+  private final LoadingCache<Id.Namespace, DatasetServiceClient> clientCache;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final DatasetTypeClassLoaderFactory typeLoader;
 
   @Inject
-  public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
+  public RemoteDatasetFramework(final DiscoveryServiceClient discoveryClient,
                                 DatasetDefinitionRegistryFactory registryFactory,
                                 DatasetTypeClassLoaderFactory typeLoader) {
-
-    this.client = new DatasetServiceClient(discoveryClient);
+    this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Namespace, DatasetServiceClient>() {
+      @Override
+      public DatasetServiceClient load(Id.Namespace namespace) throws Exception {
+        return new DatasetServiceClient(discoveryClient, namespace);
+      }
+    });
     this.registryFactory = registryFactory;
     this.typeLoader = typeLoader;
   }
@@ -101,51 +109,55 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
-    client.deleteModule(moduleId.getId());
+    clientCache.getUnchecked(moduleId.getNamespace()).deleteModule(moduleId.getId());
   }
 
   @Override
-  public void deleteAllModules() throws DatasetManagementException {
-    client.deleteModules();
+  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).deleteModules();
   }
 
   @Override
   public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-    client.addInstance(datasetInstanceId.getId(), datasetType, props);
+    clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .addInstance(datasetInstanceId.getId(), datasetType, props);
   }
 
   @Override
   public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-    client.updateInstance(datasetInstanceId.getId(), props);
+    clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .updateInstance(datasetInstanceId.getId(), props);
   }
 
   @Override
   public Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
-    return client.getAllInstances();
+    return clientCache.getUnchecked(namespaceId).getAllInstances();
   }
 
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    DatasetMeta meta = client.getInstance(datasetInstanceId.getId());
+    DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId());
     return meta == null ? null : meta.getSpec();
   }
 
   @Override
   public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return client.getInstance(datasetInstanceId.getId()) != null;
+    return clientCache.getUnchecked(datasetInstanceId.getNamespace()).getInstance(datasetInstanceId.getId()) != null;
   }
 
   @Override
   public boolean hasType(String typeName) throws DatasetManagementException {
-    return client.getType(typeName) != null;
+    // hasType is really hasDefaultType, so using system namespace
+    return clientCache.getUnchecked(Id.Namespace.from(Constants.SYSTEM_NAMESPACE)).getType(typeName) != null;
   }
 
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    client.deleteInstance(datasetInstanceId.getId());
+    clientCache.getUnchecked(datasetInstanceId.getNamespace()).deleteInstance(datasetInstanceId.getId());
   }
 
   @Override
@@ -160,7 +172,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-    DatasetMeta instanceInfo = client.getInstance(datasetInstanceId.getId());
+    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
       return null;
     }
@@ -172,7 +185,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
                                           ClassLoader classLoader) throws DatasetManagementException, IOException {
-    DatasetMeta instanceInfo = client.getInstance(datasetInstanceId.getId());
+    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
       return null;
     }
@@ -186,7 +200,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
-        client.addModule(moduleId.getId(), typeClass.getName(), tempJarPath);
+        clientCache.getUnchecked(moduleId.getNamespace()).addModule(moduleId.getId(), typeClass.getName(), tempJarPath);
       } finally {
         tempFile.delete();
       }
