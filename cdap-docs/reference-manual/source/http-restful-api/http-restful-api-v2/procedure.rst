@@ -11,7 +11,7 @@ Procedure HTTP RESTful API
 
 .. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
 
-.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
+.. include:: ../../../../_common/_include/include-v260-deprecate-procedures.rst
 
 .. highlight:: console
 

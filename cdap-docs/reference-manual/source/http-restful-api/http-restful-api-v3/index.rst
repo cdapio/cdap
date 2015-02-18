@@ -6,7 +6,6 @@
 :hide-toc: true
 
 .. _http-restful-api-v3:
-.. _restful-api:
 
 ===========================================================
 CDAP HTTP RESTful API v3

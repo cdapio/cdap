@@ -336,3 +336,7 @@ img.bordered-image {
     display: inline-block; 
     margin-top: 20px; 
 }
+
+.toctree-l3.current {
+  margin-right: -20px;
+}
