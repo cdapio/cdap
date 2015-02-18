@@ -146,8 +146,7 @@ public class DistributedStreamService extends AbstractStreamService {
     createHeartbeatsFeed();
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
-    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), 
-                                                                   new StreamsLeaderHandler());
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), new StreamsLeaderHandler());
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
       public void leaderOf(Set<Id.Stream> streamIds) {
@@ -379,10 +378,10 @@ public class DistributedStreamService extends AbstractStreamService {
       @Override
       public void leader() {
         while (true) {
+          LOG.info("Became Stream handler leader. Starting resource coordinator.");
+          heartbeatsSubscriptionExecutor = Executors.newSingleThreadExecutor(
+            Threads.createDaemonThreadFactory("heartbeats-subscription-executor"));
           try {
-            LOG.info("Became Stream handler leader. Starting resource coordinator.");
-            heartbeatsSubscriptionExecutor = Executors.newSingleThreadExecutor(
-              Threads.createDaemonThreadFactory("heartbeats-subscription-executor"));
             heartbeatsSubscription = subscribeToHeartbeatsFeed();
             resourceCoordinator = new ResourceCoordinator(getCoordinatorZKClient(), discoveryServiceClient,
                                                           new BalancedAssignmentStrategy());
@@ -391,12 +390,10 @@ public class DistributedStreamService extends AbstractStreamService {
             break;
           } catch (NotificationFeedNotFoundException e) {
             LOG.error("Internal stream heartbeats feed should exist", e);
-            heartbeatsSubscriptionExecutor.shutdownNow();
             Throwables.propagate(e);
           } catch (NotificationFeedException e) {
             // Most probably, the dataset service is not up. We retry
             LOG.warn("Could not subscribe to heartbeats feed", e);
-            heartbeatsSubscriptionExecutor.shutdownNow();
           }
         }
       }
@@ -553,8 +550,7 @@ public class DistributedStreamService extends AbstractStreamService {
       this.cancellable = cancellable;
       this.isInit = true;
       this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(streamId.getNamespaceId())
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
+        .setNamespaceId(streamId.getNamespaceId()).setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(String.format("%sSize", streamId.getName()))
         .build();
     }
