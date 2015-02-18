@@ -29,7 +29,7 @@ import java.util.List;
 public final class MDSKey {
   private final byte[] key;
 
-  MDSKey(byte[] key) {
+  private MDSKey(byte[] key) {
     this.key = key;
   }
 
@@ -84,14 +84,14 @@ public final class MDSKey {
       this.key = start.getKey();
     }
 
+    // Encodes parts of the key with segments of <length> <value>
     public Builder add(byte[] part) {
-      key = Bytes.add(key, part);
+      key = Bytes.add(key, Bytes.toBytes(part.length), part);
       return this;
     }
 
     public Builder add(String part) {
-      byte[] b = Bytes.toBytes(part);
-      key = Bytes.add(key, Bytes.toBytes(b.length), b);
+      add(Bytes.toBytes(part));
       return this;
     }
 

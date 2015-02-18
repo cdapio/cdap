@@ -27,19 +27,48 @@ import java.util.List;
 public class MDSKeyTest {
 
   @Test
-  public void testKeyBuildSplit() {
+  public void simpleStringKeySplit() {
+    // Tests key: [ "part1", "part2", "part3" ]
     List<String> originalKeyParts = ImmutableList.of("part1", "part2", "part3");
     MDSKey.Builder builder = new MDSKey.Builder();
     for (String part : originalKeyParts) {
       builder.add(part);
     }
-    MDSKey MDSKey = builder.build();
+    MDSKey mdsKey = builder.build();
 
     List<String> splitKeyParts = Lists.newArrayList();
-    List<byte[]> splittedBytes = MDSKey.split();
+    List<byte[]> splittedBytes = mdsKey.split();
     for (byte[] bytes : splittedBytes) {
       splitKeyParts.add(Bytes.toString(bytes));
     }
     Assert.assertEquals(originalKeyParts, splitKeyParts);
+  }
+
+  @Test
+  public void testComplexKeySplit() {
+    // Tests key: [ "part1", "part2", "", 4l, byte[] { 0x5 } ]
+    List<String> firstParts = ImmutableList.of("part1", "part2", "");
+    long fourthPart = 4L;
+    byte[] fifthPart = new byte[] { 0x5 };
+
+    MDSKey.Builder builder = new MDSKey.Builder();
+    // intentionally testing the MDSKey.Builder#add(String... parts) method.
+    builder.add(firstParts.get(0), firstParts.get(1), firstParts.get(2));
+
+    builder.add(fourthPart);
+    builder.add(fifthPart);
+    MDSKey mdsKey = builder.build();
+
+    List<byte[]> splittedBytes = mdsKey.split();
+    List<String> splitKeyParts = Lists.newArrayList();
+
+    int i = 0;
+    for (; i < firstParts.size(); i++) {
+      splitKeyParts.add(Bytes.toString(splittedBytes.get(i)));
+    }
+    Assert.assertEquals(firstParts, splitKeyParts);
+
+    Assert.assertEquals(fourthPart, Bytes.toLong(splittedBytes.get(3)));
+    Assert.assertTrue(Bytes.equals(fifthPart, splittedBytes.get(4)));
   }
 }

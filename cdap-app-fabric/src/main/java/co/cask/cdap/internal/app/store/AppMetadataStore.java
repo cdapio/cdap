@@ -306,7 +306,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
     List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(), AdapterMeta.class);
+    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
+                                          AdapterMeta.class);
     for (AdapterMeta adapterMeta : adapterMetas) {
       adapterSpecs.add(adapterMeta.getSpec());
     }
