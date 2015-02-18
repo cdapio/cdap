@@ -7,7 +7,7 @@ CDAP Reference Manual Table of Contents
 =================================================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 5
 
     Introduction <index>
     HTTP RESTful API <http-restful-api/index>

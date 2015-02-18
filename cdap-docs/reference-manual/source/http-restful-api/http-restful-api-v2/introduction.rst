@@ -1,17 +1,19 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _http-restful-api-introduction:
+.. _http-restful-api-v2-introduction:
 
 ===========================================================
 Introduction
 ===========================================================
 
+.. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
+
 .. highlight:: console
 
-.. _http-restful-api-conventions:
+.. _http-restful-api-v2-conventions:
 
 Conventions
 ============
@@ -56,7 +58,7 @@ and that you are to replace it with your value, perhaps in this case *mystream*:
   PUT <base-url>/streams/mystream
 
 
-.. _http-restful-api-conventions-reserved-unsafe-characters:
+.. _http-restful-api-v2-conventions-reserved-unsafe-characters:
 
 Reserved and Unsafe Characters
 ==============================

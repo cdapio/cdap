@@ -30,6 +30,7 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -65,14 +66,16 @@ class DatasetServiceClient {
   private static final Gson GSON = new Gson();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final Id.Namespace namespaceId;
 
-  public DatasetServiceClient(final DiscoveryServiceClient discoveryClient) {
+  public DatasetServiceClient(final DiscoveryServiceClient discoveryClient, Id.Namespace namespaceId) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
         return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
       }
     });
+    this.namespaceId = namespaceId;
   }
 
   @Nullable
@@ -293,7 +296,7 @@ class DatasetServiceClient {
       throw new DatasetManagementException("Cannot discover dataset service");
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
-    return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.API_VERSION_2, resource);
+    return String.format("http://%s:%s%s/namespaces/%s/data/%s", addr.getHostName(), addr.getPort(),
+                         Constants.Gateway.API_VERSION_3, namespaceId.getId(), resource);
   }
 }

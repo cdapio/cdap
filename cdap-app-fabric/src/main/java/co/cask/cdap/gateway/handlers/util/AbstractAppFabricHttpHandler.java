@@ -397,7 +397,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
                                Id.Program programId, Data type, String name) {
     Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
     if (type == Data.DATASET) {
-      DatasetSpecification dsSpec = getDatasetSpec(dsFramework, name);
+      DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
       String typeName = null;
       if (dsSpec != null) {
         typeName = dsSpec.getType();
@@ -412,15 +412,16 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   private String listDataEntities(Store store, DatasetFramework dsFramework,
                                   Id.Program programId, Data type) throws Exception {
+    Id.Namespace namespaceId = Id.Namespace.from(programId.getNamespaceId());
     if (type == Data.DATASET) {
-      Collection<DatasetSpecification> instances = dsFramework.getInstances();
+      Collection<DatasetSpecification> instances = dsFramework.getInstances(namespaceId);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
       for (DatasetSpecification instance : instances) {
         result.add(makeDataSetRecord(instance.getName(), instance.getType()));
       }
       return GSON.toJson(result);
     } else if (type == Data.STREAM) {
-      Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
+      Collection<StreamSpecification> specs = store.getAllStreams(namespaceId);
       List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
       for (StreamSpecification spec : specs) {
         result.add(makeStreamRecord(spec.getName(), null));
@@ -441,7 +442,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
       for (String dsName : dataSetsUsed) {
         String typeName = null;
-        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, dsName);
+        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, dsName);
         if (dsSpec != null) {
           typeName = dsSpec.getType();
         }
@@ -461,9 +462,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   @Nullable
-  private DatasetSpecification getDatasetSpec(DatasetFramework dsFramework, String dsName) {
+  private DatasetSpecification getDatasetSpec(DatasetFramework dsFramework, Id.Namespace namespaceId, String dsName) {
     try {
-      return dsFramework.getDatasetSpec(dsName);
+      return dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespaceId, dsName));
     } catch (Exception e) {
       LOG.warn("Couldn't get spec for dataset: " + dsName);
       return null;
@@ -541,10 +542,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   private List<ProgramRecord> listProgramsByDataAccess(Store store, DatasetFramework dsFramework,
                                                        Id.Program programId, ProgramType type,
                                                        Data data, String name) throws Exception {
+    Id.Namespace namespaceId = programId.getApplication().getNamespace();
     // search all apps for programs that use this
     List<ProgramRecord> result = Lists.newArrayList();
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
-      new Id.Namespace(programId.getNamespaceId()));
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
     if (appSpecs != null) {
       for (ApplicationSpecification appSpec : appSpecs) {
         if (type == ProgramType.FLOW) {
@@ -575,7 +576,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     // if no programs were found, check whether the data exists, return [] if yes, null if not
     boolean exists = false;
     if (data == Data.DATASET) {
-      exists = dsFramework.hasInstance(name);
+      exists = dsFramework.hasInstance(Id.DatasetInstance.from(namespaceId, name));
     } else if (data == Data.STREAM) {
       exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
     }

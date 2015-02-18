@@ -38,6 +38,6 @@ public class ExitCommand implements Command {
 
   @Override
   public String getDescription() {
-    return "Exits the CLI";
+    return "Exits the CLI.";
   }
 }

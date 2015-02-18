@@ -390,6 +390,17 @@ public abstract class MetricsSuiteTestBase {
                            Constants.Metrics.Tag.FLOWLET, flowletName);
   }
 
+  protected static Map<String, String> getFlowletContext(String namespaceId, String appName, String flowName,
+                                                         String runId, String flowletName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW))
+      .put(Constants.Metrics.Tag.PROGRAM, flowName)
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.FLOWLET, flowletName).build();
+  }
+
   protected static Map<String, String> getFlowletQueueContext(String namespaceId, String appName, String flowName,
                                                               String flowletName, String queueName) {
     return ImmutableMap.<String, String>builder()

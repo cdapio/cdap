@@ -1045,8 +1045,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove all data in consolesettings
       consoleSettingsStore.delete();
 
-      dsFramework.deleteAllInstances();
-      dsFramework.deleteAllModules();
+      dsFramework.deleteAllInstances(namespaceId);
+      dsFramework.deleteAllModules(namespaceId);
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);
@@ -1098,7 +1098,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       LOG.info("Deleting all datasets for account '" + account + "'.");
 
-      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllInstances(namespaceId);
 
       LOG.info("All datasets for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

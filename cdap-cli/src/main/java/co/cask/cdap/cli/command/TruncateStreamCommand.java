@@ -53,6 +53,6 @@ public class TruncateStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Truncates a " + ElementType.STREAM.getPrettyName();
+    return String.format("Truncates a %s.", ElementType.STREAM.getPrettyName());
   }
 }

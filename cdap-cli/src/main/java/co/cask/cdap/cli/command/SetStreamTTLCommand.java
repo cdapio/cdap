@@ -54,6 +54,6 @@ public class SetStreamTTLCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the Time-to-Live (TTL) of a " + ElementType.STREAM.getPrettyName();
+    return String.format("Sets the Time-to-Live (TTL) of a %s.", ElementType.STREAM.getPrettyName());
   }
 }

@@ -80,10 +80,11 @@ public abstract class NotificationTest {
 
   private static NotificationService notificationService;
 
+  private static final Id.Namespace namespace = Id.Namespace.from("namespace");
   protected static final Id.NotificationFeed FEED1 = new Id.NotificationFeed.Builder()
-    .setNamespaceId("namespace").setCategory("stream").setName("foo").setDescription("").build();
+    .setNamespaceId(namespace.getId()).setCategory("stream").setName("foo").setDescription("").build();
   protected static final Id.NotificationFeed FEED2 = new Id.NotificationFeed.Builder()
-    .setNamespaceId("namespace").setCategory("stream").setName("bar").setDescription("").build();
+    .setNamespaceId(namespace.getId()).setCategory("stream").setName("bar").setDescription("").build();
 
   protected static NotificationService getNotificationService() {
     return notificationService;
@@ -222,7 +223,8 @@ public abstract class NotificationTest {
   public void useTransactionTest() throws Exception {
     // Performing admin operations to create dataset instance
     // keyValueTable is a system dataset module
-    dsFramework.addInstance("keyValueTable", "myTable", DatasetProperties.EMPTY);
+    Id.DatasetInstance myTableInstance = Id.DatasetInstance.from(namespace, "myTable");
+    dsFramework.addInstance("keyValueTable", myTableInstance, DatasetProperties.EMPTY);
 
     Assert.assertTrue(feedManager.createFeed(FEED1));
     try {
@@ -252,7 +254,7 @@ public abstract class NotificationTest {
         // Waiting for the subscriber to receive that notification
         TimeUnit.SECONDS.sleep(2);
 
-        KeyValueTable table = dsFramework.getDataset("myTable", DatasetDefinition.NO_ARGUMENTS, null);
+        KeyValueTable table = dsFramework.getDataset(myTableInstance, DatasetDefinition.NO_ARGUMENTS, null);
         Assert.assertNotNull(table);
         Transaction tx1 = txManager.startShort(100);
         table.startTx(tx1);
@@ -265,7 +267,7 @@ public abstract class NotificationTest {
         cancellable.cancel();
       }
     } finally {
-      dsFramework.deleteInstance("myTable");
+      dsFramework.deleteInstance(myTableInstance);
       feedManager.deleteFeed(FEED1);
     }
   }

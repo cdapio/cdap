@@ -38,6 +38,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -57,6 +58,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -79,7 +81,9 @@ import javax.annotation.Nullable;
  * Tests for {@link ProgramLifecycleHttpHandler}
  */
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
-
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
@@ -1046,7 +1050,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private int getRuns(String runsUrl) throws Exception {
     HttpResponse response = doGet(runsUrl);
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     return history.size();
   }
 
@@ -1061,7 +1065,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
-    return new Gson().fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
+    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
     }.getType());
   }
 
@@ -1170,7 +1174,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = requestProgramList(namespace, appName, programType);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> programs = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> programs = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(expected, programs.size());
   }
 

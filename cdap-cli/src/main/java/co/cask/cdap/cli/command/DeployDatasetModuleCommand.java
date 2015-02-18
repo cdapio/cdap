@@ -68,6 +68,6 @@ public class DeployDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Deploys a " + ElementType.DATASET_MODULE.getPrettyName();
+    return String.format("Deploys a %s.", ElementType.DATASET_MODULE.getPrettyName());
   }
 }

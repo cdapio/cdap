@@ -58,6 +58,18 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
     Permission.WRITE
   );
 
+  private static final ACLEntry OTHER_ACL = new ACLEntry(
+    ObjectIds.application("otherNamespace", "otherApp"),
+    SubjectIds.user("otherUser"),
+    Permission.READ
+  );
+
+  private static final ACLEntry OTHER_ACL2 = new ACLEntry(
+    ObjectIds.application("otherNamespace", "otherApp"),
+    SubjectIds.user("otherUser"),
+    Permission.LIFECYCLE
+  );
+
   private static final ACLEntry UNRELATED_ACL = new ACLEntry(
     ObjectIds.application("unrelatedNamespace", "unrelatedApp"),
     SubjectIds.user("unrelatedUser"),
@@ -97,6 +109,14 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
     Assert.assertTrue(aclStore.exists(SIMPLE_ACL));
     aclStore.delete(SIMPLE_ACL);
     Assert.assertFalse(aclStore.exists(SIMPLE_ACL));
+  }
+
+  @Test
+  public void testSearchAndDeleteOther() throws Exception {
+    testSearchAndDelete(ImmutableList.of(OTHER_ACL, OTHER_ACL2),
+                        ImmutableList.of(OTHER_ACL, OTHER_ACL2),
+                        ImmutableList.of(new ACLStore.Query(OTHER_ACL.getObject(), OTHER_ACL.getSubject())),
+                        ImmutableList.<ACLEntry>of());
   }
 
   @Test
