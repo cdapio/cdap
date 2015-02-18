@@ -146,8 +146,7 @@ public class DistributedStreamService extends AbstractStreamService {
     createHeartbeatsFeed();
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
-    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
-                                                                   new StreamsLeaderHandler());
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), new StreamsLeaderHandler());
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
       public void leaderOf(Set<Id.Stream> streamIds) {
@@ -301,7 +300,7 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, NotificationFeedException {
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
+      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
@@ -355,7 +354,7 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
+      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Stream heartbeats feed.")
