@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * Encodes an object as a {@link Put} for storing it into a {@link Table}. Assumes that objects to write are
  * records. Fields of simple types are encoded as columns in the table. Complex types (arrays, maps, records),
- * are binary encoded and stored as blobs.
+ * are not supported.
  *
  * @param <T> the type of object to encode as a {@link Put}
  */
@@ -116,31 +116,27 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
 
   @Override
   protected void writeEnum(Put put, String val, Schema schema) throws IOException {
-    int idx = schema.getEnumIndex(val);
-    if (idx < 0) {
-      throw new IOException("Invalid enum value " + val);
-    }
-    put.add(nextField(), idx);
+    put.add(nextField(), val);
   }
 
   @Override
   protected void writeArray(Put put, Collection<?> val, Schema componentSchema) throws IOException {
-    put.add(nextField(), encodeArray(val, componentSchema));
+    throw new UnsupportedOperationException("Arrays are not supported.");
   }
 
   @Override
   protected void writeArray(Put put, Object val, Schema componentSchema) throws IOException {
-    put.add(nextField(), encodeArray(val, componentSchema));
+    throw new UnsupportedOperationException("Arrays are not supported.");
   }
 
   @Override
   protected void writeMap(Put put, Map<?, ?> val, Map.Entry<Schema, Schema> mapSchema) throws IOException {
-    put.add(nextField(), encodeMap(val, mapSchema.getKey(), mapSchema.getValue()));
+    throw new UnsupportedOperationException("Maps are not supported.");
   }
 
   @Override
   protected void writeRecord(Put put, Object record, Schema recordSchema) throws IOException {
-    put.add(nextField(), encodeRecord(record, recordSchema));
+    throw new UnsupportedOperationException("Records are not supported.");
   }
 
   @Override

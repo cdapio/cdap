@@ -28,9 +28,11 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,17 +53,23 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Map<String, String> props = properties.getProperties();
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.TYPE));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_TYPE));
     // schema can normally be derived from the type. However, we cannot use the Type in this method because
     // this is called by the system, where the Type is often not available. for example, if somebody creates
     // an ObjectMappedTable<Purchase> where Purchase is a class internal to their app.
     // we require schema here because we want to validate it to make sure it is supported.
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.SCHEMA));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.EXPLORE_KEY_NAME));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.EXPLORE_KEY_TYPE));
     try {
-      Schema schema = ObjectMappedTableProperties.getSchema(props);
-      validateSchema(schema);
+      Schema objectSchema = ObjectMappedTableProperties.getObjectSchema(props);
+      validateSchema(objectSchema);
+      String keyName = ObjectMappedTableProperties.getExploreKeyName(props);
+      Schema.Type keyType = ObjectMappedTableProperties.getExploreKeyType(props);
+      Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
       return DatasetSpecification.builder(instanceName, getName())
         .properties(properties.getProperties())
+        .property(DatasetProperties.SCHEMA, fullSchema.toString())
         .datasets(tableDef.configure(TABLE_NAME, properties))
         .build();
     } catch (IOException e) {
@@ -81,11 +89,14 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
                                                 ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
     Table table = tableDef.getDataset(tableSpec, arguments, classLoader);
+    Map<String, String> properties = spec.getProperties();
 
     TypeRepresentation typeRep = GSON.fromJson(
-      spec.getProperty(ObjectMappedTableProperties.TYPE), TypeRepresentation.class);
-    Schema schema = Schema.parseJson(spec.getProperty(ObjectMappedTableProperties.SCHEMA));
-    return new ObjectMappedTableDataset(spec.getName(), table, typeRep, schema, classLoader);
+      ObjectMappedTableProperties.getObjectTypeRepresentation(properties), TypeRepresentation.class);
+    String keyName = ObjectMappedTableProperties.getExploreKeyName(properties);
+    Schema.Type keyType = ObjectMappedTableProperties.getExploreKeyType(properties);
+    Schema objSchema = ObjectMappedTableProperties.getObjectSchema(properties);
+    return new ObjectMappedTableDataset(spec.getName(), table, typeRep, objSchema, keyName, keyType, classLoader);
   }
 
   private void validateSchema(Schema schema) throws UnsupportedTypeException {
@@ -103,5 +114,13 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
                         field.getName(), fieldType.toString()));
       }
     }
+  }
+
+  // we want to include the key as a column in the table for exploration, so add it to the schema
+  private Schema addKeyToSchema(Schema schema, String keyName, Schema.Type keyType) {
+    List<Schema.Field> fields = Lists.newArrayListWithCapacity(schema.getFields().size() + 1);
+    fields.add(Schema.Field.of(keyName, Schema.of(keyType)));
+    fields.addAll(schema.getFields());
+    return Schema.recordOf("record", fields);
   }
 }

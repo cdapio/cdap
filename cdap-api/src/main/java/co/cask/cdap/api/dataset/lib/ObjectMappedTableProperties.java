@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.TypeRepresentation;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -40,22 +41,53 @@ public class ObjectMappedTableProperties {
   /**
    * The type of object in the table.
    */
-  public static final String TYPE = "type";
+  public static final String OBJECT_TYPE = "object.type";
 
   /**
    * The schema of objects in the table.
    */
-  public static final String SCHEMA = "schema";
+  public static final String OBJECT_SCHEMA = "object.schema";
+
+  /**
+   * The name of the key to use when exploring the table. Defaults to "key".
+   */
+  public static final String EXPLORE_KEY_NAME = "explore.key.name";
+
+  /**
+   * The type of the key when exploring the table. Defaults to bytes.
+   */
+  public static final String EXPLORE_KEY_TYPE = "explore.key.type";
 
   public static Builder builder() {
     return new Builder();
   }
 
   /**
+   * @return The serialized representation of the type of objects in the table.
+   */
+  public static String getObjectTypeRepresentation(Map<String, String> properties) {
+    return properties.get(OBJECT_TYPE);
+  }
+
+  /**
    * @return The schema of objects in the table.
    */
-  public static Schema getSchema(Map<String, String> properties) throws IOException {
-    return Schema.parseJson(properties.get(SCHEMA));
+  public static Schema getObjectSchema(Map<String, String> properties) throws IOException {
+    return Schema.parseJson(properties.get(OBJECT_SCHEMA));
+  }
+
+  /**
+   * @return The name of the key to use when exploring the table.
+   */
+  public static String getExploreKeyName(Map<String, String> properties) {
+    return properties.get(EXPLORE_KEY_NAME);
+  }
+
+  /**
+   * @return The type of the key when exploring the table.
+   */
+  public static Schema.Type getExploreKeyType(Map<String, String> properties) {
+    return Schema.Type.valueOf(properties.get(EXPLORE_KEY_TYPE));
   }
 
   /**
@@ -66,14 +98,36 @@ public class ObjectMappedTableProperties {
     /**
      * Package visible default constructor, to allow sub-classing by other datasets in this package.
      */
-    Builder() { }
+    Builder() {
+      add(EXPLORE_KEY_NAME, "key");
+      add(EXPLORE_KEY_TYPE, Schema.Type.BYTES.name());
+    }
 
     /**
      * Sets the type of object in the table.
      */
     public Builder setType(Type type) throws UnsupportedTypeException {
-      add(TYPE, GSON.toJson(new TypeRepresentation(type)));
-      add(SCHEMA, schemaGenerator.generate(type, false).toString());
+      add(OBJECT_TYPE, GSON.toJson(new TypeRepresentation(type)));
+      add(OBJECT_SCHEMA, schemaGenerator.generate(type, false).toString());
+      return this;
+    }
+
+    /**
+     * Sets the name for the key to use when exploring the table. If no name is set it defaults to "key".
+     */
+    public Builder setExploreKeyName(String name) {
+      add(EXPLORE_KEY_NAME, name);
+      return this;
+    }
+
+    /**
+     * Sets the type of the key to use when exploring the table. Currently only {@link Schema.Type#BYTES} and
+     * {@link Schema.Type#STRING} are allowed. If no type is set it defaults to bytes.
+     */
+    public Builder setExploreKeyType(Schema.Type type) {
+      Preconditions.checkArgument(type == Schema.Type.BYTES || type == Schema.Type.STRING,
+                                  "Key type must be bytes or string.");
+      add(EXPLORE_KEY_TYPE, type.name());
       return this;
     }
 

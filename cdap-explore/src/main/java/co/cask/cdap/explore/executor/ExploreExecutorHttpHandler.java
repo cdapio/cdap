@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -184,6 +185,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }
+      DatasetSpecification datasetSpec = datasetFramework.getDatasetSpec(datasetInstanceId);
 
       String createStatement = null;
       // To be enabled for explore, a dataset must either be RecordScannable/Writable,
@@ -191,7 +193,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       try {
         if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
           LOG.debug("Enabling explore for dataset instance {}", datasetName);
-          createStatement = generateCreateStatement(datasetName, dataset);
+          createStatement = generateCreateStatement(datasetName, dataset, datasetSpec);
 
         } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
           // this cannot fail because we were able to instantiate the dataset
@@ -470,9 +472,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                          Constants.Explore.CDAP_NAME, streamId);
   }
 
-  public static String generateCreateStatement(String name, Dataset dataset)
+  public static String generateCreateStatement(String name, Dataset dataset, DatasetSpecification datasetSpec)
     throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaFor(dataset);
+    String hiveSchema = hiveSchemaFor(dataset, datasetSpec);
     String tableName = getHiveTableName(name);
     return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")" +
@@ -574,13 +576,30 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Given a record-enabled dataset, determine its record type and generate a schema string compatible with Hive.
-   * @param dataset The data set
+   * Given a record-enabled dataset, determine the hive schema for the dataset. Will first try to look up
+   * the schema from the dataset properties. If that is not present, it will try and determine the schema from
+   * the record type of the dataset.
+   *
+   * @param dataset The dataset
+   * @param datasetSpec The specification of the dataset.
    * @return the hive schema
    * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
    * or if the row type is not a record or contains null types.
    */
-  static String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
+  static String hiveSchemaFor(Dataset dataset, DatasetSpecification datasetSpec) throws UnsupportedTypeException {
+    // look for schema in the dataset properties
+    String schemaStr = datasetSpec.getProperty(DatasetProperties.SCHEMA);
+    if (schemaStr != null) {
+      try {
+        Schema schema = Schema.parseJson(schemaStr);
+        return SchemaConverter.toHiveSchema(schema);
+      } catch (IOException e) {
+        LOG.error("Unable to parse schema from dataset properties.", e);
+        throw new UnsupportedTypeException(e);
+      }
+    }
+
+    // otherwise, try and determine from the record type
     if (dataset instanceof RecordScannable) {
       return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
     } else if (dataset instanceof RecordWritable) {
