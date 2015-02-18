@@ -29,23 +29,29 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, $timeout, rNsList) {
+        controller: function ($state, $timeout, rNsList, mySessionStorage) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
             return one.id === $state.params.namespace;
           });
 
-          if(!n.length) {
-            var d = rNsList[0].id;
-            console.warn('invalid namespace, defaulting to ', d);
-            $timeout(function () {
-              $state.go(
-                $state.current,
-                { namespace: d },
-                {reload: true}
-              );
-            });
 
+          var PREFKEY = 'feature.home.ns.latest';
+
+          if(!n.length) {
+            mySessionStorage.get(PREFKEY)
+              .then(function (latest) {
+                var d = latest || rNsList[0].id;
+                console.warn('invalid namespace, defaulting to ', d);
+                $state.go(
+                  $state.current,
+                  { namespace: d },
+                  { reload: true }
+                );
+              });
+          }
+          else {
+            mySessionStorage.set(PREFKEY, $state.params.namespace);
           }
         }
       })

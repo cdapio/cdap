@@ -3,6 +3,108 @@
  */
 
 angular.module(PKG.name+'.feature.operation28')
+/* ------------------------------------------------------ */
+
+  .controller('Op28CdapCtrl',
+  function ($scope, $state, op28helper, MyDataSource) {
+
+    if(!$state.params.namespace) {
+      // the controller for "ns" state should handle the case of
+      // an empty namespace. but this nested state controller will
+      // still be instantiated. avoid making useless api calls.
+      return;
+    }
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.panels = [
+      ['Collect', 'EPS',    'collect.events'],
+      ['Process', '%',      'process.busyness'],
+      ['Store', 'B/s',      'dataset.store.bytes'],
+      ['Query', 'QPS',      'query.requests']
+    ].map(op28helper.panelMap);
+
+    angular.forEach($scope.panels, function (panel) {
+      var c = panel.chart;
+      dataSrc.poll({
+          _cdapPathV2: '/metrics/system/' +
+              c.metric + '?start=now-60s&end=now',
+          method: 'GET'
+        },
+        op28helper.pollCb.bind(c)
+      );
+    });
+
+  })
+
+
+/* ------------------------------------------------------ */
+
+
+  .controller('Op28SystemCtrl',
+  function ($scope, op28helper, MyDataSource) {
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.panels = [
+      ['AppFabric', 'Containers', ''],
+      ['Processors', 'Cores',     ''],
+      ['Memory', 'B',             ''],
+      ['DataFabric', 'GB',        '']
+    ].map(op28helper.panelMap);
+
+    // angular.forEach($scope.panels, function (panel) {
+    //   var c = panel.chart;
+    //   dataSrc.poll({
+    //       _cdapPathV2: '/metrics/system/'
+    //         + c.metric + '?start=now-60s&end=now',
+    //       method: 'GET'
+    //     },
+    //     op28helper.pollCb.bind(c)
+    //   );
+    // });
+
+  })
+
+
+/* ------------------------------------------------------ */
+
+
+  .controller('Op28AppsCtrl',
+  function ($scope, $state, $q, MyDataSource) {
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.apps = [];
+
+    dataSrc.request({
+        _cdapNsPath: '/apps'
+      })
+      .then(function (apps) {
+        $scope.apps = apps;
+
+        var p = [];
+        for (var i = 0; i < apps.length; i++) {
+          // p.push(dataSrc.request({
+          //   _cdapNsPath: '/metrics/query?context=ns.' +
+          //     $state.params.namespace + '.' + apps[i].id +
+          //     '&metric=resources.used.memory'
+          // }));
+        };
+
+        return $q.all(p);
+      })
+      .then(function () {
+        console.log('all done');
+      });
+
+
+  })
+
+
+/* ------------------------------------------------------ */
+
+
   .factory('op28helper', function () {
 
     function panelMap (d) {
@@ -42,86 +144,6 @@ angular.module(PKG.name+'.feature.operation28')
       pollCb: pollCb
     };
 
-  })
-  .controller('Op28CdapCtrl', function ($scope, $state, op28helper, MyDataSource) {
-
-    if(!$state.params.namespace) {
-      // the controller for "ns" state should handle the case of
-      // an empty namespace. but this nested state controller will
-      // still be instantiated. avoid making useless api calls.
-      return;
-    }
-
-    var dataSrc = new MyDataSource($scope);
-
-    $scope.panels = [
-      ['Collect', 'EPS',    'collect.events'],
-      ['Process', '%',      'process.busyness'],
-      ['Store', 'B/s',      'dataset.store.bytes'],
-      ['Query', 'QPS',      'query.requests']
-    ].map(op28helper.panelMap);
-
-    angular.forEach($scope.panels, function (panel) {
-      var c = panel.chart;
-      dataSrc.poll({
-          _cdapPathV2: '/metrics/system/' +
-              c.metric + '?start=now-60s&end=now',
-          method: 'GET'
-        },
-        op28helper.pollCb.bind(c)
-      );
-    });
-
-  })
-  .controller('Op28SystemCtrl', function ($scope, op28helper, MyDataSource) {
-
-    var dataSrc = new MyDataSource($scope);
-
-    $scope.panels = [
-      ['AppFabric', 'Containers', ''],
-      ['Processors', 'Cores',     ''],
-      ['Memory', 'B',             ''],
-      ['DataFabric', 'GB',        '']
-    ].map(op28helper.panelMap);
-
-    // angular.forEach($scope.panels, function (panel) {
-    //   var c = panel.chart;
-    //   dataSrc.poll({
-    //       _cdapPathV2: '/metrics/system/'
-    //         + c.metric + '?start=now-60s&end=now',
-    //       method: 'GET'
-    //     },
-    //     op28helper.pollCb.bind(c)
-    //   );
-    // });
-
-  })
-  .controller('Op28AppsCtrl', function ($scope, $state, $q, MyDataSource) {
-
-    var dataSrc = new MyDataSource($scope);
-
-    $scope.apps = [];
-
-    dataSrc.request({
-        _cdapNsPath: '/apps'
-      })
-      .then(function (apps) {
-        $scope.apps = apps;
-
-        var p = [];
-        for (var i = 0; i < apps.length; i++) {
-          // p.push(dataSrc.request({
-          //   _cdapNsPath: '/metrics/query?context=ns.' +
-          //     $state.params.namespace + '.' + apps[i].id +
-          //     '&metric=resources.used.memory'
-          // }));
-        };
-
-        return $q.all(p);
-      })
-      .then(function () {
-        console.log('all done');
-      });
   })
 
   ;
