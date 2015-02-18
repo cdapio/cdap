@@ -89,9 +89,13 @@ angular.module(PKG.name+'.feature.operation28')
   })
   .controller('Op28AppsCtrl', function ($scope, MyDataSource) {
 
-
-    console.log('TODO: Op28AppsCtrl');
-
+    $scope.apps = [{
+      name: 'foo',
+      desc: 'some app',
+      cores: 1,
+      containers: 0,
+      memory: 1024
+    }];
 
   })
 

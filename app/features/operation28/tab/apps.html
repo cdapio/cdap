@@ -1,3 +1,27 @@
-<div class="well text-center h2">
-  app resources / work in progress
-</div>
+<table class="table table-responsive">
+  <thead>
+    <tr>
+      <th>Application</th>
+      <th>Containers</th>
+      <th>Cores</th>
+      <th>Memory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="one in apps">
+      <td>
+        <strong>{{one.name}}</strong><br />
+        <em>{{one.desc}}</em>
+      </td>
+      <td>
+        <span class="badge">{{one.containers}}</span>
+      </td>
+      <td>
+        <span class="badge">{{one.cores}}</span>
+      </td>
+      <td>
+        <span class="badge">{{one.memory}}</span> B
+      </td>
+    </tr>
+  </tbody>
+</table>
