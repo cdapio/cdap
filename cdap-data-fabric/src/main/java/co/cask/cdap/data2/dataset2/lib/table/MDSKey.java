@@ -17,10 +17,10 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -29,16 +29,22 @@ import java.nio.ByteBuffer;
 public final class MDSKey {
   private final byte[] key;
 
+  /**
+   * @param key bytearray as constructed by {@code MDSKey.Builder}
+   */
   public MDSKey(byte[] key) {
     this.key = key;
   }
 
+  /**
+   * @return the underlying key
+   */
   public byte[] getKey() {
     return key;
   }
 
   /**
-   * Splits the keys into the parts that comprise this.
+   * Splits the keys into a {@link Splitter} which exposes the parts that comprise the key.
    */
   public Splitter split() {
     return new Splitter(key);
@@ -53,39 +59,73 @@ public final class MDSKey {
       byteBuffer = ByteBuffer.wrap(bytes);
     }
 
+    /**
+     * @throws BufferUnderflowException if there is no int as expected
+     * @return the next int part in the splitter
+     */
     public int getInt() {
       return byteBuffer.getInt();
     }
 
+    /**
+     * @throws BufferUnderflowException if there is no long as expected
+     * @return the next long part in the splitter
+     */
     public long getLong() {
       return byteBuffer.getLong();
     }
 
+    /**
+     * @throws BufferUnderflowException if there is no byte[] as expected
+     * @return the next byte[] part in the splitter
+     */
     public byte[] getBytes() {
       int len = byteBuffer.getInt();
-      Preconditions.checkState(byteBuffer.remaining() >= len);
+      if (byteBuffer.remaining() < len) {
+        throw new BufferUnderflowException();
+      }
       byte[] bytes = new byte[len];
       byteBuffer.get(bytes, 0, len);
       return bytes;
     }
 
+    /**
+     * @throws BufferUnderflowException if there is no String as expected
+     * @return the next String part in the splitter
+     */
     public String getString() {
       return Bytes.toString(getBytes());
     }
 
+    /**
+     * skips the next int part in the splitter
+     * @throws BufferUnderflowException if there is no int as expected
+     */
     public void skipInt() {
       forward(Ints.BYTES);
     }
 
+    /**
+     * skips the next long part in the splitter
+     * @throws BufferUnderflowException if there is no long as expected
+     */
     public void skipLong() {
       forward(Longs.BYTES);
     }
 
+    /**
+     * skips the next byte[] part in the splitter
+     * @throws BufferUnderflowException if there is no byte[] as expected
+     */
     public void skipBytes() {
       int len = byteBuffer.getInt();
       forward(len);
     }
 
+    /**
+     * skips the next String part in the splitter
+     * @throws BufferUnderflowException if there is no String as expected
+     */
     public void skipString() {
       skipBytes();
     }

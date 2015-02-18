@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.BufferUnderflowException;
 import java.util.List;
 
 public class MDSKeyTest {
@@ -121,13 +122,13 @@ public class MDSKeyTest {
     try {
       splitter.getBytes();
       Assert.fail();
-    } catch (IllegalStateException expected) {
+    } catch (BufferUnderflowException expected) {
     }
 
     try {
       splitter.getString();
       Assert.fail();
-    } catch (IllegalStateException expected) {
+    } catch (BufferUnderflowException expected) {
     }
   }
 
@@ -149,7 +150,7 @@ public class MDSKeyTest {
     try {
       splitter.getInt();
       Assert.fail();
-    } catch (Exception expected) {
+    } catch (BufferUnderflowException expected) {
     }
   }
 }
