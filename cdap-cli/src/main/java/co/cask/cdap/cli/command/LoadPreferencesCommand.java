@@ -91,7 +91,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return "Set Preferences of a " + type.getPluralPrettyName() +
-      " from a local Config File (supported formats = JSON)";
+    return String.format("Set Preferences of a %s from a local Config File (supported formats = JSON).", 
+                         type.getPluralPrettyName());
   }
 }

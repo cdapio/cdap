@@ -63,6 +63,6 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Lists all " + ElementType.DATASET.getPluralPrettyName();
+    return String.format("Lists all %s.", ElementType.DATASET.getPluralPrettyName());
   }
 }
