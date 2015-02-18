@@ -384,7 +384,8 @@ public final class Id  {
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
       Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
-      Preconditions.checkArgument(isId(streamName), "Stream name has an incorrect format.");
+      Preconditions.checkArgument(isId(streamName),
+                                  "Stream name can only contains alphanumeric, '-' and '_' characters only.");
 
       this.namespace = namespace;
       this.streamName = streamName;
