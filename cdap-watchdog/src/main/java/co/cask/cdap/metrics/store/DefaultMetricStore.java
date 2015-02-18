@@ -55,6 +55,7 @@ public class DefaultMetricStore implements MetricStore {
 
   private final Supplier<Cube> cube;
   private final Map<String, String> tagMapping;
+  private final Map<String, Map<String, MetricTags>> reverseMapping;
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
@@ -76,13 +77,26 @@ public class DefaultMetricStore implements MetricStore {
     // NOTE: to reduce number of aggregations we rename some of the emitted tags to "canonical" names
     this.tagMapping = ImmutableMap.of(
       // flow
-      MetricTags.FLOWLET.name(), PROGRAM_LEVEL2,
-      MetricTags.FLOWLET_QUEUE.name(), PROGRAM_LEVEL3,
+      MetricTags.FLOWLET.getCodeName(), PROGRAM_LEVEL2,
+      MetricTags.FLOWLET_QUEUE.getCodeName(), PROGRAM_LEVEL3,
       // mapreduce
-      MetricTags.MR_TASK_TYPE.name(), PROGRAM_LEVEL2,
-      MetricTags.INSTANCE_ID.name(), PROGRAM_LEVEL3,
+      MetricTags.MR_TASK_TYPE.getCodeName(), PROGRAM_LEVEL2,
+      MetricTags.INSTANCE_ID.getCodeName(), PROGRAM_LEVEL3,
       // service
-      MetricTags.SERVICE_RUNNABLE.name(), PROGRAM_LEVEL2
+      MetricTags.SERVICE_RUNNABLE.getCodeName(), PROGRAM_LEVEL2
+    );
+
+    // reverse mapping
+    // todo : remove hard-coded values and use TypeId (need to move TypeId out of app-fabric ?)
+    this.reverseMapping = ImmutableMap.<String, Map<String, MetricTags>>of(
+      //flow
+      "f", ImmutableMap.<String, MetricTags>of(PROGRAM_LEVEL2, MetricTags.FLOWLET,
+                                              PROGRAM_LEVEL3, MetricTags.FLOWLET_QUEUE)
+      ,
+      "b", ImmutableMap.<String, MetricTags>of(PROGRAM_LEVEL2, MetricTags.MR_TASK_TYPE,
+                                                   PROGRAM_LEVEL3, MetricTags.INSTANCE_ID)
+      ,
+      "u", ImmutableMap.<String, MetricTags>of(PROGRAM_LEVEL2, MetricTags.SERVICE_RUNNABLE)
     );
   }
 
@@ -134,20 +148,10 @@ public class DefaultMetricStore implements MetricStore {
   public void add(MetricValue metricValue) throws Exception {
     String scope = metricValue.getTags().get(MetricTags.SCOPE);
     String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
-    Map<String, String> expandedTagNames = expandTagNames(metricValue.getTags());
-    CubeFact fact = new CubeFact(replaceTagsIfNeeded(expandedTagNames),
+    CubeFact fact = new CubeFact(replaceTagsIfNeeded(metricValue.getTags()),
                                  toMeasureType(metricValue.getType()), measureName,
                                  new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
     cube.get().add(fact);
-  }
-
-  private Map<String, String> expandTagNames(Map<String, String> tagValues) {
-    Map<String, String> result = Maps.newHashMap();
-    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
-      String tagNameReplacement = MetricTags.valueOfCodeName(tagValue.getKey());
-      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement, tagValue.getValue());
-    }
-    return result;
   }
 
   @Override
@@ -157,7 +161,20 @@ public class DefaultMetricStore implements MetricStore {
     Collection<TimeSeries> cubeResult = cube.get().query(q);
     List<TimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
-      result.add(new TimeSeries(timeSeries, replaceTagsIfNeeded(timeSeries.getTagValues())));
+      result.add(new TimeSeries(timeSeries, unMapTags(timeSeries.getTagValues(),
+                                                      query.getSliceByTags().get(MetricTags.PROGRAM_TYPE))));
+    }
+    return result;
+  }
+
+  private Map<String, String> unMapTags(Map<String, String> tagValues, String programType) {
+    if (programType == null) {
+      return tagValues;
+    }
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
+      MetricTags tagNameReplacement = reverseMapping.get(programType).get(tagValue.getKey());
+      result.put(tagNameReplacement == null ? tagValue.getKey() : tagNameReplacement.name(), tagValue.getValue());
     }
     return result;
   }
@@ -191,7 +208,29 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
     replaceTagValuesIfNeeded(query.getTagValues());
-    return cube.get().findNextAvailableTags(query);
+    return unMapTags(cube.get().findNextAvailableTags(query), query.getTagValues());
+  }
+
+  private Collection<TagValue> unMapTags(Collection<TagValue> nextAvailableTags, List<TagValue> prefixTagList) {
+    // check if program-type is available in the query, if available , check if reverseMapping contains
+    // value for the next tag key. if so, replace the tag-key , else use existing tag-key
+    String programType = null;
+    for (TagValue tagValue : prefixTagList) {
+      if (tagValue.getTagName().equals(MetricTags.PROGRAM_TYPE.getCodeName())) {
+        programType = tagValue.getValue();
+        break;
+      }
+    }
+    if (programType == null || (reverseMapping.get(programType) == null)) {
+      return nextAvailableTags;
+    }
+
+    List<TagValue> unMappedList = Lists.newArrayList();
+    for (TagValue tagValue : nextAvailableTags) {
+      MetricTags tag = reverseMapping.get(programType).get(tagValue.getTagName());
+      unMappedList.add(tag == null ? tagValue : new TagValue(tag.getCodeName(), tagValue.getValue()));
+    }
+    return unMappedList;
   }
 
   @Override

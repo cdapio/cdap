@@ -59,8 +59,8 @@ public enum MetricTags {
     this.codeName = codeName;
   }
 
-  public static String valueOfCodeName(String codeName) {
-    return CODE_TO_FULL_NAME_MAP.get(codeName).getCodeName();
+  public static MetricTags valueOfCodeName(String codeName) {
+    return CODE_TO_FULL_NAME_MAP.get(codeName);
   }
 
   public String getCodeName() {
