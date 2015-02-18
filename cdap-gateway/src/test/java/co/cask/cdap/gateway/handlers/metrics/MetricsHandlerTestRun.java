@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.query.MetricQueryResult;
 import com.google.common.collect.ImmutableList;
@@ -43,14 +43,14 @@ import java.util.concurrent.TimeUnit;
 public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static long emitTs;
-  private List<String> tagsList;
+  private List<MetricTags> tagsList;
 
   @Before
   public void setup() throws Exception {
     setupMetrics();
-    tagsList = ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.PROGRAM,
-                                Constants.Metrics.Tag.FLOWLET);
+    tagsList = ImmutableList.<MetricTags>of(MetricTags.NAMESPACE, MetricTags.APP,
+                                MetricTags.PROGRAM_TYPE, MetricTags.PROGRAM,
+                                MetricTags.FLOWLET);
 
   }
 
@@ -104,7 +104,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
-    collector = collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+    collector = collectionService.getCollector(ImmutableMap.of(MetricTags.CLUSTER_METRICS.getCodeName(), "true"));
     collector.increment("resources.total.storage", 10);
 
     // need a better way to do this
@@ -112,65 +112,98 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
+  public void testInvalidRequests() throws Exception {
+    HttpResponse response = doPost("/v3/metrics/search?target=childContext&context=wrongtag.myspace", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    response = doPost("/v3/metrics/search?target=metric&context=namespace.myspace.app.WCount1.invalid.f", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    response = doPost("/v3/metrics/query?metric=system.reads&context=namespace.myspace.app.WCount1." +
+                        "program_type.f.random.flowName", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+  }
+  @Test
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
-                               ImmutableList.<String>of("ns.myspace", "ns.yourspace"));
-
+                               ImmutableList.<String>of("namespace.myspace", "namespace.yourspace"));
+    String context = String.format("%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "myspace");
     // WordCount is in myspace, WCount in yourspace
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.myspace",
-                       ImmutableList.<String>of("ns.myspace.app.WordCount1"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of("namespace.myspace.app.WordCount1"));
+    context = String.format("%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "yourspace");
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of("namespace.yourspace.app.WCount1"));
+    context = String.format("%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "myspace",
+                            MetricTags.APP.name().toLowerCase(), "WordCount1");
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of("namespace.myspace.app.WordCount1.program_type.f"));
 
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.myspace.app.WordCount1",
-                       ImmutableList.<String>of("ns.myspace.app.WordCount1.ptp.f"));
-
+    context = String.format("%s.%s.%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "myspace",
+                            MetricTags.APP.name().toLowerCase(), "WordCount1",
+                            MetricTags.PROGRAM_TYPE.name().toLowerCase(), "f");
     // WordCount should be found in myspace, not in yourspace
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.myspace.app.WordCount1.ptp.f",
-                       ImmutableList.<String>of("ns.myspace.app.WordCount1.ptp.f.prg.WordCounter"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WordCount1.ptp.f",
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of("namespace.myspace.app.WordCount1.program_type.f.program.WordCounter"));
+
+    context = String.format("%s.%s.%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "yourspace",
+                            MetricTags.APP.name().toLowerCase(), "WordCount1",
+                            MetricTags.PROGRAM_TYPE.name().toLowerCase(), "f");
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
                        ImmutableList.<String>of());
 
     // WCount should be found in yourspace, not in myspace
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.b",
-                                                "ns.yourspace.app.WCount1.ptp.f",
-                                                "ns.yourspace.app.WCount1.ptp.p"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.myspace.app.WCount1",
+    context = String.format("%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "yourspace",
+                            MetricTags.APP.name().toLowerCase(), "WCount1");
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of(context + ".program_type.b",
+                                                context + ".program_type.f",
+                                                context + ".program_type.p"));
+    context = String.format("%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "myspace",
+                            MetricTags.APP.name().toLowerCase(), "WCount1");
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
                        ImmutableList.<String>of());
 
+    context = String.format("%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "myspace",
+                            MetricTags.APP.name().toLowerCase(), "WCount1");
     // verify other metrics for WCount app
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
-                         ".ptp.b.prg.ClassicWordCount",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
-                         ".ptp.b.prg.ClassicWordCount.run.run1",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1.pr2.m",
-                                                "ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1.pr2.r"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
-                         ".ptp.b.prg.ClassicWordCount.run.run1.pr2.m",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp" +
-                                                  ".b.prg.ClassicWordCount.run.run1.pr2.m.pr3.task1"));
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
-                         ".ptp.b.prg.ClassicWordCount.run.run1.pr2.m.pr3.task1",
+
+    context = String.format("%s.%s.%s.%s.%s.%s.%s.%s", MetricTags.NAMESPACE.name().toLowerCase(), "yourspace",
+                            MetricTags.APP.name().toLowerCase(), "WCount1",
+                            MetricTags.PROGRAM_TYPE.name().toLowerCase(), "b",
+                            MetricTags.PROGRAM, "ClassicWordCount");
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of(context + ".run_id.run1"));
+    context = "namespace.yourspace.app.WCount1.program_type.b.program.ClassicWordCount.run_id.run1";
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of(context + ".mr_task_type.m", context + ".mr_task_type.r"));
+
+    context = "namespace.yourspace.app.WCount1.program_type.b.program.ClassicWordCount.run_id.run1.mr_task_type.m";
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of(context + ".instance_id.task1"));
+    context = "namespace.yourspace.app.WCount1.program_type.b.program.ClassicWordCount." +
+      "run_id.run1.mr_task_type.m.instance_id.task1";
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
                        ImmutableList.<String>of());
 
     // verify "*"
-    verifySearchResultContains("/v3/metrics/search?target=childContext&context=ns.*",
-                               ImmutableList.<String>of("ns.*.app.WordCount1",
-                                                        "ns.*.app.WCount1"));
+    verifySearchResultContains("/v3/metrics/search?target=childContext&context=namespace.*",
+                               ImmutableList.<String>of("namespace.*.app.WordCount1",
+                                                        "namespace.*.app.WCount1"));
 
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.*.app.*",
-                       ImmutableList.<String>of("ns.*.app.*.ptp.b",
-                                                "ns.*.app.*.ptp.f",
-                                                "ns.*.app.*.ptp.p"));
+    verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.*.app.*",
+                       ImmutableList.<String>of("namespace.*.app.*.program_type.b",
+                                                "namespace.*.app.*.program_type.f",
+                                                "namespace.*.app.*.program_type.p"));
 
-    verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1.ptp.*",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.*.prg.ClassicWordCount",
-                                                "ns.yourspace.app.WCount1.ptp.*.prg.RCounts",
-                                                "ns.yourspace.app.WCount1.ptp.*.prg.WCounter",
-                                                "ns.yourspace.app.WCount1.ptp.*.prg.WordCounter"));
+    context = "namespace.yourspace.app.WCount1.program_type.*";
+    verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                       ImmutableList.<String>of(context + ".program.ClassicWordCount",
+                                                context + ".program.RCounts",
+                                                context + ".program.WCounter",
+                                                context + ".program.WordCounter"
+                                                ));
   }
 
 
@@ -215,7 +248,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     verifyGroupByResult(
       "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "f", "WCounter") +
-        "&metric=system.reads&groupBy=" + Constants.Metrics.Tag.FLOWLET + "&start=" + start + "&end="
+        "&metric=system.reads&groupBy=" + MetricTags.FLOWLET.name() + "&start=" + start + "&end="
         + end, groupByResult);
 
     groupByResult =
@@ -225,7 +258,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     verifyGroupByResult(
       "/v3/metrics/query?context=" + getContext("yourspace") +
-        "&metric=system.reads&groupBy=" + Constants.Metrics.Tag.APP + "," + Constants.Metrics.Tag.PROGRAM_TYPE +
+        "&metric=system.reads&groupBy=" + MetricTags.APP.name() + "," + MetricTags.PROGRAM_TYPE.name() +
         "&start=" + start + "&end=" + end, groupByResult);
   }
 
@@ -269,7 +302,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private String getContext(String... tags) {
     String context = "";
     for (int i = 0; i < tags.length; i++) {
-      context += tagsList.get(i) + "." + tags[i] + ".";
+      context += tagsList.get(i).name() + "." + tags[i] + ".";
     }
     return context.substring(0, context.length() - 1);
   }
@@ -277,42 +310,42 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testSearchMetrics() throws Exception {
     // metrics in myspace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                       ".program_type.f.program.WordCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
 
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.collector",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1.program_type.f." +
+                         "program.WordCounter.run_id.run1.flowlet.collector",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
 
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                         ".program_type.f.program.WordCounter.run_id.run1",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                 "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.yourspace.app.WordCount1." +
-                         "ptp.f.prg.WordCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WordCount1." +
+                         "program_type.f.program.WordCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of());
 
 
     // metrics in yourspace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.yourspace.app.WCount1" +
-                         ".ptp.f.prg.WCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WCount1" +
+                         ".program_type.f.program.WCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of("system.reads"));
 
     // wrong namespace
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WCount1" +
-                         ".ptp.f.prg.WCounter.run.run1.pr2.splitter",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WCount1" +
+                         ".program_type.f.program.WCounter.run_id.run1.flowlet.splitter",
                        ImmutableList.<String>of());
 
     // verify "*"
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.*",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                         ".program_type.f.program.WordCounter.run_id.run1.flowlet.*",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                 "system.writes", "system.zz", "user.reads", "user.writes"));
-    verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.*.run.run1",
+    verifySearchResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
+                         ".program_type.f.program.*.run_id.run1",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                 "system.writes", "system.zz", "user.reads", "user.writes"));
   }

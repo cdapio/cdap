@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import org.apache.hadoop.mapreduce.Counter;
@@ -52,9 +53,9 @@ public class MapReduceMetricsWriter {
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.context = context;
-    this.mapperMetrics = context.getProgramMetrics().childCollector(Constants.Metrics.Tag.MR_TASK_TYPE,
+    this.mapperMetrics = context.getProgramMetrics().childCollector(MetricTags.MR_TASK_TYPE.getCodeName(),
                                                                     MapReduceMetrics.TaskType.Mapper.getId());
-    this.reducerMetrics = context.getProgramMetrics().childCollector(Constants.Metrics.Tag.MR_TASK_TYPE,
+    this.reducerMetrics = context.getProgramMetrics().childCollector(MetricTags.MR_TASK_TYPE.getCodeName(),
                                                                     MapReduceMetrics.TaskType.Reducer.getId());
   }
 

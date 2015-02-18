@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.test.SlowTests;
@@ -67,11 +67,11 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
 
     // non-empty tags.
-    final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
-                                         Constants.Metrics.Tag.APP, APP,
-                                         Constants.Metrics.Tag.PROGRAM_TYPE, PROGRAM_TYPE,
-                                         Constants.Metrics.Tag.PROGRAM, PROGRAM,
-                                         Constants.Metrics.Tag.RUN_ID, RUNID);
+    final Map baseTags = ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), NAMESPACE,
+                                         MetricTags.APP.getCodeName(), APP,
+                                         MetricTags.PROGRAM_TYPE.getCodeName(), PROGRAM_TYPE,
+                                         MetricTags.PROGRAM.getCodeName(), PROGRAM,
+                                         MetricTags.RUN_ID.getCodeName(), RUNID);
 
     try {
       // The first section tests with empty tags.
@@ -104,8 +104,9 @@ public class AggregatedMetricsCollectionServiceTest {
 
       // define collectors for non-empty tags
       MetricsCollector baseCollector = service.getCollector(baseTags);
-      MetricsCollector flowletInstanceCollector = baseCollector.childCollector(Constants.Metrics.Tag.FLOWLET, FLOWLET)
-        .childCollector(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
+      MetricsCollector flowletInstanceCollector = baseCollector.childCollector(
+        MetricTags.FLOWLET.getCodeName(), FLOWLET)
+        .childCollector(MetricTags.INSTANCE_ID.getCodeName(), INSTANCE);
 
       // increment metrics for various collectors
       baseCollector.increment(METRIC, Integer.MAX_VALUE);

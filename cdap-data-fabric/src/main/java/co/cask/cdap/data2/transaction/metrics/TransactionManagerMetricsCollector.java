@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.metrics;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.tephra.metrics.TxMetricsCollector;
@@ -32,8 +33,8 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService service) {
     this.metricsCollector = service.getCollector(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                      Constants.Metrics.Tag.COMPONENT, "transactions"));
+      ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                      MetricTags.COMPONENT.getCodeName(), "transactions"));
   }
 
   // todo: change TxMetricsCollector in Tephra

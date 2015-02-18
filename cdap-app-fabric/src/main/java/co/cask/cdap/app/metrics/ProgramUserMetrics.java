@@ -18,6 +18,7 @@ package co.cask.cdap.app.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 
@@ -42,7 +43,7 @@ public class ProgramUserMetrics implements Metrics, Externalizable {
   }
 
   public ProgramUserMetrics(MetricsCollector metricsCollector) {
-    this.metricsCollector = metricsCollector.childCollector(Constants.Metrics.Tag.SCOPE, "user");
+    this.metricsCollector = metricsCollector.childCollector(MetricTags.SCOPE.getCodeName(), "user");
   }
 
   @Override

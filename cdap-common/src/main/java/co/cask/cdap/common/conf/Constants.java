@@ -370,34 +370,6 @@ public final class Constants {
       /** Defines reporting interval for LevelDB stats, in seconds */
       public static final String LEVELDB_STATS_REPORT_INTERVAL = "metrics.dataset.leveldb.stats.report.interval";
     }
-
-    /**
-     * Metrics context tags
-     */
-    public static final class Tag {
-      // NOTES:
-      //   * tag names must be unique (keeping all possible here helps to ensure that)
-      //   * tag names better be short to reduce the serialized metric value size
-      public static final String RUN_ID = "run";
-      public static final String INSTANCE_ID = "ins";
-      public static final String COMPONENT = "cmp";
-      public static final String STREAM = "str";
-      public static final String DATASET = "ds";
-      public static final String SERVICE = "srv";
-      public static final String SERVICE_RUNNABLE = "srn";
-      public static final String HANDLER = "hnd";
-      public static final String METHOD = "mtd";
-      public static final String MR_TASK_TYPE = "mrt";
-      public static final String APP = "app";
-      public static final String PROGRAM = "prg";
-      public static final String PROGRAM_TYPE = "ptp";
-      public static final String FLOWLET = "flt";
-      public static final String FLOWLET_QUEUE = "flq";
-      public static final String CLUSTER_METRICS = "cls";
-      public static final String NAMESPACE = "ns";
-      // who emitted: user vs system (scope is historical name)
-      public static final String SCOPE = "scp";
-    }
   }
 
   /**

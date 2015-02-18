@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 

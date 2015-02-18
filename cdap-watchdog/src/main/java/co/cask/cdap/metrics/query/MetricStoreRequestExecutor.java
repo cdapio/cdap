@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
@@ -126,7 +127,7 @@ public class MetricStoreRequestExecutor {
     // trick: get all queues and streams it was processing from using group by
     CubeQuery groupByQueueName =
       new CubeQuery(new CubeQuery(query, "system.process.events.processed"),
-                    ImmutableList.of(Constants.Metrics.Tag.FLOWLET_QUEUE));
+                    ImmutableList.of(MetricTags.FLOWLET_QUEUE.getCodeName()));
     Map<String, Long> processedPerQueue = getTotalsWithSingleGroupByTag(groupByQueueName);
 
     long processedTotal = 0;
@@ -140,18 +141,19 @@ public class MetricStoreRequestExecutor {
       if (queueName.isQueue()) {
         Map<String, String> sliceByTags = Maps.newHashMap(query.getSliceByTags());
         // we want to aggregate written to the queue by all flowlets
-        sliceByTags.remove(Constants.Metrics.Tag.FLOWLET);
+        sliceByTags.remove(MetricTags.FLOWLET.getCodeName());
         // we want to narrow down to specific queue we know our flowlet was consuming from
-        sliceByTags.put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName.getSimpleName());
+        sliceByTags.put(MetricTags.FLOWLET_QUEUE.getCodeName(), queueName.getSimpleName());
         written = getTotals(new CubeQuery(new CubeQuery(query, sliceByTags), "system.process.events.out"));
 
       } else if (queueName.isStream()) {
         Map<String, String> sliceByTags = Maps.newHashMap();
         // we want to narrow down to specific stream we know our flowlet was consuming from
-        sliceByTags.put(Constants.Metrics.Tag.STREAM, queueName.getSimpleName());
+        sliceByTags.put(MetricTags.STREAM.getCodeName(), queueName.getSimpleName());
         // note: namespace + stream uniquely define the stream
         // we know that flow can consume from stream of the same namespace only at this point
-        sliceByTags.put(Constants.Metrics.Tag.NAMESPACE, query.getSliceByTags().get(Constants.Metrics.Tag.NAMESPACE));
+        sliceByTags.put(MetricTags.NAMESPACE.getCodeName(),
+                        query.getSliceByTags().get(MetricTags.NAMESPACE.getCodeName()));
         written = getTotals(new CubeQuery(new CubeQuery(query, sliceByTags), "system.collect.events"));
       } else {
         LOG.warn("Unknown queue type: " + name);

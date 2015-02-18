@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.store.MetricStore;
@@ -27,8 +28,11 @@ import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -42,6 +46,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -74,26 +79,25 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   public void search(HttpRequest request, HttpResponder responder,
                      @QueryParam("target") String target,
                      @QueryParam("context") String context) throws IOException {
-    if (target == null) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
-      return;
-    }
-
-    if ("childContext".equals(target)) {
-      searchChildContextAndRespond(responder, context);
-    } else if ("metric".equals(target)) {
-      searchMetricAndRespond(responder, context);
-    } else {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
-    }
+      if (target == null) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
+        return;
+      }
+      if ("childContext".equals(target)) {
+        searchChildContextAndRespond(responder, context);
+      } else if ("metric".equals(target)) {
+        searchMetricAndRespond(responder, context);
+      } else {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
+      }
   }
 
   @POST
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
-                     @QueryParam("context") String context,
-                     @QueryParam("metric") String metric,
-                     @QueryParam("groupBy") String groupBy) throws Exception {
+                    @QueryParam("context") String context,
+                    @QueryParam("metric") String metric,
+                    @QueryParam("groupBy") String groupBy) throws Exception {
     try {
       // todo: refactor parsing time range params
       // sets time range, query type, etc.
@@ -110,13 +114,16 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       CubeQuery query = new CubeQuery(startTs, endTs,
                                       queryTimeParams.getResolution(), metric,
-                                          // todo: figure out MeasureType
+                                      // todo: figure out MeasureType
                                       MeasureType.COUNTER, tagsSliceBy, groupByTags);
 
       Collection<TimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
 
       responder.sendJson(HttpResponseStatus.OK, result);
+    } catch (IllegalArgumentException e) {
+      LOG.error("Exception parsing request ", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Context Name");
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
@@ -126,7 +133,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private List<String> parseGroupBy(String groupBy) {
     // groupBy tags are comma separated
     return (groupBy == null) ? Lists.<String>newArrayList() :
-    Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+      Lists.newArrayList(
+        Iterables.transform(Splitter.on(",").split(groupBy), new Function<String, String>() {
+          @Override
+          public String apply(String tag) {
+            try {
+              MetricTags tagKey = MetricTags.valueOf(tag);
+              return tagKey.getCodeName();
+            } catch (IllegalArgumentException e) {
+              throw Throwables.propagate(e);
+            }
+          }
+        }));
   }
 
   private Map<String, String> parseTagValuesAsMap(@Nullable String context) {
@@ -137,22 +155,30 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
     // order matters
     Map<String, String> result = Maps.newLinkedHashMap();
-    for (int i = 0; i < tagValues.length; i += 2) {
-      String tag = tagValues[i];
-      // if odd number, the value for last tag is assumed to be null
-      String val = i + 1 < tagValues.length ? tagValues[i + 1] : null;
-      if (ANY_TAG_VALUE.equals(val)) {
-        val = null;
+    try {
+      for (int i = 0; i < tagValues.length; i += 2) {
+        String tag = tagValues[i];
+        MetricTags tagKey = MetricTags.valueOf(tag.toUpperCase());
+        tag = tagKey.getCodeName();
+        // if odd number, the value for last tag is assumed to be null
+        String val = i + 1 < tagValues.length ? tagValues[i + 1] : null;
+        if (ANY_TAG_VALUE.equals(val)) {
+          val = null;
+        }
+        result.put(tag, val);
       }
-      result.put(tag, val);
+    } catch (IllegalArgumentException e) {
+      throw Throwables.propagate(e);
     }
-
     return result;
   }
 
   private void searchMetricAndRespond(HttpResponder responder, String context) {
     try {
       responder.sendJson(HttpResponseStatus.OK, searchMetric(context));
+    } catch (IllegalArgumentException e) {
+      LOG.error("Exception parsing request ", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Context Name");
     } catch (Exception e) {
       LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -162,6 +188,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private void searchChildContextAndRespond(HttpResponder responder, String context) {
     try {
       responder.sendJson(HttpResponseStatus.OK, searchChildContext(context));
+    } catch (IllegalArgumentException e) {
+      LOG.error("Exception parsing request ", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Context Name");
     } catch (Exception e) {
       LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -180,17 +209,22 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
-    contextPrefix = toCanonicalContext(tagValues);
     CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
     Collection<String> result = Lists.newArrayList();
-    for (TagValue tag : nextTags) {
-      if (tag.getValue() == null) {
-        continue;
+    try {
+      for (TagValue tag : nextTags) {
+        if (tag.getValue() == null) {
+          continue;
+        }
+        MetricTags tagKey = MetricTags.valueOfCodeName(tag.getTagName());
+        String tagValue = tagKey.name().toLowerCase() + TAG_DELIM + tag.getValue();
+        String resultTag = (contextPrefix == null || contextPrefix.length() == 0) ?
+          tagValue : contextPrefix + TAG_DELIM + tagValue;
+        result.add(resultTag);
       }
-      String tagValue = tag.getTagName() + TAG_DELIM + tag.getValue();
-      String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
-      result.add(resultTag);
+    } catch (IllegalArgumentException e) {
+      throw Throwables.propagate(e);
     }
     return result;
   }

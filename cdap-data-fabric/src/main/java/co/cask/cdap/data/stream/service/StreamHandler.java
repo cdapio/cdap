@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.format.RecordFormats;
@@ -305,7 +306,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public StreamMetricsCollector createMetricsCollector(final Id.Stream streamId) {
         final MetricsCollector childCollector =
-          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamId.getName());
+          streamMetricsCollector.childCollector(MetricTags.STREAM.getCodeName(), streamId.getName());
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -323,20 +324,22 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   private Map<String, String> getStreamHandlerMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
-                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
-                           Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
+    return ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.SYSTEM_NAMESPACE,
+                           MetricTags.COMPONENT.getCodeName(), Constants.Gateway.METRICS_CONTEXT,
+                           MetricTags.HANDLER.getCodeName(), Constants.Gateway.STREAM_HANDLER_NAME,
+                           MetricTags.INSTANCE_ID.getCodeName(),
+                           cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
 
   /**
    * TODO: CDAP-1244:This should accept namespaceId. Refactor metricsCollectors here after streams are namespaced.
    */
   private Map<String, String> getStreamMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-                           Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
-                           Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
-                           Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
+    return ImmutableMap.of(MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+                           MetricTags.COMPONENT.getCodeName(), Constants.Gateway.METRICS_CONTEXT,
+                           MetricTags.HANDLER.getCodeName(), Constants.Gateway.STREAM_HANDLER_NAME,
+                           MetricTags.INSTANCE_ID.getCodeName(),
+                           cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
 
   /**

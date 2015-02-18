@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.spark.metrics;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 
 import java.io.Externalizable;
@@ -39,7 +40,7 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
   }
 
   public static void setMetricsCollector(MetricsCollector collector) {
-    SparkUserMetrics.metricsCollector = collector.childCollector(Constants.Metrics.Tag.SCOPE, "user");
+    SparkUserMetrics.metricsCollector = collector.childCollector(MetricTags.SCOPE.getCodeName(), "user");
   }
 
   @Override

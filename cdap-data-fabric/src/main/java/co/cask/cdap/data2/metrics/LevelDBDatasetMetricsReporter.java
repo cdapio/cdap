@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metrics;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.Namespace;
@@ -98,7 +99,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
         continue;
       }
       MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
+        metricsService.getCollector(ImmutableMap.of(MetricTags.DATASET.getCodeName(), datasetName));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
       collector.increment("dataset.size.mb", sizeInMb);

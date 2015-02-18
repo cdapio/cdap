@@ -22,9 +22,9 @@ import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.app.queue.InputDatum;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.internal.app.queue.SingleItemQueueReader;
@@ -327,7 +327,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         .build(new CacheLoader<String, MetricsCollector>() {
           @Override
           public MetricsCollector load(String key) throws Exception {
-            return flowletContext.getProgramMetrics().childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
+            return flowletContext.getProgramMetrics().childCollector(MetricTags.FLOWLET_QUEUE.getCodeName(), key);
           }
         });
 

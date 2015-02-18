@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -145,7 +145,7 @@ public class DatasetInstantiator implements DatasetContext {
                                  @Nullable
                                  MetricsCollector metricsCollector) {
       this.metricsCollector = metricsCollector == null ? null :
-        metricsCollector.childCollector(Constants.Metrics.Tag.DATASET, datasetName);
+        metricsCollector.childCollector(MetricTags.DATASET.getCodeName(), datasetName);
     }
 
     @Override

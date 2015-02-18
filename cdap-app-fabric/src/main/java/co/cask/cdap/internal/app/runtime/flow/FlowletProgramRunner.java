@@ -45,12 +45,12 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
@@ -449,7 +449,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 && queueSpec.getOutputSchema().equals(schema)) {
 
               final MetricsCollector metrics = flowletContext.getProgramMetrics().childCollector(
-                Constants.Metrics.Tag.FLOWLET_QUEUE, queueSpec.getQueueName().getSimpleName());
+                MetricTags.FLOWLET_QUEUE.getCodeName(), queueSpec.getQueueName().getSimpleName());
               QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {

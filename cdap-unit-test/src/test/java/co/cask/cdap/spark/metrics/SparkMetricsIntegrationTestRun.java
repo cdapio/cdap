@@ -17,6 +17,7 @@
 package co.cask.cdap.spark.metrics;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricTags;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
 import co.cask.cdap.metrics.store.cube.CubeQuery;
@@ -64,10 +65,10 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
   private static long getSparkMetric(String applicationId, String sparkId, String metricName) throws Exception {
     Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SPARK),
-      Constants.Metrics.Tag.PROGRAM, sparkId);
+      MetricTags.NAMESPACE.getCodeName(), Constants.DEFAULT_NAMESPACE,
+      MetricTags.APP.getCodeName(), applicationId,
+      MetricTags.PROGRAM_TYPE.getCodeName(), TypeId.getMetricContextId(ProgramType.SPARK),
+      MetricTags.PROGRAM.getCodeName(), sparkId);
 
     return getTotalCounterByPrefix(context, metricName);
   }
