@@ -222,7 +222,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
       "can be a timestamp in milliseconds or " +
       "a relative time in the form of [+|-][0-9][d|h|m|s]. " +
       "<" + ArgumentName.START_TIME + "> is relative to current time; " +
-      "<" + ArgumentName.END_TIME + ">, it is relative to start time. " +
+      "<" + ArgumentName.END_TIME + "> is relative to start time. " +
       "Special constants \"min\" and \"max\" can also be used to represent \"0\" and \"max timestamp\" respectively.";
   }
 

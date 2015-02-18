@@ -35,7 +35,7 @@ public enum ElementType {
   NAMESPACE("Namespace", "Namespaces", "namespace", "namespaces",
             null, null, ArgumentName.NAMESPACE_ID, Capability.PREFERENCES),
 
-  APP("application", "applications", "app", "apps",
+  APP("Application", "Applications", "app", "apps",
       null, null, ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
   DATASET("Dataset", "Datasets", "dataset", "datasets",
@@ -53,7 +53,7 @@ public enum ElementType {
   STREAM("Stream", "Streams", "stream", "streams",
          null, null, ArgumentName.STREAM, Capability.LIST),
 
-  PROGRAM("program", "programs", "program", "programs",
+  PROGRAM("Program", "Programs", "program", "programs",
           null, null, ArgumentName.PROGRAM),
 
   FLOW("Flow", "Flows", "flow", "flows",
