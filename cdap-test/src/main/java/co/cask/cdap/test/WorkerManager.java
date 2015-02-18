@@ -37,20 +37,4 @@ public interface WorkerManager {
    * @return true if worker is running
    */
   boolean isRunning();
-
-  /**
-   * Wait for the status of the Worker with default retries of 5 and a timeout of 1 second between retry attempts.
-   * @param status true if waiting for started, false if waiting for stopped
-   * @throws InterruptedException if the method is interrupted while waiting for the status
-   */
-  void waitForStatus(boolean status) throws InterruptedException;
-
-  /**
-   * Wait for the status of the Worker, retrying a given number of times with a timeout between attempts.
-   * @param status true if waiting for started, false if waiting for stopped
-   * @param retries number of attempts to check for status
-   * @param timeout timeout in seconds between attempts
-   * @throws InterruptedException if the methods is interrupted while waiting for the status
-   */
-  void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
 }

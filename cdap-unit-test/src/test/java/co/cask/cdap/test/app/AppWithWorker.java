@@ -62,9 +62,9 @@ public class AppWithWorker extends AbstractApplication {
     @Override
     public void run() {
       running = true;
+      writeToTable(RUN, RUN);
       while (running) {
         try {
-          writeToTable(RUN, RUN);
           TimeUnit.MILLISECONDS.sleep(100);
         } catch (InterruptedException e) {
 

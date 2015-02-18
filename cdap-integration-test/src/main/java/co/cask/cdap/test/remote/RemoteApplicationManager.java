@@ -23,7 +23,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -255,7 +254,7 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
     final ProgramId workerId = new ProgramId(applicationId, workerName, ProgramType.WORKER);
-    return new AbstractWorkerManager() {
+    return new WorkerManager() {
       @Override
       public void setRunnableInstances(int instances) {
         Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");

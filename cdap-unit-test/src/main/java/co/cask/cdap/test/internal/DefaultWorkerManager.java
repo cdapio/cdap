@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.WorkerManager;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Throwables;
@@ -27,7 +26,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager extends AbstractWorkerManager {
+public class DefaultWorkerManager implements WorkerManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultWorkerManager.class);
 
