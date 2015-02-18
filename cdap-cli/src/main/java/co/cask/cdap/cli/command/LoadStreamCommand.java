@@ -86,9 +86,13 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
 
   @Override
   public String getDescription() {
-    return String.format("Loads a file to a %s. The content of the file will become multiple events in the %s, " +
-           "based on the content type. If <%s> is not provided, it will be detected by the file extension."
-           ElementType.STREAM.getPrettyName(), ElementType.STREAM.getPrettyName(), ArgumentName.CONTENT_TYPE);
+    return String.format("Loads a file to a %s. The contents of the file will " +
+                         "become multiple events in the %s, " +
+                         "based on the content type. If <%s> is not provided, " +
+                         "it will be detected by the file extension.",
+                         ElementType.STREAM.getPrettyName(), 
+                         ElementType.STREAM.getPrettyName(), 
+                         ArgumentName.CONTENT_TYPE);
   }
 
   private String getContentType(String extension) {
