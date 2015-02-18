@@ -68,7 +68,9 @@ public class ApplicationClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationRecord> list() throws IOException, UnAuthorizedAccessTokenException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURLV3("apps"), config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+                                               config.resolveNamespacedURLV3("apps"),
+                                               config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
@@ -81,7 +83,7 @@ public class ApplicationClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void delete(String appId) throws ApplicationNotFoundException, IOException, UnAuthorizedAccessTokenException {
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveURLV3("apps/" + appId),
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3("apps/" + appId),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
@@ -95,7 +97,7 @@ public class ApplicationClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void deleteAll() throws IOException, UnAuthorizedAccessTokenException {
-    restClient.execute(HttpMethod.DELETE, config.resolveURLV3("apps"), config.getAccessToken());
+    restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3("apps"), config.getAccessToken());
   }
 
   /**
@@ -107,7 +109,7 @@ public class ApplicationClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public boolean exists(String appId) throws IOException, UnAuthorizedAccessTokenException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURLV3("apps/" + appId),
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveNamespacedURLV3("apps/" + appId),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
   }
@@ -171,7 +173,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    */
   public void deploy(File jarFile) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURLV3("apps");
+    URL url = config.resolveNamespacedURLV3("apps");
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
 
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
@@ -191,7 +193,7 @@ public class ApplicationClient {
 
     Preconditions.checkArgument(programType.isListable());
 
-    URL url = config.resolveURLV3(programType.getCategoryName());
+    URL url = config.resolveNamespacedURLV3(programType.getCategoryName());
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
@@ -235,7 +237,7 @@ public class ApplicationClient {
     throws ApplicationNotFoundException, IOException, UnAuthorizedAccessTokenException {
     Preconditions.checkArgument(programType.isListable());
 
-    URL url = config.resolveURLV3(String.format("apps/%s/%s", appId, programType.getCategoryName()));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s", appId, programType.getCategoryName()));
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
