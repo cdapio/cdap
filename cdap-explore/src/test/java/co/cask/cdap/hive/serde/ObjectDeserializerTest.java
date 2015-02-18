@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.io.SchemaGenerator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -33,7 +34,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +41,8 @@ import java.util.UUID;
 /**
  *
  */
-public class ObjectTranslatorTest {
+public class ObjectDeserializerTest {
+  private static final SchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
 
   // contains all types our Schema allows
   private static class SimpleRecord {
@@ -59,6 +60,7 @@ public class ObjectTranslatorTest {
     final UUID uuidField = UUID.fromString("92633f3c-f358-47ef-89bd-2d8dd59a600d");
     URI uriField;
     URL urlField;
+    final int[] intsField = new int[] { 1, 2, 3 };
 
     private SimpleRecord(URI uri, URL url) {
       this.uriField = uri;
@@ -82,6 +84,7 @@ public class ObjectTranslatorTest {
     byte[] uuidField;
     String uriField;
     String urlField;
+    int[] intsField = new int[] { 1, 2, 3 };
 
     private HiveSimpleRecord(SimpleRecord r) {
       this.booleanField = r.booleanField;
@@ -98,29 +101,32 @@ public class ObjectTranslatorTest {
       this.uuidField = Bytes.toBytes(r.uuidField);
       this.uriField = r.uriField.toString();
       this.urlField = r.urlField.toString();
+      this.intsField = r.intsField;
     }
 
+    // everything is lowercase to simulate hive
     private static List<String> getFieldNames() {
       return Lists.newArrayList(
-        "booleanField",
-        "byteField",
-        "charField",
-        "shortField",
-        "intField",
-        "longField",
-        "floatField",
-        "doubleField",
-        "stringField",
-        "uriField",
-        "urlField",
-        "bytesField",
-        "byteBufferField",
-        "uuidField"
+        "booleanfield",
+        "bytefield",
+        "charfield",
+        "shortfield",
+        "intfield",
+        "longfield",
+        "floatfield",
+        "doublefield",
+        "stringfield",
+        "urifield",
+        "urlfield",
+        "bytesfield",
+        "bytebufferfield",
+        "uuidfield",
+        "intsfield"
       );
     }
 
     private static List<TypeInfo> getFieldTypes() {
-      return Lists.<TypeInfo>newArrayList(
+      return Lists.newArrayList(
         TypeInfoFactory.booleanTypeInfo,
         TypeInfoFactory.intTypeInfo,
         TypeInfoFactory.intTypeInfo,
@@ -134,7 +140,8 @@ public class ObjectTranslatorTest {
         TypeInfoFactory.stringTypeInfo,
         TypeInfoFactory.binaryTypeInfo,
         TypeInfoFactory.binaryTypeInfo,
-        TypeInfoFactory.binaryTypeInfo
+        TypeInfoFactory.binaryTypeInfo,
+        TypeInfoFactory.getListTypeInfo(TypeInfoFactory.intTypeInfo)
       );
     }
 
@@ -153,7 +160,8 @@ public class ObjectTranslatorTest {
         urlField,
         bytesField,
         byteBufferField,
-        uuidField
+        uuidField,
+        intsField
       );
     }
   }
@@ -171,8 +179,8 @@ public class ObjectTranslatorTest {
 
     private static List<String> getFieldNames() {
       return Lists.newArrayList(
-        "mapField",
-        "listField",
+        "mapfield",
+        "listfield",
         "record"
       );
     }
@@ -196,78 +204,113 @@ public class ObjectTranslatorTest {
 
   @Test
   public void testIdentityTranslations() throws Exception {
-    // include all types that are the same in our schema as they are in Hive
-    Map<Object, TypeInfo> inputs = Maps.newHashMap();
-    inputs.put("foobar", TypeInfoFactory.stringTypeInfo);
-    inputs.put(5, TypeInfoFactory.intTypeInfo);
-    inputs.put(Long.MAX_VALUE, TypeInfoFactory.longTypeInfo);
-    inputs.put(true, TypeInfoFactory.booleanTypeInfo);
-    inputs.put(3.14f, TypeInfoFactory.floatTypeInfo);
-    inputs.put(3.14, TypeInfoFactory.doubleTypeInfo);
-    inputs.put(Bytes.toBytes("foobar"), TypeInfoFactory.binaryTypeInfo);
-    for (Map.Entry<Object, TypeInfo> input : inputs.entrySet()) {
-      Object field = input.getKey();
-      TypeInfo type = input.getValue();
-      Assert.assertEquals(field, ObjectTranslator.translateField(field, type));
-    }
+    List<String> names = Lists.newArrayList("dummy-name");
+    // string
+    ObjectDeserializer deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.stringTypeInfo), Schema.of(Schema.Type.STRING));
+    Assert.assertEquals("foobar", deserializer.deserialize("foobar"));
+    // int
+    deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.intTypeInfo), Schema.of(Schema.Type.INT));
+    Assert.assertEquals(Integer.MIN_VALUE, deserializer.deserialize(Integer.MIN_VALUE));
+    // long
+    deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.longTypeInfo), Schema.of(Schema.Type.LONG));
+    Assert.assertEquals(Long.MAX_VALUE, deserializer.deserialize(Long.MAX_VALUE));
+    // boolean
+    deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.booleanTypeInfo), Schema.of(Schema.Type.BOOLEAN));
+    Assert.assertTrue((Boolean) deserializer.deserialize(true));
+    // float
+    deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.floatTypeInfo), Schema.of(Schema.Type.FLOAT));
+    Assert.assertEquals(3.14f, deserializer.deserialize(3.14f));
+    // double
+    deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.doubleTypeInfo), Schema.of(Schema.Type.DOUBLE));
+    Assert.assertEquals(3.14, deserializer.deserialize(3.14));
+    // bytes
+    deserializer = new ObjectDeserializer(
+      names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.binaryTypeInfo), Schema.of(Schema.Type.BYTES));
+    Assert.assertArrayEquals(new byte[] { 1, 2, 3 }, (byte[]) deserializer.deserialize(new byte[] { 1, 2, 3 }));
   }
 
   @Test
   public void testIntFieldTranslations() throws Exception {
+    ObjectDeserializer translator = new ObjectDeserializer(
+      Lists.newArrayList("dummy-name"),
+      Lists.<TypeInfo>newArrayList(TypeInfoFactory.intTypeInfo),
+      Schema.of(Schema.Type.INT));
     Byte byteVal = Byte.MAX_VALUE;
     Character charVal = Character.MAX_VALUE;
     Short shortVal = Short.MAX_VALUE;
-    Assert.assertEquals(byteVal.intValue(), ObjectTranslator.translateField(byteVal, TypeInfoFactory.intTypeInfo));
-    Assert.assertEquals((int) charVal,
-                        ObjectTranslator.translateField(charVal, TypeInfoFactory.intTypeInfo));
-    Assert.assertEquals(shortVal.intValue(),
-                        ObjectTranslator.translateField(shortVal, TypeInfoFactory.intTypeInfo));
+    Assert.assertEquals(byteVal.intValue(), translator.deserialize(byteVal));
+    Assert.assertEquals((int) charVal, translator.deserialize(charVal));
+    Assert.assertEquals(shortVal.intValue(), translator.deserialize(shortVal));
   }
 
   @Test
   public void testURLAndURITranslation() throws Exception {
+    ObjectDeserializer translator = new ObjectDeserializer(
+      Lists.newArrayList("dummy-name"),
+      Lists.<TypeInfo>newArrayList(TypeInfoFactory.stringTypeInfo),
+      Schema.of(Schema.Type.STRING));
     String str = "http://abc.com/123";
-    Assert.assertEquals(str, ObjectTranslator.translateField(new URL(str), TypeInfoFactory.stringTypeInfo));
-    Assert.assertEquals(str, ObjectTranslator.translateField(new URI(str), TypeInfoFactory.stringTypeInfo));
+    Assert.assertEquals(str, translator.deserialize(new URL(str)));
+    Assert.assertEquals(str, translator.deserialize(new URI(str)));
   }
 
   @Test
   public void testByteBufferTranslation() throws Exception {
+    ObjectDeserializer translator = new ObjectDeserializer(
+      Lists.newArrayList("dummy-name"),
+      Lists.<TypeInfo>newArrayList(TypeInfoFactory.binaryTypeInfo),
+      Schema.of(Schema.Type.BYTES));
     ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] { 1, 2, 3 });
-    byte[] translated = (byte[]) ObjectTranslator.translateField(byteBuffer, TypeInfoFactory.binaryTypeInfo);
-    Assert.assertTrue(Arrays.equals(new byte[]{1, 2, 3}, translated));
+    byte[] translated = (byte[]) translator.deserialize(byteBuffer);
+    Assert.assertArrayEquals(new byte[]{1, 2, 3}, translated);
 
     // check to make sure bytes before the position are not copied
     byteBuffer.get();
-    translated = (byte[]) ObjectTranslator.translateField(byteBuffer, TypeInfoFactory.binaryTypeInfo);
-    Assert.assertTrue(Arrays.equals(new byte[]{2, 3}, translated));
+    translated = (byte[]) translator.deserialize(byteBuffer);
+    Assert.assertArrayEquals(new byte[]{2, 3}, translated);
   }
 
   @Test
   public void testUUIDTranslation() throws Exception {
+    ObjectDeserializer translator = new ObjectDeserializer(
+      Lists.newArrayList("dummy-name"),
+      Lists.<TypeInfo>newArrayList(TypeInfoFactory.binaryTypeInfo),
+      Schema.of(Schema.Type.BYTES));
     UUID uuid = UUID.randomUUID();
-    byte[] translated = (byte[]) ObjectTranslator.translateField(uuid, TypeInfoFactory.binaryTypeInfo);
-    Assert.assertTrue(Arrays.equals(Bytes.toBytes(uuid), translated));
+    byte[] translated = (byte[]) translator.deserialize(uuid);
+    Assert.assertArrayEquals(Bytes.toBytes(uuid), translated);
     Assert.assertEquals(uuid, Bytes.toUUID(translated));
   }
 
   @Test
   public void testListTranslation() throws Exception {
+    ObjectDeserializer translator = new ObjectDeserializer(
+      Lists.newArrayList("dummy-name"),
+      Lists.newArrayList(TypeInfoFactory.getListTypeInfo(TypeInfoFactory.stringTypeInfo)),
+      Schema.arrayOf(Schema.of(Schema.Type.STRING)));
     List<String> list = Lists.newArrayList("foo", "bar", "baz");
-    Assert.assertEquals(list, ObjectTranslator.translateField(
-      list, TypeInfoFactory.getListTypeInfo(TypeInfoFactory.stringTypeInfo)));
+    Assert.assertEquals(list, translator.deserialize(list));
   }
 
   @Test
   public void testMapTranslation() throws Exception {
+    ObjectDeserializer translator = new ObjectDeserializer(
+      Lists.newArrayList("dummy-name"),
+      Lists.newArrayList(TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.intTypeInfo, TypeInfoFactory.stringTypeInfo)),
+      Schema.mapOf(Schema.of(Schema.Type.INT), Schema.of(Schema.Type.STRING)));
     Map<Character, URL> input = Maps.newHashMap();
     input.put('a', new URL("http://abc.com"));
     input.put('1', new URL("http://123.com"));
     Map<Integer, String> expected = Maps.newHashMap();
     expected.put((int) 'a', "http://abc.com");
     expected.put((int) '1', "http://123.com");
-    Assert.assertEquals(expected, ObjectTranslator.translateField(
-      input, TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.intTypeInfo, TypeInfoFactory.stringTypeInfo)));
+    Assert.assertEquals(expected, translator.deserialize(input));
   }
 
   @Test
@@ -277,7 +320,9 @@ public class ObjectTranslatorTest {
     List<String> fieldNames = HiveSimpleRecord.getFieldNames();
     List<TypeInfo> fieldTypes = HiveSimpleRecord.getFieldTypes();
     List<Object> expected = hiveSimpleRecord.getAsList();
-    List<Object> translated = ObjectTranslator.flattenRecord(simpleRecord, fieldNames, fieldTypes);
+    ObjectDeserializer translator =
+      new ObjectDeserializer(fieldNames, fieldTypes, schemaGenerator.generate(SimpleRecord.class));
+    List<Object> translated = translator.translateRecord(simpleRecord);
     assertSimpleRecordEquals(expected, translated);
   }
 
@@ -300,6 +345,7 @@ public class ObjectTranslatorTest {
       .set("uuidField", simpleRecord.uuidField)
       .set("uriField", simpleRecord.uriField)
       .set("urlField", simpleRecord.urlField)
+      .set("intsField", simpleRecord.intsField)
       .build();
 
     // create the Hive version of the record
@@ -308,15 +354,19 @@ public class ObjectTranslatorTest {
     List<TypeInfo> fieldTypes = HiveSimpleRecord.getFieldTypes();
     List<Object> expected = hiveSimpleRecord.getAsList();
     // flatten the StructuredRecord into a list of objects
-    List<Object> translated = ObjectTranslator.flattenRecord(structuredRecord, fieldNames, fieldTypes);
+    ObjectDeserializer translator =
+      new ObjectDeserializer(fieldNames, fieldTypes, schemaGenerator.generate(SimpleRecord.class));
+    List<Object> translated = translator.translateRecord(structuredRecord);
     assertSimpleRecordEquals(expected, translated);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testNestedRecord() throws Exception {
     NestedRecord nestedRecord = new NestedRecord();
-    List<Object> translated =
-      ObjectTranslator.flattenRecord(nestedRecord, NestedRecord.getFieldNames(), NestedRecord.getFieldTypes());
+    ObjectDeserializer translator = new ObjectDeserializer(
+      NestedRecord.getFieldNames(), NestedRecord.getFieldTypes(), schemaGenerator.generate(NestedRecord.class));
+    List<Object> translated = translator.translateRecord(nestedRecord);
     List<Object> expected = nestedRecord.getAsList();
     // first 2 fields are a map and list and can be compared directly
     Assert.assertEquals(expected.get(0), translated.get(0));
@@ -325,13 +375,20 @@ public class ObjectTranslatorTest {
     assertSimpleRecordEquals((List<Object>) expected.get(2), (List<Object>) translated.get(2));
   }
 
+  @SuppressWarnings("unchecked")
   private void assertSimpleRecordEquals(List<Object> expected, List<Object> actual) {
     // compare the non-array fields
-    Assert.assertEquals(expected.subList(0, expected.size() - 3),
-                        actual.subList(0, actual.size() - 3));
-    // compare the array fields
-    for (int i = expected.size() - 1; i > expected.size() - 4; i--) {
-      Assert.assertTrue(Arrays.equals((byte[]) expected.get(i), (byte[]) actual.get(i)));
+    Assert.assertEquals(expected.subList(0, expected.size() - 4),
+                        actual.subList(0, actual.size() - 4));
+    // compare the byte array fields
+    for (int i = expected.size() - 2; i > expected.size() - 5; i--) {
+      Assert.assertArrayEquals((byte[]) expected.get(i), (byte[]) actual.get(i));
+    }
+    // compare the int array field, which becomes a list
+    List<Integer> actualInts = (List<Integer>) actual.get(actual.size() - 1);
+    int[] expectedInts = (int[]) expected.get(expected.size() - 1);
+    for (int i = 0; i < expectedInts.length; i++) {
+      Assert.assertEquals(expectedInts[i], (int) actualInts.get(i));
     }
   }
 }
