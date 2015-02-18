@@ -394,7 +394,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int count = getProgramInstances(programId);
+      int count = getWorkerInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -426,7 +426,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      setProgramInstances(programId, instances);
+      setWorkerInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -453,7 +453,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int count = getProgramInstances(programId);
+      int count = getProcedureInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -486,7 +486,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      setProgramInstances(programId, instances);
+      setProcedureInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -500,7 +500,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * TODO: This method should move to {@link ProgramLifecycleHttpHandler} when set and get instances v3 APIs are
    * implemented.
    */
-  private void setProgramInstances(Id.Program programId, int instances) throws Exception {
+  private void setProcedureInstances(Id.Program programId, int instances) throws Exception {
     try {
       store.setProcedureInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
@@ -510,19 +510,45 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                             ImmutableMap.of(programId.getId(), instances)).get();
       }
     } catch (Throwable throwable) {
-      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+      LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
     }
   }
 
-  private int getProgramInstances(Id.Program programId) throws Exception {
+  private int getProcedureInstances(Id.Program programId) throws Exception {
     try {
       return store.getProcedureInstances(programId);
     } catch (Throwable throwable) {
       LOG.warn("Exception when getting instances for {}.{} to {}.{}",
                programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
+    }
+  }
+
+  private void setWorkerInstances(Id.Program programId, int instances) throws Exception {
+    try {
+      store.setWorkerInstances(programId, instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = programLifecycleHttpHandler.findRuntimeInfo(programId,
+                                                                                                  ProgramType.WORKER);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES, ImmutableMap.of(programId.getId(),
+                                                                                              instances)).get();
+      }
+    } catch (Throwable t) {
+      LOG.warn("Exception when setting instances for {}.{} to {}.{}", programId.getId(),
+               ProgramType.WORKER.getPrettyName(), t.getMessage(), t);
+      throw new Exception(t.getMessage());
+    }
+  }
+
+  private int getWorkerInstances(Id.Program programId) throws Exception {
+    try {
+      return store.getWorkerInstances(programId);
+    } catch (Throwable t) {
+      LOG.warn("Exception when getting instances for {}.{} to {}.{}", programId.getId(),
+               ProgramType.WORKER.getPrettyName(), t.getMessage(), t);
+      throw new Exception(t.getMessage());
     }
   }
 

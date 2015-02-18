@@ -760,6 +760,8 @@ public class DefaultStore implements Store {
             programSpecification = appSpec.getMapReduce().get(id.getId());
           } else if (type == ProgramType.SPARK) {
             programSpecification = appSpec.getSpark().get(id.getId());
+          } else if (type == ProgramType.WORKER) {
+            programSpecification = appSpec.getWorkers().get(id.getId());
           } else if (type == ProgramType.WEBAPP) {
             // no-op
           } else {
