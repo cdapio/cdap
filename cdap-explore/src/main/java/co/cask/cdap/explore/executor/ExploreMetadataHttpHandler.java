@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,12 +48,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Handler that implements explore metadata APIs.
  */
-@Path(Constants.Gateway.API_VERSION_2)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreMetadataHttpHandler.class);
   private static final Gson GSON = new Gson();
@@ -67,10 +66,10 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/tables")
-  public void getTables(HttpRequest request, HttpResponder responder, @QueryParam("db") String databaseName) {
+  public void getTables(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     LOG.trace("Received get tables for current user");
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(databaseName));
+      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(namespaceId));
     } catch (ExploreException e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -79,7 +78,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/tables/{table}/info")
-  public void getTableSchema(HttpRequest request, HttpResponder responder, @PathParam("table") final String table) {
+  public void getTableSchema(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId, @PathParam("table") String table) {
     LOG.trace("Received get table info for table {}", table);
     try {
       int dbSepIdx = table.indexOf('.');
@@ -102,7 +102,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/tables")
-  public void getJDBCTables(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTables(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -117,7 +118,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/columns")
-  public void getJDBCColumns(HttpRequest request, HttpResponder responder) {
+  public void getJDBCColumns(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -132,7 +134,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/catalogs")
-  public void getJDBCCatalogs(HttpRequest request, HttpResponder responder) {
+  public void getJDBCCatalogs(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -145,7 +148,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/schemas")
-  public void getJDBCSchemas(HttpRequest request, HttpResponder responder) {
+  public void getJDBCSchemas(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -159,7 +163,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/functions")
-  public void getJDBCFunctions(HttpRequest request, HttpResponder responder) {
+  public void getJDBCFunctions(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -174,7 +179,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/tableTypes")
-  public void getJDBCTableTypes(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTableTypes(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -187,7 +193,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/types")
-  public void getJDBCTypes(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTypes(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -200,7 +207,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/jdbc/info/{type}")
-  public void getJDBCInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
+  public void getJDBCInfo(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId, @PathParam("type") final String type) {
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override
       public Void execute(HttpRequest request, HttpResponder responder)

@@ -22,9 +22,12 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
+import co.cask.cdap.explore.executor.ExploreExecutorHttpHandlerV2;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.executor.ExploreMetadataHttpHandler;
-import co.cask.cdap.explore.executor.ExplorePingHandler;
+import co.cask.cdap.explore.executor.ExploreMetadataHttpHandlerV2;
+import co.cask.cdap.explore.executor.ExploreStatusHandler;
+import co.cask.cdap.explore.executor.ExploreStatusHandlerV2;
 import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -97,8 +100,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
           Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
       handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
-      handlerBinder.addBinding().to(ExplorePingHandler.class);
+      handlerBinder.addBinding().to(ExploreExecutorHttpHandlerV2.class);
+      handlerBinder.addBinding().to(ExploreStatusHandler.class);
+      handlerBinder.addBinding().to(ExploreStatusHandlerV2.class);
       handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
+      handlerBinder.addBinding().to(ExploreMetadataHttpHandlerV2.class);
       CommonHandlers.add(handlerBinder);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);
