@@ -64,7 +64,9 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
 
   @Override
   protected void startUp() throws Exception {
-    table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
+    Id.DatasetInstance serviceStoreDatasetInstanceId =
+      Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
+    table = DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
                                             NoTxKeyValueTable.class.getName(),
                                             DatasetProperties.EMPTY, null, null);
   }

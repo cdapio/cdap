@@ -40,6 +40,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -76,6 +77,8 @@ import java.util.concurrent.TimeUnit;
 public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
+  private static final Id.Namespace namespace = Id.Namespace.from("myspace");
+  private static final Id.DatasetInstance bob = Id.DatasetInstance.from(namespace, "bob");
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -140,13 +143,13 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("bob", "exists", 404, null);
 
     // add instance, should automatically create an instance
-    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
+    dsFramework.addInstance("table", bob, DatasetProperties.EMPTY);
     testAdminOp("bob", "exists", 200, true);
 
     testAdminOp("joe", "exists", 404, null);
 
     // check truncate
-    final Table table = dsFramework.getDataset("bob", DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table = dsFramework.getDataset(bob, DatasetDefinition.NO_ARGUMENTS, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table));
@@ -181,7 +184,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("bob", "upgrade", 200, null);
 
     // drop and check non-existence
-    dsFramework.deleteInstance("bob");
+    dsFramework.deleteInstance(bob);
     testAdminOp("bob", "exists", 404, null);
   }
 
@@ -191,15 +194,15 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("bob", "exists", 404, null);
 
     // add instance, should automatically create an instance
-    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
+    dsFramework.addInstance("table", bob, DatasetProperties.EMPTY);
     testAdminOp("bob", "exists", 200, true);
 
-    dsFramework.updateInstance("bob", DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
+    dsFramework.updateInstance(bob, DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
     // check upgrade
     testAdminOp("bob", "upgrade", 200, null);
 
     // drop and check non-existence
-    dsFramework.deleteInstance("bob");
+    dsFramework.deleteInstance(bob);
     testAdminOp("bob", "exists", 404, null);
   }
 

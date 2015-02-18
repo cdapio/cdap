@@ -73,8 +73,8 @@ public class CLIMain {
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
-        new HelpCommand(getCommandsSupplier(), cliConfig),
-        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
+        new HelpCommand(getCommandsSupplier()),
+        new SearchCommandsCommand(getCommandsSupplier())
       )));
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
@@ -110,7 +110,7 @@ public class CLIMain {
     return this.cli;
   }
 
-  private Supplier<Iterable<CommandSet<Command>>> getCommandsSupplier() {
+  public Supplier<Iterable<CommandSet<Command>>> getCommandsSupplier() {
     return new Supplier<Iterable<CommandSet<Command>>>() {
       @Override
       public Iterable<CommandSet<Command>> get() {

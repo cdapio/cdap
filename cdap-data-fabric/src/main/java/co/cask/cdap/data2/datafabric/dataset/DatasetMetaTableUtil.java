@@ -34,6 +34,11 @@ public class DatasetMetaTableUtil {
   public static final String META_TABLE_NAME = "datasets.type";
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
+  private static final Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                        META_TABLE_NAME);
+  private static final Id.DatasetInstance instanceTableInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                            INSTANCE_TABLE_NAME);
+
   private final DatasetFramework framework;
 
   public DatasetMetaTableUtil(DatasetFramework framework) {
@@ -45,13 +50,13 @@ public class DatasetMetaTableUtil {
   }
 
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_NAME,
+    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, metaTableInstanceId,
                                                             DatasetTypeMDS.class.getName(),
                                                             DatasetProperties.EMPTY, null, null);
   }
 
   public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_NAME,
+    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, instanceTableInstanceId,
                                                                 DatasetInstanceMDS.class.getName(),
                                                                 DatasetProperties.EMPTY, null, null);
   }
@@ -62,10 +67,8 @@ public class DatasetMetaTableUtil {
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     addTypes(datasetFramework);
-    datasetFramework.addInstance(DatasetTypeMDS.class.getName(),
-                                 DatasetMetaTableUtil.META_TABLE_NAME, DatasetProperties.EMPTY);
-    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(),
-                                 DatasetMetaTableUtil.INSTANCE_TABLE_NAME, DatasetProperties.EMPTY);
+    datasetFramework.addInstance(DatasetTypeMDS.class.getName(), metaTableInstanceId, DatasetProperties.EMPTY);
+    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), instanceTableInstanceId, DatasetProperties.EMPTY);
   }
 
   private static void addTypes(DatasetFramework framework) throws DatasetManagementException {

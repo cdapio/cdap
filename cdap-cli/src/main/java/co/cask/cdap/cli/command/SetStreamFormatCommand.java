@@ -103,7 +103,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema \"column_name data_type, ...\" or avro-like json schema and <")
       .append(ArgumentName.SETTINGS)
-      .append("> is specified in the format \"key1=v1, key2=v2\"")
+      .append("> is specified in the format \"key1=v1, key2=v2\".")
       .toString();
   }
 }

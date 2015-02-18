@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetaTableUtil;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -48,6 +49,8 @@ public class ScheduleStoreTableUtil extends MetaTableUtil {
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
-    datasetFramework.addInstance(OrderedTable.class.getName(), SCHEDULE_STORE_DATASET_NAME, DatasetProperties.EMPTY);
+    Id.DatasetInstance scheduleStoreDatasetInstance =
+      Id.DatasetInstance.from(SYSTEM_NAMESPACE, SCHEDULE_STORE_DATASET_NAME);
+    datasetFramework.addInstance(OrderedTable.class.getName(), scheduleStoreDatasetInstance, DatasetProperties.EMPTY);
   }
 }

@@ -35,6 +35,7 @@ import java.util.Set;
  * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.ServiceSpecification}
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public final class DefaultProcedureSpecification implements ProcedureSpecification {
 
   private final String className;
