@@ -65,6 +65,6 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public String getDescription() {
     return "Sets the preferences of a " + type.getPluralPrettyName() + "." +
-      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=v1, key2=v2\"";
+      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=v1, key2=v2\".";
   }
 }

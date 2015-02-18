@@ -49,11 +49,11 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
     datasetFramework.addModule(extensiveSchema, new ExtensiveSchemaTableDefinition.ExtensiveSchemaTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("ExtensiveSchemaTable", "my_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("ExtensiveSchemaTable", MY_TABLE, DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
     ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -89,7 +89,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteInstance("my_table");
+    datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteModule(extensiveSchema);
   }
 

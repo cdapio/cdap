@@ -55,6 +55,6 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Creates a " + ElementType.DATASET.getPrettyName();
+    return String.format("Creates a %s.", ElementType.DATASET.getPrettyName());
   }
 }

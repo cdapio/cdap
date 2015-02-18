@@ -75,7 +75,7 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getDescription() {
-    return "Lists all " + ElementType.PROGRAM.getPluralPrettyName();
+    return String.format("Lists all %s.", ElementType.PROGRAM.getPluralPrettyName());
   }
 
   @Override

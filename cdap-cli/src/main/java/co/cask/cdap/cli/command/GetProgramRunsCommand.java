@@ -94,6 +94,6 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the run history of a " + elementType.getPrettyName();
+    return String.format("Gets the run history of a %s.", elementType.getPrettyName());
   }
 }

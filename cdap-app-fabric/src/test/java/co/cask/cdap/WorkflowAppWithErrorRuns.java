@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ public class WorkflowAppWithErrorRuns extends AbstractApplication {
     setName("WorkflowAppWithErrorRuns");
     setDescription("Sample Workflow application with some error runs.");
     addWorkflow(new WorkflowWithErrorRuns());
-    scheduleWorkflow("SampleSchedule", "0/1 * * * * ?", "WorkflowWithErrorRuns");
+    scheduleWorkflow(Schedules.createTimeSchedule("SampleSchedule", "", "0/1 * * * * ?"), "WorkflowWithErrorRuns");
   }
 
   /**

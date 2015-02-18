@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -34,20 +35,21 @@ import java.util.Map;
 public class FileSetTest extends AbstractDatasetTest {
 
   static FileSet fileSet;
+  private static final Id.DatasetInstance testFileSetInstance = Id.DatasetInstance.from(NAMESPACE_ID, "testFileSet");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("fileSet", "testFileSet", FileSetProperties.builder()
+    createInstance("fileSet", testFileSetInstance, FileSetProperties.builder()
       .setBasePath("testDir").build());
     Map<String, String> fileArgs = Maps.newHashMap();
     FileSetArguments.setInputPath(fileArgs, "some?File");
     FileSetArguments.setOutputPath(fileArgs, "some?File");
-    fileSet = getInstance("testFileSet", fileArgs);
+    fileSet = getInstance(testFileSetInstance, fileArgs);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("testFileSet");
+    deleteInstance(testFileSetInstance);
   }
 
   @Test

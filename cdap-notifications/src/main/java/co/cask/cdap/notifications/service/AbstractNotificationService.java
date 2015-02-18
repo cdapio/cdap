@@ -80,7 +80,8 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
     }
     for (NotificationCaller caller : callers) {
       Object notification = GSON.fromJson(notificationJson, caller.getNotificationFeedType());
-      caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
+      Id.Namespace namespaceId = Id.Namespace.from(feed.getNamespaceId());
+      caller.received(notification, new BasicNotificationContext(namespaceId, dsFramework, transactionSystemClient));
     }
   }
 

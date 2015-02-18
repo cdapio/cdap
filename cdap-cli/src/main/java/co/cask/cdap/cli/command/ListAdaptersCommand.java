@@ -38,18 +38,16 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
-  private final CLIConfig cliConfig;
 
   @Inject
   public ListAdaptersCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
-    this.cliConfig = cliConfig;
     this.adapterClient = adapterClient;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<AdapterSpecification> list = adapterClient.list(cliConfig.getCurrentNamespace());
+    List<AdapterSpecification> list = adapterClient.list();
 
     new AsciiTable<AdapterSpecification>(
       new String[]{"name", "type", "sources", "sinks", "properties"}, list,
@@ -69,6 +67,6 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Lists all " + ElementType.ADAPTER.getPluralPrettyName();
+    return String.format("Lists all %s.", ElementType.ADAPTER.getPluralPrettyName());
   }
 }
