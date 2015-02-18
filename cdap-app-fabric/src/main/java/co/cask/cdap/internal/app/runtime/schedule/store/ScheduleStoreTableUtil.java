@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.OrderedTable;
@@ -29,7 +29,7 @@ import java.io.IOException;
 
 /**
  * Helper class for working with the dataset table used by
- * {@link co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore}.
+ * {@link DatasetBasedTimeScheduleStore}.
  */
 public class ScheduleStoreTableUtil extends MetaTableUtil {
   public static final String SCHEDULE_STORE_DATASET_NAME = "schedulestore";

@@ -18,48 +18,50 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.Job;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
-import org.quartz.TriggerKey;
-import org.quartz.spi.JobFactory;
-import org.quartz.spi.TriggerFiredBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Abstract scheduler service common scheduling functionality. The extending classes should implement
- * prestart and poststop hooks to perform any action before starting the quartz scheduler and after stopping
- * the quartz scheduler.
+ * Abstract scheduler service common scheduling functionality. For each {@link Schedule} implementation, there is
+ * a scheduler that this class will delegate the work to.
+ * The extending classes should implement prestart and poststop hooks to perform any action before starting all
+ * underlying schedulers and after stopping them.
  */
 public abstract class AbstractSchedulerService extends AbstractIdleService implements SchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
-  private final WrappedScheduler delegate;
+  private final TimeScheduler timeScheduler;
+  private final StreamSizeScheduler streamSizeScheduler;
+  private final StoreFactory storeFactory;
 
-  public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                                  ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
-    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
+  private Store store;
+
+  public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier,
+                                  StreamSizeScheduler streamSizeScheduler,
+                                  StoreFactory storeFactory, ProgramRuntimeService programRuntimeService,
+                                  PreferencesStore preferencesStore) {
+    this.timeScheduler = new TimeScheduler(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
+    this.streamSizeScheduler = streamSizeScheduler;
+    this.storeFactory = storeFactory;
   }
 
   /**
@@ -67,7 +69,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
    */
   protected final void startScheduler() {
     try {
-      delegate.start();
+      timeScheduler.start();
+      streamSizeScheduler.start();
       LOG.info("Started scheduler");
     } catch (SchedulerException e) {
       LOG.error("Error starting scheduler {}", e.getCause(), e);
@@ -80,7 +83,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
    */
   protected final void stopScheduler() {
     try {
-      delegate.stop();
+      timeScheduler.stop();
+      streamSizeScheduler.stop();
       LOG.info("Stopped scheduler");
     } catch (SchedulerException e) {
       LOG.error("Error stopping scheduler {}", e.getCause(), e);
@@ -90,280 +94,150 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule) {
-    delegate.schedule(programId, programType, schedule);
+    if (schedule instanceof TimeSchedule) {
+      timeScheduler.schedule(programId, programType, schedule);
+    } else if (schedule instanceof StreamSizeSchedule) {
+      streamSizeScheduler.schedule(programId, programType, schedule);
+    }
+    throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
   }
 
   @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
-    delegate.schedule(programId, programType, schedules);
+    Set<Schedule> timeSchedules = Sets.newHashSet();
+    Set<Schedule> streamSizeSchedules = Sets.newHashSet();
+    for (Schedule schedule : schedules) {
+      if (schedule instanceof TimeSchedule) {
+        timeSchedules.add(schedule);
+      } else if (schedule instanceof StreamSizeSchedule) {
+        streamSizeSchedules.add(schedule);
+      } else {
+        throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
+      }
+    }
+    if (!timeSchedules.isEmpty()) {
+      timeScheduler.schedule(programId, programType, timeSchedules);
+    }
+    if (!streamSizeSchedules.isEmpty()) {
+      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules);
+    }
   }
 
   @Override
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
-   return delegate.nextScheduledRuntime(program, programType);
+   return timeScheduler.nextScheduledRuntime(program, programType);
   }
 
   @Override
   public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
-    return delegate.getScheduleIds(program, programType);
+    return ImmutableList.<String>builder()
+      .addAll(timeScheduler.getScheduleIds(program, programType))
+      .addAll(streamSizeScheduler.getScheduleIds(program, programType))
+      .build();
   }
 
   @Override
   public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    delegate.suspendSchedule(program, programType, scheduleName);
+    ScheduleType type = getScheduleType(program, programType, scheduleName);
+    if (type == null) {
+      return;
+    }
+    switch (type) {
+      case TIME:
+        timeScheduler.suspendSchedule(program, programType, scheduleName);
+        break;
+      case STREAM:
+        streamSizeScheduler.suspendSchedule(program, programType, scheduleName);
+        break;
+    }
   }
 
   @Override
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    delegate.resumeSchedule(program, programType, scheduleName);
+    ScheduleType type = getScheduleType(program, programType, scheduleName);
+    if (type == null) {
+      return;
+    }
+    switch (type) {
+      case TIME:
+        timeScheduler.resumeSchedule(program, programType, scheduleName);
+        break;
+      case STREAM:
+        streamSizeScheduler.resumeSchedule(program, programType, scheduleName);
+        break;
+    }
   }
 
   @Override
   public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    delegate.deleteSchedule(program, programType, scheduleName);
+    ScheduleType type = getScheduleType(program, programType, scheduleName);
+    if (type == null) {
+      return;
+    }
+    switch (type) {
+      case TIME:
+        timeScheduler.deleteSchedule(program, programType, scheduleName);
+        break;
+      case STREAM:
+        streamSizeScheduler.deleteSchedule(program, programType, scheduleName);
+        break;
+    }
   }
 
   @Override
   public void deleteSchedules(Id.Program program, SchedulableProgramType programType) {
-    delegate.deleteSchedules(program, programType);
+    timeScheduler.deleteSchedules(program, programType);
+    streamSizeScheduler.deleteSchedules(program, programType);
   }
 
   @Override
   public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    return delegate.scheduleState(program, programType, scheduleName);
+    ScheduleType type = getScheduleType(program, programType, scheduleName);
+    if (type == null) {
+      throw new UnsupportedOperationException("Schedule could not be found in application specification");
+    }
+    switch (type) {
+      case STREAM:
+        return streamSizeScheduler.scheduleState(program, programType, scheduleName);
+      case TIME:
+        return timeScheduler.scheduleState(program, programType, scheduleName);
+    }
+    throw new IllegalStateException("Unhandled type of schedule: " + type);
+  }
+
+  private Store getStore() {
+    if (store == null) {
+      store = storeFactory.create();
+    }
+    return store;
+  }
+
+  private ScheduleType getScheduleType(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+    ApplicationSpecification appSpec = getStore().getApplication(program.getApplication());
+    if (appSpec == null) {
+      return null;
+    }
+
+    Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
+    if (schedules == null || !schedules.containsKey(scheduleName)) {
+      return null;
+    }
+
+    ScheduleSpecification scheduleSpec = schedules.get(scheduleName);
+    Schedule schedule = scheduleSpec.getSchedule();
+    if (schedule instanceof TimeSchedule) {
+      return ScheduleType.TIME;
+    } else if (schedule instanceof StreamSizeSchedule) {
+      return ScheduleType.STREAM;
+    }
+    throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
   }
 
   /**
-   * class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
-   * DefaultSchedulerService.
+   * Type of a schedule.
    */
-  static final class WrappedScheduler implements co.cask.cdap.internal.app.runtime.schedule.Scheduler {
-    private Scheduler scheduler;
-    private final StoreFactory storeFactory;
-    private final Supplier<Scheduler> schedulerSupplier;
-    private final ProgramRuntimeService programRuntimeService;
-    private final PreferencesStore preferencesStore;
-
-    WrappedScheduler(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                     ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
-      this.schedulerSupplier = schedulerSupplier;
-      this.storeFactory = storeFactory;
-      this.programRuntimeService = programRuntimeService;
-      this.scheduler = null;
-      this.preferencesStore = preferencesStore;
-    }
-
-    void start() throws SchedulerException {
-      scheduler = schedulerSupplier.get();
-      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
-      scheduler.start();
-    }
-
-    void stop() throws SchedulerException {
-      if (scheduler != null) {
-        scheduler.shutdown();
-      }
-    }
-
-    @Override
-    public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule) {
-      schedule(programId, programType, ImmutableList.of(schedule));
-    }
-
-    // TODO remove this annotation once the Schedule class becomes abstract
-    @Override
-    public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
-      checkInitialized();
-      Preconditions.checkNotNull(schedules);
-
-      String jobKey = getJobKey(programId, programType).getName();
-      JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
-        .withIdentity(jobKey)
-        .storeDurably(true)
-        .build();
-      try {
-        scheduler.addJob(job, true);
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-      for (Schedule schedule : schedules) {
-        Preconditions.checkArgument(schedule instanceof TimeSchedule);
-        TimeSchedule timeSchedule = (TimeSchedule) schedule;
-        String scheduleName = timeSchedule.getName();
-        String cronEntry = timeSchedule.getCronEntry();
-        String triggerKey = getScheduleId(programId, programType, scheduleName);
-
-        LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
-
-        Trigger trigger = TriggerBuilder.newTrigger()
-          .withIdentity(triggerKey)
-          .forJob(job)
-          .withSchedule(CronScheduleBuilder
-                          .cronSchedule(getQuartzCronExpression(cronEntry)))
-          .build();
-        try {
-          scheduler.scheduleJob(trigger);
-        } catch (SchedulerException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    }
-
-    @Override
-    public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
-      checkInitialized();
-
-      List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
-      try {
-        for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
-          ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
-                                                          trigger.getNextFireTime().getTime());
-          scheduledRuntimes.add(runtime);
-        }
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-      return scheduledRuntimes;
-    }
-
-    @Override
-    public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
-      checkInitialized();
-
-      List<String> scheduleIds = Lists.newArrayList();
-      try {
-        for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
-          scheduleIds.add(trigger.getKey().getName());
-        }
-      }   catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-      return scheduleIds;
-    }
-
-
-    @Override
-    public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      checkInitialized();
-      try {
-        scheduler.pauseTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      checkInitialized();
-      try {
-        scheduler.resumeTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      checkInitialized();
-      try {
-        Trigger trigger = scheduler.getTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
-        Preconditions.checkNotNull(trigger);
-
-        scheduler.unscheduleJob(trigger.getKey());
-
-        JobKey jobKey = trigger.getJobKey();
-        if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
-          scheduler.deleteJob(jobKey);
-        }
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public void deleteSchedules(Id.Program program, SchedulableProgramType programType) {
-      checkInitialized();
-      try {
-        scheduler.deleteJob(getJobKey(program, programType));
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      checkInitialized();
-      try {
-        Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(getScheduleId(program, programType,
-                                                                                            scheduleName)));
-        // Map trigger state to schedule state.
-        // This method is only interested in returning if the scheduler is
-        // Paused, Scheduled or NotFound.
-        switch (state) {
-          case NONE:
-            return ScheduleState.NOT_FOUND;
-          case PAUSED:
-            return ScheduleState.SUSPENDED;
-          default:
-            return ScheduleState.SCHEDULED;
-        }
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    private void checkInitialized() {
-      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
-    }
-
-    private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      return String.format("%s:%s", getJobKey(program, programType).getName(), scheduleName);
-    }
-
-
-    private JobKey getJobKey(Id.Program program, SchedulableProgramType programType) {
-      return new JobKey(String.format("%s:%s:%s:%s", program.getNamespaceId(), program.getApplicationId(),
-                                      programType.name(), program.getId()));
-    }
-
-    //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
-    //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
-    //2. Quartz resolution is in seconds which cron entry doesn't support.
-    private String getQuartzCronExpression(String cronEntry) {
-      // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
-      // CronExpression will directly be used for tests.
-      String parts [] = cronEntry.split(" ");
-      Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format");
-      if (parts.length == 5) {
-        //cron entry format
-        StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
-        if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*') {
-          cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
-        }
-        return cronStringBuilder.toString();
-      } else {
-        //Use the given cronExpression
-        return cronEntry;
-      }
-    }
-
-    private JobFactory createJobFactory(final Store store) {
-      return new JobFactory() {
-        @Override
-        public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler) throws SchedulerException {
-          Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
-
-          if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore);
-          } else {
-            try {
-              return jobClass.newInstance();
-            } catch (Exception e) {
-              throw new SchedulerException("Failed to create instance of " + jobClass, e);
-            }
-          }
-        }
-      };
-    }
+  private static enum ScheduleType {
+    TIME,
+    STREAM
   }
 }
