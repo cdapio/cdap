@@ -60,6 +60,6 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the status of a " + elementType.getPrettyName();
+    return String.format("Gets the status of a %s.", elementType.getPrettyName());
   }
 }

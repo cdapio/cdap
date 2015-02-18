@@ -42,7 +42,7 @@ public class StreamConversionTest extends TestBase {
   public void testStreamConversion() throws Exception {
 
     // Deploy the PurchaseApp application
-    ApplicationManager appManager = deployApplication(StreamConversionApp.class);
+    ApplicationManager appManager = getTestManager().deployApplication(StreamConversionApp.class);
 
     // TODO: in unit tests, all schedules should be disabled at deploy time, to avoid race conditions.
     // make sure the workflow does not get started by the schedule.
@@ -65,18 +65,24 @@ public class StreamConversionTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
-    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getTestManager().getDataset("converted");
     TimePartitionedFileSet converted = fileSetManager.get();
     Map<Long, String> partitions = converted.getPartitions(startTime, System.currentTimeMillis());
     Assert.assertEquals(1, partitions.size());
     long partitionTime = partitions.keySet().iterator().next();
 
-    // partition time should be the logical start time of the MapReduce. Let's say within 1 minute after start.
-    Assert.assertTrue(partitionTime >= startTime);
-    Assert.assertTrue(partitionTime <= startTime + TimeUnit.SECONDS.toMillis(60));
+    // we must round down the start time to the full minute before we compare the partition time
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(startTime);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    long startMinute = calendar.getTimeInMillis();
+
+    // partition time should be the logical start time of the MapReduce. That is between start and now.
+    Assert.assertTrue(partitionTime >= startMinute);
+    Assert.assertTrue(partitionTime <= System.currentTimeMillis());
 
     // extract fields from partition time
-    Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(partitionTime);
     int year = calendar.get(Calendar.YEAR);
     int month = calendar.get(Calendar.MONTH) + 1;
@@ -85,7 +91,7 @@ public class StreamConversionTest extends TestBase {
     int minute = calendar.get(Calendar.MINUTE);
 
     // query with SQL
-    Connection connection = getQueryClient();
+    Connection connection = getTestManager().getQueryClient();
     ResultSet results = connection.prepareStatement("SELECT year, month, day, hour, minute " +
                                                       "FROM cdap_user_converted " +
                                                       "WHERE body = '17'").executeQuery();

@@ -74,33 +74,12 @@ public interface ExploreClient extends Closeable {
    * Add a partition to a dataset's table.
    *
    * @param datasetName name of the dataset
-   * @param time the partition time
-   * @param path the file system path of the partition
-   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
-   *         the success of the operation.
-   */
-  ListenableFuture<Void> addPartition(String datasetName, long time, String path);
-
-  /**
-   * Add a partition to a dataset's table.
-   *
-   * @param datasetName name of the dataset
    * @param key the partition key
    * @param path the file system path of the partition
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
   ListenableFuture<Void> addPartition(String datasetName, PartitionKey key, String path);
-
-  /**
-   * Drop a partition from a dataset's table.
-   *
-   * @param datasetName name of the dataset
-   * @param time the partition time
-   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
-   *         the success of the operation.
-   */
-  ListenableFuture<Void> dropPartition(String datasetName, long time);
 
   /**
    * Drop a partition from a dataset's table.

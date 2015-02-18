@@ -20,6 +20,7 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -31,16 +32,21 @@ import java.io.PrintStream;
 public class UseNamespaceCommand extends AbstractAuthCommand {
 
   private final CLIConfig cliConfig;
+  private final NamespaceClient namespaceClient;
+
 
   @Inject
-  public UseNamespaceCommand(CLIConfig cliConfig) {
+  public UseNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
     super(cliConfig);
     this.cliConfig = cliConfig;
+    this.namespaceClient = namespaceClient;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String namespace = arguments.get(ArgumentName.NAMESPACE_ID.toString());
+    // Check if namespace exists; throws exception if namespace doesn't exist.
+    namespaceClient.get(namespace);
     cliConfig.setCurrentNamespace(namespace);
     output.printf("Now using namespace '%s'\n", namespace);
   }
@@ -52,6 +58,7 @@ public class UseNamespaceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Changes the current " + ElementType.NAMESPACE.getPrettyName();
+    return String.format("Changes the current %s to <%s>.", ElementType.NAMESPACE.getPrettyName(),
+                         ArgumentName.NAMESPACE_ID);
   }
 }

@@ -217,13 +217,13 @@ public class GetStreamStatsCommand extends AbstractCommand {
   @Override
   public String getDescription() {
     return "Gets statistics for a " + ElementType.STREAM.getPrettyName() + ". " +
-      "The <" + ArgumentName.LIMIT + "> limits how many Stream events to analyze; default is " + DEFAULT_LIMIT + "." +
+      "The <" + ArgumentName.LIMIT + "> limits how many Stream events to analyze; default is " + DEFAULT_LIMIT + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +
       "a relative time in the form of [+|-][0-9][d|h|m|s]. " +
       "<" + ArgumentName.START_TIME + "> is relative to current time; " +
-      "<" + ArgumentName.END_TIME + ">, it is relative to start time. " +
-      "Special constants \"min\" and \"max\" can also be used to represent \"0\" and \"max timestamp\" respectively.";
+      "<" + ArgumentName.END_TIME + "> is relative to <" + ArgumentName.START_TIME + ">. " +
+      "Special constants \"min\" and \"max\" can be used to represent \"0\" and \"max timestamp\" respectively.";
   }
 
   /**
@@ -297,10 +297,8 @@ public class GetStreamStatsCommand extends AbstractCommand {
           int barLength = (int) ((bucket.getCount() * 1.0 / maxCount) * maxBarLength);
           if (barLength == 0) {
             printStream.print("|");
-          } else if (barLength == 1) {
-            printStream.print("|>");
-          } else if (barLength > 1) {
-            printStream.print("|" + Strings.repeat("=", barLength - 2) + ">");
+          } else if (barLength >= 1) {
+            printStream.print("|" + Strings.repeat("+", barLength - 1));
           }
           printStream.println();
         }
@@ -323,15 +321,17 @@ public class GetStreamStatsCommand extends AbstractCommand {
     }
 
     private int getLongestBucketPrefix() {
-      int longestBucket = Collections.max(buckets.elementSet(), new Comparator<Integer>() {
+      Set<Integer> bucketIndices = buckets.elementSet();
+      int longestBucket = Collections.max(bucketIndices, new Comparator<Integer>() {
         @Override
         public int compare(Integer o1, Integer o2) {
-          return (Integer.toString(o1 * BUCKET_SIZE).length() * 2 + buckets.count(o1))
-            - (Integer.toString(o2 * BUCKET_SIZE).length() * 2 + buckets.count(o2));
+          return (Long.toString(o1 * BUCKET_SIZE).length() * 2 + Long.toString(buckets.count(o1)).length())
+            - (Long.toString(o2 * BUCKET_SIZE).length() * 2 + Long.toString(buckets.count(o2)).length());
         }
       });
       Bucket bucket = new Bucket(longestBucket, buckets.count(longestBucket));
-      return bucket.getPrefix().length();
+      String longestBucketPrefix = bucket.getPrefix();
+      return longestBucketPrefix.length();
     }
 
     /**

@@ -84,7 +84,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     Map<String, String> sinkArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, partitionTime);
     TimePartitionedFileSet sink = context.getDataset(sinkName, sinkArgs);
-    outputPath = FileSetArguments.getOutputPath(sink.getUnderlyingFileSet().getRuntimeArguments());
+    outputPath = FileSetArguments.getOutputPath(sink.getEmbeddedFileSet().getRuntimeArguments());
     context.setOutput(sinkName, sink);
     AvroJob.setOutputKeySchema(job, adapterArguments.getSinkSchema());
 

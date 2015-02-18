@@ -48,6 +48,6 @@ public class NamespaceCommands extends CommandSet<Command> implements Categorize
 
   @Override
   public String getCategory() {
-    return CommandCategory.LIFECYCLE.getName();
+    return CommandCategory.NAMESPACE.getName();
   }
 }

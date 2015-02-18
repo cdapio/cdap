@@ -40,6 +40,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
@@ -84,6 +85,6 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the instances of a " + elementType.getPrettyName();
+    return String.format("Gets the instances of a %s.", elementType.getPrettyName());
   }
 }

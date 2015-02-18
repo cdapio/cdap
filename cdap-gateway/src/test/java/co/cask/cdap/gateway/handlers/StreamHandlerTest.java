@@ -75,6 +75,14 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
   }
 
   @Test
+  public void testStreamCreateInvalidName() throws Exception {
+    // Now, create the new stream with an invalid character: '@'
+    HttpURLConnection urlConn = openURL(constructPath("streams/inv@lidStreamName"), HttpMethod.PUT);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+  }
+
+  @Test
   public void testStreamCreate() throws Exception {
     // Try to get info on a non-existent stream
     HttpURLConnection urlConn = openURL(constructPath("streams/test_stream1/info"),
