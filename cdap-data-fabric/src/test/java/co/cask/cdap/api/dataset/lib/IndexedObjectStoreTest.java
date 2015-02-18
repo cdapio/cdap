@@ -72,8 +72,8 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testDelete() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    createIndexedObjectStoreInstance(index, Feed.class);
+    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -135,7 +135,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
       }
     });
 
-    deleteInstance("index");
+    deleteInstance(index);
   }
 
   @Test

@@ -83,23 +83,25 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
     Permission.READ
   );
 
-  private static final Id.DatasetModule moduleId = new Id.DatasetModule(new Id.Namespace("default"),
-                                                                        ACLStoreTableModule.class.getName());
+  private static final Id.DatasetModule MODULE_ID = new Id.DatasetModule(new Id.Namespace("default"),
+                                                                         ACLStoreTableModule.class.getName());
+  private static final Id.DatasetInstance DATASET_ID = new Id.DatasetInstance(new Id.Namespace("default"),
+                                                                             "testACLStoreTable");
   private ACLStoreTable aclStore;
 
   @Before
   public void setUp() throws Exception {
-    addModule(moduleId, new ACLStoreTableModule());
-    createInstance(ACLStoreTable.class.getName(), "testACLStoreTable", DatasetProperties.EMPTY);
-    this.aclStore = getInstance("testACLStoreTable");
+    addModule(MODULE_ID, new ACLStoreTableModule());
+    createInstance(ACLStoreTable.class.getName(), DATASET_ID, DatasetProperties.EMPTY);
+    this.aclStore = getInstance(DATASET_ID);
     aclStore.write(UNRELATED_ACL);
     aclStore.write(UNRELATED_ACL2);
   }
 
   @After
   public void tearDown() throws Exception {
-    deleteInstance("testACLStoreTable");
-    deleteModule(moduleId);
+    deleteInstance(DATASET_ID);
+    deleteModule(MODULE_ID);
   }
 
   @Test
