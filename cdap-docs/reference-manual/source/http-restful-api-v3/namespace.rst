@@ -53,10 +53,9 @@ Properties for the namespace are passed in the JSON request body:
      - Display description of the namespace
      - An empty string ("")
 
-In this initial release of namespaces, once a namespace has been created with a particular
+Once a namespace has been created with a particular
 ID and properties, its properties cannot be edited. To change the display name and
-description for a particular ID, you need to delete the namespace and recreate it. A
-future release of CDAP will allow these properties to be edited.
+description for a particular ID, you need to delete the namespace and recreate it.
 
 If a namespace with the same ID already exists, the method will still return ``200 OK``,
 but with a message that the ``Namespace '<namespace-id>' already exists``.

@@ -37,7 +37,7 @@ Namespace IDs are composed from a limited set of characters; they are restricted
 letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
 on the length of a namespace ID nor on the number of namespaces.
 
-The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
+The namespace IDs ``default`` and ``system`` are reserved. The ``default``
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.
 
@@ -70,6 +70,11 @@ The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``defa
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.
 
+Using Namespaces
+----------------
+The best practices with using namespaces would be to create desired namespaces and use
+them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
+udertaken.
 
 .. rubric::  Examples of Using Namespaces
 
@@ -77,5 +82,5 @@ be deleted.
   namespaces when using the CDAP HTTP RESTful API.
   
 - The CDAP :ref:`Command Line Interface <cli>` is namespace-aware. You set the
-  namespace you are currently using; the command prompt displays it as visual indicator.
+  namespace you are currently using; the command prompt displays it as a visual reminder.
 
