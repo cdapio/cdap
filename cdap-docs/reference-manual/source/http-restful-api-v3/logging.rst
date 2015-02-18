@@ -88,6 +88,8 @@ this escaping, you can turn it off by adding the parameter ``&escape=false`` to 
 Filtering
 ---------
 A filter string can be supplied as an optional parameter. It will filter the returned log entries
-to those that match the supplied string::
+to those that match the supplied string.
+
+
 
 
