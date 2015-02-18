@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,31 +45,31 @@ public final class DatasetsUtil {
    * NOTE: does poor job guarding against races, i.e. only one client for this dataset instance is supported at a time
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
-                                                         String instanceName, String typeName,
+                                                         Id.DatasetInstance datasetInstanceId, String typeName,
                                                          DatasetProperties props,
                                                          Map<String, String> arguments,
                                                          ClassLoader cl)
     throws DatasetManagementException, IOException {
 
-    createIfNotExists(datasetFramework, instanceName, typeName, props);
-    return (T) datasetFramework.getDataset(instanceName, arguments, null);
+    createIfNotExists(datasetFramework, datasetInstanceId, typeName, props);
+    return (T) datasetFramework.getDataset(datasetInstanceId, arguments, null);
   }
 
   /**
    * Creates instance of the data set if not exists
    */
   public static void createIfNotExists(DatasetFramework datasetFramework,
-                                       String instanceName, String typeName,
+                                       Id.DatasetInstance datasetInstanceId, String typeName,
                                        DatasetProperties props) throws DatasetManagementException, IOException {
 
-    if (!datasetFramework.hasInstance(instanceName)) {
+    if (!datasetFramework.hasInstance(datasetInstanceId)) {
       try {
-        datasetFramework.addInstance(typeName, instanceName, props);
+        datasetFramework.addInstance(typeName, datasetInstanceId, props);
       } catch (InstanceConflictException e) {
         // Do nothing: someone created this instance in between, just continuing
       } catch (DatasetManagementException e) {
         LOG.error("Could NOT add dataset instance {} of type {} with props {}",
-                  instanceName, typeName, props, e);
+                  datasetInstanceId, typeName, props, e);
         throw Throwables.propagate(e);
       }
     }

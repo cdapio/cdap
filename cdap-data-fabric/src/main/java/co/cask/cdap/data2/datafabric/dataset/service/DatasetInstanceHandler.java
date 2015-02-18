@@ -30,6 +30,7 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Maps;
@@ -116,13 +117,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("name") String name) {
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
-    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
-             name, creationProperties.getTypeName(), creationProperties.getProperties());
+    LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
+             namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
-      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                     name, existing);
+      String message = String.format("Cannot create dataset %s.%s: instance with same name already exists %s",
+                                     namespaceId, name, existing);
       LOG.info(message);
       responder.sendString(HttpResponseStatus.CONFLICT, message);
       return;
@@ -133,7 +134,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       disableExplore(name);
     }
 
-    if (!createDatasetInstance(creationProperties, name, responder, "create")) {
+    if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "create")) {
       return;
     }
 
@@ -159,13 +160,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (existing == null) {
       // update is true , but dataset instance does not exist, return 404.
       responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Dataset Instance %s does not exist to update", name));
+                           String.format("Dataset Instance %s.%s does not exist to update", namespaceId, name));
       return;
     }
 
     if (!existing.getType().equals(creationProperties.getTypeName())) {
-      String  message = String.format("Cannot update dataset %s instance with a different type, existing type is %s",
-                                      name, existing.getType());
+      String  message = String.format("Cannot update dataset %s.%s instance with a different type, existing type is %s",
+                                      namespaceId, name, existing.getType());
       LOG.warn(message);
       responder.sendString(HttpResponseStatus.CONFLICT, message);
       return;
@@ -173,7 +174,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     disableExplore(name);
 
-    if (!createDatasetInstance(creationProperties, name, responder, "update")) {
+    if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "update")) {
       return;
     }
 
@@ -194,12 +195,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     return  creationProperties;
   }
 
-  private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties,
+  private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties, String namespaceId,
                                         String name, HttpResponder responder, String operation) {
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
-      String message = String.format("Cannot %s dataset %s: unknown type %s",
-                                     operation, name, creationProperties.getTypeName());
+      String message = String.format("Cannot %s dataset %s.%s: unknown type %s",
+                                     operation, namespaceId, name, creationProperties.getTypeName());
       LOG.warn(message);
       responder.sendString(HttpResponseStatus.NOT_FOUND, message);
       return false;
@@ -207,7 +208,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta,
+      spec = opExecutorClient.create(Id.DatasetInstance.from(namespaceId, name), typeMeta,
                                      DatasetProperties.builder().addAll(creationProperties.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot %s dataset %s of type %s: executing create() failed, reason: %s",
@@ -223,8 +224,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String name) {
-    LOG.info("Deleting dataset {}", name);
-
+    LOG.info("Deleting dataset {}.{}", namespaceId, name);
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, name);
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -232,7 +233,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
 
     try {
-      if (!dropDataset(spec)) {
+      if (!dropDataset(datasetInstanceId, spec)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
@@ -250,7 +251,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/admin/{method}")
   public void executeAdmin(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                            @PathParam("name") String instanceName, @PathParam("method") String method) {
-
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, instanceName);
     try {
       Object result = null;
       String message = null;
@@ -258,11 +260,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       // NOTE: one cannot directly call create and drop, instead this should be called thru
       //       POST/DELETE @ /data/datasets/{instance-id}. Because we must create/drop metadata for these at same time
       if (method.equals("exists")) {
-        result = opExecutorClient.exists(instanceName);
+        result = opExecutorClient.exists(datasetInstanceId);
       } else if (method.equals("truncate")) {
-        opExecutorClient.truncate(instanceName);
+        opExecutorClient.truncate(datasetInstanceId);
       } else if (method.equals("upgrade")) {
-        opExecutorClient.upgrade(instanceName);
+        opExecutorClient.upgrade(datasetInstanceId);
       } else {
         throw new HandlerException(HttpResponseStatus.NOT_FOUND, "Invalid admin operation: " + method);
       }
@@ -292,7 +294,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @return true if dropped successfully, false if dataset is not found.
    * @throws Exception on error.
    */
-  private boolean dropDataset(DatasetSpecification spec) throws Exception {
+  private boolean dropDataset(Id.DatasetInstance datasetInstaceId, DatasetSpecification spec) throws Exception {
     String name = spec.getName();
 
     disableExplore(name);
@@ -301,7 +303,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return false;
     }
 
-    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+    opExecutorClient.drop(datasetInstaceId, implManager.getTypeInfo(spec.getType()), spec);
     return true;
   }
 

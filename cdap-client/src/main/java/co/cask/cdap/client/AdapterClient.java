@@ -62,13 +62,12 @@ public class AdapterClient {
   /**
    * Lists all adapters.
    *
-   * @param namespace the namespace to use
    * @return list of {@link AdapterSpecification}.
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<AdapterSpecification> list(String namespace) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("v3", namespace, "adapters");
+  public List<AdapterSpecification> list() throws IOException, UnAuthorizedAccessTokenException {
+    URL url = config.resolveURLV3("adapters");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<AdapterSpecification>>() { })
       .getResponseObject();
@@ -77,14 +76,13 @@ public class AdapterClient {
   /**
    * Gets an adapter.
    *
-   * @param namespace the namespace to use
    * @return an {@link AdapterSpecification}.
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public AdapterSpecification get(String namespace, String adapterName)
+  public AdapterSpecification get(String adapterName)
     throws AdapterNotFoundException, IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("v3", namespace, "adapters/" + adapterName);
+    URL url = config.resolveURLV3("adapters/" + adapterName);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -96,7 +94,6 @@ public class AdapterClient {
   /**
    * Creates an adapter.
    *
-   * @param namespace the namespace to use
    * @param adapterName name of the adapter to create
    * @param adapterConfig properties of the adapter to create
    * @throws AdapterTypeNotFoundException if the desired adapter type was not found
@@ -104,10 +101,10 @@ public class AdapterClient {
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void create(String namespace, String adapterName, AdapterConfig adapterConfig)
+  public void create(String adapterName, AdapterConfig adapterConfig)
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL("v3", namespace, String.format("adapters/%s", adapterName));
+    URL url = config.resolveURLV3(String.format("adapters/%s", adapterName));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
@@ -122,15 +119,14 @@ public class AdapterClient {
   /**
    * Deletes an adapter.
    *
-   * @param namespace the namespace to use
    * @param adapterName Name of the adapter to delete
    * @throws AdapterNotFoundException if the adapter with the specified name could not be found
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String namespace, String adapterName) throws AdapterNotFoundException, IOException,
+  public void delete(String adapterName) throws AdapterNotFoundException, IOException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("v3", namespace, String.format("adapters/%s", adapterName));
+    URL url = config.resolveURLV3(String.format("adapters/%s", adapterName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -141,14 +137,13 @@ public class AdapterClient {
   /**
    * Checks if a adapter exists.
    *
-   * @param namespace the namespace to use
    * @param adapterName Name of the adapter to check
    * @return true if the adapter exists
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(String namespace, String adapterName) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("v3", namespace, String.format("adapters/%s", adapterName));
+  public boolean exists(String adapterName) throws IOException, UnAuthorizedAccessTokenException {
+    URL url = config.resolveURLV3(String.format("adapters/%s", adapterName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
@@ -157,7 +152,6 @@ public class AdapterClient {
   /**
    * Waits for an adapter to exist.
    *
-   * @param namespace the namespace to use
    * @param adapterName Name of the adapter to check
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
@@ -166,14 +160,14 @@ public class AdapterClient {
    * @throws TimeoutException if the adapter was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
-  public void waitForExists(final String namespace, final String adapterName, long timeout, TimeUnit timeoutUnit)
+  public void waitForExists(final String adapterName, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(namespace, adapterName);
+          return exists(adapterName);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -192,14 +186,14 @@ public class AdapterClient {
    * @throws TimeoutException if the adapter was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
-  public void waitForDeleted(final String namespace, final String adapterName, long timeout, TimeUnit timeoutUnit)
+  public void waitForDeleted(final String adapterName, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(namespace, adapterName);
+          return exists(adapterName);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {

@@ -30,6 +30,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -46,7 +47,9 @@ import java.util.concurrent.Executor;
  */
 public abstract class AbstractNotificationService extends AbstractIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .enableComplexMapKeySerialization()
+    .create();
 
   private final Multimap<Id.NotificationFeed, NotificationCaller<?>> subscribers;
 
@@ -77,7 +80,8 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
     }
     for (NotificationCaller caller : callers) {
       Object notification = GSON.fromJson(notificationJson, caller.getNotificationFeedType());
-      caller.received(notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
+      Id.Namespace namespaceId = Id.Namespace.from(feed.getNamespaceId());
+      caller.received(notification, new BasicNotificationContext(namespaceId, dsFramework, transactionSystemClient));
     }
   }
 
