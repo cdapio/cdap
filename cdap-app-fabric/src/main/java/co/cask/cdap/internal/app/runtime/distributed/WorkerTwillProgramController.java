@@ -16,14 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A ProgramController for Workers that are launched through Twill.
@@ -32,14 +31,11 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkerTwillProgramController.class);
 
-  private final Lock lock;
-  private final DistributedWorkerInstanceUpdater instanceUpdater;
+  private final TwillController controller;
 
-  WorkerTwillProgramController(String programId, TwillController controller,
-                               DistributedWorkerInstanceUpdater instanceUpdater) {
-    super(programId, controller);
-    this.lock = new ReentrantLock();
-    this.instanceUpdater = instanceUpdater;
+  WorkerTwillProgramController(Program program, TwillController controller) {
+    super(program.getName(), controller);
+    this.controller = controller;
   }
 
   @SuppressWarnings("unchecked")
@@ -49,21 +45,20 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
       return;
     }
 
-    Map<String, String> command = (Map<String, String>) value;
-    lock.lock();
+    Map<String, Integer> command = (Map<String, Integer>) value;
     try {
-      changeInstances(command.get("runnable"),
-                      Integer.valueOf(command.get("newInstances")),
-                      Integer.valueOf(command.get("oldInstances")));
+      for (Map.Entry<String, Integer> entry : command.entrySet()) {
+        LOG.info("Changing worker instance count: {} new count is: {}", entry.getKey(), entry.getValue());
+        changeInstances(entry.getKey(), entry.getValue());
+        LOG.info("Worker instance count changed: {} new count is {}", entry.getKey(), entry.getValue());
+      }
     } catch (Throwable t) {
-      LOG.error("Failed to change instances : {}", command, t);
-    } finally {
-      lock.unlock();
+      LOG.error("Failed to change worker instances : {}", command, t);
     }
   }
 
-  private synchronized void changeInstances(String runnableId, int newInstanceCount, int oldInstanceCount)
+  private synchronized void changeInstances(String runnableId, int newInstanceCount)
     throws Exception {
-    instanceUpdater.update(runnableId, newInstanceCount, oldInstanceCount);
+    controller.changeInstances(runnableId, newInstanceCount).get();
   }
 }

@@ -65,9 +65,7 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
 
     TwillController controller = launcher.launch(new WorkerTwillApplication(program, workerSpec, hConfFile, cConfFile,
                                                                             eventHandler));
-
-    DistributedWorkerInstanceUpdater instanceUpdater = new DistributedWorkerInstanceUpdater(program, controller);
-    return new WorkerTwillProgramController(program.getName(), controller, instanceUpdater).startListen();
+    return new WorkerTwillProgramController(program, controller).startListen();
   }
 
   @Override
