@@ -94,7 +94,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       if (succeeded) {
         TimePartitionedFileSet ds = context.getDataset(TIME_PARTITIONED);
-        String outputPath = FileSetArguments.getOutputPath(ds.getUnderlyingFileSet().getRuntimeArguments());
+        String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
         Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());
         Preconditions.checkNotNull(time, "Output partition time is null.");
         ds.addPartition(time, outputPath);

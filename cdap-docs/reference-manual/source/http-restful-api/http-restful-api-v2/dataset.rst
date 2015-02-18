@@ -1,13 +1,15 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _http-restful-api-dataset:
+.. _http-restful-api-v2-dataset:
 
 ===========================================================
 Dataset HTTP RESTful API
 ===========================================================
+
+.. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
 
 .. highlight:: console
 
@@ -37,7 +39,7 @@ The response body will contain a JSON-formatted list of the existing Datasets::
      }
    }
 
-.. _http-restful-api-dataset-creating:
+.. _http-restful-api-v2-dataset-creating:
 
 Creating a Dataset
 ------------------

@@ -56,7 +56,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getDescription() {
-    return "Sends an event to a " + ElementType.STREAM.getPrettyName();
+    return String.format("Sends an event to a %s.", ElementType.STREAM.getPrettyName());
   }
 
   @Override

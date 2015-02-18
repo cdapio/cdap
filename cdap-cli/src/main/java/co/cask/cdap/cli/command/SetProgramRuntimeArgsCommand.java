@@ -65,6 +65,6 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Sets the runtime arguments of a " + elementType.getPrettyName() + "." +
-      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
+      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
   }
 }

@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.tephra.TransactionExecutor;
@@ -86,6 +87,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class MapReduceProgramRunnerTest {
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
@@ -122,7 +125,7 @@ public class MapReduceProgramRunnerTest {
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetInstantiator =
-      new DatasetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
+      new DatasetInstantiator(namespaceId, datasetFramework, injector.getInstance(CConfiguration.class),
                               MapReduceProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
@@ -136,8 +139,8 @@ public class MapReduceProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances()) {
-      dsFramework.deleteInstance(spec.getName());
+    for (DatasetSpecification spec : dsFramework.getInstances(namespaceId)) {
+      dsFramework.deleteInstance(Id.DatasetInstance.from(namespaceId, spec.getName()));
     }
   }
 
@@ -177,14 +180,17 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapreduceWithDynamicFileSet() throws Exception {
+    Id.DatasetInstance rtInput1 = Id.DatasetInstance.from(namespaceId, "rtInput1");
+    Id.DatasetInstance rtInput2 = Id.DatasetInstance.from(namespaceId, "rtInput2");
+    Id.DatasetInstance rtOutput1 = Id.DatasetInstance.from(namespaceId, "rtOutput1");
     // create the datasets here because they are not created by the app
-    dsFramework.addInstance("fileSet", "rtInput1", FileSetProperties.builder()
+    dsFramework.addInstance("fileSet", rtInput1, FileSetProperties.builder()
       .setBasePath("/rtInput1")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
       .build());
-    dsFramework.addInstance("fileSet", "rtOutput1", FileSetProperties.builder()
+    dsFramework.addInstance("fileSet", rtOutput1, FileSetProperties.builder()
       .setBasePath("/rtOutput1")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
@@ -203,7 +209,7 @@ public class MapReduceProgramRunnerTest {
                           new BasicArguments(runtimeArguments));
 
     // test reading and writing same dataset
-    dsFramework.addInstance("fileSet", "rtInput2", FileSetProperties.builder()
+    dsFramework.addInstance("fileSet", rtInput2, FileSetProperties.builder()
       .setBasePath("/rtInput2")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)

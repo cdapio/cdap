@@ -104,25 +104,26 @@ public class AbstractDatasetTest {
     framework.deleteModule(moduleId);
   }
 
-  protected static void createInstance(String type, String instanceName, DatasetProperties properties)
+  protected static void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
     throws IOException, DatasetManagementException {
 
-    framework.addInstance(type, instanceName, properties);
+    framework.addInstance(type, datasetInstanceId, properties);
   }
 
-  protected static void deleteInstance(String instanceName) throws IOException, DatasetManagementException {
-    framework.deleteInstance(instanceName);
+  protected static void deleteInstance(Id.DatasetInstance datasetInstanceId)
+    throws IOException, DatasetManagementException {
+    framework.deleteInstance(datasetInstanceId);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName)
+  protected static <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException {
-
-    return getInstance(datasetName, DatasetDefinition.NO_ARGUMENTS);
+    return getInstance(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
+  protected static <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId,
+                                                     Map<String, String> arguments)
     throws DatasetManagementException, IOException {
-    return framework.getDataset(datasetName, arguments, null);
+    return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
   protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {

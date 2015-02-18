@@ -18,6 +18,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.schedule.Schedules;
 
 /**
  *
@@ -28,7 +29,7 @@ public class ScheduleAppWithMissingWorkflow extends AbstractApplication {
     setName("ScheduleAppWithMissingWorkflow");
     setDescription("App that schedules a missing Workflow");
     addMapReduce(new NoOpMR());
-    scheduleWorkflow("EveryOneMinuteSchedule", "* * * * *", "NonExistentWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("EveryOneMinuteSchedule", "", "* * * * *"), "NonExistentWorkflow");
   }
 
   /**

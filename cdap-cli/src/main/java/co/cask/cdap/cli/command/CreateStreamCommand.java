@@ -54,6 +54,6 @@ public class CreateStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Creates a " + ElementType.STREAM.getPrettyName();
+    return String.format("Creates a %s.", ElementType.STREAM.getPrettyName());
   }
 }

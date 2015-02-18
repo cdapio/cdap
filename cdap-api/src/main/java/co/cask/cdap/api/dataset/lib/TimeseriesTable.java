@@ -125,8 +125,8 @@ public class TimeseriesTable extends TimeseriesDataset
 
   /**
    * Reads entries for a given time range and returns an <code>Iterator<Entry></code>.
-   * Provides the same functionality as {@link #read(byte[], long, long, byte[]...)} but accepts additional
-   * parameters for pagination purposes.
+   * Provides the same functionality as {@link #read(byte[], long, long, byte[][]) read(byte[], long, long, byte[]...)} 
+   * but accepts additional parameters for pagination purposes.
    * NOTE: A limit is placed on the max number of time intervals to be scanned during a read, as defined by
    * {@link #MAX_ROWS_TO_SCAN_PER_READ}.
    *

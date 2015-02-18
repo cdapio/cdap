@@ -19,25 +19,17 @@ import co.cask.http.AbstractHttpResponder;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
 /**
@@ -54,9 +46,13 @@ public final class MockResponder extends AbstractHttpResponder {
   }
 
   public <T> T decodeResponseContent(TypeToken<T> type) {
+    return decodeResponseContent(type, GSON);
+  }
+
+  public <T> T decodeResponseContent(TypeToken<T> type, Gson gson) {
     JsonReader jsonReader = new JsonReader(new InputStreamReader
                                              (new ChannelBufferInputStream(content), Charsets.UTF_8));
-    return GSON.fromJson(jsonReader, type.getType());
+    return gson.fromJson(jsonReader, type.getType());
   }
 
   @Override

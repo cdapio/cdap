@@ -1,20 +1,22 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _http-restful-api-procedure:
+.. _http-restful-api-v2-procedure:
 
 ===========================================================
 Procedure HTTP RESTful API
 ===========================================================
 
-.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
+.. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
+
+.. include:: ../../../../_common/_include/include-v260-deprecate-procedures.rst
 
 .. highlight:: console
 
 This interface supports sending calls to the methods of an Application’s Procedures.
-See the :ref:`http-restful-api-lifecycle` for how to control the life cycle of
+See the :ref:`http-restful-api-v2-lifecycle` for how to control the life cycle of
 Procedures.
 
 Executing Procedures
