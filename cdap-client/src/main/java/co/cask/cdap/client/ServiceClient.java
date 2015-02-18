@@ -51,7 +51,7 @@ public class ServiceClient {
 
   /**
    * Gets a {@link ServiceSpecification} for a {@link Service}.
-   * 
+   *
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service
    * @return {@link ServiceSpecification} representing the service
@@ -61,7 +61,7 @@ public class ServiceClient {
    */
   public ServiceSpecification get(String appId, String serviceId)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
-    URL url = config.resolveURLV3(String.format("apps/%s/services/%s", appId, serviceId));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
 
@@ -95,6 +95,6 @@ public class ServiceClient {
     throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
     // Make sure the service actually exists
     get(appId, serviceId);
-    return config.resolveURLV3(String.format("apps/%s/services/%s/methods/", appId, serviceId));
+    return config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/methods/", appId, serviceId));
   }
 }
